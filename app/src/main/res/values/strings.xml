@@ -1,0 +1,1131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ==================== APP INFO ==================== -->
+    <string name="app_name">Switchly</string>
+
+    <!-- Update prompt -->
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_message">A new Switchly version is available on Google Play.</string>
+    <string name="update_available_cta">Update</string>
+    <string name="update_available_inline">new update available!</string>
+    <string name="about_version_with_update">%1$s (%2$s)</string>
+    <string name="switchly_update_up_to_date">You are already up to date</string>
+    <string name="not_now">Not now</string>
+
+    <!-- ==================== GLOBAL / COMMON ==================== -->
+    <!-- Generic actions -->
+    <string name="settings">Settings</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="create">Create</string>
+    <string name="delete">Delete</string>
+    <string name="are_you_sure">Are you sure?</string>
+    <string name="ok">OK</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_out">Sign out</string>
+    <string name="yes">Yes</string>
+    <string name="copy">Copy</string>
+    <string name="copied">Copied</string>
+    <string name="share">Share</string>
+    <string name="required">Required</string>
+
+    <!-- Misc -->
+    <string name="invalid_value">Invalid value</string>
+    <string name="spacing">-</string>
+
+    <!-- ==================== NAVIGATION ==================== -->
+    <string name="nav_home">Home</string>
+    <string name="nav_schedules">Schedules</string>
+    <string name="nav_stats">Statistics</string>
+
+    <!-- Settings shortcuts -->
+    <string name="pref_write_tag_title">Write NFC tag</string>
+    <string name="pref_write_tag_summary">Create / update an NFC tag to control Switchly</string>
+
+    <!-- ==================== HOME / BLOCKED APPS ==================== -->
+    <string name="blocked_list_title">Blocked apps</string>
+    <string name="no_blocked_apps">No blocked apps</string>
+    <string name="pick_apps">Pick apps</string>
+
+    <!-- Blocker overlay -->
+    <string name="blocked_app_default">App blocked</string>
+    <string name="blocked_message">You can’t use this app while Switchly is active.</string>
+
+    <!-- ==================== APP PICKER ==================== -->
+    <string name="app_icon">App icon</string>
+    <string name="search_apps">Search apps</string>
+
+    <!-- ==================== PROFILES ==================== -->
+    <!-- Actions -->
+    <string name="action_delete_profile">Delete profile</string>
+    <string name="action_duplicate_profile">Duplicate profile</string>
+    <string name="action_rename_profile">Rename profile</string>
+    <string name="action_set_active_profile">Set active</string>
+    <string name="add_profile">Add profile</string>
+    <string name="select_profile">Select profile</string>
+
+    <!-- Dialogs / entries -->
+    <string name="add_profile_subtitle">Create a new Switchly profile.</string>
+    <string name="delete_profile_confirm">Delete “%1$s”?</string>
+    <string name="manage_profiles">Manage profiles</string>
+
+    <!-- Messages / toasts -->
+    <string name="profile_created">Profile “%1$s” created.</string>
+    <string name="profile_duplicated">Profile “%1$s” duplicated.</string>
+    <string name="profile_duplicate_name_fmt">%1$s (copy)</string>
+    <string name="profile_duplicate_name_numbered_fmt">%1$s (copy %2$d)</string>
+    <string name="profile_name_exists">A profile named “%1$s” already exists.</string>
+    <string name="profile_name_too_short">Please enter at least 2 characters.</string>
+    <string name="profile_renamed">Profile “%1$s” renamed.</string>
+    <string name="profile_set_active_toast">“%1$s” is now active.</string>
+
+    <!-- State labels -->
+    <string name="state_profile_on_status">Active</string>
+
+    <!-- Locking / NFC-dependent profile changes -->
+    <string name="toast_cannot_change_profile_while_locked">
+        Profiles are locked. Use your NFC tag to switch Switchly or disable it.
+    </string>
+
+    <!-- ==================== SWITCH MODE & STATES ==================== -->
+    <string name="state_disabled">Disabled</string>
+    <string name="state_enabled">Enabled</string>
+    <string name="switch_mode_label">Switch mode: %1$s</string>
+    <string name="switch_mode_status_placeholder">Switch mode: …</string>
+
+    <!-- ==================== NOTIFICATIONS ==================== -->
+    <string name="notif_bluetooth_schedules_title">Switchly: Bluetooth triggers active</string>
+    <string name="notif_bluetooth_schedules_content">Listening for Bluetooth changes to update schedules</string>
+
+    <string name="notif_wifi_schedules_title">Switchly: Wi-Fi triggers active</string>
+    <string name="notif_wifi_schedules_content">Listening for Wi-Fi changes to update schedules</string>
+
+    <string name="notif_enable_bt_triggers_title">Enable Bluetooth triggers</string>
+    <string name="notif_enable_bt_triggers_text_fmt">Tap to allow %1$s to run Bluetooth trigger monitoring</string>
+
+    <string name="notif_enable_wifi_triggers_title">Enable Wi-Fi triggers</string>
+    <string name="notif_enable_wifi_triggers_text_fmt">Tap to allow %1$s to run Wi-Fi trigger monitoring</string>
+
+    <string name="notif_channel_bluetooth_triggers_name">Switchly Bluetooth triggers</string>
+    <string name="notif_channel_bluetooth_triggers_desc">Foreground service for Bluetooth schedule triggers</string>
+
+    <string name="notif_channel_wifi_triggers_name">Switchly Wi-Fi triggers</string>
+    <string name="notif_channel_wifi_triggers_desc">Foreground service for Wi-Fi schedule triggers</string>
+
+    <string name="pref_open_accessibility_summary">Enable the Switchly accessibility service again so blocking works reliably.</string>
+
+    <!-- ==================== EMERGENCY / TEMPORARY DISABLE ==================== -->
+    <string name="pref_emergency_title">Emergency unlock</string>
+    <string name="pref_emergency_summary">Temporarily disable blocking once per day for 15 minutes.</string>
+    <string name="pref_emergency_summary_active">Emergency unlock is currently active.</string>
+    <string name="pref_emergency_summary_used">You already used Emergency Unlock today.</string>
+
+    <string name="emergency_enabled_inline">Emergency unlock (%1$d min)</string>
+    <string name="emergency_enabled_toast">Emergency unlock enabled (%1$d min)</string>
+    <string name="emergency_used_today">You can only use Emergency Unlock once per day.</string>
+
+    <string name="temp_disabled_for">for %1$d min %2$d s</string>
+    <string name="temp_enabled_for">for %1$d min %2$d s</string>
+
+    <!-- Emergency PIN -->
+    <string name="emergency_pin_choose_hint">Choose PIN (min. 4 digits)</string>
+    <string name="emergency_pin_enter_hint">Enter PIN</string>
+    <string name="emergency_pin_incorrect">Incorrect PIN.</string>
+    <string name="emergency_pin_message">This PIN is required before Emergency Unlock can be activated.</string>
+    <string name="emergency_pin_set_message">This PIN is required before Emergency Unlock can be activated.</string>
+    <string name="emergency_pin_set_title">Set emergency PIN</string>
+    <string name="emergency_pin_title">Set emergency PIN</string>
+    <string name="emergency_pin_too_short">PIN must be at least 4 digits.</string>
+
+    <!-- ==================== ONBOARDING ==================== -->
+    <!-- Controls -->
+    <string name="onb_done">Done</string>
+    <string name="onb_next">Next</string>
+    <string name="onb_open">Open</string>
+    <string name="onb_skip">Skip</string>
+    <string name="onb_badge_required">Required</string>
+    <string name="onb_badge_recommended">Recommended</string>
+    <string name="onb_badge_optional">Optional</string>
+
+    <!-- Steps -->
+    <string name="onb_accessibility_title">Accessibility service</string>
+    <string name="onb_accessibility_desc">Enable the Switchly accessibility service so Switchly can instantly detect opened apps and block them reliably.</string>
+
+    <string name="onb_notif_title">Allow notifications</string>
+    <string name="onb_notif_desc">Let Switchly show status updates and helpful tips. You can disable this anytime in system settings.</string>
+
+    <string name="onb_profile_title">Create profile</string>
+    <string name="onb_profile_desc">Create a profile with the apps you want to block.</string>
+
+    <string name="onb_pick_title">Pick apps to block</string>
+    <string name="onb_pick_desc">Choose apps for your active profile. You can change this anytime.</string>
+
+    <string name="onb_nfc_title">Write NFC tag</string>
+    <string name="onb_nfc_desc">Create a tag that instantly switches profiles with one tap.</string>
+
+    <string name="onb_start_title">Start Switchly</string>
+    <string name="onb_start_desc">Enable blocking and you’re ready.</string>
+
+    <!-- Onboarding: Quick Tile -->
+    <string name="onb_tile_title">Quick Tile</string>
+    <string name="onb_tile_desc">Add the Switchly tile to Quick Settings for fast switching.</string>
+    <string name="onb_tile_enable_label">Enable Quick Tile</string>
+
+    <!-- Onboarding placeholders -->
+    <string name="onb_page_desc_placeholder">Description</string>
+    <string name="onb_page_title_placeholder">Title</string>
+    <string name="profile_label_default">Profile</string>
+    <string name="profile_row_subtitle">Tap to manage</string>
+
+    <string name="onb_battery_title">Battery optimization</string>
+    <string name="onb_battery_desc">To make sure Schedules &amp; Blocking work reliably and dont get killed by Android.</string>
+    <string name="onb_battery_fallback_toast">Open Settings “Battery” → “Optimization” → set Switchly to “Don’t optimize”.</string>
+
+    <string name="onb_premium_title">Premium</string>
+    <string name="onb_premium_desc">More detailed Stats, additional schedule types (Wi-Fi/BT), and even more additional options.</string>
+    <string name="onb_premium_open">View Premium</string>
+
+    <string name="onb_permissions_hub_title">Permissions overview</string>
+    <string name="onb_permissions_hub_desc">See all required and optional permissions in one place. Useful if something doesn’t work.</string>
+
+    <string name="onb_optional_features_title">Optional features</string>
+    <string name="onb_optional_features_desc">Enable extras like QR actions and NFC required mode. You can change this anytime later.</string>
+
+    <string name="onb_toggle_options_title">More options</string>
+    <string name="onb_toggle_options_desc">Configure optional Switchly features like notification blocking, autostart hints, emergency unlock and more.</string>
+
+    <!-- ==================== QUICK SETTINGS TILE ==================== -->
+    <string name="pref_qs_tile_title">Quick Settings tile</string>
+    <string name="pref_qs_tile_summary">Add a tile to toggle Switchly.</string>
+
+    <string name="qs_added_already">Tile is already added</string>
+    <string name="qs_added_cancel">Canceled</string>
+    <string name="qs_added_ok">Tile added</string>
+
+    <string name="qs_label_off">Switchly OFF</string>
+    <string name="qs_label_on">Switchly ON</string>
+
+    <string name="qs_tile_add_hint">Open Quick Settings → Edit → drag “Switchly” into your active tiles</string>
+
+    <string name="qs_tile_remove_hint">To remove the tile: Quick Settings → Edit → remove “Switchly”</string>
+
+    <!-- ==================== NFC ==================== -->
+    <!-- Screen title -->
+    <string name="write_nfc_tag">Write NFC tag</string>
+
+    <!-- Write flow -->
+    <string name="nfc_arm_write">Arm tag writer</string>
+    <string name="nfc_cancel_write">Cancel</string>
+    <string name="nfc_waiting_tag">Hold the tag to the phone…</string>
+
+    <string name="nfc_no_data">Nothing to write.</string>
+    <string name="nfc_writing">Writing tag…</string>
+    <string name="nfc_write_ok">Tag written successfully!</string>
+    <string name="nfc_write_error_generic">Could not write to NFC tag.</string>
+    <string name="nfc_tag_error">Error: NFC tag could not be read.</string>
+
+    <!-- Action / deep-link errors -->
+    <string name="nfc_action_error_fmt">Action failed: %1$s</string>
+    <string name="nfc_error_invalid_or_missing_uri">Invalid or missing URI</string>
+    <string name="nfc_error_unknown_host">Unknown host</string>
+    <string name="nfc_error_unknown_action">Unknown action</string>
+    <string name="nfc_error_missing_profile">Missing profile</string>
+    <string name="nfc_error_unknown_profile_fmt">Unknown profile: %1$s</string>
+    <string name="nfc_error_profile_not_active_nothing_to_disable_fmt">Profile “%1$s” is not active — nothing to disable.</string>
+
+    <!-- Feedback -->
+    <string name="nfc_feedback_started">%1$s enabled</string>
+    <string name="nfc_feedback_stopped">%1$s disabled</string>
+
+    <!-- Editor hints -->
+    <string name="nfc_action_hint">Action</string>
+    <string name="nfc_duration_hint">Temporary disable duration</string>
+    <string name="nfc_profile_hint">Profile</string>
+    <string name="nfc_temp_hint_timer_behavior">Temporary actions last for the selected time and then automatically revert.</string>
+
+    <!-- Actions -->
+    <string name="nfc_action_disable">Disable</string>
+    <string name="nfc_action_enable">Enable</string>
+    <string name="nfc_action_temp_disable">Temporary disable</string>
+    <string name="nfc_action_temp_enable">Temporary enable</string>
+    <string name="nfc_action_toggle">Toggle</string>
+    <string name="nfc_action_pair_uid">Pair tag (UID only)</string>
+
+    <!-- NFC security lock -->
+    <string name="toast_disable_requires_nfc">Switchly can currently only be disabled via NFC tag.</string>
+
+    <string name="nfc_wrong_tag_paired_uid_required">Wrong NFC tag (paired UID required).</string>
+    <string name="nfc_state_on">ON</string>
+    <string name="nfc_state_off">OFF</string>
+    <string name="nfc_toggle_via_nfc_fmt">Switchly %1$s (via NFC)</string>
+
+    <string name="pref_autostart_title">Start Switchly after reboot</string>
+    <string name="pref_autostart_summary">Automatically restart the blocking service after the device is rebooted.</string>
+
+    <!-- NFC availability -->
+    <string name="nfc_not_available">NFC is not available on this device</string>
+    <string name="nfc_profile_none">None</string>
+
+    <!-- NFC preset durations -->
+    <string name="nfc_time_5_min">5 minutes</string>
+    <string name="nfc_time_10_min">10 minutes</string>
+    <string name="nfc_time_15_min">15 minutes</string>
+    <string name="nfc_time_20_min">20 minutes</string>
+    <string name="nfc_time_25_min">25 minutes</string>
+    <string name="nfc_time_30_min">30 minutes</string>
+
+    <!-- NFC custom time -->
+    <string name="nfc_time_custom">Custom time…</string>
+    <string name="nfc_time_custom_invalid">Please enter a number between 1 and 120 minutes.</string>
+    <string name="nfc_time_custom_placeholder">Enter time in minutes (1&#8211;120)</string>
+    <string name="nfc_time_custom_title">Custom temporary unlock</string>
+    <plurals name="nfc_time_custom_label">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+
+    <!-- ==================== PREMIUM ==================== -->
+    <string name="premium_title">Switchly Premium</string>
+    <string name="premium_short_desc">Unlock Wi‑Fi / Bluetooth schedules, detailed statistics, and more premium toggles.</string>
+    <string name="premium_status_active">Active</string>
+    <string name="premium_support_note">Thanks for supporting Switchly 💜</string>
+    <string name="premium_status_inactive">Premium is not activated yet</string>
+
+    <string name="premium_button_buy">Buy Premium</string>
+    <string name="premium_button_restore">Restore purchases</string>
+    <string name="premium_button_thanks">Thanks for your support!</string>
+
+    <!-- Premium in settings -->
+    <string name="pref_premium_title">Switchly Premium</string>
+    <string name="pref_premium_summary">Unlock temporary NFC disable and upcoming pro features.</string>
+
+    <!-- Info activity -->
+    <string name="premium_already_owned">You already have Premium</string>
+    <string name="premium_checking_purchases">Checking purchases…</string>
+
+    <!-- Premium feature cards -->
+    <string name="premium_active_header">Active premium feature</string>
+
+    <string name="premium_nfc_title">More NFC options</string>
+    <string name="premium_nfc_desc">Unlock custom unlock durations beyond the presets.</string>
+
+    <string name="premium_unlock_title">Themes &amp; colors</string>
+    <string name="premium_unlock_desc">Unlock more accent colors and enable the color picker for fully personalized themes.</string>
+
+    <string name="premium_stats_title">Statistics &amp; insights</string>
+    <string name="premium_stats_desc">Unlock detailed usage insights to see how often you use Switchly and which apps distract you the most.</string>
+
+    <string name="premium_automation_title">Automations</string>
+    <string name="premium_automation_desc">Unlock advanced automation features including time, Wi-Fi, and Bluetooth triggers.</string>
+
+    <!-- ==================== SETTINGS: CATEGORIES ==================== -->
+    <string name="pref_cat_cloud_title">Account &amp; Cloud Sync</string>
+    <string name="pref_cat_general_title">General</string>
+    <string name="pref_cat_info_title">Help &amp; About</string>
+    <string name="pref_cat_switchly_title">Focus &amp; Profiles</string>
+    <string name="pref_cat_system_title">System &amp; Permissions</string>
+
+    <!-- ==================== SETTINGS: GENERAL ==================== -->
+    <string name="pref_language_title">Language</string>
+    <string name="pref_language_summary">Choose the app language.</string>
+
+    <string name="pref_theme_title">Appearance</string>
+    <string name="pref_theme_summary">Display mode and theme color.</string>
+
+    <string name="pref_theme_color_title">Theme color</string>
+    <string name="pref_theme_mode_title">Display mode</string>
+    <string name="pref_theme_mode_dark">Dark</string>
+    <string name="pref_theme_mode_light">Light</string>
+    <string name="pref_theme_mode_system">Follow system</string>
+
+    <!-- Accent colors -->
+    <string name="accent_amber">Amber</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_default">Default (Green)</string>
+    <string name="accent_gray">Gray</string>
+    <string name="accent_orange">Orange</string>
+    <string name="accent_pink">Pink</string>
+    <string name="accent_purple">Purple</string>
+    <string name="accent_red">Red</string>
+    <string name="accent_teal">Teal</string>
+
+    <string name="pref_accent_custom">Custom color…</string>
+    <string name="pref_accent_custom_title">Custom color</string>
+    <string name="premium_required_for_theme">This color is only available with Switchly Premium.</string>
+
+    <!-- ==================== SETTINGS: PROFILES & NFC ==================== -->
+    <string name="pref_manage_profiles_title">Manage profiles</string>
+    <string name="pref_manage_profiles_summary">Add, rename, and configure profiles.</string>
+
+    <!-- ==================== SETTINGS: TOGGLE OPTIONS ==================== -->
+    <string name="pref_toggle_options_title">Toggle options</string>
+    <string name="pref_toggle_options_summary">Configure global toggles like NFC protection, Emergency Unlock, and the next schedule indicator.</string>
+
+    <string name="toggle_options_title">Toggle options</string>
+
+    <string name="toggle_section_protection">Protection</string>
+    <string name="toggle_section_ui">UI &amp; Info</string>
+    <string name="toggle_section_additional_features">Additional features</string>
+
+    <string name="pref_show_next_schedule_title">Show next schedule</string>
+    <string name="pref_show_next_schedule_summary">Shows the next schedule summary on the Settings screen.</string>
+
+    <string name="pref_block_notifications_title">Block notifications for blocked apps</string>
+    <string name="pref_block_notifications_summary">Hides notifications from apps you block.</string>
+
+    <string name="toast_notification_listener_required">To hide blocked app notifications, enable notification access for Switchly.</string>
+
+    <!-- Toggle Options: Protection -->
+    <string name="pref_require_nfc_unlock_title">Require NFC to unlock</string>
+    <string name="pref_require_nfc_unlock_summary">Unlocking Switchly requires an NFC scan.</string>
+
+    <!-- Optional features dialog -->
+    <string name="onb_optional_features_dialog_title">Optional features</string>
+    <string name="onb_configure">Configure</string>
+
+    <!-- ==================== SETTINGS: SYSTEM PERMISSIONS ==================== -->
+    <string name="pref_permissions_title">Permissions</string>
+    <string name="pref_permissions_summary">Check and manage the system permissions Switchly needs.</string>
+
+    <!-- Permissions screen sections -->
+    <string name="permissions_section_core">Core permissions</string>
+    <string name="permissions_section_notifications">Notifications</string>
+    <string name="permissions_section_triggers">Triggers &amp; battery</string>
+    <string name="permissions_section_oem">OEM background settings</string>
+
+    <!-- Permissions cards content -->
+    <string name="permissions_accessibility_title">Accessibility service</string>
+    <string name="permissions_accessibility_desc">Recommended and most stable: required so Switchly can instantly detect opened apps and enforce your profiles.</string>
+
+    <!-- Accessibility service description (Android system settings) -->
+    <string name="accessibility_service_desc">Detects foreground app changes so Switchly can block apps and enforce usage limits.</string>
+
+    <!-- Persistent protection warning -->
+    <string name="protection_inactive_title">Protection inactive</string>
+    <string name="protection_inactive_text">Switchly is enabled, but the Accessibility service is disabled. Tap to enable it.</string>
+
+    <string name="permissions_notifications_title">Notifications</string>
+    <string name="permissions_notifications_desc">Required so Switchly can show status and reminders in the notification shade.</string>
+
+    <string name="permissions_notification_access_title">Notification access</string>
+    <string name="permissions_notification_access_desc">Required to hide notifications from apps that are blocked by your active profile (notification access / listener).</string>
+
+    <string name="permissions_location_title">Location</string>
+    <string name="permissions_location_desc">Required so Wi-Fi based schedules can detect the connected network. For best reliability, set location access to “Allow all the time”.</string>
+
+    <string name="permissions_bluetooth_title">Bluetooth (Nearby devices)</string>
+    <string name="permissions_bluetooth_desc">Required for Bluetooth-based schedules (Android 12+).</string>
+
+    <string name="permissions_status_disabled">Disabled</string>
+    <string name="permissions_status_enabled">Enabled</string>
+
+    <string name="permissions_btn_open">Open settings</string>
+    <string name="permissions_btn_permissions">Permissions</string>
+    <string name="permissions_btn_allow">Allow</string>
+    <string name="permissions_btn_open_settings">Open app settings</string>
+    <string name="permissions_btn_request">Request</string>
+    <string name="permissions_btn_enable_precise">Enable precise</string>
+    <string name="permissions_btn_enable_all_the_time">Enable all the time</string>
+    <string name="permissions_why">Details</string>
+
+    <string name="permissions_status_location_approx">Approximate (needs Precise)</string>
+    <string name="permissions_status_location_background_missing">While using app (needs All the time)</string>
+    <string name="permissions_for_wifi_not_needed">Not needed (no Wi-Fi rules)</string>
+    <string name="permissions_for_bluetooth_not_needed">Not needed (no Bluetooth rules)</string>
+
+    <!-- Battery optimization / OEM autostart -->
+    <string name="permissions_battery_title">Battery optimization</string>
+    <string name="permissions_battery_desc">Disable battery optimization so schedules/receivers can run reliably in the background.</string>
+
+    <string name="permissions_autostart_title">Auto-start (OEM)</string>
+    <string name="permissions_autostart_desc">
+        Some manufacturers (e.g., Samsung, Xiaomi, or Oppo) further restrict auto-start and background activity.
+        For Switchly to work reliably, auto-start should be allowed for the app.
+    </string>
+
+    <!-- Permission banners -->
+    <string name="permissions_banner_default">All good! If anything is “Disabled” here, triggers/schedules may be unreliable.</string>
+
+    <plurals name="permissions_banner_missing_count">
+        <item quantity="one">
+            Some permissions are not optimal yet (%1$d remaining).
+            Without these restrictions, Switchly can work more reliably.
+        </item>
+        <item quantity="other">
+            Some permissions are not optimal yet (%1$d remaining).
+            Without these restrictions, Switchly can work more reliably.
+        </item>
+    </plurals>
+
+    <!-- Single-permission explanations -->
+    <string name="perm_bt_title">Nearby devices permission</string>
+    <string name="perm_bt_denied_schedule">Bluetooth permission denied</string>
+    <string name="perm_bt_why_needed">To detect connected Bluetooth devices for Bluetooth schedules, Android requires the “Nearby devices” permission.</string>
+
+    <string name="perm_location_title">Location permission</string>
+    <string name="perm_location_denied_wifi_schedule">Location permission denied. Wi-Fi schedules may not work without this permission.</string>
+    <string name="perm_location_why_wifi_ssid">To read the Wi-Fi name (SSID), Android requires Location permission.</string>
+
+    <!-- ==================== SETTINGS: GOOGLE ACCOUNT & CLOUD ==================== -->
+    <string name="pref_google_account_title">Google account</string>
+    <string name="pref_google_account_summary_logged_out">Not signed in with Google</string>
+
+    <string name="pref_cloud_backup_title">Back up to cloud</string>
+    <string name="pref_cloud_backup_summary">Manually back up your settings and profiles.</string>
+
+    <string name="pref_cloud_restore_title">Restore from cloud</string>
+    <string name="pref_cloud_restore_summary">Load a backup and overwrite local settings.</string>
+
+    <string name="settings_google_dialog_title">Google account</string>
+    <string name="settings_google_signing_in">Signing in…</string>
+    <string name="settings_google_logged_in">Signed in</string>
+    <string name="settings_google_logged_out">Not signed in</string>
+    <string name="settings_last_backup">Last backup: %1$s</string>
+
+    <!-- Cloud confirm dialogs -->
+    <string name="settings_confirm_backup_title">Backup</string>
+    <string name="settings_confirm_backup_message">Back up current settings and profiles to the cloud?</string>
+
+    <string name="settings_confirm_restore_title">Restore</string>
+    <string name="settings_confirm_restore_message">Load backup from the cloud and overwrite local settings?</string>
+
+    <string name="settings_confirm_sign_out_title">Sign out</string>
+    <string name="settings_confirm_sign_out_message">Sign out from your Google account?</string>
+
+    <!-- Cloud toasts / errors -->
+    <string name="cloud_backup_ok">Backup completed</string>
+    <string name="cloud_restore_ok_restart">Restore completed — restarting app…</string>
+    <string name="cloud_error_fmt">Error: %1$s</string>
+
+    <string name="cloud_error_not_logged_in">Not signed in</string>
+    <string name="cloud_error_no_backup_found">No backup found</string>
+    <string name="cloud_error_backup_not_found">Backup not found</string>
+
+    <string name="error_unknown">Unknown error</string>
+    <string name="settings_signed_out">Signed out</string>
+
+    <!-- Auth runtime / Google sign-in -->
+    <string name="auth_sign_in_success">Signed in with Google</string>
+    <string name="auth_sign_in_failed_fmt">Sign-in failed: %1$s</string>
+    <string name="auth_firebase_not_configured">Firebase is not configured (google-services.json missing?)</string>
+    <string name="auth_missing_google_server_client_id">Missing Google server client id (default_web_client_id). Check google-services.json + google-services plugin.</string>
+    <string name="auth_failed_to_process_google_token">Failed to process Google token</string>
+    <string name="auth_unexpected_error_sign_in">Unexpected error during sign-in</string>
+    <string name="auth_sign_in_cancelled">Sign-in cancelled</string>
+    <string name="auth_no_matching_google_accounts_found">No matching Google accounts found</string>
+    <string name="auth_sign_in_failed_generic">Sign-in failed</string>
+
+    <!-- Account deletion runtime -->
+    <string name="account_deleted">Account deleted</string>
+    <string name="account_delete_failed_delete_backups_fmt">Failed to delete backups: %1$s</string>
+    <string name="account_delete_failed_delete_cloud_data_fmt">Failed to delete cloud data: %1$s</string>
+    <string name="account_delete_recent_login_required">For security reasons, please sign in again with Google, then try deleting the account again.</string>
+    <string name="account_delete_failed_delete_account_fmt">Failed to delete account: %1$s</string>
+    <string name="settings_restore_choose_title">Choose backup</string>
+
+    <!-- Account deletion -->
+    <string name="settings_account_action_delete">Delete account</string>
+    <string name="settings_account_delete_confirm_title">Delete Switchly account?</string>
+    <string name="settings_account_delete_confirm_message">This will delete your Switchly cloud data, backups, and local settings. This cannot be undone.</string>
+
+    <!-- ==================== SETTINGS: INFO / FAQ ==================== -->
+    <string name="pref_faq_title">FAQ &amp; Tips</string>
+    <string name="pref_faq_summary">Answers to common questions and helpful information</string>
+    <string name="faq_screen_title">FAQ</string>
+
+    <!-- ==================== FAQ CONTENT ==================== -->
+    <!-- Section headers -->
+    <string name="faq_header_contact">Contact &amp; Support</string>
+    <string name="faq_header_future">Data &amp; Backups</string>
+    <string name="faq_header_general">General</string>
+    <string name="faq_header_modes">Temporary modes &amp; emergency</string>
+    <string name="faq_header_permissions">Permissions &amp; system</string>
+    <string name="faq_header_premium">Premium &amp; analytics</string>
+    <string name="faq_header_privacy">Privacy</string>
+    <string name="faq_header_profiles">Profiles &amp; app UI</string>
+    <string name="faq_header_schedules">Schedules</string>
+    <string name="faq_icon_description">FAQ icon</string>
+    <string name="faq_header_qr_nfc">QR &amp; NFC</string>
+    <string name="faq_header_limits_usage">Limits &amp; Usage</string>
+    <string name="faq_header_quick_actions">Quick actions</string>
+    <string name="faq_expand_description">Expand or collapse answer</string>
+    <string name="faq_header_support">Support</string>
+
+    <!-- FAQ search -->
+    <string name="faq_search_hint">Search questions…</string>
+
+    <!-- NFC tags -->
+    <string name="faq_q_nfc">How do NFC tags work with Switchly?</string>
+    <string name="faq_a_nfc">
+        Switchly can write NFC tags that trigger actions instantly:\n\n
+        • Global actions: enable, disable, toggle, or temporarily disable (e.g., 10 minutes).\n
+        • Profile actions: activate a specific profile and then enable, disable, or toggle.\n\n
+        If the profile on a tag no longer exists, Switchly shows a toast and does nothing.\n
+        All standard tags are supported; only proprietary formats may not work.
+    </string>
+
+    <string name="faq_q_profile_nfc_sync">Why did my NFC tag stop working after renaming a profile?</string>
+    <string name="faq_a_profile_nfc_sync">
+        NFC tags store the profile name in plain text.\n
+        If you rename or delete that profile, the tag no longer matches.\n\n
+        Rewrite the NFC tag with the updated name to fix this.
+    </string>
+
+    <string name="faq_q_nfc_uid_pair">What does “Pair tag (UID only)” do?</string>
+    <string name="faq_a_nfc_uid_pair">
+        “Pair tag (UID only)” does not write anything to the NFC tag.\n
+        Instead, Switchly only reads the tag UID (hardware ID) and stores it inside the app.\n\n
+        If UID pairing is enabled, only that exact tag can be used to toggle or unlock Switchly.\n
+        This is useful for read-only tags or if you don’t want the tag to contain a readable action.
+    </string>
+
+    <!-- Temp disable vs emergency -->
+    <string name="faq_q_temp_disable">What is the difference between “Temporary disable” and “Emergency unlock”?</string>
+    <string name="faq_a_temp_disable">
+        Temporary disable pauses blocking for a short time (e.g., 10 minutes) and automatically enables it again. You can use it as often as you want.\n\n
+        Emergency unlock disables all restrictions for a fixed time (e.g., 15 minutes) and can only be used once per calendar day to prevent overuse.\n
+        Both timers are shown on the main screen.
+    </string>
+
+    <!-- Require NFC -->
+    <string name="faq_q_require_nfc">What does “Require NFC tag to disable” do?</string>
+    <string name="faq_a_require_nfc">
+        When enabled, Switchly can only be disabled by scanning a valid NFC tag.\n\n
+        Manual toggle, Quick Tile, and certain controls are locked or show warnings.\n
+        This acts like a physical “key” to turn off your restriction profile.
+    </string>
+
+    <!-- Greyed out settings -->
+    <string name="faq_q_disabled_settings">Why are some settings greyed out or show a toast?</string>
+    <string name="faq_a_disabled_settings">
+        Some settings are disabled depending on Switchly’s state. Examples:\n\n
+        • If “Require NFC tag to disable” is active, manual disabling options are locked.\n
+        • If Emergency unlock is active, its toggle is disabled until it ends.\n
+        • Developer options appear only after tapping “Version” five times.\n\n
+        Greyed-out entries still show toasts explaining why they cannot be used.
+    </string>
+
+    <!-- Emergency bypass -->
+    <string name="faq_q_bypass">What does Emergency unlock do?</string>
+    <string name="faq_a_bypass">
+        Emergency unlock disables all blocking for a short time (e.g., 15 minutes).\n
+        It can only be used once per calendar day. After it ends, Switchly automatically resumes blocking.
+    </string>
+
+    <!-- Profiles -->
+    <string name="faq_q_profiles">What are profiles for?</string>
+    <string name="faq_a_profiles">
+        Profiles contain app selections and blocking rules, e.g., “Work”, “Study”, or “Sleep”.\n
+        You can create, rename, duplicate, or delete profiles.\n
+        The active profile is always shown at the top.
+    </string>
+
+    <!-- Quick tile -->
+    <string name="faq_q_tile">How do I add the Quick Settings tile?</string>
+    <string name="faq_a_tile">
+        Pull down the status bar, open the Quick Settings editor (pencil / “Edit”), and add “Switchly”.\n\n
+        On some devices the label or state may update with a slight delay.
+    </string>
+
+    <!-- Usage access -->
+    <string name="faq_q_usage_access">Why does Switchly need Accessibility?</string>
+    <string name="faq_a_usage_access">
+        Switchly uses an Accessibility service to detect when you open a blocked app (window/app changes).
+        It only reacts to those events to enforce your profiles.
+        No keystrokes are recorded, and Switchly does not store your screen contents.
+    </string>
+
+    <!-- Overlay -->
+    <string name="faq_q_overlay">Do I need the overlay permission?</string>
+    <string name="faq_a_overlay">
+        No. Newer versions of Switchly do not require the overlay permission.
+        Blocking is handled via Accessibility and a full-screen blocker screen.
+        If you granted overlay in an older version, you can safely revoke it in system settings.
+    </string>
+
+    <string name="faq_q_recents_preview">Why can I still see blocked apps in Recents?</string>
+    <string name="faq_a_recents_preview">
+        Android shows a thumbnail preview of the last screen in the Recents/Overview view.
+        Apps are not allowed to hide or remove the preview of other apps.
+        
+        Switchly still blocks the app completely: when you tap the blocked app, Switchly immediately kicks you out again and shows the blocker.
+        Tip: You can clear your Recents to remove the old preview thumbnail.
+    </string>
+
+    <!-- Battery -->
+    <string name="faq_q_battery">Does Switchly use a lot of battery?</string>
+    <string name="faq_a_battery">
+        Switchly is event-based: the Accessibility service reacts when apps change, so there is no constant polling.
+        Battery impact is typically low.
+        If you use Wi-Fi/Bluetooth schedules, Android may show an ongoing notification because those features require foreground services on many devices.
+    </string>
+
+    <!-- Privacy -->
+    <string name="faq_q_privacy">What data does Switchly collect?</string>
+    <string name="faq_a_privacy">
+        All processing happens locally on your device. No usage data or personal information is sent externally.\n
+        Any future cloud features will be optional and clearly explained.
+    </string>
+
+    <!-- Language -->
+    <string name="faq_q_languages">Can I change the app language?</string>
+    <string name="faq_a_languages">
+        Yes. Go to Settings → General → Language.\n
+        The app restarts for the change to take effect.
+    </string>
+
+    <!-- Theme -->
+    <string name="faq_q_theme">Does Switchly support Dark mode?</string>
+    <string name="faq_a_theme">
+        Yes. Choose Light, Dark, or System in Settings → General → Theme.\n
+        Premium unlocks additional colors and a custom color picker.
+    </string>
+
+    <!-- OEM limits -->
+    <string name="faq_q_oem_limits">Why does Switchly behave differently on my device?</string>
+    <string name="faq_a_oem_limits">
+        Some manufacturers restrict APIs that affect overlays, background services, or Quick Tiles.\n
+        Switchly uses only official APIs — behavior depends on your device/ROM settings.
+    </string>
+
+    <!-- Backup & reinstall -->
+    <string name="faq_q_backup">How does backup work if I reinstall Switchly or change phones?</string>
+    <string name="faq_a_backup">
+        Switchly stores data locally and can be backed up via your Google account.\n
+        When reinstalling with the same Google account, Android may restore profiles automatically.\n
+        You can disable Google backups if you prefer.
+    </string>
+
+    <!-- Analytics / stats -->
+    <string name="faq_q_analytics">What about usage statistics or analytics?</string>
+    <string name="faq_a_analytics">
+        Some analytics may be part of Premium — optional and privacy-friendly.\n
+        They help understand habits and improve the app.\n
+        No tracking across other apps or services.
+    </string>
+
+    <!-- Contact -->
+    <string name="faq_q_contact">How can I contact the developer?</string>
+    <string name="faq_a_contact">
+        Join the community Discord server for feedback and support:\n\n
+        https://discord.gg/PC5zn2NeCg\n\n
+        Or contact the dev directly via email:\n
+        andi@saltyy.at
+    </string>
+
+    <!-- Premium overview -->
+    <string name="faq_q_premium_overview">What exactly does Switchly Premium include?</string>
+    <string name="faq_a_premium_overview">
+        Switchly Premium adds optional features, but core blocking stays free.\n\n
+        You get:\n
+        • More accent colors and a custom color picker\n
+        • Custom temporary lock and unlock durations\n
+        • Additional Wifi and Bluetooth Schedules\n
+        • Better Insights and statistics
+    </string>
+
+    <!-- Schedules -->
+    <string name="faq_q_schedules_basic">How do schedules work?</string>
+    <string name="faq_a_schedules_basic">
+        Schedules let Switchly automatically enable or disable a profile based on time, Wi-Fi, or Bluetooth.\n
+        • Time-only: choose days and a time window.\n
+        • Wi-Fi: the schedule becomes active while you are connected to a specific network.\n
+        • Bluetooth: the schedule becomes active while a specific device is connected.\n\n
+        Schedules are optional and never required to use Switchly.
+    </string>
+
+    <string name="faq_q_schedules_wifi">Why do Wi-Fi schedules need Location permission?</string>
+    <string name="faq_a_schedules_wifi">
+        Android treats the Wi-Fi name (SSID) as location-like information.\n
+        On newer versions, apps need the Location permission to read the current SSID.\n\n
+        Without it, Wi-Fi schedules cannot reliably detect which network you are on and may not trigger.
+    </string>
+
+    <string name="faq_q_schedules_actions">What does the schedule "Action" do?</string>
+    <string name="faq_a_schedules_actions">
+        Each schedule can choose how it affects Switchly:\n\n
+        • Enable profile: enables Switchly and activates the selected profile while the schedule condition is true.\n
+        • Disable Switchly: turns Switchly off whenever the schedule condition is true, but only if it was previously enabled by a schedule.\n
+        • Enable while active, then disable: enables the profile while the condition is true and turns Switchly off once that schedule stops matching.\n\n
+        For Wi-Fi schedules, pick "Enable profile" if you only want Switchly to start on certain networks without turning off when you leave them.
+    </string>
+
+    <!-- FAQ: QR -->
+    <string name="faq_q_qr_what">What are QR actions?</string>
+    <string name="faq_a_qr_what">Switchly can save actions (e.g., switching profiles or toggling modes) as a QR code. You can share or print it.</string>
+
+    <string name="faq_q_qr_generate">How do I create a QR code?</string>
+    <string name="faq_a_qr_generate">Open the QR screen, choose the action/profile, then tap “Create”. You can save or share the code afterwards.</string>
+
+    <string name="faq_q_qr_scan">How do I scan a QR code?</string>
+    <string name="faq_a_qr_scan">Open the QR scanner in Switchly and point the camera at the code. The action is executed immediately.</string>
+
+    <!-- FAQ: temp enable -->
+    <string name="faq_q_temp_enable">What is “Temporary enable”?</string>
+    <string name="faq_a_temp_enable">This lets you enable blocking for a limited time. When the timer ends, Switchly automatically restores the previous state.</string>
+
+    <!-- FAQ: usage limits -->
+    <string name="faq_q_usage_limit_what">How do app limits work?</string>
+    <string name="faq_a_usage_limit_what">If you set a daily limit, Switchly tracks usage time and blocks the app once the limit is reached.</string>
+
+    <string name="faq_q_usage_limit_set">Where can I set a daily limit?</string>
+    <string name="faq_a_usage_limit_set">In the app picker, tap the timer/limit icon next to an app, then choose a preset or “Custom”.</string>
+
+    <string name="faq_q_usage_limit_remove">How do I remove a limit?</string>
+    <string name="faq_a_usage_limit_remove">Set the limit to “No limit”. Then the time cap will no longer be enforced.</string>
+
+    <string name="faq_q_usage_stats">Where does usage data come from?</string>
+    <string name="faq_q_usage_overall">What does “Overall” mean in usage statistics?</string>
+    <string name="faq_q_backup_stats">Are usage and blocker stats included in backups?</string>
+    <string name="faq_a_usage_stats">Switchly uses Android’s Usage Access permission to detect the foreground app and estimate usage time.</string>
+
+    <string name="faq_a_usage_overall">Overall sums up all saved usage data since you started using Switchly (based on locally stored daily values). If you cleared app data or restored an older backup, Overall reflects the currently stored state.</string>
+    <string name="faq_a_backup_stats">Yes. Cloud Backup includes your locally stored stats (usage time, blocked time, blocks/attempts, runtime, etc.). Restoring brings those values back.</string>
+
+    <!-- FAQ: schedules / bluetooth -->
+    <string name="faq_q_schedules_bluetooth">Can schedules react to Bluetooth?</string>
+    <string name="faq_a_schedules_bluetooth">Yes. You can trigger actions when a specific Bluetooth device connects/disconnects (depending on schedule options).</string>
+
+    <!-- FAQ: tile -->
+    <string name="faq_q_tile_why_missing">Why is the Quick Tile missing?</string>
+    <string name="faq_a_tile_why_missing">Add it via Android’s Quick Settings edit screen. Some OEMs only show tiles after the app has been opened once.</string>
+
+    <!-- FAQ: donate -->
+    <string name="faq_q_donate">Can I donate to support Switchly?</string>
+    <string name="faq_a_donate">
+        Premium is intentionally priced very low.
+        If you still want to support development, you can buy Premium as a “tip” or contact me to make a donation.\n
+        I plan to make Switchly open source once I have a small buffer, so I can continue development without stress and without someone immediately copying it 1:1.\n\n
+        Donation link:\n
+        https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY
+    </string>
+
+    <!-- ==================== ARRAYS: LANGUAGE / THEME ==================== -->
+    <string-array name="pref_language_entries">
+        <item>System</item>
+        <item>English</item>
+        <item>German</item>
+    </string-array>
+    <string-array name="pref_language_values">
+        <item>system</item>
+        <item>en</item>
+        <item>de</item>
+    </string-array>
+
+    <string-array name="pref_accent_entries">
+        <item>@string/accent_default</item>
+        <item>@string/accent_blue</item>
+        <item>@string/accent_orange</item>
+        <item>@string/accent_purple</item>
+        <item>@string/accent_pink</item>
+        <item>@string/accent_teal</item>
+        <item>@string/accent_red</item>
+        <item>@string/accent_amber</item>
+        <item>@string/accent_gray</item>
+    </string-array>
+
+    <string-array name="pref_accent_values">
+        <item>default</item>
+        <item>blue</item>
+        <item>orange</item>
+        <item>purple</item>
+        <item>pink</item>
+        <item>teal</item>
+        <item>red</item>
+        <item>amber</item>
+        <item>gray</item>
+    </string-array>
+
+    <!-- ==================== SCHEDULES ==================== -->
+    <string name="schedules_title">Schedules</string>
+
+    <string name="schedules_add">Add schedule</string>
+    <string name="schedules_edit">Edit schedule</string>
+    <string name="schedules_delete_confirm">Delete this schedule?</string>
+
+    <!-- Day labels -->
+    <string name="day_short_fri">Fri</string>
+    <string name="day_short_mon">Mon</string>
+    <string name="day_short_sat">Sat</string>
+    <string name="day_short_sun">Sun</string>
+    <string name="day_short_thu">Thu</string>
+    <string name="day_short_tue">Tue</string>
+    <string name="day_short_wed">Wed</string>
+
+    <!-- Fields -->
+    <string name="schedules_days">Days</string>
+    <string name="schedules_end_time">End time</string>
+    <string name="schedules_field_action">Action</string>
+    <string name="schedules_field_note_hint">Notes (optional)</string>
+    <string name="schedules_field_profile">Profile</string>
+    <string name="schedules_field_title_hint">Title (optional)</string>
+    <string name="schedules_start_time">Start time</string>
+
+    <!-- Connection schedule time window -->
+    <string name="schedules_conn_time_window">Limit by time window (optional)</string>
+    <string name="schedules_conn_time_all_day">Active all day</string>
+
+    <string name="schedules_quick_groups">Quick selection</string>
+    <string name="schedules_group_today">Today</string>
+    <string name="schedules_group_weekdays">Weekdays</string>
+    <string name="schedules_group_weekend">Weekend</string>
+
+    <!-- Date range / once -->
+    <string name="schedules_date_not_set">Not set</string>
+    <string name="schedules_date_range">Date range</string>
+    <string name="schedules_end_date">End date</string>
+    <string name="schedules_start_date">Start date</string>
+
+    <!-- Errors -->
+    <string name="schedules_error_bt_required">Please enter a Bluetooth device name.</string>
+    <string name="schedules_error_date_order">End date must be after start date</string>
+    <string name="schedules_error_no_dates">Please select a date range</string>
+    <string name="schedules_error_no_days">Please select at least one day</string>
+    <string name="schedules_error_no_profile">Please select a profile</string>
+    <string name="schedules_error_wifi_required">Please enter a Wi-Fi SSID.</string>
+    <string name="schedules_error_time_range_empty">End time must be different from start time</string>
+
+    <!-- Next schedule indicator -->
+    <string name="schedules_next_at">Next schedule: %1$s</string>
+    <string name="schedules_next_none">No upcoming schedule</string>
+    <string name="schedules_next_title">Next schedule</string>
+
+    <!-- Wi-Fi / Bluetooth conditions -->
+    <string name="schedules_bt_name_hint">Bluetooth device name (exact)</string>
+    <string name="schedules_wifi_ssid_hint">Wi-Fi SSID (exact)</string>
+    <string name="schedules_wifi_location_hint">Wi-Fi schedules need Location ON to read the current SSID. Turn on Location in Quick Settings.</string>
+
+    <!-- Type chooser -->
+    <string name="schedules_choose_type">Choose schedule type</string>
+    <string name="schedules_type_bt">Bluetooth schedule</string>
+    <string name="schedules_type_time">Time schedule</string>
+    <string name="schedules_type_wifi">Wi-Fi schedule</string>
+
+    <!-- Preview placeholders / formatting -->
+    <string name="schedule_item_subtitle_placeholder">Mon&#8211;Fri · 08:00&#8211;16:00</string>
+    <string name="schedule_item_title_placeholder">Work</string>
+
+    <string name="schedules_conn_bt_fmt">BT: %1$s</string>
+    <string name="schedules_conn_wifi_bt_fmt">Wi-Fi: %1$s · BT: %2$s</string>
+    <string name="schedules_conn_wifi_fmt">Wi-Fi: %1$s</string>
+    <string name="schedules_label_value_fmt">%1$s: %2$s</string>
+    <string name="schedules_once_range_fmt">Once · %1$s-%2$s</string>
+    <string name="schedules_subtitle_fmt">%1$s · %2$s</string>
+    <string name="schedules_time_range_fmt">%1$s-%2$s</string>
+
+    <!-- Action Dropdown items for schedule add -->
+    <string name="schedules_action_enable">Enable</string>
+    <string name="schedules_action_disable">Disable</string>
+    <string name="schedules_action_enable_disable">Enable &amp; Disable</string>
+    <string name="schedules_action_disable_enable">Disable &amp; Enable</string>
+    <string name="schedules_action_toggle">Toggle</string>
+
+    <!-- Timemode Dropdown items for schedule add -->
+    <string name="schedules_time_mode">Time mode</string>
+    <string name="schedules_time_mode_single">Single time</string>
+    <string name="schedules_time_mode_range">Time range</string>
+    <string name="schedules_time_mode_date_range">Date range</string>
+
+    <!-- ==================== UI: COLOR PICKER ==================== -->
+    <string name="color_channel_b">B</string>
+    <string name="color_channel_g">G</string>
+    <string name="color_channel_r">R</string>
+
+    <!-- ==================== QR (SCAN + GENERATE) ==================== -->
+    <!-- Titles / basic UI -->
+    <string name="qr_title">QR</string>
+    <string name="qr_generate_title">Create QR</string>
+    <string name="qr_scan_title">Scan QR</string>
+    <string name="share_qr_string">Share</string>
+
+    <!-- Scan -->
+    <string name="invalid_qr_code">Invalid QR code</string>
+
+    <!-- Common fields -->
+    <string name="qr_action">Action</string>
+    <string name="qr_minutes">Minutes</string>
+
+    <!-- Generate: Actions -->
+    <string name="qr_action_disable">Disable</string>
+    <string name="qr_action_enable">Enable</string>
+    <string name="qr_action_profile_disable">Disable profile</string>
+    <string name="qr_action_profile_enable">Enable profile</string>
+    <string name="qr_action_profile_toggle">Toggle profile</string>
+    <string name="qr_action_temp_disable">Temporary disable</string>
+    <string name="qr_action_temp_enable">Temporary enable</string>
+    <string name="qr_action_toggle">Toggle</string>
+
+    <!-- Generate: Minutes presets -->
+    <string name="qr_minutes_5">5</string>
+    <string name="qr_minutes_10">10</string>
+    <string name="qr_minutes_30">30</string>
+    <string name="qr_minutes_60">60</string>
+    <string name="qr_minutes_120">120</string>
+    <string name="qr_minutes_custom">Custom…</string>
+    <string name="qr_minutes_default">10</string>
+
+    <!-- Generate: Custom minutes -->
+    <string name="qr_minutes_custom_title">Custom minutes</string>
+    <string name="qr_minutes_hint">e.g. 45</string>
+
+    <!-- Generate: Profile fallback -->
+    <string name="qr_profile_fallback">Profile</string>
+
+    <!-- Clipboard -->
+    <string name="qr_clipboard_label">Switchly URI</string>
+
+    <!-- QR option -->
+    <string name="pref_show_qr_code_title">QR code</string>
+    <string name="pref_show_qr_code_summary">Show a QR scan button on the home screen</string>
+    <string name="permission_camera_required">Camera permission is required to scan QR codes.</string>
+
+    <!-- ==================== STATS / DAILY LIMITS (USAGE) ==================== -->
+    <string name="stats_title">Usage</string>
+
+    <!-- Statistics hub -->
+    <string name="statistics_hub_title">Statistics</string>
+    <string name="statistics_hub_usage_title">Usage statistics</string>
+    <string name="statistics_hub_usage_desc">App usage per day, week, month, year, and overall.</string>
+    <string name="statistics_hub_runtime_title">App runtime statistics</string>
+    <string name="statistics_hub_runtime_desc">How long Switchly has been running and protecting you.</string>
+    <string name="statistics_hub_blocking_title">App block statistics</string>
+    <string name="statistics_hub_blocking_desc">How often apps were blocked and how often you tried to open them.</string>
+    <string name="statistics_hub_other_title">Other info</string>
+    <string name="statistics_hub_other_desc">Emergency unlocks, schedules, and more.</string>
+
+    <string name="stats_mode_usage">Usage</string>
+    <string name="stats_mode_runtime">Runtime</string>
+    <string name="stats_mode_blocking">Blocking</string>
+    <string name="stats_mode_other">Other</string>
+
+    <string name="stats_runtime_subtitle">How long Switchly was running and blocking today.</string>
+    <string name="stats_blocking_subtitle">How often apps were blocked and how much time they were blocked.</string>
+    <string name="stats_other_subtitle">Extra insights and counters.</string>
+
+    <string name="stats_today_subtitle">App usage (daily) – limits reset at midnight</string>
+
+    <string name="stats_range_today">Today</string>
+    <string name="stats_range_week">Week</string>
+    <string name="stats_range_month">Month</string>
+    <string name="stats_range_year">Year</string>
+    <string name="stats_range_overall">Overall</string>
+
+    <string name="stats_empty">No app limits enabled.</string>
+
+    <string name="stats_limit_fmt">Limit: %1$dm</string>
+    <string name="stats_limit_none">Limit: none</string>
+
+    <string name="stats_used_today_fmt">Used today: %1$s</string>
+    <string name="stats_used_week_fmt">Used this week: %1$s</string>
+    <string name="stats_used_month_fmt">Used this month: %1$s</string>
+    <string name="stats_used_year_fmt">Used this year: %1$s</string>
+    <string name="stats_used_overall_fmt">Used overall: %1$s</string>
+
+    <string name="stats_blocked_time_fmt">Blocked: %1$s</string>
+    <string name="stats_blocked_counts_join">%1$s  %2$s</string>
+
+    <plurals name="stats_blocks_qty">
+        <item quantity="one">%d block</item>
+        <item quantity="other">%d blocks</item>
+    </plurals>
+
+    <plurals name="stats_attempts_qty">
+        <item quantity="one">%d attempt</item>
+        <item quantity="other">%d attempts</item>
+    </plurals>
+
+    <string name="stats_runtime_summary_fmt">Switchly runtime: %1$s\nBlocked time: %2$s</string>
+
+    <string name="stats_runtime_top_blocked">Top blocked apps</string>
+    <string name="stats_other_primary_caption">Total (Emergency unlocks + NFC tags + schedules)</string>
+    <string name="stats_other_not_in_total">Not included in total:</string>
+    <string name="stats_other_line_emergency">Emergency unlocks: %1$d</string>
+    <string name="stats_other_line_blocked_apps">Blocked apps: %1$d</string>
+    <string name="stats_other_line_nfc_scans">NFC tags scanned: %1$d</string>
+    <string name="stats_other_line_schedules_executed">Schedules executed: %1$d</string>
+
+    <!-- Stats sorting -->
+    <string name="stats_sort_hint_fmt">Sort: %1$s</string>
+    <string name="stats_sort_hint_default">Sort</string>
+    <string name="stats_sort_az">Name (A–Z)</string>
+    <string name="stats_sort_used_time">Usage time</string>
+    <string name="percent_fmt">%1$d%%</string>
+    <string name="stats_meta_limit_used_fmt">%1$s • %2$s</string>
+
+    <!-- Insights (Premium) -->
+    <string name="stats_insights_title">Insights (Premium)</string>
+    <string name="stats_insights_trend_fmt">%1$s %2$d%% vs previous</string>
+    <string name="stats_insights_trend_no_data">→ Not enough data yet</string>
+    <string name="stats_insights_trend_new">↑ New</string>
+    <string name="stats_insights_ratio_fmt">%1$d%% of your usage was blocked</string>
+    <string name="stats_insights_ratio_none">0%% of your usage was blocked 🎉</string>
+    <string name="stats_insights_improved_fmt">You reduced %1$s usage by %2$d%%</string>
+    <string name="stats_insights_improved_none">No most improved app yet</string>
+
+    <!-- Daily limits -->
+    <string name="set_daily_limit">Set daily limit</string>
+    <string name="set_daily_limit_title">Daily limit: %1$s</string>
+    <string name="daily_limit_label">Daily limit: %1$d min/day</string>
+
+    <string name="select_profile_first">Please select a profile first.</string>
+
+    <string name="no_limit">No limit</string>
+    <string name="custom_minutes">Custom time…</string>
+    <string name="custom_minutes_title">Custom minutes</string>
+
+    <plurals name="minutes_format">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <string name="minutes_hint">Enter time in minutes (1&#8211;120)</string>
+
+    <string name="limit_set">Limit set</string>
+    <string name="daily_limit_10">Daily limit: 10 min</string>
+
+    <!-- ==================== ABOUT / INFO ==================== -->
+    <string name="pref_about_title">About</string>
+    <string name="about_title">About</string>
+    <string name="pref_about_summary">About</string>
+
+    <string name="about_app_info">App info</string>
+    <string name="about_app_name">App name</string>
+    <string name="about_android">Android version</string>
+    <string name="about_android_version_fmt">Android %1$s (SDK %2$d)</string>
+
+    <string name="about_device">Device model</string>
+    <string name="about_device_details">Device details</string>
+    <string name="about_developer">Developer</string>
+    <string name="about_developer_info">Developer info</string>
+    <string name="about_developer_name">Saltyy (Andi S.)</string>
+<string name="about_package">Package</string>
+    <string name="about_version">Version</string>
+
+    <string name="about_mail">Email</string>
+    <string name="about_mail_address">andi@saltyy.at</string>
+    <string name="about_mail_subject">Switchly</string>
+    <string name="about_mail_copied">Email copied</string>
+
+    <string name="about_discord">Discord</string>
+    <string name="about_discord_url">https://discord.gg/PC5zn2NeCg</string>
+    <string name="about_discord_copied">Discord link copied</string>
+
+    <string name="about_website">Website</string>
+    <string name="about_website_url">https://switchly.saltyy.at</string>
+
+    <string name="about_copied">Copied</string>
+    <string name="about_no_browser">No browser app found</string>
+    <string name="about_no_mail_app">No email app found</string>
+
+    <string name="pref_tutorial_title">Tutorial</string>
+    <string name="pref_tutorial_summary">Setup-Schritte &amp; Features nochmal ansehen</string>
+
+    <string name="nfc_pair_waiting">Tap the NFC tag to pair it (UID only)</string>
+    <string name="nfc_pair_ok">Tag paired</string>
+    <string name="nfc_pair_ok_with_uid">Tag paired: %1$s</string>
+    <string name="nfc_pair_error">Could not read tag UID</string>
+
+    <string name="nfc_required_confirm_title">Require NFC to disable?</string>
+    <string name="nfc_required_confirm_enable_msg">Enabling this means Switchly can only be disabled by scanning your paired NFC tag. Make sure you have it available, or you might lock yourself out.</string>
+    <string name="nfc_required_confirm_disable_msg">Disabling this removes the NFC requirement. Switchly can then be disabled without scanning a tag.</string>
+</resources>

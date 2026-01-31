@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Text Colors -->
+    <color name="font_white">#FFFFFF</color>
+
+    <!-- Brand colors -->
+    <color name="switchly_green">#2E8B57</color>
+    <color name="colorPrimaryDark">#246E46</color>
+    <color name="ic_launcher_background">@color/switchly_green</color>
+
+    <!-- Accent palette (used by dynamic themes) -->
+    <color name="accent_default_green">#2E8B57</color>
+    <color name="accent_green">#2E8B57</color>
+    <color name="accent_blue">#FF1565C0</color>
+    <color name="accent_orange">#FFEF6C00</color>
+    <color name="accent_purple">#FF6A1B9A</color>
+    <color name="accent_pink">#EC407A</color>
+    <color name="accent_teal">#00897B</color>
+    <color name="accent_red">#FFC62828</color>
+    <color name="accent_amber">#FFA000</color>
+    <color name="accent_gray">#546E7A</color>
+
+    <!-- Semantic states -->
+    <color name="status_ok">#2E8B57</color> <!-- Material Green 500 -->
+    <color name="status_error">#D32F2F</color> <!-- Material Red 500 -->
+    <color name="status_neutral">#90A4AE</color> <!-- Blue Grey 400 -->
+    <color name="status_surface">#F5F5F5</color>
+
+    <!-- Card surfaces -->
+    <color name="switchly_card_bg">#FFFFFFFF</color>
+    <color name="switchly_card_stroke">#1A000000</color>
+
+</resources>

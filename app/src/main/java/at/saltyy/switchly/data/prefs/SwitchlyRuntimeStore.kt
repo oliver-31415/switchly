@@ -1,0 +1,160 @@
+package at.saltyy.switchly.data.prefs
+
+import android.content.Context
+import androidx.core.content.edit
+import java.util.Calendar
+
+/**
+ * Tracks how long Switchly's watcher/service was running.
+ *
+ * We keep a "currently running since" timestamp, and a per-day accumulated runtime.
+ */
+object SwitchlyRuntimeStore {
+    private const val PREFS = "switchly_prefs"
+
+    private const val KEY_RUNNING_SINCE = "switchly_runtime_running_since"
+    private const val PREFIX_DAY = "switchly_runtime_ms_" // switchly_runtime_ms_yyyymmdd
+
+    private fun dayKey(ymd: Int): String = PREFIX_DAY + ymd.toString()
+
+    fun markStarted(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (sp.getLong(KEY_RUNNING_SINCE, 0L) > 0L) return // already running
+        sp.edit { putLong(KEY_RUNNING_SINCE, System.currentTimeMillis()) }
+    }
+
+    fun markStopped(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val since = sp.getLong(KEY_RUNNING_SINCE, 0L)
+        if (since <= 0L) return
+        sp.edit { putLong(KEY_RUNNING_SINCE, 0L) }
+
+        val now = System.currentTimeMillis()
+        val delta = (now - since).coerceAtLeast(0L)
+        addRuntimeMs(ctx, delta)
+    }
+
+    private fun addRuntimeMs(ctx: Context, deltaMs: Long) {
+        if (deltaMs <= 0L) return
+        val ymd = todayYmdInt()
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val k = dayKey(ymd)
+        val cur = sp.getLong(k, 0L)
+        sp.edit { putLong(k, cur + deltaMs) }
+    }
+
+    /**
+     * Returns runtime for today. If service is currently running, includes elapsed time so far.
+     */
+    fun getRuntimeMsToday(ctx: Context): Long {
+        val ymd = todayYmdInt()
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val base = sp.getLong(dayKey(ymd), 0L)
+        val since = sp.getLong(KEY_RUNNING_SINCE, 0L)
+        return if (since > 0L) base + (System.currentTimeMillis() - since).coerceAtLeast(0L) else base
+    }
+
+    fun getRuntimeMsForLastNDays(ctx: Context, days: Int): Long {
+        if (days <= 0) return 0L
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val cal = Calendar.getInstance()
+        var sum = 0L
+        for (i in 0 until days) {
+            sum += sp.getLong(dayKey(ymdInt(cal)), 0L)
+            cal.add(Calendar.DAY_OF_YEAR, -1)
+        }
+        // include current day running time if applicable
+        return if (days >= 1) {
+            // avoid double counting today: replace today's stored value with live value
+            val todayStored = sp.getLong(dayKey(todayYmdInt()), 0L)
+            sum - todayStored + getRuntimeMsToday(ctx)
+        } else sum
+    }
+
+    fun getRuntimeMsForMonth(ctx: Context, year: Int, month1Based: Int): Long {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, (month1Based - 1).coerceIn(0, 11))
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val targetMonth = cal.get(Calendar.MONTH)
+        var sum = 0L
+        while (cal.get(Calendar.MONTH) == targetMonth) {
+            val ymd = ymdInt(cal)
+            sum += sp.getLong(dayKey(ymd), 0L)
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+        }
+        // include live today if in target month/year
+        val now = Calendar.getInstance()
+        if (now.get(Calendar.YEAR) == year && now.get(Calendar.MONTH) == targetMonth) {
+            val today = todayYmdInt()
+            val todayStored = sp.getLong(dayKey(today), 0L)
+            sum = sum - todayStored + getRuntimeMsToday(ctx)
+        }
+        return sum
+    }
+
+    fun getRuntimeMsForYear(ctx: Context, year: Int): Long {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        var sum = 0L
+        while (cal.get(Calendar.YEAR) == year) {
+            sum += sp.getLong(dayKey(ymdInt(cal)), 0L)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        // include live today if in target year
+        val now = Calendar.getInstance()
+        if (now.get(Calendar.YEAR) == year) {
+            val today = todayYmdInt()
+            val todayStored = sp.getLong(dayKey(today), 0L)
+            sum = sum - todayStored + getRuntimeMsToday(ctx)
+        }
+        return sum
+    }
+
+    /**
+     * Sums all persisted per-day runtime values across all days.
+     * Includes live "running since" time (like getRuntimeMsToday) by replacing today's stored value.
+     */
+    fun getRuntimeMsOverall(ctx: Context): Long {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        var sum = 0L
+        for ((k, vAny) in sp.all) {
+            if (!k.startsWith(PREFIX_DAY)) continue
+            val v = when (vAny) {
+                is Long -> vAny
+                is Int -> vAny.toLong()
+                is Number -> vAny.toLong()
+                else -> 0L
+            }
+            if (v > 0L) sum += v
+        }
+
+        // Replace today's stored runtime with the live runtime (includes running_since).
+        val todayKey = dayKey(todayYmdInt())
+        val todayStored = sp.getLong(todayKey, 0L)
+        return (sum - todayStored).coerceAtLeast(0L) + getRuntimeMsToday(ctx)
+    }
+
+    private fun todayYmdInt(): Int = ymdInt(Calendar.getInstance())
+
+    private fun ymdInt(cal: Calendar): Int {
+        val y = cal.get(Calendar.YEAR)
+        val m = cal.get(Calendar.MONTH) + 1
+        val d = cal.get(Calendar.DAY_OF_MONTH)
+        return (y * 10000) + (m * 100) + d
+    }
+}

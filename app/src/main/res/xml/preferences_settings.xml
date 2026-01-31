@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- General -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_general_title"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="pref_theme"
+            android:title="@string/pref_theme_title"
+            android:summary="@string/pref_theme_summary"
+            android:icon="@drawable/palette_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_language"
+            android:title="@string/pref_language_title"
+            android:summary="@string/pref_language_summary"
+            android:icon="@drawable/language_24"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <!-- Focus and Profiles -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_switchly_title"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="pref_write_tag"
+            android:title="@string/pref_write_tag_title"
+            android:summary="@string/pref_write_tag_summary"
+            android:icon="@drawable/nfc_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_manage_profiles"
+            android:title="@string/pref_manage_profiles_title"
+            android:summary="@string/pref_manage_profiles_summary"
+            android:icon="@drawable/account_box_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_schedules_next"
+            android:title="@string/schedules_next_title"
+            android:summary="@string/schedules_next_none"
+            android:icon="@drawable/alarm_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_emergency_unlock"
+            android:title="@string/pref_emergency_title"
+            android:summary="@string/pref_emergency_summary"
+            android:icon="@drawable/lock_open_24"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <!-- System -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_system_title"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="pref_permissions"
+            android:title="@string/pref_permissions_title"
+            android:summary="@string/pref_permissions_summary"
+            android:icon="@drawable/security_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_toggle_options"
+            android:title="@string/pref_toggle_options_title"
+            android:summary="@string/pref_toggle_options_summary"
+            android:icon="@drawable/tune_24"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <!-- Account & Cloud -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_cloud_title"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="pref_google_account"
+            android:title="@string/pref_google_account_title"
+            android:summary="@string/pref_google_account_summary_logged_out"
+            android:icon="@drawable/cloud_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_cloud_backup"
+            android:title="@string/pref_cloud_backup_title"
+            android:summary="@string/pref_cloud_backup_summary"
+            android:icon="@drawable/cloud_upload_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_cloud_restore"
+            android:title="@string/pref_cloud_restore_title"
+            android:summary="@string/pref_cloud_restore_summary"
+            android:icon="@drawable/cloud_download_24"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <!-- Help & Premium -->
+    <PreferenceCategory
+        android:title="@string/pref_cat_info_title"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="pref_tutorial"
+            android:title="@string/pref_tutorial_title"
+            android:summary="@string/pref_tutorial_summary"
+            android:icon="@drawable/help_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_premium_upgrade"
+            android:title="@string/pref_premium_title"
+            android:summary="@string/pref_premium_summary"
+            android:icon="@drawable/star_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_faq"
+            android:title="@string/pref_faq_title"
+            android:summary="@string/pref_faq_summary"
+            android:icon="@drawable/help_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_about"
+            android:title="@string/pref_about_title"
+            android:summary="@string/pref_about_summary"
+            android:icon="@drawable/info_24"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Variant without ActionBar (overlay / blocker screens) -->
+    <!-- Fully opaque, no edge-to-edge; used e.g. for BlockerActivity -->
+    <style name="Theme.Switchly.Blocker" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">?android:attr/colorBackground</item>
+        <item name="android:navigationBarColor">?android:attr/colorBackground</item>
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+    </style>
+
+    <!-- === Toolbar / Buttons / Cards / Dropdowns === -->
+    <!-- Unified top bar, uses current accent color -->
+    <style name="Switchly.TopBar" parent="Widget.MaterialComponents.Toolbar">
+        <!-- Background = current accent color -->
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+
+        <!-- Title color -->
+        <item name="titleTextColor">@android:color/white</item>
+
+        <!-- Back arrow in light/dark appearance -->
+        <item name="navigationIconTint">@android:color/white</item>
+    </style>
+
+    <!-- Standard buttons -->
+    <style name="Switchly.Button" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <!-- Floating Action Button (e.g., Add Profile icon) -->
+    <style name="Switchly.Fab" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">@android:color/white</item>
+    </style>
+
+    <!-- CardView appearance -->
+    <style name="Switchly.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Large</item>
+    </style>
+
+    <!-- Layout container for exposed dropdown menus -->
+    <style name="Switchly.DropdownLayout"
+        parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+        <item name="hintEnabled">true</item>
+        <item name="hintTextAppearance">@style/Switchly.DropdownHint</item>
+    </style>
+
+    <!-- Hint text styling inside dropdowns -->
+    <style name="Switchly.DropdownHint" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:lineHeight" tools:targetApi="28">14sp</item>
+    </style>
+
+    <!-- Text appearance for dropdown input field -->
+    <style name="Switchly.DropdownText"
+        parent="Widget.MaterialComponents.AutoCompleteTextView.OutlinedBox">
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body1</item>
+    </style>
+
+</resources>

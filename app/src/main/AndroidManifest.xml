@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Networking (Firebase Authentication + Cloud Sync) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Allows checking whether the device is online/offline (used by Firebase + sync logic) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Wifi Access -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- Android 13+ (Wi-Fi device scanning) -->
+    <uses-permission
+        android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="33" />
+
+    <!-- Bluetooth -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+
+    <!-- Android 12+ -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="31" />
+
+    <!-- Location needed to read Wi-Fi SSID for Wi-Fi schedules -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Exact alarm on Android 12+ (user toggle exists) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Background location improves Wi‑Fi trigger reliability when the app is not in the foreground.
+         We request it in a 2‑step flow: first "While using the app", then guide the user to "Allow all the time". -->
+    <uses-permission
+        android:name="android.permission.ACCESS_BACKGROUND_LOCATION"
+        tools:targetApi="29" />
+
+    <!-- Autostart on device reboot (restart blocking service) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- NFC requirements (unlock via NFC tag, tag writing) -->
+    <uses-permission android:name="android.permission.NFC" />
+
+    <!-- Notifications (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Battery optimization exemption request (shows a system popup on supported devices) -->
+    <uses-permission
+        android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+        tools:ignore="BatteryLife" />
+
+    <!-- Foreground services -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!-- Android 14+ for foregroundServiceType="connectedDevice" -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
+        tools:targetApi="34" />
+
+    <!-- Allows killing background processes -->
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+
+    <!-- Allows Camera for QR Code -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Camera hardware is optional (ChromeOS / devices without camera) -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <!-- NFC hardware is optional -->
+    <uses-feature
+        android:name="android.hardware.nfc"
+        android:required="false" />
+
+    <!-- Needed so we can list launchable apps in the picker -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".app.App"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.Switchly"
+        android:supportsRtl="true">
+
+        <!-- Main launcher -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Settings -->
+        <activity
+            android:name=".feature.settings.SettingsActivity"
+            android:exported="false"
+            android:label="@string/settings" />
+
+        <!-- Schedules screen -->
+        <activity
+            android:name=".feature.schedule.SchedulesActivity"
+            android:exported="false"
+            android:label="@string/schedules_title"
+            android:parentActivityName=".feature.settings.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.settings.SettingsActivity" />
+        </activity>
+
+        <!-- Onboarding -->
+        <activity
+            android:name=".feature.onboarding.OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Switchly" />
+
+        <!-- Profiles -->
+        <activity
+            android:name=".feature.profiles.ManageProfilesActivity"
+            android:exported="false" />
+
+        <!-- App picker -->
+        <activity
+            android:name=".feature.picker.AppPickerActivity"
+            android:exported="false" />
+
+        <!-- NFC writer -->
+        <activity
+            android:name=".nfc.NfcWriterActivity"
+            android:exported="false" />
+
+        <!-- NFC deep links -->
+        <activity
+            android:name=".nfc.NfcEntryActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+
+            <!-- NFC NDEF discovered pointing to switchly://... -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="switchly" android:host="switch" android:pathPattern=".*" />
+                <data android:scheme="switchly" android:host="profile" android:pathPattern=".*" />
+            </intent-filter>
+
+            <!-- Optional: also handle app links / browser deep links -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- we only need our two hosts -->
+                <data android:scheme="switchly" android:host="switch" android:pathPattern=".*" />
+                <data android:scheme="switchly" android:host="profile" android:pathPattern=".*" />
+            </intent-filter>
+        </activity>
+
+        <!-- Blocker -->
+        <activity
+            android:name=".feature.blocker.BlockerActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Switchly.Blocker" />
+
+        <!-- FAQ -->
+        <activity
+            android:name=".feature.faq.FaqActivity"
+            android:exported="false"
+            android:label="@string/faq_screen_title" />
+
+        <!-- Premium -->
+        <activity
+            android:name=".feature.premium.PremiumInfoActivity"
+            android:exported="false"
+            android:label="@string/premium_title" />
+
+        <!-- Analytics -->
+        <activity
+            android:name=".feature.stats.StatisticsHubActivity"
+            android:exported="false"
+            android:label="@string/statistics_hub_title" />
+
+        <!-- Usage analytics -->
+        <activity
+            android:name=".feature.stats.StatsActivity"
+            android:exported="false"
+            android:label="@string/stats_title" />
+
+        <!-- Permissions screen -->
+        <activity
+            android:name=".feature.settings.PermissionsActivity"
+            android:exported="false"
+            android:parentActivityName=".feature.settings.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.settings.SettingsActivity" />
+        </activity>
+
+        <!-- Toggle screen -->
+        <activity
+            android:name=".feature.settings.ToggleOptionsActivity"
+            android:exported="false" />
+
+        <!-- QR Scanner -->
+        <activity
+            android:name=".feature.qr.QrScanActivity"
+            android:exported="false" />
+
+        <!-- QR Generator -->
+        <activity
+            android:name=".feature.qr.QrGenerateActivity"
+            android:exported="false" />
+
+        <!-- About -->
+        <activity
+            android:name=".feature.about.AboutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Switchly" />
+
+        <!-- Tag discovered -->
+        <receiver
+            android:name=".nfc.NfcReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.nfc.action.TAG_DISCOVERED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- re-register watcher after app updates -->
+        <receiver
+            android:name=".platform.receiver.system.PostUpdateReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- restart watcher after device reboot -->
+        <receiver
+            android:name=".platform.receiver.system.BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Replan schedules when system time/timezone changes -->
+        <receiver
+            android:name=".platform.receiver.system.TimeChangeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Schedule receiver (triggered via explicit PendingIntent) -->
+        <receiver
+            android:name=".platform.receiver.schedule.ScheduleReceiver"
+            android:exported="false"
+            android:enabled="true" />
+
+        <!-- QS tile -->
+        <service
+            android:name=".platform.tile.SwitchlyTileService"
+            android:exported="true"
+            android:icon="@drawable/app_blocking_white_24"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Accessibility based blocker -->
+        <service
+            android:name=".blocking.SwitchlyAccessibilityService"
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/switchly_accessibility_config" />
+        </service>
+
+        <!-- Notification blocker (hides notifications from blocked apps; requires notification listener access) -->
+        <service
+            android:name=".blocking.NotificationBlockerService"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- Wi-Fi trigger service -->
+        <service
+            android:name=".platform.receiver.wifi.WifiTriggerService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- Bluetooth trigger service -->
+        <service
+            android:name=".platform.receiver.bluetooth.BluetoothTriggerService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <!-- Bluetooth based profile triggers -->
+        <receiver
+            android:name=".platform.receiver.bluetooth.BluetoothConnectionReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+                <action android:name="android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED" />
+                <action android:name="android.bluetooth.headset.profile.action.CONNECTION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>
