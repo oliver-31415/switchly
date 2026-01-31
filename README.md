@@ -3,14 +3,14 @@
 Switchly is an Android app for **profile-based app blocking**.
 A lightweight background service monitors the foreground app and shows a blocking overlay when a restricted app is opened.
 
-## ✨ Features
+## Features
 
 * App blocking via profiles
 * Schedules (time / Wi‑Fi / Bluetooth)
 * NFC & QR actions
 * Optional cloud sync / authentication (Firebase)
 
-## 🏗 Build & Run
+## Build & Run
 
 ### 1) Clone
 
@@ -38,7 +38,7 @@ If you want Google Sign‑In / Firestore sync / Crashlytics:
 
 Rebuild after adding the file.
 
-## ✅ Tests
+## Tests
 
 ```bash
 ./gradlew testDebugUnitTest
@@ -55,7 +55,7 @@ Follows **MAJOR.MINOR.PATCH**.
 | Minor | `1.1.0` | New features (backward-compatible) |
 | Major | `2.0.0` | Breaking changes                   |
 
-## 📌 Supported Android Versions
+## Supported Android Versions
 
 | Requirement                 | Value                    |
 | --------------------------- | ------------------------ |
@@ -82,30 +82,52 @@ High-level modules/packages (may vary slightly):
 * `platform/` receivers, tiles, services
 * `nfc/` NFC schema + writer
 
-## 🤝 Contributing
+## Contributing
 
-See `CONTRIBUTING.md`.
+Contributions are welcome!
 
-## 🔒 Security
+### Workflow (feature branch → Merge Request → `dev`)
+
+1. Create a new **feature branch** from `dev`:
+
+   ```bash
+   git checkout dev
+   git pull
+   git checkout -b feature/<short-description>
+   ```
+2. Make your changes and commit them.
+3. Run the basic checks locally:
+
+   ```bash
+   ./gradlew :app:assembleDebug
+   ./gradlew :app:lintDebug
+   ./gradlew testDebugUnitTest
+   ```
+4. Push your branch (recommended: push to your **fork**) and open a **Merge Request** targeting the `dev` branch.
+
+See `CONTRIBUTING.md` for details and guidelines.
+
+## Security
 
 See `SECURITY.md`.
 
-## 🕵️ Privacy
+## Privacy
 
 See `PRIVACY.md`.
+
+## Links
+
+* Website: [https://switchly.saltyy.at](https://switchly.saltyy.at)
+* Discord: [https://discord.gg/PC5zn2NeCg](https://discord.gg/PC5zn2NeCg)
+* Legal notice: [https://www.saltyy.at/pages/legal-notice/](https://www.saltyy.at/pages/legal-notice/)
+* Privacy policy: [https://www.saltyy.at/pages/privacy/](https://www.saltyy.at/pages/privacy/)
 
 ## ❤️ Donate / Support
 
 If you find Switchly useful and want to support development:
 
-* **PayPal Donate:** [https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY](https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY)
-* **Get the official release:** buy/purchase in the Play Store (supports development)
-
-Community:
-
-* **Discord:** [https://discord.gg/PC5zn2NeCg](https://discord.gg/PC5zn2NeCg)
-* **Website:** [https://switchly.saltyy.at](https://switchly.saltyy.at)
-
+* PayPal Donate: [https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY](https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY)
+* Get the official release via the Play Store (supports development)
 
 ## 📄 License
 
