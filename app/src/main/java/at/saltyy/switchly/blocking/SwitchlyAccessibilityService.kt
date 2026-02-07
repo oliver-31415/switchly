@@ -86,6 +86,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 SwitchModeStore.finishTemporaryDisableIfExpired(this@SwitchlyAccessibilityService)
                 maybeScheduleMinuteTick()
                 usageTick()
+
+                // Important: if a schedule/profile switch becomes active while the user stays inside the same app, there may be no new window transition event.
+                // Re-check the current top app on the heartbeat so blocks apply immediately at schedule boundaries.
+                currentTopPkg?.let { top ->
+                    if (top.isNotBlank()) maybeBlockNow(top)
+                }
             } catch (_: Throwable) {
                 // ignore
             }

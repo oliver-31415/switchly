@@ -31,9 +31,11 @@ import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
+import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.ScheduleStore.Days
 import at.saltyy.switchly.feature.stats.StatisticsHubActivity
+import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
@@ -111,8 +113,15 @@ class SchedulesActivity : AppCompatActivity() {
                     if (it.id == schedule.id) it.copy(enabled = enabled) else it
                 }
                 ScheduleStore.saveAll(this, list)
+
+                // If the user explicitly enables a schedule, clear stale manual-override so the schedule can apply immediately on the next tick.
+                if (enabled) {
+                    ScheduleRuntimeStore.setManualOverrideActive(this, false)
+                }
+
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
+                requestImmediateScheduleTick("ui_toggle")
             },
             onDelete = { schedule -> confirmDelete(schedule) },
             onEdit = { schedule -> showScheduleDialog(existing = schedule, preselectedMode = null) }
@@ -237,6 +246,14 @@ class SchedulesActivity : AppCompatActivity() {
         adapter.submitList(ScheduleStore.getAll(this))
     }
 
+    private fun requestImmediateScheduleTick(reason: String) {
+        sendBroadcast(
+            Intent(ScheduleReceiver.ACTION_TICK)
+                .setPackage(packageName)
+                .putExtra("time_reason", reason)
+        )
+    }
+
     private fun confirmDelete(schedule: ScheduleStore.Schedule) {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.are_you_sure))
@@ -246,6 +263,7 @@ class SchedulesActivity : AppCompatActivity() {
                 ScheduleStore.saveAll(this, newList)
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
+                requestImmediateScheduleTick("ui_delete")
                 refreshList()
             }
             .setNegativeButton(R.string.cancel, null)
@@ -994,8 +1012,14 @@ class SchedulesActivity : AppCompatActivity() {
                     else oldList.map { if (it.id == existing.id) newSchedule else it }
 
                 ScheduleStore.saveAll(this, newList)
+
+                // Editing/adding schedules is an explicit scheduling action by the user.
+                // Clear stale manual-override so the new rule can take effect right away.
+                ScheduleRuntimeStore.setManualOverrideActive(this, false)
+
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
+                requestImmediateScheduleTick(if (existing == null) "ui_add" else "ui_edit")
                 refreshList()
                 dialog.dismiss()
             }

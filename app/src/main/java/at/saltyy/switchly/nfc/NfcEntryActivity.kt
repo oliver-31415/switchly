@@ -68,13 +68,13 @@ class NfcEntryActivity : Activity() {
 
         when {
             action == "enable" -> {
-                SwitchModeStore.setEnabled(this, true)
+                SwitchModeStore.setEnabled(this, true, markManualOverrideWhenRangeActive = false)
                 BlockingRuntime.ensureRunning(this)
                 toast(getString(R.string.nfc_feedback_started, getString(R.string.app_name)))
             }
 
             action == "disable" -> {
-                SwitchModeStore.setEnabled(this, false)
+                SwitchModeStore.setEnabled(this, false, markManualOverrideWhenRangeActive = false)
                 BlockingRuntime.stop(this)
                 toast(getString(R.string.nfc_feedback_stopped, getString(R.string.app_name)))
             }
@@ -82,11 +82,11 @@ class NfcEntryActivity : Activity() {
             action == "toggle" -> {
                 val enabled = SwitchModeStore.isEnabled(this)
                 if (enabled) {
-                    SwitchModeStore.setEnabled(this, false)
+                    SwitchModeStore.setEnabled(this, false, markManualOverrideWhenRangeActive = false)
                     BlockingRuntime.stop(this)
                     toast(getString(R.string.nfc_feedback_stopped, getString(R.string.app_name)))
                 } else {
-                    SwitchModeStore.setEnabled(this, true)
+                    SwitchModeStore.setEnabled(this, true, markManualOverrideWhenRangeActive = false)
                     BlockingRuntime.ensureRunning(this)
                     toast(getString(R.string.nfc_feedback_started, getString(R.string.app_name)))
                 }
@@ -131,7 +131,7 @@ class NfcEntryActivity : Activity() {
         when {
             action in listOf("start", "enable", "on", "activate") -> {
                 ProfileStore.setCurrent(this, profile)
-                SwitchModeStore.setEnabled(this, true)
+                SwitchModeStore.setEnabled(this, true, markManualOverrideWhenRangeActive = false)
                 BlockingRuntime.ensureRunning(this)
                 toast(getString(R.string.nfc_feedback_started, profile))
             }
@@ -140,7 +140,7 @@ class NfcEntryActivity : Activity() {
             action in listOf("stop", "disable", "off") -> {
                 val current = ProfileStore.getCurrent(this)
                 if (current == profile) {
-                    SwitchModeStore.setEnabled(this, false)
+                    SwitchModeStore.setEnabled(this, false, markManualOverrideWhenRangeActive = false)
                     BlockingRuntime.stop(this)
                     toast(getString(R.string.nfc_feedback_stopped, profile))
                 } else {
@@ -160,14 +160,14 @@ class NfcEntryActivity : Activity() {
 
                 if (!enabled) {
                     ProfileStore.setCurrent(this, profile)
-                    SwitchModeStore.setEnabled(this, true)
+                    SwitchModeStore.setEnabled(this, true, markManualOverrideWhenRangeActive = false)
                     BlockingRuntime.ensureRunning(this)
                     toast(getString(R.string.nfc_feedback_started, profile))
                     return
                 }
 
                 if (current == profile) {
-                    SwitchModeStore.setEnabled(this, false)
+                    SwitchModeStore.setEnabled(this, false, markManualOverrideWhenRangeActive = false)
                     BlockingRuntime.stop(this)
                     toast(getString(R.string.nfc_feedback_stopped, profile))
                 } else {

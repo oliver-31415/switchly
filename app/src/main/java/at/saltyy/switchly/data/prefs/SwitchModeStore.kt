@@ -74,7 +74,19 @@ object SwitchModeStore {
      * - When enabling, any temporary disable timestamp is cleared.
      * - When disabling, temp-disable data is left untouched (for UI display / history purposes).
      */
-    fun setEnabled(ctx: Context, enabled: Boolean) {
+    /**
+     * Permanently enable/disable Switchly.
+     *
+     * @param markManualOverrideWhenRangeActive
+     * If true, toggling while a range schedule is active marks a manual override so the schedule won't immediately re-assert its state on the next tick.
+     *
+     * NFC-driven toggles should pass `false` so schedules can continue to work alongside tag automations.
+     */
+    fun setEnabled(
+        ctx: Context,
+        enabled: Boolean,
+        markManualOverrideWhenRangeActive: Boolean = true
+    ) {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit {
             putBoolean(KEY_ENABLED, enabled)
@@ -96,7 +108,10 @@ object SwitchModeStore {
         // If a RANGE schedule is currently active and the user flips the state manually,
         // we treat this as a temporary "manual override" so the schedule doesn't instantly
         // re-assert its state on the next tick.
-        if (ScheduleRuntimeStore.hadEnableAndDisable(ctx) || ScheduleRuntimeStore.hadDisableAndEnable(ctx)) {
+        if (
+            markManualOverrideWhenRangeActive &&
+            (ScheduleRuntimeStore.hadEnableAndDisable(ctx) || ScheduleRuntimeStore.hadDisableAndEnable(ctx))
+        ) {
             ScheduleRuntimeStore.setManualOverrideActive(ctx, true)
         }
 

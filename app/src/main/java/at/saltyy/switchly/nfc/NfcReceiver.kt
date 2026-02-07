@@ -39,7 +39,12 @@ class NfcReceiver : BroadcastReceiver() {
             // Toggle the real global Switchly state (same as the UI toggle).
             // Use the *base* flag so NFC toggles are not affected by temporary (schedule) overrides.
             val newValue = !SwitchModeStore.isBaseEnabled(context)
-            SwitchModeStore.setEnabled(context, newValue)
+            // NFC is an automation source: do NOT mark schedule manual override.
+            SwitchModeStore.setEnabled(
+                context,
+                newValue,
+                markManualOverrideWhenRangeActive = false
+            )
 
             val state = context.getString(
                 if (newValue) R.string.nfc_state_on else R.string.nfc_state_off
