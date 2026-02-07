@@ -57,7 +57,6 @@ class NfcWriterActivity : AppCompatActivity() {
     private var defaultTempHintText: CharSequence? = null
 
     private var pendingUriToWrite: String? = null
-    private var pendingUidPairing: Boolean = false
     private var armed = false
 
     private val handler = Handler(Looper.getMainLooper())
@@ -68,8 +67,7 @@ class NfcWriterActivity : AppCompatActivity() {
             getString(R.string.nfc_action_disable),
             getString(R.string.nfc_action_toggle),
             getString(R.string.nfc_action_temp_disable),
-            getString(R.string.nfc_action_temp_enable),
-            getString(R.string.nfc_action_pair_uid)
+            getString(R.string.nfc_action_temp_enable)
         )
     }
 
@@ -311,16 +309,6 @@ class NfcWriterActivity : AppCompatActivity() {
 
     private fun buildUriForSelected() {
         val selectedActionLabel = ddAction.text?.toString()?.trim().orEmpty()
-
-        // UID-only pairing mode (supports read-only / non-NDEF tags)
-        if (selectedActionLabel == getString(R.string.nfc_action_pair_uid)) {
-            pendingUidPairing = true
-            pendingUriToWrite = null
-            arm()
-            // Override default status text for pairing
-            tvStatus.text = getString(R.string.nfc_pair_waiting)
-            return
-        }
         
         val selectedProfile = ddProfile.text?.toString()?.trim().orEmpty()
         val noneLabel = getString(R.string.nfc_profile_none)
@@ -385,7 +373,6 @@ class NfcWriterActivity : AppCompatActivity() {
     private fun disarm(hideRow: Boolean) {
         armed = false
         pendingUriToWrite = null
-        pendingUidPairing = false
 
         if (hideRow) statusRow.isVisible = false
 
@@ -405,26 +392,6 @@ class NfcWriterActivity : AppCompatActivity() {
 
         if (tag == null) {
             Toast.makeText(this, getString(R.string.nfc_tag_error), Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // UID-only pairing: just store the scanned tag UID (no writing).
-        if (pendingUidPairing) {
-            val uid = NfcTagUid.uidHex(tag)
-            if (uid == null) {
-                Toast.makeText(this, getString(R.string.nfc_pair_error), Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            at.saltyy.switchly.data.prefs.NfcUidPairingStore.setPairedUidHex(this, uid)
-
-            statusRow.isVisible = true
-            statusProgress.isVisible = false
-            tvStatus.text = getString(R.string.nfc_pair_ok_with_uid, uid)
-            tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_ok))
-
-            Toast.makeText(this, getString(R.string.nfc_pair_ok), Toast.LENGTH_SHORT).show()
-            disarm(hideRow = false)
             return
         }
 

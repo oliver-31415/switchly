@@ -25,7 +25,6 @@ import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import java.util.Calendar
-import kotlin.math.abs
 
 class ScheduleReceiver : BroadcastReceiver() {
 
@@ -208,7 +207,7 @@ class ScheduleReceiver : BroadcastReceiver() {
                             inTimeRange(nowMinutes, s.startMinutes, s.endMinutes)
                         } else {
                             val targetMs = atMinutesToday(now, s.startMinutes)
-                            val due = abs(nowMs - targetMs) <= SINGLE_FIRE_WINDOW_MS
+                            val due = isDueNowOrRecently(nowMs, targetMs)
                             if (!due) {
                                 false
                             } else {
@@ -421,7 +420,8 @@ class ScheduleReceiver : BroadcastReceiver() {
             ProfileStore.setCurrent(ctx, s.profile)
         }
 
-        if (profileChanged || (shouldWriteEnabled && newEnabled)) {
+        // Keep the accessibility blocking runtime alive whenever a schedule is active and Switchly is effectively enabled. This covers cases where base state already matched the schedule action (no state write) but the service was not running.
+        if (profileChanged || SwitchModeStore.isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         }
 
@@ -473,6 +473,14 @@ class ScheduleReceiver : BroadcastReceiver() {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
+    }
+
+    /**
+     * One-shot schedules should still fire when the boundary was missed a bit (Doze / inexact alarms / OEM throttling), but never fire early.
+     */
+    private fun isDueNowOrRecently(nowMs: Long, targetMs: Long): Boolean {
+        if (nowMs < targetMs) return false
+        return (nowMs - targetMs) <= SINGLE_FIRE_LATE_WINDOW_MS
     }
 
     private fun updateNextAlarmAndNotifyIfChanged(ctx: Context) {
@@ -623,7 +631,8 @@ class ScheduleReceiver : BroadcastReceiver() {
         private const val SOURCE_BT = "bt"
         private const val SOURCE_TIME = "time"
 
-        // Window to fire one-shot time schedules (alarm jitter + doze)
-        private const val SINGLE_FIRE_WINDOW_MS = 90_000L
+        // Grace window for one-shot time schedules (late delivery due to Doze / OEM throttling).
+        // Must be >= fallback interval to avoid "schedule never fires" on devices without exact alarms.
+        private const val SINGLE_FIRE_LATE_WINDOW_MS = 30 * 60 * 1000L
     }
 }
