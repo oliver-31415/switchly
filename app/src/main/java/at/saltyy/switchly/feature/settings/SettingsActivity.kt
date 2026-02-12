@@ -1,16 +1,13 @@
 package at.saltyy.switchly.feature.settings
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
 import at.saltyy.switchly.R
-import at.saltyy.switchly.auth.Auth
 import at.saltyy.switchly.theme.AccentColor
-import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
 
 class SettingsActivity : AppCompatActivity() {
@@ -36,23 +33,6 @@ class SettingsActivity : AppCompatActivity() {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.container, SettingsFragment())
                 .commit()
-        }
-    }
-
-    // Pass Google sign-in results on to Auth
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        Auth.handleActivityResult(this) { success, error ->
-            val msg = if (success) {
-                getString(R.string.auth_sign_in_success)
-            } else {
-                getString(
-                    R.string.auth_sign_in_failed_fmt,
-                    error ?: getString(R.string.error_unknown)
-                )
-            }
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
     }
 
