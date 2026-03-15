@@ -5,7 +5,6 @@ import java.util.Calendar
 
 /**
  * Repository for Switchly stats.
- *
  * Design goals:
  * - cheap writes (service can log frequently)
  * - reliable blocked-duration tracking (via windows)
@@ -101,9 +100,7 @@ class StatsRepository private constructor(private val db: StatsDatabase) {
         )
     }
 
-    /**
-     * Start a blocked window for a given package if one isn't already open.
-     */
+    // Start a blocked window for a given package if one isn't already open.
     suspend fun ensureWindowOpen(pkg: String, profileId: String?, reason: String?) {
         if (pkg.isBlank()) return
         val open = dao.getOpenWindowForPkg(pkg)
@@ -120,9 +117,7 @@ class StatsRepository private constructor(private val db: StatsDatabase) {
         )
     }
 
-    /**
-     * Close open windows for a package and attribute the blocked duration into daily aggregates.
-     */
+    // Close open windows for a package and attribute the blocked duration into daily aggregates.
     suspend fun closeWindowsForPkg(pkg: String, reason: String? = null) {
         if (pkg.isBlank()) return
         val open = dao.getOpenWindowForPkg(pkg) ?: return

@@ -13,6 +13,7 @@
         android:orientation="vertical">
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/iconCard"
             android:layout_width="160dp"
             android:layout_height="160dp"
             app:cardBackgroundColor="?attr/colorPrimary"

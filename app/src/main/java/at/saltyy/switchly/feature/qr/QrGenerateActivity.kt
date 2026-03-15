@@ -11,6 +11,8 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import at.saltyy.switchly.ui.dialog.Dialogs
+import at.saltyy.switchly.ui.dialog.showAccented
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
@@ -133,7 +135,7 @@ class QrGenerateActivity : AppCompatActivity() {
                         type = "text/plain"
                         putExtra(Intent.EXTRA_TEXT, uri)
                     },
-                    getString(R.string.share_qr_string)
+                    getString(R.string.share)
                 )
             )
         }
@@ -185,7 +187,7 @@ class QrGenerateActivity : AppCompatActivity() {
             hint = getString(R.string.qr_minutes_hint)
         }
 
-        AlertDialog.Builder(this)
+        Dialogs.builder(this)
             .setTitle(getString(R.string.qr_minutes_custom_title))
             .setView(input)
             .setNegativeButton(getString(R.string.cancel), null)
@@ -200,7 +202,7 @@ class QrGenerateActivity : AppCompatActivity() {
                 b.minutesDropdown.setText(String.format(locale, "%d", m), false)
                 regenerate()
             }
-            .show()
+            .showAccented()
     }
 
     private fun applyActionUi(action: Action) {
@@ -235,7 +237,6 @@ class QrGenerateActivity : AppCompatActivity() {
                 .orEmpty()
                 .ifBlank { getString(R.string.qr_profile_fallback) }
 
-            // IMPORTANT: use schema builder (encoding-safe)
             NfcSchema.uriForProfileAction(profile, action.id)
         }
     }
@@ -243,7 +244,6 @@ class QrGenerateActivity : AppCompatActivity() {
     private fun parseMinutes(text: String?): Long? {
         val s = text?.trim().orEmpty()
         if (s.isBlank()) return null
-        // extract first number from localized strings like "10 min"
         val match = Regex("""\d+""").find(s) ?: return null
         return match.value.toLongOrNull()
     }

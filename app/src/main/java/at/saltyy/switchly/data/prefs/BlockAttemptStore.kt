@@ -111,6 +111,98 @@ object BlockAttemptStore {
         return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 
+    fun getTodayTotal(ctx: Context): Int = getForYmdTotal(ctx, todayYmdInt())
+
+    fun getForLastNDaysTotal(ctx: Context, days: Int): Int {
+        if (days <= 0) return 0
+        val cal = Calendar.getInstance()
+        var sum = 0
+        for (i in 0 until days) {
+            sum += getForYmdTotal(ctx, ymdInt(cal))
+            cal.add(Calendar.DAY_OF_YEAR, -1)
+        }
+        return sum
+    }
+
+    fun getForMonthTotal(ctx: Context, year: Int, month1Based: Int): Int {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, (month1Based - 1).coerceIn(0, 11))
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val targetMonth = cal.get(Calendar.MONTH)
+        var sum = 0L
+        while (cal.get(Calendar.MONTH) == targetMonth) {
+            val ymd = ymdInt(cal)
+            sum += sumForYmd(sp, ymd)
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+        }
+        return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    fun getForYearTotal(ctx: Context, year: Int): Int {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        var sum = 0L
+        while (cal.get(Calendar.YEAR) == year) {
+            val ymd = ymdInt(cal)
+            sum += sumForYmd(sp, ymd)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    fun getOverallTotal(ctx: Context): Int {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        var sum = 0L
+        for ((k, v) in sp.all) {
+            if (!k.startsWith(PREFIX)) continue
+            sum += when (v) {
+                is Int -> v.toLong()
+                is Long -> v
+                is Number -> v.toLong()
+                is String -> v.toLongOrNull() ?: 0L
+                else -> 0L
+            }
+        }
+        return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    private fun getForYmdTotal(ctx: Context, ymd: Int): Int {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sumForYmd(sp, ymd).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    private fun sumForYmd(sp: android.content.SharedPreferences, ymd: Int): Long {
+        var sum = 0L
+        val ymdStr = ymd.toString()
+        // Key format: blocked_attempt_yyyymmdd_pkg
+        for ((k, v) in sp.all) {
+            if (!k.startsWith(PREFIX + ymdStr + "_")) continue
+            sum += when (v) {
+                is Int -> v.toLong()
+                is Long -> v
+                is Number -> v.toLong()
+                is String -> v.toLongOrNull() ?: 0L
+                else -> 0L
+            }
+        }
+        return sum
+    }
+
     private fun todayYmdInt(): Int = ymdInt(Calendar.getInstance())
 
     private fun ymdInt(cal: Calendar): Int {

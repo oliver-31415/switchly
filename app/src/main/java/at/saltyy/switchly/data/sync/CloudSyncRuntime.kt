@@ -4,68 +4,31 @@ import android.content.Context
 import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import at.saltyy.switchly.auth.Auth
 import at.saltyy.switchly.R
+import at.saltyy.switchly.auth.Auth
+import at.saltyy.switchly.data.prefs.SwitchModeStore
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.SetOptions
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldValue
 import kotlin.jvm.JvmStatic
 
 /**
  * Runtime implementation for CloudSync.
- *
- * This component synchronizes SharedPreferences with Firestore using the
- * current Firebase Auth UID as the user identifier.
- *
- * Stored data:
- * - Default SharedPreferences -> field "prefs"
- * - Internal "switchly_prefs" (profiles, selected apps, switch mode) -> field "switchly_prefs"
- *
- * Additionally backed up:
- * - "switchly_prefs_schedules" (ScheduleStore) -> field "schedules_prefs"
- *
- * In addition to the main user document, each user also maintains a
- * "backups" subcollection containing timestamped backup versions.
- *
- * SAFETY:
- * - On restore we force-disable all schedules (enabled=false) so triggers don't
- *   suddenly activate after restore.
+ * This version keeps ONLY the current (versioned) backup model: Backups are stored in: switchly_users/{uid}/backups/{backupId}
  */
 object CloudSyncRuntime {
 
     private const val TAG = "CloudSyncRuntime"
     private const val COLLECTION = "switchly_users"
+    private const val SUB_BACKUPS = "backups"
 
     private const val FIELD_PREFS = "prefs"
     private const val FIELD_SWITCHLY_PREFS = "switchly_prefs"
     private const val FIELD_SCHEDULES_PREFS = "schedules_prefs"
     private const val FIELD_CREATED_AT = "created_at"
-
-    // Compact stats payload (usage_day_*, blocked_*, runtime_*, etc.)
     private const val FIELD_STATS = "stats"
-    private const val SUB_BACKUPS = "backups"
 
-    // Synthetic id used to represent the legacy root user document as a "backup"
-    private const val ROOT_LATEST_ID = "__root_latest__"
-
-    private const val FIELD_LATEST_BACKUP_ID = "latest_backup_id"
-
-    /**
-     * True if a snapshot contains an actual backup payload (not just metadata).
-     *
-     * We treat the root user document as a valid backup as long as it contains
-     * at least one of the payload fields.
-     */
-    private fun snapshotHasBackupPayload(snapshot: DocumentSnapshot): Boolean {
-        return (snapshot.get(FIELD_PREFS) as? Map<*, *>)?.isNotEmpty() == true ||
-            (snapshot.get(FIELD_SWITCHLY_PREFS) as? Map<*, *>)?.isNotEmpty() == true ||
-            (snapshot.get(FIELD_SCHEDULES_PREFS) as? Map<*, *>)?.isNotEmpty() == true ||
-            (snapshot.get(FIELD_STATS) as? Map<*, *>)?.isNotEmpty() == true
-    }
-
-    // ScheduleStore prefs name in your project
+    // ScheduleStore prefs name in the project
     private const val SCHEDULES_PREFS_NAME = "switchly_prefs_schedules"
     private const val SCHEDULES_KEY_ITEMS = "items" // JSON list stored by ScheduleStore
 
@@ -75,15 +38,14 @@ object CloudSyncRuntime {
     )
 
     /**
-     * Converts SharedPreferences maps into Firestore-compatible maps:
-     * - Collections / Sets -> List
+     * Converts SharedPreferences maps into Firestore-compatible maps: Collections/Sets -> List
      */
     private fun normalizePrefsMap(src: Map<String, *>): Map<String, Any?> {
         val out = mutableMapOf<String, Any?>()
         for ((rawKey, value) in src) {
             val v: Any? = when (value) {
-                is Set<*> -> value.filterNotNull().map { it }
-                is Collection<*> -> value.filterNotNull().map { it }
+                is Set<*> -> value.filterNotNull().toList()
+                is Collection<*> -> value.filterNotNull().toList()
                 else -> value
             }
             out[rawKey] = v
@@ -92,10 +54,9 @@ object CloudSyncRuntime {
     }
 
     /**
-     * Stats keys (usage_*, blocked_*, runtime_*, etc.) are stored as many single entries in "switchly_prefs".
+     * Stats keys (usage_day_*, blocked_*, runtime_*, etc.) are stored as many single entries in "switchly_prefs".
      * For cloud backup we compress them into structured lists to keep the remote document smaller and cleaner.
-     *
-     * Restore expands them back into the original SharedPreferences keys, so the rest of the app stays unchanged.
+     * Restore expands them back into the original SharedPreferences keys.
      */
     private fun extractStatsFromInternalPrefs(
         src: Map<String, Any?>
@@ -258,12 +219,11 @@ object CloudSyncRuntime {
             applyListLong("nfc_scan_count") { i -> buildKeyNoPkg("nfc_scan_count_", i) }
             applyListLong("schedule_exec_count") { i -> buildKeyNoPkg("schedule_exec_count_", i) }
 
-            // Usage limit bookkeeping
+            // Usage limits are Int + Bool
             applyListBoolTrue("usage_limit_ever") { i ->
                 val p = i["p"] as? String ?: return@applyListBoolTrue null
-                "usage_limit_ever__" + p
+                "usage_limit_ever__${p}"
             }
-
             applyListInt("usage_limit_min") { i ->
                 val pr = i["pr"] as? String ?: return@applyListInt null
                 val p = i["p"] as? String ?: return@applyListInt null
@@ -271,6 +231,7 @@ object CloudSyncRuntime {
             }
         }
     }
+
     @JvmStatic
     fun pushLocalState(ctx: Context, onDone: (Boolean, String?) -> Unit) {
         val uid = Auth.uid()
@@ -279,22 +240,18 @@ object CloudSyncRuntime {
             return
         }
 
-        val db = FirebaseFirestore.getInstance()
-        val docRef = db.collection(COLLECTION).document(uid)
-
         try {
-            val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
-            val all = normalizePrefsMap(prefs.all)
+            val now = System.currentTimeMillis()
 
-            val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
-            val internalAllRaw = normalizePrefsMap(internalPrefs.all)
+            val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx).all
+            val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE).all
+            val schedulesPrefs = ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE).all
+
+            val all = normalizePrefsMap(defaultPrefs)
+            val internalAllRaw = normalizePrefsMap(internalPrefs)
+            val schedulesAll = normalizePrefsMap(schedulesPrefs)
 
             val (internalAll, statsMap) = extractStatsFromInternalPrefs(internalAllRaw)
-
-            val schedulesPrefs = ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE)
-            val schedulesAll = normalizePrefsMap(schedulesPrefs.all)
-
-            val now = System.currentTimeMillis()
 
             val data = mapOf(
                 FIELD_PREFS to all,
@@ -304,24 +261,13 @@ object CloudSyncRuntime {
                 FIELD_CREATED_AT to now
             )
 
-            // Create a new backup version in the subcollection (single source of truth)
-            docRef.collection(SUB_BACKUPS)
+            val db = FirebaseFirestore.getInstance()
+            val userRef = db.collection(COLLECTION).document(uid)
+
+            userRef.collection(SUB_BACKUPS)
                 .add(data)
                 .addOnSuccessListener { created ->
                     Log.d(TAG, "pushLocalState: backup version created: ${created.id}")
-
-                    // Also store the "latest" payload on the root document.
-                    // This keeps restore working even if Firestore rules (or OEM quirks)
-                    // block reading the subcollection on some setups.
-                    //
-                    // Root = latest snapshot, Subcollection = history.
-                    docRef.set(
-                        data + mapOf(FIELD_LATEST_BACKUP_ID to created.id),
-                        SetOptions.merge()
-                    ).addOnFailureListener { e ->
-                        Log.w(TAG, "pushLocalState: root latest write failed", e)
-                    }
-
                     onDone(true, null)
                 }
                 .addOnFailureListener { e ->
@@ -335,9 +281,7 @@ object CloudSyncRuntime {
         }
     }
 
-    /**
-     * Retrieves the last N backups from the "backups" subcollection.
-     */
+    // Retrieves the last N backups from the "backups" subcollection.
     fun listBackups(
         ctx: Context,
         limit: Long = 10,
@@ -349,43 +293,11 @@ object CloudSyncRuntime {
             return
         }
 
-        val db = FirebaseFirestore.getInstance()
-        val colRef = db.collection(COLLECTION)
+        FirebaseFirestore.getInstance()
+            .collection(COLLECTION)
             .document(uid)
             .collection(SUB_BACKUPS)
-
-        fun fallbackToRoot(onFail: (String?) -> Unit) {
-            db.collection(COLLECTION).document(uid).get()
-                .addOnSuccessListener { root ->
-                    if (!root.exists()) {
-                        onFail(null)
-                        return@addOnSuccessListener
-                    }
-
-                    // 1) Root contains a full payload -> expose it as a synthetic backup
-                    if (snapshotHasBackupPayload(root)) {
-                        val ts = root.getLong(FIELD_CREATED_AT) ?: 0L
-                        onDone(true, null, listOf(CloudBackupMeta(ROOT_LATEST_ID, ts)))
-                        return@addOnSuccessListener
-                    }
-
-                    // 2) Root is metadata-only but points to a versioned backup
-                    val latestId = root.getString(FIELD_LATEST_BACKUP_ID)
-                    if (!latestId.isNullOrBlank()) {
-                        val ts = root.getLong(FIELD_CREATED_AT) ?: 0L
-                        onDone(true, null, listOf(CloudBackupMeta(latestId, ts)))
-                        return@addOnSuccessListener
-                    }
-
-                    onFail(null)
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "listBackups root fallback failed", e)
-                    onFail(e.localizedMessage)
-                }
-        }
-
-        colRef.orderBy(FIELD_CREATED_AT, Query.Direction.DESCENDING)
+            .orderBy(FIELD_CREATED_AT, Query.Direction.DESCENDING)
             .limit(limit)
             .get()
             .addOnSuccessListener { snapshot ->
@@ -393,31 +305,31 @@ object CloudSyncRuntime {
                     val ts = doc.getLong(FIELD_CREATED_AT) ?: 0L
                     CloudBackupMeta(doc.id, ts)
                 }
-
-                if (list.isNotEmpty()) {
-                    onDone(true, null, list)
-                } else {
-                    fallbackToRoot {
-                        onDone(true, null, emptyList())
-                    }
-                }
+                onDone(true, null, list)
             }
             .addOnFailureListener { e ->
-                Log.w(TAG, "listBackups failed, trying root fallback", e)
-                fallbackToRoot { msg ->
-                    onDone(false, msg ?: e.localizedMessage, null)
-                }
+                Log.e(TAG, "listBackups failed", e)
+                onDone(false, e.localizedMessage, null)
             }
     }
 
-    /**
-     * Loads a *specific* backup version from the "backups" subcollection.
-     *
-     * Compatibility: if there are no versioned backups (or rules block reading them),
-     * listBackups() may expose a synthetic entry with id ROOT_LATEST_ID which loads the
-     * legacy root document. When that path is used we also try (best-effort) to migrate
-     * the root document into the versioned subcollection and wipe the large root fields.
-     */
+    // Restores the most recent versioned backup.
+    @JvmStatic
+    fun pullRemoteState(ctx: Context, onDone: (Boolean, String?) -> Unit) {
+        listBackups(ctx, limit = 1) { ok, msg, list ->
+            if (!ok) {
+                onDone(false, msg)
+                return@listBackups
+            }
+            val id = list?.firstOrNull()?.id
+            if (id.isNullOrBlank()) {
+                onDone(false, ctx.getString(R.string.cloud_error_no_backup_found))
+                return@listBackups
+            }
+            pullBackup(ctx, id, onDone)
+        }
+    }
+
     fun pullBackup(ctx: Context, backupId: String, onDone: (Boolean, String?) -> Unit) {
         val uid = Auth.uid()
         if (uid == null) {
@@ -425,70 +337,10 @@ object CloudSyncRuntime {
             return
         }
 
-        val db = FirebaseFirestore.getInstance()
-        val userRef = db.collection(COLLECTION).document(uid)
-
-        if (backupId == ROOT_LATEST_ID) {
-            userRef.get()
-                .addOnSuccessListener { snapshot ->
-                    if (!snapshot.exists()) {
-                        onDone(false, ctx.getString(R.string.cloud_error_no_backup_found))
-                        return@addOnSuccessListener
-                    }
-
-                    // If the root doc is metadata-only (because an older build "cleaned" it),
-                    // follow the pointer to the latest versioned backup.
-                    if (!snapshotHasBackupPayload(snapshot)) {
-                        val latestId = snapshot.getString(FIELD_LATEST_BACKUP_ID)
-                        if (!latestId.isNullOrBlank()) {
-                            // Delegate to normal versioned restore.
-                            pullBackup(ctx, latestId, onDone)
-                            return@addOnSuccessListener
-                        }
-                    }
-
-                    try {
-                        applyBackupSnapshot(ctx, snapshot)
-                        onDone(true, null)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "pullBackup(latest) failed", e)
-                        onDone(false, e.localizedMessage)
-                        return@addOnSuccessListener
-                    }
-
-                    // Optional best-effort: create a versioned backup entry from the root snapshot.
-                    // We do NOT delete the root payload (root remains the "latest" snapshot).
-                    runCatching {
-                        val data = buildBackupDataFromSnapshot(snapshot)
-                        userRef.collection(SUB_BACKUPS)
-                            .add(data)
-                            .addOnSuccessListener { created ->
-                                userRef.set(
-                                    mapOf(
-                                        FIELD_LATEST_BACKUP_ID to created.id,
-                                        FIELD_CREATED_AT to (data[FIELD_CREATED_AT] as? Long ?: System.currentTimeMillis())
-                                    ),
-                                    SetOptions.merge()
-                                ).addOnFailureListener { t ->
-                                    Log.w(TAG, "pullBackup(latest): meta write failed", t)
-                                }
-                            }
-                            .addOnFailureListener { e ->
-                                Log.w(TAG, "pullBackup(latest): create versioned entry failed", e)
-                            }
-                    }.onFailure {
-                        Log.w(TAG, "pullBackup(latest): create versioned entry crashed: ${it.message}")
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "pullBackup(latest) failed", e)
-                    onDone(false, e.localizedMessage)
-                }
-            return
-        }
-
-        val backupRef = userRef.collection(SUB_BACKUPS).document(backupId)
-        backupRef.get()
+        val userRef = FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
+        userRef.collection(SUB_BACKUPS)
+            .document(backupId)
+            .get()
             .addOnSuccessListener { snapshot ->
                 if (!snapshot.exists()) {
                     onDone(false, ctx.getString(R.string.cloud_error_backup_not_found))
@@ -501,22 +353,6 @@ object CloudSyncRuntime {
                 } catch (e: Exception) {
                     Log.e(TAG, "pullBackup failed", e)
                     onDone(false, e.localizedMessage)
-                    return@addOnSuccessListener
-                }
-
-                // Best-effort: write the restored payload as the "latest" root snapshot.
-                // This makes restore resilient even if some Firestore rules allow root reads
-                // but restrict reading the versioned subcollection.
-                runCatching {
-                    val data = buildBackupDataFromSnapshot(snapshot)
-                    userRef.set(
-                        data + mapOf(FIELD_LATEST_BACKUP_ID to backupId),
-                        SetOptions.merge()
-                    ).addOnFailureListener { t ->
-                        Log.w(TAG, "pullBackup: root latest write failed", t)
-                    }
-                }.onFailure {
-                    Log.w(TAG, "pullBackup: root latest write crashed: ${it.message}")
                 }
             }
             .addOnFailureListener { e ->
@@ -525,9 +361,7 @@ object CloudSyncRuntime {
             }
     }
 
-    /**
-     * Applies a backup document (either a versioned backup or the legacy root doc) to local storage.
-     */
+    // Applies a backup document (a versioned backup document) to local storage.
     private fun applyBackupSnapshot(ctx: Context, snapshot: DocumentSnapshot) {
         val prefsMap = snapshot.get(FIELD_PREFS) as? Map<*, *> ?: emptyMap<Any, Any>()
         val internalMap = snapshot.get(FIELD_SWITCHLY_PREFS) as? Map<*, *> ?: emptyMap<Any, Any>()
@@ -543,32 +377,12 @@ object CloudSyncRuntime {
 
         // Safety: restored schedules should not immediately fire
         forceDisableAllSchedules(ctx)
+
+        // Safety: after restore, keep Switchly base state OFF so users don't get locked out
+        forceDisableSwitchlyAfterRestore(ctx)
     }
 
-    /**
-     * Builds a versioned-backup payload from a legacy root document.
-     */
-    private fun buildBackupDataFromSnapshot(snapshot: DocumentSnapshot): Map<String, Any?> {
-        val now = System.currentTimeMillis()
-        val createdAt = snapshot.getLong(FIELD_CREATED_AT) ?: now
-
-        val prefsMap = snapshot.get(FIELD_PREFS) as? Map<*, *> ?: emptyMap<Any, Any>()
-        val internalMap = snapshot.get(FIELD_SWITCHLY_PREFS) as? Map<*, *> ?: emptyMap<Any, Any>()
-        val schedulesMap = snapshot.get(FIELD_SCHEDULES_PREFS) as? Map<*, *> ?: emptyMap<Any, Any>()
-        val stats = snapshot.get(FIELD_STATS) as? Map<*, *> ?: emptyMap<Any, Any>()
-
-        return mapOf(
-            FIELD_PREFS to prefsMap,
-            FIELD_SWITCHLY_PREFS to internalMap,
-            FIELD_SCHEDULES_PREFS to schedulesMap,
-            FIELD_STATS to stats,
-            FIELD_CREATED_AT to createdAt
-        )
-    }
-
-    /**
-     * Applies a Firestore-loaded map to local SharedPreferences.
-     */
+    // Applies a Firestore-loaded map to local SharedPreferences.
     private fun applyPrefsMapToLocal(
         ctx: Context,
         map: Map<*, *>,
@@ -581,12 +395,10 @@ object CloudSyncRuntime {
             else -> PreferenceManager.getDefaultSharedPreferences(ctx)
         }
 
-        // Firestore returns integral numbers as Long. Some of our prefs are truly Int-based
-        // (e.g. onboarding version, usage limit minutes). If we store them as Long,
-        // SharedPreferences.getInt(...) will crash with ClassCastException.
+        // Firestore returns integral numbers as Long. Some of our prefs are truly Int-based.
+        // If we store them as Long, SharedPreferences.getInt(...) will crash with ClassCastException.
         fun shouldStoreAsInt(key: String): Boolean {
-            return key == "onboarding_version" ||
-                key.startsWith("usage_limit_min__")
+            return key == "onboarding_version" || key.startsWith("usage_limit_min__")
         }
 
         prefs.edit(commit = true) {
@@ -607,32 +419,23 @@ object CloudSyncRuntime {
                     is Float -> putFloat(key, value)
                     is String -> putString(key, value)
                     is List<*> -> {
-                        val canCast = value.all { it is String }
-                        if (canCast) {
+                        if (value.all { it is String }) {
                             putStringSet(key, value.filterIsInstance<String>().toSet())
                         }
                     }
-                    else -> {
-                        // ignore unsupported types
-                    }
+                    else -> Unit
                 }
             }
         }
     }
 
-    /**
-     * After restoring schedules, force-disable them for safety.
-     *
-     * We do this "best-effort" without depending on ScheduleStore internals.
-     * If the schedules JSON format changes, nothing crashes; worst case: no change.
-     */
+    // After restoring schedules, force-disable them for safety.
     private fun forceDisableAllSchedules(ctx: Context) {
         try {
             val sp = ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE)
             val raw = sp.getString(SCHEDULES_KEY_ITEMS, null) ?: return
 
-            // ScheduleStore likely stores JSON objects that contain `"enabled":true/false`.
-            // Replace any enabled:true with enabled:false (best-effort, safe fallback).
+            // Best-effort JSON patch: enabled:true -> enabled:false
             val patched = raw
                 .replace("\"enabled\":true", "\"enabled\":false")
                 .replace("\"enabled\" : true", "\"enabled\":false")
@@ -643,11 +446,47 @@ object CloudSyncRuntime {
             if (patched != raw) {
                 sp.edit { putString(SCHEDULES_KEY_ITEMS, patched) }
                 Log.d(TAG, "forceDisableAllSchedules: patched schedules enabled->false")
-            } else {
-                Log.d(TAG, "forceDisableAllSchedules: no enabled=true found to patch")
             }
         } catch (t: Throwable) {
             Log.w(TAG, "forceDisableAllSchedules failed: ${t.message}")
         }
+    }
+
+    private fun forceDisableSwitchlyAfterRestore(ctx: Context) {
+        try {
+            val sp = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
+            sp.edit(commit = true) {
+                putBoolean("switch_mode_enabled", false)
+                putLong("switch_mode_temp_disable_until", 0L)
+                putLong("switch_mode_temp_enable_until", 0L)
+                remove("switch_mode_base_before_temp_enable")
+            }
+
+            // Keep runtime flow/state in sync with prefs and bypass NFC lock for this forced safety off.
+            runCatching { SwitchModeStore.setEnabled(ctx, false, allowNfcBypass = true) }
+                .onFailure { Log.w(TAG, "forceDisableSwitchlyAfterRestore runtime sync failed", it) }
+        } catch (t: Throwable) {
+            Log.w(TAG, "forceDisableSwitchlyAfterRestore failed: ${t.message}")
+        }
+    }
+
+    fun deleteBackup(ctx: Context, backupId: String, cb: (ok: Boolean, err: String?) -> Unit) {
+        val uid = Auth.uid()
+        if (uid.isNullOrBlank()) {
+            cb(false, ctx.getString(R.string.cloud_not_logged_in))
+            return
+        }
+
+        FirebaseFirestore.getInstance()
+            .collection(COLLECTION)
+            .document(uid)
+            .collection(SUB_BACKUPS)
+            .document(backupId)
+            .delete()
+            .addOnSuccessListener { cb(true, null) }
+            .addOnFailureListener { e ->
+                Log.w(TAG, "deleteBackup failed", e)
+                cb(false, e.message)
+            }
     }
 }

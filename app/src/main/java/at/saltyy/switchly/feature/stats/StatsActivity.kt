@@ -4,12 +4,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import android.view.Gravity
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.util.LruCache
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.forEach
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,6 +24,7 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.BlockAttemptStore
 import at.saltyy.switchly.data.prefs.BlockCountStore
 import at.saltyy.switchly.data.prefs.BlockedTimeStore
+import at.saltyy.switchly.data.prefs.BlockedInboxStore
 import at.saltyy.switchly.data.prefs.NfcScanCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
@@ -24,14 +32,16 @@ import at.saltyy.switchly.data.prefs.SwitchlyRuntimeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.databinding.ActivityStatsBinding
-import at.saltyy.switchly.feature.schedule.SchedulesActivity
+import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.MainActivity
+import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.color.MaterialColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -40,6 +50,11 @@ import java.text.NumberFormat
 import java.util.Calendar
 import kotlin.math.abs
 import kotlin.math.max
+import androidx.appcompat.widget.PopupMenu
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
+import at.saltyy.switchly.data.prefs.BlockedNotificationEvent
+import at.saltyy.switchly.ui.dialog.showAccented
 
 class StatsActivity : AppCompatActivity() {
 
@@ -62,13 +77,19 @@ class StatsActivity : AppCompatActivity() {
     // Premium gating: Only TODAY is available without premium
     private enum class Range { TODAY, WEEK, MONTH, YEAR, OVERALL }
 
-    // Sorting: only A-Z and Used Time
-    private enum class Sort { NAME_AZ, USED_TIME }
+    // Sorting: A-Z and Used Time
+    private enum class Sort { NAME_AZ, NAME_ZA, USED_TIME, ATTEMPTS, BLOCKED_TIME }
+    private enum class SortDir { DESC, ASC }
+    private enum class Filter { ALL_APPS, BLOCKED_ONLY }
 
     private var range: Range = Range.TODAY
     private var sort: Sort = Sort.USED_TIME
+    private var sortDir: SortDir = SortDir.DESC
+    private var filter: Filter = Filter.ALL_APPS
     private var lastRows: List<StatsRow> = emptyList()
-
+    private var lastBlockRows: List<BlockStatsRow> = emptyList()
+    private var lastRuntimeRows: List<RuntimeBlockedRow> = emptyList()
+    private var currentBlockedSet: Set<String> = emptySet()
     private var loadJob: Job? = null
     private val labelCache = LruCache<String, String>(200)
 
@@ -113,6 +134,10 @@ class StatsActivity : AppCompatActivity() {
         override val weekDays: Int,
         override val yearNow: Int,
         override val monthNow1: Int,
+        val totalBlockedMs: Long,
+        val totalBlocks: Int,
+        val totalAttempts: Int,
+        val blockedMessages: Int,
         val rows: List<BlockStatsRow>
     ) : ComputedBase
 
@@ -132,21 +157,165 @@ class StatsActivity : AppCompatActivity() {
         override val yearNow: Int,
         override val monthNow1: Int,
         val emergencyUsed: Int,
+        val emergencyTotal: Int,
         val nfcUsed: Int,
+        val nfcTotal: Int,
         val schedulesExecuted: Int,
-        val blockedAppsNow: Int
+        val schedulesTotal: Int,
+        val qrScans: Int,
+        val qrTotal: Int,
+        val tempEnables: Int,
+        val tempTotal: Int,
+        val limitsReached: Int,
+        val limitsTotal: Int,
+        val profilesCount: Int,
+        val profilesTotal: Int,
+        val enabledSchedules: Int,
+        val enabledSchedulesTotal: Int,
+        val limitedApps: Int,
+        val limitedAppsTotal: Int,
+        val blockedAppsNow: Int,
+        val blockedAppsTotal: Int,
+        val blockedAttempts: Int,
+        val blockedAttemptsTotal: Int
     ) : ComputedBase
 
     /**
      * "Week" in the UI means *current calendar week to date* (Mon..today), not "last 7 days".
-     *
      * Calendar.DAY_OF_WEEK: 1=Sunday, 2=Monday, ... 7=Saturday
      */
+    private fun isInstalled(pkg: String): Boolean {
+        return try {
+            packageManager.getApplicationInfo(pkg, 0)
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
     private fun weekToDateDays(calNow: Calendar = Calendar.getInstance()): Int {
         val dow = calNow.get(Calendar.DAY_OF_WEEK)
         // Convert to Monday=0..Sunday=6
         val offsetFromMonday = (dow + 5) % 7
         return (offsetFromMonday + 1).coerceIn(1, 7)
+    }
+
+    private fun rangeStartMs(range: Range, weekDays: Int, yearNow: Int, monthNow1: Int): Long? {
+        val cal = Calendar.getInstance()
+        // Start from today 00:00
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+
+        return when (range) {
+            Range.TODAY -> cal.timeInMillis
+            Range.WEEK -> {
+                // "Week" = calendar week to date (Mon..today) => we stored weekDays accordingly.
+                val daysBack = (weekDays - 1).coerceAtLeast(0)
+                cal.add(Calendar.DAY_OF_YEAR, -daysBack)
+                cal.timeInMillis
+            }
+            Range.MONTH -> {
+                cal.set(Calendar.YEAR, yearNow)
+                cal.set(Calendar.MONTH, (monthNow1 - 1).coerceIn(0, 11))
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.timeInMillis
+            }
+            Range.YEAR -> {
+                cal.set(Calendar.YEAR, yearNow)
+                cal.set(Calendar.MONTH, Calendar.JANUARY)
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.timeInMillis
+            }
+            Range.OVERALL -> null
+        }
+    }
+
+    private fun blockedInboxCountForRange(
+        profile: String,
+        range: Range,
+        weekDays: Int,
+        yearNow: Int,
+        monthNow1: Int
+    ): Int {
+        val start = rangeStartMs(range, weekDays, yearNow, monthNow1)
+        val events = BlockedInboxStore.getAll(this)
+        return events.asSequence()
+            .filter { it.profile == profile }
+            .filter { start == null || it.timeMillis >= start }
+            .count()
+    }
+
+    // Blocking screen should show inbox totals (all time), not just the selected range.
+    private fun blockedInboxCountOverall(profile: String): Int {
+        val events = BlockedInboxStore.getAll(this)
+        return events.asSequence().count { it.profile == profile }
+    }
+
+    private fun showBlockingDetails(row: BlockStatsRow) {
+        val profile = ProfileStore.getCurrent(this) ?: return
+
+        val calNow = Calendar.getInstance()
+        val weekDays = weekToDateDays(calNow)
+        val yearNow = calNow.get(Calendar.YEAR)
+        val monthNow1 = calNow.get(Calendar.MONTH) + 1
+
+        val events = BlockedInboxStore.getAll(this)
+            .asSequence()
+            .filter { it.profile == profile }
+            .filter { it.pkg == row.packageName }
+            .sortedByDescending { it.timeMillis }
+            .toList()
+
+        val blockedMsgCount = events.size
+        val last3 = events.take(3)
+
+        fun shorten(s: String, max: Int): String {
+            val t = s.trim()
+            if (t.isEmpty()) return ""
+            return if (t.length <= max) t else t.take(max - 1) + "…"
+        }
+
+        val msg = buildString {
+            // Keep it focused: we show blocked messages, not internal attempt counters.
+            append(getString(R.string.stats_blocked_messages_line, blockedMsgCount))
+
+            if (last3.isNotEmpty()) {
+                append("\n\n")
+                append(getString(R.string.stats_last_blocked_messages_title))
+                for (e in last3) {
+                    val title = shorten(e.title.ifBlank { e.pkg }, 28)
+                    val body = shorten(
+                        when {
+                            e.bigText.isNotBlank() -> e.bigText
+                            e.text.isNotBlank() -> e.text
+                            e.summaryText.isNotBlank() -> e.summaryText
+                            else -> e.reason
+                        },
+                        42
+                    )
+                    append("\n• ")
+                    append(title)
+                    if (body.isNotBlank()) {
+                        append(": ")
+                        append(body)
+                    }
+                }
+            }
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(row.appName)
+            .setMessage(msg)
+            .setPositiveButton(getString(R.string.stats_open_blocked_messages)) { _, _ ->
+                startActivity(
+                    Intent(this, BlockedInboxActivity::class.java)
+                        .putExtra(BlockedInboxActivity.EXTRA_APP_FILTER, row.packageName)
+                )
+            }
+            .setNegativeButton(android.R.string.ok, null)
+            .showAccented()
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -162,7 +331,7 @@ class StatsActivity : AppCompatActivity() {
 
         // Mode is selected from StatisticsHubActivity (usage/runtime/blocking/other).
         mode = when (intent.getStringExtra(EXTRA_MODE)) {
-            "runtime" -> Mode.RUNTIME
+            "runtime" -> Mode.USAGE
             "blocking" -> Mode.BLOCKING
             "other" -> Mode.OTHER
             else -> Mode.USAGE
@@ -185,6 +354,19 @@ class StatsActivity : AppCompatActivity() {
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 
         setSupportActionBar(b.toolbar)
+
+        // Toolbar action: always-visible sort/filter button
+        b.toolbar.inflateMenu(R.menu.menu_stats)
+        tintToolbarIcons()
+        b.toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_sort_filter -> {
+                    showSortFilterMenu(b.toolbar)
+                    true
+                }
+                else -> false
+            }
+        }
         val title = when (mode) {
             Mode.USAGE -> getString(R.string.stats_title)
             Mode.RUNTIME -> getString(R.string.stats_mode_runtime)
@@ -196,21 +378,55 @@ class StatsActivity : AppCompatActivity() {
 
         b.toolbar.setNavigationOnClickListener { finish() }
         b.toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        // Background color changes after menu inflation -> ensure icons remain visible
+        tintToolbarIcons()
 
         setupBottomNav()
 
         b.recycler.layoutManager = LinearLayoutManager(this)
         usageAdapter = StatsAdapter()
-        blockAdapter = BlockStatsAdapter()
+        // Blocking rows should open a dedicated detail screen (much nicer than a popup)
+        blockAdapter = BlockStatsAdapter { row ->
+            startActivity(
+                Intent(this, BlockStatsDetailActivity::class.java)
+                    .putExtra(BlockStatsDetailActivity.EXTRA_PKG, row.packageName)
+                    .putExtra(BlockStatsDetailActivity.EXTRA_RANGE, range.name)
+            )
+        }
         runtimeAdapter = RuntimeBlockedAdapter()
 
         setupRangeChips()
         applyRangePremiumLock()
 
-        // sort chip (usage-only)
-        b.chipSort.setOnClickListener { cycleSort(withAnim = true) }
+        // Sort/Filter entrypoints
+        // 1) Always-visible icon next to the range chips (so users can't miss it)
+        b.btnSortFilter.setOnClickListener { showSortFilterMenu(b.btnSortFilter) }
+        // 2) Optional chip in the summary card (kept for convenience)
+        b.chipSort.setOnClickListener { showSortFilterMenu(b.chipSort) }
+
+        // Sort/filter makes sense for lists (usage/runtime/blocking). Keep it visible.
+        b.btnSortFilter.isVisible = (mode != Mode.OTHER)
+        b.chipSort.isVisible = (mode != Mode.OTHER)
 
         load()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Sort/Filter is shown via the bottom-right FAB (no toolbar action)
+        return false
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun tintToolbarIcons() {
+        // On some themes/devices, menu/navigation icons stay black by default.
+        // Use contrast against the *actual toolbar background* instead of relying on theme colorOnPrimary.
+        val bg = AccentColor.getToolbarColor(this)
+        val tint = if (MaterialColors.isColorLight(bg)) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+        b.toolbar.menu.forEach { it.icon?.mutate()?.setTint(tint) }
+        b.toolbar.navigationIcon?.mutate()?.setTint(tint)
     }
 
     override fun onResume() {
@@ -231,15 +447,20 @@ class StatsActivity : AppCompatActivity() {
                     finish()
                     true
                 }
-                R.id.nav_schedules -> {
-                    startActivity(Intent(this, SchedulesActivity::class.java))
-                    finish()
-                    true
-                }
                 R.id.nav_stats -> {
                     startActivity(Intent(this, StatisticsHubActivity::class.java))
                     finish()
                     true
+                }
+                R.id.nav_settings -> {
+                    if (SwitchlyAppAccessGuard.isLocked(this)) {
+                        SwitchlyAppAccessGuard.showLockedToast(this)
+                        false
+                    } else {
+                        startActivity(Intent(this, SettingsActivity::class.java))
+                        finish()
+                        true
+                    }
                 }
                 else -> false
             }
@@ -304,42 +525,231 @@ class StatsActivity : AppCompatActivity() {
                 .start()
         }
 
-        // Only 2 sorts now (no % / THIRD anymore)
+        // Quick toggle: primary metric <-> A–Z
         sort = when (sort) {
-            Sort.USED_TIME -> Sort.NAME_AZ
-            Sort.NAME_AZ -> Sort.USED_TIME
+            Sort.NAME_AZ -> primarySortForMode()
+            else -> Sort.NAME_AZ
         }
         applyAndShow()
     }
 
-    private fun applyAndShow() {
-        val sorted = when (sort) {
-            Sort.NAME_AZ -> lastRows.sortedBy { it.appName.lowercase() }
-            Sort.USED_TIME -> lastRows.sortedWith(
-                compareByDescending<StatsRow> { it.usedMsToday }.thenBy { it.appName.lowercase() }
-            )
+    private fun primarySortForMode(): Sort = when (mode) {
+        // Blocking: focus on how often you tried while blocked.
+        Mode.BLOCKING -> Sort.ATTEMPTS
+        // Runtime: highlight where you tried most while blocked.
+        Mode.RUNTIME -> Sort.ATTEMPTS
+        else -> Sort.USED_TIME
+    }
+
+    private fun showSortFilterMenu(anchor: View) {
+        if (mode == Mode.OTHER) return
+
+        // PopupMenu looked "broken"/cramped on some devices. Use a clean Material dialog instead.
+        val v = layoutInflater.inflate(R.layout.dialog_sort_filter, null)
+        val rgFilter = v.findViewById<RadioGroup>(R.id.rgFilter)
+        val rgSort = v.findViewById<RadioGroup>(R.id.rgSort)
+
+        // Labels depend on screen
+        val (sortDescLabel, sortAscLabel) = when (mode) {
+            Mode.BLOCKING -> getString(R.string.stats_sort_attempts_desc) to getString(R.string.stats_sort_attempts_asc)
+            // Runtime: sort by attempts.
+            Mode.RUNTIME -> getString(R.string.stats_sort_attempts_desc) to getString(R.string.stats_sort_attempts_asc)
+            else -> getString(R.string.stats_sort_used_time_desc) to getString(R.string.stats_sort_used_time_asc)
+        }
+        v.findViewById<RadioButton>(R.id.rbSortPrimaryDesc).text = sortDescLabel
+        v.findViewById<RadioButton>(R.id.rbSortPrimaryAsc).text = sortAscLabel
+
+        // Initial selections
+        when (filter) {
+            Filter.ALL_APPS -> rgFilter.check(R.id.rbFilterAll)
+            Filter.BLOCKED_ONLY -> rgFilter.check(R.id.rbFilterBlocked)
         }
 
-        usageAdapter.submit(
-            sorted,
-            when (range) {
-                Range.TODAY -> StatsAdapter.RangeLabel.TODAY
-                Range.WEEK -> StatsAdapter.RangeLabel.WEEK
-                Range.MONTH -> StatsAdapter.RangeLabel.MONTH
-                Range.YEAR -> StatsAdapter.RangeLabel.YEAR
-                Range.OVERALL -> StatsAdapter.RangeLabel.OVERALL
+        when (sort) {
+            Sort.NAME_AZ -> rgSort.check(R.id.rbSortAz)
+            Sort.NAME_ZA -> rgSort.check(R.id.rbSortZa)
+            Sort.ATTEMPTS, Sort.BLOCKED_TIME, Sort.USED_TIME -> {
+                rgSort.check(if (sortDir == SortDir.ASC) R.id.rbSortPrimaryAsc else R.id.rbSortPrimaryDesc)
             }
-        )
+        }
 
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.stats_sort_filter_title))
+            .setView(v)
+            .setPositiveButton(getString(R.string.stats_apply)) { _, _ ->
+                // Apply filter
+                filter = when (rgFilter.checkedRadioButtonId) {
+                    R.id.rbFilterBlocked -> Filter.BLOCKED_ONLY
+                    else -> Filter.ALL_APPS
+                }
+
+                // Apply sort
+                when (rgSort.checkedRadioButtonId) {
+                    R.id.rbSortAz -> sort = Sort.NAME_AZ
+                    R.id.rbSortZa -> sort = Sort.NAME_ZA
+                    R.id.rbSortPrimaryAsc -> {
+                        sort = primarySortForMode()
+                        sortDir = SortDir.ASC
+                    }
+                    else -> { // primary desc
+                        sort = primarySortForMode()
+                        sortDir = SortDir.DESC
+                    }
+                }
+
+                applyAndShow()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .showAccented()
+    }
+
+    private fun applyAndShow() {
+        val pm = packageManager
+
+        fun isLaunchable(pkg: String): Boolean {
+            return runCatching { pm.getLaunchIntentForPackage(pkg) != null }.getOrDefault(false)
+        }
+
+        when (mode) {
+            Mode.USAGE -> {
+                val filtered = lastRows.asSequence()
+                    .filter { row ->
+                        when (filter) {
+                            Filter.ALL_APPS -> true
+                            Filter.BLOCKED_ONLY -> currentBlockedSet.contains(row.packageName)
+                        }
+                    }
+                    .filter { row ->
+                        // Hide non-launchable/internal packages by default (e.g. com.google.android.as), unless the user explicitly configured them (blocked/limited).
+                        val launchable = isLaunchable(row.packageName)
+                        launchable || currentBlockedSet.contains(row.packageName) || row.limitMinutes > 0
+                    }
+                    .toList()
+
+                val sorted = when (sort) {
+                    Sort.NAME_AZ -> filtered.sortedBy { it.appName.lowercase() }
+                    Sort.NAME_ZA -> filtered.sortedByDescending { it.appName.lowercase() }
+                    Sort.USED_TIME -> {
+                        val cmp = when (sortDir) {
+                            SortDir.DESC -> compareByDescending<StatsRow> { it.usedMsToday }
+                            SortDir.ASC -> compareBy<StatsRow> { it.usedMsToday }
+                        }
+                        filtered.sortedWith(cmp.thenBy { it.appName.lowercase() })
+                    }
+                    else -> filtered
+                }
+
+                usageAdapter.submit(
+                    sorted,
+                    when (range) {
+                        Range.TODAY -> StatsAdapter.RangeLabel.TODAY
+                        Range.WEEK -> StatsAdapter.RangeLabel.WEEK
+                        Range.MONTH -> StatsAdapter.RangeLabel.MONTH
+                        Range.YEAR -> StatsAdapter.RangeLabel.YEAR
+                        Range.OVERALL -> StatsAdapter.RangeLabel.OVERALL
+                    }
+                )
+            }
+
+            Mode.BLOCKING -> {
+                val filtered = lastBlockRows.asSequence()
+                    .filter { row ->
+                        when (filter) {
+                            Filter.ALL_APPS -> true
+                            Filter.BLOCKED_ONLY -> currentBlockedSet.contains(row.packageName)
+                        }
+                    }
+                    .filter { row ->
+                        val launchable = isLaunchable(row.packageName)
+                        launchable || currentBlockedSet.contains(row.packageName)
+                    }
+                    .toList()
+
+                val sorted = when (sort) {
+                    Sort.NAME_AZ -> filtered.sortedBy { it.appName.lowercase() }
+                    Sort.NAME_ZA -> filtered.sortedByDescending { it.appName.lowercase() }
+                    Sort.ATTEMPTS -> {
+                        val cmp = when (sortDir) {
+                            SortDir.DESC -> compareByDescending<BlockStatsRow> { it.attemptCount }
+                            SortDir.ASC -> compareBy<BlockStatsRow> { it.attemptCount }
+                        }
+                        filtered.sortedWith(cmp.thenBy { it.appName.lowercase() })
+                    }
+                    else -> filtered
+                }
+
+                blockAdapter.submit(sorted)
+            }
+
+            Mode.RUNTIME -> {
+                val filtered = lastRuntimeRows.asSequence()
+                    .filter { row ->
+                        when (filter) {
+                            Filter.ALL_APPS -> true
+                            Filter.BLOCKED_ONLY -> currentBlockedSet.contains(row.packageName)
+                        }
+                    }
+                    .filter { row ->
+                        val launchable = isLaunchable(row.packageName)
+                        launchable || currentBlockedSet.contains(row.packageName)
+                    }
+                    .toList()
+
+                val sorted = when (sort) {
+                    Sort.NAME_AZ -> filtered.sortedBy { it.appName.lowercase() }
+                    Sort.NAME_ZA -> filtered.sortedByDescending { it.appName.lowercase() }
+                    Sort.BLOCKED_TIME -> {
+                        val cmp = when (sortDir) {
+                            SortDir.DESC -> compareByDescending<RuntimeBlockedRow> { it.scoreMs }
+                            SortDir.ASC -> compareBy<RuntimeBlockedRow> { it.scoreMs }
+                        }
+                        filtered.sortedWith(cmp.thenBy { it.appName.lowercase() })
+                    }
+                    else -> filtered
+                }
+
+                runtimeAdapter.submit(sorted)
+            }
+
+            Mode.OTHER -> Unit
+        }
+
+        // Update the hint chip if it's visible.
         val sortLabel = when (sort) {
             Sort.NAME_AZ -> getString(R.string.stats_sort_az)
-            Sort.USED_TIME -> getString(R.string.stats_sort_used_time)
+            Sort.NAME_ZA -> getString(R.string.stats_sort_za)
+            Sort.USED_TIME -> when (sortDir) {
+                SortDir.DESC -> getString(R.string.stats_sort_used_time_desc)
+                SortDir.ASC -> getString(R.string.stats_sort_used_time_asc)
+            }
+            Sort.ATTEMPTS -> when (sortDir) {
+                SortDir.DESC -> getString(R.string.stats_sort_attempts_desc)
+                SortDir.ASC -> getString(R.string.stats_sort_attempts_asc)
+            }
+            Sort.BLOCKED_TIME -> when (sortDir) {
+                SortDir.DESC -> getString(R.string.stats_sort_blocked_time_desc)
+                SortDir.ASC -> getString(R.string.stats_sort_blocked_time_asc)
+            }
         }
-        b.chipSort.text = getString(R.string.stats_sort_hint_fmt, sortLabel)
+
+        val filterLabel = when (filter) {
+            Filter.ALL_APPS -> getString(R.string.stats_filter_all_apps)
+            Filter.BLOCKED_ONLY -> getString(R.string.stats_filter_blocked_only)
+        }
+
+        b.chipSort.text = getString(R.string.stats_sort_hint_fmt, "$filterLabel • $sortLabel")
     }
 
     private fun load() {
-        val profile = ProfileStore.getCurrent(this)
+		val profile = ProfileStore.getCurrent(this)
+
+		// Keep the blocked set available for ALL modes (Blocking/Runtime/Other also use it for filtering).
+		// ProfileStore.getBlockedForProfile expects a non-null profile id.
+		currentBlockedSet = if (profile.isNullOrBlank()) {
+			emptySet()
+		} else {
+			ProfileStore.getBlockedForProfile(this, profile).toSet()
+		}
 
         applyRangePremiumLock()
 
@@ -409,6 +819,7 @@ class StatsActivity : AppCompatActivity() {
             when (computed) {
                 is UsageComputed -> {
                     lastRows = computed.rows
+                    // already set at start of load()
 
                     b.tvTodayTitle.text = rangeLabel()
                     b.tvTodaySubtitle.visibility = if (range == Range.TODAY) View.VISIBLE else View.GONE
@@ -433,13 +844,32 @@ class StatsActivity : AppCompatActivity() {
                     b.tvTodaySubtitle.visibility = View.VISIBLE
                     b.tvTodaySubtitle.text = getString(R.string.stats_blocking_subtitle)
 
+                    // Summary card: blocked messages (we intentionally don't surface "attempts" anymore)
+                    b.cardInfo.visibility = View.VISIBLE
+                    b.tvInfoLabel.text = rangeLabel()
+                    b.tvInfoPrimary.text = NumberFormat.getInstance().format(computed.blockedMessages)
+                    b.tvInfoSecondary.text = getString(R.string.stats_blocking_primary_caption)
+
+                    b.tvInfoDetails.visibility = View.VISIBLE
+                    b.tvInfoDetails.text = getString(
+                        R.string.stats_blocking_details_fmt,
+                        computed.blockedMessages
+                    )
+
+                    // "Top blocked apps" header above list
+                    b.tvListHeader.visibility = if (computed.rows.isEmpty()) View.GONE else View.VISIBLE
+                    if (!computed.rows.isEmpty()) {
+                        b.tvListHeader.text = getString(R.string.stats_runtime_top_blocked)
+                    }
+
                     b.emptyText.isVisible = computed.rows.isEmpty()
                     if (b.emptyText.isVisible) {
                         b.emptyText.gravity = Gravity.CENTER
-                        b.emptyText.text = getString(R.string.stats_empty)
+                        b.emptyText.text = getString(R.string.stats_blocking_empty)
                     }
 
-                    blockAdapter.submit(computed.rows)
+                    lastBlockRows = computed.rows
+                    applyAndShow()
                 }
 
                 is RuntimeComputed -> {
@@ -447,23 +877,20 @@ class StatsActivity : AppCompatActivity() {
                     b.tvTodaySubtitle.visibility = View.VISIBLE
                     b.tvTodaySubtitle.text = getString(R.string.stats_runtime_subtitle)
 
-                    runtimeAdapter.submit(computed.rows)
+                    lastRuntimeRows = computed.rows
+                    applyAndShow()
 
                     b.emptyText.isVisible = computed.rows.isEmpty() && computed.runtimeMs <= 0L
                     if (b.emptyText.isVisible) {
                         b.emptyText.gravity = Gravity.CENTER
-                        b.emptyText.text = getString(R.string.stats_empty)
+                        b.emptyText.text = statsEmptyMessage()
                     }
 
                     // Info card shows runtime summary
                     b.cardInfo.visibility = View.VISIBLE
                     b.tvInfoLabel.text = rangeLabel()
                     b.tvInfoPrimary.text = prettyMs(computed.runtimeMs)
-                    b.tvInfoSecondary.text = getString(
-                        R.string.stats_runtime_summary_fmt,
-                        prettyMs(computed.runtimeMs),
-                        prettyMs(computed.totalBlockedMs)
-                    )
+                    b.tvInfoSecondary.text = getString(R.string.stats_runtime_secondary_caption)
 
                     // Move "Top blocked apps" OUT of the box:
                     b.tvInfoDetails.visibility = View.GONE
@@ -476,30 +903,142 @@ class StatsActivity : AppCompatActivity() {
                     b.tvTodaySubtitle.visibility = View.VISIBLE
                     b.tvTodaySubtitle.text = getString(R.string.stats_other_subtitle)
 
-                    val totalEvents = computed.emergencyUsed + computed.nfcUsed + computed.schedulesExecuted
-
+                    // "Other" tiles live inside the info card section in the layout.
+                    // Keep the card visible, but hide the big header fields so we don't show a generic "total" summary above the tiles.
                     b.cardInfo.visibility = View.VISIBLE
-                    b.tvInfoLabel.text = rangeLabel()
-                    b.tvInfoPrimary.text = NumberFormat.getInstance().format(totalEvents)
-                    b.tvInfoSecondary.text = getString(R.string.stats_other_primary_caption)
+                    b.tvInfoLabel.visibility = View.GONE
+                    b.tvInfoPrimary.visibility = View.GONE
+                    b.tvInfoSecondary.visibility = View.GONE
+                    b.tvInfoDetails.visibility = View.GONE
 
                     b.llInfoRows.visibility = View.VISIBLE
                     b.tvInfoNote.visibility = View.VISIBLE
-                    b.tvInfoNote.text = getString(R.string.stats_other_not_in_total)
+                    b.tvInfoNote.text = getString(R.string.stats_other_note_totals)
 
-                    b.tvRowEmergency.text = getString(R.string.stats_other_line_emergency, computed.emergencyUsed)
-                    b.tvRowNfc.text = getString(R.string.stats_other_line_nfc_scans, computed.nfcUsed)
-                    b.tvRowSchedules.text = getString(R.string.stats_other_line_schedules_executed, computed.schedulesExecuted)
-                    b.tvRowBlockedApps.text = getString(R.string.stats_other_line_blocked_apps, computed.blockedAppsNow)
+                    // Hide optional tiles when the feature isn't enabled or has never been used.
+                    // NOTE: we are inside a coroutine scope here, so `this` would refer to CoroutineScope.
+                    // We need the Activity (Context) instance.
+                    val qrEnabled = at.saltyy.switchly.data.prefs.AutomationModeStore.isQrAllowed(this@StatsActivity)
+                    val showQr = qrEnabled && (computed.qrTotal > 0 || computed.qrScans > 0)
+                    b.cardOtherQr.visibility = if (showQr) View.VISIBLE else View.GONE
 
-                    b.emptyText.isVisible = (totalEvents == 0 && computed.blockedAppsNow == 0)
+                    val showTemp = (computed.tempTotal > 0 || computed.tempEnables > 0)
+                    b.cardOtherTempEnable.visibility = if (showTemp) View.VISIBLE else View.GONE
+
+                    val showLimits = (computed.limitsTotal > 0 || computed.limitsReached > 0)
+                    b.cardOtherLimitReached.visibility = if (showLimits) View.VISIBLE else View.GONE
+
+                    val showAttempts = (computed.blockedAttemptsTotal > 0 || computed.blockedAttempts > 0)
+                    b.cardOtherAttempts.visibility = if (showAttempts) View.VISIBLE else View.GONE
+
+                    b.tvOtherEmergencyCount.text = NumberFormat.getInstance().format(computed.emergencyUsed)
+                    b.tvOtherNfcCount.text = NumberFormat.getInstance().format(computed.nfcUsed)
+                    b.tvOtherSchedulesCount.text = NumberFormat.getInstance().format(computed.schedulesExecuted)
+                    b.tvOtherQrCount.text = NumberFormat.getInstance().format(computed.qrScans)
+                    b.tvOtherTempEnableCount.text = NumberFormat.getInstance().format(computed.tempEnables)
+                    b.tvOtherLimitReachedCount.text = NumberFormat.getInstance().format(computed.limitsReached)
+                    b.tvOtherBlockedAppsCount.text = NumberFormat.getInstance().format(computed.blockedAppsNow)
+                    b.tvOtherAttemptsCount.text = NumberFormat.getInstance().format(computed.blockedAttempts)
+
+                    b.tvOtherProfilesCount.text = NumberFormat.getInstance().format(computed.profilesCount)
+                    b.tvOtherSchedulesEnabledCount.text = NumberFormat.getInstance().format(computed.enabledSchedules)
+                    b.tvOtherLimitedAppsCount.text = NumberFormat.getInstance().format(computed.limitedApps)
+                    b.tvOtherEmergencyTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.emergencyTotal)
+                    )
+                    b.tvOtherNfcTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.nfcTotal)
+                    )
+                    b.tvOtherSchedulesTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.schedulesTotal)
+                    )
+                    b.tvOtherQrTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.qrTotal)
+                    )
+                    b.tvOtherTempEnableTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.tempTotal)
+                    )
+                    b.tvOtherLimitReachedTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.limitsTotal)
+                    )
+                    b.tvOtherBlockedAppsTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.blockedAppsTotal)
+                    )
+
+                    b.tvOtherAttemptsTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.blockedAttemptsTotal)
+                    )
+                    b.tvOtherProfilesTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.profilesTotal)
+                    )
+                    b.tvOtherSchedulesEnabledTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.enabledSchedulesTotal)
+                    )
+                    b.tvOtherLimitedAppsTotal.text = getString(
+                        R.string.stats_other_total_fmt,
+                        NumberFormat.getInstance().format(computed.limitedAppsTotal)
+                    )
+
+                    balanceOtherGrid(b.gridOtherTiles, b.otherGridSpacer)
+
+                    val isQrEmpty = !showQr || computed.qrScans == 0
+                    val isTempEmpty = !showTemp || computed.tempEnables == 0
+                    val isLimitsEmpty = !showLimits || computed.limitsReached == 0
+                    b.emptyText.isVisible = (
+                        computed.emergencyUsed == 0 &&
+                            computed.nfcUsed == 0 &&
+                            computed.schedulesExecuted == 0 &&
+                            isQrEmpty &&
+                            isTempEmpty &&
+                            isLimitsEmpty &&
+                            computed.blockedAppsNow == 0
+                        )
                     if (b.emptyText.isVisible) {
                         b.emptyText.gravity = Gravity.CENTER
-                        b.emptyText.text = getString(R.string.stats_empty)
+                        b.emptyText.text = statsEmptyMessage()
                     }
                 }
             }
         }
+    }
+
+    // The previous text ("No app limits …") was misleading when users DO have limits, but simply haven't generated stats in the selected range yet.
+    private fun statsEmptyMessage(): String {
+        val hasAnyLimits = runCatching {
+            at.saltyy.switchly.data.prefs.UsageLimitStore
+                .getAllLimitedPackagesAnyProfile(this)
+                .isNotEmpty()
+        }.getOrDefault(false) || runCatching {
+            at.saltyy.switchly.data.prefs.DomainLimitStore
+                .getDomainsWithLimit(this)
+                .isNotEmpty()
+        }.getOrDefault(false)
+
+        return if (hasAnyLimits) {
+            getString(R.string.stats_empty_no_data)
+        } else {
+            getString(R.string.stats_empty_no_limits)
+        }
+    }
+
+    private fun balanceOtherGrid(grid: android.widget.GridLayout, spacer: View) {
+        // GridLayout keeps column positions when some children are GONE, which can look like "2 left/3 right" with holes. 
+        // Instead of spanning tiles, we add a small invisible spacer tile to keep the total visible item count even.
+        val visibleCount = (0 until grid.childCount)
+            .map { grid.getChildAt(it) }
+            .count { it.isVisible && it.id != spacer.id }
+
+        spacer.isVisible = visibleCount % 2 == 1
     }
 
     private fun computeForMode(profile: String, mode: Mode, range: Range): ComputedBase {
@@ -529,7 +1068,7 @@ class StatsActivity : AppCompatActivity() {
             addAll(UsageLimitStore.getAllEverLimitedPackages(this@StatsActivity))
             addAll(UsageLimitStore.getAllLimitedPackagesAnyProfile(this@StatsActivity))
             addAll(ProfileStore.getBlockedForProfile(this@StatsActivity, profile))
-        }.toList().sorted()
+        }.toList().filter { isInstalled(it) }.sorted()
 
         val everLimitedSet = UsageLimitStore.getAllEverLimitedPackages(this).toHashSet()
         val blockedAlwaysSet = ProfileStore.getBlockedForProfile(this@StatsActivity, profile).toHashSet()
@@ -624,13 +1163,23 @@ class StatsActivity : AppCompatActivity() {
                         attemptCount = attemptsFor(pkg)
                     )
                 }.filter { it.blockedMs > 0L || it.blockedCount > 0 || it.attemptCount > 0 }
-                    .sortedWith(compareByDescending<BlockStatsRow> { it.blockedMs }.thenBy { it.appName.lowercase() })
+                    .sortedWith(compareByDescending<BlockStatsRow> { it.attemptCount }.thenBy { it.appName.lowercase() })
+
+                val totalBlockedMs = rows.sumOf { it.blockedMs }
+                val totalBlocks = rows.sumOf { it.blockedCount }
+                val totalAttempts = rows.sumOf { it.attemptCount }
+                // Show all-time inbox count (not just the selected range)
+                val blockedMessages = blockedInboxCountOverall(profile)
 
                 BlockingComputed(
                     pkgs = pkgs,
                     weekDays = weekDays,
                     yearNow = yearNow,
                     monthNow1 = monthNow1,
+                    totalBlockedMs = totalBlockedMs,
+                    totalBlocks = totalBlocks,
+                    totalAttempts = totalAttempts,
+                    blockedMessages = blockedMessages,
                     rows = rows
                 )
             }
@@ -645,28 +1194,26 @@ class StatsActivity : AppCompatActivity() {
                 }
 
                 val rows = pkgs.mapNotNull { pkg ->
-                    val blockedMs = blockedMsFor(pkg)
-                    val blocks = blockedCountFor(pkg)
                     val attempts = attemptsFor(pkg)
 
-                    if (blockedMs <= 0L && blocks <= 0 && attempts <= 0) return@mapNotNull null
+                    // Runtime view: focus on "how often you tried while blocked" (attempts).
+                    // Blocked time is noisy/unreliable in this app's flow, so we don't surface it here.
+                    if (attempts <= 0) return@mapNotNull null
 
                     RuntimeBlockedRow(
                         packageName = pkg,
                         appName = resolveLabel(pm, pkg),
-                        blockedMs = blockedMs,
-                        blockedCount = blocks,
+                        blockedMs = 0L,
+                        blockedCount = 0,
                         attemptCount = attempts,
-                        scoreMs = blockedMs
+                        scoreMs = attempts.toLong()
                     )
                 }.sortedWith(
-                    compareByDescending<RuntimeBlockedRow> { it.blockedMs }
-                        .thenByDescending { it.attemptCount }
-                        .thenByDescending { it.blockedCount }
+                    compareByDescending<RuntimeBlockedRow> { it.attemptCount }
                         .thenBy { it.appName.lowercase() }
                 )
 
-                val totalBlockedMs = rows.sumOf { it.blockedMs }
+                val totalBlockedMs = 0L
 
                 RuntimeComputed(
                     pkgs = pkgs,
@@ -688,6 +1235,8 @@ class StatsActivity : AppCompatActivity() {
                     Range.OVERALL -> at.saltyy.switchly.data.prefs.EmergencyUnlockCountStore.getOverall(this)
                 }
 
+                val emergencyTotal = at.saltyy.switchly.data.prefs.EmergencyUnlockCountStore.getOverall(this)
+
                 val nfcUsed = when (range) {
                     Range.TODAY -> NfcScanCountStore.getToday(this)
                     Range.WEEK -> NfcScanCountStore.getForLastNDays(this, weekDays)
@@ -695,6 +1244,8 @@ class StatsActivity : AppCompatActivity() {
                     Range.YEAR -> NfcScanCountStore.getForYear(this, yearNow)
                     Range.OVERALL -> NfcScanCountStore.getOverall(this)
                 }
+
+                val nfcTotal = NfcScanCountStore.getOverall(this)
 
                 val schedulesExecuted = when (range) {
                     Range.TODAY -> ScheduleExecutionCountStore.getToday(this)
@@ -704,9 +1255,73 @@ class StatsActivity : AppCompatActivity() {
                     Range.OVERALL -> ScheduleExecutionCountStore.getOverall(this)
                 }
 
+                val schedulesTotal = ScheduleExecutionCountStore.getOverall(this)
+
+                val qrScans = when (range) {
+                    Range.TODAY -> at.saltyy.switchly.data.prefs.QrScanCountStore.getToday(this)
+                    Range.WEEK -> at.saltyy.switchly.data.prefs.QrScanCountStore.getForLastNDays(this, weekDays)
+                    Range.MONTH -> at.saltyy.switchly.data.prefs.QrScanCountStore.getForMonth(this, yearNow, monthNow1)
+                    Range.YEAR -> at.saltyy.switchly.data.prefs.QrScanCountStore.getForYear(this, yearNow)
+                    Range.OVERALL -> at.saltyy.switchly.data.prefs.QrScanCountStore.getOverall(this)
+                }
+
+                val qrTotal = at.saltyy.switchly.data.prefs.QrScanCountStore.getOverall(this)
+
+                val tempEnables = when (range) {
+                    Range.TODAY -> at.saltyy.switchly.data.prefs.TempEnableCountStore.getToday(this)
+                    Range.WEEK -> at.saltyy.switchly.data.prefs.TempEnableCountStore.getForLastNDays(this, weekDays)
+                    Range.MONTH -> at.saltyy.switchly.data.prefs.TempEnableCountStore.getForMonth(this, yearNow, monthNow1)
+                    Range.YEAR -> at.saltyy.switchly.data.prefs.TempEnableCountStore.getForYear(this, yearNow)
+                    Range.OVERALL -> at.saltyy.switchly.data.prefs.TempEnableCountStore.getOverall(this)
+                }
+
+                val tempTotal = at.saltyy.switchly.data.prefs.TempEnableCountStore.getOverall(this)
+
+                val limitsReached = when (range) {
+                    Range.TODAY -> at.saltyy.switchly.data.prefs.LimitHitCountStore.getToday(this)
+                    Range.WEEK -> at.saltyy.switchly.data.prefs.LimitHitCountStore.getForLastNDays(this, weekDays)
+                    Range.MONTH -> at.saltyy.switchly.data.prefs.LimitHitCountStore.getForMonth(this, yearNow, monthNow1)
+                    Range.YEAR -> at.saltyy.switchly.data.prefs.LimitHitCountStore.getForYear(this, yearNow)
+                    Range.OVERALL -> at.saltyy.switchly.data.prefs.LimitHitCountStore.getOverall(this)
+                }
+
+                val limitsTotal = at.saltyy.switchly.data.prefs.LimitHitCountStore.getOverall(this)
+
+                val profilesCount = at.saltyy.switchly.data.prefs.ProfileStore.getProfiles(this).size
+                val profilesTotal = profilesCount
+
+                val enabledSchedules = at.saltyy.switchly.data.prefs.ScheduleStore.getAll(this)
+                    .count { it.enabled && it.profile == profile }
+                val enabledSchedulesTotal = enabledSchedules
+
+                val limitedApps = at.saltyy.switchly.data.prefs.UsageLimitStore.getAllLimitedPackagesAnyProfile(this).size
+                val limitedAppsTotal = limitedApps
+
+
                 val blockedAppsNow = pkgs.count { pkg ->
                     blockedMsFor(pkg) > 0L || blockedCountFor(pkg) > 0 || attemptsFor(pkg) > 0
                 }
+
+                val blockedAppsTotal: Int = if (range == Range.OVERALL) {
+                    blockedAppsNow
+                } else {
+                    val oa = buildOverallAgg()
+                    if (oa == null) 0 else pkgs.count { pkg ->
+                        (oa.blockedMs[pkg] ?: 0L) > 0L ||
+                            (oa.blockedCount[pkg] ?: 0) > 0 ||
+                            (oa.attemptCount[pkg] ?: 0) > 0
+                    }
+                }
+
+                val blockedAttempts = when (range) {
+                    Range.TODAY -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getTodayTotal(this)
+                    Range.WEEK -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getForLastNDaysTotal(this, weekDays)
+                    Range.MONTH -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getForMonthTotal(this, yearNow, monthNow1)
+                    Range.YEAR -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getForYearTotal(this, yearNow)
+                    Range.OVERALL -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getOverallTotal(this)
+                }
+
+                val blockedAttemptsTotal = at.saltyy.switchly.data.prefs.BlockAttemptStore.getOverallTotal(this)
 
                 OtherComputed(
                     pkgs = pkgs,
@@ -714,9 +1329,27 @@ class StatsActivity : AppCompatActivity() {
                     yearNow = yearNow,
                     monthNow1 = monthNow1,
                     emergencyUsed = emergencyUsed,
+                    emergencyTotal = emergencyTotal,
                     nfcUsed = nfcUsed,
+                    nfcTotal = nfcTotal,
                     schedulesExecuted = schedulesExecuted,
-                    blockedAppsNow = blockedAppsNow
+                    schedulesTotal = schedulesTotal,
+                    qrScans = qrScans,
+                    qrTotal = qrTotal,
+                    tempEnables = tempEnables,
+                    tempTotal = tempTotal,
+                    limitsReached = limitsReached,
+                    limitsTotal = limitsTotal,
+                    profilesCount = profilesCount,
+                    profilesTotal = profilesTotal,
+                    enabledSchedules = enabledSchedules,
+                    enabledSchedulesTotal = enabledSchedulesTotal,
+                    limitedApps = limitedApps,
+                    limitedAppsTotal = limitedAppsTotal,
+                    blockedAppsNow = blockedAppsNow,
+                    blockedAppsTotal = blockedAppsTotal,
+                    blockedAttempts = blockedAttempts,
+                    blockedAttemptsTotal = blockedAttemptsTotal
                 )
             }
         }
@@ -763,7 +1396,7 @@ class StatsActivity : AppCompatActivity() {
             ""
         } else {
             val denom = usedTotal.coerceAtLeast(1L)
-            val percent = ((overLimitTotal.toDouble() / denom.toDouble()) * 100.0).toInt().coerceIn(0, 100)
+            val percent = ((overLimitTotal.toDouble()/denom.toDouble()) * 100.0).toInt().coerceIn(0, 100)
             if (percent == 0) getString(R.string.stats_insights_ratio_none)
             else getString(R.string.stats_insights_ratio_fmt, percent)
         }
@@ -878,14 +1511,14 @@ class StatsActivity : AppCompatActivity() {
 
     private fun prettyMs(ms: Long): String {
         if (ms <= 0L) return "0m"
-        val totalSec = (ms / 1000L).toInt()
-        val h = totalSec / 3600
-        val m = (totalSec % 3600) / 60
+        val totalSec = (ms/1000L).toInt()
+        val h = totalSec/3600
+        val m = (totalSec % 3600)/60
         return if (h > 0) "%dh %02dm".format(h, m) else "%dm".format(m)
     }
 
     private fun prettyMinutesShort(ms: Long): String {
-        val m = (ms / 60_000L).toInt().coerceAtLeast(0)
+        val m = (ms/60_000L).toInt().coerceAtLeast(0)
         return "${m}m"
     }
 
@@ -979,7 +1612,7 @@ class StatsActivity : AppCompatActivity() {
             ""
         } else {
             val denom = usedTotal.coerceAtLeast(1L)
-            val percent = ((overLimitTotal.toDouble() / denom.toDouble()) * 100.0).toInt().coerceIn(0, 100)
+            val percent = ((overLimitTotal.toDouble()/denom.toDouble()) * 100.0).toInt().coerceIn(0, 100)
             if (percent == 0) getString(R.string.stats_insights_ratio_none)
             else getString(R.string.stats_insights_ratio_fmt, percent)
         }
@@ -1022,7 +1655,7 @@ class StatsActivity : AppCompatActivity() {
             return if (current >= 10 * 60_000L) getString(R.string.stats_insights_trend_new)
             else getString(R.string.stats_insights_trend_no_data)
         }
-        val delta = ((current - previous).toDouble() / previous.toDouble()) * 100.0
+        val delta = ((current - previous).toDouble()/previous.toDouble()) * 100.0
         val pct = abs(delta).toInt().coerceAtMost(999)
         val arrow = when {
             delta > 0.5 -> "↑"
@@ -1103,7 +1736,7 @@ class StatsActivity : AppCompatActivity() {
             val dropMs = prev - cur
             if (dropMs < minDropMs) continue
 
-            val dropPct = ((dropMs.toDouble() / prev.toDouble()) * 100.0).toInt().coerceIn(1, 999)
+            val dropPct = ((dropMs.toDouble()/prev.toDouble()) * 100.0).toInt().coerceIn(1, 999)
             if (dropPct > bestDropPct) {
                 bestDropPct = dropPct
                 best = Improvement(

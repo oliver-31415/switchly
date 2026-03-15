@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Topbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            style="@style/Switchly.TopBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
+            app:title="@string/blocked_websites_title"
+            app:navigationIcon="@drawable/arrow_back_ios_24" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+	<LinearLayout
+	    android:id="@+id/content"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:orientation="vertical"
+	    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+	    <LinearLayout
+	        android:id="@+id/websiteToggleContainer"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical"
+	        android:paddingStart="16dp"
+	        android:paddingEnd="16dp"
+	        android:paddingTop="12dp"
+	        android:paddingBottom="8dp">
+
+	        <com.google.android.material.card.MaterialCardView
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            app:cardUseCompatPadding="true"
+	            app:cardElevation="0dp"
+	            app:cardBackgroundColor="?android:attr/colorBackground"
+	            app:strokeWidth="0dp">
+
+	            <LinearLayout
+	                android:layout_width="match_parent"
+	                android:layout_height="wrap_content"
+	                android:orientation="vertical"
+	                android:padding="16dp">
+
+	                <androidx.appcompat.widget.SwitchCompat
+	                    android:id="@+id/swWebsitesEnabled"
+	                    android:layout_width="match_parent"
+	                    android:layout_height="wrap_content"
+	                    android:text="@string/block_websites"
+	                    android:textSize="16sp" />
+
+	                <TextView
+	                    android:layout_width="match_parent"
+	                    android:layout_height="wrap_content"
+	                    android:layout_marginTop="8dp"
+	                    android:text="@string/block_websites_desc"
+	                    android:textColor="?attr/colorOnSurface"
+	                    android:alpha="0.7" />
+	            </LinearLayout>
+
+	        </com.google.android.material.card.MaterialCardView>
+
+	    </LinearLayout>
+
+	    <androidx.recyclerview.widget.RecyclerView
+	        android:id="@+id/list"
+	        android:layout_width="match_parent"
+	        android:layout_height="0dp"
+	        android:layout_weight="1"
+	        android:padding="16dp" />
+
+	</LinearLayout>
+
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:padding="16dp"
+        android:text="@string/blocked_websites_empty"
+        android:textColor="?attr/colorOnSurface"
+        android:alpha="0.7"
+        android:visibility="gone" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="18dp"
+        android:contentDescription="@string/blocked_websites_add_title"
+        app:srcCompat="@drawable/add_24"
+        app:layout_anchorGravity="bottom|end"
+        app:layout_anchor="@id/content" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

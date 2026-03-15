@@ -2,23 +2,23 @@ package at.saltyy.switchly.feature.stats
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.graphics.drawable.Drawable
+import android.util.LruCache
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.databinding.RowUsageStatBinding
+import at.saltyy.switchly.theme.AccentColor
 
-/**
- * Uses the same pretty row as Usage (icon + progress bar), but for per-app blocked time.
- */
+// Uses the same pretty row as Usage (icon + progress bar), but for Runtime insights.
 class RuntimeBlockedAdapter : ListAdapter<RuntimeBlockedRow, RuntimeBlockedAdapter.VH>(DIFF) {
 
     private var maxMs: Long = 0L
 
     fun submit(rows: List<RuntimeBlockedRow>) {
-        // Use scoreMs so we still render meaningful bars even if blockedMs is 0
-        // (e.g. because we redirect to home very fast).
-        maxMs = rows.maxOfOrNull { it.blockedMs } ?: 0L
+        // scoreMs is our sorting/progress metric (currently: attempts as a Long)
+        maxMs = rows.maxOfOrNull { it.scoreMs } ?: 0L
         submitList(rows)
     }
 
@@ -32,39 +32,34 @@ class RuntimeBlockedAdapter : ListAdapter<RuntimeBlockedRow, RuntimeBlockedAdapt
     }
 
     class VH(private val b: RowUsageStatBinding) : RecyclerView.ViewHolder(b.root) {
+
+        companion object {
+            private val iconCache = LruCache<String, Drawable>(120)
+        }
         fun bind(row: RuntimeBlockedRow, maxMs: Long) {
             val ctx = b.root.context
-            b.tvApp.text = row.appName
-            b.tvMeta.text = if (row.blockedMs > 0L) {
-                // Real blocked time (no fake minutes)
-                buildString {
-                    append(ctx.getString(R.string.stats_blocked_time_fmt, StatsFormat.prettyMs(row.blockedMs)))
-                    if (row.attemptCount > 0) {
-                        append(" • Attempts ")
-                        append(row.attemptCount)
-                    }
-                    if (row.blockedCount > 0) {
-                        append(" • Blocks ")
-                        append(row.blockedCount)
-                    }
-                }
+
+            // App icon
+            val cached = iconCache.get(row.packageName)
+            if (cached != null) {
+                b.ivAppIcon.setImageDrawable(cached)
             } else {
-                // No blocked time recorded (very fast redirect), but still show counts
-                buildString {
-                    append("0 min blocked")
-                    if (row.attemptCount > 0) {
-                        append(" • Attempts ")
-                        append(row.attemptCount)
-                    }
-                    if (row.blockedCount > 0) {
-                        append(" • Blocks ")
-                        append(row.blockedCount)
-                    }
+                runCatching {
+                    val icon = ctx.packageManager.getApplicationIcon(row.packageName)
+                    iconCache.put(row.packageName, icon)
+                    b.ivAppIcon.setImageDrawable(icon)
+                }.onFailure {
+                    b.ivAppIcon.setImageResource(R.mipmap.ic_launcher_round)
                 }
             }
 
-            val rel = if (maxMs <= 0L) 0 else ((row.blockedMs.toDouble() / maxMs.toDouble()) * 100.0).toInt().coerceIn(0, 100)
+            b.tvApp.text = row.appName
+            // Runtime: blocked time is unreliable/noisy, so we show attempts only.
+            b.tvMeta.text = ctx.getString(R.string.stats_attempts_line, row.attemptCount)
+
+            val rel = if (maxMs <= 0L) 0 else ((row.scoreMs.toDouble()/maxMs.toDouble()) * 100.0).toInt().coerceIn(0, 100)
             b.progress.progress = rel
+            b.progress.progressTintList = AccentColor.getActiveColor(ctx)
 
             // Share of total isn't necessary here; keep it simple but consistent.
             b.tvPercent.text = ctx.getString(R.string.percent_fmt, rel)

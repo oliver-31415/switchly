@@ -1,14 +1,12 @@
 package at.saltyy.switchly.util
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 /**
  * Defensive SharedPreferences accessors.
- *
  * Firestore/JSON/etc. can occasionally rehydrate integral values as Long (or String).
- * SharedPreferences is type-strict and will throw ClassCastException if you call getInt()
- * when the stored type is not Int.
- *
+ * SharedPreferences is type-strict and will throw ClassCastException if you call getInt() when the stored type is not Int.
  * These helpers avoid crashes and "heal" the stored value back to the expected type.
  */
 fun SharedPreferences.getIntCompat(key: String, def: Int = 0): Int {
@@ -21,7 +19,7 @@ fun SharedPreferences.getIntCompat(key: String, def: Int = 0): Int {
             is String -> any.toIntOrNull() ?: def
             else -> def
         }
-        edit().putInt(key, v).apply()
+        edit { putInt(key, v) }
         v
     }
 }

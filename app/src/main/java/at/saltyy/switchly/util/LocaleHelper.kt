@@ -9,22 +9,17 @@ import androidx.core.os.LocaleListCompat
 
 /**
  * Helper for managing the app-specific language setting.
- *
- * Uses AppCompatDelegate application locales instead of a custom
- * configuration wrapper (modern, lint-clean approach).
+ * Uses AppCompatDelegate application locales instead of a custom configuration wrapper (modern, lint-clean approach).
  */
 object LocaleHelper {
 
     private const val PREFS = "switchly_prefs"
 
-    // Stored language value:
-    // "system" = follow system language
-    // otherwise a language tag like "en", "de", ...
+    // Stored language value: "system" = follow system language therwise a language tag like "en", "de", ...
     private const val KEY_LANG = "app_language"
 
     /**
      * Returns the persisted app language setting.
-     *
      * Defaults to "system" if none is stored.
      */
     fun getSavedLanguage(context: Context): String {
@@ -43,7 +38,6 @@ object LocaleHelper {
 
     /**
      * Returns a simple ContextWrapper.
-     *
      * No custom Configuration wrapping is needed anymore because
      * AppCompatDelegate handles per-app locales internally.
      */
@@ -53,7 +47,6 @@ object LocaleHelper {
 
     /**
      * Applies the given language using AppCompatDelegate.
-     *
      * An empty language tag means "follow system locale".
      */
     private fun applyLocale(lang: String) {

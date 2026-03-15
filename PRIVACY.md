@@ -1,5 +1,4 @@
 # Privacy Notes
-
 This document is a **high-level** overview of data handling in Switchly.
 It is not legal advice.
 

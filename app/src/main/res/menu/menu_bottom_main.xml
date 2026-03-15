@@ -3,17 +3,17 @@
 
     <item
         android:id="@+id/nav_home"
-        android:icon="@drawable/apps_24"
+        android:icon="@drawable/app_blocking_black_24"
         android:title="@string/nav_home" />
-
-    <item
-        android:id="@+id/nav_schedules"
-        android:icon="@drawable/schedule_24"
-        android:title="@string/nav_schedules" />
 
     <item
         android:id="@+id/nav_stats"
         android:icon="@drawable/bar_chart_24"
         android:title="@string/nav_stats" />
+
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/tune_24"
+        android:title="@string/nav_settings" />
 
 </menu>

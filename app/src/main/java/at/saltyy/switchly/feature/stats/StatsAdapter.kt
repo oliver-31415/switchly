@@ -4,6 +4,8 @@ import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.graphics.drawable.Drawable
+import android.util.LruCache
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -40,8 +42,25 @@ class StatsAdapter : ListAdapter<StatsRow, StatsAdapter.VH>(DIFF) {
 
     class VH(private val b: RowUsageStatBinding) : RecyclerView.ViewHolder(b.root) {
 
+        companion object {
+            private val iconCache = LruCache<String, Drawable>(120)
+        }
+
         fun bind(row: StatsRow, range: RangeLabel, maxUsedInList: Long, totalUsedInList: Long) {
             val ctx = itemView.context
+
+            val cached = iconCache.get(row.packageName)
+            if (cached != null) {
+                b.ivAppIcon.setImageDrawable(cached)
+            } else {
+                runCatching {
+                    val icon = ctx.packageManager.getApplicationIcon(row.packageName)
+                    iconCache.put(row.packageName, icon)
+                    b.ivAppIcon.setImageDrawable(icon)
+                }.onFailure {
+                    b.ivAppIcon.setImageResource(R.mipmap.ic_launcher_round)
+                }
+            }
 
             b.tvApp.visibility = View.VISIBLE
             b.tvMeta.visibility = View.VISIBLE
@@ -71,18 +90,18 @@ class StatsAdapter : ListAdapter<StatsRow, StatsAdapter.VH>(DIFF) {
             b.progress.max = 100
             b.progress.progressTintList = defaultProgressTint
 
-            // WEEK / MONTH / YEAR / OVERALL
+            // WEEK/MONTH/YEAR/OVERALL
             if (range != RangeLabel.TODAY) {
                 b.tvMeta.setTextColor(defaultMetaColors)
                 b.tvPercent.setTextColor(defaultPercentColors)
                 b.progress.progressTintList = defaultProgressTint
 
                 val relPercent = if (maxUsedInList > 0L) {
-                    ((usedMs.toDouble() / maxUsedInList.toDouble()) * 100).toInt()
+                    ((usedMs.toDouble()/maxUsedInList.toDouble()) * 100).toInt()
                 } else 0
 
                 val sharePercent = if (totalUsedInList > 0L) {
-                    ((usedMs.toDouble() / totalUsedInList.toDouble()) * 100).toInt()
+                    ((usedMs.toDouble()/totalUsedInList.toDouble()) * 100).toInt()
                 } else 0
 
                 b.progress.progress = relPercent.coerceIn(0, 100)
@@ -105,7 +124,7 @@ class StatsAdapter : ListAdapter<StatsRow, StatsAdapter.VH>(DIFF) {
             }
 
             val percentOfLimit = if (limitMs > 0L) {
-                ((usedMs.toDouble() / limitMs.toDouble()) * 100).toInt()
+                ((usedMs.toDouble()/limitMs.toDouble()) * 100).toInt()
             } else 0
 
             b.progress.progress = if (limitMs > 0L) min(percentOfLimit, 100) else 0
@@ -138,9 +157,9 @@ class StatsAdapter : ListAdapter<StatsRow, StatsAdapter.VH>(DIFF) {
 
         private fun formatMsPretty(ms: Long): String {
             if (ms <= 0L) return "0m"
-            val totalSec = (ms / 1000L).toInt()
-            val h = totalSec / 3600
-            val m = (totalSec % 3600) / 60
+            val totalSec = (ms/1000L).toInt()
+            val h = totalSec/3600
+            val m = (totalSec % 3600)/60
             val s = totalSec % 60
             return when {
                 h == 0 && m == 0 -> "${s}s"

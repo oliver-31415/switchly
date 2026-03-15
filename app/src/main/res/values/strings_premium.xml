@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- =========================================================
+         PREMIUM: Screen title + summary
+         ========================================================= -->
+    <string name="premium_title">Switchly Premium</string>
+    <string name="premium_summary">Unlock premium features.</string>
+    <string name="premium_short_desc">Unlock Wi-Fi/Bluetooth schedules, detailed statistics, and more premium controls.</string>
+
+    <!-- =========================================================
+         PREMIUM: Status/ownership
+         ========================================================= -->
+    <string name="premium_active_header">Active premium features</string>
+    <string name="premium_status_active">Active</string>
+    <string name="premium_status_inactive">Premium is not active yet</string>
+    <string name="premium_already_owned">You already have Premium</string>
+
+    <!-- =========================================================
+         PREMIUM: Purchase/restore flow
+         ========================================================= -->
+    <string name="premium_button_buy">Buy Premium</string>
+    <string name="premium_button_restore">Restore purchases</string>
+    <string name="premium_checking_purchases">Checking purchases…</string>
+    <string name="premium_button_thanks">Thanks for your support!</string>
+
+    <!-- =========================================================
+         PREMIUM: Feature cards
+         ========================================================= -->
+    <string name="premium_unlock_title">Themes &amp; colors</string>
+    <string name="premium_unlock_desc">Unlock additional accent colors and the color picker for fully personalized themes.</string>
+
+    <string name="premium_nfc_title">More NFC options</string>
+    <string name="premium_nfc_desc">Unlock custom unlock durations beyond the presets.</string>
+
+    <string name="premium_automation_title">Automations</string>
+    <string name="premium_automation_desc">Unlock advanced automation features, including time, Wi-Fi, and Bluetooth triggers.</string>
+
+    <string name="premium_stats_title">Statistics &amp; insights</string>
+    <string name="premium_stats_desc">Unlock detailed usage insights to see how often you use Switchly and which apps distract you most.</string>
+
+    <!-- =========================================================
+         PREMIUM: Gate/lock messages
+         ========================================================= -->
+    <string name="premium_required_for_theme">This color is only available with Switchly Premium.</string>
+
+    <!-- =========================================================
+         PREMIUM: Gratitude/support
+         ========================================================= -->
+    <string name="premium_support_note">Thanks for supporting Switchly 💜</string>
+
+</resources>

@@ -12,7 +12,6 @@ class BlockingEngine {
         val enabled: Boolean,
         val emergencyBypass: Boolean,
         val blockedPrefixes: Set<String>,
-        /** Exact package names that are currently temporarily allowed. */
         val tempAllowedPkgs: Set<String>
     )
 

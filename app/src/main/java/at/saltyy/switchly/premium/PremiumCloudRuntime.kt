@@ -16,8 +16,7 @@ import com.google.firebase.firestore.SetOptions
  *
  * Notes:
  * - This is only a mirror for cloud-based features or remote diagnostics.
- * - The authoritative premium state always comes from local Play Billing
- *   via PremiumManager.
+ * - The authoritative premium state always comes from local Play Billing via PremiumManager.
  */
 object PremiumCloudRuntime {
 

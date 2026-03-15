@@ -4,7 +4,10 @@
 
     <!-- Networking (Firebase Authentication + Cloud Sync) -->
     <uses-permission android:name="android.permission.INTERNET" />
-
+    
+    <!-- Usage Access (Screen time stats) -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    
     <!-- Allows checking whether the device is online/offline (used by Firebase + sync logic) -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -73,7 +76,7 @@
     <!-- Allows Camera for QR Code -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Camera hardware is optional (ChromeOS / devices without camera) -->
+    <!-- Camera hardware is optional (ChromeOS/devices without camera) -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -95,7 +98,7 @@
         android:name=".app.App"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.Switchly"
         android:supportsRtl="true">
 
@@ -108,6 +111,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            Play Billing (manifest-merged from the billing library).
+            Prevent external/accidental launches of ProxyBillingActivity without required extras, which can crash with a null PendingIntent on some devices/OS versions.
+        -->
+        <activity
+            android:name="com.android.billingclient.api.ProxyBillingActivity"
+            android:exported="false"
+            android:enabled="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:launchMode="singleTask" />
 
         <!-- Settings -->
         <activity
@@ -145,7 +161,13 @@
         <!-- NFC writer -->
         <activity
             android:name=".nfc.NfcWriterActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Switchly" />
+
+        <activity
+            android:name=".nfc.NfcWriteWaitingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Switchly" />
 
         <!-- NFC deep links -->
         <activity
@@ -161,7 +183,7 @@
                 <data android:scheme="switchly" android:host="profile" android:pathPattern=".*" />
             </intent-filter>
 
-            <!-- Optional: also handle app links / browser deep links -->
+            <!-- Optional: also handle app links/browser deep links -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -206,6 +228,11 @@
             android:exported="false"
             android:label="@string/stats_title" />
 
+        <activity
+            android:name=".feature.stats.BlockStatsDetailActivity"
+            android:exported="false"
+            android:label="@string/stats_block_detail_title" />
+
         <!-- Permissions screen -->
         <activity
             android:name=".feature.settings.PermissionsActivity"
@@ -220,6 +247,28 @@
         <activity
             android:name=".feature.settings.ToggleOptionsActivity"
             android:exported="false" />
+
+        <!-- Troubleshooting -->
+        <activity
+            android:name=".feature.settings.TroubleshootingActivity"
+            android:exported="false"
+            android:label="@string/troubleshooting_title"
+            android:parentActivityName=".feature.settings.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.settings.SettingsActivity" />
+        </activity>
+
+        <!-- Blocked notifications inbox -->
+        <activity
+            android:name=".feature.inbox.BlockedInboxActivity"
+            android:exported="false"
+            android:label="@string/blocked_inbox_title"
+            android:parentActivityName=".feature.settings.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.settings.SettingsActivity" />
+        </activity>
 
         <!-- QR Scanner -->
         <activity
@@ -237,10 +286,79 @@
             android:exported="false"
             android:theme="@style/Theme.Switchly" />
 
+        <!-- What's new (release notes) -->
+        <activity
+            android:name=".feature.about.WhatsNewActivity"
+            android:exported="false"
+            android:label="@string/settings_changelog_title"
+            android:parentActivityName=".feature.settings.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.settings.SettingsActivity" />
+        </activity>
+
+        <!-- Support -->
+        <activity
+            android:name=".feature.support.SupportActivity"
+            android:exported="false"
+            android:label="@string/support_title"
+            android:parentActivityName=".feature.settings.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.settings.SettingsActivity" />
+        </activity>
+        
+        <!-- Screen Time Dashboard -->
+        <activity
+            android:name=".feature.usage.ScreenTimeDashboardActivity"
+            android:exported="false" />
+
+        <!-- Screen Time Detail -->
+        <activity
+            android:name=".feature.usage.ScreenTimeDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.usage.WebsiteDetailActivity"
+            android:exported="false" />
+
+        <!-- Manage Blocked Websites -->
+        <activity
+            android:name=".feature.settings.ManageBlockedWebsitesActivity"
+            android:exported="false" />
+
+        <!-- InApp Blocking -->
+        <activity
+            android:name=".feature.settings.InAppBlockingActivity"
+            android:exported="false" />
+
+        <!-- Manage Paired Tags -->
+        <activity
+            android:name=".feature.settings.ManagePairedTagsActivity"
+            android:exported="false" />
+
+        <!-- App Info -->
+        <activity
+            android:name=".feature.about.AppInfoActivity"
+            android:exported="false" />
+
+        <!-- Device Info -->
+        <activity
+            android:name=".feature.about.DeviceInfoActivity"
+            android:exported="false" />
+            
+        <!-- Developer Info -->
+        <activity
+            android:name=".feature.about.OtherSwitchlyProductsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".feature.about.DeveloperInfoActivity"
+            android:exported="false" />
+
         <!-- Tag discovered -->
         <receiver
             android:name=".nfc.NfcReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.nfc.action.TAG_DISCOVERED" />
             </intent-filter>
@@ -249,7 +367,7 @@
         <!-- re-register watcher after app updates -->
         <receiver
             android:name=".platform.receiver.system.PostUpdateReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
@@ -258,7 +376,7 @@
         <!-- restart watcher after device reboot -->
         <receiver
             android:name=".platform.receiver.system.BootCompletedReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
@@ -268,11 +386,21 @@
         <!-- Replan schedules when system time/timezone changes -->
         <receiver
             android:name=".platform.receiver.system.TimeChangeReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.DATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Re-evaluate schedules when device is unlocked/user becomes present -->
+        <receiver
+            android:name=".platform.receiver.system.UserUnlockReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT" />
+                <action android:name="android.intent.action.USER_UNLOCKED" />
             </intent-filter>
         </receiver>
 

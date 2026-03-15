@@ -24,9 +24,7 @@ object PremiumManager {
         return p.getBoolean(KEY_PREMIUM_FROM_PLAY, false)
     }
 
-    /**
-     * Used by PremiumRuntime when Billing finds a valid purchase.
-     */
+    // Used by PremiumRuntime when Billing finds a valid purchase.
     fun setPremiumFromPlay(ctx: Context, active: Boolean) {
         Log.d(TAG, "setPremiumFromPlay: $active")
         prefs(ctx).edit {
@@ -37,16 +35,12 @@ object PremiumManager {
         PremiumCloudRuntime.syncPremiumFlag(ctx)
     }
 
-    /**
-     * Call this at app startup to check for existing purchases.
-     */
+    // Call this at app startup to check for existing purchases.
     fun refreshFromPlay(context: Context) {
         PremiumRuntime.refreshFromPlay(context)
     }
 
-    /**
-     * Called from UI (Premium info screen / Settings) to initiate a purchase.
-     */
+    // Called from UI (Premium info screen/Settings) to initiate a purchase.
     fun launchPurchase(activity: Activity, productId: String) {
         PremiumRuntime.launchPurchase(activity, productId)
     }

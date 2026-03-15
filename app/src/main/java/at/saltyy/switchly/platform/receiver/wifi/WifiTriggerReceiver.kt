@@ -14,6 +14,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.WifiRuleStore
 import at.saltyy.switchly.data.prefs.WifiTriggerStateStore
 import at.saltyy.switchly.platform.receiver.logic.WifiTriggerReceiverLogic
@@ -29,6 +30,11 @@ class WifiTriggerReceiver : BroadcastReceiver() {
     }
 
     private fun handle(context: Context) {
+        if (SwitchModeStore.hasActiveTemporaryOverride(context)) {
+            Log.d(TAG, "Temporary override active, skipping Wi-Fi profile apply/revert")
+            return
+        }
+
         if (
             ContextCompat.checkSelfPermission(
                 context,
@@ -76,10 +82,6 @@ class WifiTriggerReceiver : BroadcastReceiver() {
         WifiTriggerStateStore.clear(context)
     }
 
-    /**
-     * Pixel/Android 10+ reliability fix:
-     * Prefer WifiInfo from NetworkCapabilities.transportInfo (Q+), fall back to wifiManager.connectionInfo on older devices.
-     */
     private fun currentSsid(context: Context): String? {
         return try {
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

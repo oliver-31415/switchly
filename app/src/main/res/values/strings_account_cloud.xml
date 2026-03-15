@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- =========================================================
+         AUTH: Google sign-in
+         ========================================================= -->
+    <string name="auth_sign_in_success">Signed in with Google</string>
+    <string name="auth_sign_in_cancelled">Sign-in canceled</string>
+    <string name="auth_sign_in_failed_generic">Sign-in failed</string>
+    <string name="auth_sign_in_failed_fmt">Sign-in failed: %1$s</string>
+    <string name="auth_unexpected_error_sign_in">Unexpected error during sign-in</string>
+    <string name="auth_failed_to_process_google_token">Failed to process Google token</string>
+    <string name="auth_no_matching_google_accounts_found">No matching Google accounts found</string>
+    <string name="auth_missing_google_server_client_id">Missing Google server client ID (default_web_client_id). Check google-services.json and the Google Services plugin.</string>
+    <string name="auth_firebase_not_configured">Firebase is not configured (google-services.json missing?)</string>
+
+    <!-- =========================================================
+         ACCOUNT: Deletion flow
+         ========================================================= -->
+    <string name="settings_account_action_delete">Delete account</string>
+    <string name="settings_account_delete_confirm_title">Delete Switchly account?</string>
+    <string name="settings_account_delete_confirm_message">This will delete your Switchly cloud data, backups, and local settings. This cannot be undone.</string>
+
+    <string name="account_delete_recent_login_required">For security reasons, please sign in again with Google, then try deleting the account again.</string>
+    <string name="account_delete_failed_delete_account_fmt">Failed to delete account: %1$s</string>
+    <string name="account_delete_failed_delete_cloud_data_fmt">Failed to delete cloud data: %1$s</string>
+    <string name="account_delete_failed_delete_backups_fmt">Failed to delete backups: %1$s</string>
+    <string name="account_deleted">Account deleted</string>
+
+    <!-- =========================================================
+         CLOUD: Backup/restore operations
+         ========================================================= -->
+    <string name="cloud_backup_ok">Backup completed</string>
+    <string name="cloud_restore_ok_restart">Restore completed — restarting app…</string>
+
+    <string name="cloud_no_backups">No backups found</string>
+    <string name="cloud_not_logged_in">You are not signed in</string>
+
+    <string name="cloud_error_fmt">Error: %1$s</string>
+    <string name="cloud_error_no_backup_found">No backup found</string>
+    <string name="cloud_error_backup_not_found">Backup not found</string>
+    <string name="cloud_error_not_logged_in">Not signed in</string>
+
+    <!-- =========================================================
+         PREFERENCES: Cloud and account tiles
+         ========================================================= -->
+    <string name="pref_google_account_title">Google account</string>
+    <string name="pref_google_account_summary_logged_out">Not signed in to Google</string>
+
+    <string name="pref_cloud_backup_title">Back up to cloud</string>
+    <string name="pref_cloud_backup_summary">Manually back up your settings and profiles</string>
+
+    <string name="pref_cloud_restore_title">Restore from cloud</string>
+    <string name="pref_cloud_restore_summary">Load a backup and overwrite local settings</string>
+
+    <string name="pref_cloud_delete_backups_title">Delete cloud backups</string>
+    <string name="pref_cloud_delete_backups_summary">Remove selected backups from cloud history</string>
+
+    <!-- =========================================================
+         SETTINGS: Dialogs and confirmations
+         ========================================================= -->
+    <string name="settings_google_dialog_title">Google account</string>
+    <string name="settings_delete_backups_title">Delete backups</string>
+    <string name="settings_restore_choose_title">Choose backup</string>
+    <string name="settings_last_backup">Last backup: %1$s</string>
+
+    <string name="settings_confirm_backup_title">Back up</string>
+    <string name="settings_confirm_backup_message">Back up current settings and profiles to the cloud?</string>
+
+    <string name="settings_confirm_restore_title">Restore</string>
+    <string name="settings_confirm_restore_message">Load a backup from the cloud and overwrite local settings?</string>
+
+    <string name="settings_confirm_sign_out_message">Sign out of your Google account?</string>
+
+    <!-- =========================================================
+         SETTINGS: Account status states
+         ========================================================= -->
+    <string name="settings_google_logged_in">Signed in</string>
+    <string name="settings_google_logged_out">Not signed in</string>
+    <string name="settings_google_signing_in">Signing in…</string>
+    <string name="settings_signed_out">Signed out</string>
+
+    <!-- =========================================================
+         COMMON
+         ========================================================= -->
+    <string name="deleted">Deleted</string>
+    <string name="error_unknown">Unknown error</string>
+
+</resources>

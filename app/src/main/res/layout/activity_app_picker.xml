@@ -34,6 +34,7 @@
 
         <!-- Search field in the same style as FAQ -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/searchBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"

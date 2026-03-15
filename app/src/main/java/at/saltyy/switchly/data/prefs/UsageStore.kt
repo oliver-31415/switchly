@@ -47,9 +47,7 @@ object UsageStore {
         return persisted + buffered
     }
 
-    /**
-     * Explicit setter used for "clear today usage" when removing limit.
-     */
+    // Explicit setter used for "clear today usage" when removing limit.
     fun setUsageMsToday(ctx: Context, pkg: String, ms: Long) {
         if (pkg.isBlank()) return
         // Ensure buffered deltas are persisted before overwriting.
@@ -83,7 +81,6 @@ object UsageStore {
 
     /**
      * Sum usage for a range of days in the past.
-     *
      * @param startOffsetDays 0 = include today, 1 = start yesterday, 7 = start 7 days ago...
      * @param days number of days to sum (must be > 0)
      */

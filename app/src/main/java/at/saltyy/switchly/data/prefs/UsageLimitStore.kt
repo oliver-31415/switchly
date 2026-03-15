@@ -1,10 +1,20 @@
 package at.saltyy.switchly.data.prefs
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 
 object UsageLimitStore {
     private const val PREFS = "switchly_prefs"
+
+    private fun isInstalled(ctx: Context, pkg: String): Boolean {
+        return try {
+            ctx.packageManager.getApplicationInfo(pkg, 0)
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
 
     // per profile
     private const val PREFIX_LIMIT_MIN = "usage_limit_min__" // + profile + "__" + pkg
@@ -18,8 +28,7 @@ object UsageLimitStore {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = key(profile, pkg)
 
-        // If a user ever set a limit for this package, keep a permanent marker so
-        // stats can still show it even after the limit is removed later.
+        // If a user ever set a limit for this package, keep a permanent marker so stats can still show it even after the limit is removed later.
         if (minutes > 0) {
             prefs.edit { putBoolean(PREFIX_EVER_LIMIT + pkg, true) }
         }
@@ -34,9 +43,7 @@ object UsageLimitStore {
         }
     }
 
-    /**
-     * Returns all packages that had a limit set at least once (even if it's removed now).
-     */
+    // Returns all packages that had a limit set at least once (even if it's removed now).
     fun getAllEverLimitedPackages(ctx: Context): List<String> {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -54,14 +61,7 @@ object UsageLimitStore {
         val k = key(profile, pkg)
 
         if (!prefs.contains(k)) return 0
-
-        // Strict: we store limits as Int. If the stored type is wrong, drop it.
-        return try {
-            prefs.getInt(k, 0).coerceAtLeast(0)
-        } catch (_: ClassCastException) {
-            prefs.edit { remove(k) }
-            0
-        }
+        return readIntOrLongAndMigrate(prefs, k).coerceAtLeast(0)
     }
 
     fun getAllLimitedPackages(ctx: Context, profile: String): List<String> {
@@ -71,7 +71,6 @@ object UsageLimitStore {
         return prefs.all.keys.asSequence()
             .filter { it.startsWith(prefix) }
             .map { it.removePrefix(prefix) }
-            // values are stored as Int, so checking existence is enough, but keep correctness:
             .filter { pkg -> getLimitMinutes(ctx, profile, pkg) > 0 }
             .distinct()
             .sorted()
@@ -80,9 +79,7 @@ object UsageLimitStore {
 
     /**
      * Returns all packages that currently have a limit set in **any** profile.
-     *
-     * Limits are stored with keys like:
-     *   usage_limit_min__<profile>__<pkg>
+     * Limits are stored with keys like: usage_limit_min__<profile>__<pkg>
      */
     fun getAllLimitedPackagesAnyProfile(ctx: Context): List<String> {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -97,13 +94,13 @@ object UsageLimitStore {
             }
             .distinct()
             .sorted()
-            .toList()
+            .filter { isInstalled(ctx, it) }.toList()
     }
 
     /**
      * Best-effort limit for a package across ALL profiles.
      *
-     * This fixes cases where TODAY shows usage (bar) but no "Limit / %" because
+     * This fixes cases where TODAY shows usage (bar) but no "Limit/%" because
      * the current profile has no limit, but another profile does (e.g. YouTube).
      *
      * Strategy: take the MAX minutes found for that package across profiles.
@@ -114,10 +111,18 @@ object UsageLimitStore {
 
         for ((k, vAny) in prefs.all) {
             if (!k.startsWith(PREFIX_LIMIT_MIN)) continue
+
             // Key format: usage_limit_min__<profile>__<pkg>
+            // We only want exact pkg match at the end:
             if (!k.endsWith("__$pkg")) continue
 
-            val minutes = (vAny as? Int) ?: continue
+            val minutes = when (vAny) {
+                is Int -> vAny
+                is Long -> vAny.toInt()
+                is String -> vAny.toIntOrNull() ?: 0
+                else -> 0
+            }
+
             if (minutes > best) best = minutes
         }
 
@@ -127,5 +132,25 @@ object UsageLimitStore {
     fun hasAnyLimits(ctx: Context): Boolean {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return prefs.all.keys.any { it.startsWith(PREFIX_LIMIT_MIN) }
+    }
+
+    /**
+     * Reads Int if stored as Int, otherwise reads Long and migrates to Int.
+     * If key doesn't exist or type is something else -> returns 0.
+     */
+    private fun readIntOrLongAndMigrate(prefs: SharedPreferences, key: String): Int {
+        if (!prefs.contains(key)) return 0
+
+        return try {
+            prefs.getInt(key, 0)
+        } catch (_: ClassCastException) {
+            val v = try {
+                prefs.getLong(key, 0L).toInt()
+            } catch (_: Exception) {
+                0
+            }
+            prefs.edit { putInt(key, v) }
+            v
+        }
     }
 }

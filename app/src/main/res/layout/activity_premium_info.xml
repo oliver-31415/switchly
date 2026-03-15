@@ -64,10 +64,11 @@
                         <ImageView
                             android:layout_width="44dp"
                             android:layout_height="44dp"
+                            android:layout_marginStart="2dp"
                             android:layout_marginEnd="14dp"
                             android:src="@drawable/star_24"
                             android:contentDescription="@string/premium_title"
-                            app:tint="?attr/colorPrimary" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -93,7 +94,7 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Keep the status label small + compact (no huge multiline chips) -->
+                    <!-- Status row directly under the star block -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -102,39 +103,48 @@
                         android:gravity="center_vertical">
 
                         <com.google.android.material.chip.Chip
-                            android:id="@+id/tvPremiumStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/premium_status_inactive"
-                            android:textAllCaps="true"
-                            android:textStyle="bold"
-                            android:textSize="11sp"
-                            android:ellipsize="end"
-                            android:singleLine="true"
-                            android:checkable="false"
-                            android:clickable="false"
-                            android:focusable="false"
-                            app:closeIconVisible="false"
-                            app:ensureMinTouchTargetSize="false"
-                            app:chipMinHeight="0dp"
-                            app:chipCornerRadius="999dp"
-                            app:chipBackgroundColor="?attr/colorPrimary"
-                            android:textColor="?attr/colorOnPrimary" />
+                                android:id="@+id/tvPremiumStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="2dp"
+                                android:text="@string/premium_status_inactive"
+                                android:textAllCaps="true"
+                                android:textStyle="bold"
+                                android:textSize="11sp"
+                                android:ellipsize="end"
+                                android:singleLine="true"
+                                android:checkable="false"
+                                android:clickable="false"
+                                android:focusable="false"
+                                app:closeIconVisible="false"
+                                app:ensureMinTouchTargetSize="false"
+                                app:chipMinHeight="0dp"
+                                app:chipCornerRadius="999dp"
+                                app:chipBackgroundColor="?attr/colorPrimary"
+                                android:textColor="?attr/colorOnPrimary" />
 
                         <TextView
-                            android:id="@+id/tvPremiumThanks"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:layout_weight="1"
-                            android:text="@string/premium_support_note"
-                            android:textSize="13sp"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:maxLines="2"
-                            android:ellipsize="end"
-                            android:visibility="gone" />
+                                android:id="@+id/tvPremiumThanks"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:layout_weight="1"
+                                android:text="@string/premium_support_note"
+                                android:textSize="13sp"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:maxLines="2"
+                                android:ellipsize="end"
+                                android:visibility="gone" />
 
                     </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRestorePurchases"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/premium_button_restore" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -319,13 +329,6 @@
                     android:layout_height="wrap_content"
                     android:text="@string/premium_button_buy" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRestorePurchases"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/premium_button_restore" />
             </LinearLayout>
 
         </LinearLayout>

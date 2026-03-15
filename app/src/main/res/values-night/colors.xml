@@ -3,6 +3,27 @@
 
     <!-- Card surfaces -->
     <color name="switchly_card_bg">#FF1E1E1E</color>
-    <color name="switchly_card_stroke">#FF2C2C2C</color>
+    <color name="switchly_card_stroke">#00000000</color>
+
+    <!-- App background -->
+    <color name="switchly_bg">#FF121212</color>
+
+    <!-- Dividers inside cards -->
+    <color name="switchly_divider">#26FFFFFF</color>
+
+    <!-- Onboarding quick summary contrast colors (night) -->
+    <color name="onb_summary_surface">#FF171A1F</color>
+    <color name="onb_summary_text_primary">#FFF5F7FA</color>
+    <color name="onb_summary_text_on_dark">#FFF5F7FA</color>
+    <color name="onb_summary_text_secondary">#D9F5F7FA</color>
+
+    <color name="onb_summary_stroke">#40F5F7FA</color>
+    <color name="onb_summary_card_alt">#FF1D2229</color>
+
+    <!-- Unavailable app row (app picker) -->
+    <color name="unavailable_row_bg">#FF20242B</color>
+    <color name="unavailable_row_stroke">#26FFFFFF</color>
+    <color name="unavailable_chip_bg">#FF2A3038</color>
+    <color name="unavailable_chip_text">#FFE3E8EE</color>
 
 </resources>

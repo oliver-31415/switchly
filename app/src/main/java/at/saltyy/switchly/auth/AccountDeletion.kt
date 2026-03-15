@@ -16,7 +16,6 @@ import com.google.firebase.firestore.QuerySnapshot
 
 /**
  * Deletes the current Switchly account:
- *
  * 1) Deletes Firestore user document and its "backups" subcollection.
  * 2) Attempts to delete the FirebaseAuth user (may require recent login).
  * 3) Clears local SharedPreferences.

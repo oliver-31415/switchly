@@ -5,9 +5,7 @@ import androidx.core.content.edit
 
 /**
  * Persists whether the current profile was last applied by the Wi‑Fi trigger.
- *
- * This allows the Wi‑Fi receiver to **revert** the profile when Wi‑Fi disconnects
- * (or when no rule matches anymore) even if the app process was not running.
+ * This allows the Wi‑Fi receiver to **revert** the profile when Wi‑Fi disconnects (or when no rule matches anymore) even if the app process was not running.
  */
 object WifiTriggerStateStore {
     private const val PREFS = "switchly_wifi_trigger_state"

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- =========================================================
+         PROFILES: Entry points/screens
+         ========================================================= -->
+    <string name="manage_profiles">Profile verwalten</string>
+    <string name="manage_profiles_summary">Profile hinzufügen, umbenennen und konfigurieren.</string>
+    <string name="select_profile">Profil auswählen</string>
+    <string name="add_profile">Profil hinzufügen</string>
+    <string name="add_profile_subtitle">Erstelle ein neues Switchly-Profil.</string>
+    <string name="profile_row_subtitle">Zum Verwalten tippen.</string>
+
+    <!-- =========================================================
+         PROFILES: Actions
+         ========================================================= -->
+    <string name="action_set_active_profile">Als aktiv festlegen</string>
+    <string name="action_rename_profile">Profil umbenennen</string>
+    <string name="action_duplicate_profile">Profil duplizieren</string>
+    <string name="action_delete_profile">Profil löschen</string>
+    <string name="rename">Umbenennen</string>
+
+    <!-- =========================================================
+         PROFILES: Dialogs/form input
+         ========================================================= -->
+    <string name="delete_profile_confirm">„%1$s“ löschen?</string>
+    <string name="profile_rename_hint">Neuer Profilname</string>
+
+    <!-- =========================================================
+         PROFILES: Naming helpers/validation
+         ========================================================= -->
+    <string name="profile_label_default">Profil</string>
+    <string name="profile_duplicate_name_fmt">%1$s (Kopie)</string>
+    <string name="profile_duplicate_name_numbered_fmt">%1$s (Kopie %2$d)</string>
+    <string name="profile_name_exists">Ein Profil mit dem Namen „%1$s“ existiert bereits.</string>
+    <string name="profile_name_too_short">Bitte gib mindestens 2 Zeichen ein.</string>
+
+    <!-- =========================================================
+         PROFILES: Feedback/toasts/state
+         ========================================================= -->
+    <string name="profile_created">Profil „%1$s“ erstellt.</string>
+    <string name="profile_duplicated">Profil „%1$s“ dupliziert.</string>
+    <string name="profile_renamed">Profil „%1$s“ umbenannt.</string>
+    <string name="profile_set_active_toast">„%1$s“ ist jetzt aktiv.</string>
+    <string name="state_profile_on_status">Aktiv</string>
+
+</resources>

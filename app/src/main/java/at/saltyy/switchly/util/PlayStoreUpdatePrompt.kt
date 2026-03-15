@@ -9,6 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppPreferences
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
@@ -17,7 +18,6 @@ import kotlinx.coroutines.launch
 
 /**
  * Lightweight "Update available" prompt.
- *
  * Uses Play Core to detect if an update is available on Google Play.
  * When one is available, we show a dialog and open the Play Store listing.
  */
@@ -69,7 +69,7 @@ object PlayStoreUpdatePrompt {
                             openPlayStore(activity)
                         }
                         .setNegativeButton(activity.getString(R.string.not_now), null)
-                        .show()
+                        .showAccented()
 
                     prefs.setLastUpdatePromptedVersionCode(currentVersionCode)
                 }
@@ -83,7 +83,6 @@ object PlayStoreUpdatePrompt {
 
     /**
      * Checks if an update is available on Google Play.
-     *
      * This is useful for UI hints (e.g. showing "(update available)" in About).
      */
     fun checkAvailability(activity: Activity, onResult: (available: Boolean) -> Unit) {
@@ -102,8 +101,7 @@ object PlayStoreUpdatePrompt {
     }
 
     /**
-     * Manual / user initiated update prompt.
-     *
+     * Manual/user initiated update prompt.
      * - If an update is available: shows the dialog.
      * - If not: shows a small "up to date" toast.
      */
@@ -117,7 +115,7 @@ object PlayStoreUpdatePrompt {
                         openPlayStore(activity)
                     }
                     .setNegativeButton(activity.getString(R.string.cancel), null)
-                    .show()
+                    .showAccented()
             } else {
                 android.widget.Toast.makeText(
                     activity,

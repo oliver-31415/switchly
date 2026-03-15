@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
+import at.saltyy.switchly.theme.AccentColor
 
 class FaqAdapter(
     private val items: List<FaqListItem>
@@ -42,6 +43,7 @@ class FaqAdapter(
                 is FaqListItem.Header -> {
                     tvHeader.isVisible = true
                     tvHeader.text = item.title
+                    tvHeader.setTextColor(AccentColor.getAccentColorInt(itemView.context))
 
                     questionRow.isVisible = false
                     tvAnswer.isVisible = false

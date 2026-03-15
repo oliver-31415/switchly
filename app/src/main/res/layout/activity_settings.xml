@@ -17,8 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/settings"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:title="@string/settings" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Fragment-Container für Settings -->
@@ -29,6 +28,18 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="8dp"
+        android:paddingBottom="96dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <!-- Bottom-Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="?attr/colorSurface"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
+        app:menu="@menu/menu_bottom_main" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

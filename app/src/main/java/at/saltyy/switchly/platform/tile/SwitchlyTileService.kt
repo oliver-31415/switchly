@@ -5,6 +5,7 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 
@@ -26,6 +27,17 @@ class SwitchlyTileService : TileService() {
 
     private fun toggleAndRefresh() {
         val ctx = this
+
+        if (!AutomationModeStore.isTileAllowed(ctx)) {
+            Toast.makeText(
+                applicationContext,
+                getString(R.string.mode_blocked_tile_action),
+                Toast.LENGTH_SHORT
+            ).show()
+            refreshTile()
+            return
+        }
+
         val currentlyEnabled = SwitchModeStore.isEnabled(ctx)
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(ctx)
 
@@ -59,7 +71,7 @@ class SwitchlyTileService : TileService() {
             } else {
                 getString(R.string.qs_label_off)
             }
-            
+
             // App-Icon
             icon = Icon.createWithResource(
                 this@SwitchlyTileService,

@@ -11,7 +11,7 @@ object ProfileStore {
 
     private fun keyBlocked(profile: String) = "blocked_apps_$profile" // Set<String>
 
-    /** Returns all profiles (Set). */
+    // Returns all profiles (Set).
     fun getProfiles(context: Context): Set<String> {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -40,7 +40,7 @@ object ProfileStore {
         return initial
     }
 
-    /** Adds a new profile if it doesn't exist yet. */
+    // Adds a new profile if it doesn't exist yet.
     fun addProfile(context: Context, name: String): Boolean {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val current = getProfiles(context).toMutableSet()
@@ -50,7 +50,7 @@ object ProfileStore {
         return true
     }
 
-    /** Removes a profile and its blocked-app data. */
+    // Removes a profile and its blocked-app data.
     fun removeProfile(context: Context, name: String) {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val current = getProfiles(context).toMutableSet()
@@ -66,9 +66,11 @@ object ProfileStore {
 
             remove(keyBlocked(name))
         }
+
+        DomainLimitStore.onProfileRemoved(context, name)
     }
 
-    /** Renames a profile. */
+    // Renames a profile.
     fun renameProfile(context: Context, old: String, new: String): Boolean {
         if (old == new) return true
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -93,10 +95,12 @@ object ProfileStore {
                 putString(KEY_CURRENT, new)
             }
         }
+
+        DomainLimitStore.onProfileRenamed(context, old, new)
         return true
     }
 
-    /** Returns the currently active profile (creates one if missing). */
+    // Returns the currently active profile (creates one if missing).
     fun getCurrent(context: Context): String? {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val v = sp.getString(KEY_CURRENT, null)
@@ -109,7 +113,7 @@ object ProfileStore {
         return first
     }
 
-    /** Sets the currently active profile (only if it exists). */
+    // Sets the currently active profile (only if it exists).
     fun setCurrent(context: Context, name: String) {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val all = getProfiles(context)
@@ -118,18 +122,27 @@ object ProfileStore {
         }
     }
 
-    /** Returns all blocked package names for a specific profile. */
+    // Returns all blocked package names for a specific profile.
     fun getBlockedForProfile(context: Context, profile: String): Set<String> {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return try {
+        val raw = try {
             sp.getStringSet(keyBlocked(profile), emptySet()) ?: emptySet()
         } catch (_: ClassCastException) {
             sp.edit { remove(keyBlocked(profile)) }
             emptySet()
         }
+
+        if (raw.isEmpty()) return emptySet()
+
+        // Do NOT aggressively prune entries here.
+        // Reason:
+        // - Some OEMs can transiently report package lookup failures (especially around boot/unlock).
+        // - Auto-pruning can accidentally unselect user-critical apps (e.g. Settings).
+        // We keep the stored set as-is (minus blanks) and let users manage it explicitly.
+        return raw.filterTo(linkedSetOf()) { it.isNotBlank() }
     }
 
-    /** Updates the blocked-app list for the given profile. */
+    // Updates the blocked-app list for the given profile.
     fun setBlockedForProfile(context: Context, profile: String, pkgs: Set<String>) {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit { putStringSet(keyBlocked(profile), pkgs) }

@@ -36,6 +36,7 @@
 
             <!-- Action dropdown -->
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Switchly.DropdownLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/qr_action"
@@ -43,6 +44,7 @@
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/actionDropdown"
+                    style="@style/Switchly.DropdownText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none" />
@@ -51,6 +53,7 @@
             <!-- Profile dropdown (shown only for profile actions) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilProfile"
+                style="@style/Switchly.DropdownLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -60,6 +63,7 @@
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/profileDropdown"
+                    style="@style/Switchly.DropdownText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none" />
@@ -68,6 +72,7 @@
             <!-- Minutes dropdown (shown only for temp actions) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilMinutes"
+                style="@style/Switchly.DropdownLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -77,6 +82,7 @@
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/minutesDropdown"
+                    style="@style/Switchly.DropdownText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none" />

@@ -3,9 +3,7 @@ package at.saltyy.switchly
 import android.content.Context
 import at.saltyy.switchly.blocking.BlockingRuntime
 
-/**
- * Central helper to start the blocking watcher.
- */
+// Central helper to start the blocking watcher.
 object SwitchlyCore {
 
     fun ensureRunning(context: Context) {

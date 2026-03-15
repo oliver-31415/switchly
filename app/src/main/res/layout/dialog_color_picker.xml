@@ -18,7 +18,7 @@
         android:id="@+id/colorPreview"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:background="#2E8B57"
+        android:background="@color/accent_default_green"
         android:layout_marginBottom="16dp" />
 
     <TextView

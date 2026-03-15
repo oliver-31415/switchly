@@ -11,11 +11,10 @@ import java.util.Calendar
 import kotlin.math.max
 
 /**
- * Calculates upcoming schedule boundaries and manages the alarm
- * that triggers schedule re-evaluation.
+ * Calculates upcoming schedule boundaries and manages the alarm that triggers schedule re-evaluation.
  *
  * NOTE:
- * Inexact alarms can be deferred heavily in Doze, so time schedules may only apply when the device wakes / user opens the app.
+ * Inexact alarms can be deferred heavily in Doze, so time schedules may only apply when the device wakes/user opens the app.
  * We therefore prefer exact alarms *when allowed*, otherwise fall back to inexact.
  */
 object SchedulePlanner {
@@ -40,6 +39,10 @@ object SchedulePlanner {
     private const val FALLBACK_TICK_RC = 43
     private const val FALLBACK_INTERVAL_MS = 15 * 60 * 1000L
 
+    // Daily watchdog re-check around 00:05.
+    // Helps recover from OEM alarm delays/background restrictions by re-asserting the desired schedule state shortly after day rollover.
+    private const val DAILY_WATCHDOG_RC = 44
+
     fun updateNextAlarm(context: Context) {
         val ctx = context.applicationContext
 
@@ -47,7 +50,7 @@ object SchedulePlanner {
 
         val all = ScheduleStore.getAll(ctx).filter { it.enabled }
 
-        // WiFi / Bluetooth schedules are connection-triggered; ignore for time-based boundary calc if they are "always active".
+        // WiFi/Bluetooth schedules are connection-triggered; ignore for time-based boundary calc if they are "always active".
         val timeBased = all.filterNot { s ->
             val isConn = !s.wifiSsid.isNullOrBlank() || !s.btDeviceName.isNullOrBlank()
             isConn && s.startMinutes == 0 && s.endMinutes >= 1439
@@ -57,6 +60,7 @@ object SchedulePlanner {
             saveNextBoundary(ctx, -1)
             cancelAlarm(ctx)
             ensureFallbackAlarm(ctx, enabled = false)
+            ensureDailyWatchdog(ctx, enabled = all.isNotEmpty())
             return
         }
 
@@ -77,7 +81,7 @@ object SchedulePlanner {
 
         fun atMinutes(baseDay: Calendar, minutes: Int): Long {
             return (baseDay.clone() as Calendar).apply {
-                set(Calendar.HOUR_OF_DAY, minutes / 60)
+                set(Calendar.HOUR_OF_DAY, minutes/60)
                 set(Calendar.MINUTE, minutes % 60)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
@@ -146,10 +150,12 @@ object SchedulePlanner {
             val fireAt = max(nowMs + 1_000L, boundaryMs - EARLY_WINDOW_MS)
             scheduleAlarm(ctx, fireAt, boundaryMs)
             ensureFallbackAlarm(ctx, enabled = true)
+            ensureDailyWatchdog(ctx, enabled = true)
         } else {
             saveNextBoundary(ctx, -1)
             cancelAlarm(ctx)
             ensureFallbackAlarm(ctx, enabled = false)
+            ensureDailyWatchdog(ctx, enabled = all.isNotEmpty())
         }
     }
 
@@ -166,7 +172,6 @@ object SchedulePlanner {
 
     /**
      * Prefer exact alarms when allowed; otherwise fall back to inexact.
-     *
      * API notes:
      * - AlarmManager.canScheduleExactAlarms() exists on API 31+
      * - On <31 there isn't the same user-toggle mechanism; setExactAndAllowWhileIdle is usable without that check.
@@ -178,7 +183,7 @@ object SchedulePlanner {
         // Cancel first to avoid duplicates drifting around
         am.cancel(pi)
 
-        val canExact = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             runCatching { am.canScheduleExactAlarms() }.getOrDefault(false)
         } else {
             // On <31 there's no user-toggle for exact alarms like on S+
@@ -216,11 +221,48 @@ object SchedulePlanner {
         }
     }
 
+    private fun ensureDailyWatchdog(ctx: Context, enabled: Boolean) {
+        val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val pi = pendingDailyWatchdogIntent(ctx)
+
+        if (!enabled) {
+            am.cancel(pi)
+            return
+        }
+
+        val now = Calendar.getInstance()
+        val next = (now.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 5)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= now.timeInMillis) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        // Cancel first so we keep only one watchdog alarm.
+        am.cancel(pi)
+
+        val triggerAt = next.timeInMillis
+        val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching { am.canScheduleExactAlarms() }.getOrDefault(false)
+        } else {
+            true
+        }
+
+        if (canExact) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+        } else {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+        }
+    }
+
     private fun cancelAlarm(ctx: Context) {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        // Extras are ignored for PendingIntent identity, so boundaryMs doesn't matter here.
         am.cancel(pendingTickIntent(ctx, 0L))
         am.cancel(pendingFallbackIntent(ctx))
+        am.cancel(pendingDailyWatchdogIntent(ctx))
     }
 
     private fun pendingTickIntent(ctx: Context, boundaryMs: Long) =
@@ -230,7 +272,6 @@ object SchedulePlanner {
             Intent(ctx, ScheduleReceiver::class.java).apply {
                 action = ScheduleReceiver.ACTION_TICK
                 putExtra("alarm_reason", "time_boundary")
-                // IMPORTANT: evaluation uses this timestamp, not the receiver's wall-clock time.
                 putExtra("boundary_ms", boundaryMs)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -243,6 +284,17 @@ object SchedulePlanner {
             Intent(ctx, ScheduleReceiver::class.java).apply {
                 action = ScheduleReceiver.ACTION_TICK
                 putExtra("alarm_reason", "fallback_repeat")
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+    private fun pendingDailyWatchdogIntent(ctx: Context) =
+        PendingIntent.getBroadcast(
+            ctx,
+            DAILY_WATCHDOG_RC,
+            Intent(ctx, ScheduleReceiver::class.java).apply {
+                action = ScheduleReceiver.ACTION_TICK
+                putExtra("alarm_reason", "daily_watchdog")
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

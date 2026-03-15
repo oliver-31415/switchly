@@ -7,8 +7,8 @@ import androidx.core.content.edit
  * Runtime helper for schedule behavior:
  * - tracks whether Switchly was enabled by a schedule (used for disable-on-exit)
  * - tracks whether Switchly was disabled by a schedule (used for enable-on-exit)
- * - tracks whether an ENABLE_AND_DISABLE / DISABLE_AND_ENABLE schedule was active
- * - stores "last fired token" per schedule id (debounce for single-time / connection one-shot actions)
+ * - tracks whether an ENABLE_AND_DISABLE/DISABLE_AND_ENABLE schedule was active
+ * - stores "last fired token" per schedule id (debounce for single-time/connection one-shot actions)
  */
 object ScheduleRuntimeStore {
 
@@ -20,10 +20,12 @@ object ScheduleRuntimeStore {
     private const val KEY_HAD_ENABLE_AND_DISABLE = "had_enable_and_disable"
     private const val KEY_HAD_DISABLE_AND_ENABLE = "had_disable_and_enable"
 
-    // When the user manually changes the enabled state while a RANGE schedule is active,
-    // we mark a manual override so schedules won't immediately re-assert their state.
+    // When the user manually changes the enabled state while a RANGE schedule is active, we mark a manual override so schedules won't immediately re-assert their state.
     // The override is cleared automatically once no schedule matches anymore.
     private const val KEY_MANUAL_OVERRIDE_ACTIVE = "manual_override_active"
+    private const val KEY_LAST_TICK_MS = "last_tick_ms"
+    private const val KEY_LAST_EXECUTION_MS = "last_execution_ms"
+    private const val KEY_LAST_DISABLE_BLOCKED_NFC_MS = "last_disable_blocked_nfc_ms"
 
     private const val KEY_LAST_FIRED_PREFIX = "last_fired_" // + scheduleId -> token
 
@@ -91,4 +93,40 @@ object ScheduleRuntimeStore {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit { remove(KEY_LAST_FIRED_PREFIX + scheduleId) }
     }
+
+    fun markTickNow(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit { putLong(KEY_LAST_TICK_MS, System.currentTimeMillis()) }
+    }
+
+    fun getLastTickMs(ctx: Context): Long {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getLong(KEY_LAST_TICK_MS, 0L)
+    }
+
+    fun markExecutedNow(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit { putLong(KEY_LAST_EXECUTION_MS, System.currentTimeMillis()) }
+    }
+
+    fun getLastExecutionMs(ctx: Context): Long {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getLong(KEY_LAST_EXECUTION_MS, 0L)
+    }
+
+    fun markDisableBlockedByNfc(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit { putLong(KEY_LAST_DISABLE_BLOCKED_NFC_MS, System.currentTimeMillis()) }
+    }
+
+    fun getLastDisableBlockedByNfcMs(ctx: Context): Long {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getLong(KEY_LAST_DISABLE_BLOCKED_NFC_MS, 0L)
+    }
+
+    fun clearDisableBlockedByNfc(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit { remove(KEY_LAST_DISABLE_BLOCKED_NFC_MS) }
+    }
+
 }

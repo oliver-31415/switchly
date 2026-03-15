@@ -4,7 +4,6 @@ import at.saltyy.switchly.data.prefs.ScheduleStore
 
 /**
  * Pure Bluetooth trigger evaluation logic (no Android dependencies).
- *
  * In Switchly, Bluetooth triggers are currently part of schedules (ScheduleStore.Schedule.btDeviceName).
  */
 object BluetoothTriggerReceiverLogic {
@@ -42,6 +41,5 @@ object BluetoothTriggerReceiverLogic {
         return Match(scheduleId = s.id, profile = s.profile)
     }
 
-    fun hasActiveBluetoothSchedules(schedules: List<ScheduleStore.Schedule>): Boolean =
-        schedules.any { it.enabled && !it.btDeviceName.isNullOrBlank() }
+    fun hasActiveBluetoothSchedules(schedules: List<ScheduleStore.Schedule>): Boolean = schedules.any { it.enabled && !it.btDeviceName.isNullOrBlank() }
 }

@@ -6,7 +6,7 @@ import java.util.Calendar
 
 /**
  * Tracks whether a usage-limited app has reached its limit for today.
- * Once reached, we consider the app "blocked" until the next day reset (or until the user uses emergency bypass / temporary allow).
+ * Once reached, we consider the app "blocked" until the next day reset (or until the user uses emergency bypass/temporary allow).
  */
 object LimitReachedStore {
     private const val PREFS = "switchly_prefs"
@@ -17,13 +17,24 @@ object LimitReachedStore {
     fun markReachedToday(ctx: Context, pkg: String) {
         if (pkg.isBlank()) return
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        sp.edit { putBoolean(key(todayYmdInt(), pkg), true) }
+        val k = key(todayYmdInt(), pkg)
+        val already = sp.getBoolean(k, false)
+        sp.edit { putBoolean(k, true) }
+        if (!already) {
+            LimitHitCountStore.incrementToday(ctx)
+        }
     }
 
     fun isReachedToday(ctx: Context, pkg: String): Boolean {
         if (pkg.isBlank()) return false
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return sp.getBoolean(key(todayYmdInt(), pkg), false)
+    }
+
+    fun clearToday(ctx: Context, pkg: String) {
+        if (pkg.isBlank()) return
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit { remove(key(todayYmdInt(), pkg)) }
     }
 
     private fun todayYmdInt(): Int = ymdInt(Calendar.getInstance())

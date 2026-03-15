@@ -3,6 +3,8 @@ package at.saltyy.switchly.feature.stats
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.graphics.drawable.Drawable
+import android.util.LruCache
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -10,14 +12,14 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.databinding.RowUsageStatBinding
 import at.saltyy.switchly.theme.AccentColor
 
-class BlockStatsAdapter : ListAdapter<BlockStatsRow, BlockStatsAdapter.VH>(DIFF) {
+class BlockStatsAdapter(private val onRowClick: (BlockStatsRow) -> Unit) : ListAdapter<BlockStatsRow, BlockStatsAdapter.VH>(DIFF) {
 
-    private var maxBlockedMs: Long = 0L
-    private var totalBlockedMs: Long = 0L
+    private var maxAttempts: Int = 0
+    private var totalAttempts: Int = 0
 
     fun submit(rows: List<BlockStatsRow>) {
-        maxBlockedMs = rows.maxOfOrNull { it.blockedMs.coerceAtLeast(0L) } ?: 0L
-        totalBlockedMs = rows.sumOf { it.blockedMs.coerceAtLeast(0L) }
+        maxAttempts = rows.maxOfOrNull { it.attemptCount.coerceAtLeast(0) } ?: 0
+        totalAttempts = rows.sumOf { it.attemptCount.coerceAtLeast(0) }
         submitList(rows)
     }
 
@@ -27,55 +29,48 @@ class BlockStatsAdapter : ListAdapter<BlockStatsRow, BlockStatsAdapter.VH>(DIFF)
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.bind(getItem(position), maxBlockedMs, totalBlockedMs)
+        holder.bind(getItem(position), maxAttempts, totalAttempts, onRowClick)
     }
 
     class VH(private val b: RowUsageStatBinding) : RecyclerView.ViewHolder(b.root) {
-        fun bind(row: BlockStatsRow, maxBlockedMs: Long, totalBlockedMs: Long) {
+
+        companion object {
+            private val iconCache = LruCache<String, Drawable>(120)
+        }
+        fun bind(row: BlockStatsRow, maxAttempts: Int, totalAttempts: Int, onRowClick: (BlockStatsRow) -> Unit) {
             val ctx = itemView.context
+
+            val cached = iconCache.get(row.packageName)
+            if (cached != null) {
+                b.ivAppIcon.setImageDrawable(cached)
+            } else {
+                runCatching {
+                    val icon = ctx.packageManager.getApplicationIcon(row.packageName)
+                    iconCache.put(row.packageName, icon)
+                    b.ivAppIcon.setImageDrawable(icon)
+                }.onFailure {
+                    b.ivAppIcon.setImageResource(R.mipmap.ic_launcher_round)
+                }
+            }
+
+            itemView.setOnClickListener { onRowClick(row) }
 
             b.tvApp.text = row.appName
 
-            val blockedPretty = formatMsPretty(row.blockedMs)
-            b.tvMeta.text = ctx.getString(R.string.stats_blocked_time_fmt, blockedPretty)
-            val blocksStr = ctx.resources.getQuantityString(
-                R.plurals.stats_blocks_qty,
-                row.blockedCount,
-                row.blockedCount
-            )
-            val attemptsStr = ctx.resources.getQuantityString(
-                R.plurals.stats_attempts_qty,
-                row.attemptCount,
-                row.attemptCount
-            )
-            b.tvPercent.text = ctx.getString(R.string.stats_blocked_counts_join, blocksStr, attemptsStr)
+            // Blocking: show Attempts only (no blocks/blocked time).
+            b.tvMeta.text = ctx.getString(R.string.stats_attempts_line, row.attemptCount.coerceAtLeast(0))
 
+            val rel = if (maxAttempts <= 0) 0 else ((row.attemptCount.toDouble()/maxAttempts.toDouble()) * 100.0)
+                .toInt()
+                .coerceIn(0, 100)
             b.progress.visibility = View.VISIBLE
-            b.progress.max = 100
-            val relPercent = if (maxBlockedMs > 0L) {
-                ((row.blockedMs.toDouble() / maxBlockedMs.toDouble()) * 100).toInt()
-            } else 0
-            b.progress.progress = relPercent.coerceIn(0, 100)
+            b.progress.progress = rel
             b.progress.progressTintList = AccentColor.getActiveColor(ctx)
 
-            // Share percent appended if there is meaningful total
-            if (totalBlockedMs > 0L) {
-                val share = ((row.blockedMs.toDouble() / totalBlockedMs.toDouble()) * 100).toInt()
-                b.tvPercent.append("  •  ${share.coerceIn(0, 100)}%")
-            }
-        }
-
-        private fun formatMsPretty(ms: Long): String {
-            if (ms <= 0L) return "0m"
-            val totalSec = (ms / 1000L).toInt()
-            val h = totalSec / 3600
-            val m = (totalSec % 3600) / 60
-            val s = totalSec % 60
-            return when {
-                h == 0 && m == 0 -> "${s}s"
-                h == 0 -> if (s > 0) "${m}m ${s}s" else "${m}m"
-                else -> "%dh %02dm".format(h, m)
-            }
+            val share = if (totalAttempts <= 0) 0 else ((row.attemptCount.toDouble()/totalAttempts.toDouble()) * 100.0)
+                .toInt()
+                .coerceIn(0, 100)
+            b.tvPercent.text = ctx.getString(R.string.percent_fmt, share)
         }
     }
 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- =========================================================
+         QR: Entry points/navigation
+         ========================================================= -->
+    <string name="qr_title">QR</string>
+    <string name="qr_generate_title">Create QR code</string>
+    <string name="qr_scan_title">Scan QR code</string>
+
+    <!-- =========================================================
+         QR: Preference toggle
+         ========================================================= -->
+    <string name="pref_show_qr_code_title">QR code</string>
+    <string name="pref_show_qr_code_summary">Show a QR scan button on the home screen.</string>
+
+    <!-- =========================================================
+         QR: Permissions/errors
+         ========================================================= -->
+    <string name="permission_camera_required">Camera permission is required to scan QR codes.</string>
+    <string name="invalid_qr_code">Invalid QR code</string>
+
+    <!-- =========================================================
+         QR: Action selector
+         ========================================================= -->
+    <string name="qr_action">Action</string>
+    <string name="qr_action_enable">Enable</string>
+    <string name="qr_action_disable">Disable</string>
+    <string name="qr_action_toggle">Toggle</string>
+    <string name="qr_action_temp_enable">Temporary enable</string>
+    <string name="qr_action_temp_disable">Temporary disable</string>
+    <string name="qr_action_profile_enable">Enable profile</string>
+    <string name="qr_action_profile_disable">Disable profile</string>
+    <string name="qr_action_profile_toggle">Toggle profile</string>
+
+    <!-- =========================================================
+         QR: Profile helpers
+         ========================================================= -->
+    <string name="qr_profile_fallback">Profile</string>
+
+    <!-- =========================================================
+         QR: Duration/minutes picker
+         ========================================================= -->
+    <string name="qr_minutes">Minutes</string>
+    <string name="qr_minutes_5">5</string>
+    <string name="qr_minutes_10">10</string>
+    <string name="qr_minutes_30">30</string>
+    <string name="qr_minutes_60">60</string>
+    <string name="qr_minutes_120">120</string>
+    <string name="qr_minutes_default">10</string>
+    <string name="qr_minutes_custom">Custom…</string>
+    <string name="qr_minutes_custom_title">Custom minutes</string>
+    <string name="qr_minutes_hint">e.g. 45</string>
+
+    <!-- =========================================================
+         QR: Share/clipboard
+         ========================================================= -->
+    <string name="qr_clipboard_label">Switchly URI</string>
+
+</resources>

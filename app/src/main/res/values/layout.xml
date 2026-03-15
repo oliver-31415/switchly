@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Variant without ActionBar (overlay / blocker screens) -->
+    <!-- =========================
+         THEME: Blocker variant
+         ========================= -->
+
+    <!-- Variant without ActionBar (overlay/blocker screens) -->
     <!-- Fully opaque, no edge-to-edge; used e.g. for BlockerActivity -->
     <style name="Theme.Switchly.Blocker" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowIsTranslucent">false</item>
@@ -13,7 +17,10 @@
         <item name="android:windowBackground">?android:attr/colorBackground</item>
     </style>
 
-    <!-- === Toolbar / Buttons / Cards / Dropdowns === -->
+    <!-- =========================
+         COMPONENT STYLES: Toolbar/buttons/cards/chips
+         ========================= -->
+
     <!-- Unified top bar, uses current accent color -->
     <style name="Switchly.TopBar" parent="Widget.MaterialComponents.Toolbar">
         <!-- Background = current accent color -->
@@ -31,22 +38,139 @@
     <style name="Switchly.Button" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">?attr/colorPrimary</item>
         <item name="android:textColor">@android:color/white</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">52dp</item>
     </style>
 
-    <!-- Floating Action Button (e.g., Add Profile icon) -->
+    <!-- Primary button alias -->
+    <style name="Switchly.PrimaryButton" parent="Switchly.Button" />
+
+    <style name="Switchly.OutlinedButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="strokeColor">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">52dp</item>
+    </style>
+
+    <!-- Lightweight dialog/action buttons (no filled background) -->
+    <style name="Switchly.TextButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <!-- Floating Action Button -->
     <style name="Switchly.Fab" parent="Widget.MaterialComponents.FloatingActionButton">
         <item name="backgroundTint">?attr/colorPrimary</item>
         <item name="tint">@android:color/white</item>
     </style>
 
-    <!-- CardView appearance -->
+    <!-- Card shape appearance -->
+    <style name="ShapeAppearance.Switchly.Card" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">26dp</item>
+    </style>
+
+    <!-- Even rounder tiles (quick actions) -->
+    <style name="ShapeAppearance.Switchly.Tile" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">30dp</item>
+    </style>
+
     <style name="Switchly.Card" parent="Widget.MaterialComponents.CardView">
-        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Large</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Switchly.Card</item>
+        <item name="cardBackgroundColor">@color/switchly_card_bg</item>
+        <item name="strokeColor">@color/switchly_card_stroke</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardUseCompatPadding">true</item>
+    </style>
+
+    <!-- Tile cards in the dashboard quick actions -->
+    <style name="Switchly.TileCard" parent="Switchly.Card">
+        <item name="shapeAppearance">@style/ShapeAppearance.Switchly.Tile</item>
+        <item name="cardElevation">1dp</item>
+    </style>
+
+    <!-- Small divider inside cards -->
+    <style name="Switchly.Divider" parent="Widget.MaterialComponents.MaterialDivider">
+        <item name="dividerColor">@color/switchly_divider</item>
+        <item name="dividerThickness">1dp</item>
+    </style>
+    <!-- Small badges -->
+    <style name="Switchly.Chip" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipBackgroundColor">@color/switchly_divider</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="chipCornerRadius">14dp</item>
+        <item name="chipMinHeight">28dp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Small tile badge -->
+    <style name="Switchly.TileBadge">
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingStart">6dp</item>
+        <item name="android:paddingEnd">6dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:minHeight">18dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <!-- Day picker chips -->
+    <style name="Switchly.DayChip" parent="Widget.MaterialComponents.Chip.Filter">
+        <item name="chipCornerRadius">999dp</item>
+        <item name="chipMinHeight">36dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14sp</item>
+        <item name="chipStartPadding">9dp</item>
+        <item name="chipEndPadding">9dp</item>
+        <item name="textStartPadding">2dp</item>
+        <item name="textEndPadding">2dp</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="chipIconVisible">false</item>
+        <item name="closeIconVisible">false</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+    </style>
+
+    <!-- =========================
+         DROPDOWNS: TextInputLayout
+         ========================= -->
+
+    <!-- Default (non-dropdown) TextInputLayout styling used globally via theme -->
+    <style name="Switchly.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+    </style>
+
+    <!-- Default (non-dropdown) AutoCompleteTextView styling used globally via theme -->
+    <style name="Switchly.AutoCompleteText" parent="Widget.MaterialComponents.AutoCompleteTextView.OutlinedBox">
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body1</item>
     </style>
 
     <!-- Layout container for exposed dropdown menus -->
-    <style name="Switchly.DropdownLayout"
-        parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+    <style name="Switchly.DropdownLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
         <item name="boxStrokeWidth">1dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
         <item name="boxCornerRadiusTopStart">12dp</item>
@@ -63,8 +187,7 @@
     </style>
 
     <!-- Text appearance for dropdown input field -->
-    <style name="Switchly.DropdownText"
-        parent="Widget.MaterialComponents.AutoCompleteTextView.OutlinedBox">
+    <style name="Switchly.DropdownText" parent="Widget.MaterialComponents.AutoCompleteTextView.OutlinedBox">
         <item name="android:minHeight">56dp</item>
         <item name="android:paddingTop">12dp</item>
         <item name="android:paddingBottom">12dp</item>

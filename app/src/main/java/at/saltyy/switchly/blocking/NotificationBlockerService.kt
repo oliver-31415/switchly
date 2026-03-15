@@ -1,17 +1,20 @@
 package at.saltyy.switchly.blocking
 
+import android.app.Notification
 import android.content.SharedPreferences
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.LruCache
 import androidx.core.content.edit
+import at.saltyy.switchly.data.prefs.BlockedInboxStore
+import at.saltyy.switchly.data.prefs.BlockedNotificationEvent
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 
 /**
  * Hides notifications from apps that are currently blocked by the active profile.
- *
  * This runs only when the user grants Notification Listener Access in system settings.
  */
 class NotificationBlockerService : NotificationListenerService() {
@@ -25,6 +28,9 @@ class NotificationBlockerService : NotificationListenerService() {
 
     // Reduce repeated SharedPreferences reads for chatty apps.
     private val tempAllowCache = LruCache<String, Long>(64)
+
+    // Avoid spamming the inbox for noisy apps (log at most once per package every 15s)
+    private val inboxThrottle = LruCache<String, Long>(64)
 
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key.isNullOrBlank()) {
@@ -132,12 +138,55 @@ class NotificationBlockerService : NotificationListenerService() {
             // Remove the notification right away.
             // Note: some devices may still briefly show a heads-up before it disappears.
             cancelNotification(sbn.key)
+
+            // Best-effort: keep a small audit trail (metadata only)
+            val now = System.currentTimeMillis()
+            synchronized(inboxThrottle) {
+                val last = inboxThrottle.get(pkg) ?: 0L
+                if (now - last > 15_000L) {
+                    inboxThrottle.put(pkg, now)
+                    
+                    val n = sbn.notification
+                    val extras = n.extras
+                    val t = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim()
+                    val tx = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim()
+                    val big = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim()
+                    val sub = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()?.trim()
+                    val summary = extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString()?.trim()
+                    val groupKey = runCatching { sbn.groupKey }.getOrNull()
+                    val category = sbn.notification.category
+                    val channelId = sbn.notification.channelId
+
+                    fun clip(s: String?, max: Int): String? {
+                        val v = s?.replace("\n", " ")?.trim().orEmpty()
+                        if (v.isBlank()) return null
+                        return if (v.length > max) v.take(max) + "…" else v
+                    }
+
+                    BlockedInboxStore.add(
+                        ctx = this,
+                        event = BlockedNotificationEvent(
+                            timeMillis = now,
+                            pkg = pkg,
+                            profile = cachedProfile.orEmpty(),
+                            reason = "Blocked notification",
+                            title = clip(t, 200).orEmpty(),
+                            text = clip(tx, 280).orEmpty(),
+                            bigText = clip(big, 1600).orEmpty(),
+                            subText = clip(sub, 240).orEmpty(),
+                            summaryText = clip(summary, 240).orEmpty(),
+                            groupKey = clip(groupKey, 200).orEmpty(),
+                            category = clip(category, 100).orEmpty(),
+                            channelId = clip(channelId, 200).orEmpty()
+                        )
+                    )
+                }
+            }
         }
     }
 
     companion object {
         private const val PREFS = "switchly_prefs"
-
         private const val KEY_NOTIF_ENABLED = "block_notifications_enabled"
         private const val KEY_CURRENT_PROFILE = "current_profile"
         private const val KEY_BLOCKED_PREFIX = "blocked_apps_"

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- =========================================================
+         COMMON/ACCESSIBILITY
+         ========================================================= -->
+    <string name="app_icon">App-Symbol</string>
+
+    <!-- =========================================================
+         NAVIGATION
+         ========================================================= -->
+    <string name="nav_home">Blockierung</string>
+    <string name="nav_stats">Einblicke</string>
+    <string name="nav_settings">Einstellungen</string>
+
+    <!-- =========================================================
+         DASHBOARD: Profile + status
+         ========================================================= -->
+    <string name="dashboard_active_profile_fmt">Aktives Profil: %1$s</string>
+    <string name="dashboard_active_profile_unknown">Aktives Profil: —</string>
+    <string name="dashboard_nfc_locked_hint">Gesperrt: Switchly per NFC-Tag deaktivieren</string>
+    <string name="dashboard_quick_actions">Schnellaktionen</string>
+
+    <!-- =========================================================
+         DASHBOARD: Setup card
+         ========================================================= -->
+    <string name="dashboard_setup_title">Fast fertig</string>
+    <string name="dashboard_setup_subtitle">Aktiviere diese Punkte, damit die Blockierung zuverlässig funktioniert.</string>
+    <plurals name="dashboard_setup_subtitle_missing">
+        <item quantity="one">Aktiviere diesen Punkt, damit die Blockierung zuverlässig funktioniert.</item>
+        <item quantity="other">Aktiviere diese Punkte, damit die Blockierung zuverlässig funktioniert.</item>
+    </plurals>
+    <string name="dashboard_setup_desc">Schließe die erforderlichen Berechtigungen ab, damit Switchly Apps zuverlässig blockieren kann.</string>
+    <string name="dashboard_setup_missing_label">Noch fehlend</string>
+    <string name="dashboard_setup_cta">Einrichtung abschließen</string>
+
+    <!-- =========================================================
+         DASHBOARD: Blocked-now card
+         ========================================================= -->
+    <string name="dashboard_blocked_now_title">Gerade blockiert</string>
+    <string name="dashboard_blocked_now_off">Switchly ist AUS — nichts ist blockiert</string>
+    <string name="dashboard_blocked_now_all_allowed">Alles erlaubt ✅</string>
+    <string name="dashboard_blocked_now_emergency">Notfall-Entsperrung aktiv — alles erlaubt</string>
+    <string name="dashboard_blocked_now_reason_profile">Durch Profil blockiert</string>
+    <string name="dashboard_blocked_now_reason_limit">Limit erreicht</string>
+    <string name="dashboard_blocked_now_reason_attempts">Öffnen-Limit erreicht</string>
+
+    <plurals name="dashboard_blocked_now_more">
+        <item quantity="one">+%1$d weitere</item>
+        <item quantity="other">+%1$d weitere</item>
+    </plurals>
+    <string name="dashboard_blocked_now_more_preview">+3 weitere</string>
+
+    <!-- =========================================================
+         DASHBOARD: Missing badges
+         ========================================================= -->
+    <plurals name="dashboard_badge_missing">
+        <item quantity="one">%1$d fehlt</item>
+        <item quantity="other">%1$d fehlen</item>
+    </plurals>
+
+    <!-- =========================================================
+         DASHBOARD: Temporary mode
+         ========================================================= -->
+    <string name="dashboard_temp_chip">TEMP</string>
+    <string name="dashboard_temp_badge_enabled">TEMP AN • %1$s</string>
+    <string name="dashboard_temp_badge_disabled">TEMP AUS • %1$s</string>
+
+    <string name="dashboard_temp_remaining_fmt">Verbleibend: %1$s</string>
+    <string name="dashboard_temp_remaining_placeholder">Verbleibend: 00:00</string>
+
+    <string name="dashboard_temp_sheet_sub_enable">Blockierung für kurze Zeit aktivieren</string>
+    <string name="dashboard_temp_sheet_sub_disable">Switchly für kurze Zeit deaktivieren</string>
+    <string name="dashboard_temp_sheet_sub_disable_locked">Temporäres Deaktivieren ist gesperrt (NFC-Sperre ist aktiv). Nutze bei Bedarf die Notfall-Entsperrung.</string>
+    <string name="dashboard_temp_sheet_cancel_timer">Timer abbrechen</string>
+
+    <string name="dashboard_temp_hint">Halte die Haupttaste gedrückt, um temporär zu aktivieren/deaktivieren.</string>
+    <string name="dashboard_temp_hint_locked_nfc">Temporäres Deaktivieren ist nicht verfügbar, solange „NFC erforderlich“ aktiviert ist.</string>
+    <string name="dashboard_temp_nudge">Tipp: Nutze den temporären Modus für schnelle 5–60-Minuten-Sessions.</string>
+    <string name="dashboard_temp_discovery_done">Temporärer Modus bereit. Nutze ihn jederzeit per langem Drücken.</string>
+
+    <!-- =========================================================
+         DASHBOARD: Quick tiles/shortcuts
+         ========================================================= -->
+    <string name="dashboard_tile_permissions">Berechtigungen</string>
+    <string name="dashboard_tile_permissions_sub">Fehlendes beheben</string>
+    <string name="dashboard_tile_profiles">Profile</string>
+    <string name="dashboard_tile_profiles_sub">Erstellen &amp; bearbeiten</string>
+    <string name="dashboard_tile_toggle_options_sub">Sicherheit &amp; UI</string>
+    <string name="dashboard_tile_write_nfc_sub">Tag zum Umschalten antippen</string>
+
+    <!-- =========================================================
+         DASHBOARD: Main toggle
+         ========================================================= -->
+    <string name="dashboard_toggle_enable">Aktivieren</string>
+    <string name="dashboard_toggle_disable">Deaktivieren</string>
+
+    <!-- =========================================================
+         BLOCKING SCREEN/STATES
+         ========================================================= -->
+    <string name="blocked_list_title">Blockierte Apps</string>
+    <string name="blocked_app_default">App blockiert</string>
+    <string name="blocked_message">Du kannst diese App nicht nutzen, solange Switchly aktiv ist.</string>
+    <string name="no_blocked_apps">Keine blockierten Apps</string>
+
+    <!-- =========================================================
+         APP PICKER
+         ========================================================= -->
+    <string name="pick_apps">Apps auswählen</string>
+    <string name="search_apps">Apps suchen</string>
+
+    <!-- =========================================================
+         DASHBOARD: Emergency quick entry
+         ========================================================= -->
+    <string name="dashboard_emergency_hint_ready">Notfall-Entsperrung (15 Min/Tag)</string>
+    <string name="dashboard_emergency_hint_active">Notfall aktiv (%1$d Min) — tippe für Pause oder Ende</string>
+    <string name="dashboard_emergency_hint_paused">Notfall pausiert (%1$d Min) — tippe für Fortsetzen oder Ende</string>
+    <string name="dashboard_emergency_hint_used_today">Notfall-Entsperrung heute bereits genutzt</string>
+    <string name="dashboard_emergency_hint_disabled">Notfall-Entsperrung ist aus — aktiviere sie in der Blockiersteuerung</string>
+    <string name="dashboard_unavailable_hint_short">Auf diesem Gerät nicht installiert.</string>
+    <string name="dashboard_unavailable_hint_pick_apps">Auf diesem Gerät nicht installiert.\nÖffne „Apps auswählen“, um sie zu entfernen.</string>
+
+</resources>

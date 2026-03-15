@@ -6,11 +6,9 @@ import androidx.core.content.edit
 object WifiBtCache {
 
     private const val PREF = "switchly_triggers_cache"
-
     private const val K_WIFI_SSID = "wifi_ssid"
     private const val K_WIFI_BSSID = "wifi_bssid"
     private const val K_WIFI_TS = "wifi_ts"
-
     private const val K_BT_NAME = "bt_name"
     private const val K_BT_ADDR = "bt_addr"
     private const val K_BT_TS = "bt_ts"

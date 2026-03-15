@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.net.Uri
 import android.provider.Settings
 import android.view.View
 import android.widget.ImageButton
@@ -37,7 +38,26 @@ class AboutActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
-        // ---- values ----
+        // Hide sections we don't want to show in About
+        runCatching { findViewById<View>(R.id.rowDeveloper).visibility = View.GONE }
+        runCatching { findViewById<View>(R.id.rowDevice).visibility = View.GONE }
+        runCatching { findViewById<View>(R.id.rowAndroid).visibility = View.GONE }
+        runCatching { findViewById<View>(R.id.rowPackage).visibility = View.GONE }
+
+        val gitlab = getString(R.string.about_gitlab_url)
+        runCatching {
+            bindTile(
+                rootId = R.id.rowDiscord,
+                titleId = R.id.tvTitleDiscord,
+                subtitleId = R.id.tvSubtitleDiscord,
+                title = getString(R.string.about_gitlab_title),
+                subtitle = gitlab,
+                onClick = { openLink(gitlab) },
+                copyValue = gitlab
+            )
+        }
+
+        // values
         val appName = getString(R.string.app_name)
         val versionName = runCatching {
             val pi = packageManager.getPackageInfo(packageName, 0)
@@ -53,7 +73,7 @@ class AboutActivity : AppCompatActivity() {
         val email = getString(R.string.about_mail_address)
         val discord = getString(R.string.about_discord_url)
 
-        // ---- bind app info tiles ----
+        // bind app info tiles
         bindTile(
             rootId = R.id.rowAppName,
             titleId = R.id.tvTitleAppName,
@@ -126,7 +146,7 @@ class AboutActivity : AppCompatActivity() {
             copyValue = deviceModel
         )
 
-        // ---- developer info ----
+        // developer info
         bindTile(
             rootId = R.id.rowDeveloper,
             titleId = R.id.tvTitleDeveloper,
@@ -193,7 +213,7 @@ class AboutActivity : AppCompatActivity() {
 
         root.setOnLongClickListener {
             copyToClipboard(copyValue)
-            Toast.makeText(this, getString(R.string.about_copied), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.copied), Toast.LENGTH_SHORT).show()
             true
         }
     }
@@ -257,5 +277,11 @@ class AboutActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true
+    }
+
+    private fun openLink(url: String) {
+        runCatching {
+            startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+        }
     }
 }

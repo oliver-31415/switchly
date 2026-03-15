@@ -18,12 +18,15 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/write_nfc_tag"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/arrow_back_ios_24"
+            app:contentInsetStart="0dp"
+            app:contentInsetStartWithNavigation="0dp"
+            app:titleMarginStart="0dp"
+            />
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Scrollable content -->
     <ScrollView
-        android:id="@+id/contentRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingStart="16dp"
@@ -38,95 +41,186 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Profile -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilProfile"
+            <!-- Intro/instructions -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/nfc_profile_hint"
-                app:endIconMode="dropdown_menu">
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/status_border">
 
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/ddProfile"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none"
-                    android:importantForAutofill="no"
-                    android:hint="@null"
-                    android:dropDownWidth="match_parent"
-                    android:dropDownVerticalOffset="8dp" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Action -->
-            <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilAction"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:hint="@string/nfc_action_hint"
                     android:orientation="vertical"
-                    app:endIconMode="dropdown_menu">
+                    android:baselineAligned="false"
+                    android:padding="14dp">
 
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/ddAction"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:dropDownWidth="match_parent"
-                    android:dropDownVerticalOffset="8dp"
-                    android:hint="@null"
-                    android:importantForAutofill="no"
-                    android:inputType="none" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/nfc_write_intro_title"
+                            android:textStyle="bold"
+                            android:textSize="15sp" />
 
-            <!-- Temp disable duration (only visible when action = temp) -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilTime"
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="@string/nfc_write_onboarding_message"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="12sp" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Form card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="@string/nfc_duration_hint"
-                android:visibility="gone"
-                app:endIconMode="dropdown_menu">
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/status_border">
 
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/ddTime"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none"
-                    android:importantForAutofill="no"
-                    android:hint="@null"
-                    android:dropDownWidth="match_parent"
-                    android:dropDownVerticalOffset="8dp" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-            <TextView
-                android:id="@+id/tvTempHint"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/nfc_temp_hint_timer_behavior"
-                android:textSize="12sp"
-                android:visibility="gone" />
+                    <!-- Profile -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilProfile"
+                        style="@style/Switchly.DropdownLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/nfc_profile_hint"
+                        app:endIconMode="dropdown_menu">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/ddProfile"
+                            style="@style/Switchly.DropdownText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:importantForAutofill="no"
+                            android:hint="@null"
+                            android:dropDownWidth="wrap_content"
+                            android:dropDownVerticalOffset="8dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Action -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilAction"
+                        style="@style/Switchly.DropdownLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="@string/nfc_action_hint"
+                        android:orientation="vertical"
+                        app:endIconMode="dropdown_menu">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/ddAction"
+                            style="@style/Switchly.DropdownText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:dropDownWidth="wrap_content"
+                            android:dropDownVerticalOffset="8dp"
+                            android:hint="@null"
+                            android:importantForAutofill="no"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvActionHint"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/nfc_action_hint_default"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="12sp" />
+
+                        <ImageButton
+                            android:id="@+id/btnActionInfo"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="8dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/nfc_action_info_title"
+                            android:padding="6dp"
+                            android:src="@drawable/info_24"
+                            app:tint="?attr/colorOnSurface" />
+                    </LinearLayout>
+
+                    <!-- Temp disable duration (only visible when action = temp) -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilTime"
+                        style="@style/Switchly.DropdownLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="@string/nfc_duration_hint"
+                        android:visibility="gone"
+                        app:endIconMode="dropdown_menu">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/ddTime"
+                            style="@style/Switchly.DropdownText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:importantForAutofill="no"
+                            android:hint="@null"
+                            android:dropDownWidth="wrap_content"
+                            android:dropDownVerticalOffset="8dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/tvTempHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/nfc_temp_hint_timer_behavior"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Start/Cancel button -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnArmWrite"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/nfc_arm_write" />
+                android:text="@string/nfc_arm_write"
+                app:icon="@drawable/nfc_24"
+                app:iconPadding="10dp"
+                app:iconGravity="textStart" />
 
             <!-- Status -->
             <LinearLayout
                 android:id="@+id/statusRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:padding="12dp"
+                android:layout_marginTop="14dp"
+                android:padding="14dp"
                 android:gravity="center_vertical"
-                android:background="@color/status_surface"
                 android:visibility="gone"
-                android:animateLayoutChanges="true">
+                android:animateLayoutChanges="true"
+                android:elevation="2dp">
 
                 <TextView
                     android:id="@+id/tvStatus"
@@ -142,7 +236,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:indeterminate="true"
-                    android:layout_marginStart="8dp" />
+                    android:layout_marginStart="10dp" />
             </LinearLayout>
 
         </LinearLayout>

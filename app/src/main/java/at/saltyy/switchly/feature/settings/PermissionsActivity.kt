@@ -11,16 +11,24 @@ import android.provider.Settings
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.core.text.bold
 import androidx.lifecycle.lifecycleScope
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppPreferences
 import at.saltyy.switchly.data.prefs.NotificationBlockStore
+import at.saltyy.switchly.data.prefs.ScheduleStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.theme.CustomAccentApplier
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
@@ -30,10 +38,13 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import android.text.SpannableStringBuilder
+import android.widget.ImageView
+import java.text.DateFormat
+import java.util.Date
 
 /**
  * Permissions overview screen.
- *
  * Shows the current status of all required permissions/settings and provides:
  * - "Open" buttons to jump into the relevant system settings
  * - "Request" buttons for runtime permissions (only when missing)
@@ -48,27 +59,45 @@ class PermissionsActivity : AppCompatActivity() {
         MISSING
     }
 
-    private lateinit var bannerWarn: MaterialCardView
-    private lateinit var bannerWarnText: TextView
+    private lateinit var cardPermissionHeartbeat: View
+    private lateinit var rowStatusTop: View
+    private lateinit var dividerStatus: View
+    private lateinit var ivStatusIcon: ImageView
+    private lateinit var tvStatusTitle: TextView
+    private lateinit var tvPermissionHeartbeatStatus: TextView
+    private lateinit var tvPermissionLastChecked: TextView
+    private lateinit var rowStatusAction: View
+    private lateinit var tvStatusActionTitle: TextView
+    private lateinit var btnPermissionRecheck: MaterialButton
+
+    private var lastPermissionHealthCheckMs: Long = 0L
+    private var hideHealthCheckCard: Boolean = false
+    private var lastMissingPermissionCount: Int = 0
+    private var lastHasAccessibilityMismatch: Boolean = false
 
     private lateinit var tvNotificationsStatus: TextView
     private lateinit var tvNotificationAccessStatus: TextView
     private lateinit var tvAccessibilityStatus: TextView
+    private lateinit var tvUsageAccessStatus: TextView
     private lateinit var tvLocationStatus: TextView
     private lateinit var tvBluetoothStatus: TextView
     private lateinit var tvBatteryStatus: TextView
 
-    private lateinit var btnWhyNotifications: MaterialButton
-    private lateinit var btnWhyNotificationAccess: MaterialButton
-    private lateinit var btnWhyAccessibility: MaterialButton
-    private lateinit var btnWhyLocation: MaterialButton
-    private lateinit var btnWhyBluetooth: MaterialButton
-    private lateinit var btnWhyBattery: MaterialButton
-    private lateinit var btnWhyAutostart: MaterialButton
+    // These are small info icons (AppCompatImageButton) in the layout.
+    // We only attach click listeners, so a generic View type is sufficient and avoids ClassCast issues.
+    private lateinit var btnWhyNotifications: View
+    private lateinit var btnWhyNotificationAccess: View
+    private lateinit var btnWhyAccessibility: View
+    private lateinit var btnWhyUsageAccess: View
+    private lateinit var btnWhyLocation: View
+    private lateinit var btnWhyBluetooth: View
+    private lateinit var btnWhyBattery: View
+    private lateinit var btnWhyAutostart: View
 
     private lateinit var btnOpenNotifications: MaterialButton
     private lateinit var btnOpenNotificationAccess: MaterialButton
     private lateinit var btnOpenAccessibility: MaterialButton
+    private lateinit var btnOpenUsageAccess: MaterialButton
     private lateinit var btnOpenLocation: MaterialButton
     private lateinit var btnReqLocation: MaterialButton
     private lateinit var btnReqBluetooth: MaterialButton
@@ -80,12 +109,19 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var groupAutostart: View
     private lateinit var tvAutostartHint: TextView
 
-    private companion object {
+    companion object {
+        private const val ACCESS_BACKGROUND_LOCATION_PERMISSION = "android.permission.ACCESS_BACKGROUND_LOCATION"
         const val REQ_LOC_FINE = 1001
         const val REQ_LOC_BACKGROUND = 1003
         const val REQ_BT = 1002
         const val REQ_NEARBY_WIFI = 1004
         const val REQ_POST_NOTIF = 1005
+
+        private const val PREFS_PERMISSION_HEALTH = "permissions_health"
+        private const val KEY_STICKY_ACCESSIBILITY_MISMATCH = "sticky_accessibility_mismatch"
+
+        const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
+        const val EXTRA_FROM_TUTORIAL = "extra_from_tutorial"
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -104,12 +140,34 @@ class PermissionsActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
-        bannerWarn = findViewById(R.id.bannerWarn)
-        bannerWarnText = findViewById(R.id.bannerWarnText)
+        cardPermissionHeartbeat = findViewById(R.id.cardPermissionHeartbeat)
+        rowStatusTop = cardPermissionHeartbeat.findViewById(R.id.rowStatusTop)
+        dividerStatus = cardPermissionHeartbeat.findViewById(R.id.dividerStatus)
+        ivStatusIcon = cardPermissionHeartbeat.findViewById(R.id.ivStatusIcon)
+        tvStatusTitle = cardPermissionHeartbeat.findViewById(R.id.tvStatusTitle)
+        tvPermissionHeartbeatStatus = cardPermissionHeartbeat.findViewById(R.id.tvStatusBody)
+        tvPermissionLastChecked = cardPermissionHeartbeat.findViewById(R.id.tvStatusFooter)
+        rowStatusAction = cardPermissionHeartbeat.findViewById(R.id.rowStatusAction)
+        tvStatusActionTitle = cardPermissionHeartbeat.findViewById(R.id.tvStatusActionTitle)
+        btnPermissionRecheck = cardPermissionHeartbeat.findViewById(R.id.btnStatusAction)
 
+        // Static visuals for the status card
+        ivStatusIcon.setImageResource(R.drawable.security_24)
+        tvStatusActionTitle.visibility = View.GONE
+        btnPermissionRecheck.setText(R.string.permissions_health_recheck)
+        rowStatusAction.visibility = View.VISIBLE
+        tvPermissionHeartbeatStatus.visibility = View.VISIBLE
+        tvPermissionLastChecked.visibility = View.VISIBLE
+
+        hideHealthCheckCard = intent.getBooleanExtra(EXTRA_FROM_ONBOARDING, false) ||
+            intent.getBooleanExtra(EXTRA_FROM_TUTORIAL, false)
+        cardPermissionHeartbeat.visibility = if (hideHealthCheckCard) View.GONE else View.VISIBLE
+
+        // (Status card views already bound above)
         tvNotificationsStatus = findViewById(R.id.tvNotificationsStatus)
         tvNotificationAccessStatus = findViewById(R.id.tvNotificationAccessStatus)
         tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus)
+        tvUsageAccessStatus = findViewById(R.id.tvUsageAccessStatus)
         tvLocationStatus = findViewById(R.id.tvLocationStatus)
         tvBluetoothStatus = findViewById(R.id.tvBluetoothStatus)
         tvBatteryStatus = findViewById(R.id.tvBatteryStatus)
@@ -117,6 +175,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnWhyNotifications = findViewById(R.id.btnWhyNotifications)
         btnWhyNotificationAccess = findViewById(R.id.btnWhyNotificationAccess)
         btnWhyAccessibility = findViewById(R.id.btnWhyAccessibility)
+        btnWhyUsageAccess = findViewById(R.id.btnWhyUsageAccess)
         btnWhyLocation = findViewById(R.id.btnWhyLocation)
         btnWhyBluetooth = findViewById(R.id.btnWhyBluetooth)
         btnWhyBattery = findViewById(R.id.btnWhyBattery)
@@ -125,6 +184,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnOpenNotifications = findViewById(R.id.btnOpenNotifications)
         btnOpenNotificationAccess = findViewById(R.id.btnOpenNotificationAccess)
         btnOpenAccessibility = findViewById(R.id.btnOpenAccessibility)
+        btnOpenUsageAccess = findViewById(R.id.btnOpenUsageAccess)
         btnOpenLocation = findViewById(R.id.btnOpenLocation)
         btnReqLocation = findViewById(R.id.btnReqLocation)
         btnReqBluetooth = findViewById(R.id.btnReqBluetooth)
@@ -135,6 +195,21 @@ class PermissionsActivity : AppCompatActivity() {
 
         groupAutostart = findViewById(R.id.groupAutostart)
         tvAutostartHint = findViewById(R.id.tvAutostartHint)
+
+        btnPermissionRecheck.setOnClickListener {
+            updateUi(forceHeartbeat = true)
+
+            val msg = when {
+                lastHasAccessibilityMismatch -> getString(R.string.permissions_health_rechecked_with_mismatch)
+                lastMissingPermissionCount > 0 -> resources.getQuantityString(
+                    R.plurals.permissions_health_rechecked_missing,
+                    lastMissingPermissionCount,
+                    lastMissingPermissionCount
+                )
+                else -> getString(R.string.permissions_health_rechecked_all_good)
+            }
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
 
         // OPEN buttons
         btnOpenNotifications.setOnClickListener {
@@ -151,12 +226,20 @@ class PermissionsActivity : AppCompatActivity() {
             safeStart(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
 
+        btnOpenUsageAccess.setOnClickListener {
+            safeStart(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        }
+
         btnOpenLocation.setOnClickListener {
             openLocationSettingsForApp()
         }
 
         btnOpenBluetooth.setOnClickListener {
-            openAppDetails()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !hasBluetoothPermission()) {
+                requestBluetoothPermissionIfMissing()
+            } else {
+                openBluetoothSettingsOrAppDetails()
+            }
         }
 
         btnOpenBattery.setOnClickListener {
@@ -194,6 +277,13 @@ class PermissionsActivity : AppCompatActivity() {
             )
         }
 
+        btnWhyUsageAccess.setOnClickListener {
+            showWhyDialog(
+                getString(R.string.permissions_usage_access_title),
+                getString(R.string.permissions_usage_access_desc)
+            )
+        }
+
         btnWhyLocation.setOnClickListener {
             showWhyDialog(
                 getString(R.string.permissions_location_title),
@@ -227,18 +317,28 @@ class PermissionsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        CustomAccentApplier.applyIfNeeded(this)
         updateUi()
     }
 
     // UI STATE
-    private fun updateUi() {
+    private fun updateUi(forceHeartbeat: Boolean = false) {
         val notificationsEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled()
         val postNotifGranted = hasPostNotificationsPermission()
         val notificationsOk = notificationsEnabled && postNotifGranted
         val notificationAccessGranted = NotificationBlockStore.hasListenerAccess(this)
         val notificationBlockingEnabled = NotificationBlockStore.isEnabled(this)
 
-        val accessibilityEnabled = BlockingRuntime.isAccessibilityActive(this)
+        // Compare two independent signals to avoid stale/false-positive accessibility states:
+        // 1) Runtime signal used by the blocker
+        // 2) Direct system settings read
+        val accessibilityRuntime = BlockingRuntime.isAccessibilityActive(this)
+        val accessibilityDirect = BlockingRuntime.isAccessibilityEnabledInSettings(this)
+        val accessibilityMismatchNow = accessibilityRuntime != accessibilityDirect
+        val stickyAccessibilityMismatch = refreshStickyAccessibilityMismatch(accessibilityMismatchNow)
+        val accessibilityEnabled = accessibilityRuntime
+
+        val usageAccessOk = UsageStatsRepo.hasUsageAccess(this)
         val locationNeeded = isLocationNeededForFeatures()
         val locationState = if (locationNeeded) getLocationStateForWifi() else LocationState.OK
         val locationOk = locationState == LocationState.OK
@@ -247,10 +347,15 @@ class PermissionsActivity : AppCompatActivity() {
         val btGranted = if (bluetoothNeeded) hasBluetoothPermission() else true
 
         val batteryOk = isIgnoringBatteryOptimizations()
+        val hasEnabledSchedules = ScheduleStore.getAll(this).any { it.enabled }
+        val batteryRelevant = hasEnabledSchedules
+
+        val permissionsLocked = SwitchModeStore.isEnabled(this) && SwitchModeStore.isNfcRequiredForDisable(this)
 
         applyStatus(tvNotificationsStatus, notificationsOk)
         applyStatus(tvNotificationAccessStatus, notificationAccessGranted)
         applyStatus(tvAccessibilityStatus, accessibilityEnabled)
+        applyStatus(tvUsageAccessStatus, usageAccessOk)
 
         // Notifications button:
         // - Android 13+ needs the runtime permission
@@ -296,7 +401,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnOpenBluetooth.visibility = if (bluetoothNeeded) View.VISIBLE else View.GONE
 
         // Battery request button
-        btnReqBattery.visibility = if (batteryOk) View.GONE else View.VISIBLE
+        btnReqBattery.visibility = if (batteryRelevant && !batteryOk) View.VISIBLE else View.GONE
         btnOpenBattery.visibility = View.VISIBLE
 
         // OEM autostart
@@ -305,6 +410,17 @@ class PermissionsActivity : AppCompatActivity() {
         tvAutostartHint.visibility = if (showOem) View.VISIBLE else View.GONE
         btnOpenAutostart.visibility = if (showOem) View.VISIBLE else View.GONE
 
+        // Safety: when NFC lock-mode is active, prevent opening system pages that would allow disabling already-granted protections from inside the app.
+        // Missing permissions stay actionable so setup can still be completed.
+        applyProtectedButtonState(btnOpenAccessibility, permissionsLocked && accessibilityEnabled)
+        applyProtectedButtonState(btnOpenUsageAccess, permissionsLocked && usageAccessOk)
+        applyProtectedButtonState(btnOpenNotificationAccess, permissionsLocked && notificationAccessGranted)
+        applyProtectedButtonState(btnOpenNotifications, permissionsLocked && notificationsOk)
+        applyProtectedButtonState(btnOpenLocation, permissionsLocked && (!locationNeeded || locationOk))
+        applyProtectedButtonState(btnOpenBluetooth, permissionsLocked && (!bluetoothNeeded || btGranted))
+        applyProtectedButtonState(btnOpenBattery, permissionsLocked && batteryOk)
+        applyProtectedButtonState(btnOpenAutostart, permissionsLocked)
+
         // Update the notifications action label depending on what the user actually needs to do.
         btnOpenNotifications.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !postNotifGranted) {
             getString(R.string.permissions_btn_allow)
@@ -312,29 +428,131 @@ class PermissionsActivity : AppCompatActivity() {
             getString(R.string.permissions_btn_open)
         }
 
+        lastPermissionHealthCheckMs = System.currentTimeMillis()
+        val missingCount = listOf(
+            (!accessibilityEnabled),
+            (!usageAccessOk),
+            !notificationsOk,
+            (notificationBlockingEnabled && !notificationAccessGranted),
+            (locationNeeded && !locationOk),
+            (bluetoothNeeded && !btGranted),
+            (batteryRelevant && !batteryOk)
+        ).count { it }
+
+        lastMissingPermissionCount = missingCount
+        lastHasAccessibilityMismatch = stickyAccessibilityMismatch || accessibilityMismatchNow
+
+        if (!hideHealthCheckCard) {
+            updatePermissionHealthRow(
+                accessibilityEnabled = accessibilityEnabled,
+                mismatch = accessibilityMismatchNow || stickyAccessibilityMismatch,
+                batteryRelevant = batteryRelevant,
+                batteryOk = batteryOk,
+                missingCount = missingCount,
+                forceHeartbeat = forceHeartbeat
+            )
+        }
+
         updateBanner(
-            missingCount = listOf(
-                (!accessibilityEnabled),
-                !notificationsOk,
-                (notificationBlockingEnabled && !notificationAccessGranted),
-                (locationNeeded && !locationOk),
-                (bluetoothNeeded && !btGranted),
-                !batteryOk
-            ).count { it }
+            missingCount = missingCount,
+            stickyAccessibilityMismatch = stickyAccessibilityMismatch || accessibilityMismatchNow
         )
     }
 
-    private fun updateBanner(missingCount: Int) {
-        if (missingCount == 0) {
-            bannerWarn.visibility = View.GONE
+    private fun refreshStickyAccessibilityMismatch(mismatchNow: Boolean): Boolean {
+        val prefs = getSharedPreferences(PREFS_PERMISSION_HEALTH, MODE_PRIVATE)
+        val wasSticky = prefs.getBoolean(KEY_STICKY_ACCESSIBILITY_MISMATCH, false)
+        return if (mismatchNow) {
+            if (!wasSticky) prefs.edit { putBoolean(KEY_STICKY_ACCESSIBILITY_MISMATCH, true) }
+            true
+        } else {
+            if (wasSticky) prefs.edit { putBoolean(KEY_STICKY_ACCESSIBILITY_MISMATCH, false) }
+            false
+        }
+    }
+
+    private fun updatePermissionHealthRow(
+        accessibilityEnabled: Boolean,
+        mismatch: Boolean,
+        batteryRelevant: Boolean,
+        batteryOk: Boolean,
+        missingCount: Int,
+        forceHeartbeat: Boolean
+    ) {
+        val green = ContextCompat.getColor(this, R.color.status_ok)
+        val red = ContextCompat.getColor(this, R.color.status_error)
+
+        when {
+            mismatch -> {
+                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_mismatch)
+                tvPermissionHeartbeatStatus.setTextColor(red)
+            }
+            missingCount > 0 -> {
+                tvPermissionHeartbeatStatus.text = resources.getQuantityString(
+                    R.plurals.permissions_health_live_missing_count,
+                    missingCount,
+                    missingCount
+                )
+                tvPermissionHeartbeatStatus.setTextColor(red)
+            }
+            !accessibilityEnabled -> {
+                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_disabled)
+                tvPermissionHeartbeatStatus.setTextColor(red)
+            }
+            batteryRelevant && !batteryOk -> {
+                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_sched_battery_bad)
+                tvPermissionHeartbeatStatus.setTextColor(red)
+            }
+            accessibilityEnabled -> {
+                tvPermissionHeartbeatStatus.text = if (batteryRelevant) {
+                    getString(R.string.permissions_health_live_ok_with_schedules)
+                } else {
+                    getString(R.string.permissions_health_live_ok)
+                }
+                tvPermissionHeartbeatStatus.setTextColor(green)
+            }
+            else -> {
+                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_unknown)
+                tvPermissionHeartbeatStatus.setTextColor(red)
+            }
+        }
+
+        val checkedAt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
+            .format(Date(lastPermissionHealthCheckMs))
+        tvPermissionLastChecked.text = getString(R.string.permissions_health_last_checked_fmt, checkedAt)
+
+        if (forceHeartbeat) {
+            // Small visual acknowledgement that live check was refreshed now.
+            tvPermissionHeartbeatStatus.alpha = 0.6f
+            tvPermissionHeartbeatStatus.animate().alpha(1f).setDuration(180L).start()
+        }
+    }
+
+    private fun applyProtectedButtonState(button: MaterialButton, locked: Boolean) {
+        button.isEnabled = !locked
+        button.isClickable = !locked
+        button.alpha = if (locked) 0.55f else 1f
+    }
+
+    private fun updateBanner(missingCount: Int, stickyAccessibilityMismatch: Boolean) {
+        if (missingCount == 0 && !stickyAccessibilityMismatch) {
+            rowStatusTop.visibility = View.GONE
+            dividerStatus.visibility = View.GONE
             return
         }
-        bannerWarn.visibility = View.VISIBLE
-        bannerWarnText.text = resources.getQuantityString(
-            R.plurals.permissions_banner_missing_count,
-            missingCount,
-            missingCount
-        )
+        rowStatusTop.visibility = View.VISIBLE
+        dividerStatus.visibility = View.VISIBLE
+
+        tvStatusTitle.text = if (stickyAccessibilityMismatch) {
+            getString(R.string.permissions_banner_mismatch_title)
+        } else {
+            resources.getQuantityString(
+                R.plurals.permissions_banner_missing_count_short,
+                missingCount,
+                missingCount
+            )
+        }
+        tvStatusTitle.setLineSpacing(0f, 1.0f)
     }
 
     private fun applyStatus(view: TextView, enabled: Boolean) {
@@ -367,19 +585,15 @@ class PermissionsActivity : AppCompatActivity() {
 
     // FEATURE NEEDS
     private fun isLocationNeededForFeatures(): Boolean {
-        val hasWifiSchedules = at.saltyy.switchly.data.prefs.ScheduleStore
-            .hasEnabledWifiSchedules(applicationContext)
-
-        val hasWifiRules = at.saltyy.switchly.data.prefs.WifiRuleStore
-            .getAll(applicationContext)
-            .any { it.enabled && it.ssid.isNotBlank() }
-
-        return hasWifiSchedules || hasWifiRules
+        // We always show Location as recommended/needed here.
+        // Even if the user currently has no Wi‑Fi rules, enabling it avoids issues later.
+        return true
     }
 
     private fun isBluetoothNeededForFeatures(): Boolean {
-        return at.saltyy.switchly.data.prefs.ScheduleStore
-            .hasEnabledBluetoothSchedules(applicationContext)
+        // We always show Bluetooth/Nearby devices as recommended/needed here.
+        // Even if the user currently has no Bluetooth schedules, enabling it avoids issues later.
+        return true
     }
 
     // LOCATION
@@ -403,16 +617,14 @@ class PermissionsActivity : AppCompatActivity() {
 
         return ContextCompat.checkSelfPermission(
             this,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ACCESS_BACKGROUND_LOCATION_PERMISSION
         ) == PackageManager.PERMISSION_GRANTED
     }
 
     /**
      * Wi‑Fi schedules need location permissions so the connected SSID/BSSID can be read reliably.
-     *
      * For best reliability on many devices, especially when triggers run while the app is not
-     * in the foreground, we also guide users to enable "Allow all the time"
-     * (ACCESS_BACKGROUND_LOCATION) via a 2‑step flow.
+     * in the foreground, we also guide users to enable "Allow all the time" (ACCESS_BACKGROUND_LOCATION) via a 2‑step flow.
      */
     private fun getLocationStateForWifi(): LocationState {
         val fine = hasFineLocationPermission()
@@ -432,9 +644,8 @@ class PermissionsActivity : AppCompatActivity() {
 
     /**
      * Runtime request flow for Wi‑Fi schedules.
-     *
      * 1) Request ACCESS_FINE_LOCATION (Android popup: "While using the app")
-     * 2) Request / guide to ACCESS_BACKGROUND_LOCATION ("Allow all the time")
+     * 2) Request/guide to ACCESS_BACKGROUND_LOCATION ("Allow all the time")
      * 3) (Optional, Android 13+) Request NEARBY_WIFI_DEVICES
      */
     private fun requestLocationFlow() {
@@ -481,20 +692,17 @@ class PermissionsActivity : AppCompatActivity() {
         // Android 10: we can still request it directly.
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
             requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                arrayOf(ACCESS_BACKGROUND_LOCATION_PERMISSION),
                 REQ_LOC_BACKGROUND
             )
             return
         }
 
-        // Android 11+: requesting ACCESS_BACKGROUND_LOCATION will usually open
-        // the system permission controller where the user can switch to
+        // Android 11+: requesting ACCESS_BACKGROUND_LOCATION will usually open the system permission controller where the user can switch to
         // "Allow all the time" for Location.
-        //
-        // On some devices/ROMs this may still not show the exact location page,
-        // so we keep a settings fallback in onRequestPermissionsResult.
+        // On some devices/ROMs this may still not show the exact location page, so we keep a settings fallback in onRequestPermissionsResult.
         requestPermissions(
-            arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+            arrayOf(ACCESS_BACKGROUND_LOCATION_PERMISSION),
             REQ_LOC_BACKGROUND
         )
     }
@@ -631,16 +839,13 @@ class PermissionsActivity : AppCompatActivity() {
         val extraPermissionName = "android.intent.extra.PERMISSION_NAME"
         val locationGroup = Manifest.permission_group.LOCATION
 
-        // Best effort: jump directly into the permission controller screen where
-        // "Allow all the time" can be selected for Location.
-        //
-        // These intents are @hide in the SDK and may not exist on every ROM/device,
-        // so we try them first and gracefully fall back to the normal app settings page.
+        // Best effort: jump directly into the permission controller screen where "Allow all the time" can be selected for Location.
+        // These intents are @hide in the SDK and may not exist on every ROM/device, so we try them first and gracefully fall back to the normal app settings page.
         val intents = listOf(
             // Best-effort deep link directly into the Location permission entry.
             Intent("android.intent.action.MANAGE_APP_PERMISSION").apply {
                 putExtra(Intent.EXTRA_PACKAGE_NAME, pkg)
-                putExtra(extraPermissionName, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                putExtra(extraPermissionName, "android.permission.ACCESS_BACKGROUND_LOCATION")
             },
             Intent("android.intent.action.MANAGE_APP_PERMISSION").apply {
                 putExtra(Intent.EXTRA_PACKAGE_NAME, pkg)
@@ -680,6 +885,12 @@ class PermissionsActivity : AppCompatActivity() {
         )
     }
 
+    private fun openBluetoothSettingsOrAppDetails() {
+        if (!safeStart(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) {
+            openAppDetails()
+        }
+    }
+
     private fun isLikelyAggressiveOem(): Boolean {
         val m = (Build.MANUFACTURER ?: "").lowercase()
         val b = (Build.BRAND ?: "").lowercase()
@@ -691,11 +902,17 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun showWhyDialog(title: String, message: String) {
+        val prettyMessage = SpannableStringBuilder().apply {
+            bold { append(getString(R.string.permissions_why_dialog_header)) }
+            append("\n")
+            append(message)
+        }
+
         MaterialAlertDialogBuilder(this)
             .setTitle(title)
-            .setMessage(message)
+            .setMessage(prettyMessage)
             .setPositiveButton(R.string.ok, null)
-            .show()
+            .showAccented()
     }
 
     private fun safeStart(intent: Intent): Boolean {

@@ -17,7 +17,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
-import at.saltyy.switchly.data.prefs.BlockedTimeStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
 
@@ -84,9 +83,7 @@ class BlockerActivity : Activity() {
         messageView.text = getString(R.string.blocked_message)
 
         btnClose.setOnClickListener {
-            sendHome(this)
-            BlockingRuntime.ensureRunning(this)
-            finish()
+            handleCloseAction()
         }
 
         applyFromIntent(intent)
@@ -119,6 +116,10 @@ class BlockerActivity : Activity() {
         super.onPause()
     }
 
+    override fun onBackPressed() {
+        handleCloseAction()
+    }
+
     override fun onDestroy() {
         isVisible = false
         visiblePkg = null
@@ -131,24 +132,29 @@ class BlockerActivity : Activity() {
     }
 
     private fun flushDelta() {
-        val pkg = shownPkg
-        val start = shownAt
-        if (pkg.isNullOrBlank() || start <= 0L) {
-            shownAt = System.currentTimeMillis()
-            return
-        }
-
-        val now = System.currentTimeMillis()
-        val delta = (now - start).coerceAtLeast(0L)
-        if (delta > 0L) {
-            BlockedTimeStore.addBlockedMsToday(this, pkg, delta)
-        }
-        shownAt = now
+        // "Blocked time" stats should reflect how long an app was configured as blocked while Switchly was enabled (independent of this UI being visible).
+        // Tracking time here would incorrectly measure "time the blocker screen was shown".
+        // Keep this method only to keep the internal timestamp in sync.
+        shownAt = System.currentTimeMillis()
     }
 
     private fun applyFromIntent(intent: Intent?) {
         val pkg = intent?.getStringExtra(EXTRA_PKG).orEmpty()
         val label = intent?.getStringExtra(EXTRA_LABEL).orEmpty()
+        val title = intent?.getStringExtra(EXTRA_TITLE).orEmpty()
+        val msg = intent?.getStringExtra(EXTRA_MESSAGE).orEmpty()
+
+        if (title.isNotBlank()) {
+            titleView.text = title
+        } else {
+            titleView.text = getString(R.string.blocked_app_default)
+        }
+
+        if (msg.isNotBlank()) {
+            messageView.text = msg
+        } else {
+            messageView.text = getString(R.string.blocked_message)
+        }
 
         if (label.isNotBlank()) {
             appNameView.text = label
@@ -161,6 +167,39 @@ class BlockerActivity : Activity() {
                 appNameView.visibility = View.GONE
             }
         }
+    }
+
+    private fun handleCloseAction() {
+        val pkg = intent?.getStringExtra(EXTRA_PKG).orEmpty()
+        val postAckBackCount = intent?.getIntExtra(EXTRA_POST_ACK_BACK_COUNT, 0) ?: 0
+
+        // For surface-block popups we prefer staying in-app and letting Accessibility perform controlled back navigation. 
+        // This avoids accidental jumps to phone home (which can trigger PiP/miniplayer behavior in some apps).
+        if (pkg.isNotBlank() && postAckBackCount > 0) {
+            // YouTube Shorts can drop into PiP when this blocker screen is on top.
+            // Bring YouTube task to front first so post-ack routing happens in-app without a visible launcher detour.
+            if (pkg == "com.google.android.youtube") {
+                runCatching {
+                    packageManager.getLaunchIntentForPackage(pkg)?.apply {
+                        addFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                                Intent.FLAG_ACTIVITY_NO_ANIMATION
+                        )
+                    }?.let { startActivity(it) }
+                }
+            }
+
+            queuePendingBackNavigation(pkg, postAckBackCount)
+            BlockingRuntime.ensureRunning(this)
+            finish()
+            return
+        }
+
+        sendHome(this)
+        BlockingRuntime.ensureRunning(this)
+        finish()
     }
 
     private fun resolveThemeColor(attr: Int, fallback: Int): Int {
@@ -182,6 +221,9 @@ class BlockerActivity : Activity() {
     companion object {
         private const val EXTRA_PKG = "pkg"
         private const val EXTRA_LABEL = "label"
+        private const val EXTRA_TITLE = "title"
+        private const val EXTRA_MESSAGE = "message"
+        private const val EXTRA_POST_ACK_BACK_COUNT = "post_ack_back_count"
 
         //Used by [AppWatcherService] to re-show the blocker if the user swipes it away from recents.
         @Volatile
@@ -191,6 +233,32 @@ class BlockerActivity : Activity() {
         @Volatile
         var visiblePkg: String? = null
             private set
+
+        fun showDetailed(
+            context: Context,
+            pkg: String,
+            label: String?,
+            title: String?,
+            message: String?,
+            postAcknowledgeBackCount: Int = 0
+        ) {
+            val i = Intent(context, BlockerActivity::class.java).apply {
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                        Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+                )
+                putExtra(EXTRA_PKG, pkg)
+                if (!label.isNullOrEmpty()) putExtra(EXTRA_LABEL, label)
+                if (!title.isNullOrEmpty()) putExtra(EXTRA_TITLE, title)
+                if (!message.isNullOrEmpty()) putExtra(EXTRA_MESSAGE, message)
+                if (postAcknowledgeBackCount > 0) {
+                    putExtra(EXTRA_POST_ACK_BACK_COUNT, postAcknowledgeBackCount)
+                }
+            }
+            context.startActivity(i)
+        }
 
         fun show(context: Context, pkg: String, label: String?) {
             val i = Intent(context, BlockerActivity::class.java).apply {
@@ -204,6 +272,37 @@ class BlockerActivity : Activity() {
                 if (!label.isNullOrEmpty()) putExtra(EXTRA_LABEL, label)
             }
             context.startActivity(i)
+        }
+
+
+        private data class PendingBackNavigation(
+            val pkg: String,
+            val backCount: Int,
+            val createdAt: Long
+        )
+
+        @Volatile
+        private var pendingBackNavigation: PendingBackNavigation? = null
+
+        private const val PENDING_NAV_TTL_MS = 8_000L
+
+        @Synchronized
+        fun queuePendingBackNavigation(pkg: String, backCount: Int) {
+            if (pkg.isBlank() || backCount <= 0) return
+            pendingBackNavigation = PendingBackNavigation(pkg = pkg, backCount = backCount, createdAt = System.currentTimeMillis())
+        }
+
+        @Synchronized
+        fun consumePendingBackNavigationFor(pkg: String): Int {
+            val pending = pendingBackNavigation ?: return 0
+            val now = System.currentTimeMillis()
+            if ((now - pending.createdAt) > PENDING_NAV_TTL_MS) {
+                pendingBackNavigation = null
+                return 0
+            }
+            if (pending.pkg != pkg) return 0
+            pendingBackNavigation = null
+            return pending.backCount.coerceAtLeast(0)
         }
 
         fun sendHome(context: Context) {

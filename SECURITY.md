@@ -1,7 +1,6 @@
 # Security Policy
 
 ## Reporting a vulnerability
-
 If you believe you have found a security vulnerability, please **do not** open a public issue.
 
 Instead, report it privately:
@@ -14,5 +13,4 @@ Please include:
 - Any logs / screenshots that help
 
 ## Supported versions
-
 Security fixes are typically applied to the latest version on the main branch.

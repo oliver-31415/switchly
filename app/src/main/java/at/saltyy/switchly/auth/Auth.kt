@@ -9,16 +9,12 @@ import at.saltyy.switchly.R
  * Simple facade for authentication.
  *
  * All real work is done in [AuthRuntime]. This keeps the rest of the app
- * decoupled from Firebase / Credential Manager details.
+ * decoupled from Firebase/Credential Manager details.
  */
 object Auth {
 
     /**
      * Start Google sign-in using Credential Manager.
-     *
-     * Existing call sites that used:
-     *   Auth.startSignIn(activity)
-     * will continue to work.
      */
     fun startSignIn(activity: Activity) {
         AuthRuntime.startSignIn(
@@ -35,22 +31,6 @@ object Auth {
                 }
                 Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
             }
-        )
-    }
-
-    /**
-     * Legacy API used from SettingsActivity via onActivityResult.
-     *
-     * Use this overload to return localized error strings.
-     */
-    fun handleActivityResult(
-        context: Context,
-        callback: (Boolean, String?) -> Unit
-    ) {
-        val loggedIn = uid() != null
-        callback(
-            loggedIn,
-            if (loggedIn) null else context.getString(R.string.settings_google_logged_out)
         )
     }
 

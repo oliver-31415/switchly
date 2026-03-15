@@ -3,6 +3,8 @@ package at.saltyy.switchly.premium
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import android.os.Handler
+import android.os.Looper
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -19,7 +21,6 @@ import com.android.billingclient.api.QueryPurchasesParams
 
 /**
  * Billing integration used by [PremiumManager].
- *
  * Typical usage via PremiumManager:
  *  - PremiumManager.refreshFromPlay(context)
  *  - PremiumManager.launchPurchase(activity, "premium_upgrade")
@@ -40,10 +41,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
 
     private var pendingLaunchRequest: (() -> Unit)? = null
 
-    // -----------------------------------------------------------------------
     // Setup & connection
-    // -----------------------------------------------------------------------
-
     private fun ensureClient(context: Context, onReady: () -> Unit) {
         appContext = context.applicationContext
 
@@ -96,14 +94,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
         })
     }
 
-    // -----------------------------------------------------------------------
-    // Public API
-    // -----------------------------------------------------------------------
-
-    /**
-     * Refreshes the premium state by querying existing purchases.
-     * Typically called on app start.
-     */
+    // Refreshes the premium state by querying existing purchases. Typically called on app start.
     fun refreshFromPlay(context: Context) {
         ensureClient(context) {
             val client = billingClient ?: return@ensureClient
@@ -132,9 +123,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
         }
     }
 
-    /**
-     * Starts the purchase flow for the given product.
-     */
+    // Starts the purchase flow for the given product.
     fun launchPurchase(activity: Activity, productId: String) {
         ensureClient(activity) {
             val client = billingClient ?: return@ensureClient
@@ -178,22 +167,38 @@ object PremiumRuntime : PurchasesUpdatedListener {
                             .setProductDetailsParamsList(productDetailsParams)
                             .build()
 
-                        val res = client.launchBillingFlow(activity, flowParams)
-                        Log.d(TAG, "launchBillingFlow result: ${res.responseCode} ${res.debugMessage}")
+                        // Workaround for rare crashes where ProxyBillingActivity is started without required extras.
+                        // Keep it disabled by default and enable only during the purchase flow.
+                        BillingProxyActivityGate.enable(activity.applicationContext)
+
+                        val disableLater = Runnable {
+                            appContext?.let { BillingProxyActivityGate.disable(it) }
+                        }
+
+                        // Hard timeout as a safety net in case we never get onPurchasesUpdated.
+                        Handler(Looper.getMainLooper()).postDelayed(disableLater, 60_000L)
+
+                        runCatching {
+                            val res = client.launchBillingFlow(activity, flowParams)
+                            Log.d(TAG, "launchBillingFlow result: ${res.responseCode} ${res.debugMessage}")
+                        }.onFailure { t ->
+                            Log.e(TAG, "launchBillingFlow threw", t)
+                            disableLater.run()
+                        }
                     }
                 }
             )
         }
     }
 
-    // -----------------------------------------------------------------------
     // PurchasesUpdatedListener
-    // -----------------------------------------------------------------------
-
     override fun onPurchasesUpdated(
         billingResult: BillingResult,
         purchases: MutableList<Purchase>?
     ) {
+        // Once the billing flow returns, we no longer need ProxyBillingActivity enabled.
+        appContext?.let { BillingProxyActivityGate.disable(it) }
+
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
             handlePurchases(purchases)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {

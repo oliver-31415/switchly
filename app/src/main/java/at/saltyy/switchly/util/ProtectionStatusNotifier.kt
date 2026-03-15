@@ -17,9 +17,7 @@ import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.settings.PermissionsActivity
 
-/**
- * Shows a persistent warning notification when Switchly is enabled but the Accessibility service is not active (meaning blocking is currently not enforced).
- */
+// Shows a persistent warning notification when Switchly is enabled but the Accessibility service is not active (meaning blocking is currently not enforced).
 object ProtectionStatusNotifier {
 
     private const val CHANNEL_ID = "protection_status"
@@ -81,7 +79,7 @@ object ProtectionStatusNotifier {
         )
 
         val notif = NotificationCompat.Builder(ctx, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.lock_24)
             .setContentTitle(ctx.getString(R.string.protection_inactive_title))
             .setContentText(ctx.getString(R.string.protection_inactive_text))
             .setContentIntent(pi)

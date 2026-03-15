@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
@@ -25,12 +26,21 @@ import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import java.util.Calendar
+import kotlin.math.abs
 
 class ScheduleReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_TICK) return
         val ctx = context.applicationContext
+
+        // Heartbeat for schedule health diagnostics in UI.
+        ScheduleRuntimeStore.markTickNow(ctx)
+
+        if (!AutomationModeStore.isScheduleAllowed(ctx)) {
+            // Schedule automation channel is currently disabled by control mode.
+            return
+        }
 
         val wifiReason = intent.getStringExtra("wifi_reason")
         val alarmReason = intent.getStringExtra("alarm_reason")
@@ -40,10 +50,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         val eventBtName = intent.getStringExtra("eventBtName")
         val eventBtAddr = intent.getStringExtra("eventBtAddr")
         val eventBtConnected = intent.getBooleanExtra("eventBtConnected", false)
-        val hasBtEvent =
-            intent.hasExtra("eventBtName") ||
-                intent.hasExtra("eventBtAddr") ||
-                intent.hasExtra("eventBtConnected")
+        val hasBtEvent = intent.hasExtra("eventBtName") || intent.hasExtra("eventBtAddr") || intent.hasExtra("eventBtConnected")
 
         if (hasBtEvent) {
             cacheBtEvent(ctx, eventBtName, eventBtAddr, eventBtConnected)
@@ -52,9 +59,9 @@ class ScheduleReceiver : BroadcastReceiver() {
 
         val schedules = ScheduleStore.getAll(ctx).filter { it.enabled }
 
-        // "Trigger" schedules (Wi-Fi/BT based) use wifiSsid / btDeviceName.
-        val wifiTriggerSchedules = schedules.filter { !it.wifiSsid.isNullOrBlank() }
-        val btTriggerSchedules = schedules.filter { !it.btDeviceName.isNullOrBlank() }
+        // "Trigger" schedules (Wi-Fi/BT based) use wifiSsid/btDeviceName.
+        schedules.filter { !it.wifiSsid.isNullOrBlank() }
+        schedules.filter { !it.btDeviceName.isNullOrBlank() }
 
         val needsWifiSsid = schedules.any { !it.wifiSsid.isNullOrBlank() }
         val needsBtInfo = schedules.any { !it.btDeviceName.isNullOrBlank() }
@@ -81,7 +88,7 @@ class ScheduleReceiver : BroadcastReceiver() {
             }
         }
 
-        // On some devices ("use mobile data" / VPN / poor Wi-Fi), the active/default network can be CELLULAR even while Wi-Fi is still connected. 
+        // On some devices ("use mobile data"/VPN/poor Wi-Fi), the active/default network can be CELLULAR even while Wi-Fi is still connected. 
         // We therefore treat Wi-Fi as connected when *any* network has TRANSPORT_WIFI.
         val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val wifiCaps = currentWifiCaps(cm)
@@ -125,7 +132,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         val lastSource = getLastActivationSource(ctx)
         val hardWifiDisconnect = (wifiReason == "lost") || !wifiConnected
 
-        // --- Wi-Fi SSID guard ---
+        // Wi-Fi SSID guard
         if (needsWifiSsid && ssid.isNullOrBlank()) {
             if (hardWifiDisconnect) {
                 dbg("SSID null and Wi-Fi hard-disconnected -> allow disconnect evaluation")
@@ -136,7 +143,7 @@ class ScheduleReceiver : BroadcastReceiver() {
             }
         }
 
-        // --- BT name guard ---
+        // BT name guard
         if (needsBtInfo && btName.isNullOrBlank() && btAddr.isNullOrBlank() && !hasBtEvent) {
             updateNextAlarmAndNotifyIfChanged(ctx)
             return
@@ -207,7 +214,7 @@ class ScheduleReceiver : BroadcastReceiver() {
                             inTimeRange(nowMinutes, s.startMinutes, s.endMinutes)
                         } else {
                             val targetMs = atMinutesToday(now, s.startMinutes)
-                            val due = isDueNowOrRecently(nowMs, targetMs)
+                            val due = abs(nowMs - targetMs) <= SINGLE_FIRE_WINDOW_MS
                             if (!due) {
                                 false
                             } else {
@@ -228,16 +235,18 @@ class ScheduleReceiver : BroadcastReceiver() {
         val hasEnableAndDisableNow = matches.any { it.action == ScheduleStore.Action.ENABLE_AND_DISABLE }
         val hasDisableAndEnableNow = matches.any { it.action == ScheduleStore.Action.DISABLE_AND_ENABLE }
 
-        // --- No matches: handle exit actions for range types ---
+        // No matches: handle exit actions for range types
         if (matches.isEmpty()) {
             // Leaving any active schedule zone -> manual override no longer applies.
-            if (ScheduleRuntimeStore.isManualOverrideActive(ctx)) {
+            // Keep the previous value for exit handling below.
+            val manualOverrideWasActive = ScheduleRuntimeStore.isManualOverrideActive(ctx)
+            if (manualOverrideWasActive) {
                 ScheduleRuntimeStore.setManualOverrideActive(ctx, false)
             }
 
             val shouldExitOnce =
                 when (lastSource) {
-                    // Wi-Fi / BT schedules can also have time windows now.
+                    // Wi-Fi/BT schedules can also have time windows now.
                     // If we leave the active range while still connected, we still need to revert.
                     SOURCE_WIFI -> hardWifiDisconnect || isTimeBoundaryTick
                     SOURCE_BT -> (hasBtEvent && !eventBtConnected) || isTimeBoundaryTick
@@ -247,7 +256,12 @@ class ScheduleReceiver : BroadcastReceiver() {
 
             if (shouldExitOnce) {
                 // ENABLE_AND_DISABLE => disable on exit if we owned enable
-                if (hadEnableAndDisable && ScheduleRuntimeStore.wasEnabledBySchedule(ctx)) {
+                // If a manual override happened during an active range and ownership got
+                // cleared by older builds, still revert once on exit.
+                if (
+                    hadEnableAndDisable &&
+                        (ScheduleRuntimeStore.wasEnabledBySchedule(ctx) || manualOverrideWasActive)
+                ) {
                     if (SwitchModeStore.isBaseEnabled(ctx)) {
                         SwitchModeStore.setEnabledBySchedule(ctx, false)
                         ScheduleRuntimeStore.setEnabledBySchedule(ctx, false)
@@ -255,7 +269,10 @@ class ScheduleReceiver : BroadcastReceiver() {
                 }
 
                 // DISABLE_AND_ENABLE => enable on exit if we owned disable
-                if (hadDisableAndEnable && ScheduleRuntimeStore.wasDisabledBySchedule(ctx)) {
+                if (
+                    hadDisableAndEnable &&
+                        (ScheduleRuntimeStore.wasDisabledBySchedule(ctx) || manualOverrideWasActive)
+                ) {
                     if (!SwitchModeStore.isBaseEnabled(ctx)) {
                         SwitchModeStore.setEnabledBySchedule(ctx, true)
                         ScheduleRuntimeStore.setDisabledBySchedule(ctx, false)
@@ -326,6 +343,7 @@ class ScheduleReceiver : BroadcastReceiver() {
             ScheduleExecutionCountStore.incrementToday(ctx)
         }
 
+        ScheduleRuntimeStore.markExecutedNow(ctx)
         applySchedule(ctx, target, source)
     }
 
@@ -342,32 +360,33 @@ class ScheduleReceiver : BroadcastReceiver() {
 
     private fun applySchedule(ctx: Context, s: ScheduleStore.Schedule, source: String) {
         val currentProfile = ProfileStore.getCurrent(ctx)
-        val profileChanged = currentProfile != s.profile
+        val tempOverrideActive = SwitchModeStore.hasActiveTemporaryOverride(ctx)
+        val profileChanged = !tempOverrideActive && currentProfile != s.profile
 
-        val baseEnabled = SwitchModeStore.isBaseEnabled(ctx)
+        val baseEnabledBefore = SwitchModeStore.isBaseEnabled(ctx)
 
         val isRangeEnableDisable = s.action == ScheduleStore.Action.ENABLE_AND_DISABLE
         val isRangeDisableEnable = s.action == ScheduleStore.Action.DISABLE_AND_ENABLE
 
         val (shouldWriteEnabled, newEnabled) = when (s.action) {
             ScheduleStore.Action.ENABLE_AND_DISABLE -> {
-                if (!baseEnabled) true to true else false to baseEnabled
+                if (!baseEnabledBefore) true to true else false to baseEnabledBefore
             }
 
             ScheduleStore.Action.DISABLE_AND_ENABLE -> {
-                if (baseEnabled) true to false else false to baseEnabled
+                if (baseEnabledBefore) true to false else false to baseEnabledBefore
             }
 
             ScheduleStore.Action.ENABLE -> {
-                if (!baseEnabled) true to true else false to baseEnabled
+                if (!baseEnabledBefore) true to true else false to baseEnabledBefore
             }
 
             ScheduleStore.Action.DISABLE -> {
-                if (baseEnabled) true to false else false to baseEnabled
+                if (baseEnabledBefore) true to false else false to baseEnabledBefore
             }
 
             ScheduleStore.Action.TOGGLE -> {
-                true to !baseEnabled
+                true to !baseEnabledBefore
             }
         }
 
@@ -375,34 +394,45 @@ class ScheduleReceiver : BroadcastReceiver() {
             SwitchModeStore.setEnabledBySchedule(ctx, newEnabled)
         }
 
-        // --- Ownership flags ---
-        // Range schedules: always claim ownership while active (even if no state change happened)
+        val baseEnabledAfter = SwitchModeStore.isBaseEnabled(ctx)
+        val stateActuallyChanged = baseEnabledAfter != baseEnabledBefore
+        val stateWriteBlocked = shouldWriteEnabled && baseEnabledAfter != newEnabled
+
+        // Ownership flags
+        // Range schedules: claim ownership while active only if the target state is currently true.
+        // This prevents false ownership when a DISABLE write is blocked by NFC lock.
         if (isRangeEnableDisable) {
-            ScheduleRuntimeStore.setEnabledBySchedule(ctx, true)
-            ScheduleRuntimeStore.setDisabledBySchedule(ctx, false)
+            val ownsEnable = baseEnabledAfter
+            ScheduleRuntimeStore.setEnabledBySchedule(ctx, ownsEnable)
+            if (ownsEnable) {
+                ScheduleRuntimeStore.setDisabledBySchedule(ctx, false)
+            }
         } else if (isRangeDisableEnable) {
-            ScheduleRuntimeStore.setDisabledBySchedule(ctx, true)
-            ScheduleRuntimeStore.setEnabledBySchedule(ctx, false)
+            val ownsDisable = !baseEnabledAfter
+            ScheduleRuntimeStore.setDisabledBySchedule(ctx, ownsDisable)
+            if (ownsDisable) {
+                ScheduleRuntimeStore.setEnabledBySchedule(ctx, false)
+            }
         } else {
-            // One-shot schedules: only set ownership when we actually changed state
-            if (shouldWriteEnabled) {
+            // One-shot schedules: only set ownership when we actually changed state.
+            if (stateActuallyChanged) {
                 when (s.action) {
                     ScheduleStore.Action.ENABLE -> {
-                        if (newEnabled) {
+                        if (baseEnabledAfter) {
                             ScheduleRuntimeStore.setEnabledBySchedule(ctx, true)
                             ScheduleRuntimeStore.setDisabledBySchedule(ctx, false)
                         }
                     }
 
                     ScheduleStore.Action.DISABLE -> {
-                        if (!newEnabled) {
+                        if (!baseEnabledAfter) {
                             ScheduleRuntimeStore.setDisabledBySchedule(ctx, true)
                             ScheduleRuntimeStore.setEnabledBySchedule(ctx, false)
                         }
                     }
 
                     ScheduleStore.Action.TOGGLE -> {
-                        if (newEnabled) {
+                        if (baseEnabledAfter) {
                             ScheduleRuntimeStore.setEnabledBySchedule(ctx, true)
                             ScheduleRuntimeStore.setDisabledBySchedule(ctx, false)
                         } else {
@@ -416,12 +446,19 @@ class ScheduleReceiver : BroadcastReceiver() {
             }
         }
 
-        if (profileChanged) {
-            ProfileStore.setCurrent(ctx, s.profile)
+        if (stateWriteBlocked && !newEnabled && SwitchModeStore.isNfcRequiredForDisable(ctx)) {
+            // Visible in schedules screen banner so users understand why end-times may not disable.
+            ScheduleRuntimeStore.markDisableBlockedByNfc(ctx)
+            dbg("Schedule disable blocked by NFC lock (id=${s.id}, source=$source)")
         }
 
-        // Keep the accessibility blocking runtime alive whenever a schedule is active and Switchly is effectively enabled. This covers cases where base state already matched the schedule action (no state write) but the service was not running.
-        if (profileChanged || SwitchModeStore.isEnabled(ctx)) {
+        if (profileChanged) {
+            ProfileStore.setCurrent(ctx, s.profile)
+        } else if (tempOverrideActive && currentProfile != s.profile) {
+            dbg("Temporary override active -> skip schedule profile switch (id=${s.id}, source=$source, target=${s.profile})")
+        }
+
+        if (profileChanged || (stateActuallyChanged && baseEnabledAfter)) {
             BlockingRuntime.ensureRunning(ctx)
         }
 
@@ -468,19 +505,11 @@ class ScheduleReceiver : BroadcastReceiver() {
 
     private fun atMinutesToday(base: Calendar, minutes: Int): Long {
         return (base.clone() as Calendar).apply {
-            set(Calendar.HOUR_OF_DAY, minutes / 60)
+            set(Calendar.HOUR_OF_DAY, minutes/60)
             set(Calendar.MINUTE, minutes % 60)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
-    }
-
-    /**
-     * One-shot schedules should still fire when the boundary was missed a bit (Doze / inexact alarms / OEM throttling), but never fire early.
-     */
-    private fun isDueNowOrRecently(nowMs: Long, targetMs: Long): Boolean {
-        if (nowMs < targetMs) return false
-        return (nowMs - targetMs) <= SINGLE_FIRE_LATE_WINDOW_MS
     }
 
     private fun updateNextAlarmAndNotifyIfChanged(ctx: Context) {
@@ -517,9 +546,7 @@ class ScheduleReceiver : BroadcastReceiver() {
 
     /**
      * Returns the capabilities for any currently connected Wi‑Fi network.
-     *
-     * We intentionally do NOT use [ConnectivityManager.activeNetwork] because the "default" network
-     * can be CELLULAR (or a VPN) while Wi‑Fi is still connected.
+     * We intentionally do NOT use [ConnectivityManager.activeNetwork] because the "default" network can be CELLULAR (or a VPN) while Wi‑Fi is still connected.
      */
     private fun currentWifiCaps(cm: ConnectivityManager): NetworkCapabilities? {
         return try {
@@ -535,7 +562,7 @@ class ScheduleReceiver : BroadcastReceiver() {
 
     /**
      * Best-effort SSID read for devices where the Wi-Fi trigger service hasn't cached it yet.
-     * Returns null if unavailable (e.g., Location permission missing / Location OFF).
+     * Returns null if unavailable (e.g., Location permission missing/Location OFF).
      */
     private fun tryReadCurrentSsid(ctx: Context, wifiCaps: NetworkCapabilities?): String? {
         return try {
@@ -612,27 +639,19 @@ class ScheduleReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_TICK = "at.saltyy.switchly.schedule.TICK"
         private const val TAG = "ScheduleReceiver"
-
         private const val PREFS_WIFI = "switchly_wifi_cache"
         private const val KEY_LAST_SSID = "last_ssid"
-
         private const val PREFS_BT = "switchly_bt_cache"
         private const val KEY_BT_NAME = "last_bt_name"
         private const val KEY_BT_ADDR = "last_bt_addr"
         private const val KEY_BT_CONNECTED = "last_bt_connected"
         private const val KEY_BT_TS = "bt_ts"
-
         private const val BT_FRESHNESS_MS = 90_000L
-
         private const val PREFS_RUNTIME = "switchly_runtime"
         private const val KEY_LAST_SOURCE = "last_activation_source"
-
         private const val SOURCE_WIFI = "wifi"
         private const val SOURCE_BT = "bt"
         private const val SOURCE_TIME = "time"
-
-        // Grace window for one-shot time schedules (late delivery due to Doze / OEM throttling).
-        // Must be >= fallback interval to avoid "schedule never fires" on devices without exact alarms.
-        private const val SINGLE_FIRE_LATE_WINDOW_MS = 30 * 60 * 1000L
+        private const val SINGLE_FIRE_WINDOW_MS = 90_000L
     }
 }

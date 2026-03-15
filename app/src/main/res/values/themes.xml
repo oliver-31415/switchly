@@ -1,32 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Base application theme (default = green accent) -->
+    <!-- =========================
+         THEME: Base + compatibility alias
+         ========================= -->
+
+    <!-- Backwards-compatible alias (older builds referenced @style/Switchly as the app theme) -->
+    <style name="Switchly" parent="Theme.Switchly" />
+
+    <!-- Base application theme (day/default) -->
     <style name="Theme.Switchly" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Accent / primary colors -->
+
+        <!-- Accent/primary colors -->
         <item name="colorPrimary">@color/accent_default_green</item>
         <item name="colorPrimaryVariant">@color/accent_default_green</item>
         <item name="colorSecondary">@color/accent_default_green</item>
 
-        <!-- Status bar etc. -->
-        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <!-- Status bar -->
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar">true</item>
 
         <!-- Global Material component styles -->
         <item name="materialButtonStyle">@style/Switchly.Button</item>
         <item name="floatingActionButtonStyle">@style/Switchly.Fab</item>
         <item name="materialCardViewStyle">@style/Switchly.Card</item>
 
-        <!-- Toolbar / ActionBar -->
+        <!-- Toolbar/ActionBar -->
         <item name="toolbarStyle">@style/Switchly.TopBar</item>
         <item name="actionBarTheme">@style/ThemeOverlay.MaterialComponents.ActionBar</item>
         <item name="actionBarPopupTheme">@style/ThemeOverlay.MaterialComponents.Light</item>
         <item name="android:textColorPrimaryInverse">@android:color/white</item>
 
-        <!-- Global styles for dropdown fields -->
-        <item name="textInputStyle">@style/Switchly.DropdownLayout</item>
-        <item name="autoCompleteTextViewStyle">@style/Switchly.DropdownText</item>
+        <!--
+            IMPORTANT:
+            Do NOT apply the ExposedDropdownMenu TextInputLayout style globally.
+            It causes crashes when a normal EditText is placed inside a TextInputLayout (Material requires an AutoCompleteTextView for exposed dropdowns).
+            Use Switchly.DropdownLayout only on actual dropdown fields in XML.
+        -->
+        <item name="textInputStyle">@style/Switchly.TextInputLayout</item>
+        <item name="autoCompleteTextViewStyle">@style/Switchly.AutoCompleteText</item>
+
+        <!-- Dialog overlay -->
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Switchly.Dialog</item>
     </style>
-    
+
+    <!-- Dialog overlay that keeps controls in sync with the current accent theme. -->
+    <style name="ThemeOverlay.Switchly.Dialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorControlActivated">?attr/colorPrimary</item>
+        <item name="colorControlHighlight">?attr/colorPrimary</item>
+        <item name="colorAccent">?attr/colorPrimary</item>
+    </style>
+
+    <!-- =========================
+         THEME: Accent variants
+         ========================= -->
+
     <!-- Blue -->
     <style name="Theme.Switchly.Accent.Blue" parent="Theme.Switchly">
         <item name="colorPrimary">@color/accent_blue</item>

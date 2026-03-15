@@ -16,9 +16,7 @@ import androidx.core.content.edit
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 
 /**
- * Receives Bluetooth connection/disconnection events, caches the latest state
- * (name/address/connected) and forwards them to ScheduleReceiver as a generic tick.
- *
+ * Receives Bluetooth connection/disconnection events, caches the latest state (name/address/connected) and forwards them to ScheduleReceiver as a generic tick.
  * Robust across Android versions and permission-safe.
  */
 class BluetoothConnectionReceiver : BroadcastReceiver() {
@@ -26,7 +24,7 @@ class BluetoothConnectionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
 
-        // --- Extract BluetoothDevice extra (API-level compatible) ---
+        // Extract BluetoothDevice extra (API-level compatible)
         val device: BluetoothDevice? = if (Build.VERSION.SDK_INT >= 33) {
             intent.getParcelableExtra(
                 BluetoothDevice.EXTRA_DEVICE,
@@ -104,9 +102,7 @@ class BluetoothConnectionReceiver : BroadcastReceiver() {
         }
     }
 
-    /**
-     * device.name requires BLUETOOTH_CONNECT permission on Android 12+
-     */
+    // device.name requires BLUETOOTH_CONNECT permission on Android 12+
     private fun resolveDeviceNameSafe(ctx: Context, device: BluetoothDevice, fallback: String): String {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             return try {
@@ -132,8 +128,6 @@ class BluetoothConnectionReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "BluetoothConnectionRx"
-
-        // MUST MATCH ScheduleReceiver
         private const val PREFS_BT = "switchly_bt_cache"
         private const val KEY_BT_NAME = "last_bt_name"
         private const val KEY_BT_ADDR = "last_bt_addr"

@@ -7,6 +7,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import at.saltyy.switchly.R
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
@@ -48,8 +49,10 @@ class PremiumInfoActivity : AppCompatActivity() {
         btnPurchase.backgroundTintList = AccentColor.getActiveColor(this)
         btnPurchase.setTextColor(ContextCompat.getColor(this, R.color.font_white))
 
-        // Hide restore button
-        btnRestore.visibility = View.GONE
+        // Keep restore visible (placed below the support note area).
+        btnRestore.isVisible = true
+        btnRestore.strokeColor = AccentColor.getActiveColor(this)
+        btnRestore.setTextColor(AccentColor.getAccentColorInt(this))
 
         btnPurchase.setOnClickListener {
             if (PremiumManager.isPremium(this)) {

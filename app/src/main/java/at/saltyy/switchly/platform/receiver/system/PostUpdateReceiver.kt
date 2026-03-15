@@ -11,37 +11,24 @@ import androidx.core.app.NotificationCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.blocking.BlockingRuntime
-import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
-import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
-import at.saltyy.switchly.data.prefs.SchedulePlanner
+import at.saltyy.switchly.theme.AccentColor
 
 /**
- * Triggered after an app update (ACTION_MY_PACKAGE_REPLACED).
+ * Triggered after an app update (ACTION_PACKAGE_REPLACED).
  * If Switchly is active but missing the Accessibility service, show a friendly notification that links directly to the Accessibility settings.
  */
 class PostUpdateReceiver : BroadcastReceiver() {
 
     override fun onReceive(ctx: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
+        if (intent.action != Intent.ACTION_PACKAGE_REPLACED) return
 
-        val appCtx = ctx.applicationContext
-
-        // Restore schedule alarms + device triggers after updates (OEMs sometimes clear PendingIntents/alarms).
-        runCatching { SchedulePlanner.updateNextAlarm(appCtx) }
-        runCatching { SchedulePlanner.notifyNextChanged(appCtx) }
-        runCatching { WifiTriggerMonitor.ensureStarted(appCtx) }
-        runCatching { BluetoothTriggerMonitor.ensureStarted(appCtx) }
-
-        // Ensure prefs/runtime initialized
-        SwitchModeStore.ensureInit(appCtx)
-
-        val enabled = SwitchModeStore.isEnabled(appCtx)
+        val enabled = SwitchModeStore.isEnabled(ctx)
         if (!enabled) return
 
-        val needAccessibility = !BlockingRuntime.isAccessibilityActive(appCtx)
+        val needAccessibility = !BlockingRuntime.isAccessibilityActive(ctx)
         if (!needAccessibility) return
 
-        val nm = appCtx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val chId = "post_update"
 
         // minSdk 27 -> always create channel
@@ -65,8 +52,8 @@ class PostUpdateReceiver : BroadcastReceiver() {
         val message = ctx.getString(R.string.pref_open_accessibility_summary)
 
         val notif = NotificationCompat.Builder(ctx, chId)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
-            .setColor(ctx.getColor(R.color.switchly_green))
+            .setSmallIcon(R.drawable.app_blocking_white_24)
+            .setColor(AccentColor.getAccentColorInt(ctx))
             .setContentTitle(ctx.getString(R.string.app_name))
             .setContentText(message)
             .setContentIntent(pi)

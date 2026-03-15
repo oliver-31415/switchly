@@ -11,7 +11,7 @@ object ScheduleStore {
     private const val PREFS = "switchly_prefs_schedules"
     private const val KEY_SCHEDULES = "items"
 
-    // Derived flags to avoid repeatedly parsing JSON in hot paths (Wi-Fi / BT retry logic).
+    // Derived flags to avoid repeatedly parsing JSON in hot paths (Wi-Fi/BT retry logic).
     private const val KEY_HAS_WIFI_SCHEDULES = "has_enabled_wifi_schedules"
     private const val KEY_HAS_BT_SCHEDULES = "has_enabled_bt_schedules"
 

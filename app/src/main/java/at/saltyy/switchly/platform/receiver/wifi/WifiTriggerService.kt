@@ -44,11 +44,10 @@ class WifiTriggerService : Service() {
         cm = getSystemService(ConnectivityManager::class.java)
         wifi = applicationContext.getSystemService(WifiManager::class.java)
 
-        // Android 12+ may redact Wi‑Fi SSID/BSSID unless the callback explicitly requests
-        // location-sensitive transport info.
+        // Android 12+ may redact Wi‑Fi SSID/BSSID unless the callback explicitly requests location-sensitive transport info.
         cb = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             object : ConnectivityManager.NetworkCallback(
-                ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO
+                FLAG_INCLUDE_LOCATION_INFO
             ) {
                 override fun onAvailable(network: Network) {
                     cacheWifiFromActiveNetwork("available")
@@ -115,10 +114,14 @@ class WifiTriggerService : Service() {
 
     /**
      * Returns true if we successfully entered the foreground.
-     * If we can't (e.g. permission / policy), we stop ourselves to avoid
+     * If we can't (e.g. permission/policy), we stop ourselves to avoid
      * ForegroundServiceDidNotStartInTimeException.
      */
+    private var foregroundStarted = false
+
     private fun ensureForegroundOrStop(): Boolean {
+        if (foregroundStarted) return true
+
         val nm = getSystemService(NotificationManager::class.java)
 
         runCatching {
@@ -133,27 +136,32 @@ class WifiTriggerService : Service() {
 
         val notif = buildNotification()
 
-        // On Android 10+ we can declare a type. However, some devices/policies may throw.
-        // If the typed start fails, retry without a type (0) and only then give up.
+        // Try a few startForeground variants. Some Android builds are picky about service type handling.
         val ok = runCatching {
-            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIF_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
             } else {
-                0
+                startForeground(NOTIF_ID, notif)
             }
-            ServiceCompat.startForeground(this, NOTIF_ID, notif, type)
         }.recoverCatching {
-            // Fallback: no specific type
-            ServiceCompat.startForeground(this, NOTIF_ID, notif, 0)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIF_ID, notif, 0)
+            } else {
+                startForeground(NOTIF_ID, notif)
+            }
+        }.recoverCatching {
+            startForeground(NOTIF_ID, notif)
         }.isSuccess
 
         if (!ok) {
             Log.e(TAG, "Failed to enter foreground. Stopping service to avoid process crash.")
             runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) }
             stopSelf()
+            return false
         }
 
-        return ok
+        foregroundStarted = true
+        return true
     }
 
     private fun buildNotification(): Notification {
@@ -165,7 +173,7 @@ class WifiTriggerService : Service() {
         val contentPi = PendingIntent.getActivity(this, 0, openAppIntent, piFlags)
 
         return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.app_blocking_white_24)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentTitle(getString(R.string.notif_wifi_schedules_title))
@@ -281,7 +289,7 @@ class WifiTriggerService : Service() {
         if (!alreadySsid.isNullOrBlank() || !alreadyBssid.isNullOrBlank()) return
 
         if (retryCount >= 5) {
-            Log.w(TAG, "Wi-Fi info still null after retries ($reason). Likely Location OFF / no Precise / permission.")
+            Log.w(TAG, "Wi-Fi info still null after retries ($reason). Likely Location OFF/no Precise/permission.")
             prefs.edit {
                 putBoolean(KEY_NEEDS_LOCATION_HINT, true)
             }
@@ -314,11 +322,8 @@ class WifiTriggerService : Service() {
 
     companion object {
         private const val TAG = "WifiTriggerService"
-
         private const val NOTIF_CHANNEL_ID = "switchly_wifi_triggers"
         private const val NOTIF_ID = 23003
-
-        // Wi‑Fi cache used by WifiTriggerService + ScheduleReceiver
         private const val PREFS_WIFI = "switchly_wifi_cache"
         private const val KEY_LAST_SSID = "last_ssid"
         private const val KEY_LAST_BSSID = "last_bssid"

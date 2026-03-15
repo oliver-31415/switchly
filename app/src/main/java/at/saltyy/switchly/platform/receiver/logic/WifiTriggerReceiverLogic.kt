@@ -2,11 +2,7 @@ package at.saltyy.switchly.platform.receiver.logic
 
 import at.saltyy.switchly.data.prefs.WifiRuleStore
 
-/**
- * Pure Wi‑Fi rule evaluation logic (no Android dependencies).
- *
- * Keep this class small + testable.
- */
+// Pure Wi‑Fi rule evaluation logic.
 object WifiTriggerReceiverLogic {
 
     data class Match(
@@ -14,10 +10,7 @@ object WifiTriggerReceiverLogic {
         val profile: String
     )
 
-    /**
-     * @return the first enabled rule that matches the given SSID (case-insensitive),
-     *         or null if no rule matches / SSID is blank.
-     */
+    // @return the first enabled rule that matches the given SSID (case-insensitive), or null if no rule matches/SSID is blank.
     fun matchProfileForSsid(
         ssid: String?,
         rules: List<WifiRuleStore.WifiRule>

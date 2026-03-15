@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Text Colors -->
+    <!-- =========================
+         TEXT COLORS
+         ========================= -->
     <color name="font_white">#FFFFFF</color>
 
-    <!-- Brand colors -->
-    <color name="switchly_green">#2E8B57</color>
-    <color name="colorPrimaryDark">#246E46</color>
-    <color name="ic_launcher_background">@color/switchly_green</color>
+    <!-- =========================
+         BRAND COLORS
+         ========================= -->
+     <color name="ic_launcher_background">#2E8B57</color>
 
-    <!-- Accent palette (used by dynamic themes) -->
+    <!-- =========================
+         ACCENT PALETTE
+         ========================= -->
     <color name="accent_default_green">#2E8B57</color>
     <color name="accent_green">#2E8B57</color>
     <color name="accent_blue">#FF1565C0</color>
@@ -21,14 +25,50 @@
     <color name="accent_amber">#FFA000</color>
     <color name="accent_gray">#546E7A</color>
 
-    <!-- Semantic states -->
-    <color name="status_ok">#2E8B57</color> <!-- Material Green 500 -->
-    <color name="status_error">#D32F2F</color> <!-- Material Red 500 -->
-    <color name="status_neutral">#90A4AE</color> <!-- Blue Grey 400 -->
-    <color name="status_surface">#F5F5F5</color>
+    <!-- =========================
+         SEMANTIC STATES
+         ========================= -->
+    <color name="status_ok">#2E8B57</color>      <!-- Material Green 500 -->
+    <color name="status_error">#D32F2F</color>   <!-- Material Red 500 -->
+    <color name="status_neutral">#90A4AE</color>
+    <color name="status_border">#3390A4AE</color> <!-- Blue Grey 400 -->
 
-    <!-- Card surfaces -->
-    <color name="switchly_card_bg">#FFFFFFFF</color>
-    <color name="switchly_card_stroke">#1A000000</color>
+    <!-- =========================
+         SURFACES/BACKGROUND/DIVIDERS
+         ========================= -->
+    <!-- Semi-transparent white lets the soft background shine through a bit -->
+    <color name="switchly_card_bg">#F7FFFFFF</color>
+    <color name="switchly_card_stroke">#14000000</color>
+
+    <!-- App background -->
+    <color name="switchly_bg">#FFF3F4F6</color>
+
+    <!-- Dividers inside cards -->
+    <color name="switchly_divider">#14000000</color>
+
+    <!-- =========================
+         SIMPLE ALIASES (troubleshooting UI)
+         ========================= -->
+    <color name="switchly_ok">@color/status_ok</color>
+    <color name="switchly_error">@color/status_error</color>
+
+    <!-- =========================
+         ONBOARDING
+         ========================= -->
+    <color name="onb_summary_surface">#FFFFFFFF</color>
+    <color name="onb_summary_text_primary">#FF111827</color>
+    <color name="onb_summary_text_on_dark">#FFF5F7FA</color>
+    <color name="onb_summary_text_secondary">#D9111827</color>
+
+    <color name="onb_summary_stroke">#1A111827</color>
+    <color name="onb_summary_card_alt">#FFF8FAFC</color>
+
+    <!-- =========================
+         APP PICKER: Unavailable app row
+         ========================= -->
+    <color name="unavailable_row_bg">#FFF2F4F7</color>
+    <color name="unavailable_row_stroke">#1A000000</color>
+    <color name="unavailable_chip_bg">#FFE3E8EE</color>
+    <color name="unavailable_chip_text">#FF39424D</color>
 
 </resources>

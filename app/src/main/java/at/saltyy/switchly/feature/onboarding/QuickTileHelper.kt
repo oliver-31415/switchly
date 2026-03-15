@@ -11,15 +11,12 @@ import android.widget.Toast
 import at.saltyy.switchly.R
 import java.util.concurrent.Executors
 
-/**
- * Helper for requesting the Switchly Quick Settings tile.
- */
+// Helper for requesting the Switchly Quick Settings tile.
 object QuickTileHelper {
 
     /**
      * Android 13+ (API 33):
      * Uses the official system dialog to request adding a Quick Settings tile.
-     *
      * Returns true if the request could be started successfully.
      */
     fun requestAddTileIfAvailable(activity: Activity): Boolean {
@@ -28,7 +25,7 @@ object QuickTileHelper {
 
         val component = ComponentName(activity, "at.saltyy.switchly.platform.tile.SwitchlyTileService")
         val label = activity.getString(R.string.app_name)
-        val icon = Icon.createWithResource(activity, R.drawable.app_blocking_surface_24)
+        val icon = Icon.createWithResource(activity, R.drawable.app_blocking_black_24)
         val executor = Executors.newSingleThreadExecutor()
 
         sb.requestAddTileService(component, label, icon, executor) { result ->

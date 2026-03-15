@@ -1,48 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:fillViewport="true"
+    android:clipToPadding="false"
+    android:paddingTop="8dp"
+    android:paddingBottom="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="16dp">
 
-        <!-- Profile -->
-        <TextView
-            style="@style/TextAppearance.Material3.TitleMedium"
+        <!-- Subtle header spacing (dialog title is set in code) -->
+        <Space
+            android:layout_width="1dp"
+            android:layout_height="4dp" />
+
+        <!-- Profile (Exposed dropdown) -->
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:text="@string/schedules_field_profile" />
+            android:hint="@string/schedules_field_profile"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            app:boxBackgroundMode="outline"
+            app:endIconMode="dropdown_menu">
 
-        <Spinner
-            android:id="@+id/spinnerProfile"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp" />
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/spinnerProfile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="64dp"
+                android:gravity="center_vertical"
+                android:inputType="none"
+                android:importantForAutofill="no" />
 
-        <!-- Action -->
-        <TextView
-            android:id="@+id/textActionLabel"
-            style="@style/TextAppearance.Material3.BodyMedium"
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Action (Exposed dropdown) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutAction"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:layout_marginStart="4dp"
-            android:text="@string/schedules_field_action" />
+            android:hint="@string/schedules_field_action"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            app:boxBackgroundMode="outline"
+            app:endIconMode="dropdown_menu">
 
-        <Spinner
-            android:id="@+id/spinnerAction"
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/spinnerAction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="64dp"
+                android:gravity="center_vertical"
+                android:inputType="none"
+                android:importantForAutofill="no" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/textActionNfcHint"
+            style="@style/TextAppearance.MaterialComponents.Body2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp" />
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="6dp"
+            android:text="@string/schedules_dialog_nfc_lock_hint"
+            android:visibility="gone" />
 
         <!-- TIME MODE (only shown for time schedules) -->
         <LinearLayout
@@ -52,43 +82,72 @@
             android:orientation="vertical"
             android:layout_marginTop="12dp">
 
-            <TextView
-                style="@style/TextAppearance.Material3.BodyMedium"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutTimeMode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:text="@string/schedules_time_mode" />
+                android:hint="@string/schedules_time_mode"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                app:boxBackgroundMode="outline"
+                app:endIconMode="dropdown_menu">
 
-            <Spinner
-                android:id="@+id/spinnerTimeMode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp" />
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/spinnerTimeMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                android:minHeight="64dp"
+                android:gravity="center_vertical"
+                    android:inputType="none"
+                    android:importantForAutofill="no" />
+
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <!-- Title -->
-        <EditText
-            android:id="@+id/editTitle"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:hint="@string/schedules_field_title_hint"
-            android:maxLines="1"
-            android:inputType="textCapSentences"
-            android:autofillHints="name" />
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxBackgroundMode="outline"
+            app:endIconMode="none"
+            app:hintTextColor="?attr/colorOnSurface">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="64dp"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:inputType="textCapSentences"
+                android:autofillHints="name" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Note -->
-        <EditText
-            android:id="@+id/editNote"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:hint="@string/schedules_field_note_hint"
-            android:minLines="2"
-            android:inputType="textCapSentences|textMultiLine"
-            android:autofillHints="none" />
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxBackgroundMode="outline"
+            app:endIconMode="none"
+            app:hintTextColor="?attr/colorOnSurface">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="64dp"
+                android:gravity="center_vertical"
+                android:minLines="2"
+                android:inputType="textCapSentences|textMultiLine"
+                android:autofillHints="none" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Time group (only for time schedules + not date-range) -->
         <LinearLayout
@@ -98,7 +157,7 @@
             android:orientation="vertical"
             android:layout_marginTop="12dp">
 
-            <!-- Connection schedules (Wi‑Fi / Bluetooth): allow optional time window -->
+            <!-- Connection schedules (Wi‑Fi/Bluetooth): allow optional time window -->
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchConnTimeWindow"
                 android:layout_width="match_parent"
@@ -110,7 +169,7 @@
 
             <TextView
                 android:id="@+id/textConnAllDayHint"
-                style="@style/TextAppearance.Material3.BodySmall"
+                style="@style/TextAppearance.MaterialComponents.Body2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -118,55 +177,132 @@
                 android:text="@string/schedules_conn_time_all_day"
                 android:visibility="gone" />
 
+            <!-- Full-width buttons so they visually match dropdowns/inputs -->
             <LinearLayout
                 android:id="@+id/groupTimeRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
-                <TextView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/textStartTime"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:padding="10dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
                     android:text="@string/schedules_start_time"
-                    android:background="?attr/selectableItemBackground" />
+                    android:textAllCaps="false" />
 
-                <Space
-                    android:layout_width="10dp"
-                    android:layout_height="1dp" />
-
-                <TextView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/textEndTime"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:padding="10dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_marginTop="10dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
                     android:text="@string/schedules_end_time"
-                    android:background="?attr/selectableItemBackground" />
+                    android:textAllCaps="false" />
             </LinearLayout>
         </LinearLayout>
 
-        <EditText
-            android:id="@+id/inputWifiSsid"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutWifiSsid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"
             android:hint="@string/schedules_wifi_ssid_hint"
-            android:visibility="gone"
-            android:inputType="text"
-            android:autofillHints="none" />
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxBackgroundMode="outline"
+            app:endIconMode="none">
 
-        <EditText
-            android:id="@+id/inputBtName"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputWifiSsid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="64dp"
+                android:gravity="center_vertical"
+                android:inputType="text"
+                android:autofillHints="none" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Wi‑Fi helpers (only visible for Wi‑Fi schedules) -->
+        <LinearLayout
+            android:id="@+id/groupWifiActions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:hint="@string/schedules_bt_name_hint"
+            android:layout_marginTop="6dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnScanWifi"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/schedules_wifi_pick_action" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutBtName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:visibility="gone"
-            android:inputType="text"
-            android:autofillHints="none" />
+            android:hint="@string/schedules_bt_name_hint"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxBackgroundMode="outline"
+            app:endIconMode="none">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputBtName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="64dp"
+                android:gravity="center_vertical"
+                android:inputType="text"
+                android:autofillHints="none" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:id="@+id/groupBtActions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUseConnectedBt"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/schedules_bt_use_connected" />
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickPairedBt"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/schedules_bt_pick_paired" />
+        </LinearLayout>
+
 
         <!-- Weekly group -->
         <LinearLayout
@@ -179,20 +315,33 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                style="@style/TextAppearance.MaterialComponents.Subtitle2"
+                android:layout_marginStart="4dp"
                 android:text="@string/schedules_days" />
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupDays"
+            <!-- Keep all days on one line (scroll if needed) -->
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                app:singleLine="false"
-                app:chipSpacingHorizontal="4dp"
-                app:chipSpacingVertical="4dp">
+                android:clipToPadding="false"
+                android:paddingEnd="10dp"
+                android:paddingStart="10dp"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupDays"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingEnd="0dp"
+                    android:paddingStart="0dp"
+                    app:singleLine="true"
+                    app:chipSpacingHorizontal="4dp">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipMon"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/day_short_mon"
@@ -200,7 +349,7 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipTue"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/day_short_tue"
@@ -208,7 +357,7 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipWed"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/day_short_wed"
@@ -216,7 +365,7 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipThu"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/day_short_thu"
@@ -224,7 +373,7 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipFri"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/day_short_fri"
@@ -232,7 +381,7 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipSat"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/day_short_sat"
@@ -240,47 +389,64 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipSun"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/day_short_sun"
+                    android:layout_marginEnd="16dp"
                     android:checkable="true" />
-            </com.google.android.material.chip.ChipGroup>
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                style="@style/TextAppearance.MaterialComponents.Subtitle2"
+                android:layout_marginStart="4dp"
                 android:text="@string/schedules_quick_groups" />
 
-            <com.google.android.material.chip.ChipGroup
+            <!-- Quick selections: also single-line + scroll to avoid wrapping -->
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                app:singleLine="true"
-                app:chipSpacingHorizontal="8dp">
+                android:clipToPadding="false"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingEnd="2dp"
+                    android:paddingStart="2dp"
+                    app:singleLine="true"
+                    app:chipSpacingHorizontal="4dp">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipWeekdays"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/schedules_group_weekdays" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipWeekend"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/schedules_group_weekend" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipToday"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    style="@style/Switchly.DayChip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/schedules_group_today" />
-            </com.google.android.material.chip.ChipGroup>
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
         </LinearLayout>
 
         <!-- Date-range group (one-time) -->
@@ -295,37 +461,45 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                style="@style/TextAppearance.MaterialComponents.Subtitle2"
+                android:layout_marginStart="4dp"
                 android:text="@string/schedules_date_range" />
 
+            <!-- Full-width buttons so they visually match dropdowns/inputs -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
-                <TextView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/textStartDate"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:padding="10dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
                     android:text="@string/schedules_start_date"
-                    android:background="?attr/selectableItemBackground" />
+                    android:textAllCaps="false" />
 
-                <Space
-                    android:layout_width="10dp"
-                    android:layout_height="1dp" />
-
-                <TextView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/textEndDate"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:padding="10dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_marginTop="10dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
                     android:text="@string/schedules_end_date"
-                    android:background="?attr/selectableItemBackground" />
+                    android:textAllCaps="false" />
             </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

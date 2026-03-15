@@ -27,5 +27,4 @@ Thumbs.db
 *.jks
 
 # Firebase / Google Services
-app/google-services.json
 **/google-services.json

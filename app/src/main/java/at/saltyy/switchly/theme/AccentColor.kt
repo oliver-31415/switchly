@@ -25,7 +25,7 @@ object AccentColor {
         CUSTOM("custom")
     }
 
-    private fun getOption(context: Context): Option {
+    fun getOption(context: Context): Option {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         return when (prefs.getString(PREF_KEY, "default")) {
             Option.BLUE.value   -> Option.BLUE
@@ -66,6 +66,5 @@ object AccentColor {
 
     fun getToolbarColor(context: Context): Int = getAccentColorInt(context)
 
-    fun getActiveColor(context: Context): ColorStateList =
-        ColorStateList.valueOf(getAccentColorInt(context))
+    fun getActiveColor(context: Context): ColorStateList = ColorStateList.valueOf(getAccentColorInt(context))
 }

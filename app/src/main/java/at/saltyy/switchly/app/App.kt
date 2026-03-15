@@ -6,6 +6,7 @@ import androidx.preference.PreferenceManager
 import com.google.firebase.FirebaseApp
 import at.saltyy.switchly.SwitchlyCore
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.premium.BillingProxyActivityGate
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
@@ -18,11 +19,15 @@ class App : Application() {
         // Firebase (Crashlytics/Auth) - safe even if google-services.json is missing
         runCatching { FirebaseApp.initializeApp(this) }
 
+        // Billing workaround: keep ProxyBillingActivity disabled unless we are actively launching a purchase.
+        BillingProxyActivityGate.disable(this)
+
         // language
         LocaleHelper.setLanguage(this, LocaleHelper.getSavedLanguage(this))
 
         // theme
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+
         when (prefs.getString("pref_theme", "system")) {
             "light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             "dark"  -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)

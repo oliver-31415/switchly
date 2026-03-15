@@ -18,6 +18,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.QrScanCountStore
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -123,6 +124,9 @@ class QrScanActivity : AppCompatActivity() {
             finish()
             return
         }
+
+        // Count only valid Switchly QR codes.
+        QrScanCountStore.incrementToday(this)
 
         startActivity(
             Intent(Intent.ACTION_VIEW, uri)

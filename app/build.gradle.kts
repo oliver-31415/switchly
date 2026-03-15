@@ -24,10 +24,8 @@ android {
         minSdk = 27
         targetSdk = 36
 
-        versionCode = 144
-        versionName = "1.4.4"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        versionCode = 200
+        versionName = "2.0.0"
     }
 
     buildFeatures {
@@ -58,30 +56,24 @@ android {
 }
 
 dependencies {
-    // Unit test dependencies
-    testImplementation("junit:junit:4.13.2")
-
-    // Instrumented Android test dependencies
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation("androidx.test:core-ktx:1.7.0")
-
+    // AndroidX core, UI, and preferences
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
 
     // Coroutines helpers (lifecycleScope) + DataStore (for small user prefs)
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("androidx.datastore:datastore-preferences:1.2.0")
 
+    // Local database (Room)
     val roomVersion = "2.8.4"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
     // Firebase BOM + Modules
-    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
 
     // Auth for Google-Login
     implementation("com.google.firebase:firebase-auth")
@@ -90,11 +82,11 @@ dependencies {
     // Crash reporting
     implementation("com.google.firebase:firebase-crashlytics")
 
-    // Google Sign-In / Credential Manager
-    implementation("com.google.android.gms:play-services-auth:21.5.0")
+    // Google Sign-In/Credential Manager
+    implementation("com.google.android.gms:play-services-auth:21.5.1")
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
 
     // Play Billing
     implementation("com.android.billingclient:billing-ktx:8.3.0")
@@ -103,7 +95,7 @@ dependencies {
     implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     // CameraX
-    val camerax = "1.5.2"
+    val camerax = "1.5.3"
     implementation("androidx.camera:camera-core:$camerax")
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
@@ -123,4 +115,3 @@ dependencies {
 configurations.configureEach {
     exclude(group = "com.intellij", module = "annotations")
 }
-

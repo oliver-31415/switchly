@@ -3,6 +3,7 @@ package at.saltyy.switchly.ui
 import android.app.Activity
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
+import at.saltyy.switchly.theme.CustomAccentApplier
 
 object ThemeUtils {
 
@@ -24,5 +25,13 @@ object ThemeUtils {
         }
 
         activity.setTheme(themeRes)
+
+        // Runtime fallback for arbitrary custom accent colors.
+        // This retints remaining default-accent widgets after inflation.
+        if (accent == "custom") {
+            activity.window?.decorView?.post {
+                runCatching { CustomAccentApplier.applyIfNeeded(activity) }
+            }
+        }
     }
 }

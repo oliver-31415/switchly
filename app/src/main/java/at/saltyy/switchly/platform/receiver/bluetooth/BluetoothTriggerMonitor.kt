@@ -94,7 +94,7 @@ object BluetoothTriggerMonitor {
         val pi = PendingIntent.getActivity(context, 0, openIntent, piFlags)
 
         val notif = NotificationCompat.Builder(context, FALLBACK_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.app_blocking_white_24)
             .setContentTitle(context.getString(R.string.notif_enable_bt_triggers_title))
             .setContentText(context.getString(R.string.notif_enable_bt_triggers_text_fmt, context.getString(R.string.app_name)))
             .setContentIntent(pi)

@@ -3,7 +3,7 @@ package at.saltyy.switchly.nfc
 import android.net.Uri
 
 /**
- * Utility for building and parsing Switchly NFC / deep-link URIs.
+ * Utility for building and parsing Switchly NFC/deep-link URIs.
  *
  * Supported URI patterns:
  *
@@ -79,7 +79,7 @@ object NfcSchema {
     // -------------------------------------------------------------------------
 
     /**
-     * Sealed hierarchy representing what a parsed NFC / deep-link command means.
+     * Sealed hierarchy representing what a parsed NFC/deep-link command means.
      */
     sealed interface NfcCommand {
         val action: String

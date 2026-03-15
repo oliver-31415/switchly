@@ -1,5 +1,5 @@
 ############################################
-# Kotlin / Coroutines (safe defaults)
+# Kotlin/Coroutines (safe defaults)
 ############################################
 -keep class kotlin.Metadata { *; }
 -dontwarn kotlin.**
@@ -32,7 +32,7 @@
 -dontwarn com.google.zxing.**
 
 ############################################
-# Material / AppCompat (optional; mostly noise suppression)
+# Material/AppCompat (optional; mostly noise suppression)
 ############################################
 -dontwarn com.google.android.material.**
 -dontwarn androidx.appcompat.**
@@ -46,7 +46,7 @@
 -keepattributes EnclosingMethod
 
 ############################################
-# (Optional) If you use deep links with reflection / custom class loading:
+# (Optional) If you use deep links with reflection/custom class loading:
 # not needed for your current setup
 ############################################
 # -keep class at.saltyy.switchly.** { *; }

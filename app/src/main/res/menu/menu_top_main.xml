@@ -8,9 +8,4 @@
         android:icon="@drawable/qr_code_24"
         app:showAsAction="ifRoom" />
 
-    <item
-        android:id="@+id/action_settings"
-        android:title="@string/settings"
-        android:icon="@drawable/more_vert_24"
-        app:showAsAction="always" />
 </menu>

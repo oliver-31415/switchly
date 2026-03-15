@@ -1,19 +1,35 @@
 package at.saltyy.switchly.feature.schedule
 
 import android.Manifest
+import android.app.AlarmManager
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
+import android.net.wifi.ScanResult
+import android.net.wifi.WifiInfo
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
@@ -24,31 +40,47 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.edit
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.net.toUri
 import androidx.core.view.isVisible
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
+import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ScheduleStore.Days
-import at.saltyy.switchly.feature.stats.StatisticsHubActivity
-import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
-import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.feature.settings.PermissionsActivity
+import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import java.text.DateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 
 class SchedulesActivity : AppCompatActivity() {
 
@@ -57,10 +89,37 @@ class SchedulesActivity : AppCompatActivity() {
     private enum class TimeMode { SINGLE, TIME_RANGE, DATE_RANGE }
 
     private lateinit var adapter: ScheduleAdapter
+    private lateinit var cardScheduleHealth: View
+    private lateinit var tvStatusTitle: TextView
+    private lateinit var btnStatusAction: MaterialButton
+    private lateinit var rowStatusAction: View
+    private lateinit var btnStatusInfo: View
+    private lateinit var ivStatusIcon: ImageView
+    private lateinit var tvStatusActionTitle: TextView
+    private lateinit var dividerStatus: View
+    private lateinit var switchShowNextSchedule: SwitchCompat
+
+    // Unified list actions: selection mode
+    private var isSelectionMode = false
+    private val selectedScheduleIds = linkedSetOf<Int>()
+
+    private var pendingAfterLocationGrant: (() -> Unit)? = null
+    private var pendingAfterBluetoothGrant: (() -> Unit)? = null
+
+    private val nfcLockedActions = setOf(
+        ScheduleStore.Action.DISABLE,
+        ScheduleStore.Action.TOGGLE,
+        ScheduleStore.Action.ENABLE_AND_DISABLE,
+        ScheduleStore.Action.DISABLE_AND_ENABLE
+    )
 
     private val requestLocationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) {
+            val action = pendingAfterLocationGrant
+            pendingAfterLocationGrant = null
+            if (granted) {
+                action?.invoke()
+            } else {
                 Toast.makeText(
                     this,
                     getString(R.string.perm_location_denied_wifi_schedule),
@@ -71,7 +130,11 @@ class SchedulesActivity : AppCompatActivity() {
 
     private val requestBluetoothPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) {
+            val action = pendingAfterBluetoothGrant
+            pendingAfterBluetoothGrant = null
+            if (granted) {
+                action?.invoke()
+            } else {
                 Toast.makeText(
                     this,
                     getString(R.string.perm_bt_denied_schedule),
@@ -80,22 +143,59 @@ class SchedulesActivity : AppCompatActivity() {
             }
         }
 
+
+    private var externalActivityReturnCallback: (() -> Unit)? = null
+
+    private val externalActivityLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            val cb = externalActivityReturnCallback
+            externalActivityReturnCallback = null
+            cb?.invoke()
+        }
+
+    private fun launchExternalActivity(intent: Intent, onReturn: (() -> Unit)? = null) {
+        externalActivityReturnCallback = onReturn
+        runCatching {
+            externalActivityLauncher.launch(intent)
+        }.onFailure {
+            // Fallback if the launcher cannot be used in this state.
+            runCatching { startActivity(intent) }
+            if (onReturn != null) {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    if (externalActivityReturnCallback === onReturn) {
+                        val cb = externalActivityReturnCallback
+                        externalActivityReturnCallback = null
+                        cb?.invoke()
+                    }
+                }, 1400L)
+            } else {
+                externalActivityReturnCallback = null
+            }
+        }
+    }
+
+    private fun isNfcLockActiveForSchedules(): Boolean {
+        return AutomationModeStore.isNfcAllowed(this) &&
+            SwitchModeStore.isEnabled(this) &&
+            SwitchModeStore.isNfcRequiredForDisable(this)
+    }
+
+    private fun isScheduleAutomationAllowed(): Boolean {
+        return AutomationModeStore.isScheduleAllowed(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_schedules)
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
 
         // Classic system bars (status/nav handled by the framework)
-        // + apply the same bottom-nav gesture inset handling used by Main/Stats
         EdgeToEdgeUtils.setupClassic(
             activity = this,
-            toolbar = toolbar,
-            bottomNav = bottomNav
+            toolbar = toolbar
         )
-        EdgeToEdgeUtils.applyBottomNavGestureInset(bottomNav)
 
         // Keep status bar neutral (no accent bleed into system bar)
         window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
@@ -107,31 +207,150 @@ class SchedulesActivity : AppCompatActivity() {
         val recycler = findViewById<RecyclerView>(R.id.recyclerSchedules)
         recycler.layoutManager = LinearLayoutManager(this)
 
+        cardScheduleHealth = findViewById(R.id.cardScheduleHealth)
+        tvStatusTitle = cardScheduleHealth.findViewById(R.id.tvStatusTitle)
+        btnStatusAction = cardScheduleHealth.findViewById(R.id.btnStatusAction)
+        rowStatusAction = cardScheduleHealth.findViewById(R.id.rowStatusAction)
+        btnStatusInfo = cardScheduleHealth.findViewById(R.id.btnStatusInfo)
+        ivStatusIcon = cardScheduleHealth.findViewById(R.id.ivStatusIcon)
+        tvStatusActionTitle = cardScheduleHealth.findViewById(R.id.tvStatusActionTitle)
+        dividerStatus = cardScheduleHealth.findViewById(R.id.dividerStatus)
+
+        // Static visuals for this screen
+        ivStatusIcon.setImageResource(R.drawable.schedule_24)
+        tvStatusActionTitle.setText(R.string.schedules_health_action_title)
+        btnStatusInfo.visibility = View.VISIBLE
+        btnStatusInfo.setOnClickListener { showScheduleHealthInfoDialog() }
+
+        val rowShowNextSchedule = findViewById<View>(R.id.rowShowNextSchedule)
+        switchShowNextSchedule = findViewById(R.id.switchShowNextSchedule)
+        val uiPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+        switchShowNextSchedule.isChecked = uiPrefs.getBoolean(ToggleOptionsActivity.KEY_SHOW_NEXT_SCHEDULE, false)
+        tintSwitchCompat(switchShowNextSchedule)
+
+        rowShowNextSchedule.setOnClickListener { switchShowNextSchedule.toggle() }
+        switchShowNextSchedule.setOnCheckedChangeListener { _, isChecked ->
+            uiPrefs.edit { putBoolean(ToggleOptionsActivity.KEY_SHOW_NEXT_SCHEDULE, isChecked) }
+            SchedulePlanner.notifyNextChanged(this)
+        }
+
         adapter = ScheduleAdapter(
             onToggleEnabled = { schedule, enabled ->
                 val list = ScheduleStore.getAll(this).map {
                     if (it.id == schedule.id) it.copy(enabled = enabled) else it
                 }
                 ScheduleStore.saveAll(this, list)
-
-                // If the user explicitly enables a schedule, clear stale manual-override so the schedule can apply immediately on the next tick.
-                if (enabled) {
-                    ScheduleRuntimeStore.setManualOverrideActive(this, false)
-                }
-
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
-                requestImmediateScheduleTick("ui_toggle")
             },
-            onDelete = { schedule -> confirmDelete(schedule) },
+            isSelectionMode = { isSelectionMode },
+            isSelected = { id -> selectedScheduleIds.contains(id) },
+            onToggleSelection = { id -> toggleSelection(id) },
+            onEnterSelection = { preselectId -> enterSelectionMode(preselectId) },
             onEdit = { schedule -> showScheduleDialog(existing = schedule, preselectedMode = null) }
         )
         recycler.adapter = adapter
 
-        findViewById<View>(R.id.fabAdd).setOnClickListener { showNewScheduleTypeDialog() }
+        findViewById<View>(R.id.fabAdd).setOnClickListener {
+            if (!isScheduleAutomationAllowed()) {
+                Toast.makeText(this, getString(R.string.mode_blocked_schedule_action), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            showNewScheduleTypeDialog()
+        }
         refreshList()
+    }
 
-        setupBottomNav(bottomNav)
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_schedules, menu)
+        return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val hasItems = adapter.itemCount > 0
+        menu.findItem(R.id.action_select)?.isVisible = !isSelectionMode && hasItems
+        menu.findItem(R.id.action_cancel_selection)?.isVisible = isSelectionMode
+        menu.findItem(R.id.action_delete_selected)?.isVisible = isSelectionMode
+
+        val del = menu.findItem(R.id.action_delete_selected)
+        del?.isEnabled = selectedScheduleIds.isNotEmpty()
+        del?.alphaCompat(if (selectedScheduleIds.isNotEmpty()) 1f else 0.4f)
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_select -> {
+                enterSelectionMode(null)
+                true
+            }
+            R.id.action_cancel_selection -> {
+                exitSelectionMode()
+                true
+            }
+            R.id.action_delete_selected -> {
+                confirmDeleteSelectedSchedules()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun MenuItem.alphaCompat(alpha: Float) {
+        val a = (alpha.coerceIn(0f, 1f) * 255).toInt()
+        icon?.mutate()?.alpha = a
+    }
+
+    private fun updateMenuState() {
+        invalidateOptionsMenu()
+        findViewById<View>(R.id.fabAdd)?.visibility = if (isSelectionMode) View.GONE else View.VISIBLE
+    }
+
+    private fun enterSelectionMode(preselectId: Int?) {
+        isSelectionMode = true
+        selectedScheduleIds.clear()
+        preselectId?.let { selectedScheduleIds.add(it) }
+        adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        updateMenuState()
+    }
+
+    private fun exitSelectionMode() {
+        isSelectionMode = false
+        selectedScheduleIds.clear()
+        adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        updateMenuState()
+    }
+
+    private fun toggleSelection(id: Int) {
+        if (!isSelectionMode) return
+        if (selectedScheduleIds.contains(id)) selectedScheduleIds.remove(id) else selectedScheduleIds.add(id)
+        adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        updateMenuState()
+    }
+
+    private fun confirmDeleteSelectedSchedules() {
+        if (selectedScheduleIds.isEmpty()) return
+        val count = selectedScheduleIds.size
+        val dlg = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.delete))
+            .setMessage(resources.getQuantityString(R.plurals.delete_schedules_confirm, count, count))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.delete, null)
+            .create()
+
+        dlg.setOnShowListener {
+            dlg.styleSwitchlyDialogButtons()
+            dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val remaining = ScheduleStore.getAll(this).filterNot { selectedScheduleIds.contains(it.id) }
+                ScheduleStore.saveAll(this, remaining)
+                SchedulePlanner.updateNextAlarm(this)
+                SchedulePlanner.notifyNextChanged(this)
+                exitSelectionMode()
+                refreshList()
+                dlg.dismiss()
+            }
+        }
+        dlg.show()
     }
 
     private fun rootContentView(): View? {
@@ -141,7 +360,12 @@ class SchedulesActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        findViewById<BottomNavigationView>(R.id.bottomNav)?.selectedItemId = R.id.nav_schedules
+
+        val uiPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+        switchShowNextSchedule.isChecked = uiPrefs.getBoolean(ToggleOptionsActivity.KEY_SHOW_NEXT_SCHEDULE, false)
+        tintSwitchCompat(switchShowNextSchedule)
+
+        refreshList()
 
         // If Wi-Fi triggers can't read the current SSID, we show a one-time hint.
         // This commonly happens on modern Android when Location is turned off.
@@ -160,42 +384,20 @@ class SchedulesActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupBottomNav(bottomNav: BottomNavigationView) {
-        bottomNav.selectedItemId = R.id.nav_schedules
-
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    startActivity(
-                        Intent(this, MainActivity::class.java).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        }
-                    )
-                    finish()
-                    true
-                }
-
-                R.id.nav_schedules -> true
-
-                R.id.nav_stats -> {
-                    startActivity(Intent(this, StatisticsHubActivity::class.java))
-                    finish()
-                    true
-                }
-
-                else -> false
-            }
-        }
-    }
-
     private fun showNewScheduleTypeDialog() {
+        if (!isScheduleAutomationAllowed()) {
+            Toast.makeText(this, getString(R.string.mode_blocked_schedule_action), Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val isPremium = PremiumManager.isPremium(this)
+        val nfcLockOn = isNfcLockActiveForSchedules()
 
         data class TypeItem(val label: String, val iconRes: Int, val mode: NewScheduleMode)
 
         val items = buildList {
             add(TypeItem(getString(R.string.schedules_type_time), R.drawable.alarm_24, NewScheduleMode.TIME))
-            if (isPremium) {
+            if (isPremium && !nfcLockOn) {
                 add(TypeItem(getString(R.string.schedules_type_wifi), R.drawable.wifi_24, NewScheduleMode.WIFI))
                 add(TypeItem(getString(R.string.schedules_type_bt), R.drawable.bluetooth_24, NewScheduleMode.BT))
             }
@@ -219,7 +421,7 @@ class SchedulesActivity : AppCompatActivity() {
             }
         }
 
-        val dialog = AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
             .setTitle(R.string.schedules_choose_type)
             .setAdapter(adapter) { _, which ->
                 when (items[which].mode) {
@@ -229,29 +431,237 @@ class SchedulesActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.cancel, null)
-            .create()
 
-        dialog.setOnShowListener { dialog.applyAccentToButtons() }
+        if (nfcLockOn) {
+            builder.setMessage(R.string.schedules_nfc_lock_add_dialog_hint)
+        }
+
+        val dialog = builder.create()
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
         dialog.show()
     }
 
-    private fun AlertDialog.applyAccentToButtons() {
-        val accent = AccentColor.getAccentColorInt(context)
-        getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(accent)
-        getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(accent)
-        getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(accent)
+    private fun tintPickButton(button: MaterialButton) {
+        val accent = AccentColor.getAccentColorInt(this)
+        button.strokeColor = ColorStateList.valueOf(accent)
+        button.setTextColor(accent)
+        button.iconTint = ColorStateList.valueOf(accent)
+    }
+
+    private fun tintSwitchCompat(switch: SwitchCompat) {
+        val accent = AccentColor.getAccentColorInt(this)
+        val thumbOff = ColorUtils.blendARGB(accent, Color.WHITE, 0.72f)
+        val thumbDisabled = ColorUtils.blendARGB(accent, Color.LTGRAY, 0.80f)
+        val trackOn = ColorUtils.setAlphaComponent(accent, 0x88)
+        val trackOff = ColorUtils.setAlphaComponent(Color.DKGRAY, 0x44)
+        val trackOffDisabled = ColorUtils.setAlphaComponent(Color.GRAY, 0x33)
+
+        switch.thumbTintList = ColorStateList(
+            arrayOf(
+                intArrayOf(-android.R.attr.state_enabled),
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf()
+            ),
+            intArrayOf(thumbDisabled, accent, thumbOff)
+        )
+
+        switch.trackTintList = ColorStateList(
+            arrayOf(
+                intArrayOf(-android.R.attr.state_enabled),
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf()
+            ),
+            intArrayOf(trackOffDisabled, trackOn, trackOff)
+        )
     }
 
     private fun refreshList() {
-        adapter.submitList(ScheduleStore.getAll(this))
+        val list = ScheduleStore.getAll(this)
+        adapter.submitList(list)
+
+        // keep selection consistent
+        val ids = list.map { it.id }.toSet()
+        selectedScheduleIds.retainAll(ids)
+        if (isSelectionMode && selectedScheduleIds.isEmpty()) {
+            exitSelectionMode()
+        } else {
+            updateMenuState()
+        }
+        updateScheduleHealthBanner()
     }
 
-    private fun requestImmediateScheduleTick(reason: String) {
-        sendBroadcast(
-            Intent(ScheduleReceiver.ACTION_TICK)
-                .setPackage(packageName)
-                .putExtra("time_reason", reason)
-        )
+    private fun canScheduleExactAlarms(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
+        val am = getSystemService(AlarmManager::class.java) ?: return true
+        return am.canScheduleExactAlarms()
+    }
+
+    private fun openExactAlarmSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        runCatching {
+            startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                data = "package:$packageName".toUri()
+            })
+        }
+    }
+
+    private fun openBatteryOptimizationSettings() {
+        runCatching {
+            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = "package:$packageName".toUri()
+            })
+        }.onFailure {
+            runCatching {
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            }
+        }
+    }
+
+    private fun isBatteryOptimizationLikelyActive(): Boolean {
+        val pm = getSystemService(PowerManager::class.java) ?: return false
+        return !pm.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    private fun updateScheduleHealthBanner() {
+        val schedules = ScheduleStore.getAll(this)
+        val enabledSchedules = schedules.filter { it.enabled }
+
+        if (enabledSchedules.isEmpty()) {
+            cardScheduleHealth.isVisible = false
+            return
+        }
+
+        val batteryOptimizationActive = isBatteryOptimizationLikelyActive()
+        val exactAlarmsAllowed = canScheduleExactAlarms()
+        val accessibilityActive = BlockingRuntime.isAccessibilityActive(this)
+
+        // Some schedule modes need extra runtime permissions to work reliably
+        val wifiSchedulesNeedPerm = enabledSchedules.any { !it.wifiSsid.isNullOrBlank() }
+        val btSchedulesNeedPerm = enabledSchedules.any { !it.btDeviceName.isNullOrBlank() }
+        val wifiPermMissing = wifiSchedulesNeedPerm && !hasWifiSsidPermission()
+        val btPermMissing = btSchedulesNeedPerm && !hasBluetoothConnectPermission()
+
+        val nfcLockActiveForSchedules = isNfcLockActiveForSchedules()
+        val nfcConflict = nfcLockActiveForSchedules &&
+            enabledSchedules.any { it.action in nfcLockedActions }
+
+        val blockedAt = ScheduleRuntimeStore.getLastDisableBlockedByNfcMs(this)
+        val nfcBlockedRecently = nfcLockActiveForSchedules &&
+            blockedAt > 0L && (System.currentTimeMillis() - blockedAt) < 24L * 60L * 60L * 1000L
+
+        val lastExecMs = ScheduleRuntimeStore.getLastExecutionMs(this)
+        val lastExecText = if (lastExecMs > 0L) {
+            runCatching {
+                DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
+                    .format(Date(lastExecMs))
+            }.getOrDefault(DateFormat.getDateTimeInstance().format(Date(lastExecMs)))
+        } else {
+            getString(R.string.schedules_health_last_exec_never)
+        }
+
+        val statusLines = mutableListOf<String>()
+        statusLines += if (batteryOptimizationActive) {
+            getString(R.string.schedules_health_status_battery_bad)
+        } else {
+            getString(R.string.schedules_health_status_battery_ok)
+        }
+        statusLines += if (exactAlarmsAllowed) {
+            getString(R.string.schedules_health_status_exact_ok)
+        } else {
+            getString(R.string.schedules_health_status_exact_bad)
+        }
+        statusLines += getString(R.string.schedules_health_status_last_exec, lastExecText)
+
+        val healthStatusBase = statusLines.joinToString("\n")
+
+        cardScheduleHealth.isVisible = true
+
+        when {
+            !accessibilityActive -> {
+                tvStatusTitle.text = getString(
+                    R.string.schedules_health_status_with_detail,
+                    healthStatusBase,
+                    getString(R.string.schedules_health_accessibility)
+                )
+                btnStatusAction.isVisible = true
+                btnStatusAction.setText(R.string.schedules_health_action_permissions)
+                btnStatusAction.setOnClickListener {
+                    startActivity(Intent(this, PermissionsActivity::class.java))
+                }
+            }
+
+            wifiPermMissing || btPermMissing -> {
+                val detail = when {
+                    wifiPermMissing && btPermMissing -> getString(R.string.schedules_health_permissions_wifi_bt)
+                    wifiPermMissing -> getString(R.string.schedules_health_permissions_wifi)
+                    else -> getString(R.string.schedules_health_permissions_bt)
+                }
+                tvStatusTitle.text = getString(
+                    R.string.schedules_health_status_with_detail,
+                    healthStatusBase,
+                    detail
+                )
+                btnStatusAction.isVisible = true
+                btnStatusAction.setText(R.string.schedules_health_action_permissions)
+                btnStatusAction.setOnClickListener { openPermissionsOverview() }
+            }
+
+            nfcConflict || nfcBlockedRecently -> {
+                tvStatusTitle.text = getString(
+                    R.string.schedules_health_status_with_detail,
+                    healthStatusBase,
+                    getString(R.string.schedules_health_nfc_conflict)
+                )
+                btnStatusAction.isVisible = true
+                btnStatusAction.setText(R.string.schedules_health_action_toggle_options)
+                btnStatusAction.setOnClickListener {
+                    startActivity(Intent(this, ToggleOptionsActivity::class.java))
+                }
+            }
+
+            batteryOptimizationActive -> {
+                tvStatusTitle.text = getString(
+                    R.string.schedules_health_status_with_detail,
+                    healthStatusBase,
+                    getString(R.string.schedules_health_battery)
+                )
+                btnStatusAction.isVisible = true
+                btnStatusAction.setText(R.string.schedules_health_action_battery)
+                btnStatusAction.setOnClickListener { openBatteryOptimizationSettings() }
+            }
+
+            !exactAlarmsAllowed -> {
+                tvStatusTitle.text = getString(
+                    R.string.schedules_health_status_with_detail,
+                    healthStatusBase,
+                    getString(R.string.schedules_health_exact_alarm)
+                )
+                btnStatusAction.isVisible = true
+                btnStatusAction.setText(R.string.schedules_health_action_exact_alarm)
+                btnStatusAction.setOnClickListener { openExactAlarmSettings() }
+            }
+
+            else -> {
+                tvStatusTitle.text = healthStatusBase
+                btnStatusAction.isVisible = false
+                btnStatusAction.setOnClickListener(null)
+            }
+        }
+
+        // Hide the whole "Recommended action" row when nothing is required.
+        rowStatusAction.isVisible = btnStatusAction.isVisible
+        dividerStatus.isVisible = rowStatusAction.isVisible
+    }
+
+    private fun showScheduleHealthInfoDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.schedules_health_info_title)
+            .setMessage(R.string.schedules_health_info_body)
+            .setPositiveButton(R.string.ok, null)
+            .setNeutralButton(R.string.schedules_health_action_permissions) { _, _ ->
+                openPermissionsOverview()
+            }
+            .showAccented()
     }
 
     private fun confirmDelete(schedule: ScheduleStore.Schedule) {
@@ -263,11 +673,10 @@ class SchedulesActivity : AppCompatActivity() {
                 ScheduleStore.saveAll(this, newList)
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
-                requestImmediateScheduleTick("ui_delete")
                 refreshList()
             }
             .setNegativeButton(R.string.cancel, null)
-            .show()
+            .showAccented()
     }
 
     private fun wifiSsidPermissionName(): String {
@@ -279,10 +688,18 @@ class SchedulesActivity : AppCompatActivity() {
     }
 
     private fun hasWifiSsidPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
+        val primaryGranted = ContextCompat.checkSelfPermission(
             this,
             wifiSsidPermissionName()
         ) == PackageManager.PERMISSION_GRANTED
+        if (primaryGranted) return true
+
+        // Be permissive on Android 13+: some devices expose SSID access via fine location even when Nearby Wi‑Fi wasn't explicitly granted yet.
+        return Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun hasBluetoothConnectPermission(): Boolean {
@@ -303,6 +720,14 @@ class SchedulesActivity : AppCompatActivity() {
         }
     }
 
+    private fun openPermissionsOverview() {
+        runCatching {
+            startActivity(Intent(this, PermissionsActivity::class.java))
+        }.onFailure {
+            openAppSettings()
+        }
+    }
+
     private fun showWhyLocationDialogForWifi() {
         AlertDialog.Builder(this)
             .setTitle(R.string.perm_location_title)
@@ -310,8 +735,11 @@ class SchedulesActivity : AppCompatActivity() {
             .setPositiveButton(R.string.ok) { _, _ ->
                 requestLocationPermission.launch(wifiSsidPermissionName())
             }
+            .setNeutralButton(R.string.schedules_health_action_permissions) { _, _ ->
+                openPermissionsOverview()
+            }
             .setNegativeButton(R.string.cancel, null)
-            .show()
+            .showAccented()
     }
 
     private fun showWhyBluetoothDialogForSchedules() {
@@ -323,11 +751,11 @@ class SchedulesActivity : AppCompatActivity() {
                     requestBluetoothPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
                 }
             }
-            .setNeutralButton(R.string.permissions_btn_open_settings) { _, _ ->
-                openAppSettings()
+            .setNeutralButton(R.string.schedules_health_action_permissions) { _, _ ->
+                openPermissionsOverview()
             }
             .setNegativeButton(R.string.cancel, null)
-            .show()
+            .showAccented()
     }
 
     private fun showSnack(msgRes: Int) {
@@ -340,13 +768,23 @@ class SchedulesActivity : AppCompatActivity() {
         existing: ScheduleStore.Schedule?,
         preselectedMode: NewScheduleMode? = null
     ) {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_schedule_add, null, false)
+        // Inflate with the dialog theme overlay to avoid OEM/Android 16 theme resolution issues when TextInputLayout (Material) reads theme attributes.
+        val themedCtx = androidx.appcompat.view.ContextThemeWrapper(this, R.style.ThemeOverlay_Switchly_Dialog)
+        val view = LayoutInflater.from(themedCtx).inflate(R.layout.dialog_schedule_add, null, false)
+
+        // Dialog content is inflated with a theme overlay, which can still resolve some Material widget colors (chips/text fields) to the default (green) accent. 
+        // In CUSTOM mode, do an explicit runtime recolor pass so cursor/selection + checkables are correct.
+        val isCustomAccent = CustomAccentApplier.isCustomAccentEnabled(this)
+        if (isCustomAccent) {
+            CustomAccentApplier.applyToView(view, this)
+        }
 
         val editTitle = view.findViewById<EditText>(R.id.editTitle)
         val editNote = view.findViewById<EditText>(R.id.editNote)
-        val spinnerProfile = view.findViewById<Spinner>(R.id.spinnerProfile)
-        val spinnerAction = view.findViewById<Spinner>(R.id.spinnerAction)
-        val spinnerTimeMode = view.findViewById<Spinner>(R.id.spinnerTimeMode)
+        val spinnerProfile = view.findViewById<android.widget.AutoCompleteTextView>(R.id.spinnerProfile)
+        val spinnerAction = view.findViewById<android.widget.AutoCompleteTextView>(R.id.spinnerAction)
+        val textActionNfcHint = view.findViewById<TextView>(R.id.textActionNfcHint)
+        val spinnerTimeMode = view.findViewById<android.widget.AutoCompleteTextView>(R.id.spinnerTimeMode)
 
         val groupTimeMode = view.findViewById<View>(R.id.groupTimeMode)
 
@@ -360,7 +798,25 @@ class SchedulesActivity : AppCompatActivity() {
         val textConnAllDayHint = view.findViewById<TextView>(R.id.textConnAllDayHint)
 
         val inputWifiSsid = view.findViewById<EditText>(R.id.inputWifiSsid)
+        val layoutWifiSsid = view.findViewById<TextInputLayout>(R.id.layoutWifiSsid)
+        val groupWifiActions = view.findViewById<View>(R.id.groupWifiActions)
+        val btnScanWifi = view.findViewById<MaterialButton>(R.id.btnScanWifi)
         val inputBtName = view.findViewById<EditText>(R.id.inputBtName)
+        val layoutBtName = view.findViewById<TextInputLayout>(R.id.layoutBtName)
+        val groupBtActions = view.findViewById<View>(R.id.groupBtActions)
+        val btnUseConnectedBt = view.findViewById<MaterialButton>(R.id.btnUseConnectedBt)
+        val btnPickPairedBt = view.findViewById<MaterialButton>(R.id.btnPickPairedBt)
+
+        if (isCustomAccent) {
+            tintPickButton(btnScanWifi)
+            tintPickButton(btnUseConnectedBt)
+            tintPickButton(btnPickPairedBt)
+            tintSwitchCompat(switchConnTimeWindow)
+            // Outlined TextInputLayouts look best when the stroke is accented.
+            val accent = AccentColor.getAccentColorInt(this)
+            layoutWifiSsid.boxStrokeColor = accent
+            layoutBtName.boxStrokeColor = accent
+        }
 
         val groupWeekly = view.findViewById<View>(R.id.groupWeekly)
         val groupOnce = view.findViewById<View>(R.id.groupOnce)
@@ -379,6 +835,53 @@ class SchedulesActivity : AppCompatActivity() {
         val chipWeekend = view.findViewById<Chip>(R.id.chipWeekend)
         val chipToday = view.findViewById<Chip>(R.id.chipToday)
 
+        // Make chip selection states obvious without extra color selector XML files.
+        // (We build the ColorStateList in code so you can keep resources lean.)
+        fun applyDayChipColors(chip: Chip) {
+            // IMPORTANT: This dialog is inflated with a theme overlay.
+            // In CUSTOM accent modethe overlay can still resolve colorPrimary to the default green, so we must pull the user-selected accent explicitly.
+            val primary = if (isCustomAccent) {
+                AccentColor.getAccentColorInt(this@SchedulesActivity)
+            } else {
+                // NOTE: Depending on the Material library version, colorPrimary may be defined by
+                // AppCompat rather than com.google.android.material.R.attr.
+                MaterialColors.getColor(chip, androidx.appcompat.R.attr.colorPrimary)
+            }
+
+            val onPrimary = if (isCustomAccent) {
+                val black = ColorUtils.calculateContrast(Color.BLACK, primary)
+                val white = ColorUtils.calculateContrast(Color.WHITE, primary)
+                if (black >= white) Color.BLACK else Color.WHITE
+            } else {
+                MaterialColors.getColor(chip, com.google.android.material.R.attr.colorOnPrimary)
+            }
+            val onSurface = MaterialColors.getColor(chip, com.google.android.material.R.attr.colorOnSurface)
+
+            // Subtle unselected look (tinted onSurface); clear selected look (primary).
+            val bgUnchecked = MaterialColors.compositeARGBWithAlpha(onSurface, 0x14) // ~8%
+            val strokeUnchecked = MaterialColors.compositeARGBWithAlpha(onSurface, 0x3D) // ~24%
+
+            chip.chipBackgroundColor = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                intArrayOf(primary, bgUnchecked)
+            )
+            chip.chipStrokeColor = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                intArrayOf(primary, strokeUnchecked)
+            )
+            chip.setTextColor(
+                ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                    intArrayOf(onPrimary, onSurface)
+                )
+            )
+        }
+
+        listOf(
+            chipMon, chipTue, chipWed, chipThu, chipFri, chipSat, chipSun,
+            chipWeekdays, chipWeekend, chipToday
+        ).forEach(::applyDayChipColors)
+
         val isPremium = PremiumManager.isPremium(this)
 
         val kind: Kind = when {
@@ -392,8 +895,8 @@ class SchedulesActivity : AppCompatActivity() {
 
         // For non-premium: just hide the premium-only inputs
         if (!isPremium) {
-            inputWifiSsid.visibility = View.GONE
-            inputBtName.visibility = View.GONE
+            layoutWifiSsid.visibility = View.GONE
+            layoutBtName.visibility = View.GONE
         }
 
         fun applyKindVisibility() {
@@ -403,8 +906,10 @@ class SchedulesActivity : AppCompatActivity() {
             val showWifi = isPremium && kind == Kind.WIFI
             val showBt = isPremium && kind == Kind.BT
 
-            inputWifiSsid.isVisible = showWifi
-            inputBtName.isVisible = showBt
+            layoutWifiSsid.isVisible = showWifi
+            groupWifiActions.isVisible = showWifi
+            layoutBtName.isVisible = showBt
+            groupBtActions.isVisible = showBt
 
             // Time window switch only makes sense for connection schedules
             val isConn = kind == Kind.WIFI || kind == Kind.BT
@@ -412,22 +917,351 @@ class SchedulesActivity : AppCompatActivity() {
             textConnAllDayHint.isVisible = false
         }
 
+        // Wi‑Fi helper actions
+        fun requestWifiPermissionThenRetry(action: () -> Unit) {
+            pendingAfterLocationGrant = action
+            requestLocationPermission.launch(wifiSsidPermissionName())
+        }
+
+        fun requestBluetoothPermissionThenRetry(action: () -> Unit) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                pendingAfterBluetoothGrant = action
+                requestBluetoothPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
+            } else {
+                action()
+            }
+        }
+
+        fun isLocationEnabled(): Boolean {
+            val lm = getSystemService(LOCATION_SERVICE) as LocationManager
+            return runCatching {
+                lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                    lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+            }.getOrDefault(false)
+        }
+
+        fun cleanSsid(raw: String?): String? {
+            if (raw.isNullOrBlank()) return null
+            val s = raw.trim().removePrefix("\"").removeSuffix("\"")
+            if (s.equals("<unknown ssid>", ignoreCase = true)) return null
+            return s
+        }
+
+        fun markNeedsLocationHintOnce() {
+            getSharedPreferences("switchly_wifi_cache", MODE_PRIVATE).edit {
+                putBoolean("wifi_needs_location_hint", true)
+            }
+        }
+
+        fun openLocationSettings() {
+            runCatching {
+                startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            }
+        }
+        fun openWifiPickerPanel() {
+            // Open plain Wi‑Fi settings only. We do not rely on callback-selected SSID.
+            runCatching { startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) }
+        }
+
+        fun openWifiPickerOrPermissions() {
+            if (!hasWifiSsidPermission()) {
+                openPermissionsOverview()
+            } else {
+                openWifiPickerPanel()
+            }
+        }
+
+
+
+        fun showWifiPickerFromResults(results: List<ScanResult>) {
+            val ssids = results
+                .mapNotNull { cleanSsid(it.SSID) }
+                .distinct()
+                .sorted()
+
+            if (ssids.isEmpty()) {
+                val positiveActionLabel =
+                    if (!hasWifiSsidPermission()) R.string.schedules_health_action_permissions
+                    else R.string.schedules_wifi_open_picker
+
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.schedules_wifi_scan_empty)
+                    .setMessage(R.string.schedules_wifi_scan_empty_hint)
+                    .setPositiveButton(positiveActionLabel) { _, _ ->
+                        openWifiPickerOrPermissions()
+                    }
+                    .setNeutralButton(R.string.schedules_wifi_enter_manually) { _, _ ->
+                        inputWifiSsid.requestFocus()
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .showAccented()
+                return
+            }
+
+            AlertDialog.Builder(this)
+                .setTitle(R.string.schedules_wifi_pick_title)
+                .setItems(ssids.toTypedArray()) { _, which ->
+                    inputWifiSsid.setText(ssids[which])
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .showAccented()
+        }
+
+        fun scanWifi() {
+            if (!hasWifiSsidPermission()) {
+                requestWifiPermissionThenRetry { scanWifi() }
+                return
+            }
+            if (!isLocationEnabled()) {
+                markNeedsLocationHintOnce()
+                Toast.makeText(this, getString(R.string.schedules_wifi_location_required), Toast.LENGTH_LONG).show()
+                openLocationSettings()
+                return
+            }
+
+            val wifi = getSystemService(WIFI_SERVICE) as WifiManager
+            if (!wifi.isWifiEnabled) {
+                Toast.makeText(this, getString(R.string.schedules_wifi_enable_wifi), Toast.LENGTH_LONG).show()
+                openWifiPickerPanel()
+                return
+            }
+
+            val hasFineLocation = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            val hasNearbyWifi = Build.VERSION.SDK_INT < 33 ||
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.NEARBY_WIFI_DEVICES
+                ) == PackageManager.PERMISSION_GRANTED
+            val canReadWifi = hasFineLocation || (Build.VERSION.SDK_INT >= 33 && hasNearbyWifi)
+
+            if (!canReadWifi) {
+                showWhyLocationDialogForWifi()
+                return
+            }
+
+            // Best-effort: show cached results if available; otherwise trigger a scan and re-check.
+            val cached = try {
+                if (canReadWifi) wifi.scanResults else emptyList()
+            } catch (_: SecurityException) {
+                emptyList()
+            }
+            if (cached.isNotEmpty()) {
+                showWifiPickerFromResults(cached)
+                return
+            }
+
+            Toast.makeText(this, getString(R.string.schedules_wifi_scanning), Toast.LENGTH_SHORT).show()
+            val started = try {
+                if (canReadWifi) wifi.startScan() else false
+            } catch (_: SecurityException) {
+                false
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                val fresh = try {
+                    if (canReadWifi) wifi.scanResults else emptyList()
+                } catch (_: SecurityException) {
+                    emptyList()
+                }
+                if (fresh.isNotEmpty()) {
+                    showWifiPickerFromResults(fresh)
+                } else {
+                    // Many devices/ROMs restrict scanning. Fallback to the system Wi‑Fi picker.
+                    val positiveActionLabel =
+                        if (!hasWifiSsidPermission()) R.string.schedules_health_action_permissions
+                        else R.string.schedules_wifi_open_picker
+
+                    AlertDialog.Builder(this)
+                        .setTitle(R.string.schedules_wifi_scan_empty)
+                        .setMessage(R.string.schedules_wifi_fix_message)
+                        .setPositiveButton(positiveActionLabel) { _, _ ->
+                            openWifiPickerOrPermissions()
+                        }
+                        .setNeutralButton(R.string.schedules_wifi_retry_scan) { _, _ ->
+                            scanWifi()
+                        }
+                        .setNegativeButton(R.string.cancel, null)
+                        .showAccented()
+                }
+            }, if (started) 1400L else 200L)
+        }
+
+        fun useConnectedBt() {
+            if (!hasBluetoothConnectPermission()) {
+                requestBluetoothPermissionThenRetry { useConnectedBt() }
+                return
+            }
+
+            val manager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+            val adapter = manager.adapter
+            if (adapter == null || !adapter.isEnabled) {
+                Toast.makeText(this, getString(R.string.schedules_bt_enable_bt), Toast.LENGTH_LONG).show()
+                runCatching { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
+                return
+            }
+
+            val hasBtConnect = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasBtConnect) {
+                requestBluetoothPermissionThenRetry { useConnectedBt() }
+                return
+            }
+
+            val names = linkedSetOf<String>()
+
+            // 1) Classic Bluetooth (A2DP/Headset/etc.): infer connected bonded devices.
+            val bonded = runCatching { adapter.bondedDevices }.getOrDefault(emptySet())
+            val isConnectedMethod = runCatching {
+                Class.forName("android.bluetooth.BluetoothDevice").getMethod("isConnected")
+            }.getOrNull()
+
+            bonded.forEach { device ->
+                val connected = runCatching {
+                    (isConnectedMethod?.invoke(device) as? Boolean) ?: false
+                }.getOrDefault(false)
+
+                if (connected) {
+                    val n = runCatching { device.name }
+                        .getOrNull()
+                        ?.trim()
+                        ?.takeIf { it.isNotEmpty() }
+                    if (n != null) names += n
+                }
+            }
+
+            // 2) BLE fallback via BluetoothManager.
+            // Android 16 betas have shown IllegalArgumentException here on some devices/ROMs.
+            // Keep this best-effort and never allow it to crash the picker flow.
+            val bleProfiles = intArrayOf(BluetoothProfile.GATT)
+            for (profile in bleProfiles) {
+                val devices = try {
+                    manager.getConnectedDevices(profile)
+                } catch (_: IllegalArgumentException) {
+                    emptyList()
+                } catch (_: SecurityException) {
+                    emptyList()
+                } catch (_: Throwable) {
+                    emptyList()
+                }
+
+                for (d in devices) {
+                    val n = try {
+                        d.name?.trim()?.takeIf { it.isNotEmpty() }
+                    } catch (_: Throwable) {
+                        null
+                    }
+                    if (n != null) names += n
+                }
+            }
+
+            val selected = names.firstOrNull()
+            if (selected.isNullOrBlank()) {
+                Toast.makeText(this, getString(R.string.schedules_bt_no_connected), Toast.LENGTH_LONG).show()
+                // Helpful fallback: open paired picker so user can still finish quickly.
+                btnPickPairedBt.performClick()
+                return
+            }
+
+            inputBtName.setText(selected)
+        }
+
+        fun pickPairedBt() {
+            if (!hasBluetoothConnectPermission()) {
+                requestBluetoothPermissionThenRetry { pickPairedBt() }
+                return
+            }
+            val adapter = BluetoothAdapter.getDefaultAdapter()
+            if (adapter == null || !adapter.isEnabled) {
+                Toast.makeText(this, getString(R.string.schedules_bt_enable_bt), Toast.LENGTH_LONG).show()
+                runCatching { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
+                return
+            }
+
+            val hasBtConnect = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasBtConnect) {
+                requestBluetoothPermissionThenRetry { pickPairedBt() }
+                return
+            }
+
+            val bonded = try {
+                if (hasBtConnect) adapter.bondedDevices else emptySet()
+            } catch (_: SecurityException) {
+                emptySet()
+            }
+
+            val names = bonded
+                .mapNotNull { d ->
+                    runCatching { d.name }
+                        .getOrNull()
+                        ?.trim()
+                        ?.takeIf { it.isNotEmpty() }
+                }
+                .distinct()
+                .sorted()
+
+            if (names.isEmpty()) {
+                Toast.makeText(this, getString(R.string.schedules_bt_no_paired), Toast.LENGTH_LONG).show()
+                runCatching { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
+                return
+            }
+
+            AlertDialog.Builder(this)
+                .setTitle(R.string.schedules_bt_pick_paired)
+                .setItems(names.toTypedArray()) { _, which ->
+                    inputBtName.setText(names[which])
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .showAccented()
+        }
+
+        btnScanWifi.setOnClickListener { scanWifi() }
+        btnUseConnectedBt.setOnClickListener {
+            try {
+                useConnectedBt()
+            } catch (_: Throwable) {
+                Toast.makeText(this, getString(R.string.schedules_bt_no_connected), Toast.LENGTH_LONG).show()
+                btnPickPairedBt.performClick()
+            }
+        }
+        btnPickPairedBt.setOnClickListener { pickPairedBt() }
+
         // Profiles
         val profiles = ProfileStore.getProfiles(this)
         val profileList: List<String> = if (existing != null && existing.profile !in profiles) {
             listOf(existing.profile) + profiles
         } else profiles.toList()
 
-        spinnerProfile.adapter = ArrayAdapter(
+        val profileAdapter = ArrayAdapter(
             this,
-            android.R.layout.simple_spinner_item,
+            android.R.layout.simple_list_item_1,
             profileList
-        ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+        )
+        spinnerProfile.setAdapter(profileAdapter)
+
+        var selectedProfileIndex = 0
+        spinnerProfile.setOnItemClickListener { _, _, position, _ ->
+            selectedProfileIndex = position
+        }
 
         fun selectProfile(name: String?) {
             if (name == null) return
             val idx = profileList.indexOf(name)
-            if (idx >= 0) spinnerProfile.setSelection(idx)
+            if (idx >= 0) {
+                selectedProfileIndex = idx
+                spinnerProfile.setText(profileList[idx], false)
+            }
         }
 
         // Defaults
@@ -436,9 +1270,11 @@ class SchedulesActivity : AppCompatActivity() {
         var startDateYmd = 0
         var endDateYmd = 0
 
+        var selectedTimeModeIndex = 0
+
         fun currentTimeMode(): TimeMode {
             if (kind != Kind.TIME) return TimeMode.SINGLE
-            return when (spinnerTimeMode.selectedItemPosition) {
+            return when (selectedTimeModeIndex) {
                 1 -> TimeMode.TIME_RANGE
                 2 -> TimeMode.DATE_RANGE
                 else -> TimeMode.SINGLE
@@ -449,26 +1285,37 @@ class SchedulesActivity : AppCompatActivity() {
         fun setupTimeModeSpinner() {
             if (kind != Kind.TIME) return
 
-            val labels = listOf(
-                getString(R.string.schedules_time_mode_single),
-                getString(R.string.schedules_time_mode_range),
-                getString(R.string.schedules_time_mode_date_range)
-            )
-
-            spinnerTimeMode.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, labels)
-                .also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
-
-            val sel = when {
-                existing?.type == ScheduleStore.Type.ONE_TIME -> 2
-                existing?.action == ScheduleStore.Action.ENABLE_AND_DISABLE ||
-                    existing?.action == ScheduleStore.Action.DISABLE_AND_ENABLE -> 1
-                else -> 0
+            val nfcLockOn = isNfcLockActiveForSchedules()
+            val labels = if (nfcLockOn) {
+                listOf(getString(R.string.schedules_time_mode_single))
+            } else {
+                listOf(
+                    getString(R.string.schedules_time_mode_single),
+                    getString(R.string.schedules_time_mode_range),
+                    getString(R.string.schedules_time_mode_date_range)
+                )
             }
-            spinnerTimeMode.setSelection(sel)
+
+            val timeModeAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, labels)
+            spinnerTimeMode.setAdapter(timeModeAdapter)
+
+            val sel = if (nfcLockOn) {
+                0
+            } else {
+                when {
+                    existing?.type == ScheduleStore.Type.ONE_TIME -> 2
+                    existing?.action == ScheduleStore.Action.ENABLE_AND_DISABLE ||
+                        existing?.action == ScheduleStore.Action.DISABLE_AND_ENABLE -> 1
+                    else -> 0
+                }
+            }
+            selectedTimeModeIndex = sel
+            spinnerTimeMode.setText(labels.getOrNull(sel) ?: labels.firstOrNull().orEmpty(), false)
         }
 
         // Action spinner (filled in code from strings)
         var actionOptions: List<ScheduleStore.Action> = emptyList()
+        var selectedActionIndex = 0
 
         fun actionLabel(a: ScheduleStore.Action): String = when (a) {
             ScheduleStore.Action.ENABLE -> getString(R.string.schedules_action_enable)
@@ -481,29 +1328,51 @@ class SchedulesActivity : AppCompatActivity() {
         fun setActionOptions(options: List<ScheduleStore.Action>, prefer: ScheduleStore.Action?) {
             actionOptions = options
             val labels = options.map { actionLabel(it) }
-            spinnerAction.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, labels)
-                .also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            val actionAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, labels)
+            spinnerAction.setAdapter(actionAdapter)
 
             val pref = prefer ?: options.firstOrNull()
             val idx = if (pref != null) options.indexOf(pref) else 0
-            spinnerAction.setSelection(if (idx >= 0) idx else 0)
+            selectedActionIndex = if (idx >= 0) idx else 0
+            spinnerAction.setText(labels.getOrNull(selectedActionIndex) ?: labels.firstOrNull().orEmpty(), false)
         }
 
         fun selectedAction(): ScheduleStore.Action {
-            val idx = spinnerAction.selectedItemPosition
-            return actionOptions.getOrNull(idx) ?: ScheduleStore.Action.ENABLE
+            return actionOptions.getOrNull(selectedActionIndex) ?: ScheduleStore.Action.ENABLE
+        }
+
+        fun filterActionsForNfc(options: List<ScheduleStore.Action>): List<ScheduleStore.Action> {
+            if (!isNfcLockActiveForSchedules()) return options
+            val filtered = options.filterNot { it in nfcLockedActions }
+            return if (filtered.isNotEmpty()) filtered else listOf(ScheduleStore.Action.ENABLE)
+        }
+
+        fun updateActionNfcHint() {
+            val nfcLocked = isNfcLockActiveForSchedules()
+            if (!nfcLocked) {
+                textActionNfcHint.isVisible = false
+                return
+            }
+
+            val actionBlocked = selectedAction() in nfcLockedActions
+            textActionNfcHint.text = if (actionBlocked) {
+                getString(R.string.schedules_dialog_nfc_lock_hint)
+            } else {
+                getString(R.string.schedules_dialog_nfc_lock_filtered_hint)
+            }
+            textActionNfcHint.isVisible = true
         }
 
         fun formatMinutes(m: Int): String {
-            val h = m / 60
+            val h = m/60
             val mm = m % 60
             return String.format(Locale.getDefault(), "%02d:%02d", h, mm)
         }
 
         fun formatYmd(ymd: Int): String {
             if (ymd <= 0) return getString(R.string.schedules_date_not_set)
-            val y = ymd / 10000
-            val mo = (ymd / 100) % 100
+            val y = ymd/10000
+            val mo = (ymd/100) % 100
             val d = ymd % 100
             val c = Calendar.getInstance().apply {
                 set(Calendar.YEAR, y)
@@ -519,10 +1388,12 @@ class SchedulesActivity : AppCompatActivity() {
                     when (currentTimeMode()) {
                         TimeMode.SINGLE -> {
                             setActionOptions(
-                                listOf(
-                                    ScheduleStore.Action.ENABLE,
-                                    ScheduleStore.Action.DISABLE,
-                                    ScheduleStore.Action.TOGGLE
+                                filterActionsForNfc(
+                                    listOf(
+                                        ScheduleStore.Action.ENABLE,
+                                        ScheduleStore.Action.DISABLE,
+                                        ScheduleStore.Action.TOGGLE
+                                    )
                                 ),
                                 existing?.action?.takeIf {
                                     it == ScheduleStore.Action.ENABLE ||
@@ -534,9 +1405,11 @@ class SchedulesActivity : AppCompatActivity() {
 
                         TimeMode.TIME_RANGE -> {
                             setActionOptions(
-                                listOf(
-                                    ScheduleStore.Action.ENABLE_AND_DISABLE,
-                                    ScheduleStore.Action.DISABLE_AND_ENABLE
+                                filterActionsForNfc(
+                                    listOf(
+                                        ScheduleStore.Action.ENABLE_AND_DISABLE,
+                                        ScheduleStore.Action.DISABLE_AND_ENABLE
+                                    )
                                 ),
                                 existing?.action?.takeIf {
                                     it == ScheduleStore.Action.ENABLE_AND_DISABLE ||
@@ -547,7 +1420,7 @@ class SchedulesActivity : AppCompatActivity() {
 
                         TimeMode.DATE_RANGE -> {
                             setActionOptions(
-                                listOf(ScheduleStore.Action.ENABLE_AND_DISABLE),
+                                filterActionsForNfc(listOf(ScheduleStore.Action.ENABLE_AND_DISABLE)),
                                 ScheduleStore.Action.ENABLE_AND_DISABLE
                             )
                         }
@@ -567,16 +1440,22 @@ class SchedulesActivity : AppCompatActivity() {
                         ScheduleStore.Action.DISABLE -> ScheduleStore.Action.DISABLE_AND_ENABLE
                         else -> ScheduleStore.Action.ENABLE_AND_DISABLE
                     }
-
-                    setActionOptions(
+                    val connOptions = if (isNfcLockActiveForSchedules()) {
+                        listOf(ScheduleStore.Action.ENABLE)
+                    } else {
                         listOf(
                             ScheduleStore.Action.ENABLE_AND_DISABLE,
                             ScheduleStore.Action.DISABLE_AND_ENABLE
-                        ),
+                        )
+                    }
+
+                    setActionOptions(
+                        filterActionsForNfc(connOptions),
                         preferred
                     )
                 }
             }
+            updateActionNfcHint()
         }
 
         fun updateVisibilityForMode() {
@@ -640,8 +1519,9 @@ class SchedulesActivity : AppCompatActivity() {
             }
 
             if (groupOnce.isVisible) {
+                // Two-line label looks cleaner in the dialog (label on top, value below)
                 textStartDate.text = getString(
-                    R.string.schedules_label_value_fmt,
+                    R.string.schedules_label_value_multiline_fmt,
                     getString(R.string.schedules_start_date),
                     formatYmd(startDateYmd)
                 )
@@ -653,7 +1533,7 @@ class SchedulesActivity : AppCompatActivity() {
             }
         }
 
-        // Fill from existing / defaults
+        // Fill from existing/defaults
         if (existing != null) {
             editTitle.setText(existing.title)
             editNote.setText(existing.note)
@@ -703,6 +1583,7 @@ class SchedulesActivity : AppCompatActivity() {
         updateActionUi()
         updateVisibilityForMode()
         updateLabels()
+        updateActionNfcHint()
 
         // Connection time window toggle behavior
         switchConnTimeWindow.setOnCheckedChangeListener { _, checked ->
@@ -726,21 +1607,56 @@ class SchedulesActivity : AppCompatActivity() {
             updateLabels()
         }
 
-        // TimeMode spinner listener (TIME only)
-        spinnerTimeMode.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, pos: Int, id: Long) {
-                if (kind != Kind.TIME) return
-                updateActionUi()
-                updateVisibilityForMode()
-                updateLabels()
-            }
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        spinnerAction.setOnItemClickListener { _, _, pos, _ ->
+            selectedActionIndex = pos
+            updateActionNfcHint()
+        }
+
+        // TimeMode dropdown listener (TIME only)
+        spinnerTimeMode.setOnItemClickListener { _, _, pos, _ ->
+            if (kind != Kind.TIME) return@setOnItemClickListener
+            selectedTimeModeIndex = pos
+            updateActionUi()
+            updateVisibilityForMode()
+            updateLabels()
         }
 
         // Pickers
         fun pickTime(initial: Int, onPicked: (Int) -> Unit) {
-            val h = initial / 60
+            val h = initial/60
             val m = initial % 60
+
+            // The platform TimePickerDialog often keeps the theme default (green) accent in CUSTOM mode.
+            // Use MaterialTimePicker and then run our custom accent pass over the dialog content.
+            if (CustomAccentApplier.isCustomAccentEnabled(this)) {
+                val picker = MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_24H)
+                    .setHour(h)
+                    .setMinute(m)
+                    .build()
+
+                picker.addOnPositiveButtonClickListener {
+                    onPicked(picker.hour * 60 + picker.minute)
+                    updateLabels()
+                }
+
+                val tag = "switchly_timepicker_${SystemClock.uptimeMillis()}"
+                picker.show(supportFragmentManager, tag)
+
+                // Apply custom accent after the dialog is attached and views are inflated.
+                window.decorView.post {
+                    val d = picker.dialog
+                    val decor = d?.window?.decorView
+                    if (decor != null) {
+                        CustomAccentApplier.applyToView(decor, this)
+                        longArrayOf(60L, 180L, 360L).forEach { delay ->
+                            decor.postDelayed({ runCatching { CustomAccentApplier.applyToView(decor, this) } }, delay)
+                        }
+                    }
+                }
+                return
+            }
+
             TimePickerDialog(this, { _, hourOfDay, minute ->
                 onPicked(hourOfDay * 60 + minute)
                 updateLabels()
@@ -750,8 +1666,8 @@ class SchedulesActivity : AppCompatActivity() {
         fun pickDate(initialYmd: Int, onPicked: (Int) -> Unit) {
             val cal = Calendar.getInstance()
             if (initialYmd > 0) {
-                val y = initialYmd / 10000
-                val mo = (initialYmd / 100) % 100
+                val y = initialYmd/10000
+                val mo = (initialYmd/100) % 100
                 val d = initialYmd % 100
                 cal.set(y, mo - 1, d)
             }
@@ -782,7 +1698,7 @@ class SchedulesActivity : AppCompatActivity() {
             }
         }
 
-        // --- Quick chips sync (weekly only) ---
+        // Quick chips sync (weekly only)
         var isUpdatingQuick = false
 
         fun updateQuickChipsFromDays() {
@@ -863,7 +1779,7 @@ class SchedulesActivity : AppCompatActivity() {
             chip.setOnCheckedChangeListener { _, _ -> updateQuickChipsFromDays() }
         }
 
-        val dialog = AlertDialog.Builder(this)
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(if (existing == null) R.string.schedules_add else R.string.schedules_edit)
             .setView(view)
             .setPositiveButton(R.string.ok, null)
@@ -871,13 +1787,19 @@ class SchedulesActivity : AppCompatActivity() {
             .create()
 
         dialog.setOnShowListener {
-            dialog.applyAccentToButtons()
+            dialog.styleSwitchlyDialogButtons()
+            if (CustomAccentApplier.isCustomAccentEnabled(this)) {
+                tintSwitchCompat(switchConnTimeWindow)
+            }
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
 
+                layoutWifiSsid.error = null
+                layoutBtName.error = null
                 inputWifiSsid.error = null
                 inputBtName.error = null
 
-                val profile = spinnerProfile.selectedItem?.toString() ?: ""
+                val profile = profileList.getOrNull(selectedProfileIndex)
+                    ?: spinnerProfile.text?.toString().orEmpty()
                 if (profile.isBlank()) {
                     showSnack(R.string.schedules_error_no_profile)
                     return@setOnClickListener
@@ -894,6 +1816,7 @@ class SchedulesActivity : AppCompatActivity() {
 
                 // Validate connection fields if needed
                 if (kind == Kind.WIFI && isPremium && wifiSsid.isNullOrBlank()) {
+                    layoutWifiSsid.error = getString(R.string.schedules_error_wifi_required)
                     inputWifiSsid.error = getString(R.string.schedules_error_wifi_required)
                     inputWifiSsid.requestFocus()
                     showSnack(R.string.schedules_error_wifi_required)
@@ -901,13 +1824,14 @@ class SchedulesActivity : AppCompatActivity() {
                 }
 
                 if (kind == Kind.BT && isPremium && btName.isNullOrBlank()) {
+                    layoutBtName.error = getString(R.string.schedules_error_bt_required)
                     inputBtName.error = getString(R.string.schedules_error_bt_required)
                     inputBtName.requestFocus()
                     showSnack(R.string.schedules_error_bt_required)
                     return@setOnClickListener
                 }
 
-                // Permissions only if actually saving those schedule types / conditions
+                // Permissions only if actually saving those schedule types/conditions
                 if (kind == Kind.WIFI && isPremium && !wifiSsid.isNullOrBlank() && !hasWifiSsidPermission()) {
                     showWhyLocationDialogForWifi()
                     return@setOnClickListener
@@ -1012,14 +1936,8 @@ class SchedulesActivity : AppCompatActivity() {
                     else oldList.map { if (it.id == existing.id) newSchedule else it }
 
                 ScheduleStore.saveAll(this, newList)
-
-                // Editing/adding schedules is an explicit scheduling action by the user.
-                // Clear stale manual-override so the new rule can take effect right away.
-                ScheduleRuntimeStore.setManualOverrideActive(this, false)
-
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
-                requestImmediateScheduleTick(if (existing == null) "ui_add" else "ui_edit")
                 refreshList()
                 dialog.dismiss()
             }
@@ -1029,17 +1947,19 @@ class SchedulesActivity : AppCompatActivity() {
     }
 }
 
-/* --- Adapter & ViewHolder --- */
-
+// Adapter & ViewHolder
 private class ScheduleAdapter(
     private val onToggleEnabled: (ScheduleStore.Schedule, Boolean) -> Unit,
-    private val onDelete: (ScheduleStore.Schedule) -> Unit,
+    private val isSelectionMode: () -> Boolean,
+    private val isSelected: (Int) -> Boolean,
+    private val onToggleSelection: (Int) -> Unit,
+    private val onEnterSelection: (Int) -> Unit,
     private val onEdit: (ScheduleStore.Schedule) -> Unit
 ) : androidx.recyclerview.widget.ListAdapter<ScheduleStore.Schedule, ScheduleViewHolder>(DIFF) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScheduleViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_schedule, parent, false)
-        return ScheduleViewHolder(v, onToggleEnabled, onDelete, onEdit)
+        return ScheduleViewHolder(v, onToggleEnabled, isSelectionMode, isSelected, onToggleSelection, onEnterSelection, onEdit)
     }
 
     override fun onBindViewHolder(holder: ScheduleViewHolder, position: Int) {
@@ -1061,16 +1981,19 @@ private class ScheduleAdapter(
 private class ScheduleViewHolder(
     itemView: View,
     private val onToggleEnabled: (ScheduleStore.Schedule, Boolean) -> Unit,
-    private val onDelete: (ScheduleStore.Schedule) -> Unit,
+    private val isSelectionMode: () -> Boolean,
+    private val isSelected: (Int) -> Boolean,
+    private val onToggleSelection: (Int) -> Unit,
+    private val onEnterSelection: (Int) -> Unit,
     private val onEdit: (ScheduleStore.Schedule) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
 
-    private val kindIcon = itemView.findViewById<android.widget.ImageView>(R.id.imgKind)
+    private val kindIcon = itemView.findViewById<ImageView>(R.id.imgKind)
     private val title = itemView.findViewById<TextView>(R.id.textTitle)
     private val subtitle = itemView.findViewById<TextView>(R.id.textSubtitle)
     private val note = itemView.findViewById<TextView>(R.id.textNote)
     private val switchEnabled = itemView.findViewById<SwitchCompat>(R.id.switchEnabled)
-    private val buttonDelete = itemView.findViewById<ImageButton>(R.id.buttonDelete)
+    private val checkSelect = itemView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkSelect)
     private val cardRoot = itemView.findViewById<View>(R.id.cardRoot)
 
     private var current: ScheduleStore.Schedule? = null
@@ -1078,14 +2001,29 @@ private class ScheduleViewHolder(
 
     init {
         switchEnabled.setOnCheckedChangeListener { _, isChecked ->
-            if (!binding) current?.let { onToggleEnabled(it, isChecked) }
+            if (!binding && !isSelectionMode()) current?.let { onToggleEnabled(it, isChecked) }
         }
-        buttonDelete.setOnClickListener { current?.let { onDelete(it) } }
-        cardRoot.setOnClickListener { current?.let { onEdit(it) } }
+
+        cardRoot.setOnClickListener {
+            val s = current ?: return@setOnClickListener
+            if (isSelectionMode()) {
+                onToggleSelection(s.id)
+            } else {
+                onEdit(s)
+            }
+        }
+
+        cardRoot.setOnLongClickListener {
+            val s = current ?: return@setOnLongClickListener true
+            if (!isSelectionMode()) {
+                onEnterSelection(s.id)
+            }
+            true
+        }
     }
 
     private fun fmtMinutes(m: Int): String {
-        val h = m / 60
+        val h = m/60
         val mm = m % 60
         return String.format(Locale.getDefault(), "%02d:%02d", h, mm)
     }
@@ -1095,7 +2033,12 @@ private class ScheduleViewHolder(
 
         binding = true
         switchEnabled.isChecked = s.enabled
+        switchEnabled.isEnabled = !isSelectionMode()
         binding = false
+
+        val selecting = isSelectionMode()
+        checkSelect.visibility = if (selecting) View.VISIBLE else View.GONE
+        checkSelect.isChecked = selecting && isSelected(s.id)
 
         title.text = s.title.ifBlank { s.profile }
         val ctx = itemView.context
@@ -1103,7 +2046,7 @@ private class ScheduleViewHolder(
         val hasWifi = !s.wifiSsid.isNullOrBlank()
         val hasBt = !s.btDeviceName.isNullOrBlank()
 
-        // Nice icon in the list: time / wifi / bluetooth (or combined)
+        // Nice icon in the list: time/wifi/bluetooth (or combined)
         val iconRes = when {
             hasWifi && hasBt -> R.drawable.layers_24
             hasWifi -> R.drawable.wifi_24

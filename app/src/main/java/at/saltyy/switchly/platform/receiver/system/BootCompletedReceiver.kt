@@ -9,6 +9,7 @@ import at.saltyy.switchly.data.prefs.AutostartStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
+import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
 import at.saltyy.switchly.util.ProtectionStatusNotifier
 
@@ -39,6 +40,18 @@ class BootCompletedReceiver : BroadcastReceiver() {
         // Restore time schedule alarms
         runCatching { SchedulePlanner.updateNextAlarm(ctx) }
         runCatching { SchedulePlanner.notifyNextChanged(ctx) }
+
+        // Immediate watchdog re-eval after boot: if we are currently inside an active
+        // schedule window, re-assert the desired state now (instead of waiting for the next boundary).
+        runCatching {
+            ctx.sendBroadcast(
+                Intent(ctx, ScheduleReceiver::class.java).apply {
+                    this.action = ScheduleReceiver.ACTION_TICK
+                    putExtra("time_reason", "boot_completed")
+                    putExtra("alarm_reason", "boot_watchdog")
+                }
+            )
+        }
 
         // Start runtime only if it can actually function
         if (!enabled || !autostart) return

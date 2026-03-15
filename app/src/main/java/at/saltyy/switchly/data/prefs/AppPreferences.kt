@@ -9,9 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Small app-level user preferences.
- *
- * Note: Most of Switchly's existing stores are still SharedPreferences-based (and that's totally OK).
+ * Most of Switchly's existing stores are still SharedPreferences-based (and that's totally OK).
  * This DataStore is meant for *lightweight* flags that shouldn't be scattered across activities.
  */
 private val Context.appPreferencesDataStore by preferencesDataStore(name = "switchly_datastore")

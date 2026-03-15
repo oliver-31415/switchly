@@ -6,7 +6,6 @@ import java.util.Calendar
 
 /**
  * Tracks how long Switchly's watcher/service was running.
- *
  * We keep a "currently running since" timestamp, and a per-day accumulated runtime.
  */
 object SwitchlyRuntimeStore {
@@ -30,28 +29,68 @@ object SwitchlyRuntimeStore {
         sp.edit { putLong(KEY_RUNNING_SINCE, 0L) }
 
         val now = System.currentTimeMillis()
-        val delta = (now - since).coerceAtLeast(0L)
-        addRuntimeMs(ctx, delta)
-    }
-
-    private fun addRuntimeMs(ctx: Context, deltaMs: Long) {
-        if (deltaMs <= 0L) return
-        val ymd = todayYmdInt()
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val k = dayKey(ymd)
-        val cur = sp.getLong(k, 0L)
-        sp.edit { putLong(k, cur + deltaMs) }
+        addRuntimeRange(ctx, since, now)
     }
 
     /**
-     * Returns runtime for today. If service is currently running, includes elapsed time so far.
+     * Adds runtime spanning potentially multiple days by splitting at local midnights.
+     * This prevents attributing "overnight" runtime entirely to the stop day.
      */
+    private fun addRuntimeRange(ctx: Context, startMs: Long, endMs: Long) {
+        if (endMs <= startMs) return
+
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        var curStart = startMs
+
+        while (curStart < endMs) {
+            val cal = Calendar.getInstance().apply { timeInMillis = curStart }
+            val ymd = ymdInt(cal)
+
+            // Next midnight
+            cal.set(Calendar.HOUR_OF_DAY, 0)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+            val nextMidnight = cal.timeInMillis
+
+            val sliceEnd = minOf(endMs, nextMidnight)
+            val delta = (sliceEnd - curStart).coerceAtLeast(0L)
+            if (delta > 0L) {
+                val k = dayKey(ymd)
+                val cur = sp.getLong(k, 0L)
+                sp.edit { putLong(k, cur + delta) }
+            }
+
+            curStart = sliceEnd
+        }
+    }
+
+    // Returns runtime for today. If service is currently running, includes elapsed time so far.
     fun getRuntimeMsToday(ctx: Context): Long {
         val ymd = todayYmdInt()
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val base = sp.getLong(dayKey(ymd), 0L)
         val since = sp.getLong(KEY_RUNNING_SINCE, 0L)
-        return if (since > 0L) base + (System.currentTimeMillis() - since).coerceAtLeast(0L) else base
+
+        if (since <= 0L) return base
+
+        val now = System.currentTimeMillis()
+        val todayStart = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        // If the service has been running since before today's midnight, roll over the previous part into the correct day buckets and continue counting from midnight.
+        if (since < todayStart) {
+            addRuntimeRange(ctx, since, todayStart)
+            sp.edit { putLong(KEY_RUNNING_SINCE, todayStart) }
+            return base + (now - todayStart).coerceAtLeast(0L)
+        }
+
+        return base + (now - since).coerceAtLeast(0L)
     }
 
     fun getRuntimeMsForLastNDays(ctx: Context, days: Int): Long {

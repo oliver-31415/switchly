@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Global Switchly state.
- * temp-enable is implemented as a real enable (KEY_ENABLED=true) temporarily, and then restored to the previous base state when the timer expires.
+ * Temp-enable is implemented as a real enable (KEY_ENABLED=true) temporarily, and then restored to the previous base state when the timer expires.
  * This avoids "UI shows enabled but blocking doesn't really run" edge-cases.
  */
 object SwitchModeStore {
@@ -60,9 +60,16 @@ object SwitchModeStore {
         return base
     }
 
-    /**
-     * Returns only the persisted base on/off flag, ignoring any temporary disable.
-     */
+    // Returns only the persisted base on/off flag, ignoring any temporary disable.
+    fun hasActiveTemporaryOverride(ctx: Context): Boolean {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val tempDisableUntil = sp.getLong(KEY_TEMP_DISABLE_UNTIL, 0L)
+        val tempEnableUntil = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L)
+        return (tempDisableUntil != 0L && now < tempDisableUntil) ||
+            (tempEnableUntil != 0L && now < tempEnableUntil)
+    }
+
     fun isBaseEnabled(ctx: Context): Boolean {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return sp.getBoolean(KEY_ENABLED, true)
@@ -70,23 +77,24 @@ object SwitchModeStore {
 
     /**
      * Permanently enables or disables Switchly (user toggle).
-     *
      * - When enabling, any temporary disable timestamp is cleared.
-     * - When disabling, temp-disable data is left untouched (for UI display / history purposes).
+     * - When disabling, temp-disable data is left untouched (for UI display/history purposes).
      */
+    fun setEnabled(ctx: Context, enabled: Boolean) {
+        setEnabled(ctx, enabled, allowNfcBypass = false)
+    }
+
     /**
-     * Permanently enable/disable Switchly.
-     *
-     * @param markManualOverrideWhenRangeActive
-     * If true, toggling while a range schedule is active marks a manual override so the schedule won't immediately re-assert its state on the next tick.
-     *
-     * NFC-driven toggles should pass `false` so schedules can continue to work alongside tag automations.
+     * Enables/disables Switchly.
+     * Security: if Switchly is currently enabled and "require NFC to disable" is enabled, then calls that try to disable Switchly will be ignored unless [allowNfcBypass] is true.
      */
-    fun setEnabled(
-        ctx: Context,
-        enabled: Boolean,
-        markManualOverrideWhenRangeActive: Boolean = true
-    ) {
+    fun setEnabled(ctx: Context, enabled: Boolean, allowNfcBypass: Boolean): Boolean {
+        val currentlyEnabled = isEnabled(ctx)
+        if (!enabled && currentlyEnabled && isNfcRequiredForDisable(ctx) && AutomationModeStore.isNfcAllowed(ctx) && !allowNfcBypass) {
+            // Block non-NFC disabling paths (e.g. schedules, shortcuts, UI toggles).
+            return false
+        }
+
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit {
             putBoolean(KEY_ENABLED, enabled)
@@ -102,17 +110,16 @@ object SwitchModeStore {
 
         _enabledFlow.value = isEnabled(ctx)
 
-        // Manually set -> not "enabled by schedule"
-        ScheduleRuntimeStore.setEnabledBySchedule(ctx, false)
+        val rangeScheduleActive = ScheduleRuntimeStore.hadEnableAndDisable(ctx) || ScheduleRuntimeStore.hadDisableAndEnable(ctx)
 
-        // If a RANGE schedule is currently active and the user flips the state manually,
-        // we treat this as a temporary "manual override" so the schedule doesn't instantly
-        // re-assert its state on the next tick.
-        if (
-            markManualOverrideWhenRangeActive &&
-            (ScheduleRuntimeStore.hadEnableAndDisable(ctx) || ScheduleRuntimeStore.hadDisableAndEnable(ctx))
-        ) {
+        // If a RANGE schedule is currently active and the user flips the state manually, mark a temporary manual override so the schedule won't instantly fight the user.
+        // IMPORTANT: keep schedule ownership flags intact while inside the active range, otherwise exit-revert at range end can break (e.g. NFC toggle at lunch keeps the profile enabled forever after end time).
+        if (rangeScheduleActive) {
             ScheduleRuntimeStore.setManualOverrideActive(ctx, true)
+        } else {
+            // Outside an active range, manual toggles should clear schedule ownership markers.
+            ScheduleRuntimeStore.setEnabledBySchedule(ctx, false)
+            ScheduleRuntimeStore.setDisabledBySchedule(ctx, false)
         }
 
         if (enabled) {
@@ -120,21 +127,34 @@ object SwitchModeStore {
         } else {
             // Service can remain running but becomes idle by isEnabled() checks
         }
+
+        return true
     }
 
-    /**
-     * Enable or disable Switchly as triggered by schedules.
-     */
+    // Enable or disable Switchly as triggered by schedules.
     fun setEnabledBySchedule(ctx: Context, enabled: Boolean) {
+        val current = isEnabled(ctx)
+
+        if (!AutomationModeStore.isScheduleAllowed(ctx)) {
+            return
+        }
+
+        // Hard rule:
+        // NFC lock ON  -> schedules cannot enable or disable.
+        // NFC lock OFF -> schedules can change state normally.
+        if (AutomationModeStore.isNfcAllowed(ctx) && isNfcRequiredForDisable(ctx) && current != enabled) {
+            ScheduleRuntimeStore.markDisableBlockedByNfc(ctx)
+            return
+        }
+
+        // A schedule-driven state change can clear previous warning markers.
+        if (current != enabled) {
+            ScheduleRuntimeStore.clearDisableBlockedByNfc(ctx)
+        }
+
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit {
             putBoolean(KEY_ENABLED, enabled)
-
-            // IMPORTANT:
-            // Schedule-based enables must NOT cancel an active temporary disable window.
-            // Otherwise a time/Wi-Fi schedule can accidentally "undo" a 10min QR/NFC temp-disable.
-            // The temp-disable always wins in isEnabled(), so we keep it intact.
-
             putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
         }
@@ -147,15 +167,16 @@ object SwitchModeStore {
         }
     }
 
-    /**
-     * Temporarily disables Switchly for the given duration in milliseconds.
-     */
+    // Temporarily disables Switchly for the given duration in milliseconds.
     fun setTemporarilyDisabled(ctx: Context, durationMs: Long) {
         val until = System.currentTimeMillis() + durationMs
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
         sp.edit {
-            // Do NOT touch KEY_ENABLED (base state). Temp disable is represented only by the "until" timestamp.
+            // IMPORTANT:
+            // Do NOT change the persisted base on/off flag here.
+            // Temp-disable is modeled as an override window (KEY_TEMP_DISABLE_UNTIL) in isEnabled().
+            // If we flipped KEY_ENABLED=false, Switchly would stay disabled after the timer expires.
             putLong(KEY_TEMP_DISABLE_UNTIL, until)
 
             // mutually exclusive with temp-enable
@@ -163,8 +184,9 @@ object SwitchModeStore {
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
         }
 
-        _enabledFlow.value = false
+        _enabledFlow.value = isEnabled(ctx)
 
+        // Keep runtime alive so our services can continue ticking and enforce schedules/limits.
         BlockingRuntime.ensureRunning(ctx)
     }
 
@@ -179,7 +201,16 @@ object SwitchModeStore {
         val until = System.currentTimeMillis() + durationMs
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-        val baseBefore = sp.getBoolean(KEY_ENABLED, true)
+        val now = System.currentTimeMillis()
+        val activeTempUntil = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L)
+
+        // Important when user adjusts an already running temp-enable timer: keep the ORIGINAL base state so expiry restores correctly.
+        // Otherwise KEY_ENABLED is already forced to true and we would "learn" the wrong base.
+        val baseBefore = if (activeTempUntil > now && sp.contains(KEY_BASE_BEFORE_TEMP_ENABLE)) {
+            sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, sp.getBoolean(KEY_ENABLED, true))
+        } else {
+            sp.getBoolean(KEY_ENABLED, true)
+        }
 
         sp.edit {
             // clear temp-disable
@@ -214,9 +245,7 @@ object SwitchModeStore {
         return if (remaining > 0L) remaining else 0L
     }
 
-    /**
-     * Called when temp-enable expires to restore the base enabled flag.
-     */
+    // Called when temp-enable expires to restore the base enabled flag.
     fun finishTemporaryEnableIfExpired(ctx: Context) {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val until = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L)
@@ -239,9 +268,7 @@ object SwitchModeStore {
         }
     }
 
-    /**
-     * Clears an expired temp-disable window.
-     */
+    // Clears an expired temp-disable window.
     fun finishTemporaryDisableIfExpired(ctx: Context) {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val until = sp.getLong(KEY_TEMP_DISABLE_UNTIL, 0L)
@@ -282,9 +309,45 @@ object SwitchModeStore {
         }
     }
 
+    // Cancels an active temporary disable window and re-enables Switchly immediately.
+    fun cancelTemporaryDisable(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val active = sp.getLong(KEY_TEMP_DISABLE_UNTIL, 0L) > 0L
+        if (!active) return
+
+        sp.edit {
+            putLong(KEY_TEMP_DISABLE_UNTIL, 0L)
+        }
+
+        // TempReenableStore.clear(ctx)
+        _enabledFlow.value = isEnabled(ctx)
+        BlockingRuntime.ensureRunning(ctx)
+    }
+
     /**
-     * Returns whether NFC is required to disable Switchly.
+     * Clears an expired temp-disable window if it's past due.
+     * This is mainly for hygiene so we don't keep stale timestamps forever.
      */
+    fun cancelTemporaryEnable(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val active = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L) > 0L
+        if (!active) return
+
+        val baseBefore = sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, true)
+
+        sp.edit {
+            putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
+            remove(KEY_BASE_BEFORE_TEMP_ENABLE)
+            putBoolean(KEY_ENABLED, baseBefore)
+        }
+
+        _enabledFlow.value = isEnabled(ctx)
+        if (isEnabled(ctx)) {
+            BlockingRuntime.ensureRunning(ctx)
+        }
+    }
+
+    // Returns whether NFC is required to disable Switchly.
     fun isNfcRequiredForDisable(ctx: Context): Boolean {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return sp.getBoolean(KEY_REQUIRE_NFC_DISABLE, false)
@@ -292,7 +355,6 @@ object SwitchModeStore {
 
     /**
      * Updates the "NFC required to disable" flag.
-     *
      * Safety rule (improved):
      * - While Switchly is enabled, you may NOT turn this OFF (to avoid bypassing active lock).
      * - Turning it ON is always allowed.

@@ -2,8 +2,10 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:ignore="TooManyViews">
 
     <!-- Topbar -->
     <com.google.android.material.appbar.AppBarLayout
@@ -36,45 +38,13 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Banner -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/bannerWarn"
+            <!-- Permissions: Action needed + Health check -->
+            <include
+                android:id="@+id/cardPermissionHeartbeat"
+                layout="@layout/view_status_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardUseCompatPadding="true"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="1dp"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="14dp">
-
-                    <ImageView
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:src="@drawable/security_24"
-                        app:tint="?attr/colorOnSurface"
-                        android:contentDescription="@null" />
-
-                    <Space
-                        android:layout_width="12dp"
-                        android:layout_height="1dp" />
-
-                    <TextView
-                        android:id="@+id/bannerWarnText"
-                        style="@style/TextAppearance.Material3.BodyMedium"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/permissions_banner_default" />
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
+                android:layout_marginBottom="18dp" />
 
             <!-- SECTION: Core -->
             <TextView
@@ -142,16 +112,91 @@
                                     android:text="@string/permissions_status_disabled"/>
                             </LinearLayout>
 
-                            <com.google.android.material.button.MaterialButton
+                            <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/btnWhyAccessibility"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/permissions_why"/>
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenAccessibility"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:text="@string/permissions_btn_open"/>
+                    </LinearLayout>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface"/>
+
+                    <!-- Usage access (App usage data) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:src="@drawable/bar_chart_24"
+                                app:tint="?attr/colorOnSurface"
+                                android:contentDescription="@null"/>
+
+                            <Space
+                                android:layout_width="12dp"
+                                android:layout_height="1dp"/>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    style="@style/TextAppearance.Material3.BodyLarge"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/permissions_usage_access_title"/>
+
+                                <TextView
+                                    android:id="@+id/tvUsageAccessStatus"
+                                    style="@style/TextAppearance.Material3.BodyMedium"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@string/permissions_status_disabled"/>
+                            </LinearLayout>
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/btnWhyUsageAccess"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnOpenUsageAccess"
                             style="?attr/materialButtonOutlinedStyle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -228,12 +273,15 @@
                                     android:text="@string/permissions_status_disabled"/>
                             </LinearLayout>
 
-                            <com.google.android.material.button.MaterialButton
+                            <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/btnWhyNotifications"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/permissions_why"/>
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
@@ -297,12 +345,15 @@
                                     android:text="@string/permissions_status_disabled"/>
                             </LinearLayout>
 
-                            <com.google.android.material.button.MaterialButton
+                            <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/btnWhyNotificationAccess"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/permissions_why"/>
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
@@ -382,12 +433,15 @@
                                     android:text="@string/permissions_status_disabled"/>
                             </LinearLayout>
 
-                            <com.google.android.material.button.MaterialButton
+                            <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/btnWhyLocation"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/permissions_why"/>
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
@@ -456,12 +510,15 @@
                                     android:text="@string/permissions_status_disabled"/>
                             </LinearLayout>
 
-                            <com.google.android.material.button.MaterialButton
+                            <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/btnWhyBluetooth"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/permissions_why"/>
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
@@ -530,12 +587,15 @@
                                     android:text="@string/permissions_status_disabled"/>
                             </LinearLayout>
 
-                            <com.google.android.material.button.MaterialButton
+                            <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/btnWhyBattery"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/permissions_why"/>
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
@@ -609,12 +669,15 @@
                                 android:layout_weight="1"
                                 android:text="@string/permissions_autostart_title"/>
 
-                            <com.google.android.material.button.MaterialButton
+                            <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/btnWhyAutostart"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/permissions_why"/>
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
                         </LinearLayout>
 
                         <TextView

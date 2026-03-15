@@ -6,11 +6,13 @@ import android.os.CancellationSignal
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CredentialManagerCallback
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -27,9 +29,6 @@ import at.saltyy.switchly.R
  * Authentication runtime:
  * - Credential Manager + Google ID (googleid) for sign-in
  * - FirebaseAuth for backend auth
- *
- * IMPORTANT:
- * - This must NOT crash if Firebase isn't configured yet (e.g. missing google-services.json in /app).
  */
 object AuthRuntime {
 
@@ -191,13 +190,11 @@ object AuthRuntime {
 
     private fun serverClientIdOrNull(activity: Activity): String? {
         // Generated string from google-services plugin.
-        val resId = activity.resources.getIdentifier("default_web_client_id", "string", activity.packageName)
-        if (resId != 0) {
-            val value = activity.getString(resId).cleanOrNull()
-            if (value != null && !value.startsWith("YOUR_")) return value
-        }
+        val raw = runCatching { activity.getString(R.string.default_web_client_id) }.getOrNull()
+        val value = raw.cleanOrNull()?.takeIf { !it.startsWith("YOUR_") }
+        if (value != null) return value
 
-        // Fallback: read from assets/google-services.json
+        // Fallback: read from assets/google-services.json (if present)
         return readGoogleServicesInfoOrNull(activity)?.webClientId
     }
 
@@ -355,11 +352,27 @@ object AuthRuntime {
     fun signOut(context: Context, onDone: () -> Unit) {
         try {
             firebaseAuthOrNull(context)?.signOut()
-            Toast.makeText(context, context.getString(R.string.settings_signed_out), Toast.LENGTH_SHORT).show()
         } catch (t: Throwable) {
-            Log.e(TAG, "Error during signOut", t)
+            Log.e(TAG, "Error during Firebase signOut", t)
         }
-        onDone()
+
+        // Also clear provider state kept by Credential Manager.
+        val cm = CredentialManager.create(context)
+        cm.clearCredentialStateAsync(
+            ClearCredentialStateRequest(),
+            CancellationSignal(),
+            ContextCompat.getMainExecutor(context),
+            object : CredentialManagerCallback<Void?, ClearCredentialException> {
+                override fun onResult(result: Void?) {
+                    onDone()
+                }
+
+                override fun onError(e: ClearCredentialException) {
+                    Log.w(TAG, "Could not clear credential state", e)
+                    onDone()
+                }
+            }
+        )
     }
 
     /**

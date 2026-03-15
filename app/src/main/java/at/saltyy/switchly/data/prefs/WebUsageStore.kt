@@ -1,0 +1,220 @@
+package at.saltyy.switchly.data.prefs
+
+import android.content.Context
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
+import java.util.Calendar
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Daily usage tracking per domain (normalized).
+ * Used for the Web Usage tab and for website daily limits.
+ * Storage key format: web_usage_day_YYYYMMDD_<domain>
+ */
+object WebUsageStore {
+    private const val PREFIX_DAY = "web_usage_day_" // + yyyymmdd + "_" + domain
+
+    private const val FLUSH_INTERVAL_MS = 10_000L
+    private const val MAX_PENDING_KEYS = 64
+
+    private val lock = Any()
+    private val pending = ConcurrentHashMap<String, Long>()
+    @Volatile private var lastFlushAt: Long = 0L
+
+    private fun dayKey(offsetDays: Int = 0): String {
+        val c = Calendar.getInstance()
+        c.add(Calendar.DAY_OF_YEAR, offsetDays)
+        val y = c.get(Calendar.YEAR)
+        val m = c.get(Calendar.MONTH) + 1
+        val d = c.get(Calendar.DAY_OF_MONTH)
+        return "%04d%02d%02d".format(y, m, d)
+    }
+
+    private fun prefKeyForDay(domain: String, day: String): String {
+        val norm = DomainBlockStore.normalize(domain) ?: ""
+        return PREFIX_DAY + day + "_" + norm
+    }
+
+    fun addUsageMsToday(ctx: Context, domain: String, deltaMs: Long) {
+        val norm = DomainBlockStore.normalize(domain) ?: return
+        if (norm.isBlank() || deltaMs <= 0L) return
+        val k = prefKeyForDay(norm, dayKey(0))
+        pending.merge(k, deltaMs) { a, b -> a + b }
+        maybeFlush(ctx, force = false)
+    }
+
+    fun getUsageMsToday(ctx: Context, domain: String): Long {
+        val norm = DomainBlockStore.normalize(domain) ?: return 0L
+        if (norm.isBlank()) return 0L
+        val k = prefKeyForDay(norm, dayKey(0))
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val base = prefs.getLong(k, 0L)
+        val extra = pending[k] ?: 0L
+        return (base + extra).coerceAtLeast(0L)
+    }
+
+    fun setUsageMsToday(ctx: Context, domain: String, valueMs: Long) {
+        val norm = DomainBlockStore.normalize(domain) ?: return
+        if (norm.isBlank()) return
+        val k = prefKeyForDay(norm, dayKey(0))
+
+        // Drop any pending increments for today so the value is stable.
+        synchronized(lock) {
+            pending.remove(k)
+        }
+
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        prefs.edit { putLong(k, valueMs.coerceAtLeast(0L)) }
+    }
+
+    /**
+     * Returns per-day usage (ms) for the last [days] days including today.
+     * List order: oldest -> newest.
+     */
+    fun getUsageMsForLastNDays(ctx: Context, domain: String, days: Int): List<Long> {
+        val norm = DomainBlockStore.normalize(domain) ?: return emptyList()
+        // We keep more than 30 days of data. Reading a full year can be useful for the statistics screen.
+        val n = days.coerceAtLeast(1).coerceAtMost(366)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val out = ArrayList<Long>(n)
+        for (i in (-(n - 1))..0) {
+            val day = dayKey(i)
+            val k = prefKeyForDay(norm, day)
+            val base = prefs.getLong(k, 0L)
+            val extra = if (i == 0) (pending[k] ?: 0L) else 0L
+            out.add((base + extra).coerceAtLeast(0L))
+        }
+        return out
+    }
+
+    /**
+     * Best-effort list of domains known to the app:
+     * - domains in the block list
+     * - domains that have recorded usage keys
+     * - domains that have a limit stored
+     */
+    fun getDomains(ctx: Context): Set<String> {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val out = LinkedHashSet<String>()
+
+        // 1) Block list
+        runCatching { out.addAll(DomainBlockStore.getDomains(ctx)) }
+
+        // 2) Keys recorded for usage
+        for (k in prefs.all.keys) {
+            if (!k.startsWith(PREFIX_DAY)) continue
+            // PREFIX_DAY + YYYYMMDD + "_" + domain
+            val rest = k.removePrefix(PREFIX_DAY)
+            if (rest.length <= 9) continue
+            val domain = rest.substring(9) // skip YYYYMMDD_
+            if (domain.isNotBlank()) out.add(domain)
+        }
+
+        // 3) Limit keys (DomainLimitStore stores domain_limit_min_<domain>)
+        val limitPrefix = "domain_limit_min_"
+        for (k in prefs.all.keys) {
+            if (!k.startsWith(limitPrefix)) continue
+            val domain = k.removePrefix(limitPrefix)
+            if (domain.isNotBlank()) out.add(domain)
+        }
+
+        return out
+    }
+
+    /**
+     * Deletes all stored usage history for [domain] (all days).
+     * Note: this does NOT remove the domain from the block list or clear its daily limit.
+     * Use [DomainBlockStore.removeDomain]/[DomainLimitStore.clear] separately if needed.
+     */
+    fun clearAllUsage(ctx: Context, domain: String) {
+        val norm = DomainBlockStore.normalize(domain) ?: return
+        if (norm.isBlank()) return
+
+        // Clear any buffered increments first to avoid re-adding after deletion.
+        synchronized(lock) {
+            val suffix = "_" + norm
+            pending.keys
+                .filter { it.startsWith(PREFIX_DAY) && it.endsWith(suffix) }
+                .forEach { pending.remove(it) }
+        }
+
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val suffix = "_" + norm
+        val keysToRemove = prefs.all.keys
+            .filter { it.startsWith(PREFIX_DAY) && it.endsWith(suffix) }
+
+        if (keysToRemove.isEmpty()) return
+        prefs.edit {
+            for (k in keysToRemove) remove(k)
+        }
+    }
+
+    /** Total recorded usage for [domain] across all stored days. */
+    fun getUsageMsAllTime(ctx: Context, domain: String): Long {
+        val norm = DomainBlockStore.normalize(domain) ?: return 0L
+        if (norm.isBlank()) return 0L
+
+        // Ensure buffered increments are persisted so totals are correct.
+        flush(ctx)
+
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val suffix = "_" + norm
+        var total = 0L
+        for ((k, v) in prefs.all) {
+            if (!k.startsWith(PREFIX_DAY) || !k.endsWith(suffix)) continue
+            total += (v as? Long) ?: 0L
+        }
+        return total.coerceAtLeast(0L)
+    }
+
+    /**
+     * Returns all-time usage per month for [domain].
+     * Keys are YYYYMM (e.g., 202402).
+     */
+    fun getUsageMsPerMonthAllTime(ctx: Context, domain: String): Map<Int, Long> {
+        val norm = DomainBlockStore.normalize(domain) ?: return emptyMap()
+        if (norm.isBlank()) return emptyMap()
+
+        flush(ctx)
+
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val suffix = "_" + norm
+        val sums = HashMap<Int, Long>()
+
+        for ((k, v) in prefs.all) {
+            if (!k.startsWith(PREFIX_DAY) || !k.endsWith(suffix)) continue
+            val rest = k.removePrefix(PREFIX_DAY)
+            if (rest.length < 8) continue
+            val yyyymm = rest.substring(0, 6).toIntOrNull() ?: continue
+            val ms = (v as? Long) ?: 0L
+            if (ms <= 0L) continue
+            sums[yyyymm] = (sums[yyyymm] ?: 0L) + ms
+        }
+
+        // Return sorted for stable charting.
+        return sums.toSortedMap()
+    }
+    
+    fun flush(ctx: Context) = maybeFlush(ctx, force = true)
+
+    private fun maybeFlush(ctx: Context, force: Boolean) {
+        val now = System.currentTimeMillis()
+        val should = force || (now - lastFlushAt) >= FLUSH_INTERVAL_MS || pending.size >= MAX_PENDING_KEYS
+        if (!should) return
+        synchronized(lock) {
+            if (!force && (now - lastFlushAt) < FLUSH_INTERVAL_MS && pending.size < MAX_PENDING_KEYS) return
+            lastFlushAt = now
+            val snapshot = HashMap(pending)
+            pending.clear()
+            if (snapshot.isEmpty()) return
+
+            val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+            prefs.edit {
+                for ((k, add) in snapshot) {
+                    val cur = prefs.getLong(k, 0L)
+                    putLong(k, cur + add)
+                }
+            }
+        }
+    }
+}

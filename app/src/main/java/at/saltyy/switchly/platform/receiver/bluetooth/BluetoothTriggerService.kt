@@ -103,10 +103,13 @@ class BluetoothTriggerService : Service() {
 
     /**
      * Returns true if we successfully entered the foreground.
-     * If we can't (e.g. permission / policy), we stop ourselves to avoid
-     * ForegroundServiceDidNotStartInTimeException.
+     * If we can't (e.g. permission/policy), we stop ourselves to avoid ForegroundServiceDidNotStartInTimeException.
      */
+    private var foregroundStarted = false
+
     private fun ensureForegroundOrStop(): Boolean {
+        if (foregroundStarted) return true
+
         val nm = getSystemService(NotificationManager::class.java)
 
         runCatching {
@@ -115,7 +118,7 @@ class BluetoothTriggerService : Service() {
                     NOTIF_CHANNEL_ID,
                     getString(R.string.notif_channel_bluetooth_triggers_name),
                     NotificationManager.IMPORTANCE_LOW
-                ).apply { 
+                ).apply {
                     description = getString(R.string.notif_channel_bluetooth_triggers_desc)
                 }
             )
@@ -123,26 +126,31 @@ class BluetoothTriggerService : Service() {
 
         val notif = buildNotification()
 
-        // On Android 10+ we can declare a type. However, some devices/policies may throw.
-        // If the typed start fails, retry without a type (0) and only then give up.
         val ok = runCatching {
-            val fgsType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIF_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
             } else {
-                0
+                startForeground(NOTIF_ID, notif)
             }
-            ServiceCompat.startForeground(this, NOTIF_ID, notif, fgsType)
         }.recoverCatching {
-            ServiceCompat.startForeground(this, NOTIF_ID, notif, 0)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIF_ID, notif, 0)
+            } else {
+                startForeground(NOTIF_ID, notif)
+            }
+        }.recoverCatching {
+            startForeground(NOTIF_ID, notif)
         }.isSuccess
 
         if (!ok) {
             Log.e(TAG, "Failed to enter foreground. Stopping service to avoid process crash.")
             runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) }
             stopSelf()
+            return false
         }
 
-        return ok
+        foregroundStarted = true
+        return true
     }
 
     private fun buildNotification(): Notification {
@@ -158,7 +166,7 @@ class BluetoothTriggerService : Service() {
         )
 
         return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.app_blocking_white_24)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentTitle(getString(R.string.notif_bluetooth_schedules_title))
@@ -260,7 +268,6 @@ class BluetoothTriggerService : Service() {
 
     companion object {
         private const val TAG = "BluetoothTriggerService"
-
         private const val NOTIF_CHANNEL_ID = "switchly_bt_triggers"
         private const val NOTIF_ID = 23001
     }

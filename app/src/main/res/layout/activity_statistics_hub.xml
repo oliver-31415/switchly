@@ -41,16 +41,14 @@
             <!-- USAGE -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardUsage"
-                style="@style/Widget.MaterialComponents.CardView"
+                style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardUseCompatPadding="true"
-                app:cardElevation="1dp"
-                app:strokeWidth="1dp">
+                app:cardElevation="1dp" >
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -61,11 +59,12 @@
                     android:padding="16dp">
 
                     <ImageView
+                        android:id="@+id/ivUsageIcon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@string/statistics_hub_usage_title"
                         android:src="@drawable/bar_chart_24"
-                        app:tint="?attr/colorPrimary" />
+                        app:tint="?attr/colorOnSurface" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -105,16 +104,15 @@
             <!-- RUNTIME -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardRuntime"
-                style="@style/Widget.MaterialComponents.CardView"
+                style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:visibility="gone"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardUseCompatPadding="true"
-                app:cardElevation="1dp"
-                app:strokeWidth="1dp">
+                app:cardElevation="1dp" >
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -125,11 +123,12 @@
                     android:padding="16dp">
 
                     <ImageView
+                        android:id="@+id/ivRuntimeIcon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@string/statistics_hub_runtime_title"
                         android:src="@drawable/dashboard_24"
-                        app:tint="?attr/colorPrimary" />
+                        app:tint="?attr/colorOnSurface" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -169,16 +168,14 @@
             <!-- BLOCKING -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardBlocking"
-                style="@style/Widget.MaterialComponents.CardView"
+                style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardUseCompatPadding="true"
-                app:cardElevation="1dp"
-                app:strokeWidth="1dp">
+                app:cardElevation="1dp" >
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -189,11 +186,12 @@
                     android:padding="16dp">
 
                     <ImageView
+                        android:id="@+id/ivBlockingIcon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@string/statistics_hub_blocking_title"
                         android:src="@drawable/security_24"
-                        app:tint="?attr/colorPrimary" />
+                        app:tint="?attr/colorOnSurface" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -233,16 +231,15 @@
             <!-- OTHER -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardOther"
-                style="@style/Widget.MaterialComponents.CardView"
+                style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardUseCompatPadding="true"
-                app:cardElevation="1dp"
-                app:strokeWidth="1dp">
+app:cardElevation="1dp"
+>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -253,11 +250,12 @@
                     android:padding="16dp">
 
                     <ImageView
+                        android:id="@+id/ivOtherIcon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@string/statistics_hub_other_title"
                         android:src="@drawable/layers_24"
-                        app:tint="?attr/colorPrimary" />
+                        app:tint="?attr/colorOnSurface" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -304,7 +302,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="?attr/colorSurface"
-        android:paddingTop="6dp"
+        android:paddingTop="0dp"
         android:paddingBottom="0dp"
         app:menu="@menu/menu_bottom_main" />
 

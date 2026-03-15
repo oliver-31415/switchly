@@ -1,0 +1,386 @@
+package at.saltyy.switchly.feature.settings
+
+import android.content.Intent
+import android.os.Bundle
+import android.text.InputType
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
+import androidx.transition.AutoTransition
+import androidx.transition.TransitionManager
+import at.saltyy.switchly.R
+import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.theme.CustomAccentApplier
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.BlockingToggleKeys
+import at.saltyy.switchly.data.prefs.InAppLimitStore
+import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.SurfaceLimitStore
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.util.Locale
+
+class InAppBlockingActivity : AppCompatActivity() {
+
+    private val prefs by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
+
+    private fun sanitizeProfile(profile: String): String {
+        return profile.trim()
+            .lowercase(Locale.getDefault())
+            .replace(Regex("[^a-z0-9]+"), "_")
+            .trim('_')
+            .ifBlank { "default" }
+    }
+
+    private fun currentProfile(): String = ProfileStore.getCurrent(this) ?: "default"
+
+    private fun scopedKey(baseKey: String): String {
+        val p = sanitizeProfile(currentProfile())
+        return "p_${p}_$baseKey"
+    }
+
+    private fun readProfileBool(baseKey: String, def: Boolean = false): Boolean {
+        val k = scopedKey(baseKey)
+        if (prefs.contains(k)) return prefs.getBoolean(k, def)
+
+        if (prefs.contains(baseKey)) {
+            val v = prefs.getBoolean(baseKey, def)
+            // One-time copy into scoped key for current profile.
+            prefs.edit { putBoolean(k, v) }
+            return v
+        }
+
+        return def
+    }
+
+    private fun writeProfileBool(baseKey: String, value: Boolean) {
+        prefs.edit { putBoolean(scopedKey(baseKey), value) }
+    }
+
+    private fun getInAppLimitMinutesForProfile(): Int {
+        return InAppLimitStore.getLimitMinutes(this, currentProfile())
+    }
+
+    private fun getSurfaceRule(surfaceKey: String): Int {
+        return SurfaceLimitStore.getRule(this, currentProfile(), surfaceKey)
+    }
+
+    private fun setSurfaceRule(surfaceKey: String, rule: Int) {
+        SurfaceLimitStore.setRule(this, currentProfile(), surfaceKey, rule)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeUtils.applyAccentTheme(this)
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_in_app_blocking)
+
+        CustomAccentApplier.applyIfNeeded(this)
+
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
+
+        // Website blocking (global)
+        // In-app limit (applies to timed in-app surfaces that are toggled on)
+        val tvLimit = findViewById<TextView>(R.id.tvInAppLimitValue)
+        val btnLimit = findViewById<Button>(R.id.btnInAppLimit)
+        val openLimit = { showInAppLimitDialog(tvLimit) }
+        tvLimit.setOnClickListener { openLimit() }
+        btnLimit.setOnClickListener { openLimit() }
+
+        // Global in-app master (same key as Toggle Options → Blocking controls)
+        val rowInAppMaster = findViewById<View>(R.id.rowInAppMaster)
+        val swInAppMaster = findViewById<SwitchCompat>(R.id.swInAppMaster)
+        swInAppMaster.isChecked = readProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, true)
+        rowInAppMaster.setOnClickListener { swInAppMaster.toggle() }
+        swInAppMaster.setOnCheckedChangeListener { _, checked ->
+            writeProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, checked)
+            // Make sure service policy cache refreshes quickly
+            BlockingRuntime.ensureRunning(this)
+        }
+
+        // YouTube
+        setupTimedSwitch(
+            R.id.swYtShorts,
+            BlockingToggleKeys.KEY_BLOCK_YT_SHORTS,
+            surfaceKey = "yt:shorts",
+            surfaceLabel = getString(R.string.in_app_surface_shorts_label),
+            tvLimit = tvLimit
+        )
+        setupSwitch(R.id.swYtSearch, BlockingToggleKeys.KEY_BLOCK_YT_SEARCH)
+        setupSwitch(R.id.swYtComments, BlockingToggleKeys.KEY_BLOCK_YT_COMMENTS)
+        setupSwitch(R.id.swYtPip, BlockingToggleKeys.KEY_BLOCK_YT_PIP)
+
+        // Instagram
+        setupTimedSwitch(
+            R.id.swIgReels,
+            BlockingToggleKeys.KEY_BLOCK_IG_REELS,
+            surfaceKey = "ig:reels",
+            surfaceLabel = getString(R.string.in_app_surface_reels_label),
+            tvLimit = tvLimit
+        )
+        setupTimedSwitch(
+            R.id.swIgExplore,
+            BlockingToggleKeys.KEY_BLOCK_IG_EXPLORE,
+            surfaceKey = "ig:explore",
+            surfaceLabel = getString(R.string.in_app_surface_explore_label),
+            tvLimit = tvLimit
+        )
+        setupSwitch(R.id.swIgComments, BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS)
+        setupTimedSwitch(
+            R.id.swIgStories,
+            BlockingToggleKeys.KEY_BLOCK_IG_STORIES,
+            surfaceKey = "ig:stories",
+            surfaceLabel = getString(R.string.in_app_surface_stories_label),
+            tvLimit = tvLimit
+        )
+
+        // Expand/collapse sections
+        bindExpand(R.id.headerYouTube, R.id.contentYouTube, R.id.arrowYouTube)
+        bindExpand(R.id.headerInstagram, R.id.contentInstagram, R.id.arrowInstagram)
+
+        refreshInAppLimit(tvLimit)
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        CustomAccentApplier.applyIfNeeded(this)
+        refreshInAppLimit(findViewById(R.id.tvInAppLimitValue))
+        findViewById<SwitchCompat>(R.id.swInAppMaster).isChecked =
+            readProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, true)
+    }
+
+    private fun setupSwitch(switchId: Int, prefKey: String) {
+        val sw = findViewById<SwitchCompat>(switchId)
+        sw.isChecked = readProfileBool(prefKey, false)
+        sw.setOnCheckedChangeListener { _, checked ->
+            writeProfileBool(prefKey, checked)
+            // Make sure the service is alive, so changes feel instant.
+            BlockingRuntime.ensureRunning(this)
+        }
+    }
+
+    /**
+     * Like [setupSwitch], but for a specific in-app surface (Shorts/Reels/Stories/etc).
+     * When toggled ON for the first time, we ask what blocking mode to use:
+     *  - Always block (immediate)
+     *  - Daily limit for that specific surface
+     *  - Use global in-app limit (if set)
+     * Rules are stored per profile.
+     */
+    private fun setupTimedSwitch(
+        switchId: Int,
+        prefKey: String,
+        surfaceKey: String,
+        surfaceLabel: String,
+        tvLimit: TextView
+    ) {
+        val sw = findViewById<SwitchCompat>(switchId)
+        sw.isChecked = readProfileBool(prefKey, false)
+
+        // Long-press to change the surface rule without toggling.
+        sw.setOnLongClickListener {
+            showSurfaceRuleDialog(surfaceKey, surfaceLabel, tvLimit, onCancel = null)
+            true
+        }
+
+        var internalChange = false
+        sw.setOnCheckedChangeListener { _, checked ->
+            if (internalChange) return@setOnCheckedChangeListener
+
+            writeProfileBool(prefKey, checked)
+            BlockingRuntime.ensureRunning(this)
+
+            if (!checked) return@setOnCheckedChangeListener
+
+            // Only prompt if the user hasn't chosen a mode for this surface yet.
+            if (SurfaceLimitStore.hasRule(this, currentProfile(), surfaceKey)) return@setOnCheckedChangeListener
+
+            showSurfaceRuleDialog(
+                surfaceKey = surfaceKey,
+                surfaceLabel = surfaceLabel,
+                tvLimit = tvLimit,
+                onCancel = {
+                    internalChange = true
+                    sw.isChecked = false
+                    internalChange = false
+                    writeProfileBool(prefKey, false)
+                    BlockingRuntime.ensureRunning(this)
+                }
+            )
+        }
+    }
+
+    private fun showSurfaceRuleDialog(
+        surfaceKey: String,
+        surfaceLabel: String,
+        tvLimit: TextView,
+        onCancel: (() -> Unit)?
+    ) {
+        val globalMin = getInAppLimitMinutesForProfile()
+
+        val options = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        if (globalMin > 0) {
+            options.add(getString(R.string.in_app_surface_use_global_limit_fmt, globalMin))
+            actions.add { setSurfaceRule(surfaceKey, 0) }
+        } else {
+            options.add(getString(R.string.in_app_surface_set_global_limit))
+            actions.add {
+                showInAppLimitDialog(tvLimit)
+                setSurfaceRule(surfaceKey, 0)
+            }
+        }
+
+        options.add(getString(R.string.in_app_surface_always_block))
+        actions.add { setSurfaceRule(surfaceKey, -1) }
+
+        options.add("15 min/day")
+        actions.add { setSurfaceRule(surfaceKey, 15) }
+        options.add("30 min/day")
+        actions.add { setSurfaceRule(surfaceKey, 30) }
+        options.add("60 min/day")
+        actions.add { setSurfaceRule(surfaceKey, 60) }
+
+        options.add(getString(R.string.in_app_surface_custom))
+        actions.add { showCustomSurfaceLimitDialog(surfaceKey, surfaceLabel, tvLimit) }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.in_app_surface_rule_dialog_title, surfaceLabel))
+            .setItems(options.toTypedArray()) { _, which ->
+                actions.getOrNull(which)?.invoke()
+                BlockingRuntime.ensureRunning(this)
+                refreshInAppLimit(tvLimit)
+            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> onCancel?.invoke() }
+            .setOnCancelListener { onCancel?.invoke() }
+            .create()
+
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
+    }
+
+    private fun showCustomSurfaceLimitDialog(surfaceKey: String, surfaceLabel: String, tvLimit: TextView) {
+        val current = getSurfaceRule(surfaceKey).coerceAtLeast(0)
+
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            hint = getString(R.string.minutes_hint)
+            setText(if (current > 0) current.toString() else "")
+        }
+
+        val container = FrameLayout(this).apply {
+            val m = (24 * resources.displayMetrics.density).toInt()
+            setPadding(m, 0, m, 0)
+            addView(
+                input,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.in_app_surface_daily_limit_title, surfaceLabel))
+            .setMessage(getString(R.string.set_daily_limit_desc))
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val minutes = input.text?.toString()?.trim()?.toIntOrNull() ?: 0
+                if (minutes > 0) {
+                    setSurfaceRule(surfaceKey, minutes)
+                } else {
+                    // Treat empty/0 as: use global limit.
+                    setSurfaceRule(surfaceKey, 0)
+                }
+                BlockingRuntime.ensureRunning(this)
+                refreshInAppLimit(tvLimit)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
+    }
+
+    private fun bindExpand(headerId: Int, contentId: Int, arrowId: Int) {
+        val header = findViewById<View>(headerId)
+        val content = findViewById<View>(contentId)
+        val arrow = findViewById<ImageView>(arrowId)
+
+        header.setOnClickListener {
+            val show = content.visibility != View.VISIBLE
+            val parent = header.parent
+            val vg = parent as? ViewGroup ?: return@setOnClickListener
+
+            TransitionManager.beginDelayedTransition(vg, AutoTransition())
+            content.visibility = if (show) View.VISIBLE else View.GONE
+            arrow.animate().rotation(if (show) 180f else 0f).setDuration(150).start()
+        }
+    }
+
+    private fun refreshInAppLimit(tv: TextView) {
+        val limitMin = getInAppLimitMinutesForProfile()
+        tv.text = if (limitMin <= 0) getString(R.string.no_limit)
+        else getString(R.string.daily_limit_value_format, limitMin)
+    }
+
+    private fun showInAppLimitDialog(tv: TextView) {
+        val current = getInAppLimitMinutesForProfile()
+
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            hint = getString(R.string.minutes_hint)
+            setText(if (current > 0) current.toString() else "")
+        }
+
+        val inputContainer = FrameLayout(this).apply {
+            val pad = (24f * resources.displayMetrics.density).toInt()
+            setPadding(pad, 0, pad, 0)
+            addView(
+                input,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.in_app_blocking_limit_title))
+            .setMessage(getString(R.string.in_app_blocking_limit_desc))
+            .setView(inputContainer)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val minutes = input.text?.toString()?.trim()?.toIntOrNull() ?: 0
+                InAppLimitStore.setLimitMinutes(this, currentProfile(), minutes)
+
+                BlockingRuntime.ensureRunning(this)
+                refreshInAppLimit(tv)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .setNeutralButton(R.string.clear_limit) { _, _ ->
+                InAppLimitStore.setLimitMinutes(this, currentProfile(), 0)
+                BlockingRuntime.ensureRunning(this)
+                refreshInAppLimit(tv)
+            }
+            .create()
+
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
+    }
+}

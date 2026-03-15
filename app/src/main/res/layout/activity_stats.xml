@@ -2,8 +2,10 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:ignore="TooDeepLayout,TooManyViews">
 
     <!-- Topbar -->
     <com.google.android.material.appbar.AppBarLayout
@@ -78,14 +80,23 @@
 
             </com.google.android.material.chip.ChipGroup>
 
-            <!-- Range chips -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupRange"
+            <!-- Range chips + sort/filter -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="0dp"
-                app:singleSelection="true"
-                app:selectionRequired="true">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupRange"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:chipSpacingHorizontal="8dp"
+                    app:chipSpacingVertical="8dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipToday"
@@ -122,7 +133,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/stats_range_overall"/>
 
-            </com.google.android.material.chip.ChipGroup>
+                </com.google.android.material.chip.ChipGroup>
+
+            </LinearLayout>
 
             <!-- Summary Card -->
             <androidx.cardview.widget.CardView
@@ -287,7 +300,7 @@
                         android:textColor="?attr/colorOnSurface"
                         android:visibility="gone" />
 
-                    <!-- NEW: nicer rows for "Other" -->
+                    <!-- "Other" tiles -->
                     <LinearLayout
                         android:id="@+id/llInfoRows"
                         android:layout_width="match_parent"
@@ -297,69 +310,631 @@
                         android:visibility="gone">
 
                         <TextView
-                            android:id="@+id/tvRowEmergency"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:paddingTop="8dp"
-                            android:paddingBottom="8dp"
-                            android:textSize="14sp"
-                            android:textColor="?attr/colorOnSurface" />
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:alpha="0.12"
-                            android:background="?attr/colorOnSurface" />
-
-                        <TextView
-                            android:id="@+id/tvRowNfc"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:paddingTop="8dp"
-                            android:paddingBottom="8dp"
-                            android:textSize="14sp"
-                            android:textColor="?attr/colorOnSurface" />
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:alpha="0.12"
-                            android:background="?attr/colorOnSurface" />
-
-                        <TextView
-                            android:id="@+id/tvRowSchedules"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:paddingTop="8dp"
-                            android:paddingBottom="8dp"
-                            android:textSize="14sp"
-                            android:textColor="?attr/colorOnSurface" />
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:alpha="0.12"
-                            android:layout_marginTop="10dp"
-                            android:background="?attr/colorOnSurface" />
-
-                        <TextView
                             android:id="@+id/tvInfoNote"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
                             android:textSize="13sp"
                             android:textStyle="bold"
                             android:textColor="?android:attr/textColorSecondary"
                             android:visibility="gone" />
 
-                        <TextView
-                            android:id="@+id/tvRowBlockedApps"
+                        <GridLayout
+                            android:id="@+id/gridOtherTiles"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:paddingTop="8dp"
-                            android:paddingBottom="0dp"
-                            android:textSize="14sp"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:layout_marginTop="10dp"
+                            android:columnCount="2">
+
+                            <!-- Blocked apps now (move up) -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardOtherBlockedApps"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/app_blocking_black_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_blocked_apps"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherBlockedAppsCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherBlockedAppsTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardOtherAttempts"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/lock_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_blocked_attempts"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherAttemptsCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherAttemptsTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Profiles -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardOtherProfiles"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/switch_account_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_profiles"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherProfilesCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherProfilesTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Enabled schedules -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardOtherSchedulesEnabled"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/schedule_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_schedules_enabled"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherSchedulesEnabledCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherSchedulesEnabledTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Limited apps -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardOtherLimitedApps"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/tune_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_limited_apps"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherLimitedAppsCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherLimitedAppsTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Emergency -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/lock_open_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_emergency"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherEmergencyCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherEmergencyTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- NFC -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/nfc_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_nfc"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherNfcCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherNfcTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Schedules -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/schedule_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_schedules"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherSchedulesCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherSchedulesTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- QR scans -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardOtherQr"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/qr_code_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_qr"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherQrCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherQrTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Temp enables -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardOtherTempEnable"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/toggle_on_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_temp_enables"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherTempEnableCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherTempEnableTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Limits reached -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardOtherLimitReached"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                app:cardCornerRadius="16dp"
+                                app:cardUseCompatPadding="false"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="?attr/colorOnSurface">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="14dp">
+
+                                    <ImageView
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:src="@drawable/alarm_24"
+                                        android:contentDescription="@null"
+                                        app:tint="?attr/colorOnSurface"
+                                        android:alpha="0.85" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:text="@string/stats_other_tile_limits_reached"
+                                        android:textSize="13sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherLimitReachedCount"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="?attr/colorOnSurface" />
+
+                                    <TextView
+                                        android:id="@+id/tvOtherLimitReachedTotal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:gravity="end"
+                                        android:textSize="12sp"
+                                        android:textColor="?android:attr/textColorSecondary" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Spacer used to keep the 2-column grid balanced when some tiles are hidden -->
+                            <Space
+                                android:id="@+id/otherGridSpacer"
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_margin="6dp"
+                                android:layout_columnWeight="1"
+                                android:visibility="gone" />
+                        </GridLayout>
 
                     </LinearLayout>
 
@@ -402,6 +977,18 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Sort/Filter (always visible bottom-right) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnSortFilter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="104dp"
+        android:contentDescription="@string/stats_sort_filter"
+        app:srcCompat="@drawable/tune_24"
+        app:useCompatPadding="true" />
+
     <!-- Bottom-Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
@@ -409,7 +996,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="?attr/colorSurface"
-        android:paddingTop="6dp"
+        android:paddingTop="0dp"
         android:paddingBottom="0dp"
         app:menu="@menu/menu_bottom_main" />
 

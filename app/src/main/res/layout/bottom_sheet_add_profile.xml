@@ -21,7 +21,7 @@
             android:layout_height="28dp"
             app:srcCompat="@drawable/account_box_24"
             android:contentDescription="@string/app_name"
-            app:tint="?attr/colorPrimary" />
+            app:tint="?attr/colorOnSurface" />
 
         <LinearLayout
             android:layout_width="0dp"
