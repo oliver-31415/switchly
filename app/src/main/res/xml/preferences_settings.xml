@@ -37,66 +37,6 @@
             android:icon="@drawable/language_24"
             app:iconSpaceReserved="false" />
 
-        <Preference
-            android:key="pref_blocked_inbox"
-            android:layout="@layout/pref_card_item"
-            android:title="@string/blocked_inbox_title"
-            android:summary="@string/blocked_inbox_pref_summary"
-            android:icon="@drawable/notifications_24"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_emergency_unlock"
-            android:layout="@layout/pref_card_item"
-            android:title="@string/pref_emergency_title"
-            android:summary="@string/pref_emergency_summary"
-            android:icon="@drawable/lock_open_24"
-            app:iconSpaceReserved="false" />
-
-    </PreferenceScreen>
-
-    <!-- AUTOMATION & DEVICES -->
-    <PreferenceScreen
-        android:key="screen_automation_devices"
-        android:order="20"
-        android:layout="@layout/pref_card_item"
-        android:title="@string/settings_automation_devices_title"
-        android:summary="@string/settings_automation_devices_summary"
-        android:icon="@drawable/alarm_24"
-        app:iconSpaceReserved="false">
-
-        <Preference
-            android:key="pref_open_schedules"
-            android:layout="@layout/pref_card_item"
-            android:title="@string/schedules_title"
-            android:summary="@string/settings_open_schedules_summary"
-            android:icon="@drawable/alarm_24"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_manage_profiles"
-            android:layout="@layout/pref_card_item"
-            android:title="@string/manage_profiles"
-            android:summary="@string/manage_profiles_summary"
-            android:icon="@drawable/account_box_24"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_manage_paired_tags"
-            android:layout="@layout/pref_card_item"
-            android:title="@string/pref_manage_paired_tags_title"
-            android:summary="@string/pref_manage_paired_tags_summary_none"
-            android:icon="@drawable/nfc_24"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_write_tag"
-            android:layout="@layout/pref_card_item"
-            android:title="@string/pref_write_tag_title"
-            android:summary="@string/pref_write_tag_summary"
-            android:icon="@drawable/nfc_24"
-            app:iconSpaceReserved="false" />
-
     </PreferenceScreen>
 
     <!-- APPEARANCE -->

@@ -92,6 +92,13 @@ class NfcEntryActivity : Activity() {
 
         val data: Uri? = intent?.data
         if (data == null || !NfcSchema.isKnownHost(data.host)) {
+            if (fromNfc) {
+                NfcScanCountStore.incrementToday(this)
+                handleBlankTagFallbackToggle(tag)
+                finish()
+                return
+            }
+
             toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_invalid_or_missing_uri)))
             finish()
             return
@@ -106,6 +113,39 @@ class NfcEntryActivity : Activity() {
         }
 
         finish()
+    }
+
+
+    private fun handleBlankTagFallbackToggle(tag: android.nfc.Tag?) {
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+        if (pairedUidsEnabled) {
+            val pairedUids = NfcUidPairingStore.getPairedUidsHex(this)
+            if (pairedUids.isNotEmpty()) {
+                val seenUid = NfcTagUid.normalizeUidHex(NfcTagUid.uidHex(tag))
+                if (seenUid.isBlank() || pairedUids.none { it.equals(seenUid, ignoreCase = true) }) {
+                    toast(getString(R.string.nfc_wrong_tag_paired_uid_required))
+                    return
+                }
+            }
+        }
+
+        val newValue = !SwitchModeStore.isBaseEnabled(this)
+        val changed = SwitchModeStore.setEnabled(this, newValue, allowNfcBypass = !newValue)
+        if (!changed) {
+            toast(getString(R.string.nfc_action_error_fmt, getString(R.string.toast_disable_requires_nfc)))
+            return
+        }
+
+        if (newValue) {
+            BlockingRuntime.ensureRunning(this)
+        } else {
+            BlockingRuntime.stop(this)
+        }
+
+        val state = getString(if (newValue) R.string.nfc_state_on else R.string.nfc_state_off)
+        toast(getString(R.string.nfc_toggle_via_nfc_fmt, state))
+        sendBroadcast(android.content.Intent(at.saltyy.switchly.app.Switchly.ACTION_REFRESH).setPackage(packageName))
     }
 
     // -------- GLOBAL ACTIONS --------

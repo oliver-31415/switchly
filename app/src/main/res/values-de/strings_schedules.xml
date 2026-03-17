@@ -7,7 +7,6 @@
     <string name="schedules_title">Zeitpläne</string>
     <string name="schedules_add">Zeitplan hinzufügen</string>
     <string name="schedules_edit">Zeitplan bearbeiten</string>
-    <string name="schedules_delete_confirm">Diesen Zeitplan löschen?</string>
     <string name="schedules_choose_type">Zeitplan-Typ wählen</string>
 
     <!-- =========================================================
@@ -22,6 +21,7 @@
     <string name="schedules_next_title">Nächster Zeitplan</string>
     <string name="schedules_next_at">Nächster Zeitplan: %1$s</string>
     <string name="schedules_next_none">Kein kommender Zeitplan</string>
+    <string name="schedules_next_inactive_control_mode">Inaktiv — der Steuerungsmodus blockiert Zeitpläne</string>
 
     <!-- =========================================================
          SCHEDULES: Types
@@ -134,14 +134,6 @@
     <!-- =========================================================
          SCHEDULES: Health checks/warnings
          ========================================================= -->
-    <string name="schedules_health_accessibility">Die Bedienungshilfe ist deaktiviert. App-Blockierung und Zeitplan-Durchsetzung können fehlschlagen, bis sie wieder aktiviert ist.</string>
-    <string name="schedules_health_battery">Die Akku-Optimierung ist aktiv. Auf manchen Geräten können Zeitplan-Trigger im Hintergrund verzögert werden.</string>
-    <string name="schedules_health_exact_alarm">Exakte Alarme sind nicht erlaubt. Zeitpläne können auf manchen Geräten verspätet oder gar nicht auslösen.</string>
-    <string name="schedules_health_nfc_conflict">NFC-Sperre ist aktiv. Zeitpläne laufen weiter, aber Aktionen zum Deaktivieren oder Umschalten von Switchly sind bis zum Entsperren per NFC/QR blockiert.</string>
-
-    <string name="schedules_health_permissions_wifi">WLAN-Zeitpläne benötigen die Berechtigung, die aktuelle SSID zu lesen (von Android vorgeschrieben).</string>
-    <string name="schedules_health_permissions_bt">Bluetooth-Zeitpläne benötigen die Bluetooth-Berechtigung (von Android vorgeschrieben).</string>
-    <string name="schedules_health_permissions_wifi_bt">WLAN- und Bluetooth-Zeitpläne benötigen zusätzliche Berechtigungen (von Android vorgeschrieben).</string>
 
     <string name="schedules_health_info_title">Zeitplan-Status</string>
     <string name="schedules_health_info_body">Dieses Banner zeigt häufige Gründe, warum Zeitpläne unzuverlässig auslösen können (Akku-Optimierung, exakte Alarme, erforderliche Berechtigungen und Status des Accessibility-Dienstes).</string>
@@ -149,8 +141,6 @@
     <string name="schedules_health_action_title">Empfohlene Aktion</string>
 
     <string name="schedules_health_action_permissions">Berechtigungen beheben</string>
-    <string name="schedules_health_action_battery">Hintergrundausführung erlauben</string>
-    <string name="schedules_health_action_exact_alarm">Exakte Alarme erlauben</string>
     <string name="schedules_health_action_toggle_options">Umschaltoptionen öffnen</string>
 
     <!-- =========================================================
@@ -175,16 +165,30 @@
          SCHEDULES: Health status detail lines
          ========================================================= -->
     <string name="schedules_health_last_exec_never">nie</string>
-    <string name="schedules_health_status_battery_bad">• Akku-Optimierung: aktiv</string>
-    <string name="schedules_health_status_battery_ok">• Akku-Optimierung: für Switchly ignoriert ✅</string>
-    <string name="schedules_health_status_exact_ok">• Exakte Alarme: erlaubt ✅</string>
-    <string name="schedules_health_status_exact_bad">• Exakte Alarme: nicht erlaubt</string>
-    <string name="schedules_health_status_last_exec">• Letzte Zeitplan-Ausführung: %1$s</string>
-    <string name="schedules_health_status_with_detail">%1$s\n\n%2$s</string>
 
     <plurals name="delete_schedules_confirm">
         <item quantity="one">%1$d Zeitplan löschen?</item>
         <item quantity="other">%1$d Zeitpläne löschen?</item>
     </plurals>
 
+
+    <string name="schedules_disabled_title">Zeitpläne sind deaktiviert</string>
+    <string name="schedules_disabled_body">Der aktuelle Steuerungsmodus erlaubt keine Zeitplan-Automationen. Bestehende Zeitpläne bleiben sichtbar, werden aber erst ausgeführt, wenn du den Zeitplan-Modus aktivierst oder im gemischten Modus den Zeitplan-Kanal erlaubst.</string>
+    <string name="schedules_disabled_footer_mode">Aktueller Steuerungsmodus: %1$s</string>
+    <string name="schedules_disabled_footer_mixed_off">Aktueller Steuerungsmodus: %1$s · Zeitplan-Kanal: aus</string>
+    <string name="schedules_disabled_action_open_controls">Schutzsteuerung öffnen</string>
+    <string name="schedules_disabled_read_only_toast">Zeitpläne sind schreibgeschützt, bis der aktuelle Steuerungsmodus Zeitplan-Automationen erlaubt.</string>
+    <string name="schedules_locked_title">Zeitpläne sind gesperrt, solange Switchly aktiv ist</string>
+    <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst. Im Mixed-Mode kannst du optional die Zeitplan-Bearbeitung trotz aktivem Schutz erlauben.</string>
+    <string name="schedules_locked_footer">Aktueller Steuerungsmodus: %1$s · Zeitplan-Bearbeitung: gesperrt</string>
+    <string name="schedules_locked_action_open_controls">Schutzsteuerung öffnen</string>
+    <string name="schedules_locked_read_only_toast">Deaktiviere Switchly, um Zeitpläne zu ändern, oder erlaube die Zeitplan-Bearbeitung im Mixed-Mode.</string>
+
+    <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
+    <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>
+
+
+    <string name="schedules_health_battery_title">Akkueinstellungen</string>
+    <string name="schedules_health_battery_max_available_body">Dein Gerät bietet möglicherweise keine höhere Akku-Berechtigungsstufe wie „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, kannst du diesen Schritt als erledigt markieren.</string>
+    <string name="schedules_health_action_mark_battery_done">Höchste verfügbare Stufe bereits aktiviert</string>
 </resources>

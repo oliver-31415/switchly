@@ -5,7 +5,6 @@ import android.app.AlarmManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -14,8 +13,8 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.widget.ImageViewCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
@@ -24,13 +23,12 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.button.MaterialButton
 import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.BatteryOptimizationCompat
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
 
-
-// Quick diagnostics screen that shows common reasons why Switchly doesn't work reliably.
 class TroubleshootingActivity : AppCompatActivity() {
 
     private lateinit var cardTroubleshootingStatus: View
@@ -98,7 +96,6 @@ class TroubleshootingActivity : AppCompatActivity() {
         btnExactAlarms = findViewById(R.id.btnOpenExactAlarms)
         btnLocation = findViewById(R.id.btnOpenLocation)
 
-        // Top unified status card
         cardTroubleshootingStatus = findViewById(R.id.cardTroubleshootingStatus)
         ivStatusIcon = cardTroubleshootingStatus.findViewById(R.id.ivStatusIcon)
         tvStatusTitle = cardTroubleshootingStatus.findViewById(R.id.tvStatusTitle)
@@ -135,7 +132,11 @@ class TroubleshootingActivity : AppCompatActivity() {
 
         btnExactAlarms.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                runCatching { startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)) }
+                runCatching {
+                    startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = "package:$packageName".toUri()
+                    })
+                }
             }
         }
 
@@ -147,32 +148,44 @@ class TroubleshootingActivity : AppCompatActivity() {
             startActivity(Intent(this, PermissionsActivity::class.java))
         }
 
-        fun info(titleRes: Int, msgRes: Int) {
+        fun info(titleRes: Int, msgRes: Int, extraText: String? = null) {
+            val message = buildString {
+                append(getString(msgRes))
+                if (!extraText.isNullOrBlank()) {
+                    append("\n\n")
+                    append(extraText)
+                }
+            }
+
             val dlg = Dialogs.builder(this)
                 .setTitle(getString(titleRes))
-                .setMessage(getString(msgRes))
+                .setMessage(message)
                 .setPositiveButton(android.R.string.ok, null)
                 .showAccented()
 
-            // Ensure dialog buttons follow the selected accent color (especially custom accent).
             CustomAccentApplier.applyToDialog(dlg)
         }
 
         findViewById<View>(R.id.infoAccessibility).setOnClickListener {
             info(R.string.troubleshooting_accessibility, R.string.troubleshooting_info_accessibility)
         }
+
         findViewById<View>(R.id.infoNotif).setOnClickListener {
             info(R.string.troubleshooting_notification_access, R.string.troubleshooting_info_notification_access)
         }
+
         findViewById<View>(R.id.infoBattery).setOnClickListener {
-            info(R.string.troubleshooting_battery, R.string.troubleshooting_info_battery)
+            info(R.string.troubleshooting_battery, R.string.troubleshooting_info_battery, getString(R.string.troubleshooting_battery_oem_note))
         }
+
         findViewById<View>(R.id.infoBluetooth).setOnClickListener {
             info(R.string.troubleshooting_bluetooth, R.string.troubleshooting_info_bluetooth)
         }
+
         findViewById<View>(R.id.infoExact).setOnClickListener {
-            info(R.string.troubleshooting_exact_alarms, R.string.troubleshooting_info_exact_alarms)
+            info(R.string.troubleshooting_exact_alarms, R.string.troubleshooting_info_exact_alarms, getString(R.string.troubleshooting_exact_alarms_note))
         }
+
         findViewById<View>(R.id.infoLocation).setOnClickListener {
             info(R.string.troubleshooting_location, R.string.troubleshooting_info_location)
         }
@@ -195,8 +208,19 @@ class TroubleshootingActivity : AppCompatActivity() {
         )
     }
 
+    private fun setBatteryStatus(tv: TextView, ok: Boolean) {
+        tv.text = when {
+            ok && isBatteryOptimizationUserConfirmedMaxAvailable() ->
+                getString(R.string.permissions_battery_highest_available)
+            ok -> getString(R.string.troubleshooting_ok)
+            else -> getString(R.string.troubleshooting_missing)
+        }
+        tv.setTextColor(
+            if (ok) getColor(R.color.switchly_ok) else getColor(R.color.switchly_error)
+        )
+    }
+
     private fun tintInfoIcon(iv: ImageView) {
-        // Use the currently selected accent color (including custom accent).
         val color = AccentColor.getAccentColorInt(this)
         ImageViewCompat.setImageTintList(iv, ColorStateList.valueOf(color))
         iv.alpha = 0.95f
@@ -231,6 +255,14 @@ class TroubleshootingActivity : AppCompatActivity() {
         return LocationPermissionState.OK
     }
 
+    private fun isBatteryOptimizationUserConfirmedMaxAvailable(): Boolean {
+        return BatteryOptimizationCompat.isUserConfirmedMaxAvailable(this)
+    }
+
+    private fun isBatteryOptimizationEffectivelyOk(): Boolean {
+        return BatteryOptimizationCompat.isEffectivelyOk(this)
+    }
+
     private fun updateUi() {
         // Accessibility = core blocking
         val accessibilityOk = BlockingRuntime.isAccessibilityActive(this)
@@ -241,10 +273,10 @@ class TroubleshootingActivity : AppCompatActivity() {
         val notifOk = NotificationBlockStore.hasListenerAccess(this)
         setOk(tvNotifAccess, notifOk)
         tintInfoIcon(ivInfoNotif)
-
-        val pm = getSystemService(POWER_SERVICE) as PowerManager
-        val batteryOk = runCatching { pm.isIgnoringBatteryOptimizations(packageName) }.getOrDefault(false)
-        setOk(tvBattery, batteryOk)
+        
+        // Battery optimization
+        val batteryOk = isBatteryOptimizationEffectivelyOk()
+        setBatteryStatus(tvBattery, batteryOk)
         tintInfoIcon(ivInfoBattery)
 
         val exactOk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -262,7 +294,6 @@ class TroubleshootingActivity : AppCompatActivity() {
         setOk(tvLocation, locationOk)
         tintInfoIcon(ivInfoLocation)
 
-        // Overall status summary
         val checks = listOf(
             getString(R.string.troubleshooting_accessibility) to accessibilityOk,
             getString(R.string.troubleshooting_notification_access) to notifOk,
@@ -292,5 +323,10 @@ class TroubleshootingActivity : AppCompatActivity() {
             rowStatusAction.visibility = View.VISIBLE
             dividerStatus.visibility = View.VISIBLE
         }
+    }
+
+    companion object {
+        private const val PREFS_SCHEDULE_HEALTH = "switchly_schedule_health"
+        private const val KEY_BATTERY_OPTIMIZATION_CONFIRMED_MAX_AVAILABLE = "battery_optimization_confirmed_max_available"
     }
 }

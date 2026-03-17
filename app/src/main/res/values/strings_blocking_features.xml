@@ -35,6 +35,7 @@
     <string name="rule_daily_limit">Daily limit</string>
     <string name="rule_blocked">Blocked</string>
 
+    <string name="domain_limit_required">Please enter a daily limit in minutes.</string>
     <string name="daily_limit_helper">Set minutes per day. Leave empty for no limit.</string>
     <string name="set_daily_limit_desc">Set how many minutes per day are allowed before Switchly blocks it.</string>
     <string name="daily_limit_value_format">%1$d min/day</string>
@@ -44,7 +45,6 @@
          BLOCKED INBOX: Screen and empty state
          ========================================================= -->
     <string name="blocked_inbox_title">Blocked notifications</string>
-    <string name="blocked_inbox_pref_summary">See what was hidden</string>
     <string name="blocked_inbox_detail_title">Blocked notification</string>
     <string name="blocked_inbox_empty">No blocked notifications yet ✅</string>
     <string name="blocked_inbox_content_unknown">No preview available</string>

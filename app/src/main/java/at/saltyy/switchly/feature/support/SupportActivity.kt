@@ -160,7 +160,6 @@ class SupportActivity : AppCompatActivity() {
             val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0L))
             } else {
-                @Suppress("DEPRECATION")
                 packageManager.getPackageInfo(packageName, 0)
             }
             line("First install", formatDateTime(info.firstInstallTime))
@@ -229,7 +228,7 @@ class SupportActivity : AppCompatActivity() {
         }
 
         line("Quick actions visible", defaultSp.getBoolean("pref_show_quick_actions", true))
-        line("QR button visible", defaultSp.getBoolean("pref_show_qr_code", false))
+        line("QR feature enabled", defaultSp.getBoolean("pref_show_qr_code", false))
 
         section("Permissions")
         val notificationsEnabled = NotificationManagerCompat.from(this@SupportActivity).areNotificationsEnabled()

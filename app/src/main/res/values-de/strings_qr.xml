@@ -11,8 +11,8 @@
     <!-- =========================================================
          QR: Preference toggle
          ========================================================= -->
-    <string name="pref_show_qr_code_title">QR-Code</string>
-    <string name="pref_show_qr_code_summary">Zeigt auf dem Startbildschirm eine QR-Scan-Schaltfläche an.</string>
+    <string name="pref_show_qr_code_title">QR-Aktionen aktivieren</string>
+    <string name="pref_show_qr_code_summary">Erlaubt QR-Aktionen. QR-Codes kannst du in Verwaltung erstellen und scannen.</string>
 
     <!-- =========================================================
          QR: Permissions/errors

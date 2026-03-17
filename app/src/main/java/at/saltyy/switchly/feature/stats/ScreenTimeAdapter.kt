@@ -8,9 +8,11 @@ import android.util.LruCache
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.graphics.ColorUtils
 import at.saltyy.switchly.R
 import at.saltyy.switchly.databinding.RowUsageStatBinding
 import at.saltyy.switchly.theme.AccentColor
+import com.google.android.material.color.MaterialColors
 import kotlin.math.roundToInt
 
 class ScreenTimeAdapter : ListAdapter<ScreenTimeRow, ScreenTimeAdapter.VH>(DIFF) {
@@ -69,7 +71,12 @@ class ScreenTimeAdapter : ListAdapter<ScreenTimeRow, ScreenTimeAdapter.VH>(DIFF)
                 ((row.usedMs.toDouble()/maxUsedMs.toDouble()) * 100.0).roundToInt().coerceIn(0, 100)
             } else 0
             b.progress.progress = rel
-            b.progress.progressTintList = AccentColor.getActiveColor(ctx)
+            val accent = AccentColor.getAccentColorInt(ctx)
+            b.progress.setIndicatorColor(accent)
+            b.progress.trackColor = ColorUtils.setAlphaComponent(
+                MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorOnSurface, 0),
+                0x22
+            )
         }
 
         private fun formatMsPretty(ms: Long): String {

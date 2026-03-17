@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.databinding.ActivityQrGenerateBinding
 import at.saltyy.switchly.nfc.NfcSchema
@@ -76,6 +77,12 @@ class QrGenerateActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
+
+        if (!AutomationModeStore.isQrFeatureEnabled(this)) {
+            Toast.makeText(this, R.string.mode_blocked_qr_mixed_enable_toggle, Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
         b = ActivityQrGenerateBinding.inflate(layoutInflater)
         setContentView(b.root)

@@ -7,9 +7,9 @@
         android:title="@string/nav_home" />
 
     <item
-        android:id="@+id/nav_stats"
-        android:icon="@drawable/bar_chart_24"
-        android:title="@string/nav_stats" />
+        android:id="@+id/nav_tools"
+        android:icon="@drawable/apps_24"
+        android:title="@string/nav_tools" />
 
     <item
         android:id="@+id/nav_settings"

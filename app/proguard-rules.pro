@@ -1,5 +1,5 @@
 ############################################
-# Kotlin/Coroutines (safe defaults)
+# Kotlin/Coroutines
 ############################################
 -keep class kotlin.Metadata { *; }
 -dontwarn kotlin.**
@@ -7,13 +7,12 @@
 
 ############################################
 # Firebase (BOM)
-# Firebase liefert selbst consumer-rules -> meist reicht dontwarn
 ############################################
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
 ############################################
-# ML Kit Barcode (Play Services variant)
+# ML Kit Barcode (Play Services)
 ############################################
 -dontwarn com.google.mlkit.**
 -dontwarn com.google.android.odml.**
@@ -46,7 +45,6 @@
 -keepattributes EnclosingMethod
 
 ############################################
-# (Optional) If you use deep links with reflection/custom class loading:
-# not needed for your current setup
+# If you use deep links with reflection/custom class loading: not needed for your current setup
 ############################################
 # -keep class at.saltyy.switchly.** { *; }

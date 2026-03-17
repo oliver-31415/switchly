@@ -3,9 +3,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import org.json.JSONArray
 
-/**
- * Stores simple Wi-Fi based profile rules like, when connected to SSID X -> activate profile Y
- */
+// Stores simple Wi-Fi based profile rules like, when connected to SSID X -> activate profile Y
 object WifiRuleStore {
 
     private const val PREFS = "switchly_wifi_rules"

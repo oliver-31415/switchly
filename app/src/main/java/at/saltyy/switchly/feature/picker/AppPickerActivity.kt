@@ -32,6 +32,7 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
@@ -83,6 +84,8 @@ class AppPickerActivity : AppCompatActivity() {
         val rvApps = findViewById<RecyclerView>(R.id.rvApps)
         val searchBox = findViewById<TextInputLayout>(R.id.searchBox)
         val etSearch = findViewById<TextInputEditText>(R.id.etSearch)
+        val btnSelectAll = findViewById<MaterialButton>(R.id.btnSelectAll)
+        val btnClearAll = findViewById<MaterialButton>(R.id.btnClearAll)
         val btnSave = findViewById<Button>(R.id.btnSave)
 
         rvApps.layoutManager = LinearLayoutManager(this)
@@ -112,9 +115,15 @@ class AppPickerActivity : AppCompatActivity() {
 
         btnSave.backgroundTintList = AccentColor.getActiveColor(this)
         btnSave.setTextColor(ContextCompat.getColor(this, R.color.font_white))
+        btnSelectAll.strokeColor = AccentColor.getActiveColor(this)
+        btnClearAll.strokeColor = AccentColor.getActiveColor(this)
+        btnSelectAll.setTextColor(AccentColor.getAccentColorInt(this))
+        btnClearAll.setTextColor(AccentColor.getAccentColorInt(this))
         searchBox.boxStrokeColor = AccentColor.getAccentColorInt(this)
         searchBox.hintTextColor = AccentColor.getActiveColor(this)
         etSearch.backgroundTintList = AccentColor.getActiveColor(this)
+
+        setupBulkButtons(btnSelectAll, btnClearAll)
 
         Thread {
             val load = loadPickerEntries(this, preselectedManaged)
@@ -235,6 +244,16 @@ class AppPickerActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupBulkButtons(btnSelectAll: MaterialButton, btnClearAll: MaterialButton) {
+        btnSelectAll.setOnClickListener {
+            adapter.selectAllVisible()
+        }
+
+        btnClearAll.setOnClickListener {
+            adapter.clearAllVisible(this)
+        }
+    }
+
     private fun setupSaveButton(btnSave: Button) {
         btnSave.setOnClickListener {
             val profile = currentProfile
@@ -274,6 +293,11 @@ class AppPickerActivity : AppCompatActivity() {
                 if (which < presets.size) {
                     val chosen = presets[which]
 
+                    if (SwitchModeStore.isEnabled(this)) {
+                        Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+                        return@setItems
+                    }
+
                     UsageLimitStore.setLimitMinutes(this, profile, app.packageName, chosen)
                     if (chosen == 0) {
                         // clear usage so it doesn't feel "already exceeded"
@@ -294,6 +318,11 @@ class AppPickerActivity : AppCompatActivity() {
         val profile = currentProfile
         if (profile.isNullOrBlank()) {
             Toast.makeText(this, R.string.select_profile_first, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (SwitchModeStore.isEnabled(this)) {
+            Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -356,6 +385,11 @@ class AppPickerActivity : AppCompatActivity() {
                     return@setPositiveButton
                 }
 
+                if (SwitchModeStore.isEnabled(this)) {
+                    Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
                 SessionLimitStore.setLimitMinutes(this, profile, app.packageName, m)
 
                 BlockingRuntime.ensureRunning(this)
@@ -394,6 +428,11 @@ class AppPickerActivity : AppCompatActivity() {
                 val m = input.text?.toString()?.trim()?.toIntOrNull()
                 if (m == null || m < 0) {
                     Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                if (SwitchModeStore.isEnabled(this)) {
+                    Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 

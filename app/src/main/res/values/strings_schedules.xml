@@ -7,7 +7,6 @@
     <string name="schedules_title">Schedules</string>
     <string name="schedules_add">Add schedule</string>
     <string name="schedules_edit">Edit schedule</string>
-    <string name="schedules_delete_confirm">Delete this schedule?</string>
     <string name="schedules_choose_type">Choose schedule type</string>
 
     <!-- =========================================================
@@ -22,6 +21,7 @@
     <string name="schedules_next_title">Next schedule</string>
     <string name="schedules_next_at">Next schedule: %1$s</string>
     <string name="schedules_next_none">No upcoming schedule</string>
+    <string name="schedules_next_inactive_control_mode">Inactive — control mode blocks schedules</string>
 
     <!-- =========================================================
          SCHEDULES: Types
@@ -134,14 +134,6 @@
     <!-- =========================================================
          SCHEDULES: Health checks/warnings
          ========================================================= -->
-    <string name="schedules_health_accessibility">Accessibility is off. Blocking and schedules won’t work until it’s enabled again.</string>
-    <string name="schedules_health_battery">Battery optimization is on. Your device may delay schedules in the background.</string>
-    <string name="schedules_health_exact_alarm">Exact alarms are off. Time schedules may run late on some devices.</string>
-    <string name="schedules_health_nfc_conflict">NFC lock is active. Schedules still run, but actions that disable or toggle Switchly are blocked until you unlock with NFC/QR.</string>
-
-    <string name="schedules_health_permissions_wifi">Wi‑Fi schedules need permission to read the current Wi‑Fi name (SSID).</string>
-    <string name="schedules_health_permissions_bt">Bluetooth schedules need Bluetooth permission.</string>
-    <string name="schedules_health_permissions_wifi_bt">Wi‑Fi and Bluetooth schedules need extra permissions.</string>
 
     <string name="schedules_health_info_title">Schedule health</string>
     <string name="schedules_health_info_body">This banner shows the most common reasons schedules don’t trigger (permissions, battery optimization, exact alarms, accessibility).</string>
@@ -149,9 +141,11 @@
     <string name="schedules_health_action_title">Recommended action</string>
 
     <string name="schedules_health_action_permissions">Fix permissions</string>
-    <string name="schedules_health_action_battery">Allow background run</string>
-    <string name="schedules_health_action_exact_alarm">Allow exact alarms</string>
     <string name="schedules_health_action_toggle_options">Open toggle options</string>
+
+    <string name="schedules_health_battery_title">Battery settings</string>
+    <string name="schedules_health_battery_max_available_body">Your device may not offer a higher battery permission level such as “Unrestricted”. If you already enabled the highest available background or battery setting for Switchly, you can mark this step as completed.</string>
+    <string name="schedules_health_action_mark_battery_done">Highest available already enabled</string>
 
     <!-- =========================================================
          SCHEDULES: NFC lock notices
@@ -175,16 +169,26 @@
          SCHEDULES: Health status detail lines
          ========================================================= -->
     <string name="schedules_health_last_exec_never">never</string>
-    <string name="schedules_health_status_battery_bad">• Battery optimization: active</string>
-    <string name="schedules_health_status_battery_ok">• Battery optimization: ignored for Switchly ✅</string>
-    <string name="schedules_health_status_exact_ok">• Exact alarms: allowed ✅</string>
-    <string name="schedules_health_status_exact_bad">• Exact alarms: not allowed</string>
-    <string name="schedules_health_status_last_exec">• Last schedule execution: %1$s</string>
-    <string name="schedules_health_status_with_detail">%1$s\n\n%2$s</string>
 
     <plurals name="delete_schedules_confirm">
         <item quantity="one">Delete %1$d schedule?</item>
         <item quantity="other">Delete %1$d schedules?</item>
     </plurals>
+
+
+    <string name="schedules_disabled_title">Schedules are disabled</string>
+    <string name="schedules_disabled_body">The current control mode does not allow schedule automations. Existing schedules stay visible, but they won’t run until you enable Schedule mode or allow the Schedule channel in Mixed mode.</string>
+    <string name="schedules_disabled_footer_mode">Current control mode: %1$s</string>
+    <string name="schedules_disabled_footer_mixed_off">Current control mode: %1$s · Schedule channel: off</string>
+    <string name="schedules_disabled_action_open_controls">Open Protection controls</string>
+    <string name="schedules_disabled_read_only_toast">Schedules are read-only until the current control mode allows schedule automations.</string>
+    <string name="schedules_locked_title">Schedules are locked while Switchly is active</string>
+    <string name="schedules_locked_body">Schedules still run normally, but adding, editing, deleting, and toggling them is locked until you disable Switchly. In Mixed mode you can optionally allow schedule editing while protection is active.</string>
+    <string name="schedules_locked_footer">Current control mode: %1$s · Schedule editing: locked</string>
+    <string name="schedules_locked_action_open_controls">Open Protection controls</string>
+    <string name="schedules_locked_read_only_toast">Disable Switchly to change schedules, or allow schedule editing in Mixed mode.</string>
+
+    <string name="schedules_health_generic_issue">There are still some schedule permissions or requirements not set correctly.</string>
+    <string name="schedules_health_last_exec_compact">Last schedule execution: %1$s</string>
 
 </resources>

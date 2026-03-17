@@ -43,6 +43,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
@@ -58,6 +59,7 @@ import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
@@ -72,7 +74,8 @@ import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
-import at.saltyy.switchly.feature.stats.StatisticsHubActivity
+import at.saltyy.switchly.feature.support.SupportActivity
+import at.saltyy.switchly.feature.tools.ToolsHubActivity
 import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
@@ -453,6 +456,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        ExactAlarmPermissionSync.syncAndReschedule(this, reason = "main_resume")
+
         refreshProfilesUi()
         refreshBlockedList()
         updateSwitchState()
@@ -540,8 +545,8 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_home -> true
 
-                R.id.nav_stats -> {
-                    startActivity(Intent(this, StatisticsHubActivity::class.java))
+                R.id.nav_tools -> {
+                    startActivity(Intent(this, ToolsHubActivity::class.java))
                     true
                 }
 
@@ -1053,6 +1058,11 @@ class MainActivity : AppCompatActivity() {
             if (cardNextSchedule.isVisible) {
                 cardNextSchedule.hideFade()
             }
+            return
+        }
+
+        if (!AutomationModeStore.isScheduleAllowed(this)) {
+            tvNextScheduleValue.text = getString(R.string.schedules_next_inactive_control_mode)
             return
         }
 
@@ -1939,20 +1949,29 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val showQr = AutomationModeStore.isQrAllowed(this)
-        menu.findItem(R.id.action_qr)?.isVisible = showQr
-        return super.onPrepareOptionsMenu(menu)
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_qr -> {
-                showQrChoiceDialog()
+            R.id.action_info -> {
+                showDevelopmentInfoDialog()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showDevelopmentInfoDialog() {
+        val downloadsUrl = getString(R.string.about_downloads_url)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.main_info_title))
+            .setMessage(getString(R.string.main_development_info_message))
+            .setPositiveButton(getString(R.string.main_info_contact_action)) { _, _ ->
+                startActivity(Intent(this, SupportActivity::class.java))
+            }
+            .setNeutralButton(getString(R.string.main_info_older_versions_action)) { _, _ ->
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, downloadsUrl.toUri())) }
+            }
+            .setNegativeButton(getString(R.string.close), null)
+            .showAccented()
     }
 
     private fun showQrChoiceDialog() {

@@ -1,5 +1,4 @@
 package at.saltyy.switchly.feature.usage
-
 import android.os.Bundle
 import android.view.View
 import android.text.InputType
@@ -11,6 +10,9 @@ import java.text.DateFormatSymbols
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import at.saltyy.switchly.R
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
@@ -22,15 +24,27 @@ import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.UsageStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.databinding.ActivityScreenTimeDetailBinding
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.showAccented
 import java.text.SimpleDateFormat
 import java.util.Locale
-import at.saltyy.switchly.ui.dialog.showAccented
+import kotlinx.coroutines.launch
 
 class ScreenTimeDetailActivity : AppCompatActivity() {
+
+    private fun syncLimitEditingUi() {
+        val locked = SwitchModeStore.isEnabled(this)
+        b.cardLimitTime.isEnabled = !locked
+        b.cardLimitAttempts.isEnabled = !locked
+        b.btnEditLimits.isEnabled = !locked
+        b.cardLimitTime.alpha = if (locked) 0.62f else 1f
+        b.cardLimitAttempts.alpha = if (locked) 0.62f else 1f
+        b.btnEditLimits.alpha = if (locked) 0.62f else 1f
+    }
 
     private lateinit var b: ActivityScreenTimeDetailBinding
 
@@ -74,6 +88,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         // Limits (edited via the single "tune" icon)
         refreshDailyLimit(pkg)
         refreshAttemptLimit(pkg)
+        syncLimitEditingUi()
 
         // Make it clear that limits are profile-bound.
         b.tvProfileIndicator.text = ProfileStore.getCurrent(this)?.let {
@@ -112,6 +127,14 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             ) {
                 refreshDailyLimit(pkg)
                 refreshAttemptLimit(pkg)
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                SwitchModeStore.enabledFlow.collect {
+                    runOnUiThread { syncLimitEditingUi() }
+                }
             }
         }
 
@@ -155,6 +178,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         }.orEmpty()
         refreshDailyLimit(pkg)
         refreshAttemptLimit(pkg)
+        syncLimitEditingUi()
     }
 
     private fun applyRange(pkg: String, range: Range) {
@@ -378,7 +402,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             append(getString(R.string.usage_kv_fmt, getString(R.string.usage_value_label), StatsFormat.prettyMsWithSeconds(valueMs)))
             if (total > 0L) {
                 append("\n")
-                append(getString(R.string.usage_kv_fmt, getString(R.string.usage_share_of_period), String.format(java.util.Locale.getDefault(), "%.1f%%", pct)))
+                append(getString(R.string.usage_kv_fmt, getString(R.string.usage_share_of_period), String.format(Locale.getDefault(), "%.1f%%", pct)))
             }
         }
 
@@ -394,14 +418,14 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
     private fun formatDayLabel(index: Int, size: Int): String {
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_YEAR, index - (size - 1))
-        val fmt = java.text.SimpleDateFormat("EEE, d MMM", java.util.Locale.getDefault())
+        val fmt = SimpleDateFormat("EEE, d MMM", Locale.getDefault())
         return fmt.format(cal.time)
     }
 
     private fun formatMonthLabel(index: Int, size: Int): String {
         val cal = Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }
         cal.add(Calendar.MONTH, index - (size - 1))
-        val fmt = java.text.SimpleDateFormat("MMM yyyy", java.util.Locale.getDefault())
+        val fmt = SimpleDateFormat("MMM yyyy", Locale.getDefault())
         return fmt.format(cal.time)
     }
 
@@ -485,6 +509,11 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
     }
 
     private fun applyAttemptLimit(profile: String, pkg: String, attempts: Int) {
+        if (SwitchModeStore.isEnabled(this)) {
+            Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val n = attempts.coerceAtLeast(0)
         AttemptLimitStore.setLimitAttempts(this, profile, pkg, n)
 
@@ -546,6 +575,11 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
     }
 
     private fun applyDailyLimit(profile: String, pkg: String, minutes: Int) {
+        if (SwitchModeStore.isEnabled(this)) {
+            Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val m = minutes.coerceAtLeast(0)
         UsageLimitStore.setLimitMinutes(this, profile, pkg, m)
 

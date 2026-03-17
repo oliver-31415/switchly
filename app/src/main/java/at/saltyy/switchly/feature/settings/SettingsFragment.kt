@@ -605,6 +605,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         pref.isVisible = show
         if (!show) return
 
+        if (!AutomationModeStore.isScheduleAllowed(ctx)) {
+            pref.summary = getString(R.string.schedules_next_inactive_control_mode)
+            return
+        }
+
         val nextMillis = SchedulePlanner.getNextBoundaryMillis(ctx)
         if (nextMillis <= 0L) {
             pref.summary = getString(R.string.schedules_next_none)
@@ -1348,6 +1353,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 Toast.makeText(ctx, R.string.emergency_pin_changed, Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    fun openEmergencyUnlockDirect() {
+        showEmergencyUnlockWithPin()
     }
 
     private fun showEmergencyUnlockWithPin() {

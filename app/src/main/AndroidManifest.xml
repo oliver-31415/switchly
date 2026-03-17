@@ -131,6 +131,12 @@
             android:exported="false"
             android:label="@string/settings" />
 
+        <!-- Tools hub -->
+        <activity
+            android:name=".feature.tools.ToolsHubActivity"
+            android:exported="false"
+            android:label="@string/nav_tools" />
+
         <!-- Schedules screen -->
         <activity
             android:name=".feature.schedule.SchedulesActivity"
@@ -181,6 +187,21 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="switchly" android:host="switch" android:pathPattern=".*" />
                 <data android:scheme="switchly" android:host="profile" android:pathPattern=".*" />
+            </intent-filter>
+
+            <!-- Tech-discovered fallback for cards/tags that are claimed earlier than TAG_DISCOVERED for example IsoDep bank cards and some external/read-only tags). -->
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.action.TECH_DISCOVERED"
+                android:resource="@xml/nfc_tech_filter" />
+
+            <!-- Fallback for blank/non-NDEF tags so Switchly can still react. -->
+            <intent-filter>
+                <action android:name="android.nfc.action.TAG_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
             <!-- Optional: also handle app links/browser deep links -->
@@ -355,14 +376,6 @@
             android:name=".feature.about.DeveloperInfoActivity"
             android:exported="false" />
 
-        <!-- Tag discovered -->
-        <receiver
-            android:name=".nfc.NfcReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.nfc.action.TAG_DISCOVERED" />
-            </intent-filter>
-        </receiver>
 
         <!-- re-register watcher after app updates -->
         <receiver
@@ -391,6 +404,15 @@
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.DATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Reschedule exact alarms after the user grants the special access -->
+        <receiver
+            android:name=".platform.receiver.system.ExactAlarmPermissionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
 

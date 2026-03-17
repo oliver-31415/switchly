@@ -12,7 +12,6 @@ import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.content.ContextCompat
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.widget.RadioButton
 import android.widget.RadioGroup
@@ -27,10 +26,6 @@ import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.util.PermissionUtils
 import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
-import at.saltyy.switchly.util.SwitchlyAppAccessGuard
-import at.saltyy.switchly.feature.settings.SettingsActivity
-import at.saltyy.switchly.feature.stats.StatisticsHubActivity
-import at.saltyy.switchly.ui.MainActivity
 import com.google.android.material.color.MaterialColors
 import at.saltyy.switchly.ui.dialog.showAccented
 
@@ -59,14 +54,10 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b = ActivityScreenTimeDashboardBinding.inflate(layoutInflater)
         setContentView(b.root)
 
-        // Match other top-level screens: edge-to-edge + consistent system bar styling.
         EdgeToEdgeUtils.setupClassic(
             activity = this,
-            toolbar = b.toolbar,
-            bottomNav = b.bottomNav
+            toolbar = b.toolbar
         )
-        EdgeToEdgeUtils.applyBottomNavGestureInset(b.bottomNav)
-        setupBottomNav()
 
         setSupportActionBar(b.toolbar)
         // Ensure the nav icon is treated as an "up" affordance and always works.
@@ -152,10 +143,14 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.recycler.adapter = adapter
 
         // default selections
-        b.chipGroupRange.check(b.chipWeek.id)
+        syncRangeChipUi(b.chipWeek.id)
         b.toggleType.check(b.btnApps.id)
 
-        b.chipGroupRange.setOnCheckedChangeListener { _, _ -> refresh() }
+        b.chipToday.setOnClickListener { setRangeChip(b.chipToday.id) }
+        b.chipWeek.setOnClickListener { setRangeChip(b.chipWeek.id) }
+        b.chipMonth.setOnClickListener { setRangeChip(b.chipMonth.id) }
+        b.chipYear.setOnClickListener { setRangeChip(b.chipYear.id) }
+        b.chipOverall.setOnClickListener { setRangeChip(b.chipOverall.id) }
         b.toggleType.addOnButtonCheckedListener { _, _, _ -> refresh() }
 
         b.btnOpenSettings.setOnClickListener {
@@ -174,6 +169,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         applyAccentUi()
+        syncRangeChipUi(b.chipGroupRange.checkedChipId.takeIf { it != View.NO_ID } ?: b.chipWeek.id)
         refresh()
     }
 
@@ -196,6 +192,38 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             btn.iconTint = accentTint
             btn.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x35))
         }
+    }
+
+    private fun setRangeChip(chipId: Int) {
+        syncRangeChipUi(chipId)
+        refresh()
+    }
+
+    private fun syncRangeChipUi(activeChipId: Int) {
+        val activeBg = AccentColor.getAccentColorInt(this)
+        val activeText = if (MaterialColors.isColorLight(activeBg)) Color.BLACK else Color.WHITE
+        val inactiveBg = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant, 0)
+        val inactiveText = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, 0)
+        val outline = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, inactiveText)
+
+        val chips = listOf(b.chipToday, b.chipWeek, b.chipMonth, b.chipYear, b.chipOverall)
+        b.chipGroupRange.clearCheck()
+        chips.forEach { chip ->
+            val active = chip.id == activeChipId
+            chip.isChecked = active
+            chip.isCheckable = true
+            chip.isClickable = true
+            chip.isPressed = false
+            chip.isSelected = false
+            chip.isActivated = active
+            chip.chipBackgroundColor = ColorStateList.valueOf(if (active) activeBg else inactiveBg)
+            chip.setTextColor(if (active) activeText else inactiveText)
+            chip.chipStrokeColor = ColorStateList.valueOf(if (active) activeBg else outline)
+            chip.chipStrokeWidth = resources.displayMetrics.density
+            chip.jumpDrawablesToCurrentState()
+            chip.refreshDrawableState()
+        }
+        b.chipGroupRange.check(activeChipId)
     }
 
     private fun refresh() {
@@ -356,37 +384,6 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .showAccented()
-    }
-
-    private fun setupBottomNav() {
-        val bottomNav: BottomNavigationView = b.bottomNav
-        bottomNav.selectedItemId = R.id.nav_stats
-
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
-                    true
-                }
-                R.id.nav_stats -> {
-                    startActivity(Intent(this, StatisticsHubActivity::class.java))
-                    finish()
-                    true
-                }
-                R.id.nav_settings -> {
-                    if (SwitchlyAppAccessGuard.isLocked(this)) {
-                        SwitchlyAppAccessGuard.showLockedToast(this)
-                        false
-                    } else {
-                        startActivity(Intent(this, SettingsActivity::class.java))
-                        finish()
-                        true
-                    }
-                }
-                else -> false
-            }
-        }
     }
 
     private fun applyAndShowCurrent() {

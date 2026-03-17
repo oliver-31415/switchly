@@ -10,7 +10,7 @@
          NAVIGATION
          ========================================================= -->
     <string name="nav_home">Blocking</string>
-    <string name="nav_stats">Insights</string>
+    <string name="nav_tools">Tools</string>
     <string name="nav_settings">Settings</string>
 
     <!-- =========================================================
@@ -109,6 +109,8 @@
          ========================================================= -->
     <string name="pick_apps">Pick apps</string>
     <string name="search_apps">Search apps</string>
+    <string name="app_picker_select_all">Select all</string>
+    <string name="app_picker_clear_all">Clear all</string>
 
     <!-- =========================================================
          DASHBOARD: Emergency quick entry
@@ -121,4 +123,10 @@
     <string name="dashboard_unavailable_hint_short">Not installed on this device.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Not installed on this device.\nOpen “Pick apps” to remove.</string>
 
+    <string name="close">Close</string>
+
+    <string name="main_info_title">Still in development</string>
+    <string name="main_development_info_message">Switchly is still in development. I test it as carefully as I can with open beta phases, but Android behaves differently across devices, so I cannot catch every issue on my own.\nIf something is not working right for you, please send me a mail.\n\nDownloads:\nswitchly.saltyy.at/pages/download</string>
+    <string name="main_info_contact_action">Contact</string>
+    <string name="main_info_older_versions_action">Downloads</string>
 </resources>

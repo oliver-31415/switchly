@@ -8,9 +8,11 @@ import android.util.LruCache
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.graphics.ColorUtils
 import at.saltyy.switchly.R
 import at.saltyy.switchly.databinding.RowUsageStatBinding
 import at.saltyy.switchly.theme.AccentColor
+import com.google.android.material.color.MaterialColors
 
 class BlockStatsAdapter(private val onRowClick: (BlockStatsRow) -> Unit) : ListAdapter<BlockStatsRow, BlockStatsAdapter.VH>(DIFF) {
 
@@ -65,7 +67,12 @@ class BlockStatsAdapter(private val onRowClick: (BlockStatsRow) -> Unit) : ListA
                 .coerceIn(0, 100)
             b.progress.visibility = View.VISIBLE
             b.progress.progress = rel
-            b.progress.progressTintList = AccentColor.getActiveColor(ctx)
+            val accent = AccentColor.getAccentColorInt(ctx)
+            b.progress.setIndicatorColor(accent)
+            b.progress.trackColor = ColorUtils.setAlphaComponent(
+                MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorOnSurface, 0),
+                0x22
+            )
 
             val share = if (totalAttempts <= 0) 0 else ((row.attemptCount.toDouble()/totalAttempts.toDouble()) * 100.0)
                 .toInt()

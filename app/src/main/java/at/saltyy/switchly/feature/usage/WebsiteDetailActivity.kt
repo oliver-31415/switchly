@@ -1,4 +1,8 @@
 package at.saltyy.switchly.feature.usage
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 
 import android.content.Intent
 import android.os.Bundle
@@ -28,6 +32,18 @@ import java.util.Locale
 import at.saltyy.switchly.ui.dialog.showAccented
 
 class WebsiteDetailActivity : AppCompatActivity() {
+
+    private fun syncWebsiteEditingUi() {
+        val locked = SwitchModeStore.isEnabled(this)
+        b.btnEditLimits.isEnabled = !locked
+        b.btnManageBlocking.isEnabled = !locked
+        b.btnEditLimits.alpha = if (locked) 0.62f else 1f
+        b.btnManageBlocking.alpha = if (locked) 0.62f else 1f
+        b.toolbar.menu?.findItem(R.id.action_delete)?.apply {
+            isEnabled = !locked
+            icon?.mutate()?.alpha = if (locked) 120 else 255
+        }
+    }
 
     private fun websiteEditingLocked(): Boolean {
         val locked = SwitchModeStore.isEnabled(this)
@@ -64,6 +80,14 @@ class WebsiteDetailActivity : AppCompatActivity() {
                 showDeleteDialog(domain, label)
                 true
             } else false
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                SwitchModeStore.enabledFlow.collect {
+                    runOnUiThread { syncWebsiteEditingUi() }
+                }
+            }
         }
 
         // Ensure pending increments from the Accessibility service are included.
@@ -132,6 +156,7 @@ class WebsiteDetailActivity : AppCompatActivity() {
         WebUsageStore.flush(this)
         refreshDailyLimit(domain)
         applyRange(domain, currentRange())
+        syncWebsiteEditingUi()
     }
 
     private fun currentRange(): Range {
@@ -358,7 +383,7 @@ class WebsiteDetailActivity : AppCompatActivity() {
             append(getString(R.string.usage_kv_fmt, getString(R.string.usage_value_label), StatsFormat.prettyMsWithSeconds(valueMs)))
             if (total > 0L) {
                 append("\n")
-                append(getString(R.string.usage_kv_fmt, getString(R.string.usage_share_of_period), String.format(java.util.Locale.getDefault(), "%.1f%%", pct)))
+                append(getString(R.string.usage_kv_fmt, getString(R.string.usage_share_of_period), String.format(Locale.getDefault(), "%.1f%%", pct)))
             }
         }
 
@@ -374,14 +399,14 @@ class WebsiteDetailActivity : AppCompatActivity() {
     private fun formatDayLabel(index: Int, size: Int): String {
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_YEAR, index - (size - 1))
-        val fmt = java.text.SimpleDateFormat("EEE, d MMM", java.util.Locale.getDefault())
+        val fmt = SimpleDateFormat("EEE, d MMM", Locale.getDefault())
         return fmt.format(cal.time)
     }
 
     private fun formatMonthLabel(index: Int, size: Int): String {
         val cal = Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }
         cal.add(Calendar.MONTH, index - (size - 1))
-        val fmt = java.text.SimpleDateFormat("MMM yyyy", java.util.Locale.getDefault())
+        val fmt = SimpleDateFormat("MMM yyyy", Locale.getDefault())
         return fmt.format(cal.time)
     }
 
@@ -496,7 +521,7 @@ class WebsiteDetailActivity : AppCompatActivity() {
     private fun setWeekdayLabels() {
         val cal = Calendar.getInstance()
         cal.timeInMillis = System.currentTimeMillis() - java.util.concurrent.TimeUnit.DAYS.toMillis(6)
-        val dfs = java.text.DateFormatSymbols.getInstance()
+        val dfs = DateFormatSymbols.getInstance()
         val views = listOf(b.day1, b.day2, b.day3, b.day4, b.day5, b.day6, b.day7)
         for (i in 0 until 7) {
             val dow = cal.get(Calendar.DAY_OF_WEEK)

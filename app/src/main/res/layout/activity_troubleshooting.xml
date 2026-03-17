@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:fillViewport="true">
 
-    <LinearLayout tools:ignore="UseCompoundDrawables"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
@@ -26,7 +26,7 @@
                 app:title="@string/troubleshooting_title"
                 app:navigationIcon="@drawable/arrow_back_ios_24" />
         </com.google.android.material.appbar.AppBarLayout>
-        
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -47,17 +47,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp">
 
-                <LinearLayout tools:ignore="UseCompoundDrawables"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="16dp"
+                    tools:ignore="UseCompoundDrawables">
 
-                    <LinearLayout tools:ignore="UseCompoundDrawables"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        tools:ignore="UseCompoundDrawables">
 
                         <TextView
                             android:layout_width="0dp"
@@ -100,17 +102,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp">
 
-                <LinearLayout tools:ignore="UseCompoundDrawables"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="16dp"
+                    tools:ignore="UseCompoundDrawables">
 
-                    <LinearLayout tools:ignore="UseCompoundDrawables"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        tools:ignore="UseCompoundDrawables">
 
                         <TextView
                             android:layout_width="0dp"
@@ -153,17 +157,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp">
 
-                <LinearLayout tools:ignore="UseCompoundDrawables"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="16dp"
+                    tools:ignore="UseCompoundDrawables">
 
-                    <LinearLayout tools:ignore="UseCompoundDrawables"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        tools:ignore="UseCompoundDrawables">
 
                         <TextView
                             android:layout_width="0dp"
@@ -206,17 +212,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp">
 
-                <LinearLayout tools:ignore="UseCompoundDrawables"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="16dp"
+                    tools:ignore="UseCompoundDrawables">
 
-                    <LinearLayout tools:ignore="UseCompoundDrawables"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        tools:ignore="UseCompoundDrawables">
 
                         <TextView
                             android:layout_width="0dp"
@@ -259,17 +267,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp">
 
-                <LinearLayout tools:ignore="UseCompoundDrawables"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="16dp"
+                    tools:ignore="UseCompoundDrawables">
 
-                    <LinearLayout tools:ignore="UseCompoundDrawables"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        tools:ignore="UseCompoundDrawables">
 
                         <TextView
                             android:layout_width="0dp"
@@ -312,17 +322,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp">
 
-                <LinearLayout tools:ignore="UseCompoundDrawables"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="16dp"
+                    tools:ignore="UseCompoundDrawables">
 
-                    <LinearLayout tools:ignore="UseCompoundDrawables"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        tools:ignore="UseCompoundDrawables">
 
                         <TextView
                             android:layout_width="0dp"

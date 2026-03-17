@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
@@ -229,6 +230,13 @@ class OnboardingActivity : ComponentActivity() {
         val view = layoutInflater.inflate(R.layout.dialog_onboarding_optional_features, null)
         val swNfc = view.findViewById<SwitchMaterial>(R.id.swRequireNfcUnlock)
         val swQr = view.findViewById<SwitchMaterial>(R.id.swShowQrButton)
+        swQr.visibility = View.GONE
+        (view as? android.view.ViewGroup)?.let { container ->
+            val idx = container.indexOfChild(swQr)
+            if (idx >= 0 && idx + 1 < container.childCount) {
+                container.getChildAt(idx + 1).visibility = View.GONE
+            }
+        }
 
         val initialNfcRequired = SwitchModeStore.isNfcRequiredForDisable(this)
         var ignoreNfcListener = false

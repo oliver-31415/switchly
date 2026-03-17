@@ -3,6 +3,7 @@ package at.saltyy.switchly.feature.stats
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.widget.Toast
 import android.view.Gravity
@@ -32,15 +33,12 @@ import at.saltyy.switchly.data.prefs.SwitchlyRuntimeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.databinding.ActivityStatsBinding
-import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
-import at.saltyy.switchly.ui.MainActivity
-import at.saltyy.switchly.util.SwitchlyAppAccessGuard
+import at.saltyy.switchly.util.AppUsageToday
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.color.MaterialColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -339,12 +337,8 @@ class StatsActivity : AppCompatActivity() {
 
         EdgeToEdgeUtils.setupClassic(
             activity = this,
-            toolbar = b.toolbar,
-            bottomNav = b.bottomNav
+            toolbar = b.toolbar
         )
-
-        // Match Schedules look: keep BottomNav slightly above the gesture area on all devices
-        EdgeToEdgeUtils.applyBottomNavGestureInset(b.bottomNav)
 
         // Keep status bar neutral (no accent bleed into system bar)
         window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
@@ -381,8 +375,6 @@ class StatsActivity : AppCompatActivity() {
         // Background color changes after menu inflation -> ensure icons remain visible
         tintToolbarIcons()
 
-        setupBottomNav()
-
         b.recycler.layoutManager = LinearLayoutManager(this)
         usageAdapter = StatsAdapter()
         // Blocking rows should open a dedicated detail screen (much nicer than a popup)
@@ -416,10 +408,6 @@ class StatsActivity : AppCompatActivity() {
         return false
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return super.onOptionsItemSelected(item)
-    }
-
     private fun tintToolbarIcons() {
         // On some themes/devices, menu/navigation icons stay black by default.
         // Use contrast against the *actual toolbar background* instead of relying on theme colorOnPrimary.
@@ -436,50 +424,47 @@ class StatsActivity : AppCompatActivity() {
         load()
     }
 
-    private fun setupBottomNav() {
-        val bottomNav: BottomNavigationView = b.bottomNav
-        bottomNav.selectedItemId = R.id.nav_stats
-
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
-                    true
-                }
-                R.id.nav_stats -> {
-                    startActivity(Intent(this, StatisticsHubActivity::class.java))
-                    finish()
-                    true
-                }
-                R.id.nav_settings -> {
-                    if (SwitchlyAppAccessGuard.isLocked(this)) {
-                        SwitchlyAppAccessGuard.showLockedToast(this)
-                        false
-                    } else {
-                        startActivity(Intent(this, SettingsActivity::class.java))
-                        finish()
-                        true
-                    }
-                }
-                else -> false
-            }
-        }
-    }
-
     private fun setupRangeChips() {
-        b.chipToday.isChecked = true
-
-        fun setRange(target: Range) {
+        fun setRange(target: Range, chipId: Int) {
             range = target
+            syncRangeChipUi(chipId)
             load()
         }
 
-        b.chipToday.setOnClickListener { setRange(Range.TODAY) }
-        b.chipWeek.setOnClickListener { setRange(Range.WEEK) }
-        b.chipMonth.setOnClickListener { setRange(Range.MONTH) }
-        b.chipYear.setOnClickListener { setRange(Range.YEAR) }
-        b.chipOverall.setOnClickListener { setRange(Range.OVERALL) }
+        b.chipToday.setOnClickListener { setRange(Range.TODAY, b.chipToday.id) }
+        b.chipWeek.setOnClickListener { setRange(Range.WEEK, b.chipWeek.id) }
+        b.chipMonth.setOnClickListener { setRange(Range.MONTH, b.chipMonth.id) }
+        b.chipYear.setOnClickListener { setRange(Range.YEAR, b.chipYear.id) }
+        b.chipOverall.setOnClickListener { setRange(Range.OVERALL, b.chipOverall.id) }
+
+        syncRangeChipUi(b.chipToday.id)
+    }
+
+    private fun syncRangeChipUi(activeChipId: Int) {
+        val activeBg = AccentColor.getAccentColorInt(this)
+        val activeText = if (MaterialColors.isColorLight(activeBg)) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+        val inactiveBg = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant, 0)
+        val inactiveText = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, 0)
+        val outline = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, inactiveText)
+
+        val chips = listOf(b.chipToday, b.chipWeek, b.chipMonth, b.chipYear, b.chipOverall)
+        b.chipGroupRange.clearCheck()
+        chips.forEach { chip ->
+            val active = chip.id == activeChipId
+            chip.isChecked = active
+            chip.isCheckable = true
+            chip.isClickable = true
+            chip.isPressed = false
+            chip.isSelected = false
+            chip.isActivated = active
+            chip.chipBackgroundColor = ColorStateList.valueOf(if (active) activeBg else inactiveBg)
+            chip.setTextColor(if (active) activeText else inactiveText)
+            chip.chipStrokeColor = ColorStateList.valueOf(if (active) activeBg else outline)
+            chip.chipStrokeWidth = resources.displayMetrics.density
+            chip.jumpDrawablesToCurrentState()
+            chip.refreshDrawableState()
+        }
+        b.chipGroupRange.check(activeChipId)
     }
 
     /**
@@ -498,7 +483,16 @@ class StatsActivity : AppCompatActivity() {
         // If user somehow got into a locked range (old state), snap back to TODAY.
         if (!premium && range != Range.TODAY) {
             range = Range.TODAY
-            b.chipToday.isChecked = true
+            syncRangeChipUi(b.chipToday.id)
+        } else {
+            val currentChipId = when (range) {
+                Range.TODAY -> b.chipToday.id
+                Range.WEEK -> b.chipWeek.id
+                Range.MONTH -> b.chipMonth.id
+                Range.YEAR -> b.chipYear.id
+                Range.OVERALL -> b.chipOverall.id
+            }
+            syncRangeChipUi(currentChipId)
         }
     }
 
@@ -1015,7 +1009,7 @@ class StatsActivity : AppCompatActivity() {
     // The previous text ("No app limits …") was misleading when users DO have limits, but simply haven't generated stats in the selected range yet.
     private fun statsEmptyMessage(): String {
         val hasAnyLimits = runCatching {
-            at.saltyy.switchly.data.prefs.UsageLimitStore
+            UsageLimitStore
                 .getAllLimitedPackagesAnyProfile(this)
                 .isNotEmpty()
         }.getOrDefault(false) || runCatching {
@@ -1074,7 +1068,7 @@ class StatsActivity : AppCompatActivity() {
         val blockedAlwaysSet = ProfileStore.getBlockedForProfile(this@StatsActivity, profile).toHashSet()
 
         fun usageMsFor(pkg: String): Long = when (range) {
-            Range.TODAY -> UsageStore.getUsageMsToday(this, pkg)
+            Range.TODAY -> AppUsageToday.getUsageMsToday(this, pkg)
             Range.WEEK -> UsageStore.getUsageMsForLastNDays(this, pkg, weekDays)
             Range.MONTH -> UsageStore.getUsageMsForMonth(this, pkg, yearNow, monthNow1)
             Range.YEAR -> UsageStore.getUsageMsForYear(this, pkg, yearNow)
@@ -1287,14 +1281,14 @@ class StatsActivity : AppCompatActivity() {
 
                 val limitsTotal = at.saltyy.switchly.data.prefs.LimitHitCountStore.getOverall(this)
 
-                val profilesCount = at.saltyy.switchly.data.prefs.ProfileStore.getProfiles(this).size
+                val profilesCount = ProfileStore.getProfiles(this).size
                 val profilesTotal = profilesCount
 
                 val enabledSchedules = at.saltyy.switchly.data.prefs.ScheduleStore.getAll(this)
                     .count { it.enabled && it.profile == profile }
                 val enabledSchedulesTotal = enabledSchedules
 
-                val limitedApps = at.saltyy.switchly.data.prefs.UsageLimitStore.getAllLimitedPackagesAnyProfile(this).size
+                val limitedApps = UsageLimitStore.getAllLimitedPackagesAnyProfile(this).size
                 val limitedAppsTotal = limitedApps
 
 
@@ -1314,14 +1308,14 @@ class StatsActivity : AppCompatActivity() {
                 }
 
                 val blockedAttempts = when (range) {
-                    Range.TODAY -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getTodayTotal(this)
-                    Range.WEEK -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getForLastNDaysTotal(this, weekDays)
-                    Range.MONTH -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getForMonthTotal(this, yearNow, monthNow1)
-                    Range.YEAR -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getForYearTotal(this, yearNow)
-                    Range.OVERALL -> at.saltyy.switchly.data.prefs.BlockAttemptStore.getOverallTotal(this)
+                    Range.TODAY -> BlockAttemptStore.getTodayTotal(this)
+                    Range.WEEK -> BlockAttemptStore.getForLastNDaysTotal(this, weekDays)
+                    Range.MONTH -> BlockAttemptStore.getForMonthTotal(this, yearNow, monthNow1)
+                    Range.YEAR -> BlockAttemptStore.getForYearTotal(this, yearNow)
+                    Range.OVERALL -> BlockAttemptStore.getOverallTotal(this)
                 }
 
-                val blockedAttemptsTotal = at.saltyy.switchly.data.prefs.BlockAttemptStore.getOverallTotal(this)
+                val blockedAttemptsTotal = BlockAttemptStore.getOverallTotal(this)
 
                 OtherComputed(
                     pkgs = pkgs,

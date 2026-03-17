@@ -10,7 +10,7 @@
          NAVIGATION
          ========================================================= -->
     <string name="nav_home">Blockierung</string>
-    <string name="nav_stats">Einblicke</string>
+    <string name="nav_tools">Tools</string>
     <string name="nav_settings">Einstellungen</string>
 
     <!-- =========================================================
@@ -108,6 +108,8 @@
          ========================================================= -->
     <string name="pick_apps">Apps auswählen</string>
     <string name="search_apps">Apps suchen</string>
+    <string name="app_picker_select_all">Alle auswählen</string>
+    <string name="app_picker_clear_all">Auswahl löschen</string>
 
     <!-- =========================================================
          DASHBOARD: Emergency quick entry
@@ -120,4 +122,11 @@
     <string name="dashboard_unavailable_hint_short">Auf diesem Gerät nicht installiert.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Auf diesem Gerät nicht installiert.\nÖffne „Apps auswählen“, um sie zu entfernen.</string>
 
+
+    <string name="main_info_title">Noch in Entwicklung</string>
+    <string name="main_development_info_message">Switchly ist noch in Entwicklung. Ich teste die App so sorgfältig wie möglich mit offenen Beta-Phasen, aber Android verhält sich je nach Gerät unterschiedlich, daher finde ich nicht jedes Problem selbst.\nWenn bei dir etwas nicht richtig funktioniert, schreib mir bitte eine Mail.\n\nDownloads:\nswitchly.saltyy.at/pages/download</string>
+    <string name="main_info_contact_action">Kontakt</string>
+    <string name="main_info_older_versions_action">Downloads</string>
+
+    <string name="close">Schließen</string>
 </resources>

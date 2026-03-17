@@ -51,8 +51,8 @@
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/permissions_section_core"
-                android:layout_marginBottom="10dp"/>
+                android:layout_marginBottom="10dp"
+                android:text="@string/permissions_section_core" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -84,12 +84,12 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:src="@drawable/security_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@null"/>
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
 
                             <Space
                                 android:layout_width="12dp"
-                                android:layout_height="1dp"/>
+                                android:layout_height="1dp" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -101,7 +101,7 @@
                                     style="@style/TextAppearance.Material3.BodyLarge"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/permissions_accessibility_title"/>
+                                    android:text="@string/permissions_accessibility_title" />
 
                                 <TextView
                                     android:id="@+id/tvAccessibilityStatus"
@@ -109,7 +109,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="@string/permissions_status_disabled"/>
+                                    android:text="@string/permissions_status_disabled" />
                             </LinearLayout>
 
                             <androidx.appcompat.widget.AppCompatImageButton
@@ -129,17 +129,16 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_open"/>
+                            android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
-                    <!-- Divider -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
-                        android:background="?attr/colorOnSurface"/>
+                        android:background="?attr/colorOnSurface" />
 
-                    <!-- Usage access (App usage data) -->
+                    <!-- Usage access -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -156,12 +155,12 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:src="@drawable/bar_chart_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@null"/>
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
 
                             <Space
                                 android:layout_width="12dp"
-                                android:layout_height="1dp"/>
+                                android:layout_height="1dp" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -173,7 +172,7 @@
                                     style="@style/TextAppearance.Material3.BodyLarge"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/permissions_usage_access_title"/>
+                                    android:text="@string/permissions_usage_access_title" />
 
                                 <TextView
                                     android:id="@+id/tvUsageAccessStatus"
@@ -181,7 +180,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="@string/permissions_status_disabled"/>
+                                    android:text="@string/permissions_status_disabled" />
                             </LinearLayout>
 
                             <androidx.appcompat.widget.AppCompatImageButton
@@ -201,19 +200,20 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_open"/>
+                            android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
             <!-- SECTION: Notifications -->
             <TextView
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="@string/permissions_section_notifications"
-                android:layout_marginBottom="10dp"/>
+                android:layout_marginBottom="10dp"
+                android:text="@string/permissions_section_notifications" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -245,12 +245,12 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:src="@drawable/notifications_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@null"/>
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
 
                             <Space
                                 android:layout_width="12dp"
-                                android:layout_height="1dp"/>
+                                android:layout_height="1dp" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -262,7 +262,7 @@
                                     style="@style/TextAppearance.Material3.BodyLarge"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/permissions_notifications_title"/>
+                                    android:text="@string/permissions_notifications_title" />
 
                                 <TextView
                                     android:id="@+id/tvNotificationsStatus"
@@ -270,7 +270,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="@string/permissions_status_disabled"/>
+                                    android:text="@string/permissions_status_disabled" />
                             </LinearLayout>
 
                             <androidx.appcompat.widget.AppCompatImageButton
@@ -290,15 +290,14 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_open"/>
+                            android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
-                    <!-- Divider -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
-                        android:background="?attr/colorOnSurface"/>
+                        android:background="?attr/colorOnSurface" />
 
                     <!-- Notification access -->
                     <LinearLayout
@@ -317,12 +316,12 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:src="@drawable/security_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@null"/>
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
 
                             <Space
                                 android:layout_width="12dp"
-                                android:layout_height="1dp"/>
+                                android:layout_height="1dp" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -334,7 +333,7 @@
                                     style="@style/TextAppearance.Material3.BodyLarge"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/permissions_notification_access_title"/>
+                                    android:text="@string/permissions_notification_access_title" />
 
                                 <TextView
                                     android:id="@+id/tvNotificationAccessStatus"
@@ -342,7 +341,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="@string/permissions_status_disabled"/>
+                                    android:text="@string/permissions_status_disabled" />
                             </LinearLayout>
 
                             <androidx.appcompat.widget.AppCompatImageButton
@@ -362,7 +361,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_open"/>
+                            android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -374,8 +373,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="@string/permissions_section_triggers"
-                android:layout_marginBottom="10dp"/>
+                android:layout_marginBottom="10dp"
+                android:text="@string/permissions_section_triggers" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -389,6 +388,77 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="6dp">
+
+                    <!-- Exact alarms -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:src="@drawable/alarm_24"
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <Space
+                                android:layout_width="12dp"
+                                android:layout_height="1dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    style="@style/TextAppearance.Material3.BodyLarge"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/permissions_exact_alarms_title" />
+
+                                <TextView
+                                    android:id="@+id/tvExactAlarmsStatus"
+                                    style="@style/TextAppearance.Material3.BodyMedium"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@string/permissions_exact_alarms_not_allowed" />
+                            </LinearLayout>
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/btnWhyExactAlarms"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnOpenExactAlarms"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:text="@string/permissions_btn_open" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
 
                     <!-- Location -->
                     <LinearLayout
@@ -407,10 +477,12 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:src="@drawable/location_on_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@null"/>
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
 
-                            <Space android:layout_width="12dp" android:layout_height="1dp"/>
+                            <Space
+                                android:layout_width="12dp"
+                                android:layout_height="1dp" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -422,7 +494,7 @@
                                     style="@style/TextAppearance.Material3.BodyLarge"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/permissions_location_title"/>
+                                    android:text="@string/permissions_location_title" />
 
                                 <TextView
                                     android:id="@+id/tvLocationStatus"
@@ -430,7 +502,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="@string/permissions_status_disabled"/>
+                                    android:text="@string/permissions_status_disabled" />
                             </LinearLayout>
 
                             <androidx.appcompat.widget.AppCompatImageButton
@@ -450,7 +522,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_request"/>
+                            android:text="@string/permissions_btn_request" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenLocation"
@@ -458,14 +530,14 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/permissions_btn_open"/>
+                            android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
-                        android:background="?attr/colorOnSurface"/>
+                        android:background="?attr/colorOnSurface" />
 
                     <!-- Bluetooth -->
                     <LinearLayout
@@ -484,10 +556,12 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:src="@drawable/bluetooth_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@null"/>
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
 
-                            <Space android:layout_width="12dp" android:layout_height="1dp"/>
+                            <Space
+                                android:layout_width="12dp"
+                                android:layout_height="1dp" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -499,7 +573,7 @@
                                     style="@style/TextAppearance.Material3.BodyLarge"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/permissions_bluetooth_title"/>
+                                    android:text="@string/permissions_bluetooth_title" />
 
                                 <TextView
                                     android:id="@+id/tvBluetoothStatus"
@@ -507,7 +581,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="@string/permissions_status_disabled"/>
+                                    android:text="@string/permissions_status_disabled" />
                             </LinearLayout>
 
                             <androidx.appcompat.widget.AppCompatImageButton
@@ -527,7 +601,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_request"/>
+                            android:text="@string/permissions_btn_request" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenBluetooth"
@@ -535,14 +609,14 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/permissions_btn_open"/>
+                            android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
-                        android:background="?attr/colorOnSurface"/>
+                        android:background="?attr/colorOnSurface" />
 
                     <!-- Battery -->
                     <LinearLayout
@@ -561,10 +635,12 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:src="@drawable/battery_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@null"/>
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
 
-                            <Space android:layout_width="12dp" android:layout_height="1dp"/>
+                            <Space
+                                android:layout_width="12dp"
+                                android:layout_height="1dp" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -576,7 +652,7 @@
                                     style="@style/TextAppearance.Material3.BodyLarge"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/permissions_battery_title"/>
+                                    android:text="@string/permissions_battery_title" />
 
                                 <TextView
                                     android:id="@+id/tvBatteryStatus"
@@ -584,7 +660,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="@string/permissions_status_disabled"/>
+                                    android:text="@string/permissions_status_disabled" />
                             </LinearLayout>
 
                             <androidx.appcompat.widget.AppCompatImageButton
@@ -604,7 +680,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_allow"/>
+                            android:text="@string/permissions_btn_allow" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenBattery"
@@ -612,13 +688,13 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/permissions_btn_open"/>
+                            android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- OEM Autostart (conditional) -->
+            <!-- OEM Autostart -->
             <LinearLayout
                 android:id="@+id/groupAutostart"
                 android:layout_width="match_parent"
@@ -631,8 +707,8 @@
                     style="@style/TextAppearance.Material3.TitleMedium"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/permissions_section_oem"
-                    android:layout_marginBottom="10dp"/>
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/permissions_section_oem" />
 
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
@@ -657,17 +733,19 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:src="@drawable/battery_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@null"/>
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorOnSurface" />
 
-                            <Space android:layout_width="12dp" android:layout_height="1dp"/>
+                            <Space
+                                android:layout_width="12dp"
+                                android:layout_height="1dp" />
 
                             <TextView
                                 style="@style/TextAppearance.Material3.BodyLarge"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/permissions_autostart_title"/>
+                                android:text="@string/permissions_autostart_title" />
 
                             <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/btnWhyAutostart"
@@ -686,7 +764,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:text="@string/permissions_autostart_desc"/>
+                            android:text="@string/permissions_autostart_desc" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenAutostart"
@@ -694,7 +772,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_open"/>
+                            android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
                 </com.google.android.material.card.MaterialCardView>

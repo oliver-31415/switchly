@@ -22,7 +22,6 @@
     <string name="paired_tags_sort_old_new">Old → new</string>
     <string name="paired_tags_sort_name_az">Name A → Z</string>
     <string name="paired_tags_sort_name_za">Name Z → A</string>
-    <string name="paired_tags_sort_disabled_while_selecting">Sorting is disabled while selecting.</string>
 
     <string name="create">Create</string>
     <string name="save">Save</string>
@@ -34,11 +33,6 @@
 
     <string name="sign_in">Sign in</string>
     <string name="sign_out">Sign out</string>
-
-    <!-- =========================================================
-         DIALOGS/CONFIRMATION
-         ========================================================= -->
-    <string name="are_you_sure">Are you sure?</string>
 
     <!-- =========================================================
          VALIDATION + GENERIC FEEDBACK

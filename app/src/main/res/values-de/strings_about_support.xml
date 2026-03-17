@@ -19,7 +19,7 @@
     <string name="about_developer_info_summary">Entwickler- und Build-Details</string>
 
     <string name="about_other_switchly_products_title">Weitere Switchly-Produkte</string>
-    <string name="about_other_switchly_products_summary">Switchly Lite und spätere Extras</string>
+    <string name="about_other_switchly_products_summary">Switchly Lite, Launcher und spätere Extras</string>
 
     <!-- =========================================================
          ABOUT: Field labels
@@ -41,10 +41,10 @@
     <string name="about_manufacturer_label">Hersteller</string>
     <string name="about_model_label">Modell</string>
     <string name="about_package_label">Paketname</string>
-    <string name="about_play_store_label">Play Store</string>
     <string name="about_security_patch_label">Sicherheitspatch</string>
     <string name="about_version_label">Version</string>
     <string name="about_website_label">Website</string>
+    <string name="about_older_versions_label">Downloads</string>
 
     <!-- =========================================================
          ABOUT: Row titles/display names
@@ -58,7 +58,6 @@
     <string name="about_mail">E-Mail</string>
     <string name="about_package">Paketname</string>
     <string name="about_version">Version</string>
-    <string name="about_website">Website</string>
 
     <!-- =========================================================
          ABOUT: Values, formatting, and links
@@ -158,4 +157,16 @@
 
     <string name="about_switchly_lite">Switchly Lite</string>
     <string name="about_switchly_lite_bonus">Eine leichtere Version für einfache Abläufe wie NFC, Tastenaktionen und zeitgesteuerte Pläne.</string>
+    <string name="about_switchly_lite_play_store_label">Switchly Lite – Play Store</string>
+    <string name="about_switchly_launcher">Switchly Launcher</string>
+    <string name="about_switchly_launcher_bonus">Ein simpler und starker Launcher für ein minimaleres, ablenkungsärmeres Setup.</string>
+    <string name="about_switchly_launcher_play_store_label">Switchly Launcher – Play Store</string>
+
+    <string name="about_install_source_unknown">Unbekannt</string>
+    <string name="about_install_source_google_play">Google Play Store</string>
+    <string name="about_install_source_galaxy_store">Samsung Galaxy Store</string>
+    <string name="about_install_source_amazon">Amazon Appstore</string>
+    <string name="about_install_source_package_installer">Paket-Installer</string>
+    <string name="troubleshooting_battery_oem_note">Manche Geräte bieten keine Akkuoption „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, ist das auf deinem Gerät möglicherweise bereits das Maximum.</string>
+    <string name="troubleshooting_exact_alarms_note">Wenn exakte Alarme nicht erlaubt sind, können zeitbasierte Zeitpläne verspätet oder nicht zur richtigen Zeit ausgeführt werden.</string>
 </resources>

@@ -32,8 +32,34 @@ object NfcUidPairingStore {
     @Synchronized
     fun getPairedUidsHex(ctx: Context): Set<String> {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val set = sp.getStringSet(KEY_PAIRED_UID_HEX_SET, emptySet())?.toSet() ?: emptySet()
-        return set.map(::normalize).filter { it.isNotBlank() }.toSet()
+        val rawSet = runCatching {
+            sp.getStringSet(KEY_PAIRED_UID_HEX_SET, emptySet())?.toSet()
+        }.getOrNull()
+
+        val migrated = rawSet ?: migrateLegacyOrInvalidUidStorage(ctx)
+        return migrated.map(::normalize).filter { it.isNotBlank() }.toSet()
+    }
+
+    private fun migrateLegacyOrInvalidUidStorage(ctx: Context): Set<String> {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val all = runCatching { sp.all }.getOrDefault(emptyMap())
+        val raw = all[KEY_PAIRED_UID_HEX_SET]
+
+        val migrated = when (raw) {
+            is Set<*> -> raw.mapNotNull { it?.toString() }
+            is String -> raw.split(',', ';', '\n')
+            is Collection<*> -> raw.mapNotNull { it?.toString() }
+            else -> emptyList()
+        }.map(::normalize).filter { it.isNotBlank() }.toSet()
+
+        sp.edit(commit = true) {
+            if (migrated.isEmpty()) {
+                remove(KEY_PAIRED_UID_HEX_SET)
+            } else {
+                putStringSet(KEY_PAIRED_UID_HEX_SET, migrated)
+            }
+        }
+        return migrated
     }
 
     fun isPaired(ctx: Context): Boolean = getPairedUidsHex(ctx).isNotEmpty()

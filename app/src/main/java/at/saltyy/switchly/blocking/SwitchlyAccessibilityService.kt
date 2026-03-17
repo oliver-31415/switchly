@@ -37,6 +37,8 @@ import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.feature.blocker.BlockerActivity
+import at.saltyy.switchly.feature.usage.UsageStatsRepo
+import at.saltyy.switchly.util.AppUsageToday
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import java.util.Locale
 import at.saltyy.switchly.data.prefs.SurfaceUsageStore
@@ -794,7 +796,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         UsageStore.addUsageMsToday(this, pkg, delta)
 
-        // Prefer Switchly's in-process timer (fast/real-time), but if for any reason it undercounts (service paused, OEM throttling, missed events), fall back to the system-reported foreground time for today.
+        // Use the same "today" usage source that user-facing app timers show,
+        // so enforcement and displayed app usage stay aligned.
         val usedMs = getEffectiveUsageMsToday(pkg, now)
         val limitMs = limitMin * 60_000L
         if (usedMs >= limitMs) {
@@ -804,46 +807,22 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun getSystemUsageMsToday(pkg: String, now: Long): Long {
-        val usm = getSystemService(USAGE_STATS_SERVICE) as? UsageStatsManager ?: return 0L
-
-        val cal = java.util.Calendar.getInstance().apply {
-            timeInMillis = now
-            set(java.util.Calendar.HOUR_OF_DAY, 0)
-            set(java.util.Calendar.MINUTE, 0)
-            set(java.util.Calendar.SECOND, 0)
-            set(java.util.Calendar.MILLISECOND, 0)
-        }
-        val start = cal.timeInMillis
-
         return try {
-            val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, start, now) ?: return 0L
-            val s = stats.firstOrNull { it.packageName == pkg } ?: return 0L
-            // totalTimeInForeground is the most stable signal across API levels.
-            s.totalTimeInForeground.coerceAtLeast(0L)
-        } catch (_: SecurityException) {
-            0L
+            UsageStatsRepo.getTodayMsForPackage(this, pkg, now)
         } catch (_: Throwable) {
             0L
         }
     }
 
     /**
-     * Returns the best-available "today" usage for [pkg].
-     * We combine:
-     * - Switchly's internal tick-based usage (real-time)
-     * - system usage stats (can lag while app is still foreground)
-     * - an estimate that adds internal delta-since-entry onto the system snapshot-at-entry
+     * Returns the "today" app usage used for user-facing app timers.
+     *
+     * We prefer the system-reported value when Usage Access is granted so Switchly stays aligned
+     * with Android's own screen-time numbers. If Usage Access is missing, we fall back to
+     * Switchly's internal counter.
      */
     private fun getEffectiveUsageMsToday(pkg: String, now: Long): Long {
-        val usedInternal = UsageStore.getUsageMsToday(this, pkg)
-        val usedSystem = getSystemUsageMsToday(pkg, now)
-
-        val internalAtEnter = usageInternalAtEnterByPkg[pkg] ?: usedInternal
-        val systemAtEnter = usageSystemAtEnterByPkg[pkg] ?: usedSystem
-        val deltaSinceEnter = (usedInternal - internalAtEnter).coerceAtLeast(0L)
-        val estimatedSystemLive = systemAtEnter + deltaSinceEnter
-
-        return maxOf(usedInternal, usedSystem, estimatedSystemLive)
+        return AppUsageToday.getUsageMsToday(this, pkg, now)
     }
 
     /**
@@ -1231,12 +1210,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }.getOrNull() ?: pkg
     }
 
-    private fun surfaceUsageLine(@Suppress("UNUSED_PARAMETER") surfaceKey: String, limitMin: Int): String {
+    private fun surfaceUsageLine(surfaceKey: String, limitMin: Int): String {
         if (limitMin <= 0) return ""
         return getString(R.string.blocking_daily_limit_duration_fmt, formatDuration(limitMin.toLong() * 60_000L))
     }
 
-    private fun domainUsageLine(@Suppress("UNUSED_PARAMETER") domain: String, limitMin: Int): String {
+    private fun domainUsageLine(domain: String, limitMin: Int): String {
         if (limitMin <= 0) return ""
         return getString(R.string.blocking_daily_limit_duration_fmt, formatDuration(limitMin.toLong() * 60_000L))
     }

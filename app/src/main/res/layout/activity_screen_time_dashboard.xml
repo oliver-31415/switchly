@@ -28,7 +28,7 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="0dp"
-        android:paddingBottom="96dp"
+        android:paddingBottom="24dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -183,21 +183,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="104dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="96dp"
         android:contentDescription="@string/stats_sort_filter"
         app:srcCompat="@drawable/tune_24"
         app:useCompatPadding="true" />
 
     <!-- Bottom-Navigation (same as other main screens) -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="?attr/colorSurface"
-        android:paddingTop="0dp"
-        android:paddingBottom="0dp"
-        app:menu="@menu/menu_bottom_main" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

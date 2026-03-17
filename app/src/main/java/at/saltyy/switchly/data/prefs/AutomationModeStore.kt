@@ -25,6 +25,8 @@ object AutomationModeStore {
     private const val KEY_MIXED_ALLOW_BUTTON = "automation_mixed_allow_button"
     private const val KEY_MIXED_ALLOW_APP_PICKING = "automation_mixed_allow_app_picking"
     private const val KEY_MIXED_ALLOW_PROFILE_SWITCHING = "automation_mixed_allow_profile_switching"
+    private const val KEY_MIXED_ALLOW_SCHEDULE_EDITING = "automation_mixed_allow_schedule_editing"
+    private const val KEY_MIXED_ALLOW_NFC_TAG_WRITING = "automation_mixed_allow_nfc_tag_writing"
     private const val KEY_LOCK_SWITCHLY_APP_ACCESS = "pref_lock_switchly_app_access"
 
     // Kept as a local constant so this store does not depend on Activity classes.
@@ -106,6 +108,20 @@ object AutomationModeStore {
         putBool(ctx, KEY_MIXED_ALLOW_PROFILE_SWITCHING, enabled)
     }
 
+    fun isMixedAllowScheduleEditing(ctx: Context): Boolean =
+        getBool(ctx, KEY_MIXED_ALLOW_SCHEDULE_EDITING, false)
+
+    fun setMixedAllowScheduleEditing(ctx: Context, enabled: Boolean) {
+        putBool(ctx, KEY_MIXED_ALLOW_SCHEDULE_EDITING, enabled)
+    }
+
+    fun isMixedAllowNfcTagWriting(ctx: Context): Boolean =
+        getBool(ctx, KEY_MIXED_ALLOW_NFC_TAG_WRITING, false)
+
+    fun setMixedAllowNfcTagWriting(ctx: Context, enabled: Boolean) {
+        putBool(ctx, KEY_MIXED_ALLOW_NFC_TAG_WRITING, enabled)
+    }
+
     fun isScheduleAllowed(ctx: Context): Boolean {
         return when (getMode(ctx)) {
             Mode.SCHEDULE -> true
@@ -134,20 +150,20 @@ object AutomationModeStore {
     }
 
     /**
+     * Optional QR feature toggle from Blocking controls.
+     * Default: off.
+     */
+    fun isQrFeatureEnabled(ctx: Context): Boolean {
+        val defaultSp = PreferenceManager.getDefaultSharedPreferences(ctx)
+        return defaultSp.getBoolean(KEY_SHOW_QR_CODE, false)
+    }
+
+    /**
      * Effective QR availability for action execution.
-     * - QR mode: always allowed
-     * - Mixed mode: allowed only when channel is enabled AND QR button toggle is enabled
+     * QR must be enabled as an optional feature and allowed by the selected mode/channel.
      */
     fun isQrAllowed(ctx: Context): Boolean {
-        return when (getMode(ctx)) {
-            Mode.QR -> true
-            Mode.MIXED -> {
-                val sp = PreferenceManager.getDefaultSharedPreferences(ctx)
-                val qrButtonEnabled = sp.getBoolean(KEY_SHOW_QR_CODE, false)
-                isMixedAllowQr(ctx) && qrButtonEnabled
-            }
-            Mode.SCHEDULE, Mode.NFC -> false
-        }
+        return isQrFeatureEnabled(ctx) && isQrChannelAllowed(ctx)
     }
 
     /**
@@ -179,6 +195,22 @@ object AutomationModeStore {
      */
     fun isProfileSwitchingAllowedWhileEnabled(ctx: Context): Boolean {
         return getMode(ctx) == Mode.MIXED && isMixedAllowProfileSwitching(ctx)
+    }
+
+    /**
+     * Optional exception while Switchly is enabled.
+     * Locked by default; can be enabled only via Mixed mode channel toggle.
+     */
+    fun isScheduleEditingAllowedWhileEnabled(ctx: Context): Boolean {
+        return getMode(ctx) == Mode.MIXED && isMixedAllowScheduleEditing(ctx)
+    }
+
+    /**
+     * Optional exception while Switchly is enabled.
+     * Locked by default; can be enabled only via Mixed mode channel toggle.
+     */
+    fun isNfcTagWritingAllowedWhileEnabled(ctx: Context): Boolean {
+        return getMode(ctx) == Mode.MIXED && isMixedAllowNfcTagWriting(ctx)
     }
 
     /**

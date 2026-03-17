@@ -7,6 +7,7 @@ import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
+import android.nfc.tech.NdefFormatable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -31,10 +32,12 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         const val EXTRA_URI_TO_WRITE = "uri_to_write"
 
         const val MODE_WRITE_URI = "write_uri"
-        const val MODE_PAIR_UID = "pair_uid"
+        const val MODE_PAIR_UID_READONLY = "pair_uid_readonly"
+        const val MODE_PAIR_UID_WRITABLE = "pair_uid_writable"
 
         const val EXTRA_RESULT = "result"
         const val EXTRA_UID = "uid"
+        const val EXTRA_ALREADY_PAIRED = "already_paired"
 
         const val RESULT_OK_STR = "ok"
         const val RESULT_TOO_SMALL_STR = "too_small"
@@ -91,10 +94,10 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         // Initial UI state
         progress.isIndeterminate = true
         tvTitle.text = getString(R.string.nfc_waiting_tag)
-        tvHint.text = if (mode == MODE_PAIR_UID) {
-            getString(R.string.nfc_pair_waiting)
-        } else {
-            getString(R.string.nfc_ready_to_write) // already in project
+        tvHint.text = when (mode) {
+            MODE_PAIR_UID_WRITABLE -> getString(R.string.nfc_pair_waiting_writable)
+            MODE_PAIR_UID_READONLY -> getString(R.string.nfc_pair_waiting_readonly)
+            else -> getString(R.string.nfc_ready_to_write) // already in project
         }
     }
 
@@ -130,7 +133,6 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         val tag: Tag? = if (android.os.Build.VERSION.SDK_INT >= 33) {
             intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
         } else {
-            @Suppress("DEPRECATION")
             intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
         }
 
@@ -156,19 +158,25 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         progress.isIndeterminate = true
 
         handler.post {
-            if (mode == MODE_PAIR_UID) {
+            if (mode == MODE_PAIR_UID_READONLY || mode == MODE_PAIR_UID_WRITABLE) {
                 val uid = NfcTagUid.uidHex(tag)
                 if (uid == null) {
                     finishWithError(RESULT_FAILED_STR)
                     return@post
                 }
+
+                if (mode == MODE_PAIR_UID_WRITABLE && !isWritableCapable(tag)) {
+                    finishWithError(RESULT_NOT_WRITABLE_STR)
+                    return@post
+                }
+
                 val isNew = at.saltyy.switchly.data.prefs.NfcUidPairingStore.addPairedUidHex(this, uid)
                 if (isNew) {
                     showPairMetaPrompt(uid) {
-                        finishWithOk(uidHex = uid)
+                        finishWithOk(uidHex = uid, alreadyPaired = false)
                     }
                 } else {
-                    finishWithOk(uidHex = uid)
+                    finishWithOk(uidHex = uid, alreadyPaired = true)
                 }
                 return@post
             }
@@ -216,21 +224,55 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
             .showAccented()
     }
 
-    private fun finishWithOk(uidHex: String?) {
-        tvTitle.text = getString(R.string.nfc_write_ok)
-        tvHint.text = if (uidHex != null) getString(R.string.nfc_pair_ok_with_uid, uidHex) else ""
+    private fun finishWithOk(uidHex: String?, alreadyPaired: Boolean = false) {
+        tvTitle.text = when {
+            alreadyPaired -> getString(R.string.nfc_pair_already_added)
+            uidHex != null -> getString(R.string.nfc_pair_ok)
+            else -> getString(R.string.nfc_write_ok)
+        }
+        tvHint.text = when {
+            uidHex != null && alreadyPaired -> getString(R.string.nfc_pair_ok_with_uid, uidHex)
+            uidHex != null -> getString(R.string.nfc_pair_ok_with_uid, uidHex)
+            else -> ""
+        }
         progress.isIndeterminate = true
 
-        Toast.makeText(this, getString(R.string.nfc_write_ok), Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this,
+            getString(
+                when {
+                    alreadyPaired -> R.string.nfc_pair_already_added
+                    uidHex != null -> R.string.nfc_pair_ok
+                    else -> R.string.nfc_write_ok
+                }
+            ),
+            Toast.LENGTH_SHORT
+        ).show()
 
         handler.postDelayed({
             val data = Intent().apply {
                 putExtra(EXTRA_RESULT, RESULT_OK_STR)
                 if (uidHex != null) putExtra(EXTRA_UID, uidHex)
+                putExtra(EXTRA_ALREADY_PAIRED, alreadyPaired)
             }
             setResult(RESULT_OK, data)
             finish()
         }, 500)
+    }
+
+    private fun isWritableCapable(tag: Tag): Boolean {
+        val ndefTech = Ndef.get(tag)
+        if (ndefTech != null) {
+            return try {
+                ndefTech.connect()
+                ndefTech.isWritable
+            } catch (_: Exception) {
+                false
+            } finally {
+                try { ndefTech.close() } catch (_: Exception) {}
+            }
+        }
+        return NdefFormatable.get(tag) != null
     }
 
     private fun finishWithError(result: String) {
@@ -250,23 +292,34 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
 
     private fun writeUriToTag(uriString: String, tag: Tag): WriteResult {
         var ndef: Ndef? = null
+        var formatable: NdefFormatable? = null
 
         return try {
             val record = NdefRecord.createUri(uriString)
             val message = NdefMessage(arrayOf(record))
 
-            ndef = Ndef.get(tag) ?: return WriteResult.FAILED
-            ndef.connect()
+            val ndefTech = Ndef.get(tag)
+            if (ndefTech != null) {
+                ndef = ndefTech
+                ndef.connect()
 
-            if (!ndef.isWritable) return WriteResult.NOT_WRITABLE
-            if (ndef.maxSize < message.toByteArray().size) return WriteResult.TOO_SMALL
+                if (!ndef.isWritable) return WriteResult.NOT_WRITABLE
+                if (ndef.maxSize < message.toByteArray().size) return WriteResult.TOO_SMALL
 
-            ndef.writeNdefMessage(message)
-            WriteResult.OK
+                ndef.writeNdefMessage(message)
+                WriteResult.OK
+            } else {
+                val formatableTech = NdefFormatable.get(tag) ?: return WriteResult.FAILED
+                formatable = formatableTech
+                formatable.connect()
+                formatable.format(message)
+                WriteResult.OK
+            }
         } catch (_: Exception) {
             WriteResult.FAILED
         } finally {
             try { ndef?.close() } catch (_: Exception) {}
+            try { formatable?.close() } catch (_: Exception) {}
         }
     }
 }

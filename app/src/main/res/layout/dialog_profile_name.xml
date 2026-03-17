@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilProfile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/profile_name_field_hint"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:counterEnabled="true"
+        app:counterMaxLength="24"
+        app:endIconMode="none">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etProfile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/profile_name_field_hint"
+            android:imeOptions="actionDone"
+            android:inputType="textCapWords|textPersonName"
+            android:maxLength="24"
+            android:maxLines="1"
+            android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/tvHelper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:alpha="0.7"
+        android:text="@string/profile_name_helper"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="13sp" />
+
+</LinearLayout>

@@ -51,9 +51,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="96dp"
         app:srcCompat="@drawable/tune_24"
-        app:fabSize="mini"
         android:contentDescription="@string/blocked_inbox_filter"
         app:layout_anchor="@id/recyclerInbox"
         app:layout_anchorGravity="bottom|end" />

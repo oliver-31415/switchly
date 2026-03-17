@@ -338,7 +338,6 @@
                             app:showText="false"/>
                     </LinearLayout>
 
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -524,56 +523,6 @@
                             app:showText="false"/>
                     </LinearLayout>
 
-                    <!-- Quick Settings Tile (grouped with channel permission) -->
-                    <LinearLayout
-                        android:id="@+id/rowQuickTile"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/dashboard_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
-
-                        <Space
-                            android:layout_width="14dp"
-                            android:layout_height="1dp" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/pref_qs_tile_title" />
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body2"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/pref_qs_tile_summary" />
-                        </LinearLayout>
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchQuickTile"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textOn=""
-                            android:textOff=""
-                            app:showText="false"/>
-                    </LinearLayout>
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
@@ -733,6 +682,113 @@
                             app:showText="false"/>
                     </LinearLayout>
 
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
+                    <LinearLayout
+                        android:id="@+id/rowMixedAllowScheduleEditing"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/schedule_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@null" />
+
+                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_mixed_allow_schedule_editing_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/pref_mixed_allow_schedule_editing_summary" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchMixedAllowScheduleEditing"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textOn=""
+                            android:textOff=""
+                            app:showText="false"/>
+                    </LinearLayout>
+
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
+                    <LinearLayout
+                        android:id="@+id/rowMixedAllowNfcTagWriting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/nfc_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@null" />
+
+                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_mixed_allow_nfc_tag_writing_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/pref_mixed_allow_nfc_tag_writing_summary" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchMixedAllowNfcTagWriting"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textOn=""
+                            android:textOff=""
+                            app:showText="false"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -810,23 +866,23 @@
                             android:orientation="vertical"
                             android:gravity="center_horizontal">
 
-                        <androidx.appcompat.widget.AppCompatImageButton
-                            android:id="@+id/btnInfoLockSwitchlyAppAccess"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="@string/info"
-                            android:padding="10dp"
-                            android:src="@drawable/info_24"
-                            app:tint="?attr/colorOnSurface" />
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/btnInfoLockSwitchlyAppAccess"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
 
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchLockSwitchlyAppAccess"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textOn=""
-                            android:textOff=""
-                            app:showText="false"/>
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switchLockSwitchlyAppAccess"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textOn=""
+                                android:textOff=""
+                                app:showText="false"/>
 
                         </LinearLayout>
                     </LinearLayout>
@@ -944,6 +1000,61 @@
                             app:showText="false" />
                     </LinearLayout>
 
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
+                    <!-- Quick Settings Tile -->
+                    <LinearLayout
+                        android:id="@+id/rowQuickTile"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/dashboard_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@null" />
+
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_qs_tile_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/pref_qs_tile_summary" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchQuickTile"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textOn=""
+                            android:textOff=""
+                            app:showText="false"/>
+                    </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
@@ -998,23 +1109,23 @@
                             android:orientation="vertical"
                             android:gravity="center_horizontal">
 
-                        <androidx.appcompat.widget.AppCompatImageButton
-                            android:id="@+id/btnInfoLimitTempDisableTags"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="@string/info"
-                            android:padding="10dp"
-                            android:src="@drawable/info_24"
-                            app:tint="?attr/colorOnSurface" />
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/btnInfoLimitTempDisableTags"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
 
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchLimitTempDisableTags"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textOn=""
-                            android:textOff=""
-                            app:showText="false" />
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switchLimitTempDisableTags"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textOn=""
+                                android:textOff=""
+                                app:showText="false" />
 
                         </LinearLayout>
                     </LinearLayout>
@@ -1237,60 +1348,59 @@
                         android:alpha="0.12"
                         android:background="?attr/colorOnSurface" />
 
+                    <!-- Show quick actions -->
+                    <LinearLayout
+                        android:id="@+id/rowShowQuickActions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
-<!-- Show quick actions -->
-<LinearLayout
-    android:id="@+id/rowShowQuickActions"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:padding="14dp"
-    android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/apps_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@null" />
 
-    <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:src="@drawable/apps_24"
-        app:tint="?attr/colorOnSurface"
-        android:contentDescription="@null" />
+                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
 
-    <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_show_quick_actions_title" />
 
-        <TextView
-            style="@style/TextAppearance.MaterialComponents.Body1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/pref_show_quick_actions_title" />
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/pref_show_quick_actions_summary" />
+                        </LinearLayout>
 
-        <TextView
-            style="@style/TextAppearance.MaterialComponents.Body2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="@string/pref_show_quick_actions_summary" />
-    </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchShowQuickActions"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textOn=""
+                            android:textOff=""
+                            app:showText="false"/>
+                    </LinearLayout>
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/switchShowQuickActions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textOn=""
-        android:textOff=""
-        app:showText="false"/>
-</LinearLayout>
-
-<View
-    android:layout_width="match_parent"
-    android:layout_height="1dp"
-    android:alpha="0.12"
-    android:background="?attr/colorOnSurface" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
 
                     <!-- NFC Pairing: enable paired UID enforcement + management UI -->
                     <LinearLayout
@@ -1339,23 +1449,23 @@
                             android:orientation="vertical"
                             android:gravity="center_horizontal">
 
-                        <androidx.appcompat.widget.AppCompatImageButton
-                            android:id="@+id/btnInfoEnablePairedUids"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="@string/info"
-                            android:padding="10dp"
-                            android:src="@drawable/info_24"
-                            app:tint="?attr/colorOnSurface" />
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/btnInfoEnablePairedUids"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorOnSurface" />
 
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchEnablePairedUids"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textOn=""
-                            android:textOff=""
-                            app:showText="false"/>
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switchEnablePairedUids"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textOn=""
+                                android:textOff=""
+                                app:showText="false"/>
 
                         </LinearLayout>
                     </LinearLayout>

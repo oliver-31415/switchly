@@ -1,23 +1,17 @@
 package at.saltyy.switchly.feature.stats
 
 import android.content.res.ColorStateList
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.databinding.ActivityStatisticsHubBinding
-import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
-import at.saltyy.switchly.ui.MainActivity
-import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import at.saltyy.switchly.ui.ThemeUtils
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
 import android.graphics.Color
 
@@ -42,10 +36,8 @@ class StatisticsHubActivity : AppCompatActivity() {
         // Match edge-to-edge behavior across the app (Home/Schedules/Stats).
         EdgeToEdgeUtils.setupClassic(
             activity = this,
-            toolbar = b.toolbar,
-            bottomNav = b.bottomNav
+            toolbar = b.toolbar
         )
-        EdgeToEdgeUtils.applyBottomNavGestureInset(b.bottomNav)
 
         val toolbar: MaterialToolbar = b.toolbar
         setSupportActionBar(toolbar)
@@ -55,8 +47,6 @@ class StatisticsHubActivity : AppCompatActivity() {
         val bg = AccentColor.getToolbarColor(this)
         val navTint = if (MaterialColors.isColorLight(bg)) Color.BLACK else Color.WHITE
         toolbar.navigationIcon?.mutate()?.setTint(navTint)
-
-        setupBottomNav(b.bottomNav)
 
         b.cardUsage.setOnClickListener {
             startActivity(ScreenTimeDashboardActivity.intent(this))
@@ -82,38 +72,5 @@ class StatisticsHubActivity : AppCompatActivity() {
         b.ivUsageIcon.imageTintList = tint
         b.ivBlockingIcon.imageTintList = tint
         b.ivOtherIcon.imageTintList = tint
-    }
-
-    private fun setupBottomNav(bottomNav: BottomNavigationView) {
-        bottomNav.selectedItemId = R.id.nav_stats
-
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    startActivity(
-                        Intent(this, MainActivity::class.java).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        }
-                    )
-                    finish()
-                    true
-                }
-
-                R.id.nav_stats -> true
-
-                R.id.nav_settings -> {
-                    if (SwitchlyAppAccessGuard.isLocked(this)) {
-                        SwitchlyAppAccessGuard.showLockedToast(this)
-                        false
-                    } else {
-                        startActivity(Intent(this, SettingsActivity::class.java))
-                        finish()
-                        true
-                    }
-                }
-
-                else -> false
-            }
-        }
     }
 }

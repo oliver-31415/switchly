@@ -59,9 +59,9 @@
                 android:minHeight="56dp"
                 android:orientation="horizontal"
                 android:paddingStart="14dp"
-                android:paddingTop="10dp"
+                android:paddingTop="8dp"
                 android:paddingEnd="14dp"
-                android:paddingBottom="10dp"
+                android:paddingBottom="8dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground">
@@ -88,13 +88,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/pref_show_next_schedule_title" />
-
-                    <TextView
-                        style="@style/TextAppearance.Material3.BodySmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:alpha="0.75"
-                        android:text="@string/pref_show_next_schedule_summary" />
                 </LinearLayout>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -104,7 +97,6 @@
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
-
 
         <!-- Content -->
         <androidx.recyclerview.widget.RecyclerView
@@ -127,7 +119,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="96dp"
         android:contentDescription="@string/schedules_add"
         app:srcCompat="@drawable/add_24" />
 

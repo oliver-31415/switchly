@@ -95,10 +95,10 @@
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="18dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="96dp"
         android:contentDescription="@string/blocked_websites_add_title"
-        app:srcCompat="@drawable/add_24"
-        app:layout_anchorGravity="bottom|end"
-        app:layout_anchor="@id/content" />
+        app:srcCompat="@drawable/add_24" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

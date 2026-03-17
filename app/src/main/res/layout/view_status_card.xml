@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="14dp">
+        android:padding="10dp">
 
         <!-- Header row -->
         <LinearLayout
@@ -29,16 +29,16 @@
 
             <ImageView
                 android:id="@+id/ivStatusIcon"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:contentDescription="@null"
                 app:tint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvStatusTitle"
-                style="@style/TextAppearance.Material3.BodyLarge"
+                style="@style/TextAppearance.Material3.BodyMedium"
                 android:textStyle="bold"
-                android:layout_marginStart="10dp"
+                android:layout_marginStart="8dp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
@@ -61,10 +61,10 @@
             style="@style/TextAppearance.Material3.BodyMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="6dp"
             android:alpha="0.78"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:visibility="gone" />
 
         <View
@@ -79,7 +79,7 @@
             android:id="@+id/rowStatusAction"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="6dp"
             android:orientation="vertical"
             android:visibility="gone">
 
@@ -92,7 +92,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnStatusAction"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -105,7 +105,7 @@
             style="@style/TextAppearance.Material3.BodySmall"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="6dp"
             android:alpha="0.7"
             android:visibility="gone" />
 

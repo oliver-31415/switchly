@@ -5,7 +5,6 @@
          PROFILES: Entry points/screens
          ========================================================= -->
     <string name="manage_profiles">Profile verwalten</string>
-    <string name="manage_profiles_summary">Profile hinzufügen, umbenennen und konfigurieren.</string>
     <string name="select_profile">Profil auswählen</string>
     <string name="add_profile">Profil hinzufügen</string>
     <string name="add_profile_subtitle">Erstelle ein neues Switchly-Profil.</string>
@@ -43,5 +42,8 @@
     <string name="profile_renamed">Profil „%1$s“ umbenannt.</string>
     <string name="profile_set_active_toast">„%1$s“ ist jetzt aktiv.</string>
     <string name="state_profile_on_status">Aktiv</string>
+
+    <string name="profile_name_field_hint">Profilname</string>
+    <string name="profile_name_helper">Wähle einen kurzen Namen für dieses Profil.</string>
 
 </resources>

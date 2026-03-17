@@ -15,6 +15,9 @@ import android.widget.AutoCompleteTextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
@@ -29,7 +32,9 @@ import at.saltyy.switchly.data.prefs.SwitchModeStore
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.launch
 
 class ManageBlockedWebsitesActivity : AppCompatActivity() {
 
@@ -43,8 +48,13 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
 
     private fun syncEditingLockUi() {
         val locked = SwitchModeStore.isEnabled(this)
-        findViewById<FloatingActionButton>(R.id.fabAdd)?.isEnabled = !locked && !isSelectionMode
-        findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.swWebsitesEnabled)?.isEnabled = !locked
+        findViewById<FloatingActionButton>(R.id.fabAdd)?.apply {
+            // Keep the FAB clickable so taps can explain why editing is locked
+            // instead of feeling broken/dead while Switchly is active.
+            isEnabled = !isSelectionMode
+            alpha = if (locked) 0.62f else 1f
+        }
+        findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.swWebsitesEnabled)?.alpha = if (locked) 0.62f else 1f
     }
 
     private lateinit var rv: RecyclerView
@@ -101,6 +111,14 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
         findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener {
             if (websiteEditingLocked()) return@setOnClickListener
             showAddDialog()
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                SwitchModeStore.enabledFlow.collect {
+                    runOnUiThread { syncEditingLockUi() }
+                }
+            }
         }
 
         updateMenuState()
@@ -274,10 +292,11 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
             runCatching { CustomAccentApplier.applyToView(v, this) }
         }
 
-        val etDomain = v.findViewById<EditText>(R.id.etDomain)
+        val tilDomain = v.findViewById<TextInputLayout>(R.id.tilDomain)
+        val etDomain = v.findViewById<TextInputEditText>(R.id.etDomain)
         val acMode = v.findViewById<AutoCompleteTextView>(R.id.acMode)
         val tilLimit = v.findViewById<TextInputLayout>(R.id.tilDailyLimit)
-        val etLimit = v.findViewById<EditText>(R.id.etDailyLimit)
+        val etLimit = v.findViewById<TextInputEditText>(R.id.etDailyLimit)
 
         etDomain.setText(initialDomain)
         etDomain.isEnabled = allowDomainEdit
@@ -303,7 +322,7 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
             applyMode()
         }
 
-        val dlg = AlertDialog.Builder(this)
+        val dlg = at.saltyy.switchly.ui.dialog.Dialogs.builder(this)
             .setTitle(title)
             .setView(v)
             .setPositiveButton(android.R.string.ok, null)
@@ -322,21 +341,22 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
                 val domainRaw = etDomain.text?.toString()?.trim().orEmpty()
 
                 if (domainRaw.isBlank()) {
-                    etDomain.error = getString(R.string.domain_required)
+                    tilDomain.error = getString(R.string.domain_required)
                     return@setOnClickListener
                 }
 
                 val normalized = DomainBlockStore.normalize(domainRaw)
                 if (normalized.isNullOrBlank()) {
-                    etDomain.error = getString(R.string.domain_required)
+                    tilDomain.error = getString(R.string.domain_required)
                     return@setOnClickListener
                 }
+                tilDomain.error = null
 
                 val hardBlock = acMode.text?.toString() == modeAlways
                 val limitMin = etLimit.text?.toString()?.trim()?.toIntOrNull()?.coerceAtLeast(0) ?: 0
 
                 if (!hardBlock && limitMin <= 0) {
-                    tilLimit.error = getString(R.string.minutes_hint)
+                    tilLimit.error = getString(R.string.domain_limit_required)
                     return@setOnClickListener
                 } else {
                     tilLimit.error = null

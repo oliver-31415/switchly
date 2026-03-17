@@ -11,14 +11,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/domain_rule_hint_example"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:endIconMode="none">
 
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etDomain"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:imeOptions="actionDone" />
+            android:imeOptions="actionDone" 
+            android:maxLines="1"
+            android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -43,14 +46,17 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:hint="@string/minutes_hint"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:endIconMode="none">
 
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etDailyLimit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:imeOptions="actionDone" />
+            android:imeOptions="actionDone"
+            android:maxLines="1"
+            android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView

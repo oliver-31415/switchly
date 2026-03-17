@@ -7,9 +7,11 @@ import android.util.LruCache
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.graphics.ColorUtils
 import at.saltyy.switchly.R
 import at.saltyy.switchly.databinding.RowUsageStatBinding
 import at.saltyy.switchly.theme.AccentColor
+import com.google.android.material.color.MaterialColors
 
 // Uses the same pretty row as Usage (icon + progress bar), but for Runtime insights.
 class RuntimeBlockedAdapter : ListAdapter<RuntimeBlockedRow, RuntimeBlockedAdapter.VH>(DIFF) {
@@ -59,7 +61,12 @@ class RuntimeBlockedAdapter : ListAdapter<RuntimeBlockedRow, RuntimeBlockedAdapt
 
             val rel = if (maxMs <= 0L) 0 else ((row.scoreMs.toDouble()/maxMs.toDouble()) * 100.0).toInt().coerceIn(0, 100)
             b.progress.progress = rel
-            b.progress.progressTintList = AccentColor.getActiveColor(ctx)
+            val accent = AccentColor.getAccentColorInt(ctx)
+            b.progress.setIndicatorColor(accent)
+            b.progress.trackColor = ColorUtils.setAlphaComponent(
+                MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorOnSurface, 0),
+                0x22
+            )
 
             // Share of total isn't necessary here; keep it simple but consistent.
             b.tvPercent.text = ctx.getString(R.string.percent_fmt, rel)

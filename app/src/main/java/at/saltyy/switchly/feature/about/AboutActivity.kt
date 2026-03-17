@@ -66,6 +66,7 @@ class AboutActivity : AppCompatActivity() {
 
         val pkg = packageName
         val website = getString(R.string.about_website_url)
+        val downloads = getString(R.string.about_downloads_url)
         val androidVersion = getString(R.string.about_android_version_fmt, Build.VERSION.RELEASE, Build.VERSION.SDK_INT)
         val deviceModel = buildDeviceLabel()
 
@@ -161,10 +162,10 @@ class AboutActivity : AppCompatActivity() {
             rootId = R.id.rowWebsite,
             titleId = R.id.tvTitleWebsite,
             subtitleId = R.id.tvSubtitleWebsite,
-            title = getString(R.string.about_website),
-            subtitle = website,
-            onClick = { openUrl(website) },
-            copyValue = website
+            title = getString(R.string.about_older_versions_label),
+            subtitle = downloads,
+            onClick = { openUrl(downloads) },
+            copyValue = downloads
         )
 
         bindTileWithCopyButton(

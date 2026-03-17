@@ -581,14 +581,14 @@ object CustomAccentApplier {
 
         // <29: Some Android versions/OEMs expose a hidden/public setTextCursorDrawable(Drawable).
         runCatching {
-            val m = android.widget.TextView::class.java.getMethod(
+            val m = TextView::class.java.getMethod(
                 "setTextCursorDrawable",
                 android.graphics.drawable.Drawable::class.java
             )
             m.invoke(et, cursorDrawable)
         }
         runCatching {
-            val m = android.widget.TextView::class.java.getDeclaredMethod(
+            val m = TextView::class.java.getDeclaredMethod(
                 "setTextCursorDrawable",
                 android.graphics.drawable.Drawable::class.java
             )
@@ -602,7 +602,7 @@ object CustomAccentApplier {
      * We intentionally avoid touching TextView's private Editor internals.
      * Selection/cursor tinting relies on public or best-effort non-private hooks only.
      */
-    private fun getOrCreateEditor(tv: android.widget.TextView): Any? = null
+    private fun getOrCreateEditor(tv: TextView): Any? = null
 
     /**
      * Force-tint text selection/insertion handles (the small dot/tear-drop shown when placing the cursor or selecting text). 
@@ -653,7 +653,7 @@ object CustomAccentApplier {
         // Prefer any public/hidden setters if present (API differences).
         // We use reflection so compilationdoesn't depend on specific platform signatures.
         runCatching {
-            val tvCls = android.widget.TextView::class.java
+            val tvCls = TextView::class.java
             fun call(name: String, drawable: android.graphics.drawable.Drawable?) {
                 drawable ?: return
                 val m = tvCls.methods.firstOrNull {

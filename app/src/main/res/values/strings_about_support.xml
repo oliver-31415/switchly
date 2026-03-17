@@ -19,7 +19,7 @@
     <string name="about_developer_info_summary">Developer and build details</string>
 
     <string name="about_other_switchly_products_title">Other Switchly products</string>
-    <string name="about_other_switchly_products_summary">Switchly Lite and future extras</string>
+    <string name="about_other_switchly_products_summary">Switchly Lite, Launcher and future extras</string>
 
     <!-- =========================================================
          ABOUT: Field labels
@@ -36,15 +36,20 @@
     <string name="about_first_install_label">First install</string>
     <string name="about_gitlab_label">GitLab repo</string>
     <string name="about_install_source_label">Install source</string>
+    <string name="about_install_source_unknown">Unknown</string>
+    <string name="about_install_source_google_play">Google Play Store</string>
+    <string name="about_install_source_galaxy_store">Samsung Galaxy Store</string>
+    <string name="about_install_source_amazon">Amazon Appstore</string>
+    <string name="about_install_source_package_installer">Package Installer</string>
     <string name="about_last_update_label">Last update</string>
     <string name="about_locale_label">Locale</string>
     <string name="about_manufacturer_label">Manufacturer</string>
     <string name="about_model_label">Model</string>
     <string name="about_package_label">Package</string>
-    <string name="about_play_store_label">Play Store</string>
     <string name="about_security_patch_label">Security patch</string>
     <string name="about_version_label">Version</string>
     <string name="about_website_label">Website</string>
+    <string name="about_older_versions_label">Downloads</string>
 
     <!-- =========================================================
          ABOUT: Row titles/display names
@@ -58,7 +63,6 @@
     <string name="about_mail">Email</string>
     <string name="about_package">Package</string>
     <string name="about_version">Version</string>
-    <string name="about_website">Website</string>
 
     <!-- =========================================================
          ABOUT: Values, formatting, and links
@@ -120,6 +124,9 @@
     <string name="troubleshooting_info_bluetooth">Android 12+ requires the Nearby devices/Bluetooth permission for Bluetooth-based schedules.</string>
     <string name="troubleshooting_pref_summary">Check common issues &amp; fixes</string>
 
+    <string name="troubleshooting_battery_oem_note">Some devices do not offer an “Unrestricted” battery option. If you already enabled the highest available background setting for Switchly, that may already be the maximum supported on your device.</string>
+    <string name="troubleshooting_exact_alarms_note">If exact alarms are not allowed, time-based schedules may be delayed or not run at the correct time.</string>
+
     <!-- =========================================================
          PREFERENCES
          ========================================================= -->
@@ -170,4 +177,10 @@
     <string name="about_switchly_lite">Switchly Lite</string>
     <string name="about_switchly_lite_bonus">A lighter version for simple flows like NFC, button actions, and timed schedules.</string>
     <string name="about_switchly_lite_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchly.lite</string>
+    <string name="about_switchly_lite_play_store_label">Switchly Lite – Play Store</string>
+    <string name="about_switchly_launcher">Switchly Launcher</string>
+    <string name="about_switchly_launcher_bonus">A simple and strong launcher made for a more minimal, distraction-free setup.</string>
+    <string name="about_switchly_launcher_play_store_label">Switchly Launcher – Play Store</string>
+    <string name="about_switchly_launcher_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchlylauncher</string>
+    <string name="about_downloads_url" translatable="false">https://switchly.saltyy.at/pages/download</string>
 </resources>

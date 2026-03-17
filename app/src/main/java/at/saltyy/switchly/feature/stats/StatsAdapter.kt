@@ -1,18 +1,19 @@
 package at.saltyy.switchly.feature.stats
 
-import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.graphics.drawable.Drawable
 import android.util.LruCache
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.databinding.RowUsageStatBinding
 import at.saltyy.switchly.theme.AccentColor
+import com.google.android.material.color.MaterialColors
 import kotlin.math.max
 import kotlin.math.min
 
@@ -72,7 +73,6 @@ class StatsAdapter : ListAdapter<StatsRow, StatsAdapter.VH>(DIFF) {
 
             val defaultMetaColors = b.tvMeta.textColors
             val defaultPercentColors = b.tvPercent.textColors
-            val defaultProgressTint: ColorStateList? = AccentColor.getActiveColor(ctx)
 
             b.tvApp.text = row.appName
 
@@ -88,13 +88,27 @@ class StatsAdapter : ListAdapter<StatsRow, StatsAdapter.VH>(DIFF) {
             }
 
             b.progress.max = 100
-            b.progress.progressTintList = defaultProgressTint
+            run {
+                val accent = AccentColor.getAccentColorInt(ctx)
+                b.progress.setIndicatorColor(accent)
+                b.progress.trackColor = ColorUtils.setAlphaComponent(
+                    MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorOnSurface, 0),
+                    0x22
+                )
+            }
 
             // WEEK/MONTH/YEAR/OVERALL
             if (range != RangeLabel.TODAY) {
                 b.tvMeta.setTextColor(defaultMetaColors)
                 b.tvPercent.setTextColor(defaultPercentColors)
-                b.progress.progressTintList = defaultProgressTint
+                run {
+                val accent = AccentColor.getAccentColorInt(ctx)
+                b.progress.setIndicatorColor(accent)
+                b.progress.trackColor = ColorUtils.setAlphaComponent(
+                    MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorOnSurface, 0),
+                    0x22
+                )
+            }
 
                 val relPercent = if (maxUsedInList > 0L) {
                     ((usedMs.toDouble()/maxUsedInList.toDouble()) * 100).toInt()
@@ -135,11 +149,22 @@ class StatsAdapter : ListAdapter<StatsRow, StatsAdapter.VH>(DIFF) {
                 val err = ContextCompat.getColor(ctx, R.color.status_error)
                 b.tvMeta.setTextColor(err)
                 b.tvPercent.setTextColor(err)
-                b.progress.progressTintList = ContextCompat.getColorStateList(ctx, R.color.status_error)
+                run {
+                val errColor = ContextCompat.getColor(ctx, R.color.status_error)
+                b.progress.setIndicatorColor(errColor)
+                b.progress.trackColor = ColorUtils.setAlphaComponent(errColor, 0x22)
+            }
             } else {
                 b.tvMeta.setTextColor(defaultMetaColors)
                 b.tvPercent.setTextColor(defaultPercentColors)
-                b.progress.progressTintList = defaultProgressTint
+                run {
+                val accent = AccentColor.getAccentColorInt(ctx)
+                b.progress.setIndicatorColor(accent)
+                b.progress.trackColor = ColorUtils.setAlphaComponent(
+                    MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorOnSurface, 0),
+                    0x22
+                )
+            }
             }
 
             b.tvMeta.text = ctx.getString(

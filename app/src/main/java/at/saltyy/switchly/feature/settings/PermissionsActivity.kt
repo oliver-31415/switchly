@@ -1,6 +1,7 @@
 package at.saltyy.switchly.feature.settings
 
 import android.Manifest
+import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -8,10 +9,11 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.text.SpannableStringBuilder
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -22,24 +24,23 @@ import androidx.lifecycle.lifecycleScope
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppPreferences
+import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
 import at.saltyy.switchly.data.prefs.NotificationBlockStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
-import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.BatteryOptimizationCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import android.text.SpannableStringBuilder
-import android.widget.ImageView
 import java.text.DateFormat
 import java.util.Date
 
@@ -82,9 +83,8 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var tvLocationStatus: TextView
     private lateinit var tvBluetoothStatus: TextView
     private lateinit var tvBatteryStatus: TextView
+    private lateinit var tvExactAlarmsStatus: TextView
 
-    // These are small info icons (AppCompatImageButton) in the layout.
-    // We only attach click listeners, so a generic View type is sufficient and avoids ClassCast issues.
     private lateinit var btnWhyNotifications: View
     private lateinit var btnWhyNotificationAccess: View
     private lateinit var btnWhyAccessibility: View
@@ -93,6 +93,7 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var btnWhyBluetooth: View
     private lateinit var btnWhyBattery: View
     private lateinit var btnWhyAutostart: View
+    private lateinit var btnWhyExactAlarms: View
 
     private lateinit var btnOpenNotifications: MaterialButton
     private lateinit var btnOpenNotificationAccess: MaterialButton
@@ -105,24 +106,10 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var btnReqBattery: MaterialButton
     private lateinit var btnOpenBattery: MaterialButton
     private lateinit var btnOpenAutostart: MaterialButton
+    private lateinit var btnOpenExactAlarms: MaterialButton
 
     private lateinit var groupAutostart: View
     private lateinit var tvAutostartHint: TextView
-
-    companion object {
-        private const val ACCESS_BACKGROUND_LOCATION_PERMISSION = "android.permission.ACCESS_BACKGROUND_LOCATION"
-        const val REQ_LOC_FINE = 1001
-        const val REQ_LOC_BACKGROUND = 1003
-        const val REQ_BT = 1002
-        const val REQ_NEARBY_WIFI = 1004
-        const val REQ_POST_NOTIF = 1005
-
-        private const val PREFS_PERMISSION_HEALTH = "permissions_health"
-        private const val KEY_STICKY_ACCESSIBILITY_MISMATCH = "sticky_accessibility_mismatch"
-
-        const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
-        const val EXTRA_FROM_TUTORIAL = "extra_from_tutorial"
-    }
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -151,7 +138,6 @@ class PermissionsActivity : AppCompatActivity() {
         tvStatusActionTitle = cardPermissionHeartbeat.findViewById(R.id.tvStatusActionTitle)
         btnPermissionRecheck = cardPermissionHeartbeat.findViewById(R.id.btnStatusAction)
 
-        // Static visuals for the status card
         ivStatusIcon.setImageResource(R.drawable.security_24)
         tvStatusActionTitle.visibility = View.GONE
         btnPermissionRecheck.setText(R.string.permissions_health_recheck)
@@ -159,11 +145,9 @@ class PermissionsActivity : AppCompatActivity() {
         tvPermissionHeartbeatStatus.visibility = View.VISIBLE
         tvPermissionLastChecked.visibility = View.VISIBLE
 
-        hideHealthCheckCard = intent.getBooleanExtra(EXTRA_FROM_ONBOARDING, false) ||
-            intent.getBooleanExtra(EXTRA_FROM_TUTORIAL, false)
+        hideHealthCheckCard = intent.getBooleanExtra(EXTRA_FROM_ONBOARDING, false) || intent.getBooleanExtra(EXTRA_FROM_TUTORIAL, false)
         cardPermissionHeartbeat.visibility = if (hideHealthCheckCard) View.GONE else View.VISIBLE
 
-        // (Status card views already bound above)
         tvNotificationsStatus = findViewById(R.id.tvNotificationsStatus)
         tvNotificationAccessStatus = findViewById(R.id.tvNotificationAccessStatus)
         tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus)
@@ -171,6 +155,7 @@ class PermissionsActivity : AppCompatActivity() {
         tvLocationStatus = findViewById(R.id.tvLocationStatus)
         tvBluetoothStatus = findViewById(R.id.tvBluetoothStatus)
         tvBatteryStatus = findViewById(R.id.tvBatteryStatus)
+        tvExactAlarmsStatus = findViewById(R.id.tvExactAlarmsStatus)
 
         btnWhyNotifications = findViewById(R.id.btnWhyNotifications)
         btnWhyNotificationAccess = findViewById(R.id.btnWhyNotificationAccess)
@@ -180,6 +165,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnWhyBluetooth = findViewById(R.id.btnWhyBluetooth)
         btnWhyBattery = findViewById(R.id.btnWhyBattery)
         btnWhyAutostart = findViewById(R.id.btnWhyAutostart)
+        btnWhyExactAlarms = findViewById(R.id.btnWhyExactAlarms)
 
         btnOpenNotifications = findViewById(R.id.btnOpenNotifications)
         btnOpenNotificationAccess = findViewById(R.id.btnOpenNotificationAccess)
@@ -192,6 +178,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnReqBattery = findViewById(R.id.btnReqBattery)
         btnOpenBattery = findViewById(R.id.btnOpenBattery)
         btnOpenAutostart = findViewById(R.id.btnOpenAutostart)
+        btnOpenExactAlarms = findViewById(R.id.btnOpenExactAlarms)
 
         groupAutostart = findViewById(R.id.groupAutostart)
         tvAutostartHint = findViewById(R.id.tvAutostartHint)
@@ -217,12 +204,12 @@ class PermissionsActivity : AppCompatActivity() {
         }
 
         btnOpenNotificationAccess.setOnClickListener {
-            if (!safeStart(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) openAppDetails()
+            if (!safeStart(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) {
+                openAppDetails()
+            }
         }
 
         btnOpenAccessibility.setOnClickListener {
-            // This opens the general Accessibility settings screen.
-            // OEMs often don't support deep-linking to a specific service entry reliably.
             safeStart(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
 
@@ -250,12 +237,22 @@ class PermissionsActivity : AppCompatActivity() {
             openAppDetails()
         }
 
-        // REQUEST buttons
-        btnReqLocation.setOnClickListener { requestLocationFlow() }
-        btnReqBluetooth.setOnClickListener { requestBluetoothPermissionIfMissing() }
-        btnReqBattery.setOnClickListener { requestIgnoreBatteryOptimizationsSystemPopup() }
+        btnOpenExactAlarms.setOnClickListener {
+            openExactAlarmSettings()
+        }
 
-        // WHY dialogs
+        btnReqLocation.setOnClickListener {
+            requestLocationFlow()
+        }
+        
+        btnReqBluetooth.setOnClickListener {
+            requestBluetoothPermissionIfMissing()
+        }
+
+        btnReqBattery.setOnClickListener {
+            requestIgnoreBatteryOptimizationsSystemPopup()
+        }
+
         btnWhyNotifications.setOnClickListener {
             showWhyDialog(
                 getString(R.string.permissions_notifications_title),
@@ -301,7 +298,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnWhyBattery.setOnClickListener {
             showWhyDialog(
                 getString(R.string.permissions_battery_title),
-                getString(R.string.permissions_battery_desc)
+                getString(R.string.permissions_battery_desc) + "\n\n" + getString(R.string.troubleshooting_battery_oem_note)
             )
         }
 
@@ -312,16 +309,23 @@ class PermissionsActivity : AppCompatActivity() {
             )
         }
 
+        btnWhyExactAlarms.setOnClickListener {
+            showWhyDialog(
+                getString(R.string.permissions_exact_alarms_title),
+                getString(R.string.permissions_exact_alarms_summary) + "\n\n" + getString(R.string.troubleshooting_exact_alarms_note)
+            )
+        }
+
         updateUi()
     }
 
     override fun onResume() {
         super.onResume()
         CustomAccentApplier.applyIfNeeded(this)
+        ExactAlarmPermissionSync.syncAndReschedule(this, reason = "permissions_resume")
         updateUi()
     }
 
-    // UI STATE
     private fun updateUi(forceHeartbeat: Boolean = false) {
         val notificationsEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled()
         val postNotifGranted = hasPostNotificationsPermission()
@@ -329,9 +333,6 @@ class PermissionsActivity : AppCompatActivity() {
         val notificationAccessGranted = NotificationBlockStore.hasListenerAccess(this)
         val notificationBlockingEnabled = NotificationBlockStore.isEnabled(this)
 
-        // Compare two independent signals to avoid stale/false-positive accessibility states:
-        // 1) Runtime signal used by the blocker
-        // 2) Direct system settings read
         val accessibilityRuntime = BlockingRuntime.isAccessibilityActive(this)
         val accessibilityDirect = BlockingRuntime.isAccessibilityEnabledInSettings(this)
         val accessibilityMismatchNow = accessibilityRuntime != accessibilityDirect
@@ -346,9 +347,12 @@ class PermissionsActivity : AppCompatActivity() {
         val bluetoothNeeded = isBluetoothNeededForFeatures()
         val btGranted = if (bluetoothNeeded) hasBluetoothPermission() else true
 
-        val batteryOk = isIgnoringBatteryOptimizations()
+        val batteryOk = isBatteryOptimizationEffectivelyOk()
         val hasEnabledSchedules = ScheduleStore.getAll(this).any { it.enabled }
         val batteryRelevant = hasEnabledSchedules
+
+        val exactAlarmsOk = canScheduleExactAlarms()
+        val exactAlarmsRelevant = hasEnabledSchedules && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
         val permissionsLocked = SwitchModeStore.isEnabled(this) && SwitchModeStore.isNfcRequiredForDisable(this)
 
@@ -357,14 +361,13 @@ class PermissionsActivity : AppCompatActivity() {
         applyStatus(tvAccessibilityStatus, accessibilityEnabled)
         applyStatus(tvUsageAccessStatus, usageAccessOk)
 
-        // Notifications button:
-        // - Android 13+ needs the runtime permission
-        // - Older versions only need the system notifications toggle
-        btnOpenNotifications.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !postNotifGranted) {
-            getString(R.string.permissions_btn_allow)
-        } else {
-            getString(R.string.permissions_btn_open)
-        }
+        btnOpenNotifications.text =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !postNotifGranted) {
+                getString(R.string.permissions_btn_allow)
+            } else {
+                getString(R.string.permissions_btn_open)
+            }
+
         if (locationNeeded) {
             applyLocationStatus(locationState)
         } else {
@@ -381,7 +384,8 @@ class PermissionsActivity : AppCompatActivity() {
             tvBluetoothStatus.setTextColor(green)
         }
 
-        applyStatus(tvBatteryStatus, batteryOk)
+        applyBatteryStatus(tvBatteryStatus, batteryOk)
+        applyExactAlarmsStatus(tvExactAlarmsStatus, exactAlarmsOk)
 
         // Location request button
         btnReqLocation.visibility = if (!locationNeeded || locationOk) View.GONE else View.VISIBLE
@@ -404,29 +408,37 @@ class PermissionsActivity : AppCompatActivity() {
         btnReqBattery.visibility = if (batteryRelevant && !batteryOk) View.VISIBLE else View.GONE
         btnOpenBattery.visibility = View.VISIBLE
 
+        // Exact alarms button
+        btnOpenExactAlarms.visibility =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) View.VISIBLE else View.GONE
+        btnOpenExactAlarms.isEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        btnOpenExactAlarms.alpha = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 1f else 0.55f
+
         // OEM autostart
         val showOem = isLikelyAggressiveOem()
         groupAutostart.visibility = if (showOem) View.VISIBLE else View.GONE
         tvAutostartHint.visibility = if (showOem) View.VISIBLE else View.GONE
         btnOpenAutostart.visibility = if (showOem) View.VISIBLE else View.GONE
 
-        // Safety: when NFC lock-mode is active, prevent opening system pages that would allow disabling already-granted protections from inside the app.
-        // Missing permissions stay actionable so setup can still be completed.
         applyProtectedButtonState(btnOpenAccessibility, permissionsLocked && accessibilityEnabled)
         applyProtectedButtonState(btnOpenUsageAccess, permissionsLocked && usageAccessOk)
-        applyProtectedButtonState(btnOpenNotificationAccess, permissionsLocked && notificationAccessGranted)
+        applyProtectedButtonState(
+            btnOpenNotificationAccess,
+            permissionsLocked && notificationAccessGranted
+        )
         applyProtectedButtonState(btnOpenNotifications, permissionsLocked && notificationsOk)
         applyProtectedButtonState(btnOpenLocation, permissionsLocked && (!locationNeeded || locationOk))
         applyProtectedButtonState(btnOpenBluetooth, permissionsLocked && (!bluetoothNeeded || btGranted))
         applyProtectedButtonState(btnOpenBattery, permissionsLocked && batteryOk)
         applyProtectedButtonState(btnOpenAutostart, permissionsLocked)
+        applyProtectedButtonState(btnOpenExactAlarms, permissionsLocked && exactAlarmsOk)
 
-        // Update the notifications action label depending on what the user actually needs to do.
-        btnOpenNotifications.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !postNotifGranted) {
-            getString(R.string.permissions_btn_allow)
-        } else {
-            getString(R.string.permissions_btn_open)
-        }
+        btnOpenNotifications.text =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !postNotifGranted) {
+                getString(R.string.permissions_btn_allow)
+            } else {
+                getString(R.string.permissions_btn_open)
+            }
 
         lastPermissionHealthCheckMs = System.currentTimeMillis()
         val missingCount = listOf(
@@ -436,7 +448,8 @@ class PermissionsActivity : AppCompatActivity() {
             (notificationBlockingEnabled && !notificationAccessGranted),
             (locationNeeded && !locationOk),
             (bluetoothNeeded && !btGranted),
-            (batteryRelevant && !batteryOk)
+            (batteryRelevant && !batteryOk),
+            (exactAlarmsRelevant && !exactAlarmsOk)
         ).count { it }
 
         lastMissingPermissionCount = missingCount
@@ -448,6 +461,8 @@ class PermissionsActivity : AppCompatActivity() {
                 mismatch = accessibilityMismatchNow || stickyAccessibilityMismatch,
                 batteryRelevant = batteryRelevant,
                 batteryOk = batteryOk,
+                exactAlarmsRelevant = exactAlarmsRelevant,
+                exactAlarmsOk = exactAlarmsOk,
                 missingCount = missingCount,
                 forceHeartbeat = forceHeartbeat
             )
@@ -476,6 +491,8 @@ class PermissionsActivity : AppCompatActivity() {
         mismatch: Boolean,
         batteryRelevant: Boolean,
         batteryOk: Boolean,
+        exactAlarmsRelevant: Boolean,
+        exactAlarmsOk: Boolean,
         missingCount: Int,
         forceHeartbeat: Boolean
     ) {
@@ -487,6 +504,7 @@ class PermissionsActivity : AppCompatActivity() {
                 tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_mismatch)
                 tvPermissionHeartbeatStatus.setTextColor(red)
             }
+
             missingCount > 0 -> {
                 tvPermissionHeartbeatStatus.text = resources.getQuantityString(
                     R.plurals.permissions_health_live_missing_count,
@@ -495,34 +513,41 @@ class PermissionsActivity : AppCompatActivity() {
                 )
                 tvPermissionHeartbeatStatus.setTextColor(red)
             }
+
             !accessibilityEnabled -> {
                 tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_disabled)
                 tvPermissionHeartbeatStatus.setTextColor(red)
             }
+
             batteryRelevant && !batteryOk -> {
                 tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_sched_battery_bad)
                 tvPermissionHeartbeatStatus.setTextColor(red)
             }
+
+            exactAlarmsRelevant && !exactAlarmsOk -> {
+                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_exact_alarms_not_allowed)
+                tvPermissionHeartbeatStatus.setTextColor(red)
+            }
+
             accessibilityEnabled -> {
-                tvPermissionHeartbeatStatus.text = if (batteryRelevant) {
+                tvPermissionHeartbeatStatus.text = if (batteryRelevant || exactAlarmsRelevant) {
                     getString(R.string.permissions_health_live_ok_with_schedules)
                 } else {
                     getString(R.string.permissions_health_live_ok)
                 }
                 tvPermissionHeartbeatStatus.setTextColor(green)
             }
+
             else -> {
                 tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_unknown)
                 tvPermissionHeartbeatStatus.setTextColor(red)
             }
         }
 
-        val checkedAt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-            .format(Date(lastPermissionHealthCheckMs))
-        tvPermissionLastChecked.text = getString(R.string.permissions_health_last_checked_fmt, checkedAt)
+        val checkedAt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(lastPermissionHealthCheckMs))
+            tvPermissionLastChecked.text = getString(R.string.permissions_health_last_checked_fmt, checkedAt)
 
         if (forceHeartbeat) {
-            // Small visual acknowledgement that live check was refreshed now.
             tvPermissionHeartbeatStatus.alpha = 0.6f
             tvPermissionHeartbeatStatus.animate().alpha(1f).setDuration(180L).start()
         }
@@ -566,6 +591,30 @@ class PermissionsActivity : AppCompatActivity() {
         view.setTextColor(if (enabled) green else red)
     }
 
+    private fun applyBatteryStatus(view: TextView, enabled: Boolean) {
+        val green = ContextCompat.getColor(this, R.color.status_ok)
+        val red = ContextCompat.getColor(this, R.color.status_error)
+
+        val manuallyConfirmed = isBatteryOptimizationUserConfirmedMaxAvailable()
+        view.text = when {
+            enabled && manuallyConfirmed -> getString(R.string.permissions_battery_highest_available)
+            enabled -> getString(R.string.permissions_battery_allowed)
+            else -> getString(R.string.permissions_battery_not_allowed)
+        }
+        view.setTextColor(if (enabled) green else red)
+    }
+
+    private fun applyExactAlarmsStatus(view: TextView, enabled: Boolean) {
+        val green = ContextCompat.getColor(this, R.color.status_ok)
+        val red = ContextCompat.getColor(this, R.color.status_error)
+
+        view.text = getString(
+            if (enabled) R.string.permissions_exact_alarms_allowed
+            else R.string.permissions_exact_alarms_not_allowed
+        )
+        view.setTextColor(if (enabled) green else red)
+    }
+
     private fun applyLocationStatus(state: LocationState) {
         when (state) {
             LocationState.OK -> applyStatus(tvLocationStatus, true)
@@ -575,6 +624,7 @@ class PermissionsActivity : AppCompatActivity() {
                 tvLocationStatus.text = getString(R.string.permissions_status_location_approx)
                 tvLocationStatus.setTextColor(red)
             }
+
             LocationState.BACKGROUND_MISSING -> {
                 val red = ContextCompat.getColor(this, R.color.status_error)
                 tvLocationStatus.text = getString(R.string.permissions_status_location_background_missing)
@@ -749,29 +799,40 @@ class PermissionsActivity : AppCompatActivity() {
         requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQ_BT)
     }
 
-    // BATTERY OPTIMIZATION (popup)
-    private fun isIgnoringBatteryOptimizations(): Boolean {
-        val pm = getSystemService(POWER_SERVICE) as PowerManager
-        return pm.isIgnoringBatteryOptimizations(packageName)
+    private fun isBatteryOptimizationUserConfirmedMaxAvailable(): Boolean {
+        return BatteryOptimizationCompat.isUserConfirmedMaxAvailable(this)
+    }
+
+    private fun isBatteryOptimizationEffectivelyOk(): Boolean {
+        return BatteryOptimizationCompat.isEffectivelyOk(this)
     }
 
     private fun requestIgnoreBatteryOptimizationsSystemPopup() {
-        if (isIgnoringBatteryOptimizations()) {
-            // Already unrestricted/whitelisted.
+        if (isBatteryOptimizationEffectivelyOk()) {
             openBatteryOptimizationSettingsPages()
             return
         }
 
-        // Optional: direct system popup (nicer UX).
-        // NOTE: This can trigger Play policy warnings depending on your use-case.
-        // Keep it behind an explicit user action (button tap), as implemented here.
         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
             data = "package:$packageName".toUri()
         }
 
         if (!safeStart(intent)) {
-            // Fallback to settings pages.
             openBatteryOptimizationSettingsPages()
+        }
+    }
+
+    // EXACT ALARMS
+    private fun canScheduleExactAlarms(): Boolean {
+        return ExactAlarmPermissionSync.canScheduleExactAlarms(this)
+    }
+
+    private fun openExactAlarmSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        runCatching {
+            startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                data = "package:$packageName".toUri()
+            })
         }
     }
 
@@ -831,7 +892,6 @@ class PermissionsActivity : AppCompatActivity() {
         }
     }
 
-    // HELPERS
     private fun openLocationSettingsForApp() {
         val pkg = packageName
         val packageUri = "package:$pkg".toUri()
@@ -839,8 +899,6 @@ class PermissionsActivity : AppCompatActivity() {
         val extraPermissionName = "android.intent.extra.PERMISSION_NAME"
         val locationGroup = Manifest.permission_group.LOCATION
 
-        // Best effort: jump directly into the permission controller screen where "Allow all the time" can be selected for Location.
-        // These intents are @hide in the SDK and may not exist on every ROM/device, so we try them first and gracefully fall back to the normal app settings page.
         val intents = listOf(
             // Best-effort deep link directly into the Location permission entry.
             Intent("android.intent.action.MANAGE_APP_PERMISSION").apply {
@@ -896,8 +954,18 @@ class PermissionsActivity : AppCompatActivity() {
         val b = (Build.BRAND ?: "").lowercase()
         val all = "$m $b"
         return listOf(
-            "xiaomi", "redmi", "poco", "huawei", "honor",
-            "oppo", "realme", "oneplus", "vivo", "samsung"
+            "xiaomi", 
+            "redmi", 
+            "poco", 
+            "huawei", 
+            "honor",
+            "oppo", 
+            "realme", 
+            "oneplus", 
+            "vivo", 
+            "samsung",
+            "motorola", 
+            "lenovo"
         ).any { all.contains(it) }
     }
 
@@ -927,5 +995,24 @@ class PermissionsActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true
+    }
+
+    companion object {
+        private const val ACCESS_BACKGROUND_LOCATION_PERMISSION = "android.permission.ACCESS_BACKGROUND_LOCATION"
+
+        const val REQ_LOC_FINE = 1001
+        const val REQ_LOC_BACKGROUND = 1003
+        const val REQ_BT = 1002
+        const val REQ_NEARBY_WIFI = 1004
+        const val REQ_POST_NOTIF = 1005
+
+        private const val PREFS_PERMISSION_HEALTH = "permissions_health"
+        private const val KEY_STICKY_ACCESSIBILITY_MISMATCH = "sticky_accessibility_mismatch"
+
+        private const val PREFS_SCHEDULE_HEALTH = "switchly_schedule_health"
+        private const val KEY_BATTERY_OPTIMIZATION_CONFIRMED_MAX_AVAILABLE = "battery_optimization_confirmed_max_available"
+
+        const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
+        const val EXTRA_FROM_TUTORIAL = "extra_from_tutorial"
     }
 }

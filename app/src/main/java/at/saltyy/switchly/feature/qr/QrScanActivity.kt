@@ -18,6 +18,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.QrScanCountStore
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -51,6 +52,17 @@ class QrScanActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (!AutomationModeStore.isQrChannelAllowed(this)) {
+            Toast.makeText(this, R.string.mode_blocked_qr_action, Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+        if (!AutomationModeStore.isQrAllowed(this)) {
+            Toast.makeText(this, R.string.mode_blocked_qr_mixed_enable_toggle, Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
         previewView = PreviewView(this)
         setContentView(previewView)

@@ -1,36 +1,41 @@
 package at.saltyy.switchly.feature.profiles
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.ImageView
 import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.graphics.ColorUtils
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
-import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import at.saltyy.switchly.theme.AccentColor
-import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
-import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.launch
 
 class ManageProfilesActivity : AppCompatActivity() {
 
@@ -67,6 +72,12 @@ class ManageProfilesActivity : AppCompatActivity() {
         return findViewById(android.R.id.content) ?: window.decorView
     }
 
+    private fun syncProfileLockUi() {
+        val locked = isProfileLockActive()
+        findViewById<FloatingActionButton>(R.id.fabAdd)?.alpha = if (locked) 0.62f else 1f
+        list.alpha = if (locked) 0.92f else 1f
+    }
+
     private lateinit var list: ListView
     private lateinit var adapter: ArrayAdapter<String>
     private val data = mutableListOf<String>()
@@ -88,8 +99,8 @@ class ManageProfilesActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
-        val btnAdd = findViewById<MaterialButton>(R.id.btnAdd)
-        btnAdd.backgroundTintList = AccentColor.getActiveColor(this)
+        val fabAdd = findViewById<FloatingActionButton>(R.id.fabAdd)
+        fabAdd.backgroundTintList = AccentColor.getActiveColor(this)
 
         list = findViewById(R.id.listProfiles)
         adapter = object : ArrayAdapter<String>(this, R.layout.row_profile_item, data) {
@@ -106,10 +117,19 @@ class ManageProfilesActivity : AppCompatActivity() {
         }
         list.adapter = adapter
 
-        findViewById<Button>(R.id.btnAdd).setOnClickListener { showAddProfileSheet() }
+        findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener { showAddProfileSheet() }
         list.setOnItemClickListener { _, _, position, _ -> showActions(position) }
 
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                SwitchModeStore.enabledFlow.collect {
+                    runOnUiThread { syncProfileLockUi() }
+                }
+            }
+        }
+
         refresh()
+        syncProfileLockUi()
     }
 
     override fun onResume() {
@@ -118,6 +138,7 @@ class ManageProfilesActivity : AppCompatActivity() {
         findViewById<MaterialToolbar>(R.id.toolbar)
             .setBackgroundColor(AccentColor.getToolbarColor(this))
         refresh()
+        syncProfileLockUi()
     }
 
     // Loads all profiles and sorts them so the active one is on top.
@@ -133,7 +154,6 @@ class ManageProfilesActivity : AppCompatActivity() {
 
         data.clear()
         data.addAll(sorted)
-        // ListView + ArrayAdapter: use notifyDataSetChanged()
         adapter.notifyDataSetChanged()
     }
 
@@ -142,18 +162,15 @@ class ManageProfilesActivity : AppCompatActivity() {
         val name = data[pos]
         val current = ProfileStore.getCurrent(this)
 
-        // base actions
         val actions = mutableListOf(
             getString(R.string.action_rename_profile),
             getString(R.string.action_duplicate_profile)
         )
 
-        // show "set active" only if it’s not currently active
         if (name != current) {
             actions.add(getString(R.string.action_set_active_profile))
         }
 
-        // delete is always allowed
         actions.add(getString(R.string.action_delete_profile))
 
         AlertDialog.Builder(this)
@@ -161,21 +178,18 @@ class ManageProfilesActivity : AppCompatActivity() {
             .setItems(actions.toTypedArray()) { _, which ->
                 var idx = 0
 
-                // rename
                 if (which == idx) {
                     showRenameProfileSheet(name)
                     return@setItems
                 }
                 idx++
 
-                // duplicate
                 if (which == idx) {
                     duplicateProfile(name)
                     return@setItems
                 }
                 idx++
 
-                // set active (only if present)
                 if (name != current) {
                     if (which == idx) {
                         setActiveProfile(name)
@@ -184,7 +198,6 @@ class ManageProfilesActivity : AppCompatActivity() {
                     idx++
                 }
 
-                // delete
                 if (which == idx) {
                     deleteProfile(name)
                 }
@@ -198,71 +211,24 @@ class ManageProfilesActivity : AppCompatActivity() {
             return
         }
 
-        val parent = findViewById<ViewGroup>(android.R.id.content)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_add_profile, parent, false)
-
-        val icon = view.findViewById<ImageView>(R.id.icon)
-        val til = view.findViewById<TextInputLayout>(R.id.tilProfile)
-        val et = view.findViewById<TextInputEditText>(R.id.etProfile)
-        val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
-        val btnCreate = view.findViewById<MaterialButton>(R.id.btnCreate)
-
-        val accent = AccentColor.getAccentColorInt(this)
-        val tint = AccentColor.getActiveColor(this)
-        val onAccent = if (ColorUtils.calculateLuminance(accent) > 0.52) Color.BLACK else Color.WHITE
-
-        icon?.imageTintList = tint
-        til.setStartIconTintList(tint)
-        btnCancel.backgroundTintList = tint
-        btnCreate.backgroundTintList = tint
-        btnCancel.setTextColor(onAccent)
-        btnCreate.setTextColor(onAccent)
-
-        et.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
-
-        fun validate(): Boolean {
-            val name = et.text?.toString()?.trim().orEmpty()
-            return when {
-                name.length < 2 -> {
-                    til.error = getString(R.string.profile_name_too_short); false
-                }
-                ProfileStore.getProfiles(this).contains(name) -> {
-                    til.error = getString(R.string.profile_name_exists, name); false
-                }
-                else -> {
-                    til.error = null; true
-                }
-            }
-        }
-
-        btnCreate.isEnabled = false
-        et.addTextChangedListener(simpleTextWatcher { btnCreate.isEnabled = validate() })
-
-        val dialog = AlertDialog.Builder(this)
-            .setView(view)
-            .create()
-
-        btnCancel.setOnClickListener { dialog.dismiss() }
-        btnCreate.setOnClickListener {
-            if (!validate()) return@setOnClickListener
-            val name = et.text?.toString()?.trim().orEmpty()
+        showProfileNameDialog(
+            title = getString(R.string.add_profile),
+            positiveText = getString(R.string.create),
+            initialValue = ""
+        ) { name ->
             if (ProfileStore.addProfile(this, name)) {
                 ProfileStore.setCurrent(this, name)
                 refresh()
-                dialog.dismiss()
-
                 Snackbar.make(
                     snackRoot(),
                     getString(R.string.profile_created, name),
                     Snackbar.LENGTH_SHORT
                 ).show()
+                null
             } else {
-                til.error = getString(R.string.profile_name_exists, name)
+                getString(R.string.profile_name_exists, name)
             }
         }
-
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
     }
 
     private fun showRenameProfileSheet(oldName: String) {
@@ -271,67 +237,73 @@ class ManageProfilesActivity : AppCompatActivity() {
             return
         }
 
-        val parent = findViewById<ViewGroup>(android.R.id.content)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_add_profile, parent, false)
-
-        val icon = view.findViewById<ImageView>(R.id.icon)
-        val til = view.findViewById<TextInputLayout>(R.id.tilProfile)
-        val et = view.findViewById<TextInputEditText>(R.id.etProfile)
-        val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
-        val btnCreate = view.findViewById<MaterialButton>(R.id.btnCreate)
-
-        val accent = AccentColor.getAccentColorInt(this)
-        val tint = AccentColor.getActiveColor(this)
-        val onAccent = if (ColorUtils.calculateLuminance(accent) > 0.52) Color.BLACK else Color.WHITE
-
-        icon?.imageTintList = tint
-        til.setStartIconTintList(tint)
-        btnCancel.backgroundTintList = tint
-        btnCreate.backgroundTintList = tint
-        btnCancel.setTextColor(onAccent)
-        btnCreate.setTextColor(onAccent)
-
-        til.hint = getString(R.string.profile_rename_hint)
-        btnCreate.text = getString(R.string.rename)
-        et.setText(oldName)
-        et.setSelection(oldName.length)
-
-        fun validate(): Boolean {
-            val name = et.text?.toString()?.trim().orEmpty()
-            return when {
-                name.length < 2 -> {
-                    til.error = getString(R.string.profile_name_too_short); false
+        showProfileNameDialog(
+            title = getString(R.string.profile_rename_hint),
+            positiveText = getString(R.string.rename),
+            initialValue = oldName
+        ) { newName ->
+            when {
+                newName == oldName -> null
+                ProfileStore.getProfiles(this).contains(newName) -> {
+                    getString(R.string.profile_name_exists, newName)
                 }
-                name != oldName && ProfileStore.getProfiles(this).contains(name) -> {
-                    til.error = getString(R.string.profile_name_exists, name); false
+                ProfileStore.renameProfile(this, oldName, newName) -> {
+                    refresh()
+                    Snackbar.make(
+                        snackRoot(),
+                        getString(R.string.profile_renamed, newName),
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                    null
                 }
-                else -> {
-                    til.error = null; true
-                }
+                else -> getString(R.string.error_unknown)
             }
         }
+    }
 
-        btnCreate.isEnabled = validate()
-        et.addTextChangedListener(simpleTextWatcher { btnCreate.isEnabled = validate() })
+    private fun showProfileNameDialog(
+        title: String,
+        positiveText: String,
+        initialValue: String = "",
+        onSubmit: (String) -> String?
+    ) {
+        val content = layoutInflater.inflate(R.layout.dialog_profile_name, null)
+        val tilProfile = content.findViewById<TextInputLayout>(R.id.tilProfile)
+        val input = content.findViewById<TextInputEditText>(R.id.etProfile)
 
-        val dialog = AlertDialog.Builder(this)
-            .setView(view)
+        input.setText(initialValue)
+        input.setSelection(initialValue.length)
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(content)
+            .setPositiveButton(positiveText, null)
+            .setNegativeButton(R.string.cancel, null)
             .create()
 
-        btnCancel.setOnClickListener { dialog.dismiss() }
-        btnCreate.setOnClickListener {
-            if (!validate()) return@setOnClickListener
-            val newName = et.text?.toString()?.trim().orEmpty()
-            if (ProfileStore.renameProfile(this, oldName, newName)) {
-                refresh()
-                dialog.dismiss()
-                Snackbar.make(snackRoot(), getString(R.string.profile_renamed, newName), Snackbar.LENGTH_SHORT).show()
-            } else {
-                til.error = getString(R.string.error_unknown)
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val name = input.text?.toString()?.trim().orEmpty()
+                when {
+                    name.length < 2 -> {
+                        tilProfile.error = getString(R.string.profile_name_too_short)
+                    }
+                    else -> {
+                        tilProfile.error = null
+                        val error = onSubmit(name)
+                        if (error == null) {
+                            dialog.dismiss()
+                        } else {
+                            tilProfile.error = error
+                        }
+                    }
+                }
             }
         }
 
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        input.requestFocus()
         dialog.show()
     }
 
@@ -402,13 +374,4 @@ class ManageProfilesActivity : AppCompatActivity() {
         ).show()
         refresh()
     }
-
-    private fun simpleTextWatcher(onChange: (CharSequence?) -> Unit) =
-        object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                onChange(s)
-            }
-            override fun afterTextChanged(s: android.text.Editable?) {}
-        }
 }

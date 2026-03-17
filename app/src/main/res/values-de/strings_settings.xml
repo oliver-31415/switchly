@@ -14,7 +14,6 @@
     <string name="settings_backup_title">Backup</string>
     <string name="settings_backup_summary">Deine Konfiguration synchronisieren &amp; wiederherstellen</string>
 
-    <string name="settings_open_schedules_summary">Verwalte deine Zeitpläne</string>
 
     <string name="settings_battery_opt_title">Akku-Optimierung</string>
     <string name="settings_battery_opt_summary">Erlaube Switchly, im Hintergrund zuverlässig zu laufen</string>
@@ -91,8 +90,6 @@
     <!-- =========================
          PREFERENCES: NFC/Quick tile/startup/access helpers
          ========================= -->
-    <string name="pref_write_tag_title">NFC-Tag schreiben</string>
-    <string name="pref_write_tag_summary">Erstelle/aktualisiere ein NFC-Tag, um Switchly zu steuern</string>
 
     <string name="pref_require_nfc_unlock_title">NFC zum Deaktivieren von Switchly erforderlich</string>
     <string name="pref_require_nfc_unlock_summary">Wenn aktiv, kann Switchly nur mit einem gekoppelten NFC-Tag (oder QR-Fallback) deaktiviert werden.</string>
@@ -160,6 +157,11 @@
     <string name="pref_mixed_allow_app_picking_summary">Erlaubt das Öffnen der App-Auswahl, während Switchly aktiv ist.</string>
     <string name="pref_mixed_allow_profile_switching_title">Profilwechsel erlauben</string>
     <string name="pref_mixed_allow_profile_switching_summary">Erlaubt das Wechseln des aktiven Profils, während Switchly aktiv ist.</string>
+    <string name="pref_mixed_allow_schedule_editing_title">Zeitplan-Bearbeitung erlauben</string>
+    <string name="pref_mixed_allow_schedule_editing_summary">Erlaubt das Hinzufügen, Bearbeiten, Löschen und Umschalten von Zeitplänen, während Switchly aktiv ist.</string>
+
+    <string name="pref_mixed_allow_nfc_tag_writing_title">NFC-Tag-Schreiben erlauben</string>
+    <string name="pref_mixed_allow_nfc_tag_writing_summary">Erlaubt das Schreiben und Koppeln neuer NFC-Tags, während Switchly aktiv ist.</string>
     <string name="pref_lock_switchly_app_access_title">Zugriff auf Switchly-Einstellungen blockieren</string>
     <string name="pref_lock_switchly_app_access_summary">Sperrt Switchly-Seiten, solange der Schutz aktiv ist.</string>
 
@@ -173,6 +175,8 @@
     <string name="toggle_detail_mixed_allow_button">Wenn aktiv, können manuelle Buttons in der App Switchly im gemischten Modus schalten.</string>
     <string name="toggle_detail_mixed_allow_app_picking">Standardmäßig ist das aus Sicherheitsgründen gesperrt, solange Switchly aktiv ist. Aktiviere dies nur, wenn App-Listen-Änderungen trotz aktivem Schutz gewünscht sind.</string>
     <string name="toggle_detail_mixed_allow_profile_switching">Standardmäßig ist das aus Sicherheitsgründen gesperrt, solange Switchly aktiv ist. Aktiviere dies nur, wenn Profilwechsel trotz aktivem Schutz gewünscht sind.</string>
+    <string name="toggle_detail_mixed_allow_schedule_editing">Standardmäßig ist das aus Sicherheitsgründen gesperrt, solange Switchly aktiv ist. Aktiviere dies nur, wenn Zeitplan-Änderungen trotz aktivem Schutz gewünscht sind.</string>
+    <string name="toggle_detail_mixed_allow_nfc_tag_writing">Standardmäßig ist das aus Sicherheitsgründen gesperrt, solange Switchly aktiv ist. Aktiviere dies nur, wenn das Schreiben oder Koppeln neuer NFC-Tags trotz aktivem Schutz gewünscht ist.</string>
     <string name="toggle_detail_lock_switchly_app_access">Wenn aktiv, sind Einstellungs- und Steuerseiten in Switchly gesperrt, solange der Schutz aktiv ist. Deaktiviere Switchly zuerst (über einen erlaubten Kanal), um Einstellungen wieder zu ändern.</string>
 
     <string name="mode_selected_toast_fmt">%1$s aktiviert.</string>
@@ -184,16 +188,16 @@
     <string name="toast_disable_switchly_to_edit_blocked_apps">App-Bearbeitung ist gesperrt, solange Switchly aktiv ist. Deaktiviere Switchly oder aktiviere „App-Auswahl erlauben“ in den Mixed-Kanälen.</string>
     <string name="toast_disable_switchly_to_switch_profiles">Profilwechsel ist gesperrt, solange Switchly aktiv ist. Deaktiviere Switchly oder aktiviere „Profilwechsel erlauben“ in den Mixed-Kanälen.</string>
     <string name="toast_disable_switchly_to_edit_websites">Website-Bearbeitung ist gesperrt, solange Switchly aktiv ist. Deaktiviere zuerst Switchly.</string>
+    <string name="toast_disable_switchly_to_edit_app_limits">App-Limit-Bearbeitung ist gesperrt, solange Switchly aktiv ist. Deaktiviere zuerst Switchly.</string>
     <string name="toast_switchly_settings_locked_while_enabled">Switchly-Einstellungen sind gesperrt, solange der Schutz aktiv ist. Deaktiviere Switchly zuerst, um Einstellungen zu ändern.</string>
     <string name="control_mode_lock_inline_hint">Steuerungsmodus ist gesperrt, solange Switchly aktiv ist. Deaktiviere Switchly zuerst und wähle dann den Modus.</string>
 
-    <string name="mode_blocked_schedule_action">Zeitpläne sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_nfc_action">NFC-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_qr_action">QR-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
-    <string name="mode_blocked_qr_mixed_enable_toggle">Aktiviere den QR-Button in den Blocking-Steuerungen, um QR im gemischten Modus zu nutzen.</string>
+    <string name="mode_blocked_qr_mixed_enable_toggle">Aktiviere QR-Aktionen in den Blocking-Steuerungen, um QR zu nutzen.</string>
     <string name="mode_blocked_tile_action">Die Schnelleinstellungen-Kachel ist deaktiviert, weil manuelle Steuerung im aktuellen Modus deaktiviert ist.</string>
     <string name="mode_blocked_button_action">Manuelle Buttons sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
-    <string name="toggle_detail_show_qr">Fügt auf dem Startbildschirm einen QR-Entsperrbutton als Notfall-Fallback hinzu, falls dein NFC-Tag nicht verfügbar ist.</string>
+    <string name="toggle_detail_show_qr">Aktiviert QR-Aktionen als optionalen Steuerungskanal. QR-Codes kannst du in Verwaltung erstellen und scannen.</string>
     <string name="toggle_detail_quick_tile">Fügt die Switchly-Kachel zu den Android-Schnelleinstellungen hinzu. Im Mixed-Modus folgt sie derselben Berechtigung wie der manuelle Button-Kanal.</string>
     <string name="toggle_detail_block_notifications">Filtert Benachrichtigungen von Apps, die durch dein aktives Profil gerade blockiert sind. Benötigt Benachrichtigungszugriff.</string>
     <string name="toggle_detail_autostart">Nach einem Neustart versucht Switchly automatisch wieder zu starten, damit dein Schutzprofil direkt aktiv ist.</string>
@@ -261,8 +265,6 @@
     <string name="settings_focus_blocking_title">Fokus &amp; Blockierung</string>
     <string name="settings_focus_blocking_summary">Kern-Blockiersteuerung, In-App-Flächen und Notfall-Entsperrung</string>
 
-    <string name="settings_automation_devices_title">Automatisierung &amp; Geräte</string>
-    <string name="settings_automation_devices_summary">Zeitpläne, Profile und NFC-Werkzeuge</string>
 
     <string name="settings_permissions_reliability_title">Berechtigungen &amp; Zuverlässigkeit</string>
     <string name="settings_permissions_reliability_summary">Erforderliche Zugriffe, Fehlerbehebung und Akku-Verhalten</string>

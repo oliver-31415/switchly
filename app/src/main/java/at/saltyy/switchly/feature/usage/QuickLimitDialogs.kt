@@ -44,6 +44,11 @@ object QuickLimitDialogs {
         startOnAttempts: Boolean? = null,
         onChanged: (() -> Unit)? = null
     ) {
+        if (SwitchModeStore.isEnabled(activity)) {
+            Toast.makeText(activity, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val profile = ProfileStore.getCurrent(activity)
         if (profile.isNullOrBlank()) {
             Toast.makeText(activity, R.string.no_profile_selected, Toast.LENGTH_SHORT).show()
@@ -168,11 +173,11 @@ object QuickLimitDialogs {
         fun accentInputs() {
             // Outlined box stroke + hints + dropdown icon
             tilValue.boxStrokeColor = accent
-            tilValue.setHintTextColor(accentList)
+            tilValue.hintTextColor = accentList
             tilValue.defaultHintTextColor = accentList
 
             tilType.boxStrokeColor = accent
-            tilType.setHintTextColor(accentList)
+            tilType.hintTextColor = accentList
             tilType.defaultHintTextColor = accentList
             tilType.setEndIconTintList(accentList)
         }

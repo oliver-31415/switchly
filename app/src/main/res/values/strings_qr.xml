@@ -11,8 +11,8 @@
     <!-- =========================================================
          QR: Preference toggle
          ========================================================= -->
-    <string name="pref_show_qr_code_title">QR code</string>
-    <string name="pref_show_qr_code_summary">Show a QR scan button on the home screen.</string>
+    <string name="pref_show_qr_code_title">Enable QR actions</string>
+    <string name="pref_show_qr_code_summary">Allow QR actions. Create and scan QR codes from Management.</string>
 
     <!-- =========================================================
          QR: Permissions/errors

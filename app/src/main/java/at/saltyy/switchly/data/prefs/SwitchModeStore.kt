@@ -116,8 +116,18 @@ object SwitchModeStore {
         // IMPORTANT: keep schedule ownership flags intact while inside the active range, otherwise exit-revert at range end can break (e.g. NFC toggle at lunch keeps the profile enabled forever after end time).
         if (rangeScheduleActive) {
             ScheduleRuntimeStore.setManualOverrideActive(ctx, true)
+            val activeRangeScheduleId = ScheduleRuntimeStore.getActiveRangeScheduleId(ctx)
+            if (activeRangeScheduleId > 0) {
+                ScheduleRuntimeStore.setManualOverrideScheduleId(ctx, activeRangeScheduleId)
+            } else {
+                // Legacy / recovery path: avoid keeping a sticky override without an owner.
+                ScheduleRuntimeStore.clearManualOverrideScheduleId(ctx)
+            }
         } else {
             // Outside an active range, manual toggles should clear schedule ownership markers.
+            ScheduleRuntimeStore.setManualOverrideActive(ctx, false)
+            ScheduleRuntimeStore.clearManualOverrideScheduleId(ctx)
+            ScheduleRuntimeStore.clearActiveRangeScheduleId(ctx)
             ScheduleRuntimeStore.setEnabledBySchedule(ctx, false)
             ScheduleRuntimeStore.setDisabledBySchedule(ctx, false)
         }

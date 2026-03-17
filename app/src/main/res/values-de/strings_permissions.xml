@@ -127,4 +127,12 @@
     <string name="permissions_health_live_mismatch">Status-Konflikt erkannt. Nach dem Öffnen der Bedienungshilfe-Einstellungen bitte erneut prüfen.</string>
     <string name="permissions_health_last_checked_fmt">Zuletzt geprüft: %1$s</string>
 
+
+    <string name="permissions_battery_allowed">Erlaubt</string>
+    <string name="permissions_battery_not_allowed">Deaktiviert</string>
+    <string name="permissions_battery_highest_available">Höchste verfügbare Stufe aktiviert</string>
+    <string name="permissions_exact_alarms_title">Exakte Alarme</string>
+    <string name="permissions_exact_alarms_summary">Erforderlich, damit zeitbasierte Zeitpläne zuverlässig zur richtigen Zeit ausgeführt werden.</string>
+    <string name="permissions_exact_alarms_allowed">Erlaubt</string>
+    <string name="permissions_exact_alarms_not_allowed">Nicht erlaubt</string>
 </resources>

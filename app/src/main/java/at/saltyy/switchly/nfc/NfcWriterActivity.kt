@@ -1,7 +1,10 @@
 package at.saltyy.switchly.nfc
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 
 import android.animation.ObjectAnimator
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
@@ -10,6 +13,7 @@ import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
+import android.nfc.tech.NdefFormatable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -36,18 +40,20 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
-import androidx.lifecycle.Lifecycle
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.textfield.TextInputEditText
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
 import at.saltyy.switchly.util.LocaleHelper
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.MaterialColors
@@ -68,7 +74,6 @@ class NfcWriterActivity : AppCompatActivity() {
         FAILED
     }
 
-    
     private val writeFlowLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             // Show a small status row on return (success or failure)
@@ -87,7 +92,7 @@ class NfcWriterActivity : AppCompatActivity() {
 
             if (result.resultCode == RESULT_OK && resultStr == NfcWriteWaitingActivity.RESULT_OK_STR) {
                 tvStatus.text = if (uid != null) {
-                    getString(R.string.nfc_pair_ok_with_uid, uid)
+                    getString(R.string.nfc_pair_ok_with_uid_explained, uid)
                 } else {
                     getString(R.string.nfc_write_ok)
                 }
@@ -117,7 +122,7 @@ class NfcWriterActivity : AppCompatActivity() {
             }, 1800)
         }
 
-private var nfcAdapter: NfcAdapter? = null
+    private var nfcAdapter: NfcAdapter? = null
 
     private lateinit var ddProfile: AutoCompleteTextView
     private lateinit var ddAction: AutoCompleteTextView
@@ -135,10 +140,6 @@ private var nfcAdapter: NfcAdapter? = null
 
     // keep the default hint text from XML so we can restore it (no missing resources)
     private var defaultTempHintText: CharSequence? = null
-
-    private var pendingUriToWrite: String? = null
-    private var pendingUidPairing: Boolean = false
-    private var armed = false
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -159,7 +160,6 @@ private var nfcAdapter: NfcAdapter? = null
             labels += getString(R.string.nfc_action_reentry)
         }
 
-        labels += getString(R.string.nfc_action_pair_uid)
         return labels
     }
 
@@ -168,6 +168,60 @@ private var nfcAdapter: NfcAdapter? = null
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
+    }
+
+    private fun isNfcTagWritingLocked(): Boolean {
+        return SwitchModeStore.isEnabled(this) &&
+            !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this)
+    }
+
+    private fun openProtectionControls() {
+        startActivity(
+            Intent(this, ToggleOptionsActivity::class.java).apply {
+                putExtra(
+                    ToggleOptionsActivity.EXTRA_SCROLL_TO_SECTION,
+                    ToggleOptionsActivity.SECTION_BLOCKING
+                )
+            }
+        )
+    }
+
+    private fun updateWriteLockState() {
+        val locked = isNfcTagWritingLocked()
+
+        ddProfile.isEnabled = !locked
+        ddAction.isEnabled = !locked
+        ddTime.isEnabled = !locked
+        tilProfile.isEnabled = !locked
+        tilAction.isEnabled = !locked
+        tilTime.isEnabled = !locked
+        btnArmWrite.isEnabled = !locked
+        btnArmWrite.alpha = if (locked) 0.6f else 1f
+        btnArmWrite.text = if (locked) {
+            getString(R.string.nfc_write_locked_button)
+        } else {
+            getString(R.string.nfc_arm_write)
+        }
+
+        if (locked) {
+            statusRow.isVisible = true
+            statusRow.alpha = 1f
+            statusProgress.isVisible = false
+            tvStatus.text = getString(R.string.nfc_write_locked_status)
+            tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_error))
+            statusRow.setOnClickListener { openProtectionControls() }
+            btnArmWrite.setOnClickListener {
+                Toast.makeText(this, R.string.nfc_write_locked_while_enabled, Toast.LENGTH_SHORT).show()
+                openProtectionControls()
+            }
+        } else {
+            statusRow.setOnClickListener(null)
+            btnArmWrite.setOnClickListener { buildUriForSelected() }
+            if (!statusProgress.isVisible && tvStatus.text?.toString() == getString(R.string.nfc_write_locked_status)) {
+                statusRow.isVisible = false
+                tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_neutral))
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -224,14 +278,19 @@ private var nfcAdapter: NfcAdapter? = null
         setupDropdowns()
         setupTimeDropdown()
 
-        btnArmWrite.setOnClickListener {
-            buildUriForSelected()
-        }
-
         // Always "Write" (flow is on its own screen now)
         btnArmWrite.text = getString(R.string.nfc_arm_write)
         // start hidden (KTX)
         statusRow.isVisible = false
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                SwitchModeStore.enabledFlow.collect {
+                    runOnUiThread { updateWriteLockState() }
+                }
+            }
+        }
+
+        updateWriteLockState()
     }
 
     private fun applyStatusRowChrome() {
@@ -268,28 +327,8 @@ private var nfcAdapter: NfcAdapter? = null
 
     override fun onResume() {
         super.onResume()
-
-        val adapter = nfcAdapter ?: return
-        val intent = Intent(this, this::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-        )
-        adapter.enableForegroundDispatch(this, pendingIntent, null, null)
         refreshActionDropdown(keepCurrentSelection = true)
-    }
-
-    override fun onPause() {
-        // Call disableForegroundDispatch() before super to avoid IllegalStateException on
-        // newer Android versions when the activity is already past RESUMED.
-        runCatching {
-            if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-                nfcAdapter?.disableForegroundDispatch(this)
-            }
-        }
-        super.onPause()
+        updateWriteLockState()
     }
 
     private fun tintTextFieldsWithAccent() {
@@ -421,7 +460,7 @@ private var nfcAdapter: NfcAdapter? = null
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             val padding = (16 * resources.displayMetrics.density).toInt()
-            setPadding(padding, padding/2, padding, 0)
+            setPadding(padding, padding / 2, padding, 0)
             addView(
                 input,
                 LinearLayout.LayoutParams(
@@ -511,8 +550,7 @@ private var nfcAdapter: NfcAdapter? = null
                     tempMinutes
                 )
             getString(R.string.nfc_action_pair_uid) -> {
-                val enabled = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
-                    .getBoolean(at.saltyy.switchly.data.prefs.BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+                val enabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
                 if (enabled) getString(R.string.nfc_action_desc_pair_uid) else getString(R.string.nfc_action_desc_pair_uid_disabled)
             }
             else -> getString(R.string.nfc_action_hint_default)
@@ -633,30 +671,30 @@ private var nfcAdapter: NfcAdapter? = null
             )
         }
 
-        addItem(
-            getString(R.string.nfc_action_pair_uid),
-            getString(R.string.nfc_action_desc_pair_uid),
-        )
-
         sb.append(getString(R.string.pref_enable_reentry_in_write_summary)).append("\n")
         sb.append(getString(R.string.pref_limit_temp_disable_tags_summary))
 
         return sb
     }
 
-
     private fun buildUriForSelected() {
+        if (isNfcTagWritingLocked()) {
+            Toast.makeText(this, R.string.nfc_write_locked_while_enabled, Toast.LENGTH_SHORT).show()
+            openProtectionControls()
+            return
+        }
+
         val selectedActionLabel = ddAction.text?.toString()?.trim().orEmpty()
 
         // UID-only pairing mode (supports read-only/non-NDEF tags)
         if (selectedActionLabel == getString(R.string.nfc_action_pair_uid)) {
             val i = Intent(this, NfcWriteWaitingActivity::class.java).apply {
-                putExtra(NfcWriteWaitingActivity.EXTRA_MODE, NfcWriteWaitingActivity.MODE_PAIR_UID)
+                putExtra(NfcWriteWaitingActivity.EXTRA_MODE, NfcWriteWaitingActivity.MODE_PAIR_UID_READONLY)
             }
             writeFlowLauncher.launch(i)
             return
         }
-        
+
         val selectedProfile = ddProfile.text?.toString()?.trim().orEmpty()
         val noneLabel = getString(R.string.nfc_profile_none)
 
@@ -713,128 +751,6 @@ private var nfcAdapter: NfcAdapter? = null
         writeFlowLauncher.launch(i)
     }
 
-    private fun arm() {
-        armed = true
-        statusRow.isVisible = true
-        statusRow.alpha = 1f
-
-        statusProgress.isIndeterminate = true
-        statusProgress.isVisible = true
-
-        tvStatus.text = getString(R.string.nfc_waiting_tag)
-        tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_neutral))
-
-        btnArmWrite.text = getString(R.string.nfc_cancel_write)
-    }
-
-    private fun disarm(hideRow: Boolean) {
-        armed = false
-        pendingUriToWrite = null
-        pendingUidPairing = false
-
-        if (hideRow) statusRow.isVisible = false
-
-        statusProgress.isVisible = false
-        btnArmWrite.text = getString(R.string.nfc_arm_write)
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        if (!armed || intent == null) return
-
-        val tag: Tag? = if (android.os.Build.VERSION.SDK_INT >= 33) {
-            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
-        } else {
-            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
-        }
-
-        if (tag == null) {
-            Toast.makeText(this, getString(R.string.nfc_tag_error), Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // UID-only pairing: just store the scanned tag UID (no writing).
-        if (pendingUidPairing) {
-            val uid = NfcTagUid.uidHex(tag)
-            if (uid == null) {
-                Toast.makeText(this, getString(R.string.nfc_pair_error), Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            val isNew = at.saltyy.switchly.data.prefs.NfcUidPairingStore.addPairedUidHex(this, uid)
-
-            statusRow.isVisible = true
-            statusProgress.isVisible = false
-            tvStatus.text = getString(R.string.nfc_pair_ok_with_uid, uid)
-            tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_ok))
-
-            Toast.makeText(this, getString(R.string.nfc_pair_ok), Toast.LENGTH_SHORT).show()
-
-            // Prompt for a friendly name/note only for newly paired tags.
-            if (isNew) {
-                showPairMetaPrompt(uid)
-            }
-            disarm(hideRow = false)
-            return
-        }
-
-        val uriToWrite = pendingUriToWrite
-        if (uriToWrite == null) {
-            Toast.makeText(this, getString(R.string.nfc_no_data), Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        statusRow.isVisible = true
-        statusProgress.isIndeterminate = true
-        statusProgress.isVisible = true
-        tvStatus.text = getString(R.string.nfc_writing)
-        tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_neutral))
-
-        handler.post {
-            val result = writeUriToTag(uriToWrite, tag)
-
-            val okColor = ContextCompat.getColor(this, R.color.status_ok)
-            val errorColor = ContextCompat.getColor(this, R.color.status_error)
-            val neutralColor = ContextCompat.getColor(this, R.color.status_neutral)
-
-            statusProgress.isVisible = false
-
-            when (result) {
-                WriteResult.OK -> {
-                    tvStatus.text = getString(R.string.nfc_write_ok)
-                    tvStatus.setTextColor(okColor)
-                    Toast.makeText(this, getString(R.string.nfc_write_ok), Toast.LENGTH_SHORT).show()
-                }
-                WriteResult.TOO_SMALL -> {
-                    tvStatus.text = getString(R.string.nfc_write_error_too_small)
-                    tvStatus.setTextColor(errorColor)
-                    Toast.makeText(this, getString(R.string.nfc_write_error_too_small), Toast.LENGTH_LONG).show()
-                }
-                WriteResult.NOT_WRITABLE,
-                WriteResult.FAILED -> {
-                    tvStatus.text = getString(R.string.nfc_write_error_generic)
-                    tvStatus.setTextColor(errorColor)
-                    Toast.makeText(this, getString(R.string.nfc_write_error_generic), Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            disarm(hideRow = false)
-
-            handler.postDelayed({
-                val anim = ObjectAnimator.ofFloat(statusRow, "alpha", 1f, 0f)
-                anim.duration = 300
-                anim.start()
-                anim.addListener(object : android.animation.AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: android.animation.Animator) {
-                        statusRow.isVisible = false
-                        statusRow.alpha = 1f
-                        tvStatus.setTextColor(neutralColor)
-                    }
-                })
-            }, 1800)
-        }
-    }
-
     private fun showPairMetaPrompt(uid: String) {
         val v = layoutInflater.inflate(R.layout.dialog_paired_tag_pair_meta, null)
         v.findViewById<TextView>(R.id.tvUid).text = uid
@@ -860,27 +776,38 @@ private var nfcAdapter: NfcAdapter? = null
 
     private fun writeUriToTag(uriString: String, tag: Tag): WriteResult {
         var ndef: Ndef? = null
+        var formatable: NdefFormatable? = null
         return try {
             val uriRecord = NdefRecord.createUri(uriString)
             val message = NdefMessage(arrayOf(uriRecord))
 
-            ndef = Ndef.get(tag) ?: return WriteResult.FAILED
-            ndef.connect()
+            val ndefTech = Ndef.get(tag)
+            if (ndefTech != null) {
+                ndef = ndefTech
+                ndef.connect()
 
-            if (!ndef.isWritable) {
-                return WriteResult.NOT_WRITABLE
+                if (!ndef.isWritable) {
+                    return WriteResult.NOT_WRITABLE
+                }
+
+                if (message.toByteArray().size > ndef.maxSize) {
+                    return WriteResult.TOO_SMALL
+                }
+
+                ndef.writeNdefMessage(message)
+                WriteResult.OK
+            } else {
+                val formatableTech = NdefFormatable.get(tag) ?: return WriteResult.FAILED
+                formatable = formatableTech
+                formatable.connect()
+                formatable.format(message)
+                WriteResult.OK
             }
-
-            if (message.toByteArray().size > ndef.maxSize) {
-                return WriteResult.TOO_SMALL
-            }
-
-            ndef.writeNdefMessage(message)
-            WriteResult.OK
         } catch (_: Throwable) {
             WriteResult.FAILED
         } finally {
             runCatching { ndef?.close() }
+            runCatching { formatable?.close() }
         }
     }
 }

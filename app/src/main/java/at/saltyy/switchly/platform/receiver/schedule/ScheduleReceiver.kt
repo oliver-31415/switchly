@@ -242,7 +242,9 @@ class ScheduleReceiver : BroadcastReceiver() {
             val manualOverrideWasActive = ScheduleRuntimeStore.isManualOverrideActive(ctx)
             if (manualOverrideWasActive) {
                 ScheduleRuntimeStore.setManualOverrideActive(ctx, false)
+                ScheduleRuntimeStore.clearManualOverrideScheduleId(ctx)
             }
+            ScheduleRuntimeStore.clearActiveRangeScheduleId(ctx)
 
             val shouldExitOnce =
                 when (lastSource) {
@@ -295,7 +297,8 @@ class ScheduleReceiver : BroadcastReceiver() {
             ScheduleRuntimeStore.setHadDisableAndEnable(ctx, hasDisableAndEnableNow)
         }
 
-        val target = matches.first()
+        val target = pickWinningMatch(matches, nowMinutes)
+        dbg("matches=${matches.size} -> winner id=${target.id} profile=${target.profile} start=${target.startMinutes} end=${target.endMinutes} action=${target.action}")
         val source = when {
             !target.wifiSsid.isNullOrBlank() -> SOURCE_WIFI
             !target.btDeviceName.isNullOrBlank() -> SOURCE_BT
@@ -308,9 +311,16 @@ class ScheduleReceiver : BroadcastReceiver() {
         val isRangeTarget = target.action == ScheduleStore.Action.ENABLE_AND_DISABLE ||
             target.action == ScheduleStore.Action.DISABLE_AND_ENABLE
         if (manualOverride && isRangeTarget) {
-            dbg("Manual override active -> skip range schedule apply (id=${target.id}, source=$source)")
-            updateNextAlarmAndNotifyIfChanged(ctx)
-            return
+            val manualOverrideScheduleId = ScheduleRuntimeStore.getManualOverrideScheduleId(ctx)
+            if (manualOverrideScheduleId == target.id) {
+                dbg("Manual override active for current range -> skip schedule apply (id=${target.id}, source=$source)")
+                updateNextAlarmAndNotifyIfChanged(ctx)
+                return
+            }
+
+            dbg("Manual override owner changed ($manualOverrideScheduleId -> ${target.id}) -> clear override and apply winner")
+            ScheduleRuntimeStore.setManualOverrideActive(ctx, false)
+            ScheduleRuntimeStore.clearManualOverrideScheduleId(ctx)
         }
 
         // Stats: count schedule executions (not every tick)
@@ -462,6 +472,12 @@ class ScheduleReceiver : BroadcastReceiver() {
             BlockingRuntime.ensureRunning(ctx)
         }
 
+        if (isRangeEnableDisable || isRangeDisableEnable) {
+            ScheduleRuntimeStore.setActiveRangeScheduleId(ctx, s.id)
+        } else {
+            ScheduleRuntimeStore.clearActiveRangeScheduleId(ctx)
+        }
+
         val prevSource = getLastActivationSource(ctx)
         if (prevSource != source) {
             setLastActivationSource(ctx, source)
@@ -490,6 +506,35 @@ class ScheduleReceiver : BroadcastReceiver() {
         if (last == token) return false
         ScheduleRuntimeStore.setLastFiredToken(ctx, s.id, token)
         return true
+    }
+
+    private fun pickWinningMatch(
+        matches: List<ScheduleStore.Schedule>,
+        nowMin: Int
+    ): ScheduleStore.Schedule {
+        return matches.maxWithOrNull(
+            compareBy<ScheduleStore.Schedule> { activeStartSortKey(it, nowMin) }
+                .thenBy { actionPriority(it.action) }
+        ) ?: matches.first()
+    }
+
+    private fun activeStartSortKey(s: ScheduleStore.Schedule, nowMin: Int): Int {
+        if (!inTimeRange(nowMin, s.startMinutes, s.endMinutes)) return Int.MIN_VALUE
+
+        return if (s.endMinutes > s.startMinutes || nowMin >= s.startMinutes) {
+            s.startMinutes
+        } else {
+            // Overnight range that started yesterday (e.g. 22:00-06:00 while now is 01:00).
+            s.startMinutes - (24 * 60)
+        }
+    }
+
+    private fun actionPriority(action: ScheduleStore.Action): Int = when (action) {
+        ScheduleStore.Action.ENABLE,
+        ScheduleStore.Action.DISABLE,
+        ScheduleStore.Action.TOGGLE -> 1
+        ScheduleStore.Action.ENABLE_AND_DISABLE,
+        ScheduleStore.Action.DISABLE_AND_ENABLE -> 0
     }
 
     private fun inTimeRange(nowMin: Int, startMin: Int, endMin: Int): Boolean {

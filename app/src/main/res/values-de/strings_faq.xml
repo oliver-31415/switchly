@@ -18,11 +18,7 @@
     <string name="faq_header_qr_nfc">NFC &amp; QR-Details</string>
     <string name="faq_header_schedules">Zeitpläne</string>
     <string name="faq_header_limits_usage">Limits &amp; Nutzung</string>
-    <string name="faq_header_permissions">Berechtigungen &amp; System</string>
-    <string name="faq_header_privacy">Datenschutz</string>
     <string name="faq_header_premium">Premium &amp; Analysen</string>
-    <string name="faq_header_future">Konto &amp; Daten</string>
-    <string name="faq_header_quick_actions">Schnellaktionen</string>
     <string name="faq_header_contact">Kontakt</string>
     <string name="faq_header_support">Spenden</string>
 
@@ -75,9 +71,6 @@
 
     <string name="faq_q_blocked_notifications">Blockierte Benachrichtigungen – was wird gespeichert?</string>
     <string name="faq_a_blocked_notifications">Blockierte Benachrichtigungen werden nur auf deinem Gerät gespeichert. Tippe auf einen Eintrag, um alle Details zu sehen, z. B. App, Zeit, Grund, Titel, Nachricht und zusätzliche Felder (falls verfügbar).</string>
-
-    <string name="faq_q_recents_preview">Warum sehe ich blockierte Apps trotzdem in „Zuletzt verwendet“?</string>
-    <string name="faq_a_recents_preview">Android zeigt in „Zuletzt verwendet“ eine Miniatur der zuletzt sichtbaren App-Ansicht. Apps dürfen die Vorschau anderer Apps nicht ausblenden oder entfernen. Switchly blockiert die App trotzdem vollständig: Wenn du auf eine blockierte App tippst, leitet Switchly dich sofort wieder heraus und zeigt den Blocker an. Tipp: Du kannst „Zuletzt verwendet“ leeren, um alte Vorschauminiaturen zu entfernen.</string>
 
     <!-- =========================================================
          PROFILES
@@ -236,17 +229,6 @@
     <!-- =========================================================
          ACCOUNT & DATA
          ========================================================= -->
-    <string name="faq_q_backup_restore">Backup &amp; Wiederherstellung</string>
-    <string name="faq_a_backup_restore">Wenn du angemeldet bist, kannst du deine Einstellungen sichern und später wiederherstellen. Beim Wiederherstellen kannst du einen Backup-Zeitpunkt auswählen. Alte Backups kannst du auch einzeln löschen.</string>
-
-    <string name="faq_q_backup">Wie funktioniert Backup, wenn ich Switchly neu installiere oder das Handy wechsle?</string>
-    <string name="faq_a_backup">Switchly speichert Daten lokal und kann über dein Google-Konto gesichert werden.\nBei einer Neuinstallation mit demselben Google-Konto kann Android Profile automatisch wiederherstellen.\nWenn du möchtest, kannst du Google-Backups deaktivieren.</string>
-
-    <string name="faq_q_backup_stats">Sind Nutzungs- und Blocker-Statistiken in Backups enthalten?</string>
-    <string name="faq_a_backup_stats">Ja. Cloud-Backups enthalten deine lokal gespeicherten Statistiken (Nutzungszeit, blockierte Zeit, Blockierungen/Versuche, Laufzeit usw.). Bei einer Wiederherstellung werden diese Werte zurückgespielt.</string>
-
-    <string name="faq_q_delete_account">Wie lösche ich mein Konto?</string>
-    <string name="faq_a_delete_account">Gehe zu Einstellungen → Google-Konto → Konto löschen. Dadurch werden deine Cloud-Daten entfernt. Lokale Daten kannst du durch Deinstallieren der App entfernen.</string>
 
     <!-- quick-start data/account duplicates -->
     <string name="faq_q_idiot_save_data">Wie sichere ich meine Daten (Backup/Wiederherstellung)?</string>
@@ -279,4 +261,22 @@
     <string name="faq_q_switchly_lite">Gibt es auch eine einfachere Version von Switchly?</string>
     <string name="faq_a_switchly_lite">Ja, es gibt auch Switchly Lite als leichtere Option für einfache Blocking-Abläufe wie NFC, Button-Aktionen und Zeitpläne. Quasi eine abgespecktere Version von Switchly mit weniger erweiterten Funktionen.</string>
 
+
+    <string name="faq_q_control_mode">Was sind Schutzsteuerungen / Steuerungsmodus?</string>
+    <string name="faq_a_control_mode">Schutzsteuerungen legen fest, über welche Wege Switchly aktiviert oder deaktiviert werden darf.n\Je nach gewähltem Steuerungsmodus akzeptiert Switchly Änderungen durch Zeitpläne, NFC-Tags, QR-Aktionen oder manuelle Steuerungen wie den Umschalter auf dem Startbildschirm und die Schnelleinstellungen-Kachel.\n\nEs geht also nicht nur ums Entsperren. Es legt grundsätzlich fest, welchen Steuerkanälen vertraut wird.</string>
+
+    <string name="faq_q_mode_schedule">Was ist der Zeitplan-Modus?</string>
+    <string name="faq_a_mode_schedule">Der Zeitplan-Modus konzentriert sich auf automatische Abläufe.\nNur Zeitpläne dürfen Switchly automatisch steuern.\nNFC- und QR-Aktionen werden ignoriert, solange dieser Modus aktiv ist.\n\nNutze das, wenn dein Setup Zeit-, WLAN- oder Bluetooth-Bedingungen folgen soll statt physischen Tags oder QR-Codes.</string>
+
+    <string name="faq_q_mode_nfc">Was ist der NFC-Modus?</string>
+    <string name="faq_a_mode_nfc">Der NFC-Modus konzentriert sich auf physische Hürde.\nNur NFC-Aktionen werden für Automationen akzeptiert.\nZeitpläne und QR-Aktionen werden ignoriert, solange dieser Modus aktiv ist.\n\nDas ist nützlich, wenn ein physisches Tag deine wichtigste Steuerungsmethode sein soll.</string>
+
+    <string name="faq_q_mode_qr">Was ist der QR-Modus?</string>
+    <string name="faq_a_mode_qr">Der QR-Modus konzentriert sich auf QR-basierte Abläufe.\nNur QR-Aktionen werden für Automationen akzeptiert.\nZeitpläne und NFC-Aktionen werden ignoriert, solange dieser Modus aktiv ist.\n\nNutze das, wenn dein Entsperr- oder Umschaltablauf vom Scannen eines QR-Codes abhängen soll.</string>
+
+    <string name="faq_q_mode_mixed">Was ist der gemischte Modus?</string>
+    <string name="faq_a_mode_mixed">Der gemischte Modus ist die flexible Option.\nStatt nur einen Steuerweg zu erlauben, kannst du genau festlegen, welche Kanäle erlaubt sind.\n\nDas bedeutet, du kannst beliebige Kombinationen aus Zeitplänen, NFC, QR und manuellen Steuerungen zulassen.\nZum Beispiel könntest du Zeitpläne und NFC erlauben, aber QR und manuelle Buttons blockieren.</string>
+
+    <string name="faq_q_manual_controls">Was sind manuelle Steuerungen?</string>
+    <string name="faq_a_manual_controls">Manuelle Steuerungen sind die direkten Bedienelemente in der App oder der Systemoberfläche.\nDazu gehören meist der Umschalter auf dem Startbildschirm, andere manuelle Buttons und die Schnelleinstellungen-Kachel.\\nnWenn manuelle Steuerungen durch den aktuellen Steuerungsmodus blockiert sind, können diese Buttons deaktiviert sein, ignoriert werden oder statt einer Änderung von Switchly eine Warnung anzeigen.</string>
 </resources>

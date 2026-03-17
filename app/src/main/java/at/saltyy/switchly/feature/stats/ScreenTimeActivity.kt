@@ -1,6 +1,5 @@
 package at.saltyy.switchly.feature.stats
 
-import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -10,14 +9,13 @@ import at.saltyy.switchly.databinding.ActivityScreenTimeBinding
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.UsageAccess
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import at.saltyy.switchly.ui.dialog.showAccented
 import android.widget.RadioButton
 import android.widget.RadioGroup
-import java.util.concurrent.TimeUnit
-import java.util.Calendar
 
 class ScreenTimeActivity : AppCompatActivity() {
 
@@ -105,41 +103,23 @@ class ScreenTimeActivity : AppCompatActivity() {
     }
 
     private fun loadForRange(r: Range): List<ScreenTimeRow> {
-        val usm = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
-        val now = System.currentTimeMillis()
-
-        val from = when (r) {
-            Range.TODAY -> {
-                val cal = Calendar.getInstance()
-                cal.set(Calendar.HOUR_OF_DAY, 0)
-                cal.set(Calendar.MINUTE, 0)
-                cal.set(Calendar.SECOND, 0)
-                cal.set(Calendar.MILLISECOND, 0)
-                cal.timeInMillis
-            }
-            Range.WEEK -> now - TimeUnit.DAYS.toMillis(7)
-            Range.MONTH -> now - TimeUnit.DAYS.toMillis(30)
-            Range.YEAR -> now - TimeUnit.DAYS.toMillis(365)
-            Range.OVERALL -> now - TimeUnit.DAYS.toMillis(365) // keep it performant
+        val summary = when (r) {
+            Range.TODAY -> UsageStatsRepo.getTodaySummary(this, topN = 500)
+            Range.WEEK -> UsageStatsRepo.getLastNDaysSummary(this, 7, topN = 500)
+            Range.MONTH -> UsageStatsRepo.getThisMonthSummary(this, topN = 500)
+            Range.YEAR -> UsageStatsRepo.getThisYearSummary(this, topN = 500)
+            Range.OVERALL -> UsageStatsRepo.getOverallSummary(this, topN = 500)
         }
 
-        val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, now).orEmpty()
-            .filter { it.totalTimeInForeground > 0L }
-            .filter { it.packageName != packageName }
-
         val pm = packageManager
-        val launchable = stats.filter { pm.getLaunchIntentForPackage(it.packageName) != null }
-        return launchable
-            .map { s ->
-                val label = runCatching {
-                    val ai = pm.getApplicationInfo(s.packageName, 0)
-                    pm.getApplicationLabel(ai).toString()
-                }.getOrNull()?.takeIf { it.isNotBlank() } ?: s.packageName
-
+        return summary.topApps
+            .filter { it.packageName != packageName }
+            .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
+            .map { app ->
                 ScreenTimeRow(
-                    packageName = s.packageName,
-                    appName = label,
-                    usedMs = s.totalTimeInForeground
+                    packageName = app.packageName,
+                    appName = app.label,
+                    usedMs = app.timeMs
                 )
             }
     }

@@ -18,7 +18,7 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
-import at.saltyy.switchly.feature.stats.StatisticsHubActivity
+import at.saltyy.switchly.feature.tools.ToolsHubActivity
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 
@@ -113,8 +113,8 @@ class SettingsActivity : AppCompatActivity() {
                     true
                 }
 
-                R.id.nav_stats -> {
-                    startActivity(Intent(this, StatisticsHubActivity::class.java))
+                R.id.nav_tools -> {
+                    startActivity(Intent(this, ToolsHubActivity::class.java))
                     finish()
                     true
                 }

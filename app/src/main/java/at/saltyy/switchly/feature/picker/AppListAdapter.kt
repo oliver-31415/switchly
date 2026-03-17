@@ -1,5 +1,6 @@
 package at.saltyy.switchly.feature.picker
 
+import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
@@ -33,6 +34,41 @@ class AppListAdapter(
     private val managed = preselectedManaged.toMutableSet()
 
     fun getManagedPackages(): Set<String> = managed.toSet()
+
+    fun selectAllVisible() {
+        currentList.forEachIndexed { index, item ->
+            if (managed.add(item.packageName)) {
+                notifyItemChanged(index)
+            }
+        }
+    }
+
+    fun clearAllVisible(context: Context) {
+        val profile = currentProfileProvider.invoke()
+        currentList.forEachIndexed { index, item ->
+            if (hasPinnedLimit(context, profile, item)) return@forEachIndexed
+
+            val wasManaged = managed.remove(item.packageName)
+
+            if (!item.isAvailable && !profile.isNullOrBlank()) {
+                UsageLimitStore.setLimitMinutes(context, profile, item.packageName, 0)
+                SessionLimitStore.setLimitMinutes(context, profile, item.packageName, 0)
+                AttemptLimitStore.setLimitAttempts(context, profile, item.packageName, 0)
+                OpenCountStore.setToday(context, profile, item.packageName, 0)
+            }
+
+            if (wasManaged) {
+                notifyItemChanged(index)
+            }
+        }
+    }
+
+    private fun hasPinnedLimit(context: Context, profile: String?, item: AppEntry): Boolean {
+        if (profile.isNullOrBlank() || !item.isAvailable) return false
+        return UsageLimitStore.getLimitMinutes(context, profile, item.packageName) > 0 ||
+            SessionLimitStore.getLimitMinutes(context, profile, item.packageName) > 0 ||
+            AttemptLimitStore.getLimitAttempts(context, profile, item.packageName) > 0
+    }
 
     init {
         // initial list

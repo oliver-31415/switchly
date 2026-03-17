@@ -7,27 +7,39 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 object UsageStatsRepo {
 
     private fun startOfDayLocal(timeMs: Long): Long {
-        val c = java.util.Calendar.getInstance()
+        val c = Calendar.getInstance()
         c.timeInMillis = timeMs
-        c.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        c.set(java.util.Calendar.MINUTE, 0)
-        c.set(java.util.Calendar.SECOND, 0)
-        c.set(java.util.Calendar.MILLISECOND, 0)
+        c.set(Calendar.HOUR_OF_DAY, 0)
+        c.set(Calendar.MINUTE, 0)
+        c.set(Calendar.SECOND, 0)
+        c.set(Calendar.MILLISECOND, 0)
         return c.timeInMillis
     }
 
     private fun startOfTodayLocal(): Long = startOfDayLocal(System.currentTimeMillis())
 
     private fun startOfTomorrowLocal(): Long {
-        val c = java.util.Calendar.getInstance()
+        val c = Calendar.getInstance()
         c.timeInMillis = startOfTodayLocal()
-        c.add(java.util.Calendar.DAY_OF_YEAR, 1)
+        c.add(Calendar.DAY_OF_YEAR, 1)
         return c.timeInMillis
+    }
+
+    private fun isDayAligned(timeMs: Long): Boolean = startOfDayLocal(timeMs) == timeMs
+
+    private fun isSingleLocalDayWindow(from: Long, to: Long): Boolean {
+        if (!isDayAligned(from) || to <= from) return false
+        val nextDay = Calendar.getInstance().apply {
+            timeInMillis = from
+            add(Calendar.DAY_OF_YEAR, 1)
+        }.timeInMillis
+        return to <= nextDay
     }
 
     fun hasUsageAccess(ctx: Context): Boolean {
@@ -51,25 +63,25 @@ object UsageStatsRepo {
     }
 
     fun getThisMonthSummary(ctx: Context, topN: Int = 20): UsageSummary {
-        val c = java.util.Calendar.getInstance()
-        c.set(java.util.Calendar.DAY_OF_MONTH, 1)
-        c.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        c.set(java.util.Calendar.MINUTE, 0)
-        c.set(java.util.Calendar.SECOND, 0)
-        c.set(java.util.Calendar.MILLISECOND, 0)
+        val c = Calendar.getInstance()
+        c.set(Calendar.DAY_OF_MONTH, 1)
+        c.set(Calendar.HOUR_OF_DAY, 0)
+        c.set(Calendar.MINUTE, 0)
+        c.set(Calendar.SECOND, 0)
+        c.set(Calendar.MILLISECOND, 0)
         val from = c.timeInMillis
         val to = System.currentTimeMillis()
         return getSummary(ctx, from, to, topN)
     }
 
     fun getThisYearSummary(ctx: Context, topN: Int = 20): UsageSummary {
-        val c = java.util.Calendar.getInstance()
-        c.set(java.util.Calendar.MONTH, java.util.Calendar.JANUARY)
-        c.set(java.util.Calendar.DAY_OF_MONTH, 1)
-        c.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        c.set(java.util.Calendar.MINUTE, 0)
-        c.set(java.util.Calendar.SECOND, 0)
-        c.set(java.util.Calendar.MILLISECOND, 0)
+        val c = Calendar.getInstance()
+        c.set(Calendar.MONTH, Calendar.JANUARY)
+        c.set(Calendar.DAY_OF_MONTH, 1)
+        c.set(Calendar.HOUR_OF_DAY, 0)
+        c.set(Calendar.MINUTE, 0)
+        c.set(Calendar.SECOND, 0)
+        c.set(Calendar.MILLISECOND, 0)
         val from = c.timeInMillis
         val to = System.currentTimeMillis()
         return getSummary(ctx, from, to, topN)
@@ -106,51 +118,45 @@ object UsageStatsRepo {
         return getSummary(ctx, from, to, topN = 1, onlyPackage = packageName).totalTimeMs
     }
 
+    fun getTodayMsForPackage(ctx: Context, packageName: String, now: Long = System.currentTimeMillis()): Long {
+        return getSummary(ctx, startOfDayLocal(now), now, topN = 1, onlyPackage = packageName).totalTimeMs
+    }
+
     fun getLast7DaysPerDay(ctx: Context, packageName: String): List<Long> {
-        // Build 7 true calendar-day buckets (local timezone): oldest -> newest (today)
         val todayStart = startOfTodayLocal()
-        val c = java.util.Calendar.getInstance()
+        val c = Calendar.getInstance()
         c.timeInMillis = todayStart
 
         val dayStarts = mutableListOf<Long>()
         for (i in 0 until 7) {
             dayStarts.add(c.timeInMillis)
-            c.add(java.util.Calendar.DAY_OF_YEAR, -1)
+            c.add(Calendar.DAY_OF_YEAR, -1)
         }
         dayStarts.reverse()
 
-        val res = mutableListOf<Long>()
-        for (i in 0 until dayStarts.size) {
-            val start = dayStarts[i]
+        return dayStarts.mapIndexed { i, start ->
             val end = if (i == dayStarts.lastIndex) startOfTomorrowLocal() else dayStarts[i + 1]
-            val sum = getSummary(ctx, start, end, topN = 1, onlyPackage = packageName).totalTimeMs
-            res.add(sum)
+            getSummary(ctx, start, end, topN = 1, onlyPackage = packageName).totalTimeMs
         }
-        return res
     }
 
     fun getLastNDaysPerDay(ctx: Context, packageName: String, days: Int): List<Long> {
-        // Build N true calendar-day buckets (local timezone): oldest -> newest (today)
         val n = days.coerceAtLeast(1).coerceAtMost(60)
         val todayStart = startOfTodayLocal()
-        val c = java.util.Calendar.getInstance()
+        val c = Calendar.getInstance()
         c.timeInMillis = todayStart
 
         val dayStarts = mutableListOf<Long>()
         for (i in 0 until n) {
             dayStarts.add(c.timeInMillis)
-            c.add(java.util.Calendar.DAY_OF_YEAR, -1)
+            c.add(Calendar.DAY_OF_YEAR, -1)
         }
         dayStarts.reverse()
 
-        val res = mutableListOf<Long>()
-        for (i in 0 until dayStarts.size) {
-            val start = dayStarts[i]
+        return dayStarts.mapIndexed { i, start ->
             val end = if (i == dayStarts.lastIndex) startOfTomorrowLocal() else dayStarts[i + 1]
-            val sum = getSummary(ctx, start, end, topN = 1, onlyPackage = packageName).totalTimeMs
-            res.add(sum)
+            getSummary(ctx, start, end, topN = 1, onlyPackage = packageName).totalTimeMs
         }
-        return res
     }
 
     /**
@@ -185,7 +191,6 @@ object UsageStatsRepo {
         if (p == "android") return true
         if (p == "com.android.systemui") return true
 
-        // Common launcher packages across OEMs
         val known = setOf(
             "com.google.android.apps.nexuslauncher",
             "com.android.launcher3",
@@ -199,8 +204,6 @@ object UsageStatsRepo {
             "com.android.quickstep"
         )
         if (p in known) return true
-
-        // Heuristic: anything that clearly looks like a launcher
         if (p.contains("launcher")) return true
         if (p.contains("quickstep")) return true
 
@@ -214,17 +217,14 @@ object UsageStatsRepo {
         topN: Int,
         onlyPackage: String? = null
     ): UsageSummary {
-        val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
+        val safeTo = to.coerceAtMost(System.currentTimeMillis())
+        if (safeTo <= from) return UsageSummary(totalTimeMs = 0L, topApps = emptyList())
 
-        val byPkg = HashMap<String, Long>()
-        for (st in stats) {
-            val pkg = st.packageName ?: continue
-            if (onlyPackage != null && pkg != onlyPackage) continue
-            val t = st.totalTimeInForeground
-            if (t > 0) byPkg[pkg] = (byPkg[pkg] ?: 0L) + t
+        val byPkg = if (isSingleLocalDayWindow(from, safeTo)) {
+            getSingleDayUsageByPackage(ctx, from, safeTo, onlyPackage)
+        } else {
+            getBucketedUsageByPackage(ctx, from, safeTo, onlyPackage)
         }
-
 
         if (onlyPackage == null) {
             val homePkgs = getHomePackages(ctx)
@@ -237,18 +237,16 @@ object UsageStatsRepo {
             }
         }
 
-                // Drop packages that are no longer installed (stale usage records).
         run {
-            val it2 = byPkg.keys.iterator()
-            while (it2.hasNext()) {
-                val pkg = it2.next()
-                if (!isInstalled(ctx, pkg)) it2.remove()
+            val it = byPkg.keys.iterator()
+            while (it.hasNext()) {
+                val pkg = it.next()
+                if (!isInstalled(ctx, pkg)) it.remove()
             }
         }
 
-val total = byPkg.values.sum()
+        val total = byPkg.values.sum()
         val pm = ctx.packageManager
-
         val top = byPkg.entries
             .sortedByDescending { it.value }
             .take(topN)
@@ -259,14 +257,73 @@ val total = byPkg.values.sum()
                 } catch (_: Throwable) {
                     pkg
                 }
-                val icon = try { pm.getApplicationIcon(pkg) } catch (_: Throwable) { null }
-                val percent = if (total > 0) (ms.toFloat()/total.toFloat()) else 0f
+                val icon = try {
+                    pm.getApplicationIcon(pkg)
+                } catch (_: Throwable) {
+                    null
+                }
+                val percent = if (total > 0L) ms.toFloat() / total.toFloat() else 0f
                 AppUsage(pkg, label, icon, ms, percent)
             }
 
         return UsageSummary(totalTimeMs = total, topApps = top)
     }
-}
+
+    private fun getSingleDayUsageByPackage(
+        ctx: Context,
+        dayStart: Long,
+        dayEnd: Long,
+        onlyPackage: String?
+    ): HashMap<String, Long> {
+        val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val stats = try {
+            usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, dayStart, dayEnd)
+        } catch (_: SecurityException) {
+            emptyList()
+        } catch (_: Throwable) {
+            emptyList()
+        }
+
+        val byPkg = HashMap<String, Long>()
+        for (st in stats.orEmpty()) {
+            val pkg = st.packageName ?: continue
+            if (onlyPackage != null && pkg != onlyPackage) continue
+
+            val bucketStart = startOfDayLocal(st.firstTimeStamp)
+            if (bucketStart != dayStart) continue
+
+            val t = st.totalTimeInForeground.coerceAtLeast(0L)
+            if (t > 0L) {
+                byPkg[pkg] = (byPkg[pkg] ?: 0L) + t
+            }
+        }
+        return byPkg
+    }
+
+    private fun getBucketedUsageByPackage(
+        ctx: Context,
+        from: Long,
+        to: Long,
+        onlyPackage: String?
+    ): HashMap<String, Long> {
+        val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val stats = try {
+            usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
+        } catch (_: SecurityException) {
+            emptyList()
+        } catch (_: Throwable) {
+            emptyList()
+        }
+
+        val byPkg = HashMap<String, Long>()
+        for (st in stats.orEmpty()) {
+            val pkg = st.packageName ?: continue
+            if (onlyPackage != null && pkg != onlyPackage) continue
+            val t = st.totalTimeInForeground.coerceAtLeast(0L)
+            if (t > 0L) byPkg[pkg] = (byPkg[pkg] ?: 0L) + t
+        }
+        return byPkg
+    }
 
     private fun isInstalled(ctx: Context, pkg: String): Boolean {
         return try {
@@ -276,5 +333,4 @@ val total = byPkg.values.sum()
             false
         }
     }
-
-
+}

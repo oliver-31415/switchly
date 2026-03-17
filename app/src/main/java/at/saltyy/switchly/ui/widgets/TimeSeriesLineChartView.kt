@@ -103,7 +103,8 @@ class TimeSeriesLineChartView @JvmOverloads constructor(
     }
 
     override fun performClick(): Boolean {
-        return super.performClick()
+        super.performClick()
+        return true
     }
 
     override fun onTouchEvent(event: android.view.MotionEvent): Boolean {

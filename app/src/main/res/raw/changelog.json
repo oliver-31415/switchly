@@ -1,6 +1,47 @@
 {
     "releases": [
         {
+            "version": "v2.0.1",
+            "date": "Mar 15, 2026",
+            "body": [
+                "Fixed a crash when managing paired NFC tags.",
+                "Fixed a crash in the Add and Rename profile dialog.",
+                "Fixed a crash in the blocked websites rule dialog.",
+                "Fixed overlapping schedules so newer active schedule ranges correctly override older ones.",
+                "Fixed schedule manual overrides blocking newer overlapping schedule ranges.",
+                "Fixed daily app usage sometimes being overcounted, which could cause apps to be blocked before the actual limit was reached.",
+                "Improved app usage display so daily app timers and shown usage match system-reported screen time more closely.",
+                "Fixed app time limit changes being able to instantly unblock an app while protection was active.",
+                "Fixed NFC handling for blank or unwritten tags so they are detected more reliably.",
+                "Fixed NFC writing for tags that are NDEF-formatable but not yet formatted.",
+                "Improved NFC support for more tag types and devices.",
+                "Fixed schedule toggles and some statistics/progress visuals using system green instead of the selected app accent color.",
+                "Fixed inconsistent FAB sizing and spacing across several screens.",
+                "Fixed validation error styling in profile and blocked website dialogs.",
+                "Improved the Schedules screen when schedules are blocked by the current control mode.",
+                "Added a disabled and read-only state for Schedules when control mode does not allow schedule automation.",
+                "Added a shortcut from Schedules to Protection controls when schedules are blocked.",
+                "Added a clearer Next schedule status when schedules are inactive due to control mode.",
+                "Changed schedules to be read-only while Switchly is active by default.",
+                "Added a Mixed mode option to allow schedule editing while Switchly is active.",
+                "Changed NFC tag writing and pairing so they are locked while Switchly is active by default.",
+                "Added a Mixed mode option to allow NFC tag writing while Switchly is active.",
+                "Reworked Manage Paired Tags with improved add, delete, and editing flows.",
+                "Added clearer separation between writable NFC tags and read-only UID-paired tags.",
+                "Moved QR management to a more discoverable place in the app.",
+                "Changed QR actions to behave as an optional feature that can be enabled or disabled in Protection controls.",
+                "Improved feature visibility so optional tools like paired NFC tags and QR only appear when enabled.",
+                "Improved locked-state behavior across settings screens so they refresh immediately when Switchly is enabled or disabled via tile, NFC, schedules, or other triggers.",
+                "Improved blocked websites editing feedback so locked actions no longer feel unresponsive.",
+                "Improved install source labels, FAQ/help content, and various in-app explanations.",
+                "Improved battery optimization and exact alarm permission checks on devices with limited support.",
+                "Updated quick tile behavior.",
+                "Added a new info dialog on the home screen with support and download links.",
+                "Added direct download links in the app info screens.",
+                "Added Switchly Launcher to the Other apps section."
+            ]
+        },
+        {
             "version": "v2.0.0",
             "date": "Mar 09, 2026",
             "body": [
