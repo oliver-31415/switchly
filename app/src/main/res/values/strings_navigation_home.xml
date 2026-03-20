@@ -89,6 +89,10 @@
     <string name="dashboard_tile_profiles_sub">Create &amp; edit</string>
     <string name="dashboard_tile_toggle_options_sub">Security &amp; UI</string>
     <string name="dashboard_tile_write_nfc_sub">Tap-to-switch tag</string>
+    <string name="dashboard_tile_qr">QR</string>
+    <string name="dashboard_tile_qr_sub">Tap to scan • hold to generate</string>
+    <string name="dashboard_tile_barcode">Barcode</string>
+    <string name="dashboard_tile_barcode_sub">Tap to scan • hold to manage</string>
 
     <!-- =========================================================
          DASHBOARD: Main toggle

@@ -15,8 +15,8 @@
     <string name="tools_nfc_write_title">Write NFC tag</string>
     <string name="tools_nfc_write_summary">Write enable, disable, re-entry, and other actions to writable NFC tags</string>
 
-    <string name="tools_manage_qr_title">Manage QR codes</string>
-    <string name="tools_manage_qr_summary">Create or scan Switchly QR codes</string>
+    <string name="tools_manage_qr_title">Generate QR</string>
+    <string name="tools_manage_qr_summary">Create a Switchly QR code</string>
 
     <string name="tools_profiles_title">Manage profiles</string>
     <string name="tools_profiles_summary">Create, edit, and organize blocking profiles</string>
@@ -30,4 +30,8 @@
     <string name="tools_insights_summary">View usage, blocking, and other activity information</string>
 
     <string name="tools_blocked_notifications_summary">Review blocked notifications and related activity</string>
+
+    <string name="tools_manage_barcodes_title">Manage barcodes</string>
+    <string name="tools_manage_barcodes_summary">Map physical barcodes to Switchly actions</string>
+
 </resources>

@@ -15,8 +15,8 @@
     <string name="tools_nfc_write_title">NFC-Tag schreiben</string>
     <string name="tools_nfc_write_summary">Beschreibbare NFC-Tags für Aktivieren, Deaktivieren, Re-entry und andere Aktionen beschreiben</string>
 
-    <string name="tools_manage_qr_title">QR-Codes verwalten</string>
-    <string name="tools_manage_qr_summary">Switchly-QR-Codes erstellen oder scannen</string>
+    <string name="tools_manage_qr_title">QR generieren</string>
+    <string name="tools_manage_qr_summary">Einen Switchly-QR-Code erstellen</string>
 
     <string name="tools_profiles_title">Profile verwalten</string>
     <string name="tools_profiles_summary">Blockierprofile erstellen, bearbeiten und organisieren</string>
@@ -30,4 +30,8 @@
     <string name="tools_insights_summary">Nutzungs-, Blockierungs- und andere Aktivitätsinfos ansehen</string>
 
     <string name="tools_blocked_notifications_summary">Blockierte Benachrichtigungen und ähnliche Aktivität ansehen</string>
+
+    <string name="tools_manage_barcodes_title">Barcodes verwalten</string>
+    <string name="tools_manage_barcodes_summary">Physische Barcodes auf Switchly-Aktionen mappen</string>
+
 </resources>

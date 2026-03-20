@@ -47,6 +47,23 @@ object UsageStore {
         return persisted + buffered
     }
 
+    fun getUsageMsMapToday(ctx: Context): Map<String, Long> {
+        flush(ctx)
+        val ymd = todayYmdInt()
+        val prefix = PREFIX_DAY + ymd.toString() + "_"
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val out = linkedMapOf<String, Long>()
+        for ((k, v) in sp.all) {
+            if (!k.startsWith(prefix)) continue
+            val pkg = k.removePrefix(prefix).trim()
+            val ms = (v as? Number)?.toLong()?.coerceAtLeast(0L) ?: 0L
+            if (pkg.isNotBlank() && ms > 0L) {
+                out[pkg] = (out[pkg] ?: 0L) + ms
+            }
+        }
+        return out
+    }
+
     // Explicit setter used for "clear today usage" when removing limit.
     fun setUsageMsToday(ctx: Context, pkg: String, ms: Long) {
         if (pkg.isBlank()) return

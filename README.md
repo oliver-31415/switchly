@@ -1,143 +1,147 @@
 # Switchly
+[**Switchly**](https://switchly.saltyy.at) is an Android application for **profile-based app blocking**.
+A lightweight background service monitors the currently foreground app and shows a blocking overlay whenever a restricted app is opened.
 
-Switchly is an Android app for **profile-based app blocking**.
-A lightweight background service monitors the foreground app and shows a blocking overlay when a restricted app is opened.
+Designed for focus, control, and flexibility — without unnecessary complexity.
 
-## Features
+---
 
-* App blocking via profiles
-* Schedules (time / Wi‑Fi / Bluetooth)
-* NFC & QR actions
-* Optional cloud sync / authentication (Firebase)
-
-## Build & Run
-
-### 1) Clone
-
-```bash
-git clone <your-repo-url>
-cd switchly
+## Project Structure
+Source code root:
+```text
+java/at/saltyy/switchly
 ```
 
-### 2) Build (works **without** Firebase)
+Icons are based on **Material Symbols**:
+[https://fonts.google.com/icons](https://fonts.google.com/icons)
 
-If you **do not** add `app/google-services.json`, the app still builds, but Firebase features (Auth/Sync/Crashlytics) are disabled.
+---
 
-```bash
-./gradlew :app:assembleDebug
+## Localization/i18n
+All user-facing text lives in **translations**, not hard-coded in Kotlin/XML:
+
+* Default: `app/src/main/res/values/strings.xml`
+* German: `app/src/main/res/values-de/strings.xml`
+
+Guidelines:
+
+* Use `getString(R.string.some_key)`/`@string/some_key`
+* Prefer formatted strings (`*_fmt`) over string concatenation
+* Keep EN + DE keys in sync (same key set)
+
+This includes **Toasts, dialogs, notifications, and inline UI labels**.
+
+---
+
+## Firebase/Google Services
+Firebase support is **optional**.
+
+Switchly can be built **without** Firebase configured.
+When Firebase is not set up, Firebase-related functionality will simply be unavailable at runtime.
+
+To enable Firebase:
+
+1. Place your Firebase config at:
+   `app/google-services.json`
+2. Enable Firebase in Gradle via a property, for example in:
+   * local `gradle.properties`, or
+   * `~/.gradle/gradle.properties`
+
+```properties
+switchly.firebase=true
 ```
 
-### 3) Enable Firebase (optional)
+Notes:
 
-If you want Google Sign‑In / Firestore sync / Crashlytics:
+* Firebase is **not required** for general builds
+* The project is set up so public builds can compile without shipping private Firebase configuration
+* Google Services/Crashlytics are only enabled when Firebase is explicitly turned on
 
-1. Create a Firebase project
-2. Add an Android app with applicationId: `at.saltyy.switchly`
-3. Download `google-services.json`
-4. Put it here: `app/google-services.json`
+---
 
-Rebuild after adding the file.
+## Shrinking (Unused Code/Resources)
+Release builds enable:
 
-## Tests
+* **R8/minification** (`minifyEnabled true`)
+* **Resource shrinking** (`shrinkResources true`)
+
+This means most unused code/resources are removed automatically at build time.
+
+To verify locally:
 
 ```bash
-./gradlew testDebugUnitTest
-./gradlew :app:lintDebug
+./gradlew :app:assembleRelease
 ```
 
-## 🏷 Versioning
+---
 
+## Supported Android Versions
+| Requirement | Value                    |
+| ----------- | ------------------------ |
+| **Min SDK** | **Android 8.1 (API 27)** |
+| Target SDK  | 36                       |
+| JDK         | 17                       |
+| Kotlin      | 2.2+                     |
+| AGP         | 8.9+                     |
+
+---
+
+## Versioning
 Follows **MAJOR.MINOR.PATCH**.
 
-|  Type | Example | Description                        |
-| ----: | :------ | :--------------------------------- |
+| Type  | Example | Description                        |
+| ----- | ------- | ---------------------------------- |
 | Patch | `1.0.1` | Bug fixes                          |
 | Minor | `1.1.0` | New features (backward-compatible) |
 | Major | `2.0.0` | Breaking changes                   |
 
-## Supported Android Versions
+---
 
-| Requirement                 | Value                    |
-| --------------------------- | ------------------------ |
-| **Min SDK**                 | **Android 8.1 (API 27)** |
-| Target / Compile SDK        | 36                       |
-| JDK                         | 17                       |
-| Kotlin (Gradle plugin)      | 2.2.x                    |
-| Android Gradle Plugin (AGP) | 8.9+                     |
+## Development Notes
+The public Switchly repository mirrors the **publicly available releases only**. That means `main`(release) and `test`(open beta)
+Because of that, it may sometimes be **behind the current private development stage**.
 
-> Note: If you change the Kotlin/AGP versions in the project, keep the README in sync with the values in `gradle/libs.versions.toml` (or the project’s Gradle plugin versions).
+So code in this repository may occasionally not reflect the very latest internal work in progress.
 
-## 🗂 Project Structure
-
-Main code lives under:
-
-* `app/src/main/java/at/saltyy/switchly/`
-
-High-level modules/packages (may vary slightly):
-
-* `app/` startup & initialization
-* `blocking/` app watching + blocking/overlay logic
-* `feature/` UI screens
-* `data/` persistence, preferences, sync
-* `platform/` receivers, tiles, services
-* `nfc/` NFC schema + writer
+---
 
 ## Contributing
 
-Contributions are welcome!
+Before starting a contribution, please contact me first:
 
-### Workflow (feature branch → Merge Request → `dev`)
+**[andi@saltyy.at](mailto:andi@saltyy.at)**
 
-1. Create a new **feature branch** from `dev`:
+This helps avoid duplicate work and makes it easier to coordinate changes with the current development state.
 
-   ```bash
-   git checkout dev
-   git pull
-   git checkout -b feature/<short-description>
-   ```
-2. Make your changes and commit them.
-3. Run the basic checks locally:
+---
 
-   ```bash
-   ./gradlew :app:assembleDebug
-   ./gradlew :app:lintDebug
-   ./gradlew testDebugUnitTest
-   ```
-4. Push your branch (recommended: push to your **fork**) and open a **Merge Request** targeting the `dev` branch.
+## Useful Commands
+### Run lint
+```bash
+./gradlew clean lint
+```
 
-See `CONTRIBUTING.md` for details and guidelines.
+### Get info about all dependencies
+```bash
+./gradlew :app:dependencies --configuration releaseRuntimeClasspath
+```
 
-## Security
+---
 
-See `SECURITY.md`.
+## Contributor
+**Andi S.**
+[https://saltyy.at](https://saltyy.at)
 
-## Privacy
+---
 
-See `PRIVACY.md`.
-
-## Links
-
-* Website: [https://switchly.saltyy.at](https://switchly.saltyy.at)
-* Discord: [https://discord.gg/PC5zn2NeCg](https://discord.gg/PC5zn2NeCg)
-* Legal notice: [https://www.saltyy.at/pages/legal-notice/](https://www.saltyy.at/pages/legal-notice/)
-* Privacy policy: [https://www.saltyy.at/pages/privacy/](https://www.saltyy.at/pages/privacy/)
-
-## ❤️ Donate / Support
-
-If you find Switchly useful and want to support development:
-
-* PayPal Donate: [https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY](https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY)
-* Get the official release via the Play Store (supports development)
-
-## 📄 License
-
+## License
 Licensed under the **Apache License 2.0**.
 
 See:
 
 * [`LICENSE`](./LICENSE)
 * [`NOTICE`](./NOTICE)
+
 ---
 
 **Made with ♥️ and 🍪 by saltyy**
-

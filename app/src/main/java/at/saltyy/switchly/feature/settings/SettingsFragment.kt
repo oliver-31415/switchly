@@ -71,6 +71,7 @@ import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
+import at.saltyy.switchly.security.AppLockStore
 import com.google.android.material.color.MaterialColors
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -392,6 +393,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
+        findPreference<Preference>("pref_app_lock")?.setOnPreferenceClickListener {
+            startActivity(Intent(requireContext(), AppLockSettingsActivity::class.java))
+            true
+        }
+        updateAppLockSummary()
+
         // Backup as standalone prefs
         findPreference<Preference>("pref_cloud_backup")?.apply {
             setOnPreferenceClickListener {
@@ -466,6 +473,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Initial UI state
         updateGooglePrefSummary()
         updateCloudPrefVisibility()
+        updateAppLockSummary()
         refreshEmergencyPref()
         refreshLockUi()
 
@@ -667,6 +675,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
         nextChangedReceiver = null
 
         super.onDestroyView()
+    }
+
+    private fun updateAppLockSummary() {
+        val pref = findPreference<Preference>("pref_app_lock") ?: return
+        pref.summary = when {
+            !AppLockStore.isEnabled(requireContext()) -> getString(R.string.app_lock_status_off)
+            AppLockStore.isBiometricEnabled(requireContext()) -> getString(R.string.app_lock_status_pin_biometric)
+            else -> getString(R.string.app_lock_status_pin_only)
+        }
     }
 
     // Language

@@ -296,6 +296,11 @@
             android:name=".feature.qr.QrScanActivity"
             android:exported="false" />
 
+        <!-- Barcode Scanner -->
+        <activity
+            android:name=".feature.barcode.BarcodeScanActivity"
+            android:exported="false" />
+
         <!-- QR Generator -->
         <activity
             android:name=".feature.qr.QrGenerateActivity"
@@ -357,6 +362,22 @@
         <activity
             android:name=".feature.settings.ManagePairedTagsActivity"
             android:exported="false" />
+
+        <!-- Manage barcodes -->
+        <activity
+            android:name=".feature.settings.ManageBarcodesActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.settings.AppLockSettingsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.settings.AppLockActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Switchly" />
 
         <!-- App Info -->
         <activity

@@ -19,8 +19,8 @@ import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
 import at.saltyy.switchly.feature.qr.QrGenerateActivity
-import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.schedule.SchedulesActivity
+import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
@@ -61,6 +61,7 @@ class ToolsHubActivity : AppCompatActivity() {
             R.id.ivPairedTagsIcon,
             R.id.ivWriteNfcIcon,
             R.id.ivManageQrIcon,
+            R.id.ivManageBarcodesIcon,
             R.id.ivBlockedNotificationsIcon,
             R.id.ivEmergencyIcon,
             R.id.ivInsightsIcon,
@@ -92,7 +93,10 @@ class ToolsHubActivity : AppCompatActivity() {
             startActivity(Intent(this, NfcWriterActivity::class.java))
         }
         findViewById<android.view.View>(R.id.cardManageQr).setOnClickListener {
-            showQrChoiceDialog()
+            startActivity(Intent(this, QrGenerateActivity::class.java))
+        }
+        findViewById<android.view.View>(R.id.cardManageBarcodes).setOnClickListener {
+            startActivity(Intent(this, ManageBarcodesActivity::class.java))
         }
         findViewById<android.view.View>(R.id.cardInsights).setOnClickListener {
             startActivity(Intent(this, StatisticsHubActivity::class.java))
@@ -134,27 +138,17 @@ class ToolsHubActivity : AppCompatActivity() {
     private fun syncOptionalFeatureVisibility() {
         val defaultSp = PreferenceManager.getDefaultSharedPreferences(this)
         val pairedTagsEnabled = defaultSp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-        val qrEnabled = AutomationModeStore.isQrFeatureEnabled(this)
+        val qrEnabled = AutomationModeStore.shouldShowQrTools(this)
+        val barcodeEnabled = AutomationModeStore.shouldShowBarcodeTools(this)
 
         findViewById<android.view.View>(R.id.cardPairedTags).visibility =
             if (pairedTagsEnabled) android.view.View.VISIBLE else android.view.View.GONE
         findViewById<android.view.View>(R.id.cardManageQr).visibility =
             if (qrEnabled) android.view.View.VISIBLE else android.view.View.GONE
+        findViewById<android.view.View>(R.id.cardManageBarcodes).visibility =
+            if (barcodeEnabled) android.view.View.VISIBLE else android.view.View.GONE
     }
 
-    private fun showQrChoiceDialog() {
-        val items = arrayOf(getString(R.string.qr_generate_title), getString(R.string.qr_scan_title))
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.tools_manage_qr_title))
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> startActivity(Intent(this, QrGenerateActivity::class.java))
-                    1 -> startActivity(Intent(this, QrScanActivity::class.java))
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .showAccented()
-    }
 
     private fun showEmergencyQuickSheet() {
         val featureEnabled = EmergencyBypassStore.isFeatureEnabled(this)

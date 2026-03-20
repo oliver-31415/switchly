@@ -216,6 +216,8 @@ class SupportActivity : AppCompatActivity() {
         line("Channel allowed: nfc", AutomationModeStore.isNfcAllowed(this@SupportActivity))
         line("Channel allowed: qr(channel)", AutomationModeStore.isQrChannelAllowed(this@SupportActivity))
         line("Channel allowed: qr(effective)", AutomationModeStore.isQrAllowed(this@SupportActivity))
+        line("Channel allowed: barcode(channel)", AutomationModeStore.isBarcodeChannelAllowed(this@SupportActivity))
+        line("Channel allowed: barcode(effective)", AutomationModeStore.isBarcodeAllowed(this@SupportActivity))
         line("Channel allowed: tile", AutomationModeStore.isTileAllowed(this@SupportActivity))
         line("Channel allowed: button", AutomationModeStore.isButtonAllowed(this@SupportActivity))
 
@@ -223,12 +225,14 @@ class SupportActivity : AppCompatActivity() {
             line("Mixed toggle: schedule", AutomationModeStore.isMixedAllowSchedule(this@SupportActivity))
             line("Mixed toggle: nfc", AutomationModeStore.isMixedAllowNfc(this@SupportActivity))
             line("Mixed toggle: qr", AutomationModeStore.isMixedAllowQr(this@SupportActivity))
+            line("Mixed toggle: barcode", AutomationModeStore.isMixedAllowBarcode(this@SupportActivity))
             line("Mixed toggle: tile", AutomationModeStore.isMixedAllowTile(this@SupportActivity))
             line("Mixed toggle: button", AutomationModeStore.isMixedAllowButton(this@SupportActivity))
         }
 
         line("Quick actions visible", defaultSp.getBoolean("pref_show_quick_actions", true))
-        line("QR feature enabled", defaultSp.getBoolean("pref_show_qr_code", false))
+        line("QR tools visible", AutomationModeStore.shouldShowQrTools(this@SupportActivity))
+        line("Barcode tools visible", AutomationModeStore.shouldShowBarcodeTools(this@SupportActivity))
 
         section("Permissions")
         val notificationsEnabled = NotificationManagerCompat.from(this@SupportActivity).areNotificationsEnabled()

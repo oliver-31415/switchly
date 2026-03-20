@@ -1,6 +1,42 @@
 {
     "releases": [
         {
+            "version": "v2.0.4",
+            "date": "Mar 19, 2026",
+            "body": [
+                "Fixed Mixed mode so NFC, schedules, and other allowed channels can work together without incorrectly blocking each other",
+                "Fixed an issue where \"Require NFC to disable\" could interfere with other enabled control methods in Mixed mode",
+                "Improved blocked-app handling to reduce unintended one-handed mode triggers on some Samsung devices",
+                "Fixed several rare ANRs and crashes related to accessibility scanning and browser website detection",
+                "Fixed a crash in App Lock settings on some devices and improved overall blocking reliability"
+            ]
+        },
+        {
+            "version": "v2.0.3",
+            "date": "Mar 17, 2026",
+            "body": [
+                "Fixed an issue where NFC scanning could stop working after writing a tag",
+                "Fixed the NFC write flow so the write screen no longer intercepts follow-up scans",
+                "Improved NFC entry and write handling for more reliable scanning and actions",
+                "Changed NFC handling so only explicit switchly:// tags are accepted",
+                "Prevented unrelated NFC tags from accidentally triggering Switchly actions"
+            ]
+        },
+        {
+            "version": "v2.0.2",
+            "date": "Mar 17, 2026",
+            "body": [
+                "Added optional barcode support with barcode scanning, barcode management, and barcode-based actions",
+                "Added a new app lock with PIN and biometric unlock support",
+                "Fixed crashes and UI issues in the new app lock flow",
+                "Improved daily app usage/statistics so apps appear more reliably in the daily view",
+                "Improved QR and barcode controls, visibility, and home screen access",
+                "Simplified QR/barcode settings by removing redundant action toggles from additional features",
+                "Changed schedules to be read-only while Switchly is active",
+                "Added various smaller bug fixes and UI improvements across the app"
+            ]
+        },
+        {
             "version": "v2.0.1",
             "date": "Mar 15, 2026",
             "body": [

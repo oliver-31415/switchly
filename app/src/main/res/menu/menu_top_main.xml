@@ -3,6 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_qr_header"
+        android:title="@string/qr_scan_title"
+        android:icon="@drawable/qr_code_24"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_barcode_header"
+        android:title="@string/barcode_scan_title"
+        android:icon="@drawable/barcode_24"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_info"
         android:title="@string/main_info_title"
         android:icon="@drawable/info_24"

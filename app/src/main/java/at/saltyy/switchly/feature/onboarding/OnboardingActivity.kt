@@ -21,7 +21,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
-import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.onboarding.OnboardingPage
@@ -225,18 +224,8 @@ class OnboardingActivity : ComponentActivity() {
      * - Show QR Button (Top bar)
      */
     private fun showOptionalFeaturesDialog() {
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-
         val view = layoutInflater.inflate(R.layout.dialog_onboarding_optional_features, null)
         val swNfc = view.findViewById<SwitchMaterial>(R.id.swRequireNfcUnlock)
-        val swQr = view.findViewById<SwitchMaterial>(R.id.swShowQrButton)
-        swQr.visibility = View.GONE
-        (view as? android.view.ViewGroup)?.let { container ->
-            val idx = container.indexOfChild(swQr)
-            if (idx >= 0 && idx + 1 < container.childCount) {
-                container.getChildAt(idx + 1).visibility = View.GONE
-            }
-        }
 
         val initialNfcRequired = SwitchModeStore.isNfcRequiredForDisable(this)
         var ignoreNfcListener = false
@@ -244,7 +233,6 @@ class OnboardingActivity : ComponentActivity() {
 
         // current values
         swNfc.isChecked = initialNfcRequired
-        swQr.isChecked = sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_QR_CODE, false)
 
         // Onboarding should have the same explicit opt-in safety confirmation as Settings.
         swNfc.setOnCheckedChangeListener { _, isChecked ->
@@ -276,21 +264,18 @@ class OnboardingActivity : ComponentActivity() {
             .setView(view)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val requestedNfc = swNfc.isChecked
-                val requestedQr = swQr.isChecked
 
-                // If user somehow checked NFC without explicit opt-in in this dialog, keep it off and still persist QR preference.
                 if (requestedNfc && !nfcEnableConfirmedInDialog) {
-                    applyOptionalFeatureSelection(requestedNfc = false, requestedQr = requestedQr)
+                    applyOptionalFeatureSelection(requestedNfc = false)
                 } else {
-                    applyOptionalFeatureSelection(requestedNfc = requestedNfc, requestedQr = requestedQr)
+                    applyOptionalFeatureSelection(requestedNfc = requestedNfc)
                 }
             }
             .setNegativeButton(R.string.cancel, null)
             .showAccented()
     }
 
-    private fun applyOptionalFeatureSelection(requestedNfc: Boolean, requestedQr: Boolean) {
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+    private fun applyOptionalFeatureSelection(requestedNfc: Boolean) {
 
         // If Switchly is enabled, do NOT allow disabling the NFC requirement
         val enabled = SwitchModeStore.isEnabled(this)
@@ -303,9 +288,6 @@ class OnboardingActivity : ComponentActivity() {
         }
 
         SwitchModeStore.setNfcRequiredForDisable(this, finalNfc)
-        sp.edit {
-            putBoolean(ToggleOptionsActivity.KEY_SHOW_QR_CODE, requestedQr)
-        }
     }
 
     private fun applyFooterButtonAccent(btnSkip: MaterialButton, btnNext: MaterialButton) {

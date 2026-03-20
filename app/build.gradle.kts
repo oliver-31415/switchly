@@ -2,15 +2,16 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
-
-    // Optional: only applied if app/google-services.json exists
     id("com.google.gms.google-services") apply false
     id("com.google.firebase.crashlytics") apply false
 }
 
-// Optional Firebase integration.
-// Open-source builds should work without Firebase configured.
-if (file("google-services.json").exists()) {
+val firebaseEnabled = providers.gradleProperty("switchly.firebase")
+    .map(String::toBoolean)
+    .orElse(false)
+    .get()
+
+if (firebaseEnabled) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
 }
@@ -24,8 +25,8 @@ android {
         minSdk = 27
         targetSdk = 36
 
-        versionCode = 201
-        versionName = "2.0.1"
+        versionCode = 203
+        versionName = "2.0.3"
     }
 
     buildFeatures {
@@ -58,13 +59,13 @@ android {
 dependencies {
     // AndroidX core, UI, and preferences
     implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("androidx.core:core-ktx:1.18.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
 
     // Coroutines helpers (lifecycleScope) + DataStore (for small user prefs)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
-    implementation("androidx.datastore:datastore-preferences:1.2.0")
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
 
     // Local database (Room)
     val roomVersion = "2.8.4"

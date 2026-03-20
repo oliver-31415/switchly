@@ -189,6 +189,4 @@
         app:srcCompat="@drawable/tune_24"
         app:useCompatPadding="true" />
 
-    <!-- Bottom-Navigation (same as other main screens) -->
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

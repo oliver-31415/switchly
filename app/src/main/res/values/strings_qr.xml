@@ -5,17 +5,11 @@
          QR: Entry points/navigation
          ========================================================= -->
     <string name="qr_title">QR</string>
-    <string name="qr_generate_title">Create QR code</string>
+    <string name="qr_generate_title">Generate QR</string>
     <string name="qr_scan_title">Scan QR code</string>
 
     <!-- =========================================================
-         QR: Preference toggle
-         ========================================================= -->
-    <string name="pref_show_qr_code_title">Enable QR actions</string>
-    <string name="pref_show_qr_code_summary">Allow QR actions. Create and scan QR codes from Management.</string>
-
-    <!-- =========================================================
-         QR: Permissions/errors
+         QR: Preference toggles
          ========================================================= -->
     <string name="permission_camera_required">Camera permission is required to scan QR codes.</string>
     <string name="invalid_qr_code">Invalid QR code</string>

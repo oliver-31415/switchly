@@ -137,6 +137,14 @@
             android:icon="@drawable/lock_24"
             app:iconSpaceReserved="false" />
 
+        <Preference
+            android:key="pref_app_lock"
+            android:layout="@layout/pref_card_item"
+            android:title="@string/pref_app_lock_title"
+            android:summary="@string/pref_app_lock_summary"
+            android:icon="@drawable/security_24"
+            app:iconSpaceReserved="false" />
+
         <PreferenceScreen
             android:key="screen_backup"
             android:layout="@layout/pref_card_item"

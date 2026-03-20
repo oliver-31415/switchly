@@ -11,6 +11,7 @@ import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
 import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
+import at.saltyy.switchly.security.AppLockManager
 
 class App : Application() {
     override fun onCreate() {
@@ -37,6 +38,8 @@ class App : Application() {
         // start/stop trigger monitors based on active rules
         WifiTriggerMonitor.ensureStarted(this)
         BluetoothTriggerMonitor.ensureStarted(this)
+
+        AppLockManager.register(this)
 
         // auto-start blocking runtime if enabled and Accessibility is available
         val enabled = SwitchModeStore.isEnabled(this)

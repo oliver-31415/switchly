@@ -94,8 +94,8 @@
     <string name="pref_require_nfc_unlock_title">NFC zum Deaktivieren von Switchly erforderlich</string>
     <string name="pref_require_nfc_unlock_summary">Wenn aktiv, kann Switchly nur mit einem gekoppelten NFC-Tag (oder QR-Fallback) deaktiviert werden.</string>
 
-    <string name="pref_qs_tile_title">Schnelleinstellungen-Kachel verfügbar</string>
-    <string name="pref_qs_tile_summary">Fordert die Switchly-Kachel in Android-Schnelleinstellungen an bzw. behält sie dort.</string>
+    <string name="pref_qs_tile_title">Kachel-Verfügbarkeit</string>
+    <string name="pref_qs_tile_summary">Hält die Switchly-Kachel in den Android-Schnelleinstellungen verfügbar.</string>
 
     <string name="pref_autostart_title">Switchly nach Neustart starten</string>
     <string name="pref_autostart_summary">Startet Switchly nach einem Neustart wieder.</string>
@@ -148,9 +148,9 @@
     <string name="pref_mixed_allow_schedule_title">Zeitplan-Kanal erlauben</string>
     <string name="pref_mixed_allow_schedule_summary">Erlaubt Zeitplänen, Switchly zu aktivieren/deaktivieren.</string>
     <string name="pref_mixed_allow_nfc_title">NFC-Kanal erlauben</string>
-    <string name="pref_mixed_allow_nfc_summary">Erlaubt gekoppelten NFC-Tags, Switchly zu steuern.</string>
+    <string name="pref_mixed_allow_nfc_summary">Erlaubt NFC-Tags, Switchly zu steuern. Wenn gekoppelte NFC-Tags aktiviert sind, werden nur gekoppelte Tags akzeptiert.</string>
     <string name="pref_mixed_allow_qr_title">QR-Kanal erlauben</string>
-    <string name="pref_mixed_allow_qr_summary">Erlaubt QR-Aktionen zur Steuerung (zusätzlich QR-Button nötig).</string>
+    <string name="pref_mixed_allow_qr_summary">Erlaubt QR-Aktionen zur Steuerung.</string>
     <string name="pref_mixed_allow_button_title">Button-Kanal erlauben</string>
     <string name="pref_mixed_allow_button_summary">Erlaubt Dashboard-/manuellen Buttons, Switchly zu schalten.</string>
     <string name="pref_mixed_allow_app_picking_title">App-Auswahl erlauben</string>
@@ -166,12 +166,12 @@
     <string name="pref_lock_switchly_app_access_summary">Sperrt Switchly-Seiten, solange der Schutz aktiv ist.</string>
 
     <string name="toggle_detail_mode_schedule">Fokus auf Zeitpläne. NFC- und QR-Aktionen werden in diesem Modus ignoriert.</string>
-    <string name="toggle_detail_mode_nfc">Fokus auf physische Hürde. Nur gekoppelte NFC-Tag-Aktionen werden für Automationen akzeptiert.</string>
+    <string name="toggle_detail_mode_nfc">Fokus auf physische Hürde. NFC-Tag-Aktionen werden für Automationen akzeptiert. Wenn gekoppelte NFC-Tags aktiviert sind, werden nur gekoppelte Tags akzeptiert.</string>
     <string name="toggle_detail_mode_qr">Fokus auf QR-Workflows. NFC und Zeitpläne werden in diesem Modus ignoriert.</string>
     <string name="toggle_detail_mode_mixed">Flexibler Modus mit kanalweiser Steuerung. Öffne „Kanal-Berechtigungen“, um aktive Steuerpfade festzulegen.</string>
     <string name="toggle_detail_mixed_allow_schedule">Wenn aktiv, dürfen Zeitpläne im gemischten Modus den Switchly-Status ändern.</string>
-    <string name="toggle_detail_mixed_allow_nfc">Wenn aktiv, werden gekoppelte NFC-Tags im gemischten Modus als Steuerung akzeptiert.</string>
-    <string name="toggle_detail_mixed_allow_qr">Wenn aktiv, ist QR-Steuerung im gemischten Modus erlaubt. Der QR-Button auf dem Startbildschirm muss zusätzlich aktiv sein.</string>
+    <string name="toggle_detail_mixed_allow_nfc">Wenn aktiv, werden NFC-Tags im gemischten Modus als Steuerung akzeptiert. Wenn gekoppelte NFC-Tags aktiviert sind, werden nur gekoppelte Tags akzeptiert.</string>
+    <string name="toggle_detail_mixed_allow_qr">Wenn aktiviert, ist die QR-Steuerung im gemischten Modus erlaubt.</string>
     <string name="toggle_detail_mixed_allow_button">Wenn aktiv, können manuelle Buttons in der App Switchly im gemischten Modus schalten.</string>
     <string name="toggle_detail_mixed_allow_app_picking">Standardmäßig ist das aus Sicherheitsgründen gesperrt, solange Switchly aktiv ist. Aktiviere dies nur, wenn App-Listen-Änderungen trotz aktivem Schutz gewünscht sind.</string>
     <string name="toggle_detail_mixed_allow_profile_switching">Standardmäßig ist das aus Sicherheitsgründen gesperrt, solange Switchly aktiv ist. Aktiviere dies nur, wenn Profilwechsel trotz aktivem Schutz gewünscht sind.</string>
@@ -194,10 +194,8 @@
 
     <string name="mode_blocked_nfc_action">NFC-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_qr_action">QR-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
-    <string name="mode_blocked_qr_mixed_enable_toggle">Aktiviere QR-Aktionen in den Blocking-Steuerungen, um QR zu nutzen.</string>
     <string name="mode_blocked_tile_action">Die Schnelleinstellungen-Kachel ist deaktiviert, weil manuelle Steuerung im aktuellen Modus deaktiviert ist.</string>
     <string name="mode_blocked_button_action">Manuelle Buttons sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
-    <string name="toggle_detail_show_qr">Aktiviert QR-Aktionen als optionalen Steuerungskanal. QR-Codes kannst du in Verwaltung erstellen und scannen.</string>
     <string name="toggle_detail_quick_tile">Fügt die Switchly-Kachel zu den Android-Schnelleinstellungen hinzu. Im Mixed-Modus folgt sie derselben Berechtigung wie der manuelle Button-Kanal.</string>
     <string name="toggle_detail_block_notifications">Filtert Benachrichtigungen von Apps, die durch dein aktives Profil gerade blockiert sind. Benötigt Benachrichtigungszugriff.</string>
     <string name="toggle_detail_autostart">Nach einem Neustart versucht Switchly automatisch wieder zu starten, damit dein Schutzprofil direkt aktiv ist.</string>
@@ -280,4 +278,41 @@
 
     <string name="toggle_info_paired_uids_body_enabled">Nur NFC-Aktionen von gepaarten Tags akzeptieren.\n\nTags in Einstellungen → NFC-Tags koppeln, dann unter „Gepaarte Tags verwalten“ umbenennen oder entfernen. Sobald mindestens eine UID gekoppelt ist, können nur gepaarte Tags Switchly umschalten/entsperren.</string>
     <string name="toggle_info_paired_uids_body_disabled">Koppeln ist aktuell deaktiviert.\n\nWas es macht: Wenn du mindestens einen NFC-Tag koppelst, können nur gepaarte Tags Switchly umschalten/entsperren (schützt vor fremden Tags).\n\nAktivieren: Einstellungen → Blocking &amp; Control Toggles → Gepaarte NFC-Tags aktivieren.</string>
+
+    <string name="pref_mode_barcode_title">Barcode-Modus</string>
+    <string name="pref_mode_barcode_summary">Nur Barcode-Aktionen dürfen Switchly automatisch ein-/ausschalten.</string>
+    <string name="pref_mixed_allow_barcode_title">Barcode-Kanal erlauben</string>
+    <string name="pref_mixed_allow_barcode_summary">Erlaubt Barcode-Aktionen zur Steuerung von Switchly.</string>
+    <string name="toggle_detail_mode_barcode">Fokus auf physische Barcode-Workflows. QR, NFC und Zeitpläne werden in diesem Modus ignoriert.</string>
+    <string name="toggle_detail_mixed_allow_barcode">Wenn aktiviert, werden gespeicherte Barcode-Aktionen im gemischten Modus akzeptiert.</string>
+    <string name="mode_blocked_barcode_action">Barcode-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
+
+    <string name="pref_app_lock_title">App-Sperre</string>
+    <string name="pref_app_lock_summary">Schütze Switchly mit PIN oder Biometrie.</string>
+    <string name="app_lock_screen_title">App-Sperre</string>
+    <string name="app_lock_enable_title">Switchly-App schützen</string>
+    <string name="app_lock_enable_summary">Beim Öffnen von Switchly PIN oder Biometrie verlangen.</string>
+    <string name="app_lock_biometric_title">Biometrisches Entsperren erlauben</string>
+    <string name="app_lock_biometric_summary">Gesicht oder Fingerabdruck kann Switchly statt der PIN entsperren.</string>
+    <string name="app_lock_set_pin_title">App-PIN festlegen</string>
+    <string name="app_lock_change_pin_title">App-PIN ändern</string>
+    <string name="app_lock_pin_set">App-PIN gespeichert.</string>
+    <string name="app_lock_pin_hint_new">App-PIN wählen (mind. 4 Ziffern)</string>
+    <string name="app_lock_pin_hint_enter">App-PIN eingeben</string>
+    <string name="app_lock_pin_title">Switchly-PIN</string>
+    <string name="app_lock_pin_message">Diese PIN entsperrt Switchly, wenn die App-Sperre aktiv ist.</string>
+    <string name="app_lock_pin_incorrect">Falsche PIN.</string>
+    <string name="app_lock_pin_too_short">Die PIN muss mindestens 4 Ziffern haben.</string>
+    <string name="app_lock_unlock_title">Switchly entsperren</string>
+    <string name="app_lock_unlock_message">Gib deine App-PIN ein oder nutze Biometrie, um fortzufahren.</string>
+    <string name="app_lock_unlock_button">Entsperren</string>
+    <string name="app_lock_biometric_button">Biometrie verwenden</string>
+    <string name="app_lock_biometric_prompt_title">Switchly entsperren</string>
+    <string name="app_lock_biometric_prompt_subtitle">Nutze Gesicht oder Fingerabdruck, um die App zu öffnen.</string>
+    <string name="app_lock_biometric_not_available">Biometrie ist auf diesem Gerät gerade nicht verfügbar.</string>
+    <string name="app_lock_setup_pin_first">Lege zuerst eine App-PIN fest.</string>
+    <string name="app_lock_status_off">Aus</string>
+    <string name="app_lock_status_pin_only">PIN aktiviert</string>
+    <string name="app_lock_status_pin_biometric">PIN + Biometrie aktiviert</string>
+
 </resources>

@@ -9,6 +9,7 @@ import android.app.KeyguardManager
 import android.content.Intent
 import android.media.AudioManager
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
@@ -40,6 +41,7 @@ import at.saltyy.switchly.feature.blocker.BlockerActivity
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.util.AppUsageToday
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
+import java.util.ArrayDeque
 import java.util.Locale
 import at.saltyy.switchly.data.prefs.SurfaceUsageStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
@@ -53,6 +55,10 @@ import at.saltyy.switchly.data.prefs.DomainLimitStore
 class SwitchlyAccessibilityService : AccessibilityService() {
 
     private val handler = Handler(Looper.getMainLooper())
+    private var usageWorkerThread: HandlerThread? = null
+    private var usageWorker: Handler? = null
+    @Volatile private var topRefreshInFlight: Boolean = false
+    @Volatile private var usageOpenScanInFlight: Boolean = false
 
     private lateinit var pm: PowerManager
     private var km: KeyguardManager? = null
@@ -116,6 +122,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     // Keep this short so users can legitimately open/close the same app a few times without missing counts.
     private val OPEN_COUNT_COOLDOWN_MS = 800L
     private val BLOCK_SHOWN_COOLDOWN_MS = 800L
+    private val HOME_BOUNCE_COOLDOWN_MS = 900L
+    private var lastHomeBounceAt: Long = 0L
     private val BROWSER_DOMAIN_CONFIRM_MS = 700L
     private val SURFACE_CONFIRM_MS = 850L
     private val INAPP_POST_BLOCK_GRACE_MS = 1_800L
@@ -123,6 +131,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private val INSTA_EXPLORE_REENTRY_GUARD_MS = 2_200L
     private val INAPP_ENTRY_SETTLE_MS = 1_400L
     private val YT_SHORTS_REENTRY_GUARD_MS = 2_200L
+
+    private val MAX_NODE_SCAN_COUNT = 120
+    private val MAX_NODE_SCAN_DEPTH = 12
 
     private val INAPP_GLOBAL_LIMIT_KEY_LEGACY = "inapp:global"
 
@@ -491,6 +502,11 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         lastTickAt = System.currentTimeMillis()
         lastUsageOpenScanAt = lastTickAt
+        usageWorkerThread?.quitSafely()
+        usageWorkerThread = HandlerThread("switchly-usage-worker").apply { start() }
+        usageWorker = Handler(usageWorkerThread!!.looper)
+        topRefreshInFlight = false
+        usageOpenScanInFlight = false
         handler.removeCallbacks(tick)
         handler.postDelayed(tick, 1_000L)
     }
@@ -501,6 +517,11 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     override fun onDestroy() {
         handler.removeCallbacks(tick)
+        usageWorkerThread?.quitSafely()
+        usageWorkerThread = null
+        usageWorker = null
+        topRefreshInFlight = false
+        usageOpenScanInFlight = false
         runCatching { BlockingRuntime.markAccessibilityDisconnected(this) }
         runCatching { maybeFlushPerfCounters() }
         runCatching { at.saltyy.switchly.util.ProtectionStatusNotifier.refresh(this) }
@@ -828,21 +849,38 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     /**
      * Refreshes [currentTopPkg] using UsageEvents at a low cadence.
      * If Usage Access isn't granted, this is a no-op.
+     *
+     * The UsageStats binder can stall unpredictably on some devices, so the query runs on a
+     * worker thread and only the lightweight state update is posted back to the main thread.
      */
     private fun refreshTopPackageIfNeeded(now: Long) {
-        // Don't spam the system service.
         if (now - lastTopRefreshAt < 3_000L) return
-        lastTopRefreshAt = now
+        if (topRefreshInFlight) return
 
-        val top = runCatching { resolveTopPackageFromUsageEvents(now) }.getOrNull() ?: return
+        lastTopRefreshAt = now
+        topRefreshInFlight = true
+
+        val start = (now - 10_000L).coerceAtLeast(0L)
+        usageWorker?.post {
+            val top = runCatching { resolveTopPackageFromUsageEvents(start, now) }.getOrNull()
+            topRefreshInFlight = false
+            if (top.isNullOrBlank()) return@post
+
+            handler.post {
+                applyResolvedTopPackage(top, now)
+            }
+        } ?: run {
+            topRefreshInFlight = false
+        }
+    }
+
+    private fun applyResolvedTopPackage(top: String, now: Long) {
         if (top.isBlank()) return
         if (top == currentTopPkg) return
 
         currentTopPkg = top
         appEnteredAtByPkg[top] = now
 
-        // Snapshot usage at entry so limits can be enforced while the app stays open.
-        // (Some devices only update UsageStats totalTimeInForeground once the app is backgrounded.)
         runCatching {
             usageInternalAtEnterByPkg[top] = UsageStore.getUsageMsToday(this, top)
             usageSystemAtEnterByPkg[top] = getSystemUsageMsToday(top, now)
@@ -856,8 +894,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             browserCandidateSince = 0L
         }
 
-        // If the foreground package was corrected via UsageEvents, also count an "open" here.
-        // This covers devices that miss accessibility transition events when switching via Recents.
         maybeCountOpenAndEnforceAttemptLimit(top, now)
     }
 
@@ -867,8 +903,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
      * Some OEMs (and some navigation flows) do not emit consistent accessibility transition
      * events when leaving/returning to apps (especially via Recents). UsageEvents is
      * the most reliable cross-device signal for "app became foreground".
-     *
-     * This is only used when the user has configured at least one attempt limit.
      */
     private fun scanUsageEventsForOpens(now: Long) {
         if (!hasAnyAttemptLimitsCached(now)) {
@@ -876,44 +910,36 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             return
         }
 
-        // Throttle scanning to reduce overhead.
         if (lastUsageOpenScanAt == 0L) {
             lastUsageOpenScanAt = now
             return
         }
         if (now - lastUsageOpenScanAt < 1_500L) return
+        if (usageOpenScanInFlight) return
 
-        // Small overlap so we do not miss events due to scheduling jitter.
         val from = (lastUsageOpenScanAt - 400L).coerceAtLeast((now - 30_000L).coerceAtLeast(0L))
         val to = now
         lastUsageOpenScanAt = now
+        usageOpenScanInFlight = true
 
-        val usm = getSystemService(USAGE_STATS_SERVICE) as? UsageStatsManager ?: return
-        val events = try {
-            usm.queryEvents(from, to)
-        } catch (_: SecurityException) {
-            return
-        } catch (_: Throwable) {
-            return
-        }
+        usageWorker?.post {
+            val events = runCatching { queryForegroundEvents(from, to) }.getOrDefault(emptyList())
+            usageOpenScanInFlight = false
+            if (events.isEmpty()) return@post
 
-        val e = UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(e)
-            if (e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                val pkg = e.packageName?.trim().orEmpty()
-                if (pkg.isNotBlank() && pkg != packageName) {
-                    maybeCountOpenAndEnforceAttemptLimit(pkg, e.timeStamp)
+            handler.post {
+                events.forEach { (pkg, ts) ->
+                    maybeCountOpenAndEnforceAttemptLimit(pkg, ts)
                 }
             }
+        } ?: run {
+            usageOpenScanInFlight = false
         }
     }
 
-    private fun resolveTopPackageFromUsageEvents(now: Long): String? {
+    private fun resolveTopPackageFromUsageEvents(start: Long, end: Long): String? {
         val usm = getSystemService(USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
-        // Look back a short window; we only need the most recent foreground transition.
-        val start = (now - 10_000L).coerceAtLeast(0L)
-        val events = usm.queryEvents(start, now)
+        val events = usm.queryEvents(start, end)
         val e = UsageEvents.Event()
         var lastPkg: String? = null
         var lastTs = 0L
@@ -928,6 +954,30 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
         }
         return lastPkg
+    }
+
+    private fun queryForegroundEvents(start: Long, end: Long): List<Pair<String, Long>> {
+        val usm = getSystemService(USAGE_STATS_SERVICE) as? UsageStatsManager ?: return emptyList()
+        val events = try {
+            usm.queryEvents(start, end)
+        } catch (_: SecurityException) {
+            return emptyList()
+        } catch (_: Throwable) {
+            return emptyList()
+        }
+
+        val out = ArrayList<Pair<String, Long>>()
+        val e = UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(e)
+            if (e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                val pkg = e.packageName?.trim().orEmpty()
+                if (pkg.isNotBlank() && pkg != packageName) {
+                    out += pkg to e.timeStamp
+                }
+            }
+        }
+        return out
     }
 
     /**
@@ -1183,11 +1233,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             packageManager.getApplicationLabel(ai).toString()
         }.getOrNull() ?: pkg
 
-        bounceHomeAndKill(pkg)
-
-        val delayMs = if (immediate) 80L else 120L
+        val delayMs = if (immediate) 20L else 60L
         handler.postDelayed({
             runCatching { BlockerActivity.show(this, pkg, label) }
+            handler.postDelayed({
+                runCatching {
+                    val am = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+                    am.killBackgroundProcesses(pkg)
+                }
+            }, 220L)
         }, delayMs)
     }
     
@@ -1472,15 +1526,18 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val ids = browserUrlViewIds(pkg)
         for (id in ids) {
             val nodes = runCatching { root.findAccessibilityNodeInfosByViewId(id) }.getOrNull() ?: emptyList()
-            val best = nodes.firstOrNull {
-                !it.text?.toString().isNullOrBlank() ||
-                    !it.contentDescription?.toString().isNullOrBlank()
+            val copy = try {
+                val best = nodes.firstOrNull {
+                    !it.text?.toString().isNullOrBlank() ||
+                        !it.contentDescription?.toString().isNullOrBlank()
+                } ?: nodes.firstOrNull()
+                best?.let { AccessibilityNodeInfo.obtain(it) }
+            } finally {
+                nodes.forEach { runCatching { it.recycle() } }
             }
-                ?: nodes.firstOrNull()
-            if (best != null) return best
+            if (copy != null) return copy
         }
 
-        // Firefox/Fenix can shift view IDs between versions. Fallback by scanning toolbar-like nodes.
         if (pkg.startsWith("org.mozilla.")) {
             return findAnyNode(root) { node ->
                 val vid = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
@@ -1503,32 +1560,39 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         event: AccessibilityEvent?
     ): Boolean {
         val node = findBrowserUrlNode(root, pkg) ?: return false
-        val cls = node.className?.toString().orEmpty()
-        val isEdit = node.isEditable || cls.contains("EditText", ignoreCase = true)
-        val focused = node.isFocused || node.isAccessibilityFocused
-        if (focused) return true
+        try {
+            val cls = node.className?.toString().orEmpty()
+            val isEdit = node.isEditable || cls.contains("EditText", ignoreCase = true)
+            val focused = node.isFocused || node.isAccessibilityFocused
+            if (focused) return true
 
-        val type = event?.eventType ?: 0
-        val inputEvent = type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED ||
-            type == AccessibilityEvent.TYPE_VIEW_FOCUSED ||
-            type == AccessibilityEvent.TYPE_VIEW_CLICKED
-        return isEdit && inputEvent
+            val type = event?.eventType ?: 0
+            val inputEvent = type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED ||
+                type == AccessibilityEvent.TYPE_VIEW_FOCUSED ||
+                type == AccessibilityEvent.TYPE_VIEW_CLICKED
+            return isEdit && inputEvent
+        } finally {
+            runCatching { node.recycle() }
+        }
     }
 
     private fun tryExtractDomainFromBrowser(root: AccessibilityNodeInfo?, pkg: String): String? {
         if (root == null) return null
         val urlNode = findBrowserUrlNode(root, pkg)
-        val t = urlNode?.text?.toString()?.trim().orEmpty()
-        if (t.isNotBlank()) {
-            domainFromText(t)?.let { return it }
+        try {
+            val t = urlNode?.text?.toString()?.trim().orEmpty()
+            if (t.isNotBlank()) {
+                domainFromText(t)?.let { return it }
+            }
+
+            val cd = urlNode?.contentDescription?.toString()?.trim().orEmpty()
+            if (cd.isNotBlank()) {
+                domainFromText(cd)?.let { return it }
+            }
+        } finally {
+            if (urlNode != null) runCatching { urlNode.recycle() }
         }
 
-        val cd = urlNode?.contentDescription?.toString()?.trim().orEmpty()
-        if (cd.isNotBlank()) {
-            domainFromText(cd)?.let { return it }
-        }
-
-        // Fallback: only consider address-bar-like editable nodes (avoid matching page content/tab titles)
         val candidate = findEditableUrlText(root)
         return candidate?.let { domainFromText(it) }
     }
@@ -1552,43 +1616,80 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun findEditableUrlText(node: AccessibilityNodeInfo): String? {
-        val t = node.text?.toString()?.trim()
-        val cd = node.contentDescription?.toString()?.trim()
-        val vid = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
-        val cls = node.className?.toString().orEmpty()
+        data class WorkItem(val node: AccessibilityNodeInfo, val depth: Int, val owned: Boolean)
 
-        val candidate = when {
-            !t.isNullOrBlank() -> t
-            !cd.isNullOrBlank() -> cd
-            else -> null
-        }
+        val stack = ArrayDeque<WorkItem>()
+        stack.addLast(WorkItem(node, 0, false))
+        var visited = 0
 
-        val looksLikeUrl = candidate != null && candidate.length in 4..300 && candidate.contains(".")
-        val idHints = vid.contains("url") || vid.contains("address") || vid.contains("omnibox") ||
-            vid.contains("location") || vid.contains("toolbar")
-        val isEdit = node.isEditable || cls.contains("EditText", ignoreCase = true)
+        while (stack.isNotEmpty() && visited < MAX_NODE_SCAN_COUNT) {
+            val item = stack.removeLast()
+            val current = item.node
+            try {
+                visited++
 
-        // Ignore actively focused editable fields to avoid blocking while typing/autocomplete.
-        val editingNow = node.isFocused || node.isAccessibilityFocused
+                val t = current.text?.toString()?.trim()
+                val cd = current.contentDescription?.toString()?.trim()
+                val vid = current.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+                val cls = current.className?.toString().orEmpty()
 
-        if (candidate != null && looksLikeUrl && (idHints || isEdit) && !editingNow) {
-            return candidate
-        }
-        for (i in 0 until node.childCount) {
-            val c = node.getChild(i) ?: continue
-            val r = findEditableUrlText(c)
-            if (r != null) return r
+                val candidate = when {
+                    !t.isNullOrBlank() -> t
+                    !cd.isNullOrBlank() -> cd
+                    else -> null
+                }
+
+                val looksLikeUrl = candidate != null && candidate.length in 4..300 && candidate.contains(".")
+                val idHints = vid.contains("url") || vid.contains("address") || vid.contains("omnibox") ||
+                    vid.contains("location") || vid.contains("toolbar")
+                val isEdit = current.isEditable || cls.contains("EditText", ignoreCase = true)
+                val editingNow = current.isFocused || current.isAccessibilityFocused
+
+                if (candidate != null && looksLikeUrl && (idHints || isEdit) && !editingNow) {
+                    return candidate
+                }
+
+                if (item.depth >= MAX_NODE_SCAN_DEPTH) continue
+
+                val childCount = runCatching { current.childCount }.getOrDefault(0)
+                for (i in childCount - 1 downTo 0) {
+                    if (visited + stack.size >= MAX_NODE_SCAN_COUNT) break
+                    val child = runCatching { current.getChild(i) }.getOrNull() ?: continue
+                    stack.addLast(WorkItem(child, item.depth + 1, true))
+                }
+            } finally {
+                if (item.owned) runCatching { current.recycle() }
+            }
         }
         return null
     }
 
     private fun findFirstTextMatching(node: AccessibilityNodeInfo, pred: (String) -> Boolean): String? {
-        val t = node.text?.toString()
-        if (!t.isNullOrBlank() && pred(t)) return t
-        for (i in 0 until node.childCount) {
-            val c = node.getChild(i) ?: continue
-            val r = findFirstTextMatching(c, pred)
-            if (r != null) return r
+        data class WorkItem(val node: AccessibilityNodeInfo, val depth: Int, val owned: Boolean)
+
+        val stack = ArrayDeque<WorkItem>()
+        stack.addLast(WorkItem(node, 0, false))
+        var visited = 0
+
+        while (stack.isNotEmpty() && visited < MAX_NODE_SCAN_COUNT) {
+            val item = stack.removeLast()
+            val current = item.node
+            try {
+                visited++
+                val t = current.text?.toString()
+                if (!t.isNullOrBlank() && pred(t)) return t
+
+                if (item.depth >= MAX_NODE_SCAN_DEPTH) continue
+
+                val childCount = runCatching { current.childCount }.getOrDefault(0)
+                for (i in childCount - 1 downTo 0) {
+                    if (visited + stack.size >= MAX_NODE_SCAN_COUNT) break
+                    val child = runCatching { current.getChild(i) }.getOrNull() ?: continue
+                    stack.addLast(WorkItem(child, item.depth + 1, true))
+                }
+            } finally {
+                if (item.owned) runCatching { current.recycle() }
+            }
         }
         return null
     }
@@ -1675,28 +1776,59 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private fun nodeHasViewId(root: AccessibilityNodeInfo, viewIds: List<String>): Boolean {
         for (id in viewIds) {
             val nodes = runCatching { root.findAccessibilityNodeInfosByViewId(id) }.getOrNull() ?: emptyList()
-            if (nodes.isNotEmpty()) return true
+            val hasNodes = try {
+                nodes.isNotEmpty()
+            } finally {
+                nodes.forEach { runCatching { it.recycle() } }
+            }
+            if (hasNodes) return true
         }
         return false
     }
 
     private fun findAnyNode(root: AccessibilityNodeInfo, pred: (AccessibilityNodeInfo) -> Boolean): AccessibilityNodeInfo? {
-        if (pred(root)) return root
-        for (i in 0 until root.childCount) {
-            val c = root.getChild(i) ?: continue
-            val r = findAnyNode(c, pred)
-            if (r != null) return r
+        data class WorkItem(val node: AccessibilityNodeInfo, val depth: Int, val owned: Boolean)
+
+        val stack = ArrayDeque<WorkItem>()
+        stack.addLast(WorkItem(root, 0, false))
+        var visited = 0
+
+        while (stack.isNotEmpty() && visited < MAX_NODE_SCAN_COUNT) {
+            val item = stack.removeLast()
+            val current = item.node
+            try {
+                visited++
+                if (pred(current)) {
+                    return AccessibilityNodeInfo.obtain(current)
+                }
+
+                if (item.depth >= MAX_NODE_SCAN_DEPTH) continue
+
+                val childCount = runCatching { current.childCount }.getOrDefault(0)
+                for (i in childCount - 1 downTo 0) {
+                    if (visited + stack.size >= MAX_NODE_SCAN_COUNT) break
+                    val child = runCatching { current.getChild(i) }.getOrNull() ?: continue
+                    stack.addLast(WorkItem(child, item.depth + 1, true))
+                }
+            } finally {
+                if (item.owned) runCatching { current.recycle() }
+            }
         }
         return null
     }
 
     private fun nodeTextMatches(root: AccessibilityNodeInfo, needles: List<String>): Boolean {
         val n = needles.map { it.lowercase(Locale.getDefault()) }
-        return findAnyNode(root) { node ->
+        val found = findAnyNode(root) { node ->
             val t = node.text?.toString()?.lowercase(Locale.getDefault())
             val cd = node.contentDescription?.toString()?.lowercase(Locale.getDefault())
             (t != null && n.any { t.contains(it) }) || (cd != null && n.any { cd.contains(it) })
-        } != null
+        }
+        return try {
+            found != null
+        } finally {
+            if (found != null) runCatching { found.recycle() }
+        }
     }
 
     private fun eventTextMatches(event: AccessibilityEvent?, needles: List<String>): Boolean {
@@ -1704,7 +1836,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val n = needles.map { it.lowercase(Locale.getDefault()) }
         val cd = event.contentDescription?.toString()?.lowercase(Locale.getDefault())
         if (cd != null && n.any { cd.contains(it) }) return true
-        // event.text is a List<CharSequence>
         val texts = event.text ?: emptyList()
         for (cs in texts) {
             val t = cs?.toString()?.lowercase(Locale.getDefault()) ?: continue
@@ -1715,12 +1846,17 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     private fun hasSelectedLabel(root: AccessibilityNodeInfo, needles: List<String>): Boolean {
         val n = needles.map { it.lowercase(Locale.getDefault()) }
-        return findAnyNode(root) { node ->
+        val found = findAnyNode(root) { node ->
             if (!node.isSelected) return@findAnyNode false
             val t = node.text?.toString()?.lowercase(Locale.getDefault())
             val cd = node.contentDescription?.toString()?.lowercase(Locale.getDefault())
             (t != null && n.any { t.contains(it) }) || (cd != null && n.any { cd.contains(it) })
-        } != null
+        }
+        return try {
+            found != null
+        } finally {
+            if (found != null) runCatching { found.recycle() }
+        }
     }
 
     private fun hasSelectedLabelInPackage(
@@ -1730,7 +1866,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     ): Boolean {
         val n = needles.map { it.lowercase(Locale.getDefault()) }
         val targetPkg = pkg.lowercase(Locale.getDefault())
-        return findAnyNode(root) { node ->
+        val found = findAnyNode(root) { node ->
             if (!node.isSelected) return@findAnyNode false
             val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
             if (nodePkg != targetPkg) return@findAnyNode false
@@ -1738,7 +1874,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             val t = node.text?.toString()?.lowercase(Locale.getDefault())
             val cd = node.contentDescription?.toString()?.lowercase(Locale.getDefault())
             (t != null && n.any { t.contains(it) }) || (cd != null && n.any { cd.contains(it) })
-        } != null
+        }
+        return try {
+            found != null
+        } finally {
+            if (found != null) runCatching { found.recycle() }
+        }
     }
 
     private fun isRootFromPackage(root: AccessibilityNodeInfo?, pkg: String): Boolean {
@@ -1748,23 +1889,36 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val rootPkg = r.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
         if (rootPkg == targetPkg) return true
 
-        return findAnyNode(r) { node ->
+        val found = findAnyNode(r) { node ->
             node.packageName?.toString()?.lowercase(Locale.getDefault()) == targetPkg
-        } != null
+        }
+        return try {
+            found != null
+        } finally {
+            if (found != null) runCatching { found.recycle() }
+        }
     }
 
     private fun clickNodeOrClickableParent(node: AccessibilityNodeInfo?): Boolean {
         var current = node
         var hops = 0
         while (current != null && hops < 6) {
-            val canClick =
-                current.isClickable ||
-                    (current.actionList?.any { it.id == AccessibilityNodeInfo.ACTION_CLICK } == true)
-            if (canClick) {
-                val clicked = runCatching { current.performAction(AccessibilityNodeInfo.ACTION_CLICK) }.getOrDefault(false)
-                if (clicked) return true
+            val next = runCatching { current.parent }.getOrNull()
+            try {
+                val canClick =
+                    current.isClickable ||
+                        (current.actionList?.any { it.id == AccessibilityNodeInfo.ACTION_CLICK } == true)
+                if (canClick) {
+                    val clicked = runCatching { current.performAction(AccessibilityNodeInfo.ACTION_CLICK) }.getOrDefault(false)
+                    if (clicked) {
+                        next?.let { runCatching { it.recycle() } }
+                        return true
+                    }
+                }
+            } finally {
+                runCatching { current.recycle() }
             }
-            current = current.parent
+            current = next
             hops++
         }
         return false
@@ -1839,8 +1993,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (clickNodeOrClickableParent(genericCandidate)) return true
 
         // Already on home tab.
-        val alreadyHome = findAnyNode(r) { n -> isHomeLabel(n) && n.isSelected } != null
-        return alreadyHome
+        val alreadyHomeNode = findAnyNode(r) { n -> isHomeLabel(n) && n.isSelected }
+        return try {
+            alreadyHomeNode != null
+        } finally {
+            if (alreadyHomeNode != null) runCatching { alreadyHomeNode.recycle() }
+        }
     }
 
     private fun maybeInAppBlock(pkg: String, event: AccessibilityEvent? = null) {

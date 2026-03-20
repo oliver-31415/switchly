@@ -139,6 +139,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val switchModeSchedule = findViewById<SwitchMaterial>(R.id.switchModeSchedule)
         val switchModeNfc = findViewById<SwitchMaterial>(R.id.switchModeNfc)
         val switchModeQr = findViewById<SwitchMaterial>(R.id.switchModeQr)
+        val switchModeBarcode = findViewById<SwitchMaterial>(R.id.switchModeBarcode)
         val switchModeMixed = findViewById<SwitchMaterial>(R.id.switchModeMixed)
 
         // --- Switches (Mixed mode channels)
@@ -147,6 +148,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val switchMixedAllowSchedule = findViewById<SwitchMaterial>(R.id.switchMixedAllowSchedule)
         val switchMixedAllowNfc = findViewById<SwitchMaterial>(R.id.switchMixedAllowNfc)
         val switchMixedAllowQr = findViewById<SwitchMaterial>(R.id.switchMixedAllowQr)
+        val switchMixedAllowBarcode = findViewById<SwitchMaterial>(R.id.switchMixedAllowBarcode)
         val switchMixedAllowButton = findViewById<SwitchMaterial>(R.id.switchMixedAllowButton)
         val switchMixedAllowAppPicking = findViewById<SwitchMaterial>(R.id.switchMixedAllowAppPicking)
         val switchMixedAllowProfileSwitching = findViewById<SwitchMaterial>(R.id.switchMixedAllowProfileSwitching)
@@ -157,7 +159,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
 
         // --- Switches (Additional features)
         val switchRequireNfcUnlock = findViewById<SwitchMaterial>(R.id.switchRequireNfcUnlock)
-        val switchShowQrButton = findViewById<SwitchMaterial>(R.id.switchShowQrButton)
 
         // --- Switches (Protection)
         val switchBlockNotifications = findViewById<SwitchMaterial>(R.id.switchBlockNotifications)
@@ -174,11 +175,13 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val rowModeSchedule = findViewById<View>(R.id.rowModeSchedule)
         val rowModeNfc = findViewById<View>(R.id.rowModeNfc)
         val rowModeQr = findViewById<View>(R.id.rowModeQr)
+        val rowModeBarcode = findViewById<View>(R.id.rowModeBarcode)
         val rowModeMixed = findViewById<View>(R.id.rowModeMixed)
 
         val rowMixedAllowSchedule = findViewById<View>(R.id.rowMixedAllowSchedule)
         val rowMixedAllowNfc = findViewById<View>(R.id.rowMixedAllowNfc)
         val rowMixedAllowQr = findViewById<View>(R.id.rowMixedAllowQr)
+        val rowMixedAllowBarcode = findViewById<View>(R.id.rowMixedAllowBarcode)
         val rowMixedAllowButton = findViewById<View>(R.id.rowMixedAllowButton)
         val rowMixedAllowAppPicking = findViewById<View>(R.id.rowMixedAllowAppPicking)
         val rowMixedAllowProfileSwitching = findViewById<View>(R.id.rowMixedAllowProfileSwitching)
@@ -188,7 +191,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val rowLimitTempDisableTags = findViewById<View>(R.id.rowLimitTempDisableTags)
 
         val rowRequireNfcUnlock = findViewById<View>(R.id.rowRequireNfcUnlock)
-        val rowShowQrButton = findViewById<View>(R.id.rowShowQrButton)
         val rowQuickTile = findViewById<View>(R.id.rowQuickTile)
         val switchQuickTile = findViewById<SwitchMaterial>(R.id.switchQuickTile)
 
@@ -221,6 +223,13 @@ class ToggleOptionsActivity : AppCompatActivity() {
             detailsRes = R.string.toggle_detail_mode_qr
         )
         addInlineDetailsAction(
+            row = rowModeBarcode,
+            switchView = switchModeBarcode,
+            titleRes = R.string.pref_mode_barcode_title,
+            summaryRes = R.string.pref_mode_barcode_summary,
+            detailsRes = R.string.toggle_detail_mode_barcode
+        )
+        addInlineDetailsAction(
             row = rowModeMixed,
             switchView = switchModeMixed,
             titleRes = R.string.pref_mode_mixed_title,
@@ -248,6 +257,13 @@ class ToggleOptionsActivity : AppCompatActivity() {
             titleRes = R.string.pref_mixed_allow_qr_title,
             summaryRes = R.string.pref_mixed_allow_qr_summary,
             detailsRes = R.string.toggle_detail_mixed_allow_qr
+        )
+        addInlineDetailsAction(
+            row = rowMixedAllowBarcode,
+            switchView = switchMixedAllowBarcode,
+            titleRes = R.string.pref_mixed_allow_barcode_title,
+            summaryRes = R.string.pref_mixed_allow_barcode_summary,
+            detailsRes = R.string.toggle_detail_mixed_allow_barcode
         )
         addInlineDetailsAction(
             row = rowMixedAllowButton,
@@ -300,13 +316,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             detailsRes = R.string.toggle_detail_limit_temp_disable_tags
         )
 
-        addInlineDetailsAction(
-            row = rowShowQrButton,
-            switchView = switchShowQrButton,
-            titleRes = R.string.pref_show_qr_code_title,
-            summaryRes = R.string.pref_show_qr_code_summary,
-            detailsRes = R.string.toggle_detail_show_qr
-        )
+
         addInlineDetailsAction(
             row = rowQuickTile,
             switchView = switchQuickTile,
@@ -347,10 +357,12 @@ class ToggleOptionsActivity : AppCompatActivity() {
             switchModeSchedule,
             switchModeNfc,
             switchModeQr,
+            switchModeBarcode,
             switchModeMixed,
             switchMixedAllowSchedule,
             switchMixedAllowNfc,
             switchMixedAllowQr,
+            switchMixedAllowBarcode,
             switchMixedAllowButton,
             switchMixedAllowAppPicking,
             switchMixedAllowProfileSwitching,
@@ -358,7 +370,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             switchMixedAllowNfcTagWriting,
             switchLockSwitchlyAppAccess,
             switchLimitTempDisableTags,
-            switchShowQrButton,
             switchQuickTile,
             switchBlockNotifications,
             switchAutostart,
@@ -380,6 +391,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         switchMixedAllowSchedule.isChecked = AutomationModeStore.isMixedAllowSchedule(ctx)
         switchMixedAllowNfc.isChecked = AutomationModeStore.isMixedAllowNfc(ctx)
         switchMixedAllowQr.isChecked = AutomationModeStore.isMixedAllowQr(ctx)
+        switchMixedAllowBarcode.isChecked = AutomationModeStore.isMixedAllowBarcode(ctx)
         switchMixedAllowButton.isChecked = AutomationModeStore.isMixedAllowButton(ctx)
         switchMixedAllowAppPicking.isChecked = AutomationModeStore.isMixedAllowAppPicking(ctx)
         switchMixedAllowProfileSwitching.isChecked = AutomationModeStore.isMixedAllowProfileSwitching(ctx)
@@ -387,15 +399,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
         switchMixedAllowNfcTagWriting.isChecked = AutomationModeStore.isMixedAllowNfcTagWriting(ctx)
         switchLockSwitchlyAppAccess.isChecked = AutomationModeStore.isSwitchlyAppAccessLockEnabled(ctx)
         switchLimitTempDisableTags.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_LIMIT_TEMP_DISABLE_TAGS, false)
-
-        switchShowQrButton.isChecked = sp.getBoolean(KEY_SHOW_QR_CODE, false)
-        rowShowQrButton.visibility = View.VISIBLE
-        (rowShowQrButton.parent as? ViewGroup)?.let { parent ->
-            val idx = parent.indexOfChild(rowShowQrButton)
-            if (idx >= 0 && idx + 1 < parent.childCount) {
-                parent.getChildAt(idx + 1).visibility = View.VISIBLE
-            }
-        }
 
         switchBlockNotifications.isChecked = NotificationBlockStore.isEnabled(ctx)
         switchAutostart.isChecked = AutostartStore.isEnabled(ctx)
@@ -412,6 +415,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             AutomationModeStore.Mode.SCHEDULE -> getString(R.string.pref_mode_schedule_title)
             AutomationModeStore.Mode.NFC -> getString(R.string.pref_mode_nfc_title)
             AutomationModeStore.Mode.QR -> getString(R.string.pref_mode_qr_title)
+            AutomationModeStore.Mode.BARCODE -> getString(R.string.pref_mode_barcode_title)
             AutomationModeStore.Mode.MIXED -> getString(R.string.pref_mode_mixed_title)
         }
 
@@ -434,6 +438,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             switchModeSchedule.isChecked = mode == AutomationModeStore.Mode.SCHEDULE
             switchModeNfc.isChecked = mode == AutomationModeStore.Mode.NFC
             switchModeQr.isChecked = mode == AutomationModeStore.Mode.QR
+            switchModeBarcode.isChecked = mode == AutomationModeStore.Mode.BARCODE
             switchModeMixed.isChecked = mode == AutomationModeStore.Mode.MIXED
             ignoreControlModeListener = false
 
@@ -441,12 +446,14 @@ class ToggleOptionsActivity : AppCompatActivity() {
                 AutomationModeStore.Mode.SCHEDULE to rowModeSchedule,
                 AutomationModeStore.Mode.NFC to rowModeNfc,
                 AutomationModeStore.Mode.QR to rowModeQr,
+                AutomationModeStore.Mode.BARCODE to rowModeBarcode,
                 AutomationModeStore.Mode.MIXED to rowModeMixed,
             )
             val switchMap = mapOf(
                 AutomationModeStore.Mode.SCHEDULE to switchModeSchedule,
                 AutomationModeStore.Mode.NFC to switchModeNfc,
                 AutomationModeStore.Mode.QR to switchModeQr,
+                AutomationModeStore.Mode.BARCODE to switchModeBarcode,
                 AutomationModeStore.Mode.MIXED to switchModeMixed,
             )
 
@@ -513,6 +520,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         rowModeSchedule.setOnClickListener { onControlModeRowClicked(AutomationModeStore.Mode.SCHEDULE) }
         rowModeNfc.setOnClickListener { onControlModeRowClicked(AutomationModeStore.Mode.NFC) }
         rowModeQr.setOnClickListener { onControlModeRowClicked(AutomationModeStore.Mode.QR) }
+        rowModeBarcode.setOnClickListener { onControlModeRowClicked(AutomationModeStore.Mode.BARCODE) }
         rowModeMixed.setOnClickListener { onControlModeRowClicked(AutomationModeStore.Mode.MIXED) }
 
         fun bindModeSwitch(sw: SwitchMaterial, mode: AutomationModeStore.Mode) {
@@ -543,6 +551,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         bindModeSwitch(switchModeSchedule, AutomationModeStore.Mode.SCHEDULE)
         bindModeSwitch(switchModeNfc, AutomationModeStore.Mode.NFC)
         bindModeSwitch(switchModeQr, AutomationModeStore.Mode.QR)
+        bindModeSwitch(switchModeBarcode, AutomationModeStore.Mode.BARCODE)
         bindModeSwitch(switchModeMixed, AutomationModeStore.Mode.MIXED)
 
         applyControlModeSelection(AutomationModeStore.getMode(ctx), userInitiated = false)
@@ -558,6 +567,9 @@ class ToggleOptionsActivity : AppCompatActivity() {
         }
         rowMixedAllowQr.setOnClickListener {
             if (canEditMixedChannels()) switchMixedAllowQr.toggle()
+        }
+        rowMixedAllowBarcode.setOnClickListener {
+            if (canEditMixedChannels()) switchMixedAllowBarcode.toggle()
         }
         rowMixedAllowButton.setOnClickListener {
             if (canEditMixedChannels()) switchMixedAllowButton.toggle()
@@ -576,7 +588,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
         }
         rowLockSwitchlyAppAccess.setOnClickListener { switchLockSwitchlyAppAccess.toggle() }
         rowLimitTempDisableTags.setOnClickListener { switchLimitTempDisableTags.toggle() }
-        rowShowQrButton.setOnClickListener { switchShowQrButton.toggle() }
         rowEnablePairedUids.setOnClickListener { switchEnablePairedUids.toggle() }
 
         // Quick Tile: switch triggers add flow, disabling shows how-to-remove hint
@@ -651,6 +662,17 @@ class ToggleOptionsActivity : AppCompatActivity() {
             AutomationModeStore.setMixedAllowQr(ctx, isChecked)
             invalidateOptionsMenu()
         }
+        switchMixedAllowBarcode.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
+            if (!canEditMixedChannels()) {
+                ignoreMixedChannelListener = true
+                buttonView.isChecked = !isChecked
+                ignoreMixedChannelListener = false
+                return@setOnCheckedChangeListener
+            }
+            AutomationModeStore.setMixedAllowBarcode(ctx, isChecked)
+            invalidateOptionsMenu()
+        }
         switchMixedAllowButton.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -711,11 +733,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             sp.edit { putBoolean(BlockingToggleKeys.KEY_LIMIT_TEMP_DISABLE_TAGS, isChecked) }
         }
 
-        // QR toggle = optional QR feature (default off)
-        switchShowQrButton.setOnCheckedChangeListener { _, isChecked ->
-            sp.edit { putBoolean(KEY_SHOW_QR_CODE, isChecked) }
-            invalidateOptionsMenu()
-        }
 
         // Autostart
         switchAutostart.setOnCheckedChangeListener { _, isChecked ->
@@ -788,12 +805,14 @@ class ToggleOptionsActivity : AppCompatActivity() {
                 AutomationModeStore.Mode.SCHEDULE to findViewById<View>(R.id.rowModeSchedule),
                 AutomationModeStore.Mode.NFC to findViewById<View>(R.id.rowModeNfc),
                 AutomationModeStore.Mode.QR to findViewById<View>(R.id.rowModeQr),
+                AutomationModeStore.Mode.BARCODE to findViewById<View>(R.id.rowModeBarcode),
                 AutomationModeStore.Mode.MIXED to findViewById<View>(R.id.rowModeMixed),
             )
             val switchMap = mapOf(
                 AutomationModeStore.Mode.SCHEDULE to findViewById<SwitchMaterial>(R.id.switchModeSchedule),
                 AutomationModeStore.Mode.NFC to findViewById<SwitchMaterial>(R.id.switchModeNfc),
                 AutomationModeStore.Mode.QR to findViewById<SwitchMaterial>(R.id.switchModeQr),
+                AutomationModeStore.Mode.BARCODE to findViewById<SwitchMaterial>(R.id.switchModeBarcode),
                 AutomationModeStore.Mode.MIXED to findViewById<SwitchMaterial>(R.id.switchModeMixed),
             )
             val modeSwitchingAllowed = !SwitchModeStore.isEnabled(this)
@@ -1000,6 +1019,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             R.id.rowMixedAllowSchedule,
             R.id.rowMixedAllowNfc,
             R.id.rowMixedAllowQr,
+            R.id.rowMixedAllowBarcode,
             R.id.rowMixedAllowButton,
             R.id.rowMixedAllowAppPicking,
             R.id.rowMixedAllowProfileSwitching,
@@ -1013,6 +1033,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             R.id.switchMixedAllowSchedule,
             R.id.switchMixedAllowNfc,
             R.id.switchMixedAllowQr,
+            R.id.switchMixedAllowBarcode,
             R.id.switchMixedAllowButton,
             R.id.switchMixedAllowAppPicking,
             R.id.switchMixedAllowProfileSwitching,
@@ -1162,7 +1183,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
 
         const val KEY_SHOW_NEXT_SCHEDULE = "pref_show_next_schedule"
         const val KEY_SHOW_QUICK_ACTIONS = "pref_show_quick_actions"
-        const val KEY_SHOW_QR_CODE = "pref_show_qr_code"
         const val KEY_QS_TILE_REQUESTED = "pref_qs_tile_requested"
 
         fun start(context: Context) {

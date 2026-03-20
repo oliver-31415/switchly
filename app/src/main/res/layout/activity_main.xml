@@ -340,6 +340,114 @@
                 android:layout_marginTop="8dp"
                 android:orientation="vertical">
 
+                <!-- QR / Barcode quick actions -->
+                <LinearLayout
+                    android:id="@+id/rowScanShortcuts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:visibility="gone">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/tileQr"
+                        style="@style/Switchly.TileCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="116dp"
+                        android:layout_margin="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="-2dp"
+                                android:padding="8dp"
+                                android:src="@drawable/qr_code_24"
+                                app:tint="?attr/colorOnSurface"
+                                android:contentDescription="@string/dashboard_tile_qr" />
+
+                            <Space
+                                android:layout_width="1dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_tile_qr"
+                                android:textStyle="bold"
+                                android:textSize="15sp"
+                                android:alpha="0.95" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/dashboard_tile_qr_sub"
+                                android:textSize="12sp"
+                                android:alpha="0.75" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/tileBarcode"
+                        style="@style/Switchly.TileCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="116dp"
+                        android:layout_margin="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="-2dp"
+                                android:padding="8dp"
+                                android:src="@drawable/barcode_24"
+                                app:tint="?attr/colorOnSurface"
+                                android:contentDescription="@string/dashboard_tile_barcode" />
+
+                            <Space
+                                android:layout_width="1dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_tile_barcode"
+                                android:textStyle="bold"
+                                android:textSize="15sp"
+                                android:alpha="0.95" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/dashboard_tile_barcode_sub"
+                                android:textSize="12sp"
+                                android:alpha="0.75" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

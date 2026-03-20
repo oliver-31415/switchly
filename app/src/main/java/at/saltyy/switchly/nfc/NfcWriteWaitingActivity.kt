@@ -19,7 +19,9 @@ import com.google.android.material.textfield.TextInputEditText
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import androidx.lifecycle.Lifecycle
+import androidx.preference.PreferenceManager
+import at.saltyy.switchly.data.prefs.BlockingToggleKeys
+import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 
 /**
  * Full-screen "ready to write" screen.
@@ -82,6 +84,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
 
         btnClose.setOnClickListener {
             // Allow user to back out if they landed here by mistake.
+            safeDisableForegroundDispatch()
             setResult(RESULT_CANCELED, Intent().apply { putExtra(EXTRA_RESULT, RESULT_FAILED_STR) })
             finish()
         }
@@ -104,6 +107,8 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        if (isFinishing || isDestroyed || isProcessingTag) return
+
         val adapter = nfcAdapter ?: return
         val intent = Intent(this, this::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pendingIntent = PendingIntent.getActivity(
@@ -112,18 +117,19 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         )
-        adapter.enableForegroundDispatch(this, pendingIntent, null, null)
+        runCatching {
+            adapter.enableForegroundDispatch(this, pendingIntent, null, null)
+        }
     }
 
     override fun onPause() {
-        // On newer Android versions, disableForegroundDispatch() can throw if called
-        // after the activity is no longer in RESUMED state. Call it before super.
-        runCatching {
-            if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-                nfcAdapter?.disableForegroundDispatch(this)
-            }
-        }
+        safeDisableForegroundDispatch()
         super.onPause()
+    }
+
+    override fun onStop() {
+        safeDisableForegroundDispatch()
+        super.onStop()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -145,13 +151,9 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         if (isProcessingTag) return
         isProcessingTag = true
 
-        // Best-effort: stop foreground dispatch whilewe are working, but never crash if the
-        // OS considers the activity not RESUMED anymore.
-        runCatching {
-            if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-                nfcAdapter?.disableForegroundDispatch(this)
-            }
-        }
+        // Stop foreground dispatch immediately so follow-up scans cannot get routed back
+        // into the write screen while this write result is still being shown.
+        safeDisableForegroundDispatch()
 
         tvTitle.text = getString(R.string.nfc_writing)
         tvHint.text = getString(R.string.nfc_hold_still)
@@ -189,11 +191,37 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
 
             val result = writeUriToTag(uri, tag)
             when (result) {
-                WriteResult.OK -> finishWithOk(uidHex = null)
+                WriteResult.OK -> {
+                    val sp = PreferenceManager.getDefaultSharedPreferences(this)
+                    val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+                    if (pairedUidsEnabled) {
+                        val uid = NfcTagUid.uidHex(tag)
+                        if (!uid.isNullOrBlank()) {
+                            val isNew = NfcUidPairingStore.addPairedUidHex(this, uid)
+                            if (isNew) {
+                                showPairMetaPrompt(uid) {
+                                    finishWithOk(uidHex = uid, alreadyPaired = false)
+                                }
+                            } else {
+                                finishWithOk(uidHex = uid, alreadyPaired = true)
+                            }
+                        } else {
+                            finishWithOk(uidHex = null)
+                        }
+                    } else {
+                        finishWithOk(uidHex = null)
+                    }
+                }
                 WriteResult.TOO_SMALL -> finishWithError(RESULT_TOO_SMALL_STR)
                 WriteResult.NOT_WRITABLE -> finishWithError(RESULT_NOT_WRITABLE_STR)
                 WriteResult.FAILED -> finishWithError(RESULT_FAILED_STR)
             }
+        }
+    }
+
+    private fun safeDisableForegroundDispatch() {
+        runCatching {
+            nfcAdapter?.disableForegroundDispatch(this)
         }
     }
 
@@ -225,6 +253,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
     }
 
     private fun finishWithOk(uidHex: String?, alreadyPaired: Boolean = false) {
+        safeDisableForegroundDispatch()
         tvTitle.text = when {
             alreadyPaired -> getString(R.string.nfc_pair_already_added)
             uidHex != null -> getString(R.string.nfc_pair_ok)
@@ -276,6 +305,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
     }
 
     private fun finishWithError(result: String) {
+        safeDisableForegroundDispatch()
         tvTitle.text = getString(R.string.nfc_write_error_generic)
         tvHint.text = ""
 

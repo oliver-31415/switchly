@@ -96,8 +96,8 @@
     <string name="pref_require_nfc_unlock_title">Require NFC to disable Switchly</string>
     <string name="pref_require_nfc_unlock_summary">When on, only a paired NFC tag (or QR fallback) can disable Switchly.</string>
 
-    <string name="pref_qs_tile_title">Quick Settings tile availability</string>
-    <string name="pref_qs_tile_summary">Requests/keeps the Switchly tile in Android Quick Settings.</string>
+    <string name="pref_qs_tile_title">Tile availability</string>
+    <string name="pref_qs_tile_summary">Keeps the Switchly tile available in Android Quick Settings.</string>
 
     <string name="pref_autostart_title">Start Switchly after reboot</string>
     <string name="pref_autostart_summary">Start Switchly again after reboot.</string>
@@ -151,9 +151,9 @@
     <string name="pref_mixed_allow_schedule_title">Allow schedule channel</string>
     <string name="pref_mixed_allow_schedule_summary">Lets schedules enable/disable Switchly.</string>
     <string name="pref_mixed_allow_nfc_title">Allow NFC channel</string>
-    <string name="pref_mixed_allow_nfc_summary">Lets paired NFC tags control Switchly.</string>
+    <string name="pref_mixed_allow_nfc_summary">Lets NFC actions control Switchly, including written tags and paired tags. In Mixed mode, other allowed channels continue to work too.</string>
     <string name="pref_mixed_allow_qr_title">Allow QR channel</string>
-    <string name="pref_mixed_allow_qr_summary">Lets QR actions control Switchly (plus QR button toggle).</string>
+    <string name="pref_mixed_allow_qr_summary">Lets QR actions control Switchly.</string>
     <string name="pref_mixed_allow_button_title">Allow button channel</string>
     <string name="pref_mixed_allow_button_summary">Lets dashboard/manual buttons toggle Switchly.</string>
     <string name="pref_mixed_allow_app_picking_title">Allow picking apps</string>
@@ -169,13 +169,13 @@
     <string name="pref_lock_switchly_app_access_summary">Lock Switchly screens while protection is active.</string>
 
     <string name="toggle_detail_mode_schedule">Focus on calendar routines. NFC and QR actions are ignored while this mode is active.</string>
-    <string name="toggle_detail_mode_nfc">Focus on physical friction. Only paired NFC tag actions are accepted for automation.</string>
+    <string name="toggle_detail_mode_nfc">Focus on physical friction. NFC actions are accepted for automation, including written tags and paired tags.</string>
     <string name="toggle_detail_mode_qr">Focus on QR workflows. NFC and schedules are ignored while this mode is active.</string>
     <string name="toggle_detail_mode_mixed">Flexible mode with per-channel controls. Use the Mixed mode channels section to choose which control methods are allowed.</string>
 
     <string name="toggle_detail_mixed_allow_schedule">When enabled, schedule automations are allowed to change Switchly state while Mixed mode is active.</string>
-    <string name="toggle_detail_mixed_allow_nfc">When enabled, paired NFC tags are accepted as control input while Mixed mode is active.</string>
-    <string name="toggle_detail_mixed_allow_qr">When enabled, QR control is allowed in Mixed mode. The QR Home button must also be enabled.</string>
+    <string name="toggle_detail_mixed_allow_nfc">When enabled, NFC actions are accepted as control input while Mixed mode is active, including written tags and paired tags. Other allowed Mixed-mode channels continue to work too.</string>
+    <string name="toggle_detail_mixed_allow_qr">When enabled, QR control is allowed in Mixed mode.</string>
     <string name="toggle_detail_mixed_allow_button">When enabled, in-app dashboard/manual buttons can toggle Switchly in Mixed mode.</string>
     <string name="toggle_detail_mixed_allow_app_picking">Safety default is locked while Switchly is enabled. Enable this only if you intentionally want app list edits while protection is active.</string>
     <string name="toggle_detail_mixed_allow_profile_switching">Safety default is locked while Switchly is enabled. Enable this only if you intentionally want profile switching while protection is active.</string>
@@ -198,10 +198,8 @@
 
     <string name="mode_blocked_nfc_action">NFC actions are disabled by current control mode.</string>
     <string name="mode_blocked_qr_action">QR actions are disabled by current control mode.</string>
-    <string name="mode_blocked_qr_mixed_enable_toggle">Enable QR actions in Blocking controls to use QR.</string>
     <string name="mode_blocked_tile_action">Quick Settings tile is disabled because manual controls are disabled in the current control mode.</string>
     <string name="mode_blocked_button_action">Manual buttons are disabled by current control mode.</string>
-    <string name="toggle_detail_show_qr">Enables QR actions as an optional control channel. QR creation and scanning are available from Management.</string>
     <string name="toggle_detail_quick_tile">Lets you use the Switchly tile from Android Quick Settings. After enabling it here, add the tile from Android’s Quick Settings edit screen.</string>
     <string name="toggle_detail_block_notifications">Filters notifications from apps that are currently blocked by your active profile. Requires notification listener access.</string>
     <string name="toggle_detail_autostart">After a reboot, Switchly tries to start itself again so your protection profile comes back automatically.</string>
@@ -286,5 +284,41 @@
 
     <string name="toggle_info_paired_uids_body_enabled">Only accept NFC toggles from tags you have paired.\nPair tags in Settings → NFC tags, then use “Manage paired tags” to rename or remove them. If at least one UID is paired, only paired tags can toggle/unlock Switchly.</string>
     <string name="toggle_info_paired_uids_body_disabled">Pairing is currently disabled.\nWhat it does: if you pair at least one NFC tag, only paired tags can toggle/unlock Switchly (prevents random tags).\nHow to enable: Settings → Blocking &amp; control toggles → Enable paired NFC tags.</string>
+
+    <string name="pref_mode_barcode_title">Barcode mode</string>
+    <string name="pref_mode_barcode_summary">Only barcode actions can auto-enable/disable Switchly.</string>
+    <string name="pref_mixed_allow_barcode_title">Allow barcode channel</string>
+    <string name="pref_mixed_allow_barcode_summary">Lets barcode actions control Switchly.</string>
+    <string name="toggle_detail_mode_barcode">Focus on physical barcode workflows. QR, NFC and schedules are ignored while this mode is active.</string>
+    <string name="toggle_detail_mixed_allow_barcode">When enabled, saved barcode actions are accepted in Mixed mode.</string>
+    <string name="mode_blocked_barcode_action">Barcode actions are disabled by current control mode.</string>
+
+    <string name="pref_app_lock_title">App lock</string>
+    <string name="pref_app_lock_summary">Protect Switchly with PIN or biometrics.</string>
+    <string name="app_lock_screen_title">App lock</string>
+    <string name="app_lock_enable_title">Protect Switchly app</string>
+    <string name="app_lock_enable_summary">Require PIN or biometrics when opening Switchly.</string>
+    <string name="app_lock_biometric_title">Allow biometric unlock</string>
+    <string name="app_lock_biometric_summary">Face or fingerprint can unlock Switchly instead of the PIN.</string>
+    <string name="app_lock_set_pin_title">Set app PIN</string>
+    <string name="app_lock_change_pin_title">Change app PIN</string>
+    <string name="app_lock_pin_set">App PIN saved.</string>
+    <string name="app_lock_pin_hint_new">Choose app PIN (min. 4 digits)</string>
+    <string name="app_lock_pin_hint_enter">Enter app PIN</string>
+    <string name="app_lock_pin_title">Switchly PIN</string>
+    <string name="app_lock_pin_message">This PIN unlocks Switchly when app lock is enabled.</string>
+    <string name="app_lock_pin_incorrect">Incorrect PIN.</string>
+    <string name="app_lock_pin_too_short">PIN must be at least 4 digits.</string>
+    <string name="app_lock_unlock_title">Unlock Switchly</string>
+    <string name="app_lock_unlock_message">Enter your app PIN or use biometrics to continue.</string>
+    <string name="app_lock_unlock_button">Unlock</string>
+    <string name="app_lock_biometric_button">Use biometrics</string>
+    <string name="app_lock_biometric_prompt_title">Unlock Switchly</string>
+    <string name="app_lock_biometric_prompt_subtitle">Use face or fingerprint to open the app.</string>
+    <string name="app_lock_biometric_not_available">Biometrics are not available on this device right now.</string>
+    <string name="app_lock_setup_pin_first">Set an app PIN first.</string>
+    <string name="app_lock_status_off">Off</string>
+    <string name="app_lock_status_pin_only">PIN enabled</string>
+    <string name="app_lock_status_pin_biometric">PIN + biometrics enabled</string>
 
 </resources>

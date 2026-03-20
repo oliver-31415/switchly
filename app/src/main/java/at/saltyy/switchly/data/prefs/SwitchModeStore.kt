@@ -90,8 +90,8 @@ object SwitchModeStore {
      */
     fun setEnabled(ctx: Context, enabled: Boolean, allowNfcBypass: Boolean): Boolean {
         val currentlyEnabled = isEnabled(ctx)
-        if (!enabled && currentlyEnabled && isNfcRequiredForDisable(ctx) && AutomationModeStore.isNfcAllowed(ctx) && !allowNfcBypass) {
-            // Block non-NFC disabling paths (e.g. schedules, shortcuts, UI toggles).
+        if (!enabled && currentlyEnabled && isNfcDisableLockEnforced(ctx) && !allowNfcBypass) {
+            // Block non-NFC disabling paths only while NFC has exclusive control.
             return false
         }
 
@@ -150,9 +150,9 @@ object SwitchModeStore {
         }
 
         // Hard rule:
-        // NFC lock ON  -> schedules cannot enable or disable.
+        // NFC lock ON  -> schedules cannot disable Switchly, but they may still enable it.
         // NFC lock OFF -> schedules can change state normally.
-        if (AutomationModeStore.isNfcAllowed(ctx) && isNfcRequiredForDisable(ctx) && current != enabled) {
+        if (!enabled && isNfcDisableLockEnforced(ctx) && current != enabled) {
             ScheduleRuntimeStore.markDisableBlockedByNfc(ctx)
             return
         }
@@ -361,6 +361,10 @@ object SwitchModeStore {
     fun isNfcRequiredForDisable(ctx: Context): Boolean {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return sp.getBoolean(KEY_REQUIRE_NFC_DISABLE, false)
+    }
+
+    fun isNfcDisableLockEnforced(ctx: Context): Boolean {
+        return isNfcRequiredForDisable(ctx) && AutomationModeStore.isNfcExclusiveControlActive(ctx)
     }
 
     /**

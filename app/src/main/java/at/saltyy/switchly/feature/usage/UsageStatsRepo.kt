@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import at.saltyy.switchly.data.prefs.UsageStore
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -276,28 +277,131 @@ object UsageStatsRepo {
         onlyPackage: String?
     ): HashMap<String, Long> {
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val byPkg = HashMap<String, Long>()
+
+        mergeUsage(byPkg, queryAggregateUsage(usm, dayStart, dayEnd, onlyPackage))
+        mergeUsage(byPkg, queryDailyUsage(usm, dayStart, dayEnd, onlyPackage))
+        mergeUsage(byPkg, queryEventDerivedUsage(usm, dayStart, dayEnd, onlyPackage))
+
+        val internalToday = UsageStore.getUsageMsMapToday(ctx)
+        if (onlyPackage != null) {
+            val internal = internalToday[onlyPackage]?.coerceAtLeast(0L) ?: 0L
+            if (internal > 0L) {
+                byPkg[onlyPackage] = maxOf(byPkg[onlyPackage] ?: 0L, internal)
+            }
+        } else {
+            for ((pkg, ms) in internalToday) {
+                if (ms <= 0L) continue
+                byPkg[pkg] = maxOf(byPkg[pkg] ?: 0L, ms)
+            }
+        }
+
+        return byPkg
+    }
+
+    private fun mergeUsage(target: MutableMap<String, Long>, incoming: Map<String, Long>) {
+        for ((pkg, ms) in incoming) {
+            if (pkg.isBlank() || ms <= 0L) continue
+            target[pkg] = maxOf(target[pkg] ?: 0L, ms)
+        }
+    }
+
+    private fun queryAggregateUsage(
+        usm: UsageStatsManager,
+        from: Long,
+        to: Long,
+        onlyPackage: String?
+    ): Map<String, Long> {
+        val out = HashMap<String, Long>()
+        val aggregated = try {
+            usm.queryAndAggregateUsageStats(from, to)
+        } catch (_: SecurityException) {
+            emptyMap()
+        } catch (_: Throwable) {
+            emptyMap()
+        }
+        for ((pkg, st) in aggregated.orEmpty()) {
+            if (onlyPackage != null && pkg != onlyPackage) continue
+            val t = st.totalTimeInForeground.coerceAtLeast(0L)
+            if (t > 0L) out[pkg] = maxOf(out[pkg] ?: 0L, t)
+        }
+        return out
+    }
+
+    private fun queryDailyUsage(
+        usm: UsageStatsManager,
+        from: Long,
+        to: Long,
+        onlyPackage: String?
+    ): Map<String, Long> {
+        val out = HashMap<String, Long>()
         val stats = try {
-            usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, dayStart, dayEnd)
+            usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
         } catch (_: SecurityException) {
             emptyList()
         } catch (_: Throwable) {
             emptyList()
         }
-
-        val byPkg = HashMap<String, Long>()
         for (st in stats.orEmpty()) {
             val pkg = st.packageName ?: continue
             if (onlyPackage != null && pkg != onlyPackage) continue
-
-            val bucketStart = startOfDayLocal(st.firstTimeStamp)
-            if (bucketStart != dayStart) continue
-
+            val overlapsWindow = st.lastTimeStamp <= 0L || st.lastTimeStamp > from
+            if (!overlapsWindow) continue
             val t = st.totalTimeInForeground.coerceAtLeast(0L)
-            if (t > 0L) {
-                byPkg[pkg] = (byPkg[pkg] ?: 0L) + t
+            if (t > 0L) out[pkg] = maxOf(out[pkg] ?: 0L, t)
+        }
+        return out
+    }
+
+    private fun queryEventDerivedUsage(
+        usm: UsageStatsManager,
+        from: Long,
+        to: Long,
+        onlyPackage: String?
+    ): Map<String, Long> {
+        val events = try {
+            usm.queryEvents(from, to)
+        } catch (_: SecurityException) {
+            return emptyMap()
+        } catch (_: Throwable) {
+            return emptyMap()
+        }
+
+        val starts = HashMap<String, Long>()
+        val totals = HashMap<String, Long>()
+        val e = UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(e)
+            val pkg = e.packageName ?: continue
+            if (onlyPackage != null && pkg != onlyPackage) continue
+            when (e.eventType) {
+                UsageEvents.Event.MOVE_TO_FOREGROUND,
+                UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    val startAt = e.timeStamp.coerceAtLeast(from)
+                    val prev = starts[pkg]
+                    if (prev == null || startAt < prev) starts[pkg] = startAt
+                }
+
+                UsageEvents.Event.MOVE_TO_BACKGROUND,
+                UsageEvents.Event.ACTIVITY_PAUSED,
+                UsageEvents.Event.ACTIVITY_STOPPED -> {
+                    val startAt = starts.remove(pkg) ?: continue
+                    val endAt = e.timeStamp.coerceAtMost(to)
+                    if (endAt > startAt) {
+                        totals[pkg] = (totals[pkg] ?: 0L) + (endAt - startAt)
+                    }
+                }
             }
         }
-        return byPkg
+
+        for ((pkg, startAt) in starts) {
+            val safeStart = startAt.coerceIn(from, to)
+            if (to > safeStart) {
+                totals[pkg] = (totals[pkg] ?: 0L) + (to - safeStart)
+            }
+        }
+
+        return totals
     }
 
     private fun getBucketedUsageByPackage(

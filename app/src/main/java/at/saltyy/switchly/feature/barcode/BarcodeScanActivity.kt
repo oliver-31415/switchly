@@ -1,4 +1,4 @@
-package at.saltyy.switchly.feature.qr
+package at.saltyy.switchly.feature.barcode
 
 import android.Manifest
 import android.content.Intent
@@ -19,7 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
-import at.saltyy.switchly.data.prefs.QrScanCountStore
+import at.saltyy.switchly.data.prefs.BarcodeScanCountStore
 import at.saltyy.switchly.data.prefs.ScanCodeStore
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -28,7 +28,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.atomic.AtomicBoolean
 
-class QrScanActivity : AppCompatActivity() {
+class BarcodeScanActivity : AppCompatActivity() {
 
     private lateinit var previewView: PreviewView
     private val handled = AtomicBoolean(false)
@@ -36,7 +36,20 @@ class QrScanActivity : AppCompatActivity() {
     private val scanner by lazy {
         BarcodeScanning.getClient(
             BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                .setBarcodeFormats(
+                    Barcode.FORMAT_AZTEC,
+                    Barcode.FORMAT_CODABAR,
+                    Barcode.FORMAT_CODE_39,
+                    Barcode.FORMAT_CODE_93,
+                    Barcode.FORMAT_CODE_128,
+                    Barcode.FORMAT_DATA_MATRIX,
+                    Barcode.FORMAT_EAN_8,
+                    Barcode.FORMAT_EAN_13,
+                    Barcode.FORMAT_ITF,
+                    Barcode.FORMAT_PDF417,
+                    Barcode.FORMAT_UPC_A,
+                    Barcode.FORMAT_UPC_E,
+                )
                 .build()
         )
     }
@@ -46,7 +59,7 @@ class QrScanActivity : AppCompatActivity() {
     ) { granted ->
         if (granted) startCamera()
         else {
-            Toast.makeText(this, R.string.permission_camera_required, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.permission_barcode_camera_required, Toast.LENGTH_SHORT).show()
             finish()
         }
     }
@@ -75,8 +88,8 @@ class QrScanActivity : AppCompatActivity() {
 
     private fun canOpenScanner(): Boolean {
         if (isPickMode() || allowDirectOpen()) return true
-        if (!allowDirectOpen() && !AutomationModeStore.isQrAllowed(this)) {
-            Toast.makeText(this, R.string.mode_blocked_qr_action, Toast.LENGTH_SHORT).show()
+        if (!allowDirectOpen() && !AutomationModeStore.isBarcodeAllowed(this)) {
+            Toast.makeText(this, R.string.mode_blocked_barcode_action, Toast.LENGTH_SHORT).show()
             return false
         }
         return true
@@ -127,14 +140,14 @@ class QrScanActivity : AppCompatActivity() {
             .addOnSuccessListener { list ->
                 val first = list.firstOrNull() ?: return@addOnSuccessListener
                 val raw = first.rawValue ?: return@addOnSuccessListener
-                handleQr(raw)
+                handleBarcode(raw)
             }
             .addOnCompleteListener {
                 imageProxy.close()
             }
     }
 
-    private fun handleQr(raw: String) {
+    private fun handleBarcode(raw: String) {
         if (!handled.compareAndSet(false, true)) return
 
         if (isPickMode()) {
@@ -142,33 +155,43 @@ class QrScanActivity : AppCompatActivity() {
                 RESULT_OK,
                 Intent()
                     .putExtra(EXTRA_PICKED_RAW, raw)
-                    .putExtra(EXTRA_PICKED_KIND, ScanCodeStore.Kind.QR.raw)
+                    .putExtra(EXTRA_PICKED_KIND, ScanCodeStore.Kind.BARCODE.raw)
             )
             finish()
             return
         }
 
-        if (!allowDirectOpen() && !AutomationModeStore.isQrAllowed(this)) {
-            Toast.makeText(this, R.string.mode_blocked_qr_action, Toast.LENGTH_SHORT).show()
+        if (!allowDirectOpen() && !AutomationModeStore.isBarcodeAllowed(this)) {
+            Toast.makeText(this, R.string.mode_blocked_barcode_action, Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        val managed = ScanCodeStore.findEntry(this, ScanCodeStore.Kind.QR, raw)
+        val managed = ScanCodeStore.findEntry(this, ScanCodeStore.Kind.BARCODE, raw)
         if (managed != null) {
-            QrScanCountStore.incrementToday(this)
+            val check = ScanCodeStore.checkLimits(this, managed)
+            if (check != null) {
+                Toast.makeText(this, check, Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
+            ScanCodeStore.consume(this, managed)
+            BarcodeScanCountStore.incrementToday(this)
             dispatchActionUri(managed.actionUri)
             return
         }
 
-        val uri = raw.toUri()
-        if (uri.scheme.equals("switchly", ignoreCase = true)) {
-            QrScanCountStore.incrementToday(this)
+        val rawUri = raw.toUri()
+        val strictSwitchly = ScanCodeStore.isStrictSwitchlyUri(raw)
+        if (rawUri.scheme.equals("switchly", ignoreCase = true) &&
+            strictSwitchly
+        ) {
+            BarcodeScanCountStore.incrementToday(this)
             dispatchActionUri(raw)
             return
         }
 
-        Toast.makeText(this, R.string.invalid_qr_code, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.invalid_barcode, Toast.LENGTH_SHORT).show()
         finish()
     }
 
@@ -176,7 +199,7 @@ class QrScanActivity : AppCompatActivity() {
         val uri = rawUri.toUri()
         startActivity(
             Intent(Intent.ACTION_VIEW, uri)
-                .putExtra(EXTRA_SCAN_SOURCE, ScanCodeStore.Kind.QR.raw)
+                .putExtra(EXTRA_SCAN_SOURCE, ScanCodeStore.Kind.BARCODE.raw)
                 .setClass(this, NfcEntryActivity::class.java)
         )
         finish()

@@ -1,7 +1,11 @@
 package at.saltyy.switchly.nfc
 
 import android.app.Activity
+import android.content.Intent
 import android.net.Uri
+import android.nfc.NdefMessage
+import android.nfc.NfcAdapter
+import android.nfc.tech.Ndef
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -16,6 +20,7 @@ import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.TempEnableCountStore
+import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.ui.ThemeUtils
 
 /**
@@ -49,7 +54,9 @@ class NfcEntryActivity : Activity() {
         // If an NFC tag parcelable exists, this came from NFC.
         // QR scanner routes here via deep-link without EXTRA_TAG.
         val fromNfc = tag != null
-        val fromQr = !fromNfc
+        val scanSource = intent?.getStringExtra(QrScanActivity.EXTRA_SCAN_SOURCE)
+        val fromBarcode = !fromNfc && scanSource == "barcode"
+        val fromQr = !fromNfc && !fromBarcode
 
         // Respect user-selected control mode.
         if (fromNfc && !AutomationModeStore.isNfcAllowed(this)) {
@@ -57,18 +64,15 @@ class NfcEntryActivity : Activity() {
             finish()
             return
         }
-        if (fromQr) {
-            if (!AutomationModeStore.isQrChannelAllowed(this)) {
-                toast(getString(R.string.mode_blocked_qr_action))
-                finish()
-                return
-            }
-            // Mixed mode allows QR only when QR feature toggle is enabled.
-            if (!AutomationModeStore.isQrAllowed(this)) {
-                toast(getString(R.string.mode_blocked_qr_mixed_enable_toggle))
-                finish()
-                return
-            }
+        if (fromBarcode && !AutomationModeStore.isBarcodeAllowed(this)) {
+            toast(getString(R.string.mode_blocked_barcode_action))
+            finish()
+            return
+        }
+        if (fromQr && !AutomationModeStore.isQrAllowed(this)) {
+            toast(getString(R.string.mode_blocked_qr_action))
+            finish()
+            return
         }
 
         // Optional: UID-only paired tag support for NFC source.
@@ -90,11 +94,10 @@ class NfcEntryActivity : Activity() {
             }
         }
 
-        val data: Uri? = intent?.data
+        val data: Uri? = extractSwitchlyUri(intent)
         if (data == null || !NfcSchema.isKnownHost(data.host)) {
             if (fromNfc) {
-                NfcScanCountStore.incrementToday(this)
-                handleBlankTagFallbackToggle(tag)
+                // Ignore unrelated/unknown NFC tags by default.
                 finish()
                 return
             }
@@ -104,7 +107,9 @@ class NfcEntryActivity : Activity() {
             return
         }
 
-        NfcScanCountStore.incrementToday(this)
+        if (fromNfc) {
+            NfcScanCountStore.incrementToday(this)
+        }
 
         when (data.host?.lowercase()) {
             NfcSchema.HOST_SWITCH -> handleGlobalAction(data, tag)
@@ -116,36 +121,71 @@ class NfcEntryActivity : Activity() {
     }
 
 
-    private fun handleBlankTagFallbackToggle(tag: android.nfc.Tag?) {
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-        if (pairedUidsEnabled) {
-            val pairedUids = NfcUidPairingStore.getPairedUidsHex(this)
-            if (pairedUids.isNotEmpty()) {
-                val seenUid = NfcTagUid.normalizeUidHex(NfcTagUid.uidHex(tag))
-                if (seenUid.isBlank() || pairedUids.none { it.equals(seenUid, ignoreCase = true) }) {
-                    toast(getString(R.string.nfc_wrong_tag_paired_uid_required))
-                    return
+    private fun extractSwitchlyUri(intent: Intent?): Uri? {
+        val direct = intent?.data
+        if (
+            direct != null &&
+            direct.scheme.equals("switchly", ignoreCase = true) &&
+            NfcSchema.isKnownHost(direct.host)
+        ) {
+            return direct
+        }
+
+        val rawMessages = if (Build.VERSION.SDK_INT >= 33) {
+            intent?.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent?.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
+                ?.mapNotNull { it as? NdefMessage }
+                ?.toTypedArray()
+        }
+
+        rawMessages
+            ?.asSequence()
+            ?.flatMap { it.records.asSequence() }
+            ?.mapNotNull { record ->
+                try {
+                    record.toUri()
+                } catch (_: Throwable) {
+                    null
                 }
             }
-        }
+            ?.firstOrNull { uri ->
+                uri.scheme.equals("switchly", ignoreCase = true) &&
+                    NfcSchema.isKnownHost(uri.host)
+            }
+            ?.let { return it }
 
-        val newValue = !SwitchModeStore.isBaseEnabled(this)
-        val changed = SwitchModeStore.setEnabled(this, newValue, allowNfcBypass = !newValue)
-        if (!changed) {
-            toast(getString(R.string.nfc_action_error_fmt, getString(R.string.toast_disable_requires_nfc)))
-            return
-        }
-
-        if (newValue) {
-            BlockingRuntime.ensureRunning(this)
+        val tag = if (Build.VERSION.SDK_INT >= 33) {
+            intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG, android.nfc.Tag::class.java)
         } else {
-            BlockingRuntime.stop(this)
+            @Suppress("DEPRECATION")
+            intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG) as? android.nfc.Tag
         }
 
-        val state = getString(if (newValue) R.string.nfc_state_on else R.string.nfc_state_off)
-        toast(getString(R.string.nfc_toggle_via_nfc_fmt, state))
-        sendBroadcast(android.content.Intent(at.saltyy.switchly.app.Switchly.ACTION_REFRESH).setPackage(packageName))
+        val ndef = tag?.let { Ndef.get(it) } ?: return null
+        return try {
+            ndef.connect()
+            val message = ndef.cachedNdefMessage ?: ndef.ndefMessage
+            message
+                ?.records
+                ?.asSequence()
+                ?.mapNotNull { record ->
+                    try {
+                        record.toUri()
+                    } catch (_: Throwable) {
+                        null
+                    }
+                }
+                ?.firstOrNull { uri ->
+                    uri.scheme.equals("switchly", ignoreCase = true) &&
+                        NfcSchema.isKnownHost(uri.host)
+                }
+        } catch (_: Throwable) {
+            null
+        } finally {
+            runCatching { ndef.close() }
+        }
     }
 
     // -------- GLOBAL ACTIONS --------

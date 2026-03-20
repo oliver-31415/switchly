@@ -32,9 +32,14 @@
         <item name="actionBarPopupTheme">@style/ThemeOverlay.MaterialComponents.Light</item>
         <item name="android:textColorPrimaryInverse">@android:color/white</item>
 
-        <!-- Global styles for dropdown fields -->
-        <item name="textInputStyle">@style/Switchly.DropdownLayout</item>
-        <item name="autoCompleteTextViewStyle">@style/Switchly.DropdownText</item>
+        <!--
+            IMPORTANT:
+            Do NOT apply the ExposedDropdownMenu TextInputLayout style globally.
+            It crashes normal TextInputLayout + EditText screens in night mode as soon as Material expects an AutoCompleteTextView.
+            Use Switchly.DropdownLayout only on actual dropdown fields in XML.
+        -->
+        <item name="textInputStyle">@style/Switchly.TextInputLayout</item>
+        <item name="autoCompleteTextViewStyle">@style/Switchly.AutoCompleteText</item>
 
         <!-- Dialog overlay -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Switchly.Dialog</item>

@@ -88,6 +88,10 @@
     <string name="dashboard_tile_profiles_sub">Erstellen &amp; bearbeiten</string>
     <string name="dashboard_tile_toggle_options_sub">Sicherheit &amp; UI</string>
     <string name="dashboard_tile_write_nfc_sub">Tag zum Umschalten antippen</string>
+    <string name="dashboard_tile_qr">QR</string>
+    <string name="dashboard_tile_qr_sub">Tippen zum Scannen • halten zum Generieren</string>
+    <string name="dashboard_tile_barcode">Barcode</string>
+    <string name="dashboard_tile_barcode_sub">Tippen zum Scannen • halten zum Verwalten</string>
 
     <!-- =========================================================
          DASHBOARD: Main toggle

@@ -5,14 +5,8 @@
          QR: Entry points/navigation
          ========================================================= -->
     <string name="qr_title">QR</string>
-    <string name="qr_generate_title">QR-Code erstellen</string>
+    <string name="qr_generate_title">QR generieren</string>
     <string name="qr_scan_title">QR-Code scannen</string>
-
-    <!-- =========================================================
-         QR: Preference toggle
-         ========================================================= -->
-    <string name="pref_show_qr_code_title">QR-Aktionen aktivieren</string>
-    <string name="pref_show_qr_code_summary">Erlaubt QR-Aktionen. QR-Codes kannst du in Verwaltung erstellen und scannen.</string>
 
     <!-- =========================================================
          QR: Permissions/errors

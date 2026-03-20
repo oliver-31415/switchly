@@ -68,9 +68,11 @@ import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.onboarding.OnboardingActivity
 import at.saltyy.switchly.feature.picker.AppPickerActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
+import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
 import at.saltyy.switchly.feature.qr.QrGenerateActivity
 import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.schedule.SchedulesActivity
+import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
@@ -142,6 +144,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tileWriteNfc: MaterialCardView
     private lateinit var tileToggleOptions: MaterialCardView
     private lateinit var tilePermissions: MaterialCardView
+    private lateinit var tileQr: MaterialCardView
+    private lateinit var tileBarcode: MaterialCardView
+    private lateinit var rowScanShortcuts: View
 
     private lateinit var tvQuickActionsTitle: TextView
     private lateinit var gridQuickActions: View
@@ -287,6 +292,9 @@ class MainActivity : AppCompatActivity() {
         tileWriteNfc = findViewById(R.id.tileWriteNfc)
         tileToggleOptions = findViewById(R.id.tileToggleOptions)
         tilePermissions = findViewById(R.id.tilePermissions)
+        tileQr = findViewById(R.id.tileQr)
+        tileBarcode = findViewById(R.id.tileBarcode)
+        rowScanShortcuts = findViewById(R.id.rowScanShortcuts)
 
         tvQuickActionsTitle = findViewById(R.id.tvQuickActionsTitle)
         gridQuickActions = findViewById(R.id.gridQuickActions)
@@ -313,7 +321,7 @@ class MainActivity : AppCompatActivity() {
 
         // Micro animations: subtle press-scale on interactive cards/buttons
         listOf(
-            tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions,
+            tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileQr, tileBarcode,
             cardNextSchedule, cardBlockedNow, rowActiveProfile
         ).forEach { applyPressScale(it) }
         applyPressScale(btnToggle)
@@ -367,6 +375,16 @@ class MainActivity : AppCompatActivity() {
         tileProfiles.setOnClickListener { openProfilesIfUnlocked() }
         tileWriteNfc.setOnClickListener { startActivity(Intent(this, NfcWriterActivity::class.java)) }
         tileToggleOptions.setOnClickListener { startActivity(Intent(this, ToggleOptionsActivity::class.java)) }
+        tileQr.setOnClickListener { startActivity(Intent(this, QrScanActivity::class.java)) }
+        tileQr.setOnLongClickListener {
+            showQrChoiceDialog()
+            true
+        }
+        tileBarcode.setOnClickListener { startActivity(Intent(this, BarcodeScanActivity::class.java)) }
+        tileBarcode.setOnLongClickListener {
+            startActivity(Intent(this, ManageBarcodesActivity::class.java))
+            true
+        }
         tilePermissions.setOnClickListener {
             val locked = SwitchModeStore.isEnabled(this) && SwitchModeStore.isNfcRequiredForDisable(this)
             if (locked) {
@@ -375,6 +393,8 @@ class MainActivity : AppCompatActivity() {
             }
             startActivity(Intent(this, PermissionsActivity::class.java))
         }
+
+        syncScanQuickActions()
 
         // Next schedule card
         cardNextSchedule.setOnClickListener {
@@ -455,6 +475,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        syncScanQuickActions()
 
         ExactAlarmPermissionSync.syncAndReschedule(this, reason = "main_resume")
 
@@ -1076,8 +1097,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateQuickActionsVisibility() {
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        val show = sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_QUICK_ACTIONS, true)
+        val show = areQuickActionsEnabled()
 
         if (show) {
             tvQuickActionsTitle.showFade()
@@ -1087,6 +1107,22 @@ class MainActivity : AppCompatActivity() {
             gridQuickActions.hideFade()
             tvQuickActionsTitle.hideFade()
         }
+        syncScanQuickActions()
+        invalidateOptionsMenu()
+    }
+
+    private fun areQuickActionsEnabled(): Boolean {
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        return sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_QUICK_ACTIONS, true)
+    }
+
+    private fun syncScanQuickActions() {
+        if (!::tileQr.isInitialized) return
+        val qrVisible = AutomationModeStore.isQrAllowed(this)
+        val barcodeVisible = AutomationModeStore.isBarcodeAllowed(this)
+        tileQr.visibility = if (qrVisible) View.VISIBLE else View.GONE
+        tileBarcode.visibility = if (barcodeVisible) View.VISIBLE else View.GONE
+        rowScanShortcuts.visibility = if (qrVisible || barcodeVisible) View.VISIBLE else View.GONE
     }
 
     /**
@@ -1534,10 +1570,14 @@ class MainActivity : AppCompatActivity() {
         tileProfiles.isEnabled = !profileLocked
         tileWriteNfc.isEnabled = true
         tileToggleOptions.isEnabled = true
+        tileQr.isEnabled = true
+        tileBarcode.isEnabled = true
 
         tileProfiles.alpha = profileAlpha
         tileWriteNfc.alpha = 1f
         tileToggleOptions.alpha = 1f
+        tileQr.alpha = 1f
+        tileBarcode.alpha = 1f
         rowActiveProfile.alpha = profileAlpha
         btnPickApps.alpha = appPickingAlpha
     }
@@ -1949,8 +1989,28 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val quickActionsEnabled = areQuickActionsEnabled()
+        val qrVisible = AutomationModeStore.isQrAllowed(this)
+        val barcodeVisible = AutomationModeStore.isBarcodeAllowed(this)
+
+        menu.findItem(R.id.action_qr_header)?.isVisible = !quickActionsEnabled && qrVisible
+        menu.findItem(R.id.action_barcode_header)?.isVisible = !quickActionsEnabled && barcodeVisible
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_qr_header -> {
+                startActivity(Intent(this, QrScanActivity::class.java)
+                    .putExtra(QrScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true))
+                true
+            }
+            R.id.action_barcode_header -> {
+                startActivity(Intent(this, BarcodeScanActivity::class.java)
+                    .putExtra(BarcodeScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true))
+                true
+            }
             R.id.action_info -> {
                 showDevelopmentInfoDialog()
                 true

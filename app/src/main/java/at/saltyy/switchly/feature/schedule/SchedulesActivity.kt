@@ -205,6 +205,7 @@ class SchedulesActivity : AppCompatActivity() {
             AutomationModeStore.Mode.SCHEDULE -> getString(R.string.pref_mode_schedule_title)
             AutomationModeStore.Mode.NFC -> getString(R.string.pref_mode_nfc_title)
             AutomationModeStore.Mode.QR -> getString(R.string.pref_mode_qr_title)
+            AutomationModeStore.Mode.BARCODE -> getString(R.string.pref_mode_barcode_title)
             AutomationModeStore.Mode.MIXED -> getString(R.string.pref_mode_mixed_title)
         }
     }

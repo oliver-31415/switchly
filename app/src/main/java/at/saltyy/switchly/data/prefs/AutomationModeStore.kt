@@ -2,7 +2,6 @@ package at.saltyy.switchly.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
-import androidx.preference.PreferenceManager
 
 /**
  * Selects which control channel is allowed to change Switchly automatically.
@@ -21,6 +20,7 @@ object AutomationModeStore {
     // Mixed-mode channel toggles
     private const val KEY_MIXED_ALLOW_NFC = "automation_mixed_allow_nfc"
     private const val KEY_MIXED_ALLOW_QR = "automation_mixed_allow_qr"
+    private const val KEY_MIXED_ALLOW_BARCODE = "automation_mixed_allow_barcode"
     private const val KEY_MIXED_ALLOW_SCHEDULE = "automation_mixed_allow_schedule"
     private const val KEY_MIXED_ALLOW_BUTTON = "automation_mixed_allow_button"
     private const val KEY_MIXED_ALLOW_APP_PICKING = "automation_mixed_allow_app_picking"
@@ -29,13 +29,11 @@ object AutomationModeStore {
     private const val KEY_MIXED_ALLOW_NFC_TAG_WRITING = "automation_mixed_allow_nfc_tag_writing"
     private const val KEY_LOCK_SWITCHLY_APP_ACCESS = "pref_lock_switchly_app_access"
 
-    // Kept as a local constant so this store does not depend on Activity classes.
-    private const val KEY_SHOW_QR_CODE = "pref_show_qr_code"
-
     enum class Mode(val raw: String) {
         SCHEDULE("schedule"),
         NFC("nfc"),
         QR("qr"),
+        BARCODE("barcode"),
         MIXED("mixed");
 
         companion object {
@@ -71,6 +69,13 @@ object AutomationModeStore {
 
     fun setMixedAllowQr(ctx: Context, enabled: Boolean) {
         putBool(ctx, KEY_MIXED_ALLOW_QR, enabled)
+    }
+
+    fun isMixedAllowBarcode(ctx: Context): Boolean =
+        getBool(ctx, KEY_MIXED_ALLOW_BARCODE, true)
+
+    fun setMixedAllowBarcode(ctx: Context, enabled: Boolean) {
+        putBool(ctx, KEY_MIXED_ALLOW_BARCODE, enabled)
     }
 
     fun isMixedAllowSchedule(ctx: Context): Boolean =
@@ -126,7 +131,7 @@ object AutomationModeStore {
         return when (getMode(ctx)) {
             Mode.SCHEDULE -> true
             Mode.MIXED -> isMixedAllowSchedule(ctx)
-            Mode.NFC, Mode.QR -> false
+            Mode.NFC, Mode.QR, Mode.BARCODE -> false
         }
     }
 
@@ -134,37 +139,60 @@ object AutomationModeStore {
         return when (getMode(ctx)) {
             Mode.NFC -> true
             Mode.MIXED -> isMixedAllowNfc(ctx)
-            Mode.SCHEDULE, Mode.QR -> false
+            Mode.SCHEDULE, Mode.QR, Mode.BARCODE -> false
+        }
+    }
+
+    fun isNfcExclusiveControlActive(ctx: Context): Boolean {
+        return when (getMode(ctx)) {
+            Mode.NFC -> true
+            Mode.MIXED ->
+                isMixedAllowNfc(ctx) &&
+                    !isMixedAllowSchedule(ctx) &&
+                    !isMixedAllowQr(ctx) &&
+                    !isMixedAllowBarcode(ctx) &&
+                    !isMixedAllowButton(ctx)
+            Mode.SCHEDULE, Mode.QR, Mode.BARCODE -> false
         }
     }
 
     /**
-     * Pure capability check (without checking QR UI toggle visibility).
+     * Pure capability check for QR based only on the selected control mode.
      */
     fun isQrChannelAllowed(ctx: Context): Boolean {
         return when (getMode(ctx)) {
             Mode.QR -> true
             Mode.MIXED -> isMixedAllowQr(ctx)
-            Mode.SCHEDULE, Mode.NFC -> false
+            Mode.SCHEDULE, Mode.NFC, Mode.BARCODE -> false
         }
     }
 
-    /**
-     * Optional QR feature toggle from Blocking controls.
-     * Default: off.
-     */
-    fun isQrFeatureEnabled(ctx: Context): Boolean {
-        val defaultSp = PreferenceManager.getDefaultSharedPreferences(ctx)
-        return defaultSp.getBoolean(KEY_SHOW_QR_CODE, false)
+    fun isQrAllowed(ctx: Context): Boolean {
+        return isQrChannelAllowed(ctx)
     }
 
-    /**
-     * Effective QR availability for action execution.
-     * QR must be enabled as an optional feature and allowed by the selected mode/channel.
-     */
-    fun isQrAllowed(ctx: Context): Boolean {
-        return isQrFeatureEnabled(ctx) && isQrChannelAllowed(ctx)
+    fun shouldShowQrTools(ctx: Context): Boolean {
+        return isQrChannelAllowed(ctx)
     }
+
+    fun isBarcodeChannelAllowed(ctx: Context): Boolean {
+        return when (getMode(ctx)) {
+            Mode.BARCODE -> true
+            Mode.MIXED -> isMixedAllowBarcode(ctx)
+            Mode.SCHEDULE, Mode.NFC, Mode.QR -> false
+        }
+    }
+
+    fun isBarcodeAllowed(ctx: Context): Boolean {
+        return isBarcodeChannelAllowed(ctx)
+    }
+
+    fun shouldShowBarcodeTools(ctx: Context): Boolean {
+        return isBarcodeChannelAllowed(ctx)
+    }
+
+    fun isAnyScanFeatureEnabled(ctx: Context): Boolean =
+        isQrChannelAllowed(ctx) || isBarcodeChannelAllowed(ctx)
 
     /**
      * Tile control follows the same Mixed-mode channel as the manual button.

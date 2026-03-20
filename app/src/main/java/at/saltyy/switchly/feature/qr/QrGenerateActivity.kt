@@ -78,8 +78,8 @@ class QrGenerateActivity : AppCompatActivity() {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
 
-        if (!AutomationModeStore.isQrFeatureEnabled(this)) {
-            Toast.makeText(this, R.string.mode_blocked_qr_mixed_enable_toggle, Toast.LENGTH_SHORT).show()
+        if (!AutomationModeStore.shouldShowQrTools(this)) {
+            Toast.makeText(this, R.string.mode_blocked_qr_action, Toast.LENGTH_SHORT).show()
             finish()
             return
         }
