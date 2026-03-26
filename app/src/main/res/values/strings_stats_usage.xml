@@ -51,34 +51,11 @@
     <!-- =========================
          SCREEN TIME: Summary card
          ========================= -->
-    <string name="screen_time_title">Screen time</string>
-    <string name="screen_time_used_fmt">Used: %1$s</string>
-    <string name="screen_time_total_fmt">Total: %1$s</string>
-
-    <!-- =========================
-         STATISTICS HUB: Landing cards
-         ========================= -->
-    <string name="statistics_hub_title">Statistics</string>
-
-    <string name="statistics_hub_usage_title">Usage statistics</string>
-    <string name="statistics_hub_usage_desc">App usage per day, week, month, year, and overall.</string>
-
-    <string name="statistics_hub_blocking_title">App block statistics</string>
-    <string name="statistics_hub_blocking_desc">How often apps were blocked and how often you tried to open them.</string>
-
-    <string name="statistics_hub_runtime_title">App runtime statistics</string>
-    <string name="statistics_hub_runtime_desc">How long Switchly has been running and protecting you.</string>
-
-    <string name="statistics_hub_other_title">Other info</string>
-    <string name="statistics_hub_other_desc">Emergency unlocks, schedules, and more.</string>
+    <string name="statistics_usage_title">Usage statistics</string>
 
     <!-- =========================
          STATS: Mode + range + sorting controls
          ========================= -->
-    <string name="stats_mode_usage">Usage</string>
-    <string name="stats_mode_blocking">Blocking</string>
-    <string name="stats_mode_runtime">Runtime</string>
-    <string name="stats_mode_other">Other</string>
 
     <string name="stats_range_today">Today</string>
     <string name="stats_range_week">Week</string>
@@ -86,95 +63,38 @@
     <string name="stats_range_year">Year</string>
     <string name="stats_range_overall">Overall</string>
 
-    <string name="stats_sort_hint_default">Sort</string>
-    <string name="stats_sort_hint_fmt">Sort: %1$s</string>
     <string name="stats_sort_az">Name (A–Z)</string>
     <string name="stats_sort_za">Name (Z–A)</string>
 
     <!-- =========================
          STATS: Usage overview
          ========================= -->
-    <string name="stats_title">Usage</string>
-    <string name="stats_today_subtitle">App usage (daily) – limits reset at midnight</string>
 
-    <string name="stats_used_today_fmt">Used today: %1$s</string>
-    <string name="stats_used_week_fmt">Used this week: %1$s</string>
-    <string name="stats_used_month_fmt">Used this month: %1$s</string>
-    <string name="stats_used_year_fmt">Used this year: %1$s</string>
-    <string name="stats_used_overall_fmt">Used overall: %1$s</string>
 
-    <string name="stats_limit_fmt">Limit: %1$d min</string>
-    <string name="stats_limit_none">Limit: none</string>
-    <string name="stats_meta_limit_used_fmt">%1$s • %2$s</string>
-    <!-- Shown when the current range has no recorded stats. -->
-    <string name="stats_empty_no_data">No stats yet for this period.</string>
-    <!-- Shown when the user hasn't configured any limits at all. -->
-    <string name="stats_empty_no_limits">No app or website limits configured yet.</string>
-    <!-- Kept for backwards compatibility with layout defaults (not used in code). -->
-    <string name="stats_empty">No stats yet.</string>
 
     <!-- =========================
          STATS: Blocking
          ========================= -->
-    <string name="stats_blocking_primary_caption">Blocked messages</string>
-    <string name="stats_blocking_subtitle">Blocked notifications, per app.</string>
-    <string name="stats_blocking_details_fmt">Blocked messages: %1$d</string>
 
     <!-- Blocking: details screen -->
-    <string name="stats_block_detail_title">Blocking details</string>
-    <string name="stats_detail_attempts_caption">Attempts</string>
-    <string name="stats_detail_blocked_msgs_caption">Blocked messages</string>
-    <string name="stats_detail_last3_title">Last 3 blocked messages</string>
-    <string name="stats_detail_no_messages">No blocked messages yet.</string>
-    <string name="stats_detail_open_inbox">Open blocked messages</string>
 
-    <string name="stats_blocking_empty">No blocking data yet.</string>
 
     <!-- =========================
          STATS: Runtime
          ========================= -->
-    <string name="stats_runtime_subtitle">How long Switchly was running — and where you hit blocks most.</string>
-    <string name="stats_runtime_secondary_caption">Switchly runtime</string>
-    <string name="stats_runtime_top_blocked">Most attempted apps</string>
 
     <!-- =========================
          STATS: Other counters
          ========================= -->
-    <string name="stats_other_subtitle">Extra insights and counters.</string>
-    <string name="stats_other_tile_emergency">Emergency unlocks</string>
-    <string name="stats_other_tile_nfc">NFC tags</string>
-    <string name="stats_other_tile_schedules">Schedules</string>
-    <string name="stats_other_tile_blocked_apps">Blocked apps</string>
-    <string name="stats_other_tile_profiles">Profiles</string>
-    <string name="stats_other_tile_schedules_enabled">Enabled schedules</string>
-    <string name="stats_other_tile_limited_apps">Limited apps</string>
-    <string name="stats_other_tile_qr">QR scans</string>
-    <string name="stats_other_tile_temp_enables">Temp enables</string>
-    <string name="stats_other_tile_limits_reached">Limits reached</string>
-    <string name="stats_other_tile_blocked_attempts">Blocked attempts</string>
-
-    <string name="stats_other_total_fmt">Total: %1$s</string>
-    <string name="stats_other_note_totals">Totals are overall (since install)</string>
 
     <!-- =========================
          STATS: Premium insights
          ========================= -->
-    <string name="stats_insights_title">Insights (Premium)</string>
-    <string name="stats_insights_ratio_fmt">%1$d%% of your usage was blocked</string>
-    <string name="stats_insights_ratio_none">0%% of your usage was blocked 🎉</string>
-    <string name="stats_insights_improved_fmt">You reduced %1$s usage by %2$d%%</string>
-    <string name="stats_insights_improved_none">No most improved app yet</string>
-    <string name="stats_insights_trend_fmt">%1$s %2$d%% vs previous</string>
-    <string name="stats_insights_trend_new">↑ New</string>
-    <string name="stats_insights_trend_no_data">→ Not enough data yet</string>
 
     <!-- =========================
          USAGE ACCESS: Missing permission prompts
          ========================= -->
-    <string name="usage_access_missing_title">Usage Access required</string>
-    <string name="usage_access_missing_desc">Enable Usage Access to see your screen time and most used apps.</string>
     <string name="usage_access_needed_desc">Please enable "App usage data" access for Switchly to show your screen time stats.</string>
-    <string name="usage_access_open_settings">Open usage access settings</string>
     <string name="usage_open_settings">Open settings</string>
 
     <!-- =========================
@@ -190,6 +110,7 @@
     <string name="usage_year_total">This year total</string>
     <string name="usage_overall_total">All time total</string>
 
+    <string name="usage_range_today">Today</string>
     <string name="usage_range_week">Week</string>
     <string name="usage_range_month">Month</string>
     <string name="usage_range_year">Year</string>
@@ -210,12 +131,24 @@
 
     <string name="usage_total_screen_time">Total Screen Time</string>
     <string name="usage_sessions_today">Opens today</string>
+    <string name="usage_sessions_week">Opens this week</string>
+    <string name="usage_sessions_month">Opens this month</string>
+    <string name="usage_sessions_year">Opens this year</string>
+    <string name="usage_sessions_overall">Opens overall</string>
+    <string name="usage_attempts_today">Attempts today</string>
+    <string name="usage_attempts_week">Attempts this week</string>
+    <string name="usage_attempts_month">Attempts this month</string>
+    <string name="usage_attempts_year">Attempts this year</string>
+    <string name="usage_attempts_overall">Attempts overall</string>
     <string name="usage_app_placeholder">App</string>
 
     <!-- =========================
          USAGE: Website data states
          ========================= -->
     <string name="usage_web_placeholder">Website stats coming soon.</string>
+    <string name="usage_apps_no_accessibility">App usage tracking needs Switchly Accessibility enabled.</string>
+    <string name="usage_apps_no_data">No tracked app usage yet. Switchly records app usage while Accessibility is enabled.</string>
+    <string name="usage_apps_no_blocked">No blocked apps configured yet.</string>
     <string name="usage_websites_no_accessibility">Website tracking needs Switchly Accessibility enabled.</string>
     <string name="usage_websites_no_data">No website data yet. Open a website in a supported browser (Chrome, Brave, Edge, Firefox…) while Switchly Accessibility is enabled.</string>
     <string name="usage_websites_no_blocked">No limited websites configured yet.</string>
@@ -235,7 +168,6 @@
     <string name="usage_share_of_period">Share of period</string>
 
 <string name="usage_kv_fmt">%1$s: %2$s</string>
-    <string name="percent_fmt">%1$d%%</string>
     <string name="usage_percent_zero" formatted="false">0.0%</string>
     <string name="usage_time_zero_short">0m</string>
     <string name="usage_time_zero_medium">0h 00m</string>
@@ -252,10 +184,6 @@
     <string name="stats_apply">Apply</string>
     <string name="stats_sort_used_time_desc">Used time (top)</string>
     <string name="stats_sort_used_time_asc">Used time (bottom)</string>
-    <string name="stats_sort_attempts_desc">Attempts (top)</string>
-    <string name="stats_sort_attempts_asc">Attempts (bottom)</string>
-    <string name="stats_sort_blocked_time_desc">Blocked time (top)</string>
-    <string name="stats_sort_blocked_time_asc">Blocked time (bottom)</string>
 
     <!-- Quick limit editor (used in Usage Stats + Details) -->
     <string name="edit_limits">Edit limits</string>
@@ -264,10 +192,6 @@
     <string name="limit_attempts_action">Attempts</string>
     <string name="no_profile_selected">Please select a profile.</string>
     <string name="profile_active_fmt">Profile: %1$s</string>
-    <string name="stats_attempts_line">Attempts: %1$d</string>
-    <string name="stats_blocked_messages_line">Blocked messages: %1$d</string>
-    <string name="stats_last_blocked_messages_title">Last blocked messages</string>
-    <string name="stats_open_blocked_messages">Open blocked messages</string>
     <string name="stats_sort_filter">Sort &amp; filter</string>
 
     <!-- =========================

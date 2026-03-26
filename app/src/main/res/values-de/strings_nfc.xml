@@ -24,7 +24,7 @@
     <string name="nfc_action_toggle">Umschalten</string>
     <string name="nfc_action_temp_enable">Temporär aktivieren</string>
     <string name="nfc_action_temp_disable">Temporär deaktivieren</string>
-    <string name="nfc_action_reentry">Re-entry</string>
+    <string name="nfc_action_reentry">Einstellungen temporär entsperren</string>
     <string name="nfc_action_pair_uid">Tag koppeln (nur UID)</string>
     <string name="nfc_action_hint_with_profile">%1$s\n%2$s</string>
 
@@ -47,8 +47,8 @@
     </plurals>
 
     <plurals name="nfc_action_desc_reentry">
-        <item quantity="one">Schreibt ein Re-entry-Tag, das ein %1$d-minütiges Einstellungsfenster öffnet und danach den vorherigen Zustand wiederherstellt.</item>
-        <item quantity="other">Schreibt ein Re-entry-Tag, das ein %1$d-minütiges Einstellungsfenster öffnet und danach den vorherigen Zustand wiederherstellt.</item>
+        <item quantity="one">Schreibt ein Tag, das die Switchly-Einstellungen %1$d Minute lang temporär entsperrt und danach den vorherigen Zustand wiederherstellt.</item>
+        <item quantity="other">Schreibt ein Tag, das die Switchly-Einstellungen %1$d Minuten lang temporär entsperrt und danach den vorherigen Zustand wiederherstellt.</item>
     </plurals>
     <string name="nfc_action_desc_pair_uid">Keine Schreibaktion. Das ist nur UID-Kopplung, auch für schreibgeschützte Karten. Beim Scannen wird die UID als erlaubt gespeichert, aber es wird keine Deaktivieren/Profil-Aktion auf die Karte geschrieben. Sobald mindestens eine UID gekoppelt ist, können nur gekoppelte Tags Switchly umschalten oder entsperren.</string>
     <string name="nfc_action_desc_profile_selected">Ausgewähltes Profil: %1$s</string>
@@ -146,7 +146,7 @@
          PAIRED TAGS: List/edit
          ========================================================= -->
     <string name="paired_tags_setup_title">NFC-Tags hinzufügen und verwalten</string>
-    <string name="paired_tags_setup_body">Nutze die + Schaltfläche, um ein neues NFC-Tag hinzuzufügen.\n\n• Beschreibbares Tag hinzufügen: Der erste Scan koppelt die UID des Tags. Wenn du dasselbe Tag erneut scannst, öffnet Switchly den Aktions-Writer, damit du eine Aktion darauf schreiben kannst.\n• Schreibgeschütztes Tag hinzufügen: koppelt die UID des Tags für Toggle-/Entsperr-Nutzung, ohne etwas auf die Karte zu schreiben.</string>
+    <string name="paired_tags_setup_body">Nutze die + Schaltfläche, um ein neues NFC-Tag hinzuzufügen.\n\n• Beschreibbares Tag hinzufügen: Der erste Scan koppelt die UID des Tags. Wenn du dasselbe Tag erneut scannst, öffnet Switchly den Aktions-Writer, damit du eine Aktion darauf schreiben kannst.\n• Schreibgeschütztes Tag hinzufügen: koppelt die UID des Tags für Toggle-/Entsperr-Nutzung, ohne etwas auf die Karte zu schreiben. Nur hier gekoppelte Tags funktionieren so als schreibgeschützte Tags.</string>
     <string name="paired_tags_add_title">NFC-Tag hinzufügen</string>
     <string name="paired_tags_add_writable_title">Beschreibbares Tag hinzufügen</string>
     <string name="paired_tags_add_readonly_title">Schreibgeschütztes Tag hinzufügen</string>
@@ -168,7 +168,7 @@
 
     <!-- Pairing: optional name/note prompt -->
     <string name="paired_tag_pair_prompt_title">Tag benennen</string>
-    <string name="paired_tag_pair_prompt_message">Optional, hilft dir aber später beim Wiedererkennen. Schreibgeschützte Karten können per UID gekoppelt werden, speichern aber keine Switchly-Aktion auf der Karte selbst.</string>
+    <string name="paired_tag_pair_prompt_message">Optional, hilft dir aber später beim Wiedererkennen. Schreibgeschützte Karten können per UID gekoppelt werden, speichern aber keine Switchly-Aktion auf der Karte selbst. Nur hier gekoppelte Tags können so verwendet werden.</string>
     <string name="paired_tag_pair_prompt_save">Speichern</string>
     <string name="paired_tag_pair_prompt_skip">Überspringen</string>
 

@@ -115,7 +115,15 @@ class ToggleOptionsActivity : AppCompatActivity() {
         btnInfoEnablePairedUids.setOnClickListener {
             val dialog = MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.toggle_info_paired_uids_title)
-                .setMessage(if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)) R.string.toggle_info_paired_uids_body_enabled else R.string.toggle_info_paired_uids_body_disabled)
+                .setMessage(
+                    if (PreferenceManager.getDefaultSharedPreferences(this)
+                            .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+                    ) {
+                        R.string.toggle_info_paired_uids_body_enabled
+                    } else {
+                        R.string.toggle_info_paired_uids_body_disabled
+                    }
+                )
                 .setPositiveButton(R.string.ok, null)
                 .create()
             dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
@@ -141,6 +149,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val switchModeQr = findViewById<SwitchMaterial>(R.id.switchModeQr)
         val switchModeBarcode = findViewById<SwitchMaterial>(R.id.switchModeBarcode)
         val switchModeMixed = findViewById<SwitchMaterial>(R.id.switchModeMixed)
+        val switchAllowButtonEnable = findViewById<SwitchMaterial>(R.id.switchAllowButtonEnable)
 
         // --- Switches (Mixed mode channels)
         val cardMixedChannels = findViewById<MaterialCardView>(R.id.cardMixedChannels)
@@ -177,6 +186,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val rowModeQr = findViewById<View>(R.id.rowModeQr)
         val rowModeBarcode = findViewById<View>(R.id.rowModeBarcode)
         val rowModeMixed = findViewById<View>(R.id.rowModeMixed)
+        val rowAllowButtonEnable = findViewById<View>(R.id.rowAllowButtonEnable)
 
         val rowMixedAllowSchedule = findViewById<View>(R.id.rowMixedAllowSchedule)
         val rowMixedAllowNfc = findViewById<View>(R.id.rowMixedAllowNfc)
@@ -187,6 +197,10 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val rowMixedAllowProfileSwitching = findViewById<View>(R.id.rowMixedAllowProfileSwitching)
         val rowMixedAllowScheduleEditing = findViewById<View>(R.id.rowMixedAllowScheduleEditing)
         val rowMixedAllowNfcTagWriting = findViewById<View>(R.id.rowMixedAllowNfcTagWriting)
+        val dividerAfterMixedAllowSchedule = findViewById<View>(R.id.dividerAfterMixedAllowSchedule)
+        val dividerAfterMixedAllowNfc = findViewById<View>(R.id.dividerAfterMixedAllowNfc)
+        val dividerAfterMixedAllowQr = findViewById<View>(R.id.dividerAfterMixedAllowQr)
+        val dividerAfterMixedAllowBarcode = findViewById<View>(R.id.dividerAfterMixedAllowBarcode)
         val rowLockSwitchlyAppAccess = findViewById<View>(R.id.rowLockSwitchlyAppAccess)
         val rowLimitTempDisableTags = findViewById<View>(R.id.rowLimitTempDisableTags)
 
@@ -236,7 +250,13 @@ class ToggleOptionsActivity : AppCompatActivity() {
             summaryRes = R.string.pref_mode_mixed_summary,
             detailsRes = R.string.toggle_detail_mode_mixed
         )
-
+        addInlineDetailsAction(
+            row = rowAllowButtonEnable,
+            switchView = switchAllowButtonEnable,
+            titleRes = R.string.pref_allow_button_enable_title,
+            summaryRes = R.string.pref_allow_button_enable_summary,
+            detailsRes = R.string.toggle_detail_allow_button_enable
+        )
         addInlineDetailsAction(
             row = rowMixedAllowSchedule,
             switchView = switchMixedAllowSchedule,
@@ -307,7 +327,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             summaryRes = R.string.pref_lock_switchly_app_access_summary,
             detailsRes = R.string.toggle_detail_lock_switchly_app_access
         )
-
         addInlineDetailsAction(
             row = rowLimitTempDisableTags,
             switchView = switchLimitTempDisableTags,
@@ -315,8 +334,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             summaryRes = R.string.pref_limit_temp_disable_tags_summary,
             detailsRes = R.string.toggle_detail_limit_temp_disable_tags
         )
-
-
         addInlineDetailsAction(
             row = rowQuickTile,
             switchView = switchQuickTile,
@@ -352,6 +369,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             summaryRes = R.string.pref_show_quick_actions_summary,
             detailsRes = R.string.toggle_detail_quick_actions
         )
+
         accentSwitches.clear()
         accentSwitches += listOf(
             switchModeSchedule,
@@ -359,6 +377,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             switchModeQr,
             switchModeBarcode,
             switchModeMixed,
+            switchAllowButtonEnable,
             switchMixedAllowSchedule,
             switchMixedAllowNfc,
             switchMixedAllowQr,
@@ -378,16 +397,12 @@ class ToggleOptionsActivity : AppCompatActivity() {
         )
         applySwitchAccentTints()
 
-        // -------------------------
-        // Initial state
-        // -------------------------
-        // Deprecated in UI (replaced by granular mixed-channel controls).
-        // Keep backend value disabled to avoid stale hard-lock surprises after updates.
         SwitchModeStore.setNfcRequiredForDisable(ctx, false)
         rowRequireNfcUnlock.visibility = View.GONE
         findViewById<View>(R.id.dividerRequireNfcUnlock)?.visibility = View.GONE
         switchRequireNfcUnlock.isChecked = false
 
+        switchAllowButtonEnable.isChecked = AutomationModeStore.isButtonEnableAllowed(ctx)
         switchMixedAllowSchedule.isChecked = AutomationModeStore.isMixedAllowSchedule(ctx)
         switchMixedAllowNfc.isChecked = AutomationModeStore.isMixedAllowNfc(ctx)
         switchMixedAllowQr.isChecked = AutomationModeStore.isMixedAllowQr(ctx)
@@ -406,9 +421,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
         switchEmergency.isChecked = EmergencyBypassStore.isFeatureEnabled(ctx)
         switchShowQuickActions.isChecked = sp.getBoolean(KEY_SHOW_QUICK_ACTIONS, true)
         switchEnablePairedUids.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-
-        // Quick tile is not a "real" enable/disable setting (Android doesn't allow removing tiles programmatically).
-        // We store whether the user wants the tile/has requested it.
         switchQuickTile.isChecked = sp.getBoolean(KEY_QS_TILE_REQUESTED, false)
 
         fun modeLabel(mode: AutomationModeStore.Mode): String = when (mode) {
@@ -442,56 +454,38 @@ class ToggleOptionsActivity : AppCompatActivity() {
             switchModeMixed.isChecked = mode == AutomationModeStore.Mode.MIXED
             ignoreControlModeListener = false
 
-            val rowMap = mapOf(
-                AutomationModeStore.Mode.SCHEDULE to rowModeSchedule,
-                AutomationModeStore.Mode.NFC to rowModeNfc,
-                AutomationModeStore.Mode.QR to rowModeQr,
-                AutomationModeStore.Mode.BARCODE to rowModeBarcode,
-                AutomationModeStore.Mode.MIXED to rowModeMixed,
-            )
-            val switchMap = mapOf(
-                AutomationModeStore.Mode.SCHEDULE to switchModeSchedule,
-                AutomationModeStore.Mode.NFC to switchModeNfc,
-                AutomationModeStore.Mode.QR to switchModeQr,
-                AutomationModeStore.Mode.BARCODE to switchModeBarcode,
-                AutomationModeStore.Mode.MIXED to switchModeMixed,
-            )
+            val showMixedOnly = mode == AutomationModeStore.Mode.MIXED
+            val isSchedule = mode == AutomationModeStore.Mode.SCHEDULE
+            val isNfc = mode == AutomationModeStore.Mode.NFC
 
-            val modeSwitchingAllowed = canChangeControlMode(showToast = false)
+            cardMixedChannels.visibility = View.VISIBLE
+            tvMixedChannelsSection.visibility = View.VISIBLE
 
-            rowMap.forEach { (key, row) ->
-                val selected = key == mode
-                val baseAlpha = if (selected) 1f else 0.82f
-                row.alpha = if (modeSwitchingAllowed) baseAlpha else (baseAlpha * 0.86f)
-            }
-            switchMap.forEach { (key, sw) ->
-                val selected = key == mode
-                sw.isEnabled = modeSwitchingAllowed
-                sw.alpha = when {
-                    selected && modeSwitchingAllowed -> 1f
-                    !selected && modeSwitchingAllowed -> 0.8f
-                    selected -> 0.58f
-                    else -> 0.45f
-                }
-            }
+            // Mixed-only channels
+            rowMixedAllowSchedule.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
+            rowMixedAllowNfc.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
+            rowMixedAllowQr.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
+            rowMixedAllowBarcode.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
+            rowMixedAllowButton.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
 
-            // Channel controls are relevant only for Mixed mode. Hide them otherwise to avoid confusing users.
-            val showChannels = mode == AutomationModeStore.Mode.MIXED
-            cardMixedChannels.visibility = if (showChannels) View.VISIBLE else View.GONE
-            tvMixedChannelsSection.visibility = if (showChannels) View.VISIBLE else View.GONE
-            if (showChannels) refreshMixedChannelInteractivity()
+            dividerAfterMixedAllowSchedule.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
+            dividerAfterMixedAllowNfc.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
+            dividerAfterMixedAllowQr.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
+            dividerAfterMixedAllowBarcode.visibility = if (showMixedOnly) View.VISIBLE else View.GONE
 
-            if (userInitiated) {
-                Toast.makeText(
-                    ctx,
-                    getString(R.string.mode_selected_toast_fmt, modeLabel(mode)),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            // Always relevant
+            rowMixedAllowAppPicking.visibility = View.VISIBLE
+            rowMixedAllowProfileSwitching.visibility = View.VISIBLE
+            rowAllowButtonEnable.visibility = View.VISIBLE
 
-            refreshNfcLockedHint()
-            refreshControlModeLockHint()
-            invalidateOptionsMenu()
+            // Conditional
+            rowMixedAllowScheduleEditing.visibility =
+                if (isSchedule || showMixedOnly) View.VISIBLE else View.GONE
+
+            rowMixedAllowNfcTagWriting.visibility =
+                if (isNfc || showMixedOnly) View.VISIBLE else View.GONE
+
+            refreshMixedChannelInteractivity()
         }
 
         fun onControlModeRowClicked(target: AutomationModeStore.Mode) {
@@ -555,10 +549,12 @@ class ToggleOptionsActivity : AppCompatActivity() {
         bindModeSwitch(switchModeMixed, AutomationModeStore.Mode.MIXED)
 
         applyControlModeSelection(AutomationModeStore.getMode(ctx), userInitiated = false)
-
         refreshNfcLockedHint()
 
         // Row click toggles switch
+        rowAllowButtonEnable.setOnClickListener {
+            switchAllowButtonEnable.toggle()
+        }
         rowMixedAllowSchedule.setOnClickListener {
             if (canEditMixedChannels()) switchMixedAllowSchedule.toggle()
         }
@@ -586,9 +582,15 @@ class ToggleOptionsActivity : AppCompatActivity() {
         rowMixedAllowNfcTagWriting.setOnClickListener {
             if (canEditMixedChannels()) switchMixedAllowNfcTagWriting.toggle()
         }
-        rowLockSwitchlyAppAccess.setOnClickListener { switchLockSwitchlyAppAccess.toggle() }
-        rowLimitTempDisableTags.setOnClickListener { switchLimitTempDisableTags.toggle() }
-        rowEnablePairedUids.setOnClickListener { switchEnablePairedUids.toggle() }
+        rowLockSwitchlyAppAccess.setOnClickListener {
+            switchLockSwitchlyAppAccess.toggle()
+        }
+        rowLimitTempDisableTags.setOnClickListener {
+            switchLimitTempDisableTags.toggle()
+        }
+        rowEnablePairedUids.setOnClickListener {
+            switchEnablePairedUids.toggle()
+        }
 
         // Quick Tile: switch triggers add flow, disabling shows how-to-remove hint
         val addQuickTile: () -> Unit = {
@@ -610,7 +612,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             if (isChecked) {
                 addQuickTile()
             } else {
-                // Can't remove tiles programmatically -> guide user
                 Snackbar.make(
                     findViewById(android.R.id.content),
                     getString(R.string.qs_tile_remove_hint),
@@ -621,13 +622,12 @@ class ToggleOptionsActivity : AppCompatActivity() {
 
         rowBlockNotifs.setOnClickListener { switchBlockNotifications.toggle() }
         rowAutostart.setOnClickListener { switchAutostart.toggle() }
-
         rowEmergency.setOnClickListener { switchEmergency.toggle() }
         rowShowQuickActions.setOnClickListener { switchShowQuickActions.toggle() }
 
-        // -------------------------
-        // Listeners
-        // -------------------------
+        switchAllowButtonEnable.setOnCheckedChangeListener { _, isChecked ->
+            AutomationModeStore.setButtonEnableAllowed(ctx, isChecked)
+        }
 
         // Mixed mode channel toggles
         switchMixedAllowSchedule.setOnCheckedChangeListener { buttonView, isChecked ->
@@ -639,7 +639,9 @@ class ToggleOptionsActivity : AppCompatActivity() {
                 return@setOnCheckedChangeListener
             }
             AutomationModeStore.setMixedAllowSchedule(ctx, isChecked)
+            refreshMixedChannelInteractivity()
         }
+
         switchMixedAllowNfc.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -650,7 +652,9 @@ class ToggleOptionsActivity : AppCompatActivity() {
             }
             AutomationModeStore.setMixedAllowNfc(ctx, isChecked)
             refreshNfcLockedHint()
+            refreshMixedChannelInteractivity()
         }
+
         switchMixedAllowQr.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -662,6 +666,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             AutomationModeStore.setMixedAllowQr(ctx, isChecked)
             invalidateOptionsMenu()
         }
+
         switchMixedAllowBarcode.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -673,6 +678,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             AutomationModeStore.setMixedAllowBarcode(ctx, isChecked)
             invalidateOptionsMenu()
         }
+
         switchMixedAllowButton.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -683,6 +689,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             }
             AutomationModeStore.setMixedAllowButton(ctx, isChecked)
         }
+
         switchMixedAllowAppPicking.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -693,6 +700,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             }
             AutomationModeStore.setMixedAllowAppPicking(ctx, isChecked)
         }
+
         switchMixedAllowProfileSwitching.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -703,6 +711,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             }
             AutomationModeStore.setMixedAllowProfileSwitching(ctx, isChecked)
         }
+
         switchMixedAllowScheduleEditing.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -713,6 +722,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             }
             AutomationModeStore.setMixedAllowScheduleEditing(ctx, isChecked)
         }
+
         switchMixedAllowNfcTagWriting.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
             if (!canEditMixedChannels()) {
@@ -788,12 +798,27 @@ class ToggleOptionsActivity : AppCompatActivity() {
         if (!requestedSection.isNullOrBlank()) {
             scrollToRequestedSection(requestedSection)
         }
-
     }
 
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true
+    }
+
+    private fun shouldShowScheduleEditing(): Boolean {
+        return when (AutomationModeStore.getMode(this)) {
+            AutomationModeStore.Mode.SCHEDULE -> true
+            AutomationModeStore.Mode.MIXED -> AutomationModeStore.isMixedAllowSchedule(this)
+            else -> false
+        }
+    }
+
+    private fun shouldShowNfcTagWriting(): Boolean {
+        return when (AutomationModeStore.getMode(this)) {
+            AutomationModeStore.Mode.NFC -> true
+            AutomationModeStore.Mode.MIXED -> AutomationModeStore.isMixedAllowNfc(this)
+            else -> false
+        }
     }
 
     private fun refreshLiveLockUi() {
@@ -883,9 +908,8 @@ class ToggleOptionsActivity : AppCompatActivity() {
     }
 
     private fun applyDetailButtonTint() {
-        // Keep the inline info icons in the selected accent color.
-        detailButtons.forEach { btn ->
-            tintInfoIcon(btn)
+        detailButtons.forEach {
+            btn -> tintInfoIcon(btn)
         }
     }
 
@@ -901,7 +925,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val detailsBtn = ImageButton(this).apply {
             setImageResource(R.drawable.info_24)
             contentDescription = getString(R.string.info)
-            // No "box" around it, just a ripple.
             setBackgroundResource(android.R.color.transparent)
             this@ToggleOptionsActivity.withStyledAttributes(
                 attrs = intArrayOf(android.R.attr.selectableItemBackgroundBorderless)
@@ -943,8 +966,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             ).apply {
                 gravity = android.view.Gravity.CENTER_HORIZONTAL
             }
-            // Optical alignment: Material switch track has slight right-weight visually.
-            // Nudge a touch left so it appears centered under the info icon.
             switchView.translationX = -dp(2).toFloat()
 
             trailingStack.addView(detailsBtn)
@@ -998,6 +1019,10 @@ class ToggleOptionsActivity : AppCompatActivity() {
             AutomationModeStore.getMode(this) == AutomationModeStore.Mode.MIXED
     }
 
+    private fun isActiveAccessEditingLocked(): Boolean {
+        return false
+    }
+
     private fun canEditMixedChannels(showToast: Boolean = true): Boolean {
         val allowed = !isMixedChannelEditingLocked()
         if (!allowed && showToast) {
@@ -1011,22 +1036,34 @@ class ToggleOptionsActivity : AppCompatActivity() {
     }
 
     private fun refreshMixedChannelInteractivity() {
-        val locked = isMixedChannelEditingLocked()
-        val rowAlpha = if (locked) 0.68f else 1f
-        val switchAlpha = if (locked) 0.58f else 1f
+        val mode = AutomationModeStore.getMode(this)
+        val mixedLocked = isMixedChannelEditingLocked()
+
+        val isMixed = mode == AutomationModeStore.Mode.MIXED
+        val isSchedule = mode == AutomationModeStore.Mode.SCHEDULE
+        val isNfc = mode == AutomationModeStore.Mode.NFC
+
+        val scheduleEditingVisible = isSchedule || isMixed
+        val nfcTagWritingVisible = isNfc || isMixed
+
+        // apply visibility again (safety sync)
+        findViewById<View>(R.id.rowMixedAllowScheduleEditing)?.visibility =
+            if (scheduleEditingVisible) View.VISIBLE else View.GONE
+
+        findViewById<View>(R.id.rowMixedAllowNfcTagWriting)?.visibility =
+            if (nfcTagWritingVisible) View.VISIBLE else View.GONE
+
+        val mixedRowAlpha = if (mixedLocked) 0.68f else 1f
+        val mixedSwitchAlpha = if (mixedLocked) 0.58f else 1f
 
         listOf(
             R.id.rowMixedAllowSchedule,
             R.id.rowMixedAllowNfc,
             R.id.rowMixedAllowQr,
             R.id.rowMixedAllowBarcode,
-            R.id.rowMixedAllowButton,
-            R.id.rowMixedAllowAppPicking,
-            R.id.rowMixedAllowProfileSwitching,
-            R.id.rowMixedAllowScheduleEditing,
-            R.id.rowMixedAllowNfcTagWriting
-        ).forEach { id ->
-            findViewById<View>(id)?.alpha = rowAlpha
+            R.id.rowMixedAllowButton
+        ).forEach {
+            findViewById<View>(it)?.alpha = mixedRowAlpha
         }
 
         listOf(
@@ -1034,17 +1071,34 @@ class ToggleOptionsActivity : AppCompatActivity() {
             R.id.switchMixedAllowNfc,
             R.id.switchMixedAllowQr,
             R.id.switchMixedAllowBarcode,
-            R.id.switchMixedAllowButton,
-            R.id.switchMixedAllowAppPicking,
-            R.id.switchMixedAllowProfileSwitching,
-            R.id.switchMixedAllowScheduleEditing,
-            R.id.switchMixedAllowNfcTagWriting
-        ).forEach { id ->
-            findViewById<SwitchMaterial>(id)?.let { sw ->
-                sw.isEnabled = !locked
-                sw.alpha = switchAlpha
+            R.id.switchMixedAllowButton
+        ).forEach {
+            findViewById<SwitchMaterial>(it)?.apply {
+                isEnabled = !mixedLocked
+                alpha = mixedSwitchAlpha
             }
         }
+
+        // Card visibility fallback (never empty)
+        val hasVisible =
+            listOf(
+                R.id.rowMixedAllowSchedule,
+                R.id.rowMixedAllowNfc,
+                R.id.rowMixedAllowQr,
+                R.id.rowMixedAllowBarcode,
+                R.id.rowMixedAllowButton,
+                R.id.rowMixedAllowAppPicking,
+                R.id.rowMixedAllowProfileSwitching,
+                R.id.rowAllowButtonEnable,
+                R.id.rowMixedAllowScheduleEditing,
+                R.id.rowMixedAllowNfcTagWriting
+            ).any { findViewById<View>(it)?.visibility == View.VISIBLE }
+
+        findViewById<View>(R.id.cardMixedChannels)?.visibility =
+            if (hasVisible) View.VISIBLE else View.GONE
+
+        findViewById<View>(R.id.tvMixedChannelsSection)?.visibility =
+            if (hasVisible) View.VISIBLE else View.GONE
     }
 
     private fun normalizeSection(raw: String?): String? {
@@ -1087,7 +1141,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             R.id.cardDisplayControls
         )
 
-        AutomationModeStore.getMode(this) == AutomationModeStore.Mode.MIXED
         val showIds = when (normalized) {
             SECTION_BLOCKING -> buildSet {
                 add(R.id.cardNfcLockedHint)
@@ -1097,27 +1150,24 @@ class ToggleOptionsActivity : AppCompatActivity() {
                 add(R.id.tvMixedChannelsSection)
                 add(R.id.cardMixedChannels)
             }
-
             SECTION_FEATURES -> setOf(
                 R.id.tvAdditionalFeaturesSection,
                 R.id.cardAdditionalFeatures
             )
-
             SECTION_SAFETY -> setOf(
                 R.id.tvSafetyControlsSection,
                 R.id.cardSafetyControls
             )
-
             SECTION_DISPLAY -> setOf(
                 R.id.tvDisplayControlsSection,
                 R.id.cardDisplayControls
             )
-
             else -> emptySet()
         }
 
         allIds.forEach { viewId ->
-            findViewById<View>(viewId)?.visibility = if (showIds.contains(viewId)) View.VISIBLE else View.GONE
+            findViewById<View>(viewId)?.visibility =
+                if (showIds.contains(viewId)) View.VISIBLE else View.GONE
         }
 
         val topHeaderId = when (normalized) {

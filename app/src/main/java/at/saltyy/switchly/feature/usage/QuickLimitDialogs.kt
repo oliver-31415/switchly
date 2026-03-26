@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
@@ -20,6 +21,8 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.AppBlockSafety
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
@@ -44,6 +47,37 @@ object QuickLimitDialogs {
         startOnAttempts: Boolean? = null,
         onChanged: (() -> Unit)? = null
     ) {
+        val safety = AppBlockSafety.resolve(activity, pkg)
+        when (safety.level) {
+            AppBlockSafety.Level.HARD_EXCLUDED -> {
+                Toast.makeText(
+                    activity,
+                    safety.hint ?: activity.getString(R.string.app_picker_protected_generic_hint),
+                    Toast.LENGTH_LONG
+                ).show()
+                return
+            }
+            AppBlockSafety.Level.SOFT_WARNING -> {
+                AlertDialog.Builder(activity)
+                    .setTitle(safety.warningTitle ?: activity.getString(R.string.app_picker_protected_caution_title))
+                    .setMessage(safety.warningMessage ?: safety.hint ?: activity.getString(R.string.app_picker_protected_generic_hint))
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.continue_label) { _, _ ->
+                        showForAppInternal(activity, pkg, label, startOnAttempts, onChanged)
+                    }
+                    .showAccented()
+            }
+            else -> showForAppInternal(activity, pkg, label, startOnAttempts, onChanged)
+        }
+    }
+
+    private fun showForAppInternal(
+        activity: AppCompatActivity,
+        pkg: String,
+        label: String,
+        startOnAttempts: Boolean? = null,
+        onChanged: (() -> Unit)? = null
+    ) {
         if (SwitchModeStore.isEnabled(activity)) {
             Toast.makeText(activity, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
             return
@@ -55,7 +89,6 @@ object QuickLimitDialogs {
             return
         }
 
-        // Single compact dialog: dropdown (type) + value.
         val currentTime = UsageLimitStore.getLimitMinutes(activity, profile, pkg)
         val currentAttempts = AttemptLimitStore.getLimitAttempts(activity, profile, pkg)
 
@@ -146,6 +179,7 @@ object QuickLimitDialogs {
     }
 
     private fun ensureManaged(activity: AppCompatActivity, profile: String, pkg: String) {
+        if (AppBlockSafety.isHardExcluded(activity, pkg)) return
         val blocked = ProfileStore.getBlockedForProfile(activity, profile).toMutableSet()
         if (!blocked.contains(pkg)) {
             blocked.add(pkg)

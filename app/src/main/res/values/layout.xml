@@ -58,6 +58,17 @@
         <item name="android:minHeight">52dp</item>
     </style>
 
+    <style name="Switchly.OutlinedButton.CompactSegment" parent="Switchly.OutlinedButton">
+        <item name="android:minWidth">0dp</item>
+        <item name="minWidth">0dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:paddingLeft">4dp</item>
+        <item name="android:paddingRight">4dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
     <!-- Lightweight dialog/action buttons (no filled background) -->
     <style name="Switchly.TextButton" parent="Widget.MaterialComponents.Button.TextButton">
         <item name="android:textColor">?attr/colorPrimary</item>

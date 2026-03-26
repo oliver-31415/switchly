@@ -25,8 +25,8 @@ android {
         minSdk = 27
         targetSdk = 36
 
-        versionCode = 203
-        versionName = "2.0.3"
+        versionCode = 204
+        versionName = "2.0.4"
     }
 
     buildFeatures {
@@ -74,7 +74,7 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     // Firebase BOM + Modules
-    implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
 
     // Auth for Google-Login
     implementation("com.google.firebase:firebase-auth")

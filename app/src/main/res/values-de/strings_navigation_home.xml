@@ -82,12 +82,16 @@
     <!-- =========================================================
          DASHBOARD: Quick tiles/shortcuts
          ========================================================= -->
-    <string name="dashboard_tile_permissions">Berechtigungen</string>
-    <string name="dashboard_tile_permissions_sub">Fehlendes beheben</string>
     <string name="dashboard_tile_profiles">Profile</string>
     <string name="dashboard_tile_profiles_sub">Erstellen &amp; bearbeiten</string>
-    <string name="dashboard_tile_toggle_options_sub">Sicherheit &amp; UI</string>
-    <string name="dashboard_tile_write_nfc_sub">Tag zum Umschalten antippen</string>
+    <string name="dashboard_tile_blocked_websites">Blockierte Websites</string>
+    <string name="dashboard_tile_blocked_websites_sub">Domains &amp; Regeln</string>
+    <string name="dashboard_tile_usage">Nutzung</string>
+    <string name="dashboard_tile_usage_sub">Statistiken &amp; Details</string>
+    <string name="dashboard_tile_in_app">In-App-Blocking</string>
+    <string name="dashboard_tile_in_app_sub">Feeds &amp; Oberflächen</string>
+    <string name="dashboard_quick_actions_edit">Schnellaktionen bearbeiten</string>
+    <string name="dashboard_quick_actions_customize">Schnellaktionen anpassen</string>
     <string name="dashboard_tile_qr">QR</string>
     <string name="dashboard_tile_qr_sub">Tippen zum Scannen • halten zum Generieren</string>
     <string name="dashboard_tile_barcode">Barcode</string>
@@ -114,6 +118,23 @@
     <string name="search_apps">Apps suchen</string>
     <string name="app_picker_select_all">Alle auswählen</string>
     <string name="app_picker_clear_all">Auswahl löschen</string>
+    <string name="app_picker_protected_chip">Geschützt</string>
+    <string name="app_picker_caution_chip">Achtung</string>
+    <string name="app_picker_protected_generic_hint">Diese App ist aus Gerätesicherheitsgründen geschützt.</string>
+    <string name="app_picker_protected_keyboard_hint">Deine aktuelle Tastatur wird vom Blockieren ausgeschlossen, damit du dich nicht vom Tippen aussperrst.</string>
+    <string name="app_picker_protected_launcher_hint">Dein aktueller Launcher wird vom Blockieren ausgeschlossen, damit du dich nicht vom Homescreen aussperrst.</string>
+    <string name="app_picker_wallet_hint">Wallet-Apps können auf manchen Geräten Gesten oder Schnellzugriffe stören.</string>
+    <string name="app_picker_dialer_hint">Wenn du deine aktuelle Telefon-App blockierst, können Anrufe und der Notfallzugriff schwieriger werden.</string>
+    <string name="app_picker_protected_caution_title">Diese App ist sicherheitsrelevant</string>
+    <string name="app_picker_wallet_warning_title">Diese Wallet-App trotzdem blockieren?</string>
+    <string name="app_picker_wallet_warning_message">Wallet-Apps können auf manchen Geräten Gesten oder Schnellzugriffe stören. Blockiere diese App nur, wenn du sicher bist, dass dein Handy danach normal nutzbar bleibt.</string>
+    <string name="app_picker_wallet_warning_message_samsung">Samsung Wallet kann auf Galaxy-Geräten über die Quick-Access-Geste vom unteren Bildschirmrand geöffnet werden. Das Blockieren kann die normale Nutzung des Homescreens stören. Blockiere sie nur, wenn du dieses Verhalten wirklich willst.</string>
+    <string name="app_picker_dialer_warning_title">Diese Telefon-App trotzdem blockieren?</string>
+    <string name="app_picker_dialer_warning_message">Wenn du deine aktuelle Telefon-App blockierst, können normale Anrufe und der Notfallzugriff schwieriger werden.</string>
+    <string name="app_picker_settings_hint">Das Blockieren von Einstellungen kann Fehlerbehebung und Berechtigungsänderungen erschweren.</string>
+    <string name="app_picker_settings_warning_title">Einstellungen trotzdem blockieren?</string>
+    <string name="app_picker_settings_warning_message">Das Blockieren von Einstellungen kann Fehlerbehebung und Berechtigungsänderungen erschweren.</string>
+    <string name="continue_label">Weiter</string>
 
     <!-- =========================================================
          DASHBOARD: Emergency quick entry
@@ -133,4 +154,16 @@
     <string name="main_info_older_versions_action">Downloads</string>
 
     <string name="close">Schließen</string>
+
+    <string name="dashboard_quick_actions_toggle">Schnellaktionen umschalten</string>
+    <string name="dashboard_quick_actions_expand">Schnellaktionen ausklappen</string>
+    <string name="dashboard_quick_actions_collapse">Schnellaktionen einklappen</string>
+    <plurals name="app_picker_select_all_skipped_notice">
+        <item quantity="one">%d sicherheitsrelevante App wurde übersprungen.</item>
+        <item quantity="other">%d sicherheitsrelevante Apps wurden übersprungen.</item>
+    </plurals>
+    <plurals name="app_picker_removed_protected_notice">
+        <item quantity="one">%d geschützte App wurde aus diesem Profil aus Sicherheitsgründen entfernt.</item>
+        <item quantity="other">%d geschützte Apps wurden aus diesem Profil aus Sicherheitsgründen entfernt.</item>
+    </plurals>
 </resources>

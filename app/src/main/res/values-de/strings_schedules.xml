@@ -115,7 +115,7 @@
          ========================================================= -->
     <string name="schedules_wifi_enable_wifi">Bitte schalte zuerst WLAN ein.</string>
     <string name="schedules_wifi_location_required">Der Standort muss aktiviert sein, um die WLAN-SSID zu lesen.</string>
-    <string name="schedules_wifi_location_hint">WLAN-Zeitpläne benötigen aktivierten Standort, um die aktuelle SSID zu lesen. Aktiviere den Standort in den Schnelleinstellungen.</string>
+    <string name="schedules_wifi_location_hint">WLAN-Zeitpläne benötigen Zugriff auf WLAN, um die aktuelle SSID zu lesen. Ab Android 13 muss zusätzlich „Geräte in der Nähe“ erlaubt sein. Aktiviere außerdem den Standort in den Schnelleinstellungen.</string>
 
     <string name="schedules_wifi_fix_message">Switchly kann WLAN-Namen nur lesen, wenn du mit WLAN verbunden bist und der Standort aktiviert ist (Android 10+). Wenn du dich gerade erst verbunden hast, kehre zurück und tippe erneut auf „Aktuelles WLAN verwenden“.</string>
 
@@ -179,10 +179,10 @@
     <string name="schedules_disabled_action_open_controls">Schutzsteuerung öffnen</string>
     <string name="schedules_disabled_read_only_toast">Zeitpläne sind schreibgeschützt, bis der aktuelle Steuerungsmodus Zeitplan-Automationen erlaubt.</string>
     <string name="schedules_locked_title">Zeitpläne sind gesperrt, solange Switchly aktiv ist</string>
-    <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst. Im Mixed-Mode kannst du optional die Zeitplan-Bearbeitung trotz aktivem Schutz erlauben.</string>
+    <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst. Der Notfall-Bypass entsperrt die Zeitplan-Bearbeitung ebenfalls vorübergehend. Im Mixed-Mode kannst du optional die Zeitplan-Bearbeitung trotz aktivem Schutz erlauben.</string>
     <string name="schedules_locked_footer">Aktueller Steuerungsmodus: %1$s · Zeitplan-Bearbeitung: gesperrt</string>
     <string name="schedules_locked_action_open_controls">Schutzsteuerung öffnen</string>
-    <string name="schedules_locked_read_only_toast">Deaktiviere Switchly, um Zeitpläne zu ändern, oder erlaube die Zeitplan-Bearbeitung im Mixed-Mode.</string>
+    <string name="schedules_locked_read_only_toast">Deaktiviere Switchly, nutze den Notfall-Bypass oder erlaube die Zeitplan-Bearbeitung im Mixed-Mode.</string>
 
     <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
     <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>

@@ -115,7 +115,7 @@
          ========================================================= -->
     <string name="schedules_wifi_enable_wifi">Please turn on Wi-Fi first.</string>
     <string name="schedules_wifi_location_required">Location must be turned on to read the Wi-Fi SSID.</string>
-    <string name="schedules_wifi_location_hint">Wi-Fi schedules need Location enabled to read the current SSID. Turn on Location in Quick Settings.</string>
+    <string name="schedules_wifi_location_hint">Wi-Fi schedules need Wi-Fi access to read the current SSID. On Android 13+, also allow Nearby Wi-Fi devices. Make sure Location is turned on in Quick Settings.</string>
 
     <string name="schedules_wifi_fix_message">Switchly can only read Wi-Fi names when you are connected to Wi-Fi and Location is enabled (Android 10+). If you just connected, come back and tap “Use current Wi-Fi” again.</string>
 
@@ -175,7 +175,6 @@
         <item quantity="other">Delete %1$d schedules?</item>
     </plurals>
 
-
     <string name="schedules_disabled_title">Schedules are disabled</string>
     <string name="schedules_disabled_body">The current control mode does not allow schedule automations. Existing schedules stay visible, but they won’t run until you enable Schedule mode or allow the Schedule channel in Mixed mode.</string>
     <string name="schedules_disabled_footer_mode">Current control mode: %1$s</string>
@@ -183,10 +182,10 @@
     <string name="schedules_disabled_action_open_controls">Open Protection controls</string>
     <string name="schedules_disabled_read_only_toast">Schedules are read-only until the current control mode allows schedule automations.</string>
     <string name="schedules_locked_title">Schedules are locked while Switchly is active</string>
-    <string name="schedules_locked_body">Schedules still run normally, but adding, editing, deleting, and toggling them is locked until you disable Switchly. In Mixed mode you can optionally allow schedule editing while protection is active.</string>
+    <string name="schedules_locked_body">Schedules still run normally, but adding, editing, deleting, and toggling them is locked until you disable Switchly. Emergency Bypass also temporarily unlocks schedule editing. In Mixed mode you can optionally allow schedule editing while protection is active.</string>
     <string name="schedules_locked_footer">Current control mode: %1$s · Schedule editing: locked</string>
     <string name="schedules_locked_action_open_controls">Open Protection controls</string>
-    <string name="schedules_locked_read_only_toast">Disable Switchly to change schedules, or allow schedule editing in Mixed mode.</string>
+    <string name="schedules_locked_read_only_toast">Disable Switchly, use Emergency Bypass, or allow schedule editing in Mixed mode.</string>
 
     <string name="schedules_health_generic_issue">There are still some schedule permissions or requirements not set correctly.</string>
     <string name="schedules_health_last_exec_compact">Last schedule execution: %1$s</string>

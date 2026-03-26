@@ -240,18 +240,27 @@ class ScheduleReceiver : BroadcastReceiver() {
             // Leaving any active schedule zone -> manual override no longer applies.
             // Keep the previous value for exit handling below.
             val manualOverrideWasActive = ScheduleRuntimeStore.isManualOverrideActive(ctx)
+            val previousActiveRangeId = ScheduleRuntimeStore.getActiveRangeScheduleId(ctx)
+            val previousActiveRange = schedules.firstOrNull { it.id == previousActiveRangeId }
             if (manualOverrideWasActive) {
                 ScheduleRuntimeStore.setManualOverrideActive(ctx, false)
                 ScheduleRuntimeStore.clearManualOverrideScheduleId(ctx)
             }
             ScheduleRuntimeStore.clearActiveRangeScheduleId(ctx)
 
+            val effectiveLastSource = when {
+                previousActiveRange?.wifiSsid?.isNotBlank() == true -> SOURCE_WIFI
+                previousActiveRange?.btDeviceName?.isNotBlank() == true -> SOURCE_BT
+                previousActiveRange != null -> SOURCE_TIME
+                else -> lastSource
+            }
+
             val shouldExitOnce =
-                when (lastSource) {
+                when (effectiveLastSource) {
                     // Wi-Fi/BT schedules can also have time windows now.
                     // If we leave the active range while still connected, we still need to revert.
-                    SOURCE_WIFI -> hardWifiDisconnect || isTimeBoundaryTick
-                    SOURCE_BT -> (hasBtEvent && !eventBtConnected) || isTimeBoundaryTick
+                    SOURCE_WIFI -> hardWifiDisconnect || isTimeBoundaryTick || alarmReason == "boot_watchdog" || alarmReason == "unlock_watchdog"
+                    SOURCE_BT -> (hasBtEvent && !eventBtConnected) || isTimeBoundaryTick || alarmReason == "boot_watchdog" || alarmReason == "unlock_watchdog"
                     SOURCE_TIME -> true
                     else -> false
                 }

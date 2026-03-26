@@ -10,7 +10,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
-import android.provider.Settings
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -220,6 +219,14 @@ class SupportActivity : AppCompatActivity() {
         line("Channel allowed: barcode(effective)", AutomationModeStore.isBarcodeAllowed(this@SupportActivity))
         line("Channel allowed: tile", AutomationModeStore.isTileAllowed(this@SupportActivity))
         line("Channel allowed: button", AutomationModeStore.isButtonAllowed(this@SupportActivity))
+        line("Button enable allowed", AutomationModeStore.isButtonEnableAllowed(this@SupportActivity))
+        line("Button can enable (effective)", AutomationModeStore.canButtonEnable(this@SupportActivity))
+
+        line("Allowed while enabled: app picker", AutomationModeStore.isAppPickerAllowedWhileEnabled(this@SupportActivity))
+        line("Allowed while enabled: profile switching", AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this@SupportActivity))
+        line("Allowed while enabled: schedule editing", AutomationModeStore.isScheduleEditingAllowedWhileEnabled(this@SupportActivity))
+        line("Allowed while enabled: NFC tag writing", AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this@SupportActivity))
+        line("Lock Switchly app access", AutomationModeStore.isSwitchlyAppAccessLockEnabled(this@SupportActivity))
 
         if (mode == AutomationModeStore.Mode.MIXED) {
             line("Mixed toggle: schedule", AutomationModeStore.isMixedAllowSchedule(this@SupportActivity))
@@ -228,9 +235,14 @@ class SupportActivity : AppCompatActivity() {
             line("Mixed toggle: barcode", AutomationModeStore.isMixedAllowBarcode(this@SupportActivity))
             line("Mixed toggle: tile", AutomationModeStore.isMixedAllowTile(this@SupportActivity))
             line("Mixed toggle: button", AutomationModeStore.isMixedAllowButton(this@SupportActivity))
+            line("Mixed toggle: app picking", AutomationModeStore.isMixedAllowAppPicking(this@SupportActivity))
+            line("Mixed toggle: profile switching", AutomationModeStore.isMixedAllowProfileSwitching(this@SupportActivity))
+            line("Mixed toggle: schedule editing", AutomationModeStore.isMixedAllowScheduleEditing(this@SupportActivity))
+            line("Mixed toggle: NFC tag writing", AutomationModeStore.isMixedAllowNfcTagWriting(this@SupportActivity))
         }
 
         line("Quick actions visible", defaultSp.getBoolean("pref_show_quick_actions", true))
+        line("Quick actions expanded", defaultSp.getBoolean("home_quick_actions_expanded", false))
         line("QR tools visible", AutomationModeStore.shouldShowQrTools(this@SupportActivity))
         line("Barcode tools visible", AutomationModeStore.shouldShowBarcodeTools(this@SupportActivity))
 
@@ -249,7 +261,7 @@ class SupportActivity : AppCompatActivity() {
 
         line("Accessibility enabled", BlockingRuntime.isAccessibilityActive(this@SupportActivity))
         line("Usage access", UsageStatsRepo.hasUsageAccess(this@SupportActivity))
-        line("Overlay permission", Settings.canDrawOverlays(this@SupportActivity))
+        line("Location services enabled", isLocationEnabled())
 
         line("Location fine", hasPermission(Manifest.permission.ACCESS_FINE_LOCATION))
         line("Location coarse", hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION))
@@ -296,12 +308,6 @@ class SupportActivity : AppCompatActivity() {
 
         val inboxEvents = runCatching { BlockedInboxStore.getAll(this@SupportActivity) }.getOrDefault(emptyList())
         line("Blocked inbox events stored", inboxEvents.size)
-        inboxEvents.firstOrNull()?.let { latest ->
-            line(
-                "Last blocked inbox event",
-                "${formatDateTime(latest.timeMillis)} | ${latest.pkg} | ${latest.reason.ifBlank { "-" }}"
-            )
-        }
 
         if (includeAdvanced) {
             section("Advanced diagnostics")
@@ -329,6 +335,14 @@ class SupportActivity : AppCompatActivity() {
 
     private fun hasPermission(permission: String): Boolean {
         return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val lm = getSystemService(LOCATION_SERVICE) as? android.location.LocationManager ?: return false
+        return runCatching {
+            lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
+                lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+        }.getOrDefault(false)
     }
 
     private fun canScheduleExactAlarmsCompat(): Boolean {

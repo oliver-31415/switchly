@@ -30,34 +30,38 @@ class NfcReceiver : BroadcastReceiver() {
                 return
             }
 
-            // Optional: UID-only pairing
-            // If one or more UIDs are paired, only those exact NFC tags can toggle Switchly.
-            // Do not apply this check to non-NFC fallback intents.
+            // Security rule:
+            // - Written switchly:// tags are handled by NfcEntryActivity.
+            // - This receiver must never let arbitrary blank/unwritten tags toggle Switchly.
+            // - Read-only UID-only toggles are allowed only for explicitly paired NFC tags.
             if (isNfcIntent) {
                 val sp = PreferenceManager.getDefaultSharedPreferences(context)
                 val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-                if (pairedUidsEnabled) {
-                    val pairedUids = NfcUidPairingStore.getPairedUidsHex(context)
-                    if (pairedUids.isNotEmpty()) {
-                        val tag: Tag? = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
-                        val seenUid = NfcTagUid.normalizeUidHex(NfcTagUid.uidHex(tag))
+                val pairedUids = if (pairedUidsEnabled) NfcUidPairingStore.getPairedUidsHex(context) else emptySet()
+                val tag: Tag? = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
+                val seenUid = NfcTagUid.normalizeUidHex(NfcTagUid.uidHex(tag))
 
-                        if (seenUid.isBlank() || pairedUids.none { it.equals(seenUid, ignoreCase = true) }) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.nfc_wrong_tag_paired_uid_required),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return
-                        }
+                // If pairing is enabled and at least one UID is configured, only that exact paired tag may toggle here.
+                if (pairedUidsEnabled && pairedUids.isNotEmpty()) {
+                    if (seenUid.isBlank() || pairedUids.none { it.equals(seenUid, ignoreCase = true) }) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.nfc_wrong_tag_paired_uid_required),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return
                     }
+                } else {
+                    // No paired UID mode active here: ignore raw NFC discovery intents.
+                    // This prevents unrelated blank/unwritten tags from toggling Switchly.
+                    return
                 }
             }
 
             // Toggle the real global Switchly state (same as the UI toggle).
             // Use the *base* flag so NFC toggles are not affected by temporary (schedule) overrides.
             val newValue = !SwitchModeStore.isBaseEnabled(context)
-            SwitchModeStore.setEnabled(context, newValue)
+            SwitchModeStore.setEnabled(context, newValue, allowNfcBypass = true)
 
             val state = context.getString(
                 if (newValue) R.string.nfc_state_on else R.string.nfc_state_off

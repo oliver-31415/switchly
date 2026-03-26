@@ -40,6 +40,7 @@ import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.feature.blocker.BlockerActivity
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.util.AppUsageToday
+import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import java.util.ArrayDeque
 import java.util.Locale
@@ -275,6 +276,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun getUsageLimitCached(profile: String, pkg: String, now: Long = System.currentTimeMillis()): Int {
+        if (AppBlockSafety.isHardExcluded(this, pkg)) return 0
         val fresh =
             cachedUsageLimitProfile == profile &&
                 (now - cachedUsageLimitAt) <= POLICY_CACHE_TTL_MS
@@ -289,6 +291,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun getAttemptLimitCached(profile: String, pkg: String, now: Long = System.currentTimeMillis()): Int {
+        if (AppBlockSafety.isHardExcluded(this, pkg)) return 0
         val fresh =
             cachedAttemptLimitProfile == profile &&
                 (now - cachedAttemptLimitAt) <= POLICY_CACHE_TTL_MS
@@ -763,6 +766,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         val pkg = rootPkg ?: (currentTopPkg ?: return)
         if (pkg.isBlank()) return
+        if (pkg == packageName) return
         val last = lastTickAt
         lastTickAt = now
 
@@ -777,13 +781,19 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (TempAllowStore.isAllowed(this, pkg)) return
 
         val nowForCache = now
-        val profile = getCurrentProfileCached(nowForCache) ?: return
+        val profile = getCurrentProfileCached(nowForCache)
 
-        // "Blocked time" should reflect how long apps are configured as blocked while Switchly is enabled (not how long the blocker UI is shown). Track it here, once per tick.
-        val blockedSet = getBlockedAppsCached(profile, nowForCache)
-        if (blockedSet.isNotEmpty()) {
-            for (blockedPkg in blockedSet) {
-                BlockedTimeStore.addBlockedMsToday(this, blockedPkg, delta)
+        // Track app usage for Today statistics even when no daily limit is configured.
+        // Limit enforcement still happens below and continues to depend on the active profile + limit.
+        UsageStore.addUsageMsToday(this, pkg, delta)
+
+        if (!profile.isNullOrBlank()) {
+            // "Blocked time" should reflect how long apps are configured as blocked while Switchly is enabled (not how long the blocker UI is shown). Track it here, once per tick.
+            val blockedSet = getBlockedAppsCached(profile, nowForCache)
+            if (blockedSet.isNotEmpty()) {
+                for (blockedPkg in blockedSet) {
+                    BlockedTimeStore.addBlockedMsToday(this, blockedPkg, delta)
+                }
             }
         }
 
@@ -810,12 +820,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
         }
 
+        val safeProfile = profile ?: return
+
         // Usage limits should work even if the app isn't in the "blocked apps" list.
         // (Users can set a daily limit without hard-blocking the app.)
-        val limitMin = getUsageLimitCached(profile, pkg, nowForCache)
+        val limitMin = getUsageLimitCached(safeProfile, pkg, nowForCache)
         if (limitMin <= 0) return // hard block -> handled by event driven blocker
-
-        UsageStore.addUsageMsToday(this, pkg, delta)
 
         // Use the same "today" usage source that user-facing app timers show,
         // so enforcement and displayed app usage stay aligned.
@@ -849,9 +859,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     /**
      * Refreshes [currentTopPkg] using UsageEvents at a low cadence.
      * If Usage Access isn't granted, this is a no-op.
-     *
-     * The UsageStats binder can stall unpredictably on some devices, so the query runs on a
-     * worker thread and only the lightweight state update is posted back to the main thread.
+     * The UsageStats binder can stall unpredictably on some devices, so the query runs on a  worker thread and only the lightweight state update is posted back to the main thread.
      */
     private fun refreshTopPackageIfNeeded(now: Long) {
         if (now - lastTopRefreshAt < 3_000L) return
@@ -881,6 +889,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         currentTopPkg = top
         appEnteredAtByPkg[top] = now
 
+        // Snapshot usage at entry so limits can be enforced while the app stays open.
+        // (Some devices only update UsageStats totalTimeInForeground once the app is backgrounded.)
         runCatching {
             usageInternalAtEnterByPkg[top] = UsageStore.getUsageMsToday(this, top)
             usageSystemAtEnterByPkg[top] = getSystemUsageMsToday(top, now)
@@ -894,6 +904,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             browserCandidateSince = 0L
         }
 
+        // If the foreground package was corrected via UsageEvents, also count an "open" here.
+        // This covers devices that miss accessibility transition events when switching via Recents.
         maybeCountOpenAndEnforceAttemptLimit(top, now)
     }
 
@@ -903,6 +915,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
      * Some OEMs (and some navigation flows) do not emit consistent accessibility transition
      * events when leaving/returning to apps (especially via Recents). UsageEvents is
      * the most reliable cross-device signal for "app became foreground".
+     *
+     * This is only used when the user has configured at least one attempt limit.
      */
     private fun scanUsageEventsForOpens(now: Long) {
         if (!hasAnyAttemptLimitsCached(now)) {
@@ -910,6 +924,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             return
         }
 
+        // Throttle scanning to reduce overhead.
         if (lastUsageOpenScanAt == 0L) {
             lastUsageOpenScanAt = now
             return
@@ -987,6 +1002,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
      */
     private fun maybeCountOpenAndEnforceAttemptLimit(pkg: String, now: Long) {
         if (pkg.isBlank() || pkg == packageName) return
+        if (AppBlockSafety.isHardExcluded(this, pkg)) return
 
         // Only count while we would normally enforce.
         if (!pm.isInteractive) return
@@ -1023,6 +1039,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     private fun maybeBlockNow(pkg: String, event: AccessibilityEvent? = null, force: Boolean = false) {
         perf.maybeBlockCalls++
+        if (AppBlockSafety.isHardExcluded(this, pkg)) return
 
         if (!pm.isInteractive) return
         if (km?.isKeyguardLocked == true) return
@@ -1538,6 +1555,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             if (copy != null) return copy
         }
 
+        // Firefox/Fenix can shift view IDs between versions. Fallback by scanning toolbar-like nodes.
         if (pkg.startsWith("org.mozilla.")) {
             return findAnyNode(root) { node ->
                 val vid = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()

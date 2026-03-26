@@ -151,8 +151,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         if (isProcessingTag) return
         isProcessingTag = true
 
-        // Stop foreground dispatch immediately so follow-up scans cannot get routed back
-        // into the write screen while this write result is still being shown.
+        // Stop foreground dispatch immediately so follow-up scans cannot get routed back into the write screen while this write result is still being shown.
         safeDisableForegroundDispatch()
 
         tvTitle.text = getString(R.string.nfc_writing)
@@ -172,7 +171,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
                     return@post
                 }
 
-                val isNew = at.saltyy.switchly.data.prefs.NfcUidPairingStore.addPairedUidHex(this, uid)
+                val isNew = NfcUidPairingStore.addPairedUidHex(this, uid)
                 if (isNew) {
                     showPairMetaPrompt(uid) {
                         finishWithOk(uidHex = uid, alreadyPaired = false)
@@ -237,7 +236,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
             .setMessage(getString(R.string.paired_tag_pair_prompt_message))
             .setView(v)
             .setPositiveButton(getString(R.string.paired_tag_pair_prompt_save)) { _, _ ->
-                at.saltyy.switchly.data.prefs.NfcUidPairingStore.setTagMeta(
+                NfcUidPairingStore.setTagMeta(
                     this,
                     uid,
                     etName.text?.toString(),

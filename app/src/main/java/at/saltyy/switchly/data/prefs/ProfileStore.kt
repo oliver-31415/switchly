@@ -2,6 +2,7 @@ package at.saltyy.switchly.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import at.saltyy.switchly.util.AppBlockSafety
 
 object ProfileStore {
     private const val PREFS = "switchly_prefs"
@@ -134,17 +135,16 @@ object ProfileStore {
 
         if (raw.isEmpty()) return emptySet()
 
-        // Do NOT aggressively prune entries here.
-        // Reason:
-        // - Some OEMs can transiently report package lookup failures (especially around boot/unlock).
-        // - Auto-pruning can accidentally unselect user-critical apps (e.g. Settings).
-        // We keep the stored set as-is (minus blanks) and let users manage it explicitly.
-        return raw.filterTo(linkedSetOf()) { it.isNotBlank() }
+        // Keep the stored set mostly intact (minus blanks), but always exclude packages that Switchly currently protects for device safety (for example the active launcher or keyboard).
+        return raw
+            .filterTo(linkedSetOf()) { it.isNotBlank() }
+            .let { AppBlockSafety.sanitizeManagedPackages(context, it) }
     }
 
     // Updates the blocked-app list for the given profile.
     fun setBlockedForProfile(context: Context, profile: String, pkgs: Set<String>) {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        sp.edit { putStringSet(keyBlocked(profile), pkgs) }
+        val sanitized = AppBlockSafety.sanitizeManagedPackages(context, pkgs)
+        sp.edit { putStringSet(keyBlocked(profile), sanitized) }
     }
 }

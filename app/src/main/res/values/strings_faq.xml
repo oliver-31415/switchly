@@ -90,11 +90,11 @@
     <string name="faq_q_temp_enable">What is “Temporary enable”?</string>
     <string name="faq_a_temp_enable">This lets you enable blocking for a limited time. When the timer ends, Switchly automatically restores the previous state.</string>
 
-    <string name="faq_q_reentry">What is “Re-entry” in NFC write?</string>
-    <string name="faq_a_reentry">Re-entry writes an NFC action that temporarily disables Switchly for the selected duration (for example 10 minutes), so you can enter settings and adjust things.\nAfter the timer ends, the previous state is restored automatically.\nTo show Re-entry in the NFC writer, enable “Enable Re-entry in NFC writer” in Toggle Options.</string>
+    <string name="faq_q_reentry">What is “Temporary settings unlock” in NFC write?</string>
+    <string name="faq_a_reentry">Temporary settings unlock writes an NFC action that temporarily unlocks Switchly settings for the selected duration (for example 10 minutes).\n\nAfter the timer ends, the previous protection state is restored automatically.\n\nTo show this action in the NFC writer, enable it in Toggle Options.</string>
 
     <string name="faq_q_nfc_emergency_tag">Can I write an “Emergency disable” NFC tag?</string>
-    <string name="faq_a_nfc_emergency_tag">No — Emergency disable tags were removed to reduce bypass loops. Emergency unlock is now only available from inside the app.\nIf you want stricter control for NFC tags, enable “Limit temporary disable NFC tags” in Toggle Options.\nThat adds per-tag cooldown and daily limits for Temporary disable and Re-entry tags.\nYou can set custom limits per UID in Manage Paired Tags. First enable “Enable paired NFC tags” in Toggle Options, then open Manage Paired Tags and tap a tag to edit Daily uses and Cooldown minutes.</string>
+    <string name="faq_a_nfc_emergency_tag">No — Emergency disable tags were removed to reduce bypass loops. Emergency unlock is now only available from inside the app.\nIf you want stricter control for NFC tags, enable “Limit temporary NFC tags” in Toggle Options.\nThat adds per-tag cooldown and daily limits for Temporary disable and Temporary settings unlock tags.\nYou can set custom limits per UID in Manage Paired Tags. First enable “Enable paired NFC tags” in Toggle Options, then open Manage Paired Tags and tap a tag to edit Daily uses and Cooldown minutes.</string>
 
     <string name="faq_q_require_nfc">What does “Require NFC tag to disable” do?</string>
     <string name="faq_a_require_nfc">When enabled, Switchly can only be disabled by scanning a valid NFC tag.\n\nManual toggle, Quick Settings tile, and certain controls are locked or show warnings.\nThis acts like a physical “key” to turn off your restriction profile.</string>
@@ -131,7 +131,7 @@
     <string name="faq_a_nfc_paired_tags">UID-only mode is a security feature: when enabled, Switchly only accepts NFC tags whose UID you paired.\nIf you accidentally paired a transit card or another tag UID, other tags may be rejected with “Wrong NFC tag (paired UID required)”.\nTo remove or rename paired tags, first enable “Enable paired NFC tags” in Toggle Options, then open Manage Paired Tags in Settings.\nPairing is done by scanning a tag in the NFC writer and choosing “Pair UID”.</string>
 
     <string name="faq_q_nfc_uid_pair">What does “Pair tag (UID only)” do?</string>
-    <string name="faq_a_nfc_uid_pair">“Pair tag (UID only)” does not write anything to the NFC tag.\nInstead, Switchly only reads the tag UID (hardware ID) and stores it inside the app.\n\nIf UID pairing is enabled, only that exact tag can be used to toggle or unlock Switchly.\nThis is useful for read-only tags or if you do not want the tag to contain a readable action.</string>
+    <string name="faq_a_nfc_uid_pair">“Pair tag (UID only)” does not write anything to the NFC tag.\nInstead, Switchly only reads the tag UID (hardware ID) and stores it inside the app.\n\nIf UID pairing is enabled, only that exact paired tag can be used to toggle or unlock Switchly without a written action. Unpaired blank tags are ignored.\nThis is useful for read-only tags or if you do not want the tag to contain a readable action.</string>
 
     <string name="faq_q_nfc_tag_types">Which NFC tag types work?</string>
     <string name="faq_a_nfc_tag_types">Best compatibility: NTAG213, NTAG215, NTAG216 (NFC Forum Type 2). In general, most writable NDEF-capable tags work. Avoid locked read-only tags for writing. UID-only pairing also works with tags you cannot write to.</string>
@@ -172,7 +172,7 @@
     <string name="faq_a_schedule_types">Switchly supports time schedules (single time/range/date range), Wi-Fi schedules (SSID), and Bluetooth schedules (device name). You can choose actions like Enable, Disable, Toggle, or Enable+Disable depending on your use case.</string>
 
     <string name="faq_q_schedules_wifi">Why do Wi-Fi schedules need Location permission?</string>
-    <string name="faq_a_schedules_wifi">Android treats the Wi-Fi name (SSID) as location-like information.\nOn newer versions, apps need Location permission to read the current SSID.\n\nWithout it, Wi-Fi schedules cannot reliably detect your current network and may not trigger.</string>
+    <string name="faq_a_schedules_wifi">Android treats the Wi-Fi name (SSID) as location-like information.\nOn newer versions, apps need Location permission to read the current SSID. On Android 13 and newer, some devices also require the Nearby Wi-Fi devices permission for reliable Wi-Fi trigger detection.\n\nWithout these permissions, Wi-Fi schedules cannot reliably detect your current network and may not trigger.</string>
 
     <string name="faq_q_schedules_bluetooth">Can schedules react to Bluetooth?</string>
     <string name="faq_a_schedules_bluetooth">Yes. You can trigger actions when a specific Bluetooth device connects/disconnects (depending on schedule options).</string>
@@ -199,13 +199,16 @@
     <string name="faq_a_usage_access">Switchly uses an Accessibility service to detect when you open a blocked app (window/app changes). It only reacts to those events to enforce your profiles. No keystrokes are recorded, and Switchly does not store your screen contents.</string>
 
     <string name="faq_q_usage_stats">Where does usage data come from?</string>
-    <string name="faq_a_usage_stats">Switchly uses Android’s Usage Access permission to detect the foreground app and estimate usage time.</string>
+    <string name="faq_a_usage_stats">Switchly primarily uses its Accessibility service to detect foreground app changes and record usage time. Usage Access may still be used as a fallback or for compatibility on some screens, but Accessibility is the main source of truth for current tracking.</string>
 
     <string name="faq_q_overlay">Do I need the overlay permission?</string>
     <string name="faq_a_overlay">No. Newer versions of Switchly do not require overlay permission. Blocking is handled via Accessibility and a full-screen blocker. If you granted overlay in an older version, you can safely revoke it in system settings.</string>
 
     <string name="faq_q_oem_limits">Why does Switchly behave differently on my device?</string>
     <string name="faq_a_oem_limits">Some manufacturers restrict APIs that affect overlays, background services, or Quick Settings tiles.\nSwitchly uses only official APIs — behavior still depends on your device/ROM settings.</string>
+
+    <string name="faq_q_xiaomi_background">Why does Switchly sometimes stop working on Xiaomi / Redmi / POCO devices?</string>
+    <string name="faq_a_xiaomi_background">On some Xiaomi, Redmi, and POCO devices, MIUI or HyperOS can stop Accessibility or restrict background behavior very aggressively to save battery. This can make blocking or statistics stop even if Android still shows Accessibility as enabled. In some cases the Accessibility toggle stays on in settings, but the service is no longer really running in the background.\n\nTry this:\n\n• Enable Autostart for Switchly\n• Set battery mode to No restrictions / Don’t optimize if available\n• Lock Switchly in the Recents screen so the system does not clear it as aggressively\n• If available, allow background activity for Switchly\n• If you use Wi-Fi triggers, allow Location and on Android 13+ also Nearby Wi-Fi devices\n• Turn the Accessibility toggle off and on again once\n\nAfter changing these settings, also open Switchly → Troubleshoot and check whether Accessibility, notifications, usage access, and Wi-Fi-related permissions are all shown as active.</string>
 
     <string name="faq_q_battery">Does Switchly use a lot of battery?</string>
     <string name="faq_a_battery">Switchly is event-based: the Accessibility service reacts when apps change, so there is no constant polling. Battery impact is typically low. If you use Wi-Fi/Bluetooth schedules, Android may show an ongoing notification because those features require foreground services on many devices.</string>

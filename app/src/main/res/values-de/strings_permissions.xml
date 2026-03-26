@@ -87,7 +87,7 @@
     <string name="accessibility_service_desc">Erkennt Änderungen der Vordergrund-App, damit Switchly Apps blockieren und Nutzungslimits durchsetzen kann.</string>
 
     <string name="perm_location_title">Standortberechtigung</string>
-    <string name="perm_location_why_wifi_ssid">Um den WLAN-Namen (SSID) zu lesen, benötigt Android die Standortberechtigung.</string>
+    <string name="perm_location_why_wifi_ssid">Um den WLAN-Namen (SSID) zu lesen, benötigt Switchly die WLAN-Berechtigung. Ab Android 13 muss zusätzlich „Geräte in der Nähe“ erlaubt sein.</string>
     <string name="perm_location_denied_wifi_schedule">Standortberechtigung verweigert. WLAN-Zeitpläne funktionieren ohne diese Berechtigung möglicherweise nicht.</string>
 
     <string name="perm_bt_title">Berechtigung „Geräte in der Nähe“</string>

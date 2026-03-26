@@ -237,23 +237,6 @@
             android:exported="false"
             android:label="@string/premium_title" />
 
-        <!-- Analytics -->
-        <activity
-            android:name=".feature.stats.StatisticsHubActivity"
-            android:exported="false"
-            android:label="@string/statistics_hub_title" />
-
-        <!-- Usage analytics -->
-        <activity
-            android:name=".feature.stats.StatsActivity"
-            android:exported="false"
-            android:label="@string/stats_title" />
-
-        <activity
-            android:name=".feature.stats.BlockStatsDetailActivity"
-            android:exported="false"
-            android:label="@string/stats_block_detail_title" />
-
         <!-- Permissions screen -->
         <activity
             android:name=".feature.settings.PermissionsActivity"
@@ -410,7 +393,7 @@
         <!-- restart watcher after device reboot -->
         <receiver
             android:name=".platform.receiver.system.BootCompletedReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
@@ -420,7 +403,7 @@
         <!-- Replan schedules when system time/timezone changes -->
         <receiver
             android:name=".platform.receiver.system.TimeChangeReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
@@ -431,7 +414,7 @@
         <!-- Reschedule exact alarms after the user grants the special access -->
         <receiver
             android:name=".platform.receiver.system.ExactAlarmPermissionReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
@@ -440,7 +423,7 @@
         <!-- Re-evaluate schedules when device is unlocked/user becomes present -->
         <receiver
             android:name=".platform.receiver.system.UserUnlockReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="android.intent.action.USER_UNLOCKED" />
@@ -511,6 +494,16 @@
                 <action android:name="android.bluetooth.headset.profile.action.CONNECTION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 </manifest>

@@ -25,6 +25,7 @@ object AutomationModeStore {
     private const val KEY_MIXED_ALLOW_BUTTON = "automation_mixed_allow_button"
     private const val KEY_MIXED_ALLOW_APP_PICKING = "automation_mixed_allow_app_picking"
     private const val KEY_MIXED_ALLOW_PROFILE_SWITCHING = "automation_mixed_allow_profile_switching"
+    private const val KEY_ALLOW_BUTTON_ENABLE = "automation_allow_button_enable"
     private const val KEY_MIXED_ALLOW_SCHEDULE_EDITING = "automation_mixed_allow_schedule_editing"
     private const val KEY_MIXED_ALLOW_NFC_TAG_WRITING = "automation_mixed_allow_nfc_tag_writing"
     private const val KEY_LOCK_SWITCHLY_APP_ACCESS = "pref_lock_switchly_app_access"
@@ -99,6 +100,13 @@ object AutomationModeStore {
         putBool(ctx, KEY_MIXED_ALLOW_BUTTON, enabled)
     }
 
+    fun isButtonEnableAllowed(ctx: Context): Boolean =
+        getBool(ctx, KEY_ALLOW_BUTTON_ENABLE, false)
+
+    fun setButtonEnableAllowed(ctx: Context, enabled: Boolean) {
+        putBool(ctx, KEY_ALLOW_BUTTON_ENABLE, enabled)
+    }
+
     fun isMixedAllowAppPicking(ctx: Context): Boolean =
         getBool(ctx, KEY_MIXED_ALLOW_APP_PICKING, false)
 
@@ -139,19 +147,6 @@ object AutomationModeStore {
         return when (getMode(ctx)) {
             Mode.NFC -> true
             Mode.MIXED -> isMixedAllowNfc(ctx)
-            Mode.SCHEDULE, Mode.QR, Mode.BARCODE -> false
-        }
-    }
-
-    fun isNfcExclusiveControlActive(ctx: Context): Boolean {
-        return when (getMode(ctx)) {
-            Mode.NFC -> true
-            Mode.MIXED ->
-                isMixedAllowNfc(ctx) &&
-                    !isMixedAllowSchedule(ctx) &&
-                    !isMixedAllowQr(ctx) &&
-                    !isMixedAllowBarcode(ctx) &&
-                    !isMixedAllowButton(ctx)
             Mode.SCHEDULE, Mode.QR, Mode.BARCODE -> false
         }
     }
@@ -209,36 +204,52 @@ object AutomationModeStore {
         return getMode(ctx) == Mode.MIXED && isMixedAllowButton(ctx)
     }
 
+    fun canButtonEnable(ctx: Context): Boolean {
+        return isButtonAllowed(ctx) || isButtonEnableAllowed(ctx)
+    }
+
+    fun isNfcExclusiveControlActive(ctx: Context): Boolean {
+        return when (getMode(ctx)) {
+            Mode.NFC -> true
+            Mode.MIXED -> isMixedAllowNfc(ctx) &&
+                !isMixedAllowSchedule(ctx) &&
+                !isMixedAllowQr(ctx) &&
+                !isMixedAllowBarcode(ctx) &&
+                !isMixedAllowButton(ctx)
+            Mode.SCHEDULE, Mode.QR, Mode.BARCODE -> false
+        }
+    }
+
     /**
      * Optional exception while Switchly is enabled.
-     * Locked by default; can be enabled only via Mixed mode channel toggle.
+     * Locked by default; can be enabled regardless of the active control mode.
      */
     fun isAppPickerAllowedWhileEnabled(ctx: Context): Boolean {
-        return getMode(ctx) == Mode.MIXED && isMixedAllowAppPicking(ctx)
+        return isMixedAllowAppPicking(ctx)
     }
 
     /**
      * Optional exception while Switchly is enabled.
-     * Locked by default; can be enabled only via Mixed mode channel toggle.
+     * Locked by default; can be enabled regardless of the active control mode.
      */
     fun isProfileSwitchingAllowedWhileEnabled(ctx: Context): Boolean {
-        return getMode(ctx) == Mode.MIXED && isMixedAllowProfileSwitching(ctx)
+        return isMixedAllowProfileSwitching(ctx)
     }
 
     /**
      * Optional exception while Switchly is enabled.
-     * Locked by default; can be enabled only via Mixed mode channel toggle.
+     * Locked by default; can be enabled regardless of the active control mode.
      */
     fun isScheduleEditingAllowedWhileEnabled(ctx: Context): Boolean {
-        return getMode(ctx) == Mode.MIXED && isMixedAllowScheduleEditing(ctx)
+        return isMixedAllowScheduleEditing(ctx)
     }
 
     /**
      * Optional exception while Switchly is enabled.
-     * Locked by default; can be enabled only via Mixed mode channel toggle.
+     * Locked by default; can be enabled regardless of the active control mode.
      */
     fun isNfcTagWritingAllowedWhileEnabled(ctx: Context): Boolean {
-        return getMode(ctx) == Mode.MIXED && isMixedAllowNfcTagWriting(ctx)
+        return isMixedAllowNfcTagWriting(ctx)
     }
 
     /**

@@ -20,17 +20,18 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
-import at.saltyy.switchly.data.prefs.SwitchModeStore
-import at.saltyy.switchly.util.SwitchlyAppAccessGuard
-import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.feature.usage.QuickLimitDialogs
 import at.saltyy.switchly.theme.AccentColor
-import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -94,11 +95,13 @@ class AppPickerActivity : AppCompatActivity() {
 
         val preselectedManaged: Set<String> = if (!currentProfile.isNullOrEmpty()) {
             ProfileStore.getBlockedForProfile(this, currentProfile!!).toSet()
-        } else emptySet()
+        } else {
+            emptySet()
+        }
 
         adapter = AppListAdapter(
             allApps = emptyList(),
-            preselectedManaged = preselectedManaged,
+            preselectedManaged = AppBlockSafety.sanitizeManagedPackages(this, preselectedManaged),
             currentProfileProvider = { currentProfile },
             onSetLimitClicked = { app ->
                 QuickLimitDialogs.showForApp(
@@ -130,9 +133,12 @@ class AppPickerActivity : AppCompatActivity() {
             if (isFinishing || isDestroyed) return@Thread
 
             runOnUiThread {
+                val sanitizedPreselected = AppBlockSafety.sanitizeManagedPackages(this, preselectedManaged)
+                val removedProtectedCount = (preselectedManaged - sanitizedPreselected).size
+
                 adapter = AppListAdapter(
                     allApps = load.entries,
-                    preselectedManaged = preselectedManaged,
+                    preselectedManaged = sanitizedPreselected,
                     currentProfileProvider = { currentProfile },
                     onSetLimitClicked = { app ->
                         QuickLimitDialogs.showForApp(
@@ -149,6 +155,18 @@ class AppPickerActivity : AppCompatActivity() {
 
                 setupSearch(etSearch)
                 setupSaveButton(btnSave)
+
+                if (removedProtectedCount > 0) {
+                    Toast.makeText(
+                        this,
+                        resources.getQuantityString(
+                            R.plurals.app_picker_removed_protected_notice,
+                            removedProtectedCount,
+                            removedProtectedCount
+                        ),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
 
                 if (load.unavailableCount > 0) {
                     Toast.makeText(
@@ -203,7 +221,6 @@ class AppPickerActivity : AppCompatActivity() {
             }
             .toList()
 
-        // Keep unavailable entries first so users can quickly remove stale entries.
         return PickerLoadResult(entries = unavailable + installed, unavailableCount = unavailable.size)
     }
 
@@ -221,7 +238,11 @@ class AppPickerActivity : AppCompatActivity() {
                 val label = runCatching { pm.getApplicationLabel(ai).toString() }.getOrNull()
                     ?.takeIf { it.isNotBlank() } ?: pkg
 
-                AppEntry(label = label, packageName = pkg)
+                AppEntry(
+                    label = label,
+                    packageName = pkg,
+                    blockSafety = AppBlockSafety.resolve(context, pkg)
+                )
             }
             .distinctBy { it.packageName }
             .sortedBy { it.label.lowercase(Locale.getDefault()) }
@@ -240,13 +261,22 @@ class AppPickerActivity : AppCompatActivity() {
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
                 etSearch.clearFocus()
                 true
-            } else false
+            } else {
+                false
+            }
         }
     }
 
     private fun setupBulkButtons(btnSelectAll: MaterialButton, btnClearAll: MaterialButton) {
         btnSelectAll.setOnClickListener {
-            adapter.selectAllVisible()
+            val skipped = adapter.selectAllVisible()
+            if (skipped > 0) {
+                Toast.makeText(
+                    this,
+                    resources.getQuantityString(R.plurals.app_picker_select_all_skipped_notice, skipped, skipped),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
 
         btnClearAll.setOnClickListener {
@@ -262,8 +292,7 @@ class AppPickerActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Save "managed list" (apps that are either blocked OR have a limit)
-            val managed = adapter.getManagedPackages()
+            val managed = AppBlockSafety.sanitizeManagedPackages(this, adapter.getManagedPackages())
             ProfileStore.setBlockedForProfile(this, profile, managed)
 
             BlockingRuntime.ensureRunning(this)
@@ -271,177 +300,114 @@ class AppPickerActivity : AppCompatActivity() {
         }
     }
 
-    private fun showDailyLimitDialog(app: AppEntry) {
-        val profile = currentProfile
-        if (profile.isNullOrBlank()) {
-            Toast.makeText(this, R.string.select_profile_first, Toast.LENGTH_SHORT).show()
-            return
+    private fun ensureAppCanBeManaged(app: AppEntry, onAllowed: () -> Unit) {
+        when (app.blockSafety.level) {
+            AppBlockSafety.Level.HARD_EXCLUDED -> {
+                Toast.makeText(
+                    this,
+                    app.blockSafety.hint ?: getString(R.string.app_picker_protected_generic_hint),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            AppBlockSafety.Level.SOFT_WARNING -> {
+                AlertDialog.Builder(this)
+                    .setTitle(app.blockSafety.warningTitle ?: getString(R.string.app_picker_protected_caution_title))
+                    .setMessage(app.blockSafety.warningMessage ?: app.blockSafety.hint ?: getString(R.string.app_picker_protected_generic_hint))
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.continue_label) { _, _ -> onAllowed() }
+                    .showAccented()
+            }
+
+            else -> onAllowed()
         }
-
-        val presets = listOf(0, 3, 5, 10, 15, 30, 45, 60, 90, 120)
-        val labels = presets.map { m ->
-            if (m == 0){
-                getString(R.string.no_limit)
-            } else {
-                resources.getQuantityString(R.plurals.minutes_format, m, m)
-            }
-        } + getString(R.string.custom_minutes)
-
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.set_daily_limit_title, app.label))
-            .setItems(labels.toTypedArray()) { _, which ->
-                if (which < presets.size) {
-                    val chosen = presets[which]
-
-                    if (SwitchModeStore.isEnabled(this)) {
-                        Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
-                        return@setItems
-                    }
-
-                    UsageLimitStore.setLimitMinutes(this, profile, app.packageName, chosen)
-                    if (chosen == 0) {
-                        // clear usage so it doesn't feel "already exceeded"
-                        UsageStore.setUsageMsToday(this, app.packageName, 0L)
-                    }
-
-                    BlockingRuntime.ensureRunning(this)
-                    adapter.notifyPkgChanged(app.packageName)
-                } else {
-                    showCustomMinutesInput(app)
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .showAccented()
     }
 
     private fun showSessionLimitDialog(app: AppEntry) {
-        val profile = currentProfile
-        if (profile.isNullOrBlank()) {
-            Toast.makeText(this, R.string.select_profile_first, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (SwitchModeStore.isEnabled(this)) {
-            Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val presets = listOf(0, 3, 5, 10, 15, 30, 45, 60, 90, 120)
-        val labels = presets.map { m ->
-            if (m == 0) {
-                getString(R.string.no_limit)
-            } else {
-                resources.getQuantityString(R.plurals.minutes_format, m, m)
+        ensureAppCanBeManaged(app) {
+            val profile = currentProfile
+            if (profile.isNullOrBlank()) {
+                Toast.makeText(this, R.string.select_profile_first, Toast.LENGTH_SHORT).show()
+                return@ensureAppCanBeManaged
             }
-        } + getString(R.string.custom_minutes)
 
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.set_session_limit_title, app.label))
-            .setItems(labels.toTypedArray()) { _, which ->
-                if (which < presets.size) {
-                    val chosen = presets[which]
-                    SessionLimitStore.setLimitMinutes(this, profile, app.packageName, chosen)
+            if (SwitchModeStore.isEnabled(this)) {
+                Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+                return@ensureAppCanBeManaged
+            }
 
-                    BlockingRuntime.ensureRunning(this)
-                    adapter.notifyPkgChanged(app.packageName)
+            val presets = listOf(0, 3, 5, 10, 15, 30, 45, 60, 90, 120)
+            val labels = presets.map { m ->
+                if (m == 0) {
+                    getString(R.string.no_limit)
                 } else {
-                    showCustomSessionMinutesInput(app)
+                    resources.getQuantityString(R.plurals.minutes_format, m, m)
                 }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .showAccented()
+            } + getString(R.string.custom_minutes)
+
+            AlertDialog.Builder(this)
+                .setTitle(getString(R.string.set_session_limit_title, app.label))
+                .setItems(labels.toTypedArray()) { _, which ->
+                    if (which < presets.size) {
+                        val chosen = presets[which]
+                        SessionLimitStore.setLimitMinutes(this, profile, app.packageName, chosen)
+
+                        BlockingRuntime.ensureRunning(this)
+                        adapter.notifyPkgChanged(app.packageName)
+                    } else {
+                        showCustomSessionMinutesInput(app)
+                    }
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .showAccented()
+        }
     }
 
     private fun showCustomSessionMinutesInput(app: AppEntry) {
-        val profile = currentProfile ?: return
+        ensureAppCanBeManaged(app) {
+            val profile = currentProfile ?: return@ensureAppCanBeManaged
 
-        val input = EditText(this).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER
-            hint = getString(R.string.minutes_hint)
-            backgroundTintList = AccentColor.getActiveColor(context)
-        }
-
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            val pad = (16 * resources.displayMetrics.density).toInt()
-            setPadding(pad, pad/2, pad, 0)
-            addView(
-                input,
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            )
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle(R.string.custom_minutes_title)
-            .setView(container)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                val m = input.text?.toString()?.trim()?.toIntOrNull()
-                if (m == null || m < 0) {
-                    Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                if (SwitchModeStore.isEnabled(this)) {
-                    Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                SessionLimitStore.setLimitMinutes(this, profile, app.packageName, m)
-
-                BlockingRuntime.ensureRunning(this)
-                adapter.notifyPkgChanged(app.packageName)
+            val input = EditText(this).apply {
+                inputType = InputType.TYPE_CLASS_NUMBER
+                hint = getString(R.string.minutes_hint)
+                backgroundTintList = AccentColor.getActiveColor(context)
             }
-            .showAccented()
-    }
 
-    private fun showCustomMinutesInput(app: AppEntry) {
-        val profile = currentProfile ?: return
-
-        val input = EditText(this).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER
-            hint = getString(R.string.minutes_hint)
-            backgroundTintList = AccentColor.getActiveColor(context)
-        }
-
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            val pad = (16 * resources.displayMetrics.density).toInt()
-            setPadding(pad, pad/2, pad, 0)
-            addView(
-                input,
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+            val container = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                val pad = (16 * resources.displayMetrics.density).toInt()
+                setPadding(pad, pad / 2, pad, 0)
+                addView(
+                    input,
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
                 )
-            )
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle(R.string.custom_minutes_title)
-            .setView(container)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                val m = input.text?.toString()?.trim()?.toIntOrNull()
-                if (m == null || m < 0) {
-                    Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                if (SwitchModeStore.isEnabled(this)) {
-                    Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                UsageLimitStore.setLimitMinutes(this, profile, app.packageName, m)
-                if (m == 0) UsageStore.setUsageMsToday(this, app.packageName, 0L)
-
-                BlockingRuntime.ensureRunning(this)
-                adapter.notifyPkgChanged(app.packageName)
             }
-            .showAccented()
+
+            AlertDialog.Builder(this)
+                .setTitle(R.string.custom_minutes_title)
+                .setView(container)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ok) { _, _ ->
+                    val m = input.text?.toString()?.trim()?.toIntOrNull()
+                    if (m == null || m < 0) {
+                        Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show()
+                        return@setPositiveButton
+                    }
+
+                    if (SwitchModeStore.isEnabled(this)) {
+                        Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+                        return@setPositiveButton
+                    }
+
+                    SessionLimitStore.setLimitMinutes(this, profile, app.packageName, m)
+
+                    BlockingRuntime.ensureRunning(this)
+                    adapter.notifyPkgChanged(app.packageName)
+                }
+                .showAccented()
+        }
     }
 }

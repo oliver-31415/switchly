@@ -94,7 +94,7 @@
     <string name="accessibility_service_desc">Detects foreground-app changes so Switchly can block apps and enforce usage limits.</string>
 
     <string name="perm_location_title">Location permission</string>
-    <string name="perm_location_why_wifi_ssid">To read the Wi-Fi name (SSID), Android requires location permission.</string>
+    <string name="perm_location_why_wifi_ssid">To read the Wi-Fi name (SSID), Switchly needs the Wi-Fi permission. On Android 13 and newer, also allow Nearby Wi-Fi devices.</string>
     <string name="perm_location_denied_wifi_schedule">Location permission denied. Wi-Fi schedules may not work without this permission.</string>
 
     <string name="perm_bt_title">Nearby devices permission</string>
@@ -121,17 +121,17 @@
         <item quantity="other">Re-check complete: %1$d required permissions are still missing</item>
     </plurals>
 
-    <string name="permissions_health_live_unknown">Live check pending…</string>
-    <string name="permissions_health_live_ok">Live check: Accessibility is active ✅</string>
-    <string name="permissions_health_live_disabled">Live check: Accessibility is currently disabled</string>
+    <string name="permissions_health_live_unknown">Check pending…</string>
+    <string name="permissions_health_live_ok">Accessibility is active ✅</string>
+    <string name="permissions_health_live_disabled">Accessibility is currently disabled</string>
 
     <plurals name="permissions_health_live_missing_count">
-        <item quantity="one">Live check: %1$d required permission is still missing</item>
-        <item quantity="other">Live check: %1$d required permissions are still missing</item>
+        <item quantity="one">%1$d required permission is still missing</item>
+        <item quantity="other">%1$d required permissions are still missing</item>
     </plurals>
 
-    <string name="permissions_health_live_sched_battery_bad">Live check: Accessibility is active, but battery optimization is still on (schedules may be delayed)</string>
-    <string name="permissions_health_live_ok_with_schedules">Live check: Accessibility and schedule battery settings look good ✅</string>
+    <string name="permissions_health_live_sched_battery_bad">Accessibility is active, but battery optimization is still on (schedules may be delayed)</string>
+    <string name="permissions_health_live_ok_with_schedules">Accessibility and schedule battery settings look good ✅</string>
     <string name="permissions_health_live_mismatch">Status mismatch detected. Re-check after opening Accessibility settings.</string>
     <string name="permissions_health_last_checked_fmt">Last checked: %1$s</string>
 

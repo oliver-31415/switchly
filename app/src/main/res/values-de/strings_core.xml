@@ -14,8 +14,6 @@
     <string name="cancel">Abbrechen</string>
     <string name="not_now">Jetzt nicht</string>
 
-    <string name="zero">0</string>
-
     <!-- Sorting -->
     <string name="paired_tags_sort_title">Gepaarte Tags sortieren</string>
     <string name="paired_tags_sort_new_old">Neu → alt</string>
@@ -30,6 +28,7 @@
     <string name="copy">Kopieren</string>
     <string name="copied">Kopiert</string>
     <string name="share">Teilen</string>
+    <string name="qr_share_failed">QR-Code konnte nicht geteilt werden.</string>
 
     <string name="sign_in">Anmelden</string>
     <string name="sign_out">Abmelden</string>

@@ -83,12 +83,16 @@
     <!-- =========================================================
          DASHBOARD: Quick tiles/shortcuts
          ========================================================= -->
-    <string name="dashboard_tile_permissions">Permissions</string>
-    <string name="dashboard_tile_permissions_sub">Fix what’s missing</string>
     <string name="dashboard_tile_profiles">Profiles</string>
     <string name="dashboard_tile_profiles_sub">Create &amp; edit</string>
-    <string name="dashboard_tile_toggle_options_sub">Security &amp; UI</string>
-    <string name="dashboard_tile_write_nfc_sub">Tap-to-switch tag</string>
+    <string name="dashboard_tile_blocked_websites">Blocked websites</string>
+    <string name="dashboard_tile_blocked_websites_sub">Domains &amp; rules</string>
+    <string name="dashboard_tile_usage">Usage</string>
+    <string name="dashboard_tile_usage_sub">Stats &amp; details</string>
+    <string name="dashboard_tile_in_app">In-app blocking</string>
+    <string name="dashboard_tile_in_app_sub">Feeds &amp; surfaces</string>
+    <string name="dashboard_quick_actions_edit">Edit quick actions</string>
+    <string name="dashboard_quick_actions_customize">Customize quick actions</string>
     <string name="dashboard_tile_qr">QR</string>
     <string name="dashboard_tile_qr_sub">Tap to scan • hold to generate</string>
     <string name="dashboard_tile_barcode">Barcode</string>
@@ -115,6 +119,23 @@
     <string name="search_apps">Search apps</string>
     <string name="app_picker_select_all">Select all</string>
     <string name="app_picker_clear_all">Clear all</string>
+    <string name="app_picker_protected_chip">Protected</string>
+    <string name="app_picker_caution_chip">Caution</string>
+    <string name="app_picker_protected_generic_hint">This app is protected for device safety.</string>
+    <string name="app_picker_protected_keyboard_hint">Your current keyboard is excluded from blocking so you don’t lock yourself out of typing.</string>
+    <string name="app_picker_protected_launcher_hint">Your current launcher is excluded from blocking so you don’t lock yourself out of Home.</string>
+    <string name="app_picker_wallet_hint">Wallet apps can interfere with gestures or quick access on some devices.</string>
+    <string name="app_picker_dialer_hint">Blocking your current phone app can make calls and emergency access harder.</string>
+    <string name="app_picker_protected_caution_title">This app is safety-sensitive</string>
+    <string name="app_picker_wallet_warning_title">Block this wallet app anyway?</string>
+    <string name="app_picker_wallet_warning_message">Wallet apps can interfere with gestures or quick access on some devices. Only block this app if you’re sure you can still use your phone normally.</string>
+    <string name="app_picker_wallet_warning_message_samsung">Samsung Wallet can be opened from the bottom-edge Quick access gesture on Galaxy devices. Blocking it can interfere with normal Home screen use. Only block it if you’re sure you still want that behavior.</string>
+    <string name="app_picker_dialer_warning_title">Block this phone app anyway?</string>
+    <string name="app_picker_dialer_warning_message">Blocking your current phone app can make regular calls and emergency access harder.</string>
+    <string name="app_picker_settings_hint">Blocking Settings can make troubleshooting and permission changes harder.</string>
+    <string name="app_picker_settings_warning_title">Block Settings anyway?</string>
+    <string name="app_picker_settings_warning_message">Blocking Settings can make troubleshooting and permission changes harder.</string>
+    <string name="continue_label">Continue</string>
 
     <!-- =========================================================
          DASHBOARD: Emergency quick entry
@@ -133,4 +154,16 @@
     <string name="main_development_info_message">Switchly is still in development. I test it as carefully as I can with open beta phases, but Android behaves differently across devices, so I cannot catch every issue on my own.\nIf something is not working right for you, please send me a mail.\n\nDownloads:\nswitchly.saltyy.at/pages/download</string>
     <string name="main_info_contact_action">Contact</string>
     <string name="main_info_older_versions_action">Downloads</string>
+
+    <string name="dashboard_quick_actions_toggle">Toggle quick actions</string>
+    <string name="dashboard_quick_actions_expand">Expand quick actions</string>
+    <string name="dashboard_quick_actions_collapse">Collapse quick actions</string>
+    <plurals name="app_picker_select_all_skipped_notice">
+        <item quantity="one">Skipped %d safety-sensitive app.</item>
+        <item quantity="other">Skipped %d safety-sensitive apps.</item>
+    </plurals>
+    <plurals name="app_picker_removed_protected_notice">
+        <item quantity="one">Removed %d protected app from this profile for device safety.</item>
+        <item quantity="other">Removed %d protected apps from this profile for device safety.</item>
+    </plurals>
 </resources>

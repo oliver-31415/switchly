@@ -14,8 +14,6 @@
     <string name="cancel">Cancel</string>
     <string name="not_now">Not now</string>
 
-    <string name="zero">0</string>
-
     <!-- Sorting -->
     <string name="paired_tags_sort_title">Sort paired tags</string>
     <string name="paired_tags_sort_new_old">New → old</string>
@@ -30,6 +28,7 @@
     <string name="copy">Copy</string>
     <string name="copied">Copied</string>
     <string name="share">Share</string>
+    <string name="qr_share_failed">Could not share QR code.</string>
 
     <string name="sign_in">Sign in</string>
     <string name="sign_out">Sign out</string>

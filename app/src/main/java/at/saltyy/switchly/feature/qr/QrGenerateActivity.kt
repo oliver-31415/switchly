@@ -4,7 +4,9 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.graphics.Bitmap
+import androidx.core.content.FileProvider
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -30,10 +32,13 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import java.util.Locale
+import java.io.File
+import java.io.FileOutputStream
 
 class QrGenerateActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityQrGenerateBinding
+    private var currentQrBitmap: Bitmap? = null
 
     private enum class Mode { GLOBAL, PROFILE }
 
@@ -134,17 +139,7 @@ class QrGenerateActivity : AppCompatActivity() {
         }
 
         b.btnShare.setOnClickListener {
-            val uri = b.tvUri.text?.toString().orEmpty()
-            if (uri.isBlank()) return@setOnClickListener
-            startActivity(
-                Intent.createChooser(
-                    Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, uri)
-                    },
-                    getString(R.string.share)
-                )
-            )
+            shareQrAsPng()
         }
 
         // Initial render
@@ -226,6 +221,7 @@ class QrGenerateActivity : AppCompatActivity() {
         b.tvUri.text = uri
 
         val bmp = generateQrBitmap(uri, 900)
+        currentQrBitmap = bmp
         b.ivQr.setImageBitmap(bmp)
     }
 
@@ -276,6 +272,42 @@ class QrGenerateActivity : AppCompatActivity() {
             }
         }
         return bmp
+    }
+
+    private fun shareQrAsPng() {
+        val bitmap = currentQrBitmap ?: run {
+            val uriText = b.tvUri.text?.toString().orEmpty()
+            if (uriText.isBlank()) return
+            generateQrBitmap(uriText, 900)
+        }
+        val streamUri = writeQrBitmapToCache(bitmap) ?: run {
+            Toast.makeText(this, R.string.qr_share_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        startActivity(
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, streamUri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    clipData = ClipData.newUri(contentResolver, getString(R.string.share), streamUri)
+                },
+                getString(R.string.share)
+            )
+        )
+    }
+
+    private fun writeQrBitmapToCache(bitmap: Bitmap): Uri? {
+        return runCatching {
+            val dir = File(cacheDir, "shared").apply { mkdirs() }
+            val file = File(dir, "switchly_qr_${System.currentTimeMillis()}.png")
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                out.flush()
+            }
+            FileProvider.getUriForFile(this, "${applicationContext.packageName}.fileprovider", file)
+        }.getOrNull()
     }
 
     private fun copyToClipboard(text: String) {

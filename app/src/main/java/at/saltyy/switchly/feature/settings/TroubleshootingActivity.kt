@@ -109,7 +109,10 @@ class TroubleshootingActivity : AppCompatActivity() {
 
         ivStatusIcon.visibility = View.GONE
         tvStatusBody.visibility = View.VISIBLE
-        tvStatusFooter.visibility = View.GONE
+        tvStatusFooter.visibility = if (isXiaomiFamilyDevice()) View.VISIBLE else View.GONE
+        if (isXiaomiFamilyDevice()) {
+            tvStatusFooter.text = getString(R.string.troubleshooting_xiaomi_note)
+        }
         btnStatusInfo.visibility = View.GONE
 
         tvStatusActionTitle.setText(R.string.pref_permissions_title)
@@ -175,7 +178,14 @@ class TroubleshootingActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.infoBattery).setOnClickListener {
-            info(R.string.troubleshooting_battery, R.string.troubleshooting_info_battery, getString(R.string.troubleshooting_battery_oem_note))
+            val extra = buildString {
+                append(getString(R.string.troubleshooting_battery_oem_note))
+                if (isXiaomiFamilyDevice()) {
+                    append("\n\n")
+                    append(getString(R.string.troubleshooting_xiaomi_note))
+                }
+            }
+            info(R.string.troubleshooting_battery, R.string.troubleshooting_info_battery, extra)
         }
 
         findViewById<View>(R.id.infoBluetooth).setOnClickListener {
@@ -257,6 +267,13 @@ class TroubleshootingActivity : AppCompatActivity() {
 
     private fun isBatteryOptimizationUserConfirmedMaxAvailable(): Boolean {
         return BatteryOptimizationCompat.isUserConfirmedMaxAvailable(this)
+    }
+
+    private fun isXiaomiFamilyDevice(): Boolean {
+        val manu = Build.MANUFACTURER.orEmpty().lowercase()
+        val brand = Build.BRAND.orEmpty().lowercase()
+        return manu.contains("xiaomi") || manu.contains("redmi") || manu.contains("poco") ||
+            brand.contains("xiaomi") || brand.contains("redmi") || brand.contains("poco")
     }
 
     private fun isBatteryOptimizationEffectivelyOk(): Boolean {

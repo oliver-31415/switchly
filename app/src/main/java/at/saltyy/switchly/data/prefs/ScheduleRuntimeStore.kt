@@ -162,4 +162,19 @@ object ScheduleRuntimeStore {
         sp.edit { remove(KEY_LAST_DISABLE_BLOCKED_NFC_MS) }
     }
 
+    fun resetActiveScheduleState(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit {
+            putBoolean(KEY_ENABLED_BY_SCHEDULE, false)
+            putBoolean(KEY_DISABLED_BY_SCHEDULE, false)
+            putBoolean(KEY_HAD_ENABLE_AND_DISABLE, false)
+            putBoolean(KEY_HAD_DISABLE_AND_ENABLE, false)
+            putBoolean(KEY_MANUAL_OVERRIDE_ACTIVE, false)
+            remove(KEY_MANUAL_OVERRIDE_SCHEDULE_ID)
+            remove(KEY_ACTIVE_RANGE_SCHEDULE_ID)
+            val keys = sp.all.keys.filter { it.startsWith(KEY_LAST_FIRED_PREFIX) }
+            for (k in keys) remove(k)
+        }
+    }
+
 }

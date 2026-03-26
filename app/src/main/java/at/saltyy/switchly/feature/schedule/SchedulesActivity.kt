@@ -48,6 +48,7 @@ import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
@@ -67,6 +68,7 @@ import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
+import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
@@ -135,6 +137,7 @@ class SchedulesActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
+            refreshList()
         }
 
     private val requestBluetoothPermission =
@@ -150,6 +153,7 @@ class SchedulesActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
+            refreshList()
         }
 
     private var externalActivityReturnCallback: (() -> Unit)? = null
@@ -192,6 +196,7 @@ class SchedulesActivity : AppCompatActivity() {
     }
 
     private fun isScheduleEditingLocked(): Boolean {
+        if (EmergencyBypassStore.isActive(this)) return false
         return SwitchModeStore.isEnabled(this) &&
             !AutomationModeStore.isScheduleEditingAllowedWhileEnabled(this)
     }
@@ -297,6 +302,7 @@ class SchedulesActivity : AppCompatActivity() {
                         if (it.id == schedule.id) it.copy(enabled = enabled) else it
                     }
                     ScheduleStore.saveAll(this, list)
+                    reapplySchedulesNow()
                     SchedulePlanner.updateNextAlarm(this)
                     SchedulePlanner.notifyNextChanged(this)
                 }
@@ -841,18 +847,37 @@ class SchedulesActivity : AppCompatActivity() {
         }
     }
 
-    private fun hasWifiSsidPermission(): Boolean {
-        val primaryGranted = ContextCompat.checkSelfPermission(
+    private fun hasNearbyWifiPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < 33) return true
+        return ContextCompat.checkSelfPermission(
             this,
-            wifiSsidPermissionName()
+            Manifest.permission.NEARBY_WIFI_DEVICES
         ) == PackageManager.PERMISSION_GRANTED
-        if (primaryGranted) return true
+    }
 
-        return Build.VERSION.SDK_INT >= 33 &&
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
+    private fun hasFineLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun hasWifiSsidPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= 33) {
+            hasNearbyWifiPermission() || hasFineLocationPermission()
+        } else {
+            hasFineLocationPermission()
+        }
+    }
+
+    private fun reapplySchedulesNow() {
+        ScheduleRuntimeStore.resetActiveScheduleState(this)
+        sendBroadcast(
+            Intent(this, ScheduleReceiver::class.java).apply {
+                action = ScheduleReceiver.ACTION_TICK
+                putExtra("alarm_reason", "schedule_edit")
+            }
+        )
     }
 
     private fun hasBluetoothConnectPermission(): Boolean {
@@ -1184,7 +1209,7 @@ class SchedulesActivity : AppCompatActivity() {
                     this,
                     Manifest.permission.NEARBY_WIFI_DEVICES
                 ) == PackageManager.PERMISSION_GRANTED
-            val canReadWifi = hasFineLocation || (Build.VERSION.SDK_INT >= 33 && hasNearbyWifi)
+            val canReadWifi = if (Build.VERSION.SDK_INT >= 33) hasNearbyWifi else hasFineLocation
 
             if (!canReadWifi) {
                 showWhyLocationDialogForWifi()
@@ -2086,6 +2111,7 @@ class SchedulesActivity : AppCompatActivity() {
                 }
 
                 ScheduleStore.saveAll(this, newList)
+                reapplySchedulesNow()
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
                 refreshList()

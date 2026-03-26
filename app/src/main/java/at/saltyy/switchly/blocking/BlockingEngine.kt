@@ -5,6 +5,7 @@ import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.TempAllowStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.util.AppBlockSafety
 
 class BlockingEngine {
 
@@ -17,6 +18,7 @@ class BlockingEngine {
 
     fun shouldBlock(context: Context, topPackage: String?): Boolean {
         if (topPackage.isNullOrBlank()) return false
+        if (AppBlockSafety.isHardExcluded(context, topPackage)) return false
         if (EmergencyBypassStore.isActive(context)) return false
         if (!SwitchModeStore.isEnabled(context)) return false
         if (TempAllowStore.isAllowed(context, topPackage)) return false

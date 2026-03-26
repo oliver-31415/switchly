@@ -120,8 +120,9 @@
     <string name="troubleshooting_info_notification_access">Needed only for the “Blocked notifications” feature. Without it, notification blocking won’t work.</string>
     <string name="troubleshooting_info_battery">Battery optimization can delay background work. Disable optimization for Switchly to improve reliability.</string>
     <string name="troubleshooting_info_exact_alarms">Exact alarms make time-based schedules fire on time. Some devices delay schedules when this is off.</string>
-    <string name="troubleshooting_info_location">Android requires precise location permission to read the current Wi‑Fi name (SSID). For best reliability with Wi‑Fi triggers, background location should also be allowed.</string>
+    <string name="troubleshooting_info_location">Android requires precise location permission to read the current Wi‑Fi name (SSID). For best reliability with Wi‑Fi triggers, background location should also be allowed. On Android 13 and newer, some devices also require Nearby Wi‑Fi devices.</string>
     <string name="troubleshooting_info_bluetooth">Android 12+ requires the Nearby devices/Bluetooth permission for Bluetooth-based schedules.</string>
+    <string name="troubleshooting_xiaomi_note">Xiaomi / Redmi / POCO note:\n\n• Also enable Autostart for Switchly\n• Set battery mode to No restrictions if that option exists\n• Lock the app in Recents if possible\n• If available, allow background activity for Switchly\n• Toggle Accessibility off and on again if Android shows it as enabled but Switchly is not responding</string>
     <string name="troubleshooting_pref_summary">Check common issues &amp; fixes</string>
 
     <string name="troubleshooting_battery_oem_note">Some devices do not offer an “Unrestricted” battery option. If you already enabled the highest available background setting for Switchly, that may already be the maximum supported on your device.</string>

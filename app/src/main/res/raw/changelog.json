@@ -2,13 +2,31 @@
     "releases": [
         {
             "version": "v2.0.4",
-            "date": "Mar 19, 2026",
+            "date": "Mar 25, 2026",
             "body": [
-                "Fixed Mixed mode so NFC, schedules, and other allowed channels can work together without incorrectly blocking each other",
-                "Fixed an issue where \"Require NFC to disable\" could interfere with other enabled control methods in Mixed mode",
-                "Improved blocked-app handling to reduce unintended one-handed mode triggers on some Samsung devices",
-                "Fixed several rare ANRs and crashes related to accessibility scanning and browser website detection",
-                "Fixed a crash in App Lock settings on some devices and improved overall blocking reliability"
+                "Fixed an issue where blocked apps could occasionally trigger one-handed mode on some Samsung devices",
+                "Fixed Mixed Mode schedule handling when “NFC required to disable” was enabled",
+                "Schedules now work properly again without being blocked too aggressively by NFC-only disable protection",
+                "Clarified NFC channel wording in Mixed Mode settings and improved paired/read-only tag behavior",
+                "Added a new option to allow the button channel to enable Switchly without allowing it to disable it",
+                "Improved editing locks and clearer popups for blocked actions like app picking, profile management, and NFC writing while Switchly is active",
+                "Improved debug info and support diagnostics with more details about editing permissions and Mixed Mode toggles",
+                "Fixed several rare ANRs and crashes related to accessibility scanning, browser website detection, and App Lock settings",
+                "Improved app usage and statistics screens, including clearer opens and attempts counts for Today/Week/Month",
+                "Fixed an issue where Today usage stats could appear empty unless a daily app limit was set",
+                "Fixed an issue where the Today usage graph could disappear in app details",
+                "Changed app usage to prefer Accessibility tracking as the primary source, with UsageStats used only as a fallback",
+                "Added sanity clamping to prevent impossible app usage totals from being shown in Today/Week/Month/Year/Overall views",
+                "Excluded your current launcher and keyboard from blocking for device safety, and made Select All skip critical apps automatically",
+                "Fixed an issue where the launcher exclusion message could appear on the wrong app while filtering",
+                "Changed app usage screens to exclude Switchly itself from tracked usage lists",
+                "Added clearer warnings before blocking risky apps such as wallet, phone, and Settings apps",
+                "Improved QR and barcode channel action visibility in the top bar when quick action tiles are hidden",
+                "Improved FAQ icon colors so they stay visually consistent when expanding and collapsing items",
+                "Improved blocking controls so schedule editing and NFC tag writing are only shown when those channels are actually relevant",
+                "Changed QR code sharing to share the QR as an image instead of plain text",
+                "Improved Wi-Fi trigger reliability, reboot recovery, and permission guidance (including Android 13+ Nearby Wi-Fi devices)",
+                "Expanded Xiaomi / Redmi / POCO troubleshooting and FAQ guidance for devices with stricter background restrictions"
             ]
         },
         {

@@ -320,17 +320,49 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:id="@+id/tvQuickActionsTitle"
+            <LinearLayout
+                android:id="@+id/rowQuickActionsHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:paddingBottom="2dp"
-                android:includeFontPadding="true"
-                android:text="@string/dashboard_quick_actions"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:alpha="0.75" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:minHeight="40dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
+
+                <TextView
+                    android:id="@+id/tvQuickActionsTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:includeFontPadding="true"
+                    android:text="@string/dashboard_quick_actions"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:alpha="0.75" />
+
+                <ImageView
+                    android:id="@+id/ivQuickActionsEdit"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="@string/dashboard_quick_actions_edit"
+                    android:padding="2dp"
+                    android:src="@drawable/edit_24"
+                    app:tint="?attr/colorOnSurface" />
+
+                <ImageView
+                    android:id="@+id/ivQuickActionsChevron"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="@string/dashboard_quick_actions_toggle"
+                    android:padding="2dp"
+                    android:src="@drawable/arrow_drop_down_24"
+                    app:tint="?attr/colorOnSurface" />
+            </LinearLayout>
 
             <!-- Quick actions tiles -->
             <LinearLayout
@@ -449,6 +481,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/rowManageShortcuts"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -527,7 +560,7 @@
                                 android:padding="8dp"
                                 android:src="@drawable/nfc_24"
                                 app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/write_nfc_tag" />
+                                android:contentDescription="@string/dashboard_tile_blocked_websites" />
 
                             <Space
                                 android:layout_width="1dp"
@@ -537,7 +570,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/write_nfc_tag"
+                                android:text="@string/dashboard_tile_blocked_websites"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
                                 android:alpha="0.95" />
@@ -546,7 +579,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="@string/dashboard_tile_write_nfc_sub"
+                                android:text="@string/dashboard_tile_blocked_websites_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
                         </LinearLayout>
@@ -554,6 +587,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/rowUtilityShortcuts"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -581,9 +615,9 @@
                                 android:layout_height="40dp"
                                 android:layout_marginStart="-2dp"
                                 android:padding="8dp"
-                                android:src="@drawable/tune_24"
+                                android:src="@drawable/apps_24"
                                 app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/toggle_options_title" />
+                                android:contentDescription="@string/dashboard_tile_in_app" />
 
                             <Space
                                 android:layout_width="1dp"
@@ -593,7 +627,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/toggle_options_title"
+                                android:text="@string/dashboard_tile_in_app"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
                                 android:alpha="0.95" />
@@ -602,7 +636,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="@string/dashboard_tile_toggle_options_sub"
+                                android:text="@string/dashboard_tile_in_app_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
                         </LinearLayout>
@@ -635,9 +669,9 @@
                                     android:layout_height="40dp"
                                     android:layout_marginStart="-2dp"
                                     android:padding="8dp"
-                                    android:src="@drawable/security_24"
+                                    android:src="@drawable/bar_chart_24"
                                     app:tint="?attr/colorOnSurface"
-                                    android:contentDescription="@string/dashboard_tile_permissions" />
+                                    android:contentDescription="@string/dashboard_tile_usage" />
 
                                 <Space
                                     android:layout_width="0dp"
@@ -661,7 +695,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/dashboard_tile_permissions"
+                                android:text="@string/dashboard_tile_usage"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
                                 android:alpha="0.95" />
@@ -670,7 +704,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="@string/dashboard_tile_permissions_sub"
+                                android:text="@string/dashboard_tile_usage_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
                         </LinearLayout>

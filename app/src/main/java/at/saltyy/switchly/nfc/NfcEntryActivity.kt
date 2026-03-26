@@ -38,17 +38,17 @@ class NfcEntryActivity : Activity() {
         handleIncomingIntent(intent)
     }
 
-    override fun onNewIntent(intent: android.content.Intent?) {
+    override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIncomingIntent(intent)
     }
 
-    private fun handleIncomingIntent(intent: android.content.Intent?) {
+    private fun handleIncomingIntent(intent: Intent?) {
         val tag = if (Build.VERSION.SDK_INT >= 33) {
-            intent?.getParcelableExtra(android.nfc.NfcAdapter.EXTRA_TAG, android.nfc.Tag::class.java)
+            intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG, android.nfc.Tag::class.java)
         } else {
-            intent?.getParcelableExtra(android.nfc.NfcAdapter.EXTRA_TAG) as? android.nfc.Tag
+            intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG) as? android.nfc.Tag
         }
 
         // If an NFC tag parcelable exists, this came from NFC.
@@ -97,12 +97,29 @@ class NfcEntryActivity : Activity() {
         val data: Uri? = extractSwitchlyUri(intent)
         if (data == null || !NfcSchema.isKnownHost(data.host)) {
             if (fromNfc) {
+                // Read-only/UID-paired tags should still be able to toggle Switchly without requiring a written switchly:// payload.
+                val sp = PreferenceManager.getDefaultSharedPreferences(this)
+                val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+                val pairedUids = if (pairedUidsEnabled) NfcUidPairingStore.getPairedUidsHex(this) else emptySet()
+                val seenUid = NfcTagUid.normalizeUidHex(NfcTagUid.uidHex(tag))
+                if (pairedUidsEnabled && pairedUids.isNotEmpty() && seenUid.isNotBlank() &&
+                    pairedUids.any { it.equals(seenUid, ignoreCase = true) }) {
+                    handleReadOnlyPairedTagToggle()
+                    finish()
+                    return
+                }
+
                 // Ignore unrelated/unknown NFC tags by default.
                 finish()
                 return
             }
 
-            toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_invalid_or_missing_uri)))
+            toast(
+                getString(
+                    R.string.nfc_action_error_fmt,
+                    getString(R.string.nfc_error_invalid_or_missing_uri)
+                )
+            )
             finish()
             return
         }
@@ -114,12 +131,16 @@ class NfcEntryActivity : Activity() {
         when (data.host?.lowercase()) {
             NfcSchema.HOST_SWITCH -> handleGlobalAction(data, tag)
             NfcSchema.HOST_PROFILE -> handleProfileAction(data, tag)
-            else -> toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_host)))
+            else -> toast(
+                getString(
+                    R.string.nfc_action_error_fmt,
+                    getString(R.string.nfc_error_unknown_host)
+                )
+            )
         }
 
         finish()
     }
-
 
     private fun extractSwitchlyUri(intent: Intent?): Uri? {
         val direct = intent?.data
@@ -134,7 +155,6 @@ class NfcEntryActivity : Activity() {
         val rawMessages = if (Build.VERSION.SDK_INT >= 33) {
             intent?.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
         } else {
-            @Suppress("DEPRECATION")
             intent?.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
                 ?.mapNotNull { it as? NdefMessage }
                 ?.toTypedArray()
@@ -159,7 +179,6 @@ class NfcEntryActivity : Activity() {
         val tag = if (Build.VERSION.SDK_INT >= 33) {
             intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG, android.nfc.Tag::class.java)
         } else {
-            @Suppress("DEPRECATION")
             intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG) as? android.nfc.Tag
         }
 
@@ -188,7 +207,18 @@ class NfcEntryActivity : Activity() {
         }
     }
 
-    // -------- GLOBAL ACTIONS --------
+    private fun handleReadOnlyPairedTagToggle() {
+        val enabled = SwitchModeStore.isEnabled(this)
+        if (enabled) {
+            SwitchModeStore.setEnabled(this, false, allowNfcBypass = true)
+            BlockingRuntime.stop(this)
+            toast(getString(R.string.nfc_feedback_stopped, getString(R.string.app_name)))
+        } else {
+            SwitchModeStore.setEnabled(this, true)
+            BlockingRuntime.ensureRunning(this)
+            toast(getString(R.string.nfc_feedback_started, getString(R.string.app_name)))
+        }
+    }
 
     private fun handleGlobalAction(data: Uri, tag: android.nfc.Tag?) {
         val action = data.lastPathSegment?.lowercase() ?: return
@@ -250,8 +280,6 @@ class NfcEntryActivity : Activity() {
             else -> toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
         }
     }
-
-    // -------- PROFILE ACTIONS --------
 
     private fun handleProfileAction(data: Uri, tag: android.nfc.Tag?) {
         val segs = data.pathSegments ?: emptyList()
