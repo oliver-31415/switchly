@@ -1,26 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         APP IDENTITY
-         ========================================================= -->
+    <!-- APP AND COMMON ACTIONS -->
     <string name="app_name">Switchly</string>
     <string name="settings">Einstellungen</string>
-
-    <!-- =========================================================
-         COMMON ACTIONS
-         ========================================================= -->
     <string name="ok">OK</string>
     <string name="cancel">Abbrechen</string>
     <string name="not_now">Jetzt nicht</string>
-
-    <!-- Sorting -->
-    <string name="paired_tags_sort_title">Gepaarte Tags sortieren</string>
-    <string name="paired_tags_sort_new_old">Neu → alt</string>
-    <string name="paired_tags_sort_old_new">Alt → neu</string>
-    <string name="paired_tags_sort_name_az">Name A → Z</string>
-    <string name="paired_tags_sort_name_za">Name Z → A</string>
-
     <string name="create">Erstellen</string>
     <string name="save">Speichern</string>
     <string name="delete">Löschen</string>
@@ -28,54 +13,35 @@
     <string name="copy">Kopieren</string>
     <string name="copied">Kopiert</string>
     <string name="share">Teilen</string>
-    <string name="qr_share_failed">QR-Code konnte nicht geteilt werden.</string>
-
+    <string name="info">Info</string>
+    <!-- SIGN-IN AND GENERIC STATE LABELS -->
     <string name="sign_in">Anmelden</string>
     <string name="sign_out">Abmelden</string>
-
-    <!-- =========================================================
-         VALIDATION + GENERIC FEEDBACK
-         ========================================================= -->
     <string name="required">Erforderlich</string>
     <string name="invalid_value">Ungültiger Wert</string>
-
-    <!-- =========================================================
-         STATE LABELS
-         ========================================================= -->
     <string name="state_enabled">Aktiviert</string>
     <string name="state_disabled">Deaktiviert</string>
-
-    <!-- =========================================================
-         QUICK SETTINGS TILE
-         ========================================================= -->
+    <!-- PAIRED TAG SORTING -->
+    <string name="paired_tags_sort_title">Gepaarte Tags sortieren</string>
+    <string name="paired_tags_sort_new_old">Neu → alt</string>
+    <string name="paired_tags_sort_old_new">Alt → neu</string>
+    <string name="paired_tags_sort_name_az">Name A → Z</string>
+    <string name="paired_tags_sort_name_za">Name Z → A</string>
+    <!-- QUICK SETTINGS TILE -->
     <string name="qs_label_on">Switchly EIN</string>
     <string name="qs_label_off">Switchly AUS</string>
-
     <string name="qs_added_ok">Kachel hinzugefügt</string>
     <string name="qs_added_already">Kachel ist bereits hinzugefügt</string>
     <string name="qs_added_cancel">Abgebrochen</string>
-
     <string name="qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „Switchly“ zu den aktiven Kacheln ziehen</string>
     <string name="qs_tile_remove_hint">Zum Entfernen der Kachel: Schnelleinstellungen → Bearbeiten → „Switchly“ entfernen</string>
-
-    <!-- =========================================================
-         SWITCH MODE
-         ========================================================= -->
-    <string name="switch_mode_label">Switch-Modus: %1$s</string>
-    <string name="switch_mode_status_placeholder">Switch-Modus: …</string>
-
-    <!-- =========================================================
-         APP UPDATE
-         ========================================================= -->
+    <!-- UPDATE STATUS -->
     <string name="update_available_title">Update verfügbar</string>
     <string name="update_available_message">Eine neue Switchly-Version ist im Google Play Store verfügbar.</string>
     <string name="update_available_inline">Neues Update verfügbar!</string>
     <string name="update_available_cta">Aktualisieren</string>
     <string name="switchly_update_up_to_date">Du bist bereits auf dem neuesten Stand</string>
-
-    <!-- =========================================================
-         THEME/ACCENT COLORS
-         ========================================================= -->
+    <!-- ACCENT COLORS AND CUSTOM COLOR CHANNELS -->
     <string name="accent_default">Standard (Grün)</string>
     <string name="accent_blue">Blau</string>
     <string name="accent_teal">Türkis</string>
@@ -85,20 +51,14 @@
     <string name="accent_orange">Orange</string>
     <string name="accent_amber">Bernstein</string>
     <string name="accent_gray">Grau</string>
-
-    <!-- =========================================================
-         COLOR PICKER CHANNELS
-         ========================================================= -->
     <string name="color_channel_r">R</string>
     <string name="color_channel_g">G</string>
     <string name="color_channel_b">B</string>
-
-    <!-- =========================================================
-         TYPOGRAPHIC/TOKEN-LIKE STRINGS
-         ========================================================= -->
+    <!-- COMMON FORMAT TOKENS -->
+    <string name="switch_mode_label">Switch-Modus: %1$s</string>
+    <string name="switch_mode_status_placeholder">Switch-Modus: …</string>
     <string name="common_dash">—</string>
     <string name="common_bullet">•</string>
-
-    <string name="info">Info</string>
-
+    <!-- QR SHARE -->
+    <string name="qr_share_failed">QR-Code konnte nicht geteilt werden.</string>
 </resources>

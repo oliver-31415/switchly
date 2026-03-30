@@ -1,47 +1,34 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         Barcode: Preference toggles and validation
-         ========================================================= -->
+    <!-- BARCODES - Scan entry and validation -->
     <string name="barcode_scan_title">Barcode scannen</string>
     <string name="permission_barcode_camera_required">Für das Scannen von Barcodes ist die Kameraberechtigung erforderlich.</string>
     <string name="invalid_barcode">Unbekannter Barcode</string>
-
-    <!-- =========================================================
-         Barcode: Management
-         ========================================================= -->
+    <!-- BARCODES - Overview and empty/setup states -->
     <string name="manage_barcodes_title">Barcodes verwalten</string>
     <string name="manage_barcodes_setup_title">Physische Codes auf Switchly-Aktionen mappen</string>
     <string name="manage_barcodes_setup_body">Füge einen Barcode-Wert hinzu und weise ihm eine Switchly-Aktion zu. Nützlich für gedruckte Barcodes, Produktverpackungen oder strikte verwaltete Code-Setups.</string>
     <string name="manage_barcodes_empty">Noch keine verwalteten Codes.</string>
+    <!-- BARCODES - Add and edit flows -->
     <string name="manage_barcodes_add_title">Barcode hinzufügen</string>
     <string name="manage_barcodes_edit_title">Barcode bearbeiten</string>
     <string name="manage_barcodes_add_scan_barcode">Barcode hinzufügen (Scan)</string>
     <string name="manage_barcodes_add_manual">Barcode hinzufügen (manuell)</string>
+    <!-- BARCODES - Row actions and misc -->
     <string name="manage_barcodes_kind_barcode">Barcode</string>
     <string name="manage_barcodes_raw_label">Gescannter Wert</string>
     <string name="manage_barcodes_name_label">Name (optional)</string>
     <string name="manage_barcodes_note_label">Notiz (optional)</string>
     <string name="manage_barcodes_profile_universal">Universell</string>
-
-    <!-- =========================================================
-         Barcode: Limits
-         ========================================================= -->
     <string name="manage_barcodes_daily_limit_label">Tageslimit (optional)</string>
     <string name="manage_barcodes_cooldown_label">Cooldown in Minuten (optional)</string>
     <string name="manage_barcodes_limit_daily_summary">Max. %1$d/Tag</string>
     <string name="manage_barcodes_limit_cooldown_summary">Cooldown %1$d Min.</string>
     <string name="manage_barcodes_limit_daily_toast">Tageslimit erreicht (%1$d).</string>
     <string name="manage_barcodes_limit_cooldown_toast">Versuch es in %1$d Min. erneut.</string>
-
-    <!-- =========================================================
-         Barcode: Selection and deletion
-         ========================================================= -->
     <string name="manage_barcodes_delete_selected_title">Barcodes löschen</string>
     <plurals name="manage_barcodes_delete_selected_confirm_fmt">
         <item quantity="one">%d Barcode löschen?</item>
         <item quantity="other">%d Barcodes löschen?</item>
     </plurals>
-
 </resources>

@@ -1,9 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         AUTH: Google Sign-in
-         ========================================================= -->
+    <!-- AUTH - Sign-in flow and configuration errors -->
     <string name="auth_sign_in_success">Mit Google angemeldet</string>
     <string name="auth_sign_in_cancelled">Anmeldung abgebrochen</string>
     <string name="auth_sign_in_failed_generic">Anmeldung fehlgeschlagen</string>
@@ -13,77 +10,46 @@
     <string name="auth_no_matching_google_accounts_found">Keine passenden Google-Konten gefunden</string>
     <string name="auth_missing_google_server_client_id">Fehlende Google-Server-Client-ID (default_web_client_id). Prüfe die google-services.json und das Google-Services-Plugin.</string>
     <string name="auth_firebase_not_configured">Firebase ist nicht konfiguriert (google-services.json fehlt?)</string>
-
-    <!-- =========================================================
-         ACCOUNT: Löschablauf
-         ========================================================= -->
+    <!-- ACCOUNT - Account actions and sign-out state -->
     <string name="settings_account_action_delete">Konto löschen</string>
     <string name="settings_account_delete_confirm_title">Switchly-Konto löschen?</string>
     <string name="settings_account_delete_confirm_message">Dadurch werden deine Switchly-Cloud-Daten, Backups und lokalen Einstellungen gelöscht. Dies kann nicht rückgängig gemacht werden.</string>
-
     <string name="account_delete_recent_login_required">Aus Sicherheitsgründen melde dich bitte erneut mit Google an und versuche dann, das Konto erneut zu löschen.</string>
     <string name="account_delete_failed_delete_account_fmt">Konto konnte nicht gelöscht werden: %1$s</string>
     <string name="account_delete_failed_delete_cloud_data_fmt">Cloud-Daten konnten nicht gelöscht werden: %1$s</string>
     <string name="account_delete_failed_delete_backups_fmt">Backups konnten nicht gelöscht werden: %1$s</string>
     <string name="account_deleted">Konto gelöscht</string>
-
-    <!-- =========================================================
-         CLOUD: Backup-/Wiederherstellungsaktionen
-         ========================================================= -->
-    <string name="cloud_backup_ok">Backup abgeschlossen</string>
-    <string name="cloud_restore_ok_restart">Wiederherstellung abgeschlossen — App wird neu gestartet…</string>
-
-    <string name="cloud_no_backups">Keine Backups gefunden</string>
-    <string name="cloud_not_logged_in">Du bist nicht angemeldet</string>
-
-    <string name="cloud_error_fmt">Fehler: %1$s</string>
-    <string name="cloud_error_no_backup_found">Kein Backup gefunden</string>
-    <string name="cloud_error_backup_not_found">Backup nicht gefunden</string>
-    <string name="cloud_error_not_logged_in">Nicht angemeldet</string>
-
-    <!-- =========================================================
-         PREFERENCES: Cloud- und Konto-Kacheln
-         ========================================================= -->
     <string name="pref_google_account_title">Google-Konto</string>
     <string name="pref_google_account_summary_logged_out">Nicht mit Google angemeldet</string>
-
-    <string name="pref_cloud_backup_title">In der Cloud sichern</string>
-    <string name="pref_cloud_backup_summary">Sichere deine Einstellungen und Profile manuell</string>
-
-    <string name="pref_cloud_restore_title">Aus der Cloud wiederherstellen</string>
-    <string name="pref_cloud_restore_summary">Lade ein Backup und überschreibe lokale Einstellungen</string>
-
-    <string name="pref_cloud_delete_backups_title">Cloud-Backups löschen</string>
-    <string name="pref_cloud_delete_backups_summary">Ausgewählte Backups aus dem Cloud-Verlauf entfernen</string>
-
-    <!-- =========================================================
-         SETTINGS: Dialoge und Bestätigungen
-         ========================================================= -->
     <string name="settings_google_dialog_title">Google-Konto</string>
-    <string name="settings_delete_backups_title">Backups löschen</string>
-    <string name="settings_restore_choose_title">Backup auswählen</string>
-    <string name="settings_last_backup">Letztes Backup: %1$s</string>
-
-    <string name="settings_confirm_backup_title">Sichern</string>
-    <string name="settings_confirm_backup_message">Aktuelle Einstellungen und Profile in der Cloud sichern?</string>
-
-    <string name="settings_confirm_restore_title">Wiederherstellen</string>
-    <string name="settings_confirm_restore_message">Backup aus der Cloud laden und lokale Einstellungen überschreiben?</string>
-
     <string name="settings_confirm_sign_out_message">Von deinem Google-Konto abmelden?</string>
-
-    <!-- =========================================================
-         SETTINGS: Kontostatus
-         ========================================================= -->
     <string name="settings_google_logged_in">Angemeldet</string>
     <string name="settings_google_logged_out">Nicht angemeldet</string>
     <string name="settings_google_signing_in">Anmeldung läuft…</string>
     <string name="settings_signed_out">Abgemeldet</string>
-
-    <!-- =========================================================
-         COMMON
-         ========================================================= -->
     <string name="deleted">Gelöscht</string>
     <string name="error_unknown">Unbekannter Fehler</string>
-
+    <!-- CLOUD - Backup and restore status -->
+    <string name="cloud_backup_ok">Backup abgeschlossen</string>
+    <string name="cloud_restore_ok_restart">Wiederherstellung abgeschlossen — App wird neu gestartet…</string>
+    <string name="cloud_no_backups">Keine Backups gefunden</string>
+    <string name="cloud_not_logged_in">Du bist nicht angemeldet</string>
+    <string name="cloud_error_fmt">Fehler: %1$s</string>
+    <string name="cloud_error_no_backup_found">Kein Backup gefunden</string>
+    <string name="cloud_error_backup_not_found">Backup nicht gefunden</string>
+    <string name="cloud_error_not_logged_in">Nicht angemeldet</string>
+    <string name="pref_cloud_backup_title">In der Cloud sichern</string>
+    <string name="pref_cloud_backup_summary">Sichere deine Einstellungen und Profile manuell</string>
+    <string name="pref_cloud_restore_title">Aus der Cloud wiederherstellen</string>
+    <string name="pref_cloud_restore_summary">Lade ein Backup und überschreibe lokale Einstellungen</string>
+    <string name="pref_cloud_delete_backups_title">Cloud-Backups löschen</string>
+    <string name="pref_cloud_delete_backups_summary">Ausgewählte Backups aus dem Cloud-Verlauf entfernen</string>
+    <!-- CLOUD - Backup and restore dialogs -->
+    <string name="settings_delete_backups_title">Backups löschen</string>
+    <string name="settings_restore_choose_title">Backup auswählen</string>
+    <string name="settings_last_backup">Letztes Backup: %1$s</string>
+    <string name="settings_confirm_backup_title">Sichern</string>
+    <string name="settings_confirm_backup_message">Aktuelle Einstellungen und Profile in der Cloud sichern?</string>
+    <string name="settings_confirm_restore_title">Wiederherstellen</string>
+    <string name="settings_confirm_restore_message">Backup aus der Cloud laden und lokale Einstellungen überschreiben?</string>
 </resources>

@@ -1,33 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
+    <!-- TOOLS - Section labels -->
     <string name="tools_section_automation">Control &amp; automation</string>
     <string name="tools_section_management">Profiles &amp; setup</string>
     <string name="tools_section_safety">Quick override</string>
     <string name="tools_section_activity">Usage &amp; review</string>
+    <!-- TOOLS - Automation -->
     <string name="tools_schedules_title">Schedules</string>
     <string name="tools_schedules_summary">Create and manage automatic time, Wi-Fi, and Bluetooth actions</string>
-
     <string name="tools_nfc_write_title">Write NFC tag</string>
     <string name="tools_nfc_write_summary">Write enable, disable, settings unlock, and other actions to writable NFC tags</string>
-
     <string name="tools_manage_qr_title">Generate QR</string>
     <string name="tools_manage_qr_summary">Create a Switchly QR code</string>
-
+    <!-- TOOLS - Management -->
     <string name="tools_profiles_title">Manage profiles</string>
     <string name="tools_profiles_summary">Create, switch, and organize blocking profiles</string>
-
-    <string name="tools_emergency_unlock_summary">Temporarily disable protection when you really need to</string>
-
     <string name="tools_paired_tags_title">Manage paired tags</string>
     <string name="tools_paired_tags_summary">Add, rename, and manage paired NFC tags, including cooldown or daily-use limits</string>
-
-    <string name="tools_insights_title">Usage &amp; insights</string>
-    <string name="tools_insights_summary">View usage, blocking, and related activity information</string>
-
-    <string name="tools_blocked_notifications_summary">Review blocked notifications and related activity</string>
-
     <string name="tools_manage_barcodes_title">Manage barcodes</string>
     <string name="tools_manage_barcodes_summary">Map physical barcodes to Switchly actions</string>
-
+    <!-- TOOLS - Safety -->
+    <string name="tools_emergency_unlock_summary">Temporarily disable protection when you really need to</string>
+    <!-- TOOLS - Activity -->
+    <string name="tools_insights_title">Usage &amp; insights</string>
+    <string name="tools_insights_summary">View usage, blocking, and related activity information</string>
+    <string name="tools_blocked_notifications_summary">Review blocked notifications and related activity</string>
 </resources>

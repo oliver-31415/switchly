@@ -1,29 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         ABOUT: Screen and section headers
-         ========================================================= -->
+    <!-- ABOUT - Screen and section headers -->
     <string name="about_title">About</string>
-
     <string name="about_app_info">App info</string>
     <string name="about_app_info_title">App info</string>
     <string name="about_app_info_summary">Version, build, and links</string>
-
     <string name="about_device_details">Device details</string>
     <string name="about_device_info_title">Device info</string>
     <string name="about_device_info_summary">Android version, model, and device</string>
-
     <string name="about_developer_info">Developer info</string>
     <string name="about_developer_info_title">Developer info</string>
     <string name="about_developer_info_summary">Developer and build details</string>
-
     <string name="about_other_switchly_products_title">Other Switchly products</string>
     <string name="about_other_switchly_products_summary">Switchly Lite, Launcher and future extras</string>
-
-    <!-- =========================================================
-         ABOUT: Field labels
-         ========================================================= -->
+    <!-- ABOUT - Field labels and install source values -->
     <string name="about_abi_label">ABI</string>
     <string name="about_android_label">Android</string>
     <string name="about_app_name_label">App name</string>
@@ -50,10 +40,9 @@
     <string name="about_version_label">Version</string>
     <string name="about_website_label">Website</string>
     <string name="about_older_versions_label">Downloads</string>
-
-    <!-- =========================================================
-         ABOUT: Row titles/display names
-         ========================================================= -->
+    <string name="about_switchly_lite_play_store_label">Switchly Lite – Play Store</string>
+    <string name="about_switchly_launcher_play_store_label">Switchly Launcher – Play Store</string>
+    <!-- ABOUT - Row titles and display labels -->
     <string name="about_android">Android version</string>
     <string name="about_app_name">App name</string>
     <string name="about_developer">Developer</string>
@@ -63,32 +52,31 @@
     <string name="about_mail">Email</string>
     <string name="about_package">Package</string>
     <string name="about_version">Version</string>
-
-    <!-- =========================================================
-         ABOUT: Values, formatting, and links
-         ========================================================= -->
+    <string name="about_switchly_lite">Switchly Lite</string>
+    <string name="about_switchly_lite_bonus">A lighter version for simple flows like NFC, button actions, and timed schedules.</string>
+    <string name="about_switchly_launcher">Switchly Launcher</string>
+    <string name="about_switchly_launcher_bonus">A simple and strong launcher made for a more minimal, distraction-free setup.</string>
+    <!-- ABOUT - Formatting, values, contact data, and links -->
     <string name="about_android_version_fmt">Android %1$s (SDK %2$d)</string>
     <string name="about_developer_name" translatable="false">Saltyy (Andi S.)</string>
     <string name="about_mail_subject" translatable="false">Switchly</string>
     <string name="about_version_with_update">%1$s (%2$s)</string>
-
     <string name="about_discord_url" translatable="false">https://discord.gg/PC5zn2NeCg</string>
     <string name="about_gitlab_url" translatable="false">https://gitlab.com/Saltyy/switchly-public</string>
     <string name="about_website_url" translatable="false">https://switchly.saltyy.at</string>
     <string name="about_mail_address" translatable="false">support@saltyy.at</string>
-
-    <!-- =========================================================
-         ABOUT: User feedback/errors
-         ========================================================= -->
+    <string name="dev_name_line">Developer: Saltyy (Andi S.)</string>
+    <string name="dev_contact_email" translatable="false">andi@saltyy.at</string>
+    <string name="about_switchly_lite_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchly.lite</string>
+    <string name="about_switchly_launcher_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchlylauncher</string>
+    <string name="about_downloads_url" translatable="false">https://switchly.saltyy.at/pages/download</string>
+    <!-- ABOUT - User feedback and availability errors -->
     <string name="about_discord_copied">Discord link copied</string>
     <string name="about_mail_copied">Email copied</string>
     <string name="about_no_browser">No browser app found</string>
     <string name="about_no_mail_app">No email app found</string>
     <string name="about_play_store_link_copied">Play Store link copied</string>
-
-    <!-- =========================================================
-         SUPPORT
-         ========================================================= -->
+    <!-- SUPPORT -->
     <string name="support_title">Support</string>
     <string name="support_desc">Need help or found a bug?\nSend an email and, if possible, include debug info and a short description.</string>
     <string name="support_email_subject">Switchly Support</string>
@@ -99,23 +87,18 @@
     <string name="support_include_debug">Include debug info</string>
     <string name="support_include_advanced_debug">Include extended diagnostics</string>
     <string name="support_debug_preface">Please describe your issue above this line.</string>
-
-    <!-- =========================================================
-         TROUBLESHOOTING
-         ========================================================= -->
+    <!-- TROUBLESHOOTING -->
     <string name="troubleshooting_title">Troubleshooting</string>
     <string name="troubleshooting_accessibility">Accessibility service</string>
     <string name="troubleshooting_battery">Battery optimization disabled</string>
     <string name="troubleshooting_exact_alarms">Exact alarms permission</string>
     <string name="troubleshooting_location">Location permission (Wi‑Fi triggers)</string>
     <string name="troubleshooting_bluetooth">Bluetooth permission (Nearby devices)</string>
-
     <string name="troubleshooting_notification_access">Notification listener access</string>
     <string name="troubleshooting_ok">OK ✅</string>
     <string name="troubleshooting_missing">Missing ❌</string>
     <string name="troubleshooting_open_permissions_overview">Open permissions overview</string>
     <string name="troubleshooting_open_settings">Open settings</string>
-
     <string name="troubleshooting_info_accessibility">Switchly needs Accessibility to block apps and enforce schedules. If it’s off, blocking will not work.</string>
     <string name="troubleshooting_info_notification_access">Needed only for the “Blocked notifications” feature. Without it, notification blocking won’t work.</string>
     <string name="troubleshooting_info_battery">Battery optimization can delay background work. Disable optimization for Switchly to improve reliability.</string>
@@ -124,64 +107,36 @@
     <string name="troubleshooting_info_bluetooth">Android 12+ requires the Nearby devices/Bluetooth permission for Bluetooth-based schedules.</string>
     <string name="troubleshooting_xiaomi_note">Xiaomi / Redmi / POCO note:\n\n• Also enable Autostart for Switchly\n• Set battery mode to No restrictions if that option exists\n• Lock the app in Recents if possible\n• If available, allow background activity for Switchly\n• Toggle Accessibility off and on again if Android shows it as enabled but Switchly is not responding</string>
     <string name="troubleshooting_pref_summary">Check common issues &amp; fixes</string>
-
     <string name="troubleshooting_battery_oem_note">Some devices do not offer an “Unrestricted” battery option. If you already enabled the highest available background setting for Switchly, that may already be the maximum supported on your device.</string>
     <string name="troubleshooting_exact_alarms_note">If exact alarms are not allowed, time-based schedules may be delayed or not run at the correct time.</string>
-
-    <!-- =========================================================
-         PREFERENCES
-         ========================================================= -->
+    <!-- TUTORIAL entry -->
     <string name="pref_tutorial_title">Tutorial</string>
     <string name="pref_tutorial_summary">Review setup steps and features</string>
-
-    <!-- =========================================================
-         WHAT'S NEW/RELEASE NOTES
-         ========================================================= -->
+    <!-- CHANGELOG and release notes -->
     <string name="release_note_version_placeholder" translatable="false">v1.5.3</string>
     <string name="release_note_date_placeholder" translatable="false">Feb 15, 2026</string>
     <string name="release_note_body_placeholder">Release notes…</string>
-
     <string name="changelog_latest_fmt">Latest: %1$s</string>
     <string name="changelog_show_more">Show more</string>
     <string name="changelog_show_less">Show less</string>
     <string name="changelog_show_full_fmt">Show full list (%1$d)</string>
     <string name="changelog_highlights">Highlights</string>
-
     <plurals name="changelog_more_changes_fmt">
         <item quantity="one">+%1$d more change</item>
         <item quantity="other">+%1$d more changes</item>
     </plurals>
-
     <plurals name="changelog_date_count_fmt">
         <item quantity="one">%1$s • %2$d change</item>
         <item quantity="other">%1$s • %2$d changes</item>
     </plurals>
-
     <plurals name="changelog_count_only_fmt">
         <item quantity="one">%1$d change</item>
         <item quantity="other">%1$d changes</item>
     </plurals>
-
     <string name="changelog_section_added">Added</string>
     <string name="changelog_section_changed">Changed</string>
     <string name="changelog_section_improved">Improved</string>
     <string name="changelog_section_fixed">Fixed</string>
     <string name="changelog_section_removed">Removed</string>
     <string name="changelog_section_other">Other</string>
-
-    <!-- =========================================================
-         DEV META
-         ========================================================= -->
-    <string name="dev_name_line">Developer: Saltyy (Andi S.)</string>
-    <string name="dev_contact_email" translatable="false">andi@saltyy.at</string>
-
-    <string name="about_switchly_lite">Switchly Lite</string>
-    <string name="about_switchly_lite_bonus">A lighter version for simple flows like NFC, button actions, and timed schedules.</string>
-    <string name="about_switchly_lite_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchly.lite</string>
-    <string name="about_switchly_lite_play_store_label">Switchly Lite – Play Store</string>
-    <string name="about_switchly_launcher">Switchly Launcher</string>
-    <string name="about_switchly_launcher_bonus">A simple and strong launcher made for a more minimal, distraction-free setup.</string>
-    <string name="about_switchly_launcher_play_store_label">Switchly Launcher – Play Store</string>
-    <string name="about_switchly_launcher_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchlylauncher</string>
-    <string name="about_downloads_url" translatable="false">https://switchly.saltyy.at/pages/download</string>
 </resources>
