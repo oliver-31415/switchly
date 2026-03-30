@@ -1,49 +1,31 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         PROFILES: Entry points/screens
-         ========================================================= -->
+    <!-- PROFILES - Screen titles and row labels -->
     <string name="manage_profiles">Manage profiles</string>
     <string name="select_profile">Select profile</string>
     <string name="add_profile">Add profile</string>
     <string name="add_profile_subtitle">Create a new Switchly profile.</string>
     <string name="profile_row_subtitle">Tap to manage.</string>
-
-    <!-- =========================================================
-         PROFILES: Actions
-         ========================================================= -->
+    <string name="rename">Rename</string>
+    <!-- PROFILES - Actions -->
     <string name="action_set_active_profile">Set active</string>
     <string name="action_rename_profile">Rename profile</string>
     <string name="action_duplicate_profile">Duplicate profile</string>
     <string name="action_delete_profile">Delete profile</string>
-    <string name="rename">Rename</string>
-
-    <!-- =========================================================
-         PROFILES: Dialogs/form input
-         ========================================================= -->
+    <!-- PROFILES - Validation and naming -->
     <string name="delete_profile_confirm">Delete “%1$s”?</string>
     <string name="profile_rename_hint">New profile name</string>
-
-    <!-- =========================================================
-         PROFILES: Naming helpers/validation
-         ========================================================= -->
     <string name="profile_label_default">Profile</string>
     <string name="profile_duplicate_name_fmt">%1$s (copy)</string>
     <string name="profile_duplicate_name_numbered_fmt">%1$s (copy %2$d)</string>
     <string name="profile_name_exists">A profile named “%1$s” already exists.</string>
     <string name="profile_name_too_short">Please enter at least 2 characters.</string>
-
-    <!-- =========================================================
-         PROFILES: Feedback/toasts/state
-         ========================================================= -->
+    <string name="profile_name_field_hint">Profile name</string>
+    <string name="profile_name_helper">Choose a short name for this profile.</string>
+    <!-- PROFILES - Result toasts and state -->
     <string name="profile_created">Profile “%1$s” created.</string>
     <string name="profile_duplicated">Profile “%1$s” duplicated.</string>
     <string name="profile_renamed">Profile “%1$s” renamed.</string>
     <string name="profile_set_active_toast">“%1$s” is now active.</string>
     <string name="state_profile_on_status">Active</string>
-
-    <string name="profile_name_field_hint">Profile name</string>
-    <string name="profile_name_helper">Choose a short name for this profile.</string>
-
 </resources>

@@ -38,6 +38,7 @@ import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.android.material.textfield.TextInputLayout
 import java.text.NumberFormat
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.EditingLockGuard
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.nfc.NfcWriteWaitingActivity
@@ -146,6 +147,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
+        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_paired_tags)) return
 
         val pairedTagsEnabled = PreferenceManager.getDefaultSharedPreferences(this)
             .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
@@ -278,10 +280,9 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             getString(R.string.paired_tags_add_readonly_title)
         )
 
-        showSingleSelectRadioDialog(
+        showSimpleChoiceDialog(
             title = getString(R.string.paired_tags_add_title),
             entries = entries,
-            checkedIndex = -1,
         ) { which, dialog ->
             when (which) {
                 0 -> startPairWritableFlow()
@@ -303,6 +304,30 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             putExtra(NfcWriteWaitingActivity.EXTRA_MODE, NfcWriteWaitingActivity.MODE_PAIR_UID_READONLY)
         }
         pairReadOnlyLauncher.launch(intent)
+    }
+
+    private fun showSimpleChoiceDialog(
+        title: String,
+        entries: List<String>,
+        onSelected: (index: Int, dialog: AlertDialog) -> Unit,
+    ) {
+        val content = layoutInflater.inflate(R.layout.dialog_single_select_list, null)
+        val rv = content.findViewById<RecyclerView>(R.id.recycler)
+        rv.layoutManager = LinearLayoutManager(this)
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(content)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        val adapter = SimpleChoiceAdapter(entries) { which ->
+            onSelected(which, dialog)
+        }
+        rv.adapter = adapter
+
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
     }
 
     private fun showSingleSelectRadioDialog(
@@ -689,6 +714,32 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val title: TextView = itemView.findViewById(R.id.title)
             val radio: MaterialRadioButton = itemView.findViewById(R.id.radio)
+        }
+    }
+
+    private class SimpleChoiceAdapter(
+        private val entries: List<String>,
+        private val onSelected: (Int) -> Unit,
+    ) : RecyclerView.Adapter<SimpleChoiceAdapter.VH>() {
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_single_select_plain, parent, false)
+            return VH(v)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            holder.title.text = entries[position]
+            holder.itemView.setOnClickListener {
+                val p = holder.bindingAdapterPosition
+                if (p != RecyclerView.NO_POSITION) onSelected(p)
+            }
+        }
+
+        override fun getItemCount(): Int = entries.size
+
+        class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+            val title: TextView = itemView.findViewById(R.id.title)
         }
     }
 

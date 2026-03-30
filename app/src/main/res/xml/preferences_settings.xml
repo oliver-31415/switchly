@@ -7,7 +7,7 @@
     <PreferenceScreen
         android:key="screen_focus_blocking"
         android:order="10"
-        android:layout="@layout/pref_card_item"
+        android:layout="@layout/item_pref_card"
         android:title="@string/settings_focus_blocking_title"
         android:summary="@string/settings_focus_blocking_summary"
         android:icon="@drawable/apps_24"
@@ -15,7 +15,7 @@
 
         <Preference
             android:key="pref_toggle_options_blocking"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/toggle_options_blocking_title"
             android:summary="@string/toggle_options_blocking_summary"
             android:icon="@drawable/tune_24"
@@ -23,7 +23,7 @@
 
         <Preference
             android:key="pref_in_app_blocking"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/in_app_blocking_title"
             android:summary="@string/in_app_blocking_summary"
             android:icon="@drawable/tune_24"
@@ -31,7 +31,7 @@
 
         <Preference
             android:key="pref_manage_blocked_websites"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/blocked_websites_title"
             android:summary="@string/blocked_websites_summary"
             android:icon="@drawable/language_24"
@@ -43,7 +43,7 @@
     <PreferenceScreen
         android:key="screen_appearance"
         android:order="30"
-        android:layout="@layout/pref_card_item"
+        android:layout="@layout/item_pref_card"
         android:title="@string/settings_theme_title"
         android:summary="@string/settings_theme_summary"
         android:icon="@drawable/palette_24"
@@ -51,7 +51,7 @@
 
         <Preference
             android:key="pref_theme_mode"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_theme_mode_title"
             android:summary="@string/pref_theme_mode_summary"
             android:icon="@drawable/toggle_on_24"
@@ -59,7 +59,7 @@
 
         <Preference
             android:key="pref_theme_color"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_theme_color_title"
             android:summary="@string/pref_theme_color_summary"
             android:icon="@drawable/palette_24"
@@ -67,7 +67,7 @@
 
         <Preference
             android:key="pref_language"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_language_title"
             android:summary="@string/pref_language_summary"
             android:icon="@drawable/language_24"
@@ -79,7 +79,7 @@
     <PreferenceScreen
         android:key="screen_permissions_reliability"
         android:order="40"
-        android:layout="@layout/pref_card_item"
+        android:layout="@layout/item_pref_card"
         android:title="@string/settings_permissions_reliability_title"
         android:summary="@string/settings_permissions_reliability_summary"
         android:icon="@drawable/security_24"
@@ -87,7 +87,7 @@
 
         <Preference
             android:key="pref_permissions"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_permissions_title"
             android:summary="@string/pref_permissions_summary"
             android:icon="@drawable/security_24"
@@ -95,7 +95,7 @@
 
         <Preference
             android:key="pref_troubleshooting"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/troubleshooting_title"
             android:summary="@string/troubleshooting_pref_summary"
             android:icon="@drawable/help_24"
@@ -103,7 +103,7 @@
 
         <Preference
             android:key="pref_other_help_battery"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/settings_battery_opt_title"
             android:summary="@string/settings_battery_opt_summary"
             android:icon="@drawable/battery_24"
@@ -115,7 +115,7 @@
     <PreferenceScreen
         android:key="screen_account"
         android:order="50"
-        android:layout="@layout/pref_card_item"
+        android:layout="@layout/item_pref_card"
         android:title="@string/settings_account_title"
         android:summary="@string/settings_account_summary"
         android:icon="@drawable/account_box_24"
@@ -123,7 +123,7 @@
 
         <Preference
             android:key="pref_google_account"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_google_account_title"
             android:summary="@string/pref_google_account_summary_logged_out"
             android:icon="@drawable/cloud_24"
@@ -131,7 +131,7 @@
 
         <Preference
             android:key="pref_change_emergency_pin"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_change_emergency_pin_title"
             android:summary="@string/pref_change_emergency_pin_summary"
             android:icon="@drawable/lock_24"
@@ -139,7 +139,7 @@
 
         <Preference
             android:key="pref_app_lock"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_app_lock_title"
             android:summary="@string/pref_app_lock_summary"
             android:icon="@drawable/security_24"
@@ -147,7 +147,7 @@
 
         <PreferenceScreen
             android:key="screen_backup"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/settings_backup_title"
             android:summary="@string/settings_backup_summary"
             android:icon="@drawable/cloud_24"
@@ -155,7 +155,7 @@
 
             <Preference
                 android:key="pref_cloud_backup"
-                android:layout="@layout/pref_card_item"
+                android:layout="@layout/item_pref_card"
                 android:title="@string/pref_cloud_backup_title"
                 android:summary="@string/pref_cloud_backup_summary"
                 android:icon="@drawable/cloud_upload_24"
@@ -163,7 +163,7 @@
 
             <Preference
                 android:key="pref_cloud_restore"
-                android:layout="@layout/pref_card_item"
+                android:layout="@layout/item_pref_card"
                 android:title="@string/pref_cloud_restore_title"
                 android:summary="@string/pref_cloud_restore_summary"
                 android:icon="@drawable/cloud_download_24"
@@ -171,7 +171,7 @@
 
             <Preference
                 android:key="pref_cloud_delete_backups"
-                android:layout="@layout/pref_card_item"
+                android:layout="@layout/item_pref_card"
                 android:title="@string/pref_cloud_delete_backups_title"
                 android:summary="@string/pref_cloud_delete_backups_summary"
                 android:icon="@drawable/delete_24"
@@ -180,7 +180,7 @@
 
         <Preference
             android:key="pref_premium_upgrade"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/premium_title"
             android:summary="@string/premium_summary"
             android:icon="@drawable/star_24"
@@ -188,7 +188,7 @@
 
         <Preference
             android:key="pref_reset_app_data"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_reset_app_data_title"
             android:summary="@string/pref_reset_app_data_summary"
             android:icon="@drawable/delete_24"
@@ -200,7 +200,7 @@
     <PreferenceScreen
         android:key="screen_help_about"
         android:order="60"
-        android:layout="@layout/pref_card_item"
+        android:layout="@layout/item_pref_card"
         android:title="@string/settings_help_about_title"
         android:summary="@string/settings_help_about_summary"
         android:icon="@drawable/info_24"
@@ -208,7 +208,7 @@
 
         <Preference
             android:key="pref_tutorial"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_tutorial_title"
             android:summary="@string/pref_tutorial_summary"
             android:icon="@drawable/play_arrow_24"
@@ -216,7 +216,7 @@
 
         <Preference
             android:key="pref_faq"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/pref_faq_title"
             android:summary="@string/pref_faq_summary"
             android:icon="@drawable/help_24"
@@ -224,7 +224,7 @@
 
         <Preference
             android:key="pref_other_help_contact"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/settings_contact_support_title"
             android:summary="@string/settings_contact_support_summary"
             android:icon="@drawable/mail_24"
@@ -232,7 +232,7 @@
 
         <Preference
             android:key="pref_changelog"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/settings_changelog_title"
             android:summary="@string/settings_changelog_summary"
             android:icon="@drawable/sync_24"
@@ -240,7 +240,7 @@
 
         <PreferenceScreen
             android:key="screen_info"
-            android:layout="@layout/pref_card_item"
+            android:layout="@layout/item_pref_card"
             android:title="@string/settings_info_title"
             android:summary="@string/settings_info_summary"
             android:icon="@drawable/info_24"
@@ -248,7 +248,7 @@
 
             <Preference
                 android:key="pref_about_app_info"
-                android:layout="@layout/pref_card_item"
+                android:layout="@layout/item_pref_card"
                 android:title="@string/about_app_info_title"
                 android:summary="@string/about_app_info_summary"
                 android:icon="@drawable/info_24"
@@ -256,7 +256,7 @@
 
             <Preference
                 android:key="pref_about_device_info"
-                android:layout="@layout/pref_card_item"
+                android:layout="@layout/item_pref_card"
                 android:title="@string/about_device_info_title"
                 android:summary="@string/about_device_info_summary"
                 android:icon="@drawable/info_24"
@@ -264,7 +264,7 @@
 
             <Preference
                 android:key="pref_about_developer_info"
-                android:layout="@layout/pref_card_item"
+                android:layout="@layout/item_pref_card"
                 android:title="@string/about_developer_info_title"
                 android:summary="@string/about_developer_info_summary"
                 android:icon="@drawable/info_24"
@@ -272,7 +272,7 @@
 
             <Preference
                 android:key="pref_about_other_switchly_products"
-                android:layout="@layout/pref_card_item"
+                android:layout="@layout/item_pref_card"
                 android:title="@string/about_other_switchly_products_title"
                 android:summary="@string/about_other_switchly_products_summary"
                 android:icon="@drawable/apps_24"

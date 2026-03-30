@@ -22,6 +22,7 @@ import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.databinding.ActivityWebsiteDetailBinding
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.ui.ThemeUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -55,10 +56,10 @@ class WebsiteDetailActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityWebsiteDetailBinding
 
-    private var currentRange: Range = Range.WEEK
+    private var currentRange: Range = Range.TODAY
     private var currentSeries: List<Long> = emptyList()
 
-    private enum class Range { WEEK, MONTH, YEAR, OVERALL }
+    private enum class Range { TODAY, WEEK, MONTH, YEAR, OVERALL }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
@@ -115,11 +116,16 @@ class WebsiteDetailActivity : AppCompatActivity() {
 
         b.btnManageBlocking.setOnClickListener {
             if (websiteEditingLocked()) return@setOnClickListener
-            startActivity(Intent(this, ManageBlockedWebsitesActivity::class.java))
+            if (EditingLockGuard.isLocked(this)) {
+                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_websites)
+            } else {
+                startActivity(Intent(this, ManageBlockedWebsitesActivity::class.java))
+            }
         }
 
         // If opened from a specific Stats range, default the chart to the most relevant view.
         val initialRange = when (intent.getStringExtra(EXTRA_INITIAL_RANGE)) {
+            RANGE_TODAY -> Range.TODAY
             RANGE_MONTH -> Range.MONTH
             RANGE_YEAR -> Range.YEAR
             RANGE_OVERALL -> Range.OVERALL
@@ -129,6 +135,7 @@ class WebsiteDetailActivity : AppCompatActivity() {
         setWeekdayLabels()
 
         b.toggleRange.check(when (initialRange) {
+            Range.TODAY -> b.btnRangeToday.id
             Range.MONTH -> b.btnRangeMonth.id
             Range.YEAR -> b.btnRangeYear.id
             Range.OVERALL -> b.btnRangeOverall.id
@@ -139,6 +146,7 @@ class WebsiteDetailActivity : AppCompatActivity() {
         b.toggleRange.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
             val range = when (checkedId) {
+                b.btnRangeToday.id -> Range.TODAY
                 b.btnRangeMonth.id -> Range.MONTH
                 b.btnRangeYear.id -> Range.YEAR
                 b.btnRangeOverall.id -> Range.OVERALL
@@ -161,6 +169,7 @@ class WebsiteDetailActivity : AppCompatActivity() {
 
     private fun currentRange(): Range {
         return when (b.toggleRange.checkedButtonId) {
+            b.btnRangeToday.id -> Range.TODAY
             b.btnRangeMonth.id -> Range.MONTH
             b.btnRangeYear.id -> Range.YEAR
             b.btnRangeOverall.id -> Range.OVERALL
@@ -171,6 +180,20 @@ class WebsiteDetailActivity : AppCompatActivity() {
     private fun applyRange(domain: String, range: Range) {
         currentRange = range
         when (range) {
+            Range.TODAY -> {
+                WebUsageStore.flush(this)
+                currentSeries = listOf(WebUsageStore.getUsageMsToday(this, domain))
+                b.chart.visibility = View.GONE
+                b.weekdayRow.visibility = View.GONE
+                b.lineChart.visibility = View.GONE
+                val total = currentSeries.sum()
+                b.rangeTotal.text = getString(
+                    R.string.usage_kv_fmt,
+                    getString(R.string.usage_today),
+                    StatsFormat.prettyMsWithSeconds(total)
+                )
+            }
+
             Range.WEEK -> {
                 val perDay = WebUsageStore.getUsageMsForLastNDays(this, domain, 7)
                 currentSeries = perDay
@@ -535,6 +558,7 @@ class WebsiteDetailActivity : AppCompatActivity() {
         const val EXTRA_DOMAIN = "domain"
         const val EXTRA_LABEL = "label"
         const val EXTRA_INITIAL_RANGE = "initial_range"
+        const val RANGE_TODAY = "today"
         const val RANGE_WEEK = "week"
         const val RANGE_MONTH = "month"
         const val RANGE_YEAR = "year"

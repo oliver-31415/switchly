@@ -22,11 +22,13 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.InAppLimitStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Locale
@@ -83,6 +85,12 @@ class InAppBlockingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
+        if (SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_inapp)) {
+            if (SwitchModeStore.isBaseEnabled(this)) {
+                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_inapp)
+            }
+            return
+        }
         setContentView(R.layout.activity_in_app_blocking)
 
         CustomAccentApplier.applyIfNeeded(this)

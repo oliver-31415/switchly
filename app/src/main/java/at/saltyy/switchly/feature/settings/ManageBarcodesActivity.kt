@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
@@ -29,6 +30,8 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -85,6 +88,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
+        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_barcodes)) return
 
         if (!AutomationModeStore.shouldShowBarcodeTools(this)) {
             finish()
@@ -243,20 +247,43 @@ class ManageBarcodesActivity : AppCompatActivity() {
     }
 
     private fun showAddChoiceDialog() {
-        val items = arrayOf(
+        val items = listOf(
             getString(R.string.manage_barcodes_add_scan_barcode),
             getString(R.string.manage_barcodes_add_manual),
         )
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.manage_barcodes_add_title)
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> launchPicker()
-                    else -> showEditDialog(existing = null)
-                }
+        showSimpleChoiceDialog(
+            title = getString(R.string.manage_barcodes_add_title),
+            entries = items,
+        ) { which, dialog ->
+            when (which) {
+                0 -> launchPicker()
+                else -> showEditDialog(existing = null)
             }
+            dialog.dismiss()
+        }
+    }
+
+    private fun showSimpleChoiceDialog(
+        title: String,
+        entries: List<String>,
+        onSelected: (index: Int, dialog: AlertDialog) -> Unit,
+    ) {
+        val content = layoutInflater.inflate(R.layout.dialog_single_select_list, null)
+        val rv = content.findViewById<RecyclerView>(R.id.recycler)
+        rv.layoutManager = LinearLayoutManager(this)
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(content)
             .setNegativeButton(R.string.cancel, null)
-            .showAccented()
+            .create()
+
+        rv.adapter = SimpleChoiceAdapter(entries) { which ->
+            onSelected(which, dialog)
+        }
+
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
     }
 
     private fun launchPicker() {
@@ -318,7 +345,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
             .setPositiveButton(R.string.save) { _, _ -> }
             .showAccented()
             .also { dialog ->
-                val positive = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 positive.setOnClickListener {
                     val form = readForm(
                         rawValue = etRaw.text?.toString().orEmpty(),
@@ -463,6 +490,36 @@ class ManageBarcodesActivity : AppCompatActivity() {
 
             else -> null
         }
+    }
+
+    private class SimpleChoiceAdapter(
+        private val entries: List<String>,
+        private val onSelected: (Int) -> Unit,
+    ) : RecyclerView.Adapter<SimpleChoiceAdapter.VH>() {
+
+        inner class VH(view: View) : RecyclerView.ViewHolder(view) {
+            private val text = view.findViewById<TextView>(android.R.id.text1)
+
+            fun bind(label: String) {
+                text.text = label
+                itemView.setOnClickListener {
+                    val pos = bindingAdapterPosition
+                    if (pos != RecyclerView.NO_POSITION) onSelected(pos)
+                }
+            }
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(android.R.layout.simple_list_item_1, parent, false)
+            return VH(view)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            holder.bind(entries[position])
+        }
+
+        override fun getItemCount(): Int = entries.size
     }
 
     private inner class CodeAdapter(

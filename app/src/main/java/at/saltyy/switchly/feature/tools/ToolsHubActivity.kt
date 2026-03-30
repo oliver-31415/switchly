@@ -3,6 +3,8 @@ package at.saltyy.switchly.feature.tools
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.view.View
+import android.widget.LinearLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -24,7 +26,7 @@ import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
-import at.saltyy.switchly.feature.stats.StatisticsHubActivity
+import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
 import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
@@ -32,6 +34,7 @@ import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
+import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.color.MaterialColors
 
@@ -55,7 +58,6 @@ class ToolsHubActivity : AppCompatActivity() {
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
         listOf(
-            R.id.ivProtectionIcon,
             R.id.ivSchedulesIcon,
             R.id.ivProfilesIcon,
             R.id.ivPairedTagsIcon,
@@ -71,35 +73,55 @@ class ToolsHubActivity : AppCompatActivity() {
             )
         }
 
-        findViewById<android.view.View>(R.id.cardProtection).setOnClickListener {
-            startActivity(Intent(this, ToggleOptionsActivity::class.java))
-        }
-        findViewById<android.view.View>(R.id.cardSchedules).setOnClickListener {
+        reorderToolCards()
+
+        findViewById<View>(R.id.cardSchedules).setOnClickListener {
             startActivity(Intent(this, SchedulesActivity::class.java))
         }
-        findViewById<android.view.View>(R.id.cardProfiles).setOnClickListener {
-            startActivity(Intent(this, ManageProfilesActivity::class.java))
+        findViewById<View>(R.id.cardProfiles).setOnClickListener {
+            if (isProfileManagementLocked()) {
+                val msgRes = if (isNfcLockedForProtectedEdits()) {
+                    R.string.toast_cannot_change_profile_while_locked
+                } else {
+                    R.string.edit_locked_manage_profiles
+                }
+                EditingLockGuard.showLockedDialog(this, msgRes)
+            } else {
+                startActivity(Intent(this, ManageProfilesActivity::class.java))
+            }
         }
-        findViewById<android.view.View>(R.id.cardBlockedNotifications).setOnClickListener {
+        findViewById<View>(R.id.cardBlockedNotifications).setOnClickListener {
             startActivity(Intent(this, BlockedInboxActivity::class.java))
         }
-        findViewById<android.view.View>(R.id.cardEmergency).setOnClickListener {
+        findViewById<View>(R.id.cardEmergency).setOnClickListener {
             showEmergencyQuickSheet()
         }
-        findViewById<android.view.View>(R.id.cardPairedTags).setOnClickListener {
-            startActivity(Intent(this, ManagePairedTagsActivity::class.java))
+        findViewById<View>(R.id.cardPairedTags).setOnClickListener {
+            if (EditingLockGuard.isLocked(this)) {
+                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
+            } else {
+                startActivity(Intent(this, ManagePairedTagsActivity::class.java))
+            }
         }
-        findViewById<android.view.View>(R.id.cardWriteNfc).setOnClickListener {
-            startActivity(Intent(this, NfcWriterActivity::class.java))
+        findViewById<View>(R.id.cardWriteNfc).setOnClickListener {
+            if (isNfcTagWritingLocked()) {
+                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_write_nfc_tags)
+            } else {
+                startActivity(Intent(this, NfcWriterActivity::class.java))
+            }
         }
-        findViewById<android.view.View>(R.id.cardManageQr).setOnClickListener {
+        findViewById<View>(R.id.cardManageQr).setOnClickListener {
             startActivity(Intent(this, QrGenerateActivity::class.java))
         }
-        findViewById<android.view.View>(R.id.cardManageBarcodes).setOnClickListener {
-            startActivity(Intent(this, ManageBarcodesActivity::class.java))
+        findViewById<View>(R.id.cardManageBarcodes).setOnClickListener {
+            if (EditingLockGuard.isLocked(this)) {
+                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
+            } else {
+                startActivity(Intent(this, ManageBarcodesActivity::class.java))
+            }
         }
-        findViewById<android.view.View>(R.id.cardInsights).setOnClickListener {
-            startActivity(Intent(this, StatisticsHubActivity::class.java))
+        findViewById<View>(R.id.cardInsights).setOnClickListener {
+            startActivity(ScreenTimeDashboardActivity.intent(this))
         }
 
         syncOptionalFeatureVisibility()
@@ -135,20 +157,52 @@ class ToolsHubActivity : AppCompatActivity() {
         syncOptionalFeatureVisibility()
     }
 
+    private fun isNfcLockedForProtectedEdits(): Boolean {
+        return SwitchModeStore.isEnabled(this) && SwitchModeStore.isNfcRequiredForDisable(this)
+    }
+
+    private fun isProfileManagementLocked(): Boolean {
+        return if (isNfcLockedForProtectedEdits()) {
+            true
+        } else {
+            SwitchModeStore.isBaseEnabled(this) &&
+                !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
+        }
+    }
+
+    private fun isNfcTagWritingLocked(): Boolean {
+        return SwitchModeStore.isEnabled(this) &&
+            !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this)
+    }
+
     private fun syncOptionalFeatureVisibility() {
         val defaultSp = PreferenceManager.getDefaultSharedPreferences(this)
         val pairedTagsEnabled = defaultSp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
         val qrEnabled = AutomationModeStore.shouldShowQrTools(this)
         val barcodeEnabled = AutomationModeStore.shouldShowBarcodeTools(this)
 
-        findViewById<android.view.View>(R.id.cardPairedTags).visibility =
-            if (pairedTagsEnabled) android.view.View.VISIBLE else android.view.View.GONE
-        findViewById<android.view.View>(R.id.cardManageQr).visibility =
-            if (qrEnabled) android.view.View.VISIBLE else android.view.View.GONE
-        findViewById<android.view.View>(R.id.cardManageBarcodes).visibility =
-            if (barcodeEnabled) android.view.View.VISIBLE else android.view.View.GONE
+        findViewById<View>(R.id.cardPairedTags).visibility =
+            if (pairedTagsEnabled) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardManageQr).visibility =
+            if (qrEnabled) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardManageBarcodes).visibility =
+            if (barcodeEnabled) View.VISIBLE else View.GONE
     }
 
+    private fun reorderToolCards() {
+        val content = findViewById<LinearLayout>(R.id.toolsContent)
+        val managementHeader = findViewById<View>(R.id.tvToolsSectionManagement)
+        val qrCard = findViewById<View>(R.id.cardManageQr)
+        val barcodeCard = findViewById<View>(R.id.cardManageBarcodes)
+
+        listOf(qrCard, barcodeCard).forEach { card ->
+            (card.parent as? LinearLayout)?.removeView(card)
+        }
+
+        val insertIndex = content.indexOfChild(managementHeader)
+        content.addView(qrCard, insertIndex)
+        content.addView(barcodeCard, insertIndex + 1)
+    }
 
     private fun showEmergencyQuickSheet() {
         val featureEnabled = EmergencyBypassStore.isFeatureEnabled(this)

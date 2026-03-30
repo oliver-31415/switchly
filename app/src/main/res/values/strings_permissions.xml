@@ -1,138 +1,82 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         PERMISSIONS: Screen sections
-         ========================================================= -->
+    <!-- PERMISSIONS - Section labels, banner, and status chips -->
     <string name="permissions_section_core">Core permissions</string>
     <string name="permissions_section_triggers">Triggers &amp; battery</string>
     <string name="permissions_section_notifications">Notifications</string>
     <string name="permissions_section_oem">OEM background settings</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Top banner/summary
-         ========================================================= -->
     <plurals name="permissions_banner_missing_count_short">
         <item quantity="one">Action needed: %1$d permission remaining</item>
         <item quantity="other">Action needed: %1$d permissions remaining</item>
     </plurals>
     <string name="permissions_banner_mismatch_title">Status mismatch detected</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Generic statuses
-         ========================================================= -->
     <string name="permissions_status_enabled">Enabled</string>
     <string name="permissions_status_disabled">Disabled</string>
     <string name="permissions_status_location_approx">Approximate (Precise required)</string>
     <string name="permissions_status_location_background_missing">Only while app is in use (“Allow all the time” required)</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Card titles + descriptions (Core)
-         ========================================================= -->
+    <!-- PERMISSIONS - Core and trigger permissions -->
     <string name="permissions_accessibility_title">Accessibility service</string>
     <string name="permissions_accessibility_desc">Required for reliable blocking: lets Switchly instantly detect opened apps and enforce your profiles.</string>
-
     <string name="permissions_usage_access_title">App usage access</string>
     <string name="permissions_usage_access_desc">Required for screen-time statistics and daily app limits. Enable “App usage data” access for Switchly.</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Card titles + descriptions (Triggers and battery)
-         ========================================================= -->
     <string name="permissions_battery_title">Battery optimization</string>
     <string name="permissions_battery_desc">Disable battery optimization so schedules and receivers can run reliably in the background.</string>
-
-     <string name="permissions_battery_allowed">Allowed</string>
-     <string name="permissions_battery_not_allowed">Disabled</string>
-     <string name="permissions_battery_highest_available">Highest available enabled</string>
-
-     <string name="permissions_exact_alarms_title">Exact alarms</string>
-     <string name="permissions_exact_alarms_summary">Needed so time-based schedules can run reliably at the correct time.</string>
-     <string name="permissions_exact_alarms_allowed">Allowed</string>
-     <string name="permissions_exact_alarms_not_allowed">Not allowed</string>
-
+    <string name="permissions_battery_allowed">Allowed</string>
+    <string name="permissions_battery_not_allowed">Disabled</string>
+    <string name="permissions_battery_highest_available">Highest available enabled</string>
+    <string name="permissions_exact_alarms_title">Exact alarms</string>
+    <string name="permissions_exact_alarms_summary">Needed so time-based schedules can run reliably at the correct time.</string>
+    <string name="permissions_exact_alarms_allowed">Allowed</string>
+    <string name="permissions_exact_alarms_not_allowed">Not allowed</string>
     <string name="permissions_location_title">Location</string>
     <string name="permissions_location_desc">Required so Wi-Fi-based schedules can detect the connected network. For best reliability, set location access to “Allow all the time”.</string>
-
     <string name="permissions_bluetooth_title">Bluetooth (Nearby devices)</string>
     <string name="permissions_bluetooth_desc">Required for Bluetooth-based schedules (Android 12+).</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Card titles + descriptions (Notifications)
-         ========================================================= -->
+    <!-- PERMISSIONS - Notification-related permissions -->
     <string name="permissions_notifications_title">Notifications</string>
     <string name="permissions_notifications_desc">Required so Switchly can show status updates and reminders in the notification shade.</string>
-
     <string name="permissions_notification_access_title">Notification access</string>
     <string name="permissions_notification_access_desc">Required to hide notifications from apps blocked by your active profile (notification listener access).</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Card titles + descriptions (OEM)
-         ========================================================= -->
+    <string name="toast_notification_listener_required">To hide blocked-app notifications, enable notification access for Switchly.</string>
+    <!-- PERMISSIONS - OEM/autostart and helper buttons -->
     <string name="permissions_autostart_title">Auto-start (OEM)</string>
     <string name="permissions_autostart_desc">Some manufacturers (e.g., Samsung, Xiaomi, or Oppo) further restrict auto-start and background activity. For Switchly to work reliably, auto-start should be allowed for this app.</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Action buttons/controls
-         ========================================================= -->
     <string name="permissions_btn_request">Request</string>
     <string name="permissions_btn_allow">Allow</string>
     <string name="permissions_btn_permissions">Permissions</string>
     <string name="permissions_btn_open">Open settings</string>
     <string name="permissions_btn_enable_precise">Enable precise</string>
     <string name="permissions_btn_enable_all_the_time">Enable all the time</string>
+    <!-- PERMISSIONS - Explanations and denial texts -->
     <string name="permissions_why_dialog_header">Why this matters</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Trigger-specific helper states
-         ========================================================= -->
     <string name="permissions_for_wifi_not_needed">Not needed (no Wi-Fi rules)</string>
     <string name="permissions_for_bluetooth_not_needed">Not needed (no Bluetooth rules)</string>
-
-    <!-- =========================================================
-         EXTERNAL PERMISSION EXPLANATIONS
-         ========================================================= -->
     <string name="accessibility_service_desc">Detects foreground-app changes so Switchly can block apps and enforce usage limits.</string>
-
     <string name="perm_location_title">Location permission</string>
-    <string name="perm_location_why_wifi_ssid">To read the Wi-Fi name (SSID), Android requires location permission.</string>
+    <string name="perm_location_why_wifi_ssid">To read the Wi-Fi name (SSID), Switchly needs the Wi-Fi permission. On Android 13 and newer, also allow Nearby Wi-Fi devices.</string>
     <string name="perm_location_denied_wifi_schedule">Location permission denied. Wi-Fi schedules may not work without this permission.</string>
-
     <string name="perm_bt_title">Nearby devices permission</string>
     <string name="perm_bt_why_needed">To detect connected Bluetooth devices for Bluetooth schedules, Android requires the “Nearby devices” permission.</string>
     <string name="perm_bt_denied_schedule">Bluetooth permission denied. Bluetooth schedules may not work without this permission.</string>
-
-    <!-- =========================================================
-         PROTECTION STATUS/TOASTS
-         ========================================================= -->
     <string name="protection_inactive_title">Protection inactive</string>
     <string name="protection_inactive_text">Switchly is enabled, but the Accessibility service is disabled. Tap to enable it.</string>
-
-    <string name="toast_notification_listener_required">To hide blocked-app notifications, enable notification access for Switchly.</string>
-
-    <!-- =========================================================
-         PERMISSIONS: Health panel
-         ========================================================= -->
+    <!-- PERMISSIONS - Health checks -->
     <string name="permissions_health_recheck">Re-check</string>
     <string name="permissions_health_rechecked_all_good">Re-check complete: all required permissions look good ✅</string>
     <string name="permissions_health_rechecked_with_mismatch">Re-check complete: accessibility status mismatch still detected</string>
-
     <plurals name="permissions_health_rechecked_missing">
         <item quantity="one">Re-check complete: %1$d required permission is still missing</item>
         <item quantity="other">Re-check complete: %1$d required permissions are still missing</item>
     </plurals>
-
-    <string name="permissions_health_live_unknown">Live check pending…</string>
-    <string name="permissions_health_live_ok">Live check: Accessibility is active ✅</string>
-    <string name="permissions_health_live_disabled">Live check: Accessibility is currently disabled</string>
-
+    <string name="permissions_health_live_unknown">Check pending…</string>
+    <string name="permissions_health_live_ok">Accessibility is active ✅</string>
+    <string name="permissions_health_live_disabled">Accessibility is currently disabled</string>
     <plurals name="permissions_health_live_missing_count">
-        <item quantity="one">Live check: %1$d required permission is still missing</item>
-        <item quantity="other">Live check: %1$d required permissions are still missing</item>
+        <item quantity="one">%1$d required permission is still missing</item>
+        <item quantity="other">%1$d required permissions are still missing</item>
     </plurals>
-
-    <string name="permissions_health_live_sched_battery_bad">Live check: Accessibility is active, but battery optimization is still on (schedules may be delayed)</string>
-    <string name="permissions_health_live_ok_with_schedules">Live check: Accessibility and schedule battery settings look good ✅</string>
+    <string name="permissions_health_live_sched_battery_bad">Accessibility is active, but battery optimization is still on (schedules may be delayed)</string>
+    <string name="permissions_health_live_ok_with_schedules">Accessibility and schedule battery settings look good ✅</string>
     <string name="permissions_health_live_mismatch">Status mismatch detected. Re-check after opening Accessibility settings.</string>
     <string name="permissions_health_last_checked_fmt">Last checked: %1$s</string>
-
 </resources>

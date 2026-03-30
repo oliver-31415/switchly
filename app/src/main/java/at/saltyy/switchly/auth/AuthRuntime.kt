@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.os.CancellationSignal
 import android.util.Log
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
@@ -70,7 +69,6 @@ object AuthRuntime {
         val auth = firebaseAuthOrNull(activity)
         if (auth == null) {
             val msg = activity.getString(R.string.auth_firebase_not_configured)
-            Toast.makeText(activity, msg, Toast.LENGTH_LONG).show()
             onResult(false, msg)
             return
         }
@@ -78,7 +76,6 @@ object AuthRuntime {
         val serverClientId = serverClientIdOrNull(activity)
         if (serverClientId == null) {
             val msg = activity.getString(R.string.auth_missing_google_server_client_id)
-            Toast.makeText(activity, msg, Toast.LENGTH_LONG).show()
             onResult(false, msg)
             return
         }
@@ -134,13 +131,11 @@ object AuthRuntime {
                         } catch (e: GoogleIdTokenParsingException) {
                             Log.e(TAG, "Google ID token parsing failed", e)
                             val msg = activity.getString(R.string.auth_failed_to_process_google_token)
-                            Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
                             onResult(false, msg)
                             return
                         } catch (t: Throwable) {
                             Log.e(TAG, "Unexpected error handling Google credential", t)
                             val msg = activity.getString(R.string.auth_unexpected_error_sign_in)
-                            Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
                             onResult(false, msg)
                             return
                         }
@@ -148,7 +143,6 @@ object AuthRuntime {
 
                     Log.w(TAG, "Unsupported or cancelled credential: $credential")
                     val msg = activity.getString(R.string.auth_sign_in_cancelled)
-                    Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
                     onResult(false, msg)
                 }
 
@@ -181,13 +175,11 @@ object AuthRuntime {
             is NoCredentialException -> {
                 Log.w(TAG, "No credentials available", e)
                 val msg = activity.getString(R.string.auth_no_matching_google_accounts_found)
-                Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
                 onResult(false, msg)
             }
             else -> {
                 Log.e(TAG, "getCredential failed", e)
                 val msg = activity.getString(R.string.auth_sign_in_failed_generic)
-                Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
                 onResult(false, msg)
             }
         }

@@ -1,4 +1,5 @@
 package at.saltyy.switchly.feature.usage
+
 import android.os.Bundle
 import android.view.View
 import android.text.InputType
@@ -20,6 +21,7 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
+import at.saltyy.switchly.data.prefs.BlockAttemptStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
@@ -30,9 +32,13 @@ import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.AppBlockSafety
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ScreenTimeDetailActivity : AppCompatActivity() {
 
@@ -48,10 +54,19 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityScreenTimeDetailBinding
 
-    private var currentRange: Range = Range.WEEK
+    private var currentRange: Range = Range.TODAY
     private var currentSeries: List<Long> = emptyList()
+    private var currentXAxisLabels: List<String> = emptyList()
+    private var rangeJob: Job? = null
 
-    private enum class Range { WEEK, MONTH, YEAR, OVERALL }
+    private data class CountSummary(
+        val sessionsLabelRes: Int,
+        val attemptsLabelRes: Int,
+        val sessionsCount: Int,
+        val attemptsCount: Int
+    )
+
+    private enum class Range { TODAY, WEEK, MONTH, YEAR, OVERALL }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
@@ -66,23 +81,20 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
 
         b.toolbar.title = label
 
-        val summaryToday = UsageStatsRepo.getTodaySummary(this, topN = 200)
-        val today = summaryToday.topApps.firstOrNull { it.packageName == pkg }?.timeMs ?: 0L
-        val sessions = UsageStatsRepo.getSessionsToday(this, pkg)
+        b.btnRangeYear.visibility = View.VISIBLE
+        b.btnRangeOverall.visibility = View.VISIBLE
+
+        val today = UsageStore.getUsageMsToday(this, pkg)
 
         // icon/name
-        val icon = summaryToday.topApps.firstOrNull { it.packageName == pkg }?.icon
+        val icon = runCatching { packageManager.getApplicationIcon(pkg) }.getOrNull()
         b.icon.setImageDrawable(icon)
 
+        b.weekTotal.visibility = View.GONE
         b.todayUsage.text = getString(
             R.string.usage_kv_fmt,
             getString(R.string.usage_today),
             StatsFormat.prettyMsWithSeconds(today)
-        )
-        b.sessions.text = getString(
-            R.string.usage_kv_fmt,
-            getString(R.string.usage_sessions_today),
-            sessions.toString()
         )
 
         // Limits (edited via the single "tune" icon)
@@ -142,6 +154,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
 
         // If opened from a specific Stats range, default the chart to the most relevant view.
         val initialRange = when (intent.getStringExtra(EXTRA_INITIAL_RANGE)) {
+            RANGE_TODAY -> Range.TODAY
             RANGE_MONTH -> Range.MONTH
             RANGE_YEAR -> Range.YEAR
             RANGE_OVERALL -> Range.OVERALL
@@ -149,16 +162,19 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         }
         setWeekdayLabels()
         b.toggleRange.check(when (initialRange) {
+            Range.TODAY -> b.btnRangeToday.id
             Range.MONTH -> b.btnRangeMonth.id
             Range.YEAR -> b.btnRangeYear.id
             Range.OVERALL -> b.btnRangeOverall.id
             else -> b.btnRangeWeek.id
         })
         setupChartInteractions(label)
+        updateCountSummaryForRange(pkg, initialRange)
 
         b.toggleRange.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
             val range = when (checkedId) {
+                b.btnRangeToday.id -> Range.TODAY
                 b.btnRangeMonth.id -> Range.MONTH
                 b.btnRangeYear.id -> Range.YEAR
                 b.btnRangeOverall.id -> Range.OVERALL
@@ -167,7 +183,18 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             applyRange(pkg, range)
         }
 
-        applyRange(pkg, initialRange)
+        lifecycleScope.launch {
+            val changed = withContext(Dispatchers.IO) { UsageHistoryBackfill.maybeRun(this@ScreenTimeDetailActivity) }
+            if (changed) {
+                val refreshedToday = UsageStore.getUsageMsToday(this@ScreenTimeDetailActivity, pkg)
+                b.todayUsage.text = getString(
+                    R.string.usage_kv_fmt,
+                    getString(R.string.usage_today),
+                    StatsFormat.prettyMsWithSeconds(refreshedToday)
+                )
+            }
+            applyRange(pkg, initialRange)
+        }
     }
 
     override fun onResume() {
@@ -176,16 +203,90 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         b.tvProfileIndicator.text = ProfileStore.getCurrent(this)?.let {
             getString(R.string.profile_active_fmt, it)
         }.orEmpty()
+        updateCountSummaryForRange(pkg, currentRange)
         refreshDailyLimit(pkg)
         refreshAttemptLimit(pkg)
         syncLimitEditingUi()
     }
 
+    private fun updateCountSummaryForRange(pkg: String, range: Range) {
+        lifecycleScope.launch {
+            val summary = withContext(Dispatchers.IO) {
+                when (range) {
+                    Range.TODAY -> CountSummary(
+                        sessionsLabelRes = R.string.usage_sessions_today,
+                        attemptsLabelRes = R.string.usage_attempts_today,
+                        sessionsCount = OpenCountStore.getTodayAllProfiles(this@ScreenTimeDetailActivity, pkg),
+                        attemptsCount = BlockAttemptStore.getToday(this@ScreenTimeDetailActivity, pkg)
+                    )
+                    Range.WEEK -> CountSummary(
+                        sessionsLabelRes = R.string.usage_sessions_week,
+                        attemptsLabelRes = R.string.usage_attempts_week,
+                        sessionsCount = OpenCountStore.getForCurrentWeekAllProfiles(this@ScreenTimeDetailActivity, pkg),
+                        attemptsCount = BlockAttemptStore.getForCurrentWeek(this@ScreenTimeDetailActivity, pkg)
+                    )
+                    Range.MONTH -> CountSummary(
+                        sessionsLabelRes = R.string.usage_sessions_month,
+                        attemptsLabelRes = R.string.usage_attempts_month,
+                        sessionsCount = OpenCountStore.getForCurrentMonthAllProfiles(this@ScreenTimeDetailActivity, pkg),
+                        attemptsCount = BlockAttemptStore.getForCurrentMonth(this@ScreenTimeDetailActivity, pkg)
+                    )
+                    Range.YEAR -> CountSummary(
+                        sessionsLabelRes = R.string.usage_sessions_year,
+                        attemptsLabelRes = R.string.usage_attempts_year,
+                        sessionsCount = OpenCountStore.getForCurrentYearAllProfiles(this@ScreenTimeDetailActivity, pkg),
+                        attemptsCount = BlockAttemptStore.getForCurrentYear(this@ScreenTimeDetailActivity, pkg)
+                    )
+                    Range.OVERALL -> CountSummary(
+                        sessionsLabelRes = R.string.usage_sessions_overall,
+                        attemptsLabelRes = R.string.usage_attempts_overall,
+                        sessionsCount = OpenCountStore.getOverallAllProfiles(this@ScreenTimeDetailActivity, pkg),
+                        attemptsCount = BlockAttemptStore.getOverall(this@ScreenTimeDetailActivity, pkg)
+                    )
+                }
+            }
+
+            b.sessions.text = getString(
+                R.string.usage_kv_fmt,
+                getString(summary.sessionsLabelRes),
+                summary.sessionsCount.toString()
+            )
+            b.attempts.text = getString(
+                R.string.usage_kv_fmt,
+                getString(summary.attemptsLabelRes),
+                summary.attemptsCount.toString()
+            )
+        }
+    }
+
+    private fun setHeaderUsageTotal(labelRes: Int, totalMs: Long) {
+        b.todayUsage.text = getString(
+            R.string.usage_kv_fmt,
+            getString(labelRes),
+            StatsFormat.prettyMsWithSeconds(totalMs)
+        )
+    }
+
     private fun applyRange(pkg: String, range: Range) {
+        rangeJob?.cancel()
         currentRange = range
+        updateCountSummaryForRange(pkg, range)
         when (range) {
+            Range.TODAY -> {
+                currentSeries = UsageSanity.capSeriesToRange(this, UsageStatsRepo.getTodayPerHour(this, pkg), UsageSanity.RangeCap.TODAY)
+                currentXAxisLabels = buildTodayHourLabels(currentSeries.size)
+                b.chart.visibility = View.GONE
+                b.weekdayRow.visibility = View.GONE
+                b.lineChart.visibility = View.VISIBLE
+                b.lineChart.setValues(currentSeries)
+                b.lineChart.setXAxisLabels(currentXAxisLabels)
+                val total = UsageSanity.capTotalToRange(this, currentSeries.sum(), UsageSanity.RangeCap.TODAY)
+                setHeaderUsageTotal(R.string.usage_today, total)
+            }
+
             Range.WEEK -> {
-                val perDay = UsageStatsRepo.getLast7DaysPerDay(this, pkg)
+                currentXAxisLabels = emptyList()
+                val perDay = UsageSanity.capSeriesToRange(this, UsageStore.getUsageMsSeriesForLastNDays(this, pkg, 7), UsageSanity.RangeCap.WEEK)
                 currentSeries = perDay
                 b.chart.visibility = View.VISIBLE
                 b.weekdayRow.visibility = View.VISIBLE
@@ -193,17 +294,13 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
                 b.chart.setValues(perDay)
                 b.lineChart.setXAxisLabels(emptyList())
 
-                val total = perDay.sum()
-                b.weekTotal.text = getString(
-                    R.string.usage_kv_fmt,
-                    getString(R.string.usage_week_total),
-                    StatsFormat.prettyMsWithSeconds(total)
-                )
+                val total = UsageSanity.capTotalToRange(this, perDay.sum(), UsageSanity.RangeCap.WEEK)
+                setHeaderUsageTotal(R.string.usage_week_total, total)
             }
 
             Range.MONTH -> {
-                val days = daysSinceStartOfMonth()
-                val perDay = UsageStatsRepo.getLastNDaysPerDay(this, pkg, days)
+                currentXAxisLabels = buildDayIndexLabels(daysSinceStartOfMonth())
+                val perDay = UsageSanity.capSeriesToRange(this, UsageStore.getUsageMsSeriesForCurrentMonth(this, pkg), UsageSanity.RangeCap.MONTH)
                 currentSeries = perDay
                 b.chart.visibility = View.GONE
                 b.weekdayRow.visibility = View.GONE
@@ -211,53 +308,122 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
                 b.lineChart.setValues(perDay)
                 b.lineChart.setXAxisLabels(buildDayIndexLabels(perDay.size))
 
-                val total = perDay.sum()
-                b.weekTotal.text = getString(
-                    R.string.usage_kv_fmt,
-                    getString(R.string.usage_month_total),
-                    StatsFormat.prettyMsWithSeconds(total)
-                )
+                val total = UsageSanity.capTotalToRange(this, perDay.sum(), UsageSanity.RangeCap.MONTH)
+                setHeaderUsageTotal(R.string.usage_month_total, total)
             }
 
             Range.YEAR -> {
-                val perMonth = getThisYearMonthsTotals(pkg)
-                currentSeries = perMonth
                 b.chart.visibility = View.GONE
                 b.weekdayRow.visibility = View.GONE
                 b.lineChart.visibility = View.VISIBLE
-                b.lineChart.setValues(perMonth)
-                b.lineChart.setXAxisLabels(buildThisYearMonthLabels(perMonth.size))
-
-                val total = perMonth.sum()
-                b.weekTotal.text = getString(
-                    R.string.usage_kv_fmt,
-                    getString(R.string.usage_year_total),
-                    StatsFormat.prettyMsWithSeconds(total)
-                )
+                rangeJob = lifecycleScope.launch {
+                    val buckets = withContext(Dispatchers.IO) { UsageStore.getUsageMsMonthBucketsForCurrentYear(this@ScreenTimeDetailActivity, pkg) }
+                    if (currentRange != Range.YEAR) return@launch
+                    currentSeries = UsageSanity.capSeriesToRange(this@ScreenTimeDetailActivity, buckets.map { it.totalMs }, UsageSanity.RangeCap.YEAR)
+                    currentXAxisLabels = buckets.map { monthLabel(it.month1Based, it.year) }
+                    b.lineChart.setValues(currentSeries)
+                    b.lineChart.setXAxisLabels(currentXAxisLabels)
+                    setHeaderUsageTotal(R.string.usage_year_total, UsageSanity.capTotalToRange(this@ScreenTimeDetailActivity, currentSeries.sum(), UsageSanity.RangeCap.YEAR))
+                }
             }
 
             Range.OVERALL -> {
-                val perMonth = getLastNMonthsTotals(pkg, months = 36)
-                currentSeries = perMonth
                 b.chart.visibility = View.GONE
                 b.weekdayRow.visibility = View.GONE
                 b.lineChart.visibility = View.VISIBLE
-                b.lineChart.setValues(perMonth)
-                b.lineChart.setXAxisLabels(buildLastNMonthLabels(perMonth.size))
-
-                val now = System.currentTimeMillis()
-                // Some OEMs behave oddly when querying from epoch (0L). If that returns 0 but the
-                // chart clearly has data, fall back to the visible series sum.
-                val totalRaw = UsageStatsRepo.getTotalMsForWindow(this, 0L, now, pkg)
-                val seriesSum = perMonth.sum()
-                val total = if (totalRaw == 0L && seriesSum > 0L) seriesSum else totalRaw
-                b.weekTotal.text = getString(
-                    R.string.usage_kv_fmt,
-                    getString(R.string.usage_overall_total),
-                    StatsFormat.prettyMsWithSeconds(total)
-                )
+                rangeJob = lifecycleScope.launch {
+                    val buckets = withContext(Dispatchers.IO) { UsageStore.getUsageMsMonthBucketsAllTime(this@ScreenTimeDetailActivity, pkg, maxMonths = 36) }
+                    if (currentRange != Range.OVERALL) return@launch
+                    currentSeries = UsageSanity.capSeriesToRange(this@ScreenTimeDetailActivity, buckets.map { it.totalMs }, UsageSanity.RangeCap.OVERALL)
+                    currentXAxisLabels = buckets.map { monthLabel(it.month1Based, it.year, shortYear = true) }
+                    b.lineChart.setValues(currentSeries)
+                    b.lineChart.setXAxisLabels(currentXAxisLabels)
+                    setHeaderUsageTotal(R.string.usage_overall_total, UsageSanity.capTotalToRange(this@ScreenTimeDetailActivity, UsageStore.getUsageMsOverall(this@ScreenTimeDetailActivity, pkg), UsageSanity.RangeCap.OVERALL))
+                }
             }
         }
+    }
+
+    private data class OverallUsageResult(
+        val totalMs: Long,
+        val chartMonths: List<Long>
+    )
+
+    private fun getMonthTotalAccurate(pkg: String, year: Int, month0: Int): Long {
+        val startCal = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, month0)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val endCal = (startCal.clone() as Calendar).apply { add(Calendar.MONTH, 1) }
+        val now = System.currentTimeMillis()
+        val monthStart = startCal.timeInMillis
+        val monthEnd = minOf(endCal.timeInMillis, now)
+        if (monthEnd <= monthStart) return 0L
+
+        var sum = 0L
+        val day = startCal.clone() as Calendar
+        while (day.timeInMillis < monthEnd) {
+            val dayStart = day.timeInMillis
+            val nextDay = (day.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }.timeInMillis
+            val dayEnd = minOf(nextDay, monthEnd)
+            sum += UsageStatsRepo.getTotalMsForWindow(this, dayStart, dayEnd, pkg)
+            day.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return sum.coerceAtLeast(0L)
+    }
+
+    private fun getThisYearMonthsTotalsAccurate(pkg: String): List<Long> {
+        val now = Calendar.getInstance()
+        val year = now.get(Calendar.YEAR)
+        val curMonth = now.get(Calendar.MONTH)
+        val out = ArrayList<Long>(curMonth + 1)
+        for (m in Calendar.JANUARY..curMonth) {
+            out.add(getMonthTotalAccurate(pkg, year, m))
+        }
+        return out
+    }
+
+    private fun getOverallUsageAccurate(pkg: String, chartMonths: Int): OverallUsageResult {
+        val nowMs = System.currentTimeMillis()
+        val earliest = UsageStatsRepo.getEarliestAvailableUsageMs(this, 0L, nowMs) ?: nowMs
+
+        val startCal = Calendar.getInstance().apply {
+            timeInMillis = earliest
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val endCal = Calendar.getInstance().apply {
+            timeInMillis = nowMs
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val allMonths = ArrayList<Long>()
+        val cursor = startCal.clone() as Calendar
+        while (cursor.timeInMillis <= endCal.timeInMillis) {
+            allMonths.add(getMonthTotalAccurate(pkg, cursor.get(Calendar.YEAR), cursor.get(Calendar.MONTH)))
+            cursor.add(Calendar.MONTH, 1)
+        }
+
+        val total = allMonths.sum()
+        val chart = if (allMonths.size > chartMonths) allMonths.takeLast(chartMonths) else allMonths
+        return OverallUsageResult(totalMs = total, chartMonths = chart)
+    }
+
+    private fun monthLabel(month1Based: Int, year: Int, shortYear: Boolean = false): String {
+        val monthName = DateFormatSymbols.getInstance().shortMonths.getOrNull((month1Based - 1).coerceIn(0, 11)).orEmpty().trim().ifBlank { month1Based.toString() }
+        return if (shortYear) "$monthName ${year % 100}" else monthName
     }
 
     private fun buildDayIndexLabels(count: Int): List<String> {
@@ -301,40 +467,29 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
 
     private fun getThisYearMonthsTotals(pkg: String): List<Long> {
         val now = System.currentTimeMillis()
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.MONTH, Calendar.JANUARY)
-            set(Calendar.DAY_OF_MONTH, 1)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        val out = ArrayList<Long>(12)
-        val cur = Calendar.getInstance()
-        val curYear = cur.get(Calendar.YEAR)
+        val cur = Calendar.getInstance().apply { timeInMillis = now }
+        val year = cur.get(Calendar.YEAR)
         val curMonth = cur.get(Calendar.MONTH)
 
+        // Use the app's stored per-day usage as the primary source for long windows.
+        // Summing historical UsageStats day-windows can massively overcount on some devices, while the local daily store stays stable and monotonic.
+        val totals = ArrayList<Long>(curMonth + 1)
         for (m in Calendar.JANUARY..curMonth) {
-            val startCal = (cal.clone() as Calendar).apply { set(Calendar.MONTH, m) }
-            val endCal = (startCal.clone() as Calendar).apply { add(Calendar.MONTH, 1) }
-            val start = startCal.timeInMillis
-            val end = if (m == curMonth) now else endCal.timeInMillis
-            out.add(UsageStatsRepo.getTotalMsForWindow(this, start, end, pkg))
+            val fromStore = UsageStore.getUsageMsForMonth(this, pkg, year, m + 1)
+            val monthTotal = if (m == curMonth && fromStore <= 0L) {
+                // For the current month, fall back to the same per-day series the Month screen uses.
+                UsageStatsRepo.getLastNDaysPerDay(this, pkg, daysSinceStartOfMonth()).sum()
+            } else {
+                fromStore
+            }
+            totals.add(monthTotal.coerceAtLeast(0L))
         }
-        return out
+        return totals
     }
 
     private fun getLastNMonthsTotals(pkg: String, months: Int): List<Long> {
-        // Query month-by-month windows. This is slower than trying to bucket raw stats, but it is:
-        // - accurate
-        // - stable across OEM implementations
-        // - avoids weird results when querying from epoch (0L)
         val m = months.coerceIn(1, 60)
-        val now = System.currentTimeMillis()
-
         val base = Calendar.getInstance().apply {
-            timeInMillis = now
             set(Calendar.DAY_OF_MONTH, 1)
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
@@ -344,11 +499,25 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
 
         val out = ArrayList<Long>(m)
         for (i in (m - 1) downTo 0) {
-            val startCal = (base.clone() as Calendar).apply { add(Calendar.MONTH, -i) }
-            val endCal = (startCal.clone() as Calendar).apply { add(Calendar.MONTH, 1) }
-            val start = startCal.timeInMillis
-            val end = if (i == 0) now else endCal.timeInMillis
-            out.add(UsageStatsRepo.getTotalMsForWindow(this, start, end, pkg))
+            val cal = (base.clone() as Calendar).apply { add(Calendar.MONTH, -i) }
+            val year = cal.get(Calendar.YEAR)
+            val month0 = cal.get(Calendar.MONTH)
+            val fromStore = UsageStore.getUsageMsForMonth(this, pkg, year, month0 + 1)
+            val monthTotal = if (fromStore > 0L) {
+                fromStore
+            } else {
+                runCatching {
+                    if (i == 0) {
+                        UsageStatsRepo.getLastNDaysPerDay(this, pkg, daysSinceStartOfMonth()).sum()
+                    } else {
+                        val start = cal.timeInMillis
+                        val endCal = (cal.clone() as Calendar).apply { add(Calendar.MONTH, 1) }
+                        val end = endCal.timeInMillis
+                        UsageStatsRepo.getTotalMsForWindow(this, start, end, pkg)
+                    }
+                }.getOrDefault(0L)
+            }
+            out.add(monthTotal.coerceAtLeast(0L))
         }
         return out
     }
@@ -394,7 +563,8 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         val pct = if (total > 0L) (valueMs.toDouble() * 100.0/total.toDouble()) else 0.0
 
         val whenLabel = when (range) {
-            Range.YEAR, Range.OVERALL -> formatMonthLabel(index, series.size)
+            Range.TODAY -> currentXAxisLabels.getOrNull(index) ?: formatHourLabel(index)
+            Range.YEAR, Range.OVERALL -> currentXAxisLabels.getOrNull(index) ?: formatMonthLabel(index, series.size)
             else -> formatDayLabel(index, series.size)
         }
 
@@ -413,6 +583,18 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             .create()
         dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
         dialog.show()
+    }
+
+    private fun buildTodayHourLabels(count: Int): List<String> {
+        return (0 until count.coerceAtLeast(0)).map { hour ->
+            String.format(Locale.getDefault(), "%02d", hour)
+        }
+    }
+
+    private fun formatHourLabel(index: Int): String {
+        val startHour = index.coerceIn(0, 23)
+        val endHour = (startHour + 1).coerceAtMost(24)
+        return String.format(Locale.getDefault(), "%02d:00–%02d:00", startHour, endHour)
     }
 
     private fun formatDayLabel(index: Int, size: Int): String {
@@ -459,8 +641,27 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             else resources.getQuantityString(R.plurals.daily_attempt_limit_value_format, limit, limit)
     }
 
+    private fun ensureAppCanBeManaged(pkg: String, proceed: () -> Unit) {
+        val safety = AppBlockSafety.resolve(this, pkg)
+        when (safety.level) {
+            AppBlockSafety.Level.HARD_EXCLUDED -> {
+                Toast.makeText(this, safety.hint ?: getString(R.string.app_picker_protected_generic_hint), Toast.LENGTH_LONG).show()
+            }
+            AppBlockSafety.Level.SOFT_WARNING -> {
+                AlertDialog.Builder(this)
+                    .setTitle(safety.warningTitle ?: getString(R.string.app_picker_protected_caution_title))
+                    .setMessage(safety.warningMessage ?: safety.hint ?: getString(R.string.app_picker_protected_generic_hint))
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.continue_label) { _, _ -> proceed() }
+                    .showAccented()
+            }
+            else -> proceed()
+        }
+    }
+
     private fun showAttemptLimitDialog(pkg: String, label: String) {
-        val profile = ProfileStore.getCurrent(this) ?: return
+        ensureAppCanBeManaged(pkg) {
+        val profile = ProfileStore.getCurrent(this) ?: return@ensureAppCanBeManaged
         val current = AttemptLimitStore.getLimitAttempts(this, profile, pkg)
 
         val presets = listOf(0, 3, 5, 10, 15, 20, 30, 50, 100)
@@ -484,6 +685,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .showAccented()
+        }
     }
 
     private fun showCustomOpensInput(pkg: String, label: String) {
@@ -527,7 +729,8 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
     }
 
     private fun showDailyLimitDialog(pkg: String, label: String) {
-        val profile = ProfileStore.getCurrent(this) ?: return
+        ensureAppCanBeManaged(pkg) {
+        val profile = ProfileStore.getCurrent(this) ?: return@ensureAppCanBeManaged
 
         val current = UsageLimitStore.getLimitMinutes(this, profile, pkg)
         val presets = listOf(0, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120)
@@ -550,6 +753,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .showAccented()
+        }
     }
 
     private fun showCustomMinutesInput(pkg: String, label: String) {
@@ -622,6 +826,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         const val EXTRA_LABEL = "label"
 
         const val EXTRA_INITIAL_RANGE = "initial_range"
+        const val RANGE_TODAY = "today"
         const val RANGE_WEEK = "week"
         const val RANGE_MONTH = "month"
         const val RANGE_YEAR = "year"

@@ -635,15 +635,11 @@ class PermissionsActivity : AppCompatActivity() {
 
     // FEATURE NEEDS
     private fun isLocationNeededForFeatures(): Boolean {
-        // We always show Location as recommended/needed here.
-        // Even if the user currently has no Wi‑Fi rules, enabling it avoids issues later.
-        return true
+        return ScheduleStore.hasEnabledWifiSchedules(this)
     }
 
     private fun isBluetoothNeededForFeatures(): Boolean {
-        // We always show Bluetooth/Nearby devices as recommended/needed here.
-        // Even if the user currently has no Bluetooth schedules, enabling it avoids issues later.
-        return true
+        return ScheduleStore.hasEnabledBluetoothSchedules(this)
     }
 
     // LOCATION

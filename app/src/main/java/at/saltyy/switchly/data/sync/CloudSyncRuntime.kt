@@ -21,6 +21,7 @@ object CloudSyncRuntime {
     private const val TAG = "CloudSyncRuntime"
     private const val COLLECTION = "switchly_users"
     private const val SUB_BACKUPS = "backups"
+    private const val LEGACY_ROOT_BACKUP_ID = "__legacy_root__"
 
     private const val FIELD_PREFS = "prefs"
     private const val FIELD_SWITCHLY_PREFS = "switchly_prefs"
@@ -36,6 +37,15 @@ object CloudSyncRuntime {
         val id: String,
         val createdAt: Long
     )
+
+    private fun hasBackupPayload(snapshot: DocumentSnapshot): Boolean {
+        return snapshot.exists() && (
+            snapshot.contains(FIELD_PREFS) ||
+                snapshot.contains(FIELD_SWITCHLY_PREFS) ||
+                snapshot.contains(FIELD_SCHEDULES_PREFS) ||
+                snapshot.contains(FIELD_STATS)
+            )
+    }
 
     /**
      * Converts SharedPreferences maps into Firestore-compatible maps: Collections/Sets -> List
@@ -293,19 +303,33 @@ object CloudSyncRuntime {
             return
         }
 
-        FirebaseFirestore.getInstance()
-            .collection(COLLECTION)
-            .document(uid)
-            .collection(SUB_BACKUPS)
+        val db = FirebaseFirestore.getInstance()
+        val userRef = db.collection(COLLECTION).document(uid)
+
+        userRef.collection(SUB_BACKUPS)
             .orderBy(FIELD_CREATED_AT, Query.Direction.DESCENDING)
             .limit(limit)
             .get()
             .addOnSuccessListener { snapshot ->
-                val list = snapshot.documents.map { doc ->
+                val versioned = snapshot.documents.map { doc ->
                     val ts = doc.getLong(FIELD_CREATED_AT) ?: 0L
                     CloudBackupMeta(doc.id, ts)
                 }
-                onDone(true, null, list)
+
+                userRef
+                    .get()
+                    .addOnSuccessListener { userSnapshot ->
+                        val combined = versioned.toMutableList()
+                        if (hasBackupPayload(userSnapshot)) {
+                            val ts = userSnapshot.getLong(FIELD_CREATED_AT) ?: 0L
+                            combined += CloudBackupMeta(LEGACY_ROOT_BACKUP_ID, ts)
+                        }
+                        onDone(true, null, combined.sortedByDescending { it.createdAt }.take(limit.toInt()))
+                    }
+                    .addOnFailureListener { e ->
+                        Log.w(TAG, "listBackups: legacy root fallback check failed", e)
+                        onDone(true, null, versioned)
+                    }
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "listBackups failed", e)
@@ -338,11 +362,17 @@ object CloudSyncRuntime {
         }
 
         val userRef = FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
-        userRef.collection(SUB_BACKUPS)
-            .document(backupId)
-            .get()
+        val snapshotTask = if (backupId == LEGACY_ROOT_BACKUP_ID) {
+            userRef.get()
+        } else {
+            userRef.collection(SUB_BACKUPS)
+                .document(backupId)
+                .get()
+        }
+
+        snapshotTask
             .addOnSuccessListener { snapshot ->
-                if (!snapshot.exists()) {
+                if (!hasBackupPayload(snapshot)) {
                     onDone(false, ctx.getString(R.string.cloud_error_backup_not_found))
                     return@addOnSuccessListener
                 }

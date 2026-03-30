@@ -5,10 +5,14 @@ import androidx.core.content.edit
 import java.util.Calendar
 
 object UsageStore {
+    data class MonthBucket(val year: Int, val month1Based: Int, val totalMs: Long)
+
     private const val PREFS = "switchly_prefs"
 
     // usage_day_yyyymmdd_pkg
     private const val PREFIX_DAY = "usage_day_" // + yyyymmdd + "_" + pkg
+    private const val KEY_SANITIZE_VERSION = "usage_sanitize_version"
+    private const val CURRENT_SANITIZE_VERSION = 1
 
     // Buffer frequent increments to avoid high-frequency SharedPreferences writes.
     // We flush at most every FLUSH_INTERVAL_MS or if too many keys are pending.
@@ -75,6 +79,30 @@ object UsageStore {
         sp.edit {
             putLong(dayKey(ymd, pkg), ms.coerceAtLeast(0L))
         }
+    }
+
+    fun getUsageMsForDay(ctx: Context, ymd: Int, pkg: String): Long {
+        if (pkg.isBlank()) return 0L
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getLong(dayKey(ymd, pkg), 0L).coerceAtLeast(0L)
+    }
+
+    fun mergeUsageMsForDay(ctx: Context, ymd: Int, pkg: String, ms: Long) {
+        if (pkg.isBlank() || ms <= 0L) return
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val k = dayKey(ymd, pkg)
+        val cur = sp.getLong(k, 0L).coerceAtLeast(0L)
+        val merged = maxOf(cur, ms.coerceAtLeast(0L))
+        if (merged == cur) return
+        sp.edit { putLong(k, merged) }
+    }
+
+    fun hasAnyUsageData(ctx: Context): Boolean {
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.all.keys.any { it.startsWith(PREFIX_DAY) }
     }
 
     fun getUsageMsForLastNDays(ctx: Context, pkg: String, days: Int): Long {
@@ -171,6 +199,139 @@ object UsageStore {
         return sum
     }
 
+    fun getTrackedPackages(ctx: Context): Set<String> {
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val out = linkedSetOf<String>()
+        for ((k, v) in sp.all) {
+            if (!k.startsWith(PREFIX_DAY)) continue
+            val rest = k.removePrefix(PREFIX_DAY)
+            val idx = rest.indexOf('_')
+            if (idx <= 0 || idx >= rest.length - 1) continue
+            val pkg = rest.substring(idx + 1).trim()
+            val ms = (v as? Number)?.toLong()?.coerceAtLeast(0L) ?: 0L
+            if (pkg.isNotBlank() && ms > 0L) out += pkg
+        }
+        return out
+    }
+
+    fun getUsageMsMapForLastNDays(ctx: Context, days: Int): Map<String, Long> {
+        if (days <= 0) return emptyMap()
+        flush(ctx)
+        val wanted = HashSet<Int>(days)
+        val cal = Calendar.getInstance()
+        repeat(days) {
+            wanted += ymdInt(cal)
+            cal.add(Calendar.DAY_OF_YEAR, -1)
+        }
+        return getUsageMsMapMatching(ctx) { ymd, _ -> ymd in wanted }
+    }
+
+    fun getUsageMsMapForMonth(ctx: Context, year: Int, month1Based: Int): Map<String, Long> {
+        flush(ctx)
+        return getUsageMsMapMatching(ctx) { ymd, _ ->
+            (ymd / 10000) == year && ((ymd / 100) % 100) == month1Based
+        }
+    }
+
+    fun getUsageMsMapForYear(ctx: Context, year: Int): Map<String, Long> {
+        flush(ctx)
+        return getUsageMsMapMatching(ctx) { ymd, _ -> (ymd / 10000) == year }
+    }
+
+    fun getUsageMsMapOverall(ctx: Context): Map<String, Long> {
+        flush(ctx)
+        return getUsageMsMapMatching(ctx) { _, _ -> true }
+    }
+
+    fun getUsageMsSeriesForLastNDays(ctx: Context, pkg: String, days: Int): List<Long> {
+        if (pkg.isBlank() || days <= 0) return emptyList()
+        flush(ctx)
+        val cal = Calendar.getInstance()
+        val ymds = ArrayList<Int>(days)
+        repeat(days) {
+            ymds += ymdInt(cal)
+            cal.add(Calendar.DAY_OF_YEAR, -1)
+        }
+        ymds.reverse()
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return ymds.map { ymd -> sp.getLong(dayKey(ymd, pkg), 0L).coerceAtLeast(0L) }
+    }
+
+    fun getUsageMsSeriesForCurrentMonth(ctx: Context, pkg: String): List<Long> {
+        if (pkg.isBlank()) return emptyList()
+        flush(ctx)
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val targetMonth = cal.get(Calendar.MONTH)
+        val targetYear = cal.get(Calendar.YEAR)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val out = ArrayList<Long>()
+        while (cal.get(Calendar.YEAR) == targetYear && cal.get(Calendar.MONTH) == targetMonth) {
+            out += sp.getLong(dayKey(ymdInt(cal), pkg), 0L).coerceAtLeast(0L)
+            val sameDay = cal.get(Calendar.DAY_OF_MONTH) == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+            if (sameDay) break
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+        }
+        return out
+    }
+
+    fun getUsageMsMonthBucketsForCurrentYear(ctx: Context, pkg: String): List<MonthBucket> {
+        if (pkg.isBlank()) return emptyList()
+        flush(ctx)
+        val year = Calendar.getInstance().get(Calendar.YEAR)
+        val currentMonth1 = Calendar.getInstance().get(Calendar.MONTH) + 1
+        return (1..currentMonth1).map { month1 ->
+            MonthBucket(year, month1, getUsageMsForMonth(ctx, pkg, year, month1))
+        }
+    }
+
+    fun getUsageMsMonthBucketsAllTime(ctx: Context, pkg: String, maxMonths: Int = Int.MAX_VALUE): List<MonthBucket> {
+        if (pkg.isBlank()) return emptyList()
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val byYearMonth = linkedMapOf<Int, Long>()
+        val suffix = '_' + pkg
+        for ((k, v) in sp.all) {
+            if (!k.startsWith(PREFIX_DAY) || !k.endsWith(suffix)) continue
+            val rest = k.removePrefix(PREFIX_DAY)
+            if (rest.length < 10) continue
+            val ymd = rest.substring(0, 8).toIntOrNull() ?: continue
+            val year = ymd / 10000
+            val month1 = (ymd / 100) % 100
+            val yearMonth = year * 100 + month1
+            val ms = (v as? Number)?.toLong()?.coerceAtLeast(0L) ?: 0L
+            if (ms > 0L) byYearMonth[yearMonth] = (byYearMonth[yearMonth] ?: 0L) + ms
+        }
+        val sorted = byYearMonth.entries.sortedBy { it.key }.map { (ym, total) ->
+            MonthBucket(ym / 100, ym % 100, total)
+        }
+        return if (sorted.size > maxMonths) sorted.takeLast(maxMonths) else sorted
+    }
+
+    private fun getUsageMsMapMatching(ctx: Context, matches: (ymd: Int, pkg: String) -> Boolean): Map<String, Long> {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val out = linkedMapOf<String, Long>()
+        for ((k, v) in sp.all) {
+            if (!k.startsWith(PREFIX_DAY)) continue
+            val rest = k.removePrefix(PREFIX_DAY)
+            val idx = rest.indexOf('_')
+            if (idx <= 0 || idx >= rest.length - 1) continue
+            val ymd = rest.substring(0, idx).toIntOrNull() ?: continue
+            val pkg = rest.substring(idx + 1).trim()
+            val ms = (v as? Number)?.toLong()?.coerceAtLeast(0L) ?: 0L
+            if (pkg.isBlank() || ms <= 0L) continue
+            if (!matches(ymd, pkg)) continue
+            out[pkg] = (out[pkg] ?: 0L) + ms
+        }
+        return out
+    }
+
     fun getUsageMsOverall(ctx: Context, pkg: String): Long {
         if (pkg.isBlank()) return 0L
         flush(ctx)
@@ -183,6 +344,95 @@ object UsageStore {
             }
         }
         return sum
+    }
+
+    fun getEarliestTrackedStartMs(ctx: Context): Long? {
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        var earliestYmd: Int? = null
+        for ((k, v) in sp.all) {
+            if (!k.startsWith(PREFIX_DAY)) continue
+            val rest = k.removePrefix(PREFIX_DAY)
+            val idx = rest.indexOf('_')
+            if (idx <= 0 || idx >= rest.length - 1) continue
+            val ymd = rest.substring(0, idx).toIntOrNull() ?: continue
+            val ms = (v as? Number)?.toLong()?.coerceAtLeast(0L) ?: 0L
+            if (ms <= 0L) continue
+            if (earliestYmd == null || ymd < earliestYmd!!) earliestYmd = ymd
+        }
+        val value = earliestYmd ?: return null
+        val year = value / 10000
+        val month1 = (value / 100) % 100
+        val day = value % 100
+        return Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, (month1 - 1).coerceIn(0, 11))
+            set(Calendar.DAY_OF_MONTH, day.coerceAtLeast(1))
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    fun sanitizeImpossibleDailyTotals(ctx: Context): Boolean {
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (sp.getInt(KEY_SANITIZE_VERSION, 0) >= CURRENT_SANITIZE_VERSION) return false
+
+        val all = sp.all
+        val byDay = linkedMapOf<Int, MutableList<Pair<String, Long>>>()
+        for ((k, v) in all) {
+            if (!k.startsWith(PREFIX_DAY)) continue
+            val rest = k.removePrefix(PREFIX_DAY)
+            val idx = rest.indexOf('_')
+            if (idx <= 0 || idx >= rest.length - 1) continue
+            val ymd = rest.substring(0, idx).toIntOrNull() ?: continue
+            val ms = (v as? Number)?.toLong()?.coerceAtLeast(0L) ?: 0L
+            if (ms <= 0L) continue
+            byDay.getOrPut(ymd) { mutableListOf() }.add(k to ms)
+        }
+
+        if (byDay.isEmpty()) {
+            sp.edit { putInt(KEY_SANITIZE_VERSION, CURRENT_SANITIZE_VERSION) }
+            return false
+        }
+
+        val now = Calendar.getInstance()
+        val todayYmd = ymdInt(now)
+        val startOfToday = (now.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val elapsedTodayMs = (System.currentTimeMillis() - startOfToday).coerceAtLeast(0L)
+        val fullDayMs = 24L * 60L * 60L * 1000L
+
+        var changed = false
+        sp.edit {
+            for ((ymd, entries) in byDay) {
+                val total = entries.sumOf { it.second }
+                val cap = if (ymd == todayYmd) elapsedTodayMs else fullDayMs
+                if (cap <= 0L || total <= cap) continue
+
+                val ratio = cap.toDouble() / total.toDouble()
+                var assigned = 0L
+                entries.forEachIndexed { index, (key, ms) ->
+                    val scaled = if (index == entries.lastIndex) {
+                        (cap - assigned).coerceAtLeast(0L)
+                    } else {
+                        kotlin.math.floor(ms.toDouble() * ratio).toLong().coerceAtLeast(0L)
+                    }
+                    assigned += scaled
+                    putLong(key, scaled)
+                }
+                changed = true
+            }
+            putInt(KEY_SANITIZE_VERSION, CURRENT_SANITIZE_VERSION)
+        }
+
+        return changed
     }
 
     /**

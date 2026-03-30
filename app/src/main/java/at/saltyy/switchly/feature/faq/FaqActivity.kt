@@ -223,6 +223,7 @@ class FaqActivity : AppCompatActivity() {
         detailed.item(R.string.faq_q_usage_stats, R.string.faq_a_usage_stats, R.drawable.bar_chart_24)
         detailed.item(R.string.faq_q_overlay, R.string.faq_a_overlay, R.drawable.info_24)
         detailed.item(R.string.faq_q_oem_limits, R.string.faq_a_oem_limits, R.drawable.info_24)
+        detailed.item(R.string.faq_q_xiaomi_background, R.string.faq_a_xiaomi_background, R.drawable.battery_24)
         detailed.item(R.string.faq_q_battery, R.string.faq_a_battery, R.drawable.info_24)
         detailed.item(R.string.faq_q_tile, R.string.faq_a_tile, R.drawable.dashboard_24)
         detailed.item(R.string.faq_q_tile_why_missing, R.string.faq_a_tile_why_missing, R.drawable.dashboard_24)

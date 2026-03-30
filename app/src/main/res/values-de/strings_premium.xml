@@ -1,52 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         PREMIUM: Screen title + summary
-         ========================================================= -->
+    <!-- PREMIUM - Overview and current status -->
     <string name="premium_title">Switchly Premium</string>
     <string name="premium_summary">Schalte Premium-Funktionen frei.</string>
     <string name="premium_short_desc">Schalte WLAN-/Bluetooth-Zeitpläne, detaillierte Statistiken und weitere Premium-Optionen frei.</string>
-
-    <!-- =========================================================
-         PREMIUM: Status/ownership
-         ========================================================= -->
     <string name="premium_active_header">Aktive Premium-Funktionen</string>
     <string name="premium_status_active">Aktiv</string>
     <string name="premium_status_inactive">Premium ist noch nicht aktiv</string>
     <string name="premium_already_owned">Du hast Premium bereits</string>
-
-    <!-- =========================================================
-         PREMIUM: Purchase/restore flow
-         ========================================================= -->
+    <string name="premium_checking_purchases">Käufe werden geprüft…</string>
+    <!-- PREMIUM - Purchase actions -->
     <string name="premium_button_buy">Premium kaufen</string>
     <string name="premium_button_restore">Käufe wiederherstellen</string>
-    <string name="premium_checking_purchases">Käufe werden geprüft…</string>
     <string name="premium_button_thanks">Danke für deine Unterstützung!</string>
-
-    <!-- =========================================================
-         PREMIUM: Feature cards
-         ========================================================= -->
+    <!-- PREMIUM - Unlock cards and feature highlights -->
     <string name="premium_unlock_title">Designs &amp; Farben</string>
     <string name="premium_unlock_desc">Schalte zusätzliche Akzentfarben frei und aktiviere den Farbwähler für vollständig personalisierte Designs.</string>
-
     <string name="premium_nfc_title">Mehr NFC-Optionen</string>
     <string name="premium_nfc_desc">Schalte benutzerdefinierte Entsperrdauern jenseits der Voreinstellungen frei.</string>
-
     <string name="premium_automation_title">Automatisierungen</string>
     <string name="premium_automation_desc">Schalte erweiterte Automatisierungen frei, einschließlich Zeit-, WLAN- und Bluetooth-Triggern.</string>
-
     <string name="premium_stats_title">Statistiken &amp; Einblicke</string>
     <string name="premium_stats_desc">Schalte detaillierte Nutzungseinblicke frei, um zu sehen, wie oft du Switchly nutzt und welche Apps dich am meisten ablenken.</string>
-
-    <!-- =========================================================
-         PREMIUM: Gate/lock messages
-         ========================================================= -->
     <string name="premium_required_for_theme">Diese Farbe ist nur mit Switchly Premium verfügbar.</string>
-
-    <!-- =========================================================
-         PREMIUM: Gratitude/support
-         ========================================================= -->
+    <!-- PREMIUM - Support note -->
     <string name="premium_support_note">Danke, dass du Switchly unterstützt 💜</string>
-
 </resources>

@@ -1,29 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         ABOUT: Screen and section headers
-         ========================================================= -->
+    <!-- ABOUT - Screen and section headers -->
     <string name="about_title">Über</string>
-
     <string name="about_app_info">App-Info</string>
     <string name="about_app_info_title">App-Info</string>
     <string name="about_app_info_summary">Version, Build und Links</string>
-
     <string name="about_device_details">Gerätedetails</string>
     <string name="about_device_info_title">Geräteinfo</string>
     <string name="about_device_info_summary">Android-Version, Modell und Gerät</string>
-
     <string name="about_developer_info">Entwicklerinfo</string>
     <string name="about_developer_info_title">Entwicklerinfo</string>
     <string name="about_developer_info_summary">Entwickler- und Build-Details</string>
-
     <string name="about_other_switchly_products_title">Weitere Switchly-Produkte</string>
     <string name="about_other_switchly_products_summary">Switchly Lite, Launcher und spätere Extras</string>
-
-    <!-- =========================================================
-         ABOUT: Field labels
-         ========================================================= -->
+    <!-- ABOUT - Field labels and install source values -->
     <string name="about_abi_label">ABI</string>
     <string name="about_android_label">Android</string>
     <string name="about_app_name_label">App-Name</string>
@@ -45,10 +35,14 @@
     <string name="about_version_label">Version</string>
     <string name="about_website_label">Website</string>
     <string name="about_older_versions_label">Downloads</string>
-
-    <!-- =========================================================
-         ABOUT: Row titles/display names
-         ========================================================= -->
+    <string name="about_switchly_lite_play_store_label">Switchly Lite – Play Store</string>
+    <string name="about_switchly_launcher_play_store_label">Switchly Launcher – Play Store</string>
+    <string name="about_install_source_unknown">Unbekannt</string>
+    <string name="about_install_source_google_play">Google Play Store</string>
+    <string name="about_install_source_galaxy_store">Samsung Galaxy Store</string>
+    <string name="about_install_source_amazon">Amazon Appstore</string>
+    <string name="about_install_source_package_installer">Paket-Installer</string>
+    <!-- ABOUT - Row titles and display labels -->
     <string name="about_android">Android-Version</string>
     <string name="about_app_name">App-Name</string>
     <string name="about_developer">Entwickler</string>
@@ -58,25 +52,21 @@
     <string name="about_mail">E-Mail</string>
     <string name="about_package">Paketname</string>
     <string name="about_version">Version</string>
-
-    <!-- =========================================================
-         ABOUT: Values, formatting, and links
-         ========================================================= -->
+    <string name="about_switchly_lite">Switchly Lite</string>
+    <string name="about_switchly_lite_bonus">Eine leichtere Version für einfache Abläufe wie NFC, Tastenaktionen und zeitgesteuerte Pläne.</string>
+    <string name="about_switchly_launcher">Switchly Launcher</string>
+    <string name="about_switchly_launcher_bonus">Ein simpler und starker Launcher für ein minimaleres, ablenkungsärmeres Setup.</string>
+    <!-- ABOUT - Formatting, values, contact data, and links -->
     <string name="about_android_version_fmt">Android %1$s (SDK %2$d)</string>
     <string name="about_version_with_update">%1$s (%2$s)</string>
-
-    <!-- =========================================================
-         ABOUT: User feedback/errors
-         ========================================================= -->
+    <string name="dev_name_line">Entwickler: Saltyy (Andi S.)</string>
+    <!-- ABOUT - User feedback and availability errors -->
     <string name="about_discord_copied">Discord-Link kopiert</string>
     <string name="about_mail_copied">E-Mail kopiert</string>
     <string name="about_no_browser">Keine Browser-App gefunden</string>
     <string name="about_no_mail_app">Keine E-Mail-App gefunden</string>
     <string name="about_play_store_link_copied">Play-Store-Link kopiert</string>
-
-    <!-- =========================================================
-         SUPPORT
-         ========================================================= -->
+    <!-- SUPPORT -->
     <string name="support_title">Support</string>
     <string name="support_desc">Brauchst du Hilfe oder hast einen Fehler gefunden?\nSende eine E-Mail und füge nach Möglichkeit Debug-Infos sowie eine kurze Beschreibung hinzu.</string>
     <string name="support_email_subject">Switchly-Support</string>
@@ -87,17 +77,13 @@
     <string name="support_include_debug">Debug-Infos anhängen</string>
     <string name="support_include_advanced_debug">Erweiterte Diagnoseinfos anhängen</string>
     <string name="support_debug_preface">Bitte beschreibe dein Problem oberhalb dieser Zeile.</string>
-
-    <!-- =========================================================
-         TROUBLESHOOTING
-         ========================================================= -->
+    <!-- TROUBLESHOOTING -->
     <string name="troubleshooting_title">Fehlerbehebung</string>
     <string name="troubleshooting_accessibility">Bedienungshilfedienst</string>
     <string name="troubleshooting_battery">Akku-Optimierung deaktiviert</string>
     <string name="troubleshooting_exact_alarms">Berechtigung für exakte Alarme</string>
     <string name="troubleshooting_location">Standortberechtigung (WLAN-Trigger)</string>
     <string name="troubleshooting_bluetooth">Bluetooth-Berechtigung (Geräte in der Nähe)</string>
-
     <string name="troubleshooting_notification_access">Benachrichtigungszugriff</string>
     <string name="troubleshooting_ok">OK ✅</string>
     <string name="troubleshooting_missing">Fehlt ❌</string>
@@ -109,64 +95,36 @@
     <string name="troubleshooting_info_exact_alarms">Exakte Alarme sorgen dafür, dass zeitbasierte Zeitpläne pünktlich auslösen. Manche Geräte verzögern Zeitpläne, wenn dies deaktiviert ist.</string>
     <string name="troubleshooting_info_location">Android benötigt die Berechtigung für den genauen Standort, um den aktuellen WLAN-Namen (SSID) zu lesen. Für die beste Zuverlässigkeit bei WLAN-Triggern sollte zusätzlich Hintergrundstandort erlaubt sein.</string>
     <string name="troubleshooting_info_bluetooth">Android 12+ benötigt die Berechtigung „Geräte in der Nähe“ bzw. Bluetooth für Bluetooth-basierte Zeitpläne.</string>
+    <string name="troubleshooting_xiaomi_note">Xiaomi-/Redmi-/POCO-Hinweis:\n\n• Aktiviere zusätzlich Autostart für Switchly\n• Stelle den Akku-Modus auf Uneingeschränkt / Nicht optimieren, falls verfügbar\n• Sperre die App nach Möglichkeit in den letzten Apps\n• Wenn vorhanden, erlaube Hintergrundaktivität für Switchly\n• Schalte die Bedienungshilfe einmal aus und wieder ein, falls sie als aktiv angezeigt wird, Switchly aber nicht reagiert</string>
     <string name="troubleshooting_pref_summary">Häufige Probleme &amp; Lösungen prüfen</string>
-
-    <!-- =========================================================
-         PREFERENCES
-         ========================================================= -->
+    <string name="troubleshooting_battery_oem_note">Manche Geräte bieten keine Akkuoption „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, ist das auf deinem Gerät möglicherweise bereits das Maximum.</string>
+    <string name="troubleshooting_exact_alarms_note">Wenn exakte Alarme nicht erlaubt sind, können zeitbasierte Zeitpläne verspätet oder nicht zur richtigen Zeit ausgeführt werden.</string>
+    <!-- TUTORIAL entry -->
     <string name="pref_tutorial_title">Tutorial</string>
     <string name="pref_tutorial_summary">Einrichtungsschritte und Funktionen noch einmal ansehen</string>
-
-    <!-- =========================================================
-         WHAT'S NEW/RELEASE NOTES
-         ========================================================= -->
+    <!-- CHANGELOG and release notes -->
     <string name="release_note_body_placeholder">Versionshinweise…</string>
-
     <string name="changelog_latest_fmt">Neueste: %1$s</string>
     <string name="changelog_show_more">Mehr anzeigen</string>
     <string name="changelog_show_less">Weniger anzeigen</string>
     <string name="changelog_show_full_fmt">Vollständige Liste anzeigen (%1$d)</string>
     <string name="changelog_highlights">Highlights</string>
-
     <plurals name="changelog_more_changes_fmt">
         <item quantity="one">+%1$d weitere Änderung</item>
         <item quantity="other">+%1$d weitere Änderungen</item>
     </plurals>
-
     <plurals name="changelog_date_count_fmt">
         <item quantity="one">%1$s • %2$d Änderung</item>
         <item quantity="other">%1$s • %2$d Änderungen</item>
     </plurals>
-
     <plurals name="changelog_count_only_fmt">
         <item quantity="one">%1$d Änderung</item>
         <item quantity="other">%1$d Änderungen</item>
     </plurals>
-
     <string name="changelog_section_added">Neu</string>
     <string name="changelog_section_changed">Geändert</string>
     <string name="changelog_section_improved">Verbessert</string>
     <string name="changelog_section_fixed">Behoben</string>
     <string name="changelog_section_removed">Entfernt</string>
     <string name="changelog_section_other">Sonstiges</string>
-
-    <!-- =========================================================
-         DEV META
-         ========================================================= -->
-    <string name="dev_name_line">Entwickler: Saltyy (Andi S.)</string>
-
-    <string name="about_switchly_lite">Switchly Lite</string>
-    <string name="about_switchly_lite_bonus">Eine leichtere Version für einfache Abläufe wie NFC, Tastenaktionen und zeitgesteuerte Pläne.</string>
-    <string name="about_switchly_lite_play_store_label">Switchly Lite – Play Store</string>
-    <string name="about_switchly_launcher">Switchly Launcher</string>
-    <string name="about_switchly_launcher_bonus">Ein simpler und starker Launcher für ein minimaleres, ablenkungsärmeres Setup.</string>
-    <string name="about_switchly_launcher_play_store_label">Switchly Launcher – Play Store</string>
-
-    <string name="about_install_source_unknown">Unbekannt</string>
-    <string name="about_install_source_google_play">Google Play Store</string>
-    <string name="about_install_source_galaxy_store">Samsung Galaxy Store</string>
-    <string name="about_install_source_amazon">Amazon Appstore</string>
-    <string name="about_install_source_package_installer">Paket-Installer</string>
-    <string name="troubleshooting_battery_oem_note">Manche Geräte bieten keine Akkuoption „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, ist das auf deinem Gerät möglicherweise bereits das Maximum.</string>
-    <string name="troubleshooting_exact_alarms_note">Wenn exakte Alarme nicht erlaubt sind, können zeitbasierte Zeitpläne verspätet oder nicht zur richtigen Zeit ausgeführt werden.</string>
 </resources>

@@ -26,7 +26,7 @@
             android:layout_height="22dp"
             android:src="@drawable/switch_account_24"
             app:tint="?attr/colorOnSurface"
-            android:contentDescription="@null" />
+            android:contentDescription="@string/edit" />
 
         <Space
             android:layout_width="14dp"
@@ -79,9 +79,9 @@
         <ImageView
             android:layout_width="18dp"
             android:layout_height="18dp"
-            android:src="@drawable/arrow_forward_ios_24"
+            android:src="@drawable/edit_24"
             app:tint="?android:attr/textColorSecondary"
-            android:contentDescription="@null" />
+            android:contentDescription="@string/edit" />
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
