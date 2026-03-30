@@ -1,34 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         NOTIFICATIONS: Channel metadata
-         ========================================================= -->
+    <!-- NOTIFICATION CHANNELS -->
     <string name="notif_channel_wifi_triggers_name">Switchly WLAN-Trigger</string>
     <string name="notif_channel_wifi_triggers_desc">Vordergrunddienst für WLAN-Zeitplan-Trigger.</string>
-
     <string name="notif_channel_bluetooth_triggers_name">Switchly Bluetooth-Trigger</string>
     <string name="notif_channel_bluetooth_triggers_desc">Vordergrunddienst für Bluetooth-Zeitplan-Trigger.</string>
-
-    <!-- =========================================================
-         NOTIFICATIONS: Active foreground service (Wi-Fi)
-         ========================================================= -->
+    <!-- SCHEDULE STATUS NOTIFICATIONS -->
     <string name="notif_wifi_schedules_title">Switchly: WLAN-Trigger aktiv</string>
     <string name="notif_wifi_schedules_content">Überwacht WLAN-Änderungen, um Zeitpläne zu aktualisieren.</string>
-
-    <!-- =========================================================
-         NOTIFICATIONS: Active foreground service (Bluetooth)
-         ========================================================= -->
     <string name="notif_bluetooth_schedules_title">Switchly: Bluetooth-Trigger aktiv</string>
     <string name="notif_bluetooth_schedules_content">Überwacht Bluetooth-Änderungen, um Zeitpläne zu aktualisieren.</string>
-
-    <!-- =========================================================
-         NOTIFICATIONS: Permission/enable prompts
-         ========================================================= -->
+    <!-- ENABLE TRIGGER PROMPTS -->
     <string name="notif_enable_wifi_triggers_title">WLAN-Trigger aktivieren</string>
     <string name="notif_enable_wifi_triggers_text_fmt">Tippe, um %1$s die Überwachung von WLAN-Triggern zu erlauben.</string>
-
     <string name="notif_enable_bt_triggers_title">Bluetooth-Trigger aktivieren</string>
     <string name="notif_enable_bt_triggers_text_fmt">Tippe, um %1$s die Überwachung von Bluetooth-Triggern zu erlauben.</string>
-
 </resources>

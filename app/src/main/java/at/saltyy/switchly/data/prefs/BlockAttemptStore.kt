@@ -92,6 +92,25 @@ object BlockAttemptStore {
         return sum
     }
 
+    fun getForCurrentWeek(ctx: Context, pkg: String): Int {
+        if (pkg.isBlank()) return 0
+        val now = Calendar.getInstance()
+        val currentDow = now.get(Calendar.DAY_OF_WEEK)
+        val firstDow = now.firstDayOfWeek
+        val diff = (7 + (currentDow - firstDow)) % 7
+        return getForLastNDays(ctx, pkg, diff + 1)
+    }
+
+    fun getForCurrentMonth(ctx: Context, pkg: String): Int {
+        val now = Calendar.getInstance()
+        return getForMonth(ctx, pkg, now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1)
+    }
+
+    fun getForCurrentYear(ctx: Context, pkg: String): Int {
+        val now = Calendar.getInstance()
+        return getForYear(ctx, pkg, now.get(Calendar.YEAR))
+    }
+
     fun getOverall(ctx: Context, pkg: String): Int {
         if (pkg.isBlank()) return 0
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

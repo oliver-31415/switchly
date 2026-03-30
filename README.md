@@ -135,7 +135,10 @@ This helps avoid duplicate work and makes it easier to coordinate changes with t
 ---
 
 ## License
-Licensed under the **Apache License 2.0**.
+Switchly is licensed under the **GNU General Public License v3.0**.
+
+You are free to use, modify, and distribute this software,
+but any distributed modifications must also be licensed under **GPLv3**.
 
 See:
 

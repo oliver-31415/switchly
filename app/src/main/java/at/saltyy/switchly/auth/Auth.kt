@@ -16,7 +16,10 @@ object Auth {
     /**
      * Start Google sign-in using Credential Manager.
      */
-    fun startSignIn(activity: Activity) {
+    fun startSignIn(
+        activity: Activity,
+        onFinished: ((Boolean, String?) -> Unit)? = null
+    ) {
         AuthRuntime.startSignIn(
             activity = activity,
             onResult = { success, error ->
@@ -30,6 +33,7 @@ object Auth {
                     )
                 }
                 Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
+                onFinished?.invoke(success, error)
             }
         )
     }

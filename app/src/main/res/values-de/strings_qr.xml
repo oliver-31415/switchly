@@ -1,22 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         QR: Entry points/navigation
-         ========================================================= -->
+    <!-- QR - Screen titles and validation -->
     <string name="qr_title">QR</string>
     <string name="qr_generate_title">QR generieren</string>
     <string name="qr_scan_title">QR-Code scannen</string>
-
-    <!-- =========================================================
-         QR: Permissions/errors
-         ========================================================= -->
     <string name="permission_camera_required">Für das Scannen von QR-Codes ist die Kameraberechtigung erforderlich.</string>
     <string name="invalid_qr_code">Ungültiger QR-Code</string>
-
-    <!-- =========================================================
-         QR: Action selector
-         ========================================================= -->
+    <!-- QR - Action payloads -->
     <string name="qr_action">Aktion</string>
     <string name="qr_action_enable">Aktivieren</string>
     <string name="qr_action_disable">Deaktivieren</string>
@@ -26,15 +16,8 @@
     <string name="qr_action_profile_enable">Profil aktivieren</string>
     <string name="qr_action_profile_disable">Profil deaktivieren</string>
     <string name="qr_action_profile_toggle">Profil umschalten</string>
-
-    <!-- =========================================================
-         QR: Profile helpers
-         ========================================================= -->
     <string name="qr_profile_fallback">Profil</string>
-
-    <!-- =========================================================
-         QR: Duration/minutes picker
-         ========================================================= -->
+    <!-- QR - Temporary duration values -->
     <string name="qr_minutes">Minuten</string>
     <string name="qr_minutes_5">5</string>
     <string name="qr_minutes_10">10</string>
@@ -45,10 +28,6 @@
     <string name="qr_minutes_custom">Benutzerdefiniert…</string>
     <string name="qr_minutes_custom_title">Benutzerdefinierte Minuten</string>
     <string name="qr_minutes_hint">z. B. 45</string>
-
-    <!-- =========================================================
-         QR: Share/clipboard
-         ========================================================= -->
+    <!-- QR - Misc -->
     <string name="qr_clipboard_label">Switchly-URI</string>
-
 </resources>

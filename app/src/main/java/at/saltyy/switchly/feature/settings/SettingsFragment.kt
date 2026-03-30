@@ -64,6 +64,7 @@ import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
 import at.saltyy.switchly.feature.support.SupportActivity
 import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -235,9 +236,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     val msgRes = if (requireNfc) {
                         R.string.toast_cannot_change_profile_while_locked
                     } else {
-                        R.string.toast_disable_switchly_to_switch_profiles
+                        R.string.edit_locked_manage_profiles
                     }
-                    Toast.makeText(ctx, getString(msgRes), Toast.LENGTH_SHORT).show()
+                    EditingLockGuard.showLockedDialog(ctx, msgRes)
                     return@setOnPreferenceClickListener true
                 }
                 startActivity(Intent(requireContext(), ManageProfilesActivity::class.java))
@@ -252,7 +253,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("pref_write_tag")?.apply {
             isVisible = true
             setOnPreferenceClickListener {
-                startActivity(Intent(requireContext(), NfcWriterActivity::class.java))
+                if (SwitchModeStore.isEnabled(requireContext()) &&
+                    !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(requireContext())
+                ) {
+                    EditingLockGuard.showLockedDialog(requireContext(), R.string.edit_locked_write_nfc_tags)
+                } else {
+                    startActivity(Intent(requireContext(), NfcWriterActivity::class.java))
+                }
                 true
             }
         }
@@ -261,7 +268,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("pref_manage_paired_tags")?.apply {
             isVisible = pairedUiEnabled
             setOnPreferenceClickListener {
-                startActivity(Intent(requireContext(), ManagePairedTagsActivity::class.java))
+                if (EditingLockGuard.isLocked(requireContext())) {
+                    EditingLockGuard.showLockedDialog(requireContext(), R.string.edit_locked_manage_paired_tags)
+                } else {
+                    startActivity(Intent(requireContext(), ManagePairedTagsActivity::class.java))
+                }
                 true
             }
         }
@@ -306,7 +317,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("pref_manage_blocked_websites")?.apply {
             isVisible = true
             setOnPreferenceClickListener {
-                startActivity(Intent(requireContext(), ManageBlockedWebsitesActivity::class.java))
+                if (EditingLockGuard.isLocked(requireContext())) {
+                    EditingLockGuard.showLockedDialog(requireContext(), R.string.edit_locked_manage_websites)
+                } else {
+                    startActivity(Intent(requireContext(), ManageBlockedWebsitesActivity::class.java))
+                }
                 true
             }
         }
@@ -315,7 +330,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("pref_in_app_blocking")?.apply {
             isVisible = true
             setOnPreferenceClickListener {
-                startActivity(Intent(requireContext(), InAppBlockingActivity::class.java))
+                if (SwitchModeStore.isBaseEnabled(requireContext()) || EditingLockGuard.isLocked(requireContext())) {
+                    EditingLockGuard.showLockedDialog(requireContext(), R.string.edit_locked_manage_inapp)
+                } else {
+                    startActivity(Intent(requireContext(), InAppBlockingActivity::class.java))
+                }
                 true
             }
         }
@@ -592,7 +611,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val list = listView ?: return
-        // Match the "Statistics Hub" spacing (cards have breathing room)
+        // Match the statistics card spacing (cards have breathing room)
         val d = resources.displayMetrics.density
         val padH = (16f * d).toInt()
         val padTop = (12f * d).toInt()
@@ -1085,7 +1104,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     if (which == 0) {
                         findPreference<Preference>("pref_google_account")?.summary =
                             getString(R.string.settings_google_signing_in)
-                        at.saltyy.switchly.auth.Auth.startSignIn(requireActivity())
+                        at.saltyy.switchly.auth.Auth.startSignIn(requireActivity()) { _, _ ->
+                            if (!isAdded) return@startSignIn
+                            updateGooglePrefSummary()
+                            updateCloudPrefVisibility()
+                        }
                     }
                 }
                 .setNegativeButton(getString(R.string.cancel), null)

@@ -6,11 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.CompoundButton
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -21,6 +23,8 @@ import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.AppBlockSafety
 import java.util.Locale
 
 class AppListAdapter(
@@ -35,12 +39,18 @@ class AppListAdapter(
 
     fun getManagedPackages(): Set<String> = managed.toSet()
 
-    fun selectAllVisible() {
+    fun selectAllVisible(): Int {
+        var skipped = 0
         currentList.forEachIndexed { index, item ->
+            if (item.blockSafety.level != AppBlockSafety.Level.NONE) {
+                skipped++
+                return@forEachIndexed
+            }
             if (managed.add(item.packageName)) {
                 notifyItemChanged(index)
             }
         }
+        return skipped
     }
 
     fun clearAllVisible(context: Context) {
@@ -64,25 +74,24 @@ class AppListAdapter(
     }
 
     private fun hasPinnedLimit(context: Context, profile: String?, item: AppEntry): Boolean {
-        if (profile.isNullOrBlank() || !item.isAvailable) return false
+        if (profile.isNullOrBlank() || !item.isAvailable || item.blockSafety.level == AppBlockSafety.Level.HARD_EXCLUDED) {
+            return false
+        }
         return UsageLimitStore.getLimitMinutes(context, profile, item.packageName) > 0 ||
             SessionLimitStore.getLimitMinutes(context, profile, item.packageName) > 0 ||
             AttemptLimitStore.getLimitAttempts(context, profile, item.packageName) > 0
     }
 
     init {
-        // initial list
         submitList(allApps)
         setHasStableIds(true)
     }
 
     override fun getItemId(position: Int): Long {
-        // stable id based on package name
         return getItem(position).packageName.hashCode().toLong()
     }
 
     fun notifyPkgChanged(pkg: String) {
-        // refresh only if currently visible in list
         val idx = currentList.indexOfFirst { it.packageName == pkg }
         if (idx >= 0) notifyItemChanged(idx)
     }
@@ -110,8 +119,8 @@ class AppListAdapter(
         private val ivAppIcon: ImageView = v.findViewById(R.id.ivAppIcon)
         private val tvLabel: TextView = v.findViewById(R.id.tvLabel)
         private val tvPkg: TextView = v.findViewById(R.id.tvPkg)
-        private val tvUnavailableChip: TextView = v.findViewById(R.id.tvUnavailableChip)
-        private val tvUnavailableHint: TextView = v.findViewById(R.id.tvUnavailableHint)
+        private val tvStateChip: TextView = v.findViewById(R.id.tvUnavailableChip)
+        private val tvHint: TextView = v.findViewById(R.id.tvUnavailableHint)
 
         private val limitRow: LinearLayout = v.findViewById(R.id.limitRow)
         private val ivTimer: ImageView = v.findViewById(R.id.ivTimer)
@@ -124,6 +133,17 @@ class AppListAdapter(
         private fun dp(value: Float): Int =
             (value * itemView.resources.displayMetrics.density).toInt()
 
+        private fun applyStateChipStyle() {
+            val ctx = itemView.context
+            val chipBg = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(999f).toFloat()
+                setColor(ContextCompat.getColor(ctx, R.color.unavailable_chip_bg))
+            }
+            tvStateChip.background = chipBg
+            tvStateChip.setTextColor(ContextCompat.getColor(ctx, R.color.unavailable_chip_text))
+        }
+
         private fun applyUnavailableRowStyle() {
             val ctx = itemView.context
             val bg = GradientDrawable().apply {
@@ -135,22 +155,12 @@ class AppListAdapter(
             itemView.background = bg
         }
 
-        private fun applyUnavailableChipStyle() {
-            val ctx = itemView.context
-            val chipBg = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(999f).toFloat()
-                setColor(ContextCompat.getColor(ctx, R.color.unavailable_chip_bg))
-            }
-            tvUnavailableChip.background = chipBg
-            tvUnavailableChip.setTextColor(ContextCompat.getColor(ctx, R.color.unavailable_chip_text))
-        }
-
         fun bind(item: AppEntry) {
             val ctx = itemView.context
             val profile = currentProfileProvider.invoke()
+            val hardExcluded = item.blockSafety.level == AppBlockSafety.Level.HARD_EXCLUDED
+            val softWarning = item.blockSafety.level == AppBlockSafety.Level.SOFT_WARNING
 
-            // App icon (cached) to keep scrolling smooth
             ivAppIcon.setImageDrawable(AppIconCache.get(ctx, item.packageName))
 
             tvLabel.text = item.label
@@ -172,16 +182,28 @@ class AppListAdapter(
             val hasSessionLimit = sessionLimitMin > 0
             val hasAttemptLimit = attemptLimit > 0
             val hasLimit = hasDailyLimit || hasSessionLimit || hasAttemptLimit
+            val effectiveHasLimit = hasLimit && !hardExcluded
             val accent = AccentColor.getAccentColorInt(ctx)
 
-            // Recycler rows are inflated asynchronously; keep checkbox tint in sync with active accent.
             cb.buttonTintList = AccentColor.getActiveColor(ctx)
+            applyStateChipStyle()
 
             if (item.isAvailable) {
-                // reset unavailable visuals for recycled holders
                 itemView.background = null
-                tvUnavailableChip.visibility = View.GONE
-                tvUnavailableHint.visibility = View.GONE
+
+                if (!item.blockSafety.hint.isNullOrBlank()) {
+                    tvStateChip.visibility = View.VISIBLE
+                    tvHint.visibility = View.VISIBLE
+                    tvStateChip.text = ctx.getString(
+                        if (hardExcluded) R.string.app_picker_protected_chip else R.string.app_picker_caution_chip
+                    )
+                    tvHint.text = item.blockSafety.hint
+                } else {
+                    tvStateChip.text = ""
+                    tvHint.text = ""
+                    tvStateChip.visibility = View.GONE
+                    tvHint.visibility = View.GONE
+                }
 
                 limitRow.orientation = LinearLayout.HORIZONTAL
                 limitRow.gravity = android.view.Gravity.CENTER_VERTICAL
@@ -192,13 +214,9 @@ class AppListAdapter(
                 limitParams.marginStart = 0
                 tvLimit.layoutParams = limitParams
 
-                if (hasLimit) {
+                if (effectiveHasLimit) {
                     limitRow.visibility = View.VISIBLE
-
-                    // icon tint
                     ivTimer.setColorFilter(accent)
-
-                    // state + limit text
                     tvState.text = ctx.getString(R.string.limit_set)
                     tvLimit.text = buildString {
                         if (hasDailyLimit) append(ctx.getString(R.string.daily_limit_label, limitMin))
@@ -211,54 +229,72 @@ class AppListAdapter(
                             append(ctx.getString(R.string.attempt_limit_label, attemptLimit))
                         }
                     }
-
                     tvState.setTextColor(accent)
                     tvLimit.setTextColor(accent)
                 } else {
                     limitRow.visibility = View.GONE
                 }
             } else {
-                // unavailable/stale profile entry: show badge + compact remove hint
                 applyUnavailableRowStyle()
-                applyUnavailableChipStyle()
-                tvUnavailableChip.visibility = View.VISIBLE
-                tvUnavailableHint.visibility = View.VISIBLE
-                tvUnavailableHint.text = ctx.getString(R.string.unavailable_app_remove_hint)
-
-                // do not show limit info row for unavailable entries (keeps layout compact)
+                tvStateChip.visibility = View.VISIBLE
+                tvHint.visibility = View.VISIBLE
+                tvStateChip.text = ctx.getString(R.string.unavailable_app_state)
+                tvHint.text = ctx.getString(R.string.unavailable_app_remove_hint)
                 limitRow.visibility = View.GONE
             }
 
-            // If any limit is set on an installed app -> ALWAYS managed.
-            if (hasLimit && item.isAvailable) {
+            if (effectiveHasLimit && item.isAvailable) {
                 managed.add(item.packageName)
+            }
+            if (hardExcluded) {
+                managed.remove(item.packageName)
             }
 
             cb.setOnCheckedChangeListener(null)
 
-            val lockSelectionDueToLimit = hasLimit && item.isAvailable
-            cb.isChecked = hasLimit || managed.contains(item.packageName)
-            cb.isEnabled = !lockSelectionDueToLimit
-            cb.alpha = if (lockSelectionDueToLimit) 0.65f else 1f
+            val lockSelectionDueToLimit = effectiveHasLimit && item.isAvailable
+            cb.isChecked = effectiveHasLimit || (!hardExcluded && managed.contains(item.packageName))
+            cb.isEnabled = !lockSelectionDueToLimit && !hardExcluded
+            cb.alpha = if (lockSelectionDueToLimit || hardExcluded) 0.65f else 1f
 
-            cb.setOnCheckedChangeListener { _, checked ->
+            lateinit var listener: CompoundButton.OnCheckedChangeListener
+            fun setCheckedSilently(value: Boolean) {
+                cb.setOnCheckedChangeListener(null)
+                cb.isChecked = value
+                cb.setOnCheckedChangeListener(listener)
+            }
+
+            listener = CompoundButton.OnCheckedChangeListener { _, checked ->
                 if (checked) {
-                    managed.add(item.packageName)
+                    if (softWarning) {
+                        setCheckedSilently(false)
+                        AlertDialog.Builder(ctx)
+                            .setTitle(item.blockSafety.warningTitle ?: ctx.getString(R.string.app_picker_protected_caution_title))
+                            .setMessage(item.blockSafety.warningMessage ?: item.blockSafety.hint ?: ctx.getString(R.string.app_picker_protected_generic_hint))
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .setPositiveButton(R.string.continue_label) { _, _ ->
+                                managed.add(item.packageName)
+                                notifyPkgChanged(item.packageName)
+                            }
+                            .showAccented()
+                    } else {
+                        managed.add(item.packageName)
+                    }
                 } else {
                     managed.remove(item.packageName)
 
-                    // For unavailable apps, removing should fully clean stale limit state too.
                     if (!item.isAvailable && !profile.isNullOrBlank()) {
                         UsageLimitStore.setLimitMinutes(ctx, profile, item.packageName, 0)
                         SessionLimitStore.setLimitMinutes(ctx, profile, item.packageName, 0)
                         AttemptLimitStore.setLimitAttempts(ctx, profile, item.packageName, 0)
-                        OpenCountStore.setToday(ctx, profile ?: "default", item.packageName, 0)
+                        OpenCountStore.setToday(ctx, profile, item.packageName, 0)
                         notifyPkgChanged(item.packageName)
                     }
                 }
             }
+            cb.setOnCheckedChangeListener(listener)
 
-            if (item.isAvailable) {
+            if (item.isAvailable && !hardExcluded) {
                 btnLimit.visibility = View.VISIBLE
                 btnLimit.isEnabled = true
                 btnLimit.alpha = 1f
@@ -267,8 +303,18 @@ class AppListAdapter(
                     onSetSessionLimitClicked?.invoke(item)
                     true
                 }
+            } else if (item.isAvailable) {
+                btnLimit.visibility = View.VISIBLE
+                btnLimit.isEnabled = false
+                btnLimit.alpha = 0.45f
+                btnLimit.setOnClickListener {
+                    Toast.makeText(ctx, item.blockSafety.hint ?: ctx.getString(R.string.app_picker_protected_generic_hint), Toast.LENGTH_LONG).show()
+                }
+                btnLimit.setOnLongClickListener {
+                    Toast.makeText(ctx, item.blockSafety.hint ?: ctx.getString(R.string.app_picker_protected_generic_hint), Toast.LENGTH_LONG).show()
+                    true
+                }
             } else {
-                // For unavailable apps the limit action is irrelevant and only adds UI noise.
                 btnLimit.visibility = View.GONE
                 btnLimit.isEnabled = false
                 btnLimit.alpha = 0.45f
@@ -290,7 +336,6 @@ class AppListAdapter(
             }
 
             override fun areContentsTheSame(oldItem: AppEntry, newItem: AppEntry): Boolean {
-                // if label/icon can change, include those fields too
                 return oldItem == newItem
             }
         }

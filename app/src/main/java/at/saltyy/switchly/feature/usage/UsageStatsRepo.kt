@@ -94,9 +94,105 @@ object UsageStatsRepo {
     }
 
     fun getTodaySummary(ctx: Context, topN: Int = 20): UsageSummary {
-        val now = System.currentTimeMillis()
-        val start = startOfTodayLocal()
-        return getSummary(ctx, start, now, topN)
+        // Prefer Switchly's own per-day store for "today".
+        // Some devices/OEMs over-report UsageStats for the current day and can leak yesterday's total into today's app values, which then causes early blocking.
+        // If the internal store is still empty, fall back to a live system query so the Today tab doesn't look blank.
+        val byPkg = HashMap(UsageStore.getUsageMsMapToday(ctx))
+        if (byPkg.isEmpty()) {
+            return getSummary(ctx, startOfTodayLocal(), System.currentTimeMillis(), topN)
+        }
+
+        val homePkgs = getHomePackages(ctx)
+        val it = byPkg.keys.iterator()
+        while (it.hasNext()) {
+            val pkg = it.next()
+            if (shouldExcludePackage(ctx, pkg, homePkgs) || !isInstalled(ctx, pkg)) {
+                it.remove()
+            }
+        }
+
+        val total = byPkg.values.sum()
+        val pm = ctx.packageManager
+        val top = byPkg.entries
+            .sortedByDescending { it.value }
+            .take(topN)
+            .map { (pkg, ms) ->
+                val label = try {
+                    val appInfo = pm.getApplicationInfo(pkg, 0)
+                    pm.getApplicationLabel(appInfo).toString()
+                } catch (_: Throwable) {
+                    pkg
+                }
+                val icon = try {
+                    pm.getApplicationIcon(pkg)
+                } catch (_: Throwable) {
+                    null
+                }
+                val percent = if (total > 0L) ms.toFloat() / total.toFloat() else 0f
+                AppUsage(pkg, label, icon, ms, percent)
+            }
+
+        return UsageSummary(totalTimeMs = total, topApps = top)
+    }
+
+    fun getTodayPerHour(
+        ctx: Context,
+        packageName: String,
+        now: Long = System.currentTimeMillis()
+    ): List<Long> {
+        if (packageName.isBlank()) return List(24) { 0L }
+
+        val safeNow = now.coerceAtMost(System.currentTimeMillis())
+        val dayStart = startOfTodayLocal()
+        val buckets = LongArray(24)
+        val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val events = try {
+            usm.queryEvents(dayStart, safeNow)
+        } catch (_: SecurityException) {
+            null
+        } catch (_: Throwable) {
+            null
+        }
+
+        if (events != null) {
+            var activeStart: Long? = null
+            val e = UsageEvents.Event()
+            while (events.hasNextEvent()) {
+                events.getNextEvent(e)
+                if (e.packageName != packageName) continue
+                when (e.eventType) {
+                    UsageEvents.Event.MOVE_TO_FOREGROUND,
+                    UsageEvents.Event.ACTIVITY_RESUMED -> {
+                        val startAt = e.timeStamp.coerceIn(dayStart, safeNow)
+                        val prev = activeStart
+                        if (prev == null || startAt < prev) activeStart = startAt
+                    }
+
+                    UsageEvents.Event.MOVE_TO_BACKGROUND,
+                    UsageEvents.Event.ACTIVITY_PAUSED,
+                    UsageEvents.Event.ACTIVITY_STOPPED -> {
+                        val startAt = activeStart ?: continue
+                        val endAt = e.timeStamp.coerceIn(dayStart, safeNow)
+                        addRangeToHourlyBuckets(buckets, dayStart, startAt, endAt)
+                        activeStart = null
+                    }
+                }
+            }
+
+            val startAt = activeStart
+            if (startAt != null) {
+                addRangeToHourlyBuckets(buckets, dayStart, startAt, safeNow)
+            }
+        }
+
+        val internalToday = UsageStore.getUsageMsToday(ctx, packageName).coerceAtLeast(0L)
+        val bucketTotal = buckets.sum().coerceAtLeast(0L)
+        if (internalToday > bucketTotal) {
+            val hourIndex = (((safeNow - dayStart) / TimeUnit.HOURS.toMillis(1)).toInt()).coerceIn(0, 23)
+            buckets[hourIndex] += (internalToday - bucketTotal)
+        }
+
+        return buckets.map { it.coerceAtLeast(0L) }
     }
 
     fun getSessionsToday(ctx: Context, packageName: String): Int {
@@ -115,12 +211,95 @@ object UsageStatsRepo {
         return sessions
     }
 
+    private fun getPackageUsageForWindowClamped(
+        ctx: Context,
+        from: Long,
+        to: Long,
+        packageName: String
+    ): Long {
+        val safeTo = to.coerceAtMost(System.currentTimeMillis())
+        val windowMs = (safeTo - from).coerceAtLeast(0L)
+        if (packageName.isBlank() || windowMs <= 0L) return 0L
+        val reported = getSummary(ctx, from, safeTo, topN = 1, onlyPackage = packageName).totalTimeMs
+        // A single package cannot physically be in the foreground longer than the
+        // queried window itself. Some OEMs over-report package usage in bucketed
+        // queries, especially for historical windows, so clamp to the window size.
+        return reported.coerceIn(0L, windowMs)
+    }
+
     fun getTotalMsForWindow(ctx: Context, from: Long, to: Long, packageName: String): Long {
-        return getSummary(ctx, from, to, topN = 1, onlyPackage = packageName).totalTimeMs
+        return getPackageUsageForWindowClamped(ctx, from, to, packageName)
     }
 
     fun getTodayMsForPackage(ctx: Context, packageName: String, now: Long = System.currentTimeMillis()): Long {
-        return getSummary(ctx, startOfDayLocal(now), now, topN = 1, onlyPackage = packageName).totalTimeMs
+        return getPackageUsageForWindowClamped(ctx, startOfDayLocal(now), now, packageName)
+    }
+
+    fun getSessionsForWindow(ctx: Context, from: Long, to: Long, packageName: String): Int {
+        val safeTo = to.coerceAtMost(System.currentTimeMillis())
+        if (packageName.isBlank() || safeTo <= from) return 0
+        val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val events = try {
+            usm.queryEvents(from, safeTo)
+        } catch (_: SecurityException) {
+            return 0
+        } catch (_: Throwable) {
+            return 0
+        }
+        var sessions = 0
+        val e = UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(e)
+            if (e.packageName == packageName && e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                sessions++
+            }
+        }
+        return sessions
+    }
+
+    fun getSessionsForCurrentWeek(ctx: Context, packageName: String): Int {
+        val now = System.currentTimeMillis()
+        val c = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            val diff = (7 + (get(Calendar.DAY_OF_WEEK) - firstDayOfWeek)) % 7
+            add(Calendar.DAY_OF_YEAR, -diff)
+        }
+        return getSessionsForWindow(ctx, c.timeInMillis, now, packageName)
+    }
+
+    fun getSessionsForCurrentMonth(ctx: Context, packageName: String): Int {
+        val now = System.currentTimeMillis()
+        val c = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return getSessionsForWindow(ctx, c.timeInMillis, now, packageName)
+    }
+
+    fun getSessionsForCurrentYear(ctx: Context, packageName: String): Int {
+        val now = System.currentTimeMillis()
+        val c = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return getSessionsForWindow(ctx, c.timeInMillis, now, packageName)
+    }
+
+    fun getSessionsOverall(ctx: Context, packageName: String): Int {
+        return getSessionsForWindow(ctx, 0L, System.currentTimeMillis(), packageName)
     }
 
     fun getLast7DaysPerDay(ctx: Context, packageName: String): List<Long> {
@@ -137,7 +316,7 @@ object UsageStatsRepo {
 
         return dayStarts.mapIndexed { i, start ->
             val end = if (i == dayStarts.lastIndex) startOfTomorrowLocal() else dayStarts[i + 1]
-            getSummary(ctx, start, end, topN = 1, onlyPackage = packageName).totalTimeMs
+            getPackageUsageForWindowClamped(ctx, start, end, packageName)
         }
     }
 
@@ -156,7 +335,7 @@ object UsageStatsRepo {
 
         return dayStarts.mapIndexed { i, start ->
             val end = if (i == dayStarts.lastIndex) startOfTomorrowLocal() else dayStarts[i + 1]
-            getSummary(ctx, start, end, topN = 1, onlyPackage = packageName).totalTimeMs
+            getPackageUsageForWindowClamped(ctx, start, end, packageName)
         }
     }
 
@@ -164,6 +343,59 @@ object UsageStatsRepo {
      * Returns the earliest timestamp (ms) that the system actually reports usage for within the window.
      * Useful for showing a UI banner like: "Data available since ..." on devices that retain only ~1 week.
      */
+
+    fun getSingleDayUsageMapForImport(ctx: Context, dayStart: Long, dayEnd: Long): Map<String, Long> {
+        val safeEnd = dayEnd.coerceAtMost(System.currentTimeMillis())
+        if (safeEnd <= dayStart) return emptyMap()
+        val windowMs = (safeEnd - dayStart).coerceAtLeast(0L)
+
+        // Import legacy data conservatively.
+        // For the one-time migration we intentionally do NOT merge multiple system sources, because that can inflate historical values on some devices.
+        // We only import the raw daily UsageStats values that Android already exposes for the requested window.
+        val byPkg = queryDailyUsage(
+            ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager,
+            dayStart,
+            safeEnd,
+            onlyPackage = null
+        )
+
+        val homePkgs = getHomePackages(ctx)
+        val out = linkedMapOf<String, Long>()
+        for ((pkg, rawMs) in byPkg) {
+            if (shouldExcludePackage(ctx, pkg, homePkgs)) continue
+            if (!isInstalled(ctx, pkg)) continue
+            val ms = rawMs.coerceIn(0L, windowMs)
+            if (ms > 0L) out[pkg] = ms
+        }
+        return out
+    }
+
+    fun getSessionCountMapForWindow(ctx: Context, from: Long, to: Long): Map<String, Int> {
+        val safeTo = to.coerceAtMost(System.currentTimeMillis())
+        if (safeTo <= from) return emptyMap()
+        val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val events = try {
+            usm.queryEvents(from, safeTo)
+        } catch (_: SecurityException) {
+            return emptyMap()
+        } catch (_: Throwable) {
+            return emptyMap()
+        }
+        val homePkgs = getHomePackages(ctx)
+        val out = linkedMapOf<String, Int>()
+        val e = UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(e)
+            val pkg = e.packageName ?: continue
+            if (shouldExcludePackage(ctx, pkg, homePkgs)) continue
+            if (!isInstalled(ctx, pkg)) continue
+            if (e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                out[pkg] = (out[pkg] ?: 0) + 1
+            }
+        }
+        return out
+    }
+
     fun getEarliestAvailableUsageMs(ctx: Context, from: Long, to: Long): Long? {
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
@@ -186,8 +418,9 @@ object UsageStatsRepo {
         }
     }
 
-    private fun shouldExcludePackage(pkg: String, homePkgs: Set<String>): Boolean {
+    private fun shouldExcludePackage(ctx: Context, pkg: String, homePkgs: Set<String>): Boolean {
         val p = pkg.lowercase()
+        if (pkg == ctx.packageName) return true
         if (pkg in homePkgs) return true
         if (p == "android") return true
         if (p == "com.android.systemui") return true
@@ -232,7 +465,7 @@ object UsageStatsRepo {
             val it = byPkg.keys.iterator()
             while (it.hasNext()) {
                 val pkg = it.next()
-                if (shouldExcludePackage(pkg, homePkgs)) {
+                if (shouldExcludePackage(ctx, pkg, homePkgs)) {
                     it.remove()
                 }
             }
@@ -283,16 +516,20 @@ object UsageStatsRepo {
         mergeUsage(byPkg, queryDailyUsage(usm, dayStart, dayEnd, onlyPackage))
         mergeUsage(byPkg, queryEventDerivedUsage(usm, dayStart, dayEnd, onlyPackage))
 
-        val internalToday = UsageStore.getUsageMsMapToday(ctx)
-        if (onlyPackage != null) {
-            val internal = internalToday[onlyPackage]?.coerceAtLeast(0L) ?: 0L
-            if (internal > 0L) {
-                byPkg[onlyPackage] = maxOf(byPkg[onlyPackage] ?: 0L, internal)
-            }
-        } else {
-            for ((pkg, ms) in internalToday) {
-                if (ms <= 0L) continue
-                byPkg[pkg] = maxOf(byPkg[pkg] ?: 0L, ms)
+        // Only merge the live in-memory "today" usage for the actual current-day window.
+        // Historical single-day queries (used by month/year/overall detail screens) must not pull in today's buffered value, otherwise today's usage gets duplicated into every historical day and long-range totals explode.
+        if (dayStart == startOfTodayLocal()) {
+            val internalToday = UsageStore.getUsageMsMapToday(ctx)
+            if (onlyPackage != null) {
+                val internal = internalToday[onlyPackage]?.coerceAtLeast(0L) ?: 0L
+                if (internal > 0L) {
+                    byPkg[onlyPackage] = maxOf(byPkg[onlyPackage] ?: 0L, internal)
+                }
+            } else {
+                for ((pkg, ms) in internalToday) {
+                    if (ms <= 0L) continue
+                    byPkg[pkg] = maxOf(byPkg[pkg] ?: 0L, ms)
+                }
             }
         }
 
@@ -402,6 +639,26 @@ object UsageStatsRepo {
         }
 
         return totals
+    }
+
+    private fun addRangeToHourlyBuckets(
+        buckets: LongArray,
+        dayStart: Long,
+        startMs: Long,
+        endMs: Long
+    ) {
+        val safeStart = startMs.coerceAtLeast(dayStart)
+        val safeEnd = endMs.coerceAtLeast(safeStart)
+        if (safeEnd <= safeStart) return
+
+        val hourMs = TimeUnit.HOURS.toMillis(1)
+        var cursor = safeStart
+        while (cursor < safeEnd) {
+            val hourIndex = (((cursor - dayStart) / hourMs).toInt()).coerceIn(0, 23)
+            val hourEnd = minOf(dayStart + ((hourIndex + 1) * hourMs), safeEnd)
+            if (hourEnd > cursor) buckets[hourIndex] += (hourEnd - cursor)
+            cursor = hourEnd
+        }
     }
 
     private fun getBucketedUsageByPackage(

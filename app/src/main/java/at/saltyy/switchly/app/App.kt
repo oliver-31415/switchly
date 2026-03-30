@@ -9,6 +9,7 @@ import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.premium.BillingProxyActivityGate
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
 import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
 import at.saltyy.switchly.security.AppLockManager
@@ -40,6 +41,9 @@ class App : Application() {
         BluetoothTriggerMonitor.ensureStarted(this)
 
         AppLockManager.register(this)
+
+        // One-time sanity cleanup for old inflated usage imports.
+        runCatching { UsageStore.sanitizeImpossibleDailyTotals(this) }
 
         // auto-start blocking runtime if enabled and Accessibility is available
         val enabled = SwitchModeStore.isEnabled(this)

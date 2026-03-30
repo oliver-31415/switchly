@@ -1,37 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <string name="tools_section_automation">Automatisierung</string>
-    <string name="tools_section_management">Verwaltung</string>
-    <string name="tools_section_safety">Sicherheit</string>
-    <string name="tools_section_activity">Aktivität</string>
-
-    <string name="tools_protection_title">Schutzsteuerung</string>
-    <string name="tools_protection_summary">Lege fest, welche Steuerungswege erlaubt sind, zum Beispiel Zeitpläne, NFC, QR oder manuelle Aktionen</string>
-
+    <!-- TOOLS - Section labels -->
+    <string name="tools_section_automation">Steuerung &amp; Automatisierung</string>
+    <string name="tools_section_management">Profile &amp; Einrichtung</string>
+    <string name="tools_section_safety">Schnelle Freigabe</string>
+    <string name="tools_section_activity">Nutzung &amp; Verlauf</string>
+    <!-- TOOLS - Automation -->
     <string name="tools_schedules_title">Zeitpläne</string>
     <string name="tools_schedules_summary">Automatische Aktionen für Zeit, WLAN und Bluetooth erstellen und verwalten</string>
-
     <string name="tools_nfc_write_title">NFC-Tag schreiben</string>
-    <string name="tools_nfc_write_summary">Beschreibbare NFC-Tags für Aktivieren, Deaktivieren, Re-entry und andere Aktionen beschreiben</string>
-
+    <string name="tools_nfc_write_summary">Beschreibbare NFC-Tags für Aktivieren, Deaktivieren, Einstellungs-Entsperrung und andere Aktionen beschreiben</string>
     <string name="tools_manage_qr_title">QR generieren</string>
     <string name="tools_manage_qr_summary">Einen Switchly-QR-Code erstellen</string>
-
+    <!-- TOOLS - Management -->
     <string name="tools_profiles_title">Profile verwalten</string>
-    <string name="tools_profiles_summary">Blockierprofile erstellen, bearbeiten und organisieren</string>
-
-    <string name="tools_emergency_unlock_summary">Schutz vorübergehend deaktivieren, wenn du es wirklich brauchst</string>
-
+    <string name="tools_profiles_summary">Blockierprofile erstellen, wechseln und organisieren</string>
     <string name="tools_paired_tags_title">Gepaarte Tags verwalten</string>
     <string name="tools_paired_tags_summary">Gepaarte NFC-Tags hinzufügen, umbenennen und verwalten, inklusive Cooldown- oder Tageslimits</string>
-
-    <string name="tools_insights_title">Einblicke</string>
-    <string name="tools_insights_summary">Nutzungs-, Blockierungs- und andere Aktivitätsinfos ansehen</string>
-
-    <string name="tools_blocked_notifications_summary">Blockierte Benachrichtigungen und ähnliche Aktivität ansehen</string>
-
     <string name="tools_manage_barcodes_title">Barcodes verwalten</string>
     <string name="tools_manage_barcodes_summary">Physische Barcodes auf Switchly-Aktionen mappen</string>
-
+    <!-- TOOLS - Safety -->
+    <string name="tools_emergency_unlock_summary">Schutz vorübergehend deaktivieren, wenn du es wirklich brauchst</string>
+    <!-- TOOLS - Activity -->
+    <string name="tools_insights_title">Nutzung &amp; Einblicke</string>
+    <string name="tools_insights_summary">Nutzungs-, Blockierungs- und verwandte Aktivitätsinfos ansehen</string>
+    <string name="tools_blocked_notifications_summary">Blockierte Benachrichtigungen und ähnliche Aktivität ansehen</string>
 </resources>

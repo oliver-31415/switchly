@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.data.prefs.DomainBlockStore
@@ -68,6 +69,7 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
+        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_websites)) return
         setContentView(R.layout.activity_manage_blocked_websites)
 
         val swWebsitesEnabled = findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.swWebsitesEnabled)

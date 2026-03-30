@@ -1,57 +1,33 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================================================
-         BLOCKING HUB/ENTRY POINTS
-         ========================================================= -->
+    <!-- WEBSITE BLOCKING - Overview and rules -->
     <string name="block_websites">Websites blockieren</string>
     <string name="block_websites_desc">Blockiere bestimmte Domains in unterstützten Browsern.\nDu kannst auch ein tägliches Zeitlimit festlegen.</string>
-
-    <!-- =========================================================
-         WEBSITE BLOCKING: List/screen
-         ========================================================= -->
     <string name="blocked_websites_title">Blockierte Websites</string>
     <string name="blocked_websites_summary">Bestimmte Domains in unterstützten Browsern blockieren</string>
     <string name="blocked_websites_empty">Noch keine blockierten Websites. Tippe auf +, um eine hinzuzufügen.</string>
     <string name="blocked_websites_add_title">Website hinzufügen</string>
-
     <plurals name="delete_websites_confirm">
         <item quantity="one">Diese Website-Regel löschen?</item>
         <item quantity="other">%1$d Website-Regeln löschen?</item>
     </plurals>
     <string name="add_website_rule_title">Website-Regel hinzufügen</string>
-
-    <!-- =========================================================
-         WEBSITE BLOCKING: Domain input/validation
-         ========================================================= -->
     <string name="domain_rule_hint_example">example.com</string>
     <string name="domain_required">Bitte gib eine Domain ein.</string>
-
-    <!-- =========================================================
-         WEBSITE + IN-APP: Rule types/limits
-         ========================================================= -->
     <string name="rule_type">Regeltyp</string>
     <string name="rule_block_always">Immer blockieren</string>
     <string name="rule_daily_limit">Tägliches Limit</string>
     <string name="rule_blocked">Blockiert</string>
-
     <string name="domain_limit_required">Bitte gib ein Tageslimit in Minuten ein.</string>
     <string name="daily_limit_helper">Lege Minuten pro Tag fest. Leer lassen für kein Limit.</string>
     <string name="set_daily_limit_desc">Lege fest, wie viele Minuten pro Tag erlaubt sind, bevor Switchly blockiert.</string>
     <string name="daily_limit_value_format">%1$d Min/Tag</string>
     <string name="clear_limit">Limit löschen</string>
-
-    <!-- =========================================================
-         BLOCKED INBOX: Screen and empty state
-         ========================================================= -->
+    <!-- BLOCKED INBOX -->
     <string name="blocked_inbox_title">Blockierte Benachrichtigungen</string>
     <string name="blocked_inbox_detail_title">Blockierte Benachrichtigung</string>
     <string name="blocked_inbox_empty">Noch keine blockierten Benachrichtigungen ✅</string>
     <string name="blocked_inbox_content_unknown">Keine Vorschau verfügbar</string>
-
-    <!-- =========================================================
-         BLOCKED INBOX: Item details (fields)
-         ========================================================= -->
     <string name="blocked_inbox_field_time">Zeit</string>
     <string name="blocked_inbox_field_app">App</string>
     <string name="blocked_inbox_field_profile">Profil</string>
@@ -61,19 +37,14 @@
     <string name="blocked_inbox_field_sub_text">Untertext</string>
     <string name="blocked_inbox_field_summary_text">Zusammenfassung</string>
     <string name="blocked_inbox_field_big_text">Langer Text</string>
-    <!-- =========================================================
-         BLOCKED INBOX: Filter/sort
-         ========================================================= -->
     <string name="blocked_inbox_filter_app">Nach App filtern</string>
     <string name="blocked_inbox_filter">Filter</string>
     <string name="blocked_inbox_filter_menu_title">Filtern &amp; sortieren</string>
     <string name="blocked_inbox_filter_all_apps">Alle Apps</string>
     <string name="blocked_inbox_filter_subtitle_fmt">Filter: %1$s</string>
-
     <string name="blocked_inbox_sort_title">Blockierte Benachrichtigungen sortieren</string>
     <string name="blocked_inbox_sort_newest">Neueste zuerst</string>
     <string name="blocked_inbox_sort_oldest">Älteste zuerst</string>
-
     <string name="blocked_inbox_delete_title">Blockierte Benachrichtigungen löschen</string>
     <plurals name="blocked_inbox_delete_selected_confirm_fmt">
         <item quantity="one">%1$d ausgewählte Benachrichtigung löschen?</item>
@@ -85,24 +56,12 @@
         <item quantity="other">%1$d ausgewählt</item>
     </plurals>
     <string name="select">Auswählen</string>
-
     <string name="blocked_inbox_subtitle_compact_fmt">%1$s%2$s</string>
-
-    <!-- =========================================================
-         IN-APP BLOCKING: Screen
-         ========================================================= -->
+    <!-- IN-APP BLOCKING -->
     <string name="in_app_blocking_title">In-App-Blockierung</string>
     <string name="in_app_blocking_summary">Blockiere Teile von Apps wie Shorts, Reels und Explore.</string>
-
-    <!-- =========================================================
-         IN-APP BLOCKING: Supported apps
-         ========================================================= -->
     <string name="in_app_blocking_youtube">YouTube</string>
     <string name="in_app_blocking_instagram">Instagram</string>
-
-    <!-- =========================================================
-         IN-APP BLOCKING: Sections to block
-         ========================================================= -->
     <string name="in_app_blocking_block_shorts">Shorts blockieren</string>
     <string name="in_app_blocking_block_reels">Reels blockieren</string>
     <string name="in_app_blocking_block_explore">Explore-Tab blockieren</string>
@@ -110,48 +69,30 @@
     <string name="in_app_blocking_block_video_search">Videosuche blockieren</string>
     <string name="in_app_blocking_block_comments">Kommentare blockieren</string>
     <string name="in_app_blocking_block_pip">Bild-im-Bild-Modus blockieren</string>
-
-    <!-- =========================================================
-         IN-APP BLOCKING: Limit configuration
-         ========================================================= -->
     <string name="in_app_blocking_limit_title">In-App-Blockierungslimit</string>
     <string name="in_app_limit_label">In-App-Limit</string>
     <string name="in_app_blocking_limit_desc">Tägliches Zeitlimit über alle aktivierten In-App-Bereiche.\nWenn kein Limit gesetzt ist, werden aktivierte Bereiche sofort blockiert.</string>
-
-    <!-- =========================================================
-         COMMON ACTIONS
-         ========================================================= -->
     <string name="edit">Bearbeiten</string>
-
-    <!-- =========================================================
-         IN-APP BLOCKING: Surface labels/dialogs
-         ========================================================= -->
     <string name="in_app_surface_shorts_label">Shorts</string>
     <string name="in_app_surface_reels_label">Reels</string>
     <string name="in_app_surface_explore_label">Entdecken</string>
     <string name="in_app_surface_stories_label">Stories</string>
-
     <string name="in_app_surface_use_global_limit_fmt">Globales Limit verwenden (%1$d Min/Tag)</string>
     <string name="in_app_surface_set_global_limit">Globales In-App-Limit festlegen…</string>
     <string name="in_app_surface_always_block">Immer blockieren</string>
     <string name="in_app_surface_custom">Benutzerdefiniert…</string>
     <string name="in_app_surface_rule_dialog_title">%1$s</string>
     <string name="in_app_surface_daily_limit_title">%1$s: tägliches Limit</string>
-
-    <!-- =========================================================
-         BLOCKER OVERLAY: Titles/messages
-         ========================================================= -->
+    <!-- BLOCKING MESSAGES AND OVERLAYS -->
     <string name="blocking_website_blocked_title">Website ist blockiert!</string>
     <string name="blocking_website_limit_reached_title">Website-Limit erreicht!</string>
     <string name="blocking_in_app_limit_reached_title">In-App-Limit erreicht!</string>
     <string name="blocking_surface_blocked_title">%1$s ist blockiert!</string>
     <string name="blocking_surface_limit_reached_title">%1$s-Limit erreicht!</string>
-
     <string name="blocking_search_blocked_title">Suche ist blockiert!</string>
     <string name="blocking_comments_blocked_title">Kommentare sind blockiert!</string>
     <string name="blocking_pip_blocked_title">Bild-im-Bild ist blockiert!</string>
     <string name="blocking_explore_blocked_title">Entdecken ist blockiert!</string>
-
     <string name="blocking_youtube_search_blocked_message">Die YouTube-Suche wird von Switchly blockiert.</string>
     <string name="blocking_youtube_comments_blocked_message">YouTube-Kommentare werden von Switchly blockiert.</string>
     <string name="blocking_youtube_pip_blocked_message">Der Bild-im-Bild-Modus wird von Switchly blockiert.</string>
@@ -159,5 +100,4 @@
     <string name="blocking_instagram_explore_search_blocked_message">Instagram Entdecken/Suche wird von Switchly blockiert.</string>
     <string name="blocking_surface_base_message">Du kannst diese App-Funktion nicht nutzen, solange Switchly aktiv ist.</string>
     <string name="blocking_daily_limit_duration_fmt">Tägliches Limit: %1$s</string>
-
 </resources>

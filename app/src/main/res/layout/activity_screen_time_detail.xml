@@ -72,6 +72,14 @@
                         android:textColor="?attr/colorOnSurface"/>
 
                     <TextView
+                        android:id="@+id/attempts"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/usage_attempts_today"
+                        android:textColor="?attr/colorOnSurface"/>
+
+                    <TextView
                         android:id="@+id/weekTotal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -209,8 +217,16 @@
                 app:selectionRequired="true">
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRangeToday"
+                    style="@style/Switchly.OutlinedButton.CompactSegment"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/usage_range_today" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRangeWeek"
-                    style="@style/Switchly.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton.CompactSegment"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -218,7 +234,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRangeMonth"
-                    style="@style/Switchly.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton.CompactSegment"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -226,7 +242,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRangeYear"
-                    style="@style/Switchly.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton.CompactSegment"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -234,7 +250,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRangeOverall"
-                    style="@style/Switchly.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton.CompactSegment"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

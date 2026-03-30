@@ -1,5 +1,6 @@
 package at.saltyy.switchly.feature.faq
 
+import android.content.res.ColorStateList
 import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +11,7 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
+import com.google.android.material.color.MaterialColors
 
 class FaqAdapter(
     private val items: List<FaqListItem>
@@ -39,11 +41,15 @@ class FaqAdapter(
         private val ivIcon: ImageView = v.findViewById(R.id.ivIcon)
 
         fun bind(item: FaqListItem, pos: Int) {
+            val ctx = itemView.context
+            val accent = AccentColor.getAccentColorInt(ctx)
+            val default = tvQuestion.currentTextColor
+
             when (item) {
                 is FaqListItem.Header -> {
                     tvHeader.isVisible = true
                     tvHeader.text = item.title
-                    tvHeader.setTextColor(AccentColor.getAccentColorInt(itemView.context))
+                    tvHeader.setTextColor(accent)
 
                     questionRow.isVisible = false
                     tvAnswer.isVisible = false
@@ -65,6 +71,15 @@ class FaqAdapter(
                     }
 
                     val isOpen = pos == expanded
+
+                    ivIcon.setColorFilter(default)
+                    ivArrow.setColorFilter(default)
+
+                    if (isOpen) {
+                        ivIcon.setColorFilter(accent)
+                        ivArrow.setColorFilter(accent)
+                    }
+
                     tvAnswer.isVisible = isOpen
                     ivArrow.rotation = if (isOpen) 180f else 0f
 

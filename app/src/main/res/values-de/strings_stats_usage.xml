@@ -1,9 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-
-    <!-- =========================
-         LIMITS: Picker/setup
-         ========================= -->
+    <!-- LIMITS - Quick editors and value helpers -->
     <string name="set_daily_limit">Tägliches Limit festlegen</string>
     <string name="set_daily_limit_title">Tägliches Limit: %1$s</string>
     <string name="daily_limit_label">Tägliches Limit: %1$d Min/Tag</string>
@@ -14,7 +11,6 @@
         <item quantity="one">%1$d Öffnung/Tag</item>
         <item quantity="other">%1$d Öffnungen/Tag</item>
     </plurals>
-
     <string name="opens_hint">Anzahl Öffnungen eingeben (0–200)</string>
     <string name="minutes_hint_day">Zeit eingeben</string>
     <string name="limit_type_hint">Limit-Typen</string>
@@ -22,10 +18,8 @@
         <item quantity="one">%1$d Öffnung</item>
         <item quantity="other">%1$d Öffnungen</item>
     </plurals>
-
     <string name="set_session_limit_title">Sitzungslimit für %1$s festlegen</string>
     <string name="session_limit_label">Sitzungslimit: %1$d Min</string>
-
     <string name="custom_minutes">Benutzerdefinierte Zeit…</string>
     <string name="custom_value">Benutzerdefiniert…</string>
     <string name="custom_minutes_title">Benutzerdefinierte Minuten</string>
@@ -34,11 +28,16 @@
         <item quantity="one">%1$d Minute</item>
         <item quantity="other">%1$d Minuten</item>
     </plurals>
-
     <string name="no_limit">Kein Limit</string>
     <string name="limit_set">Limit festgelegt</string>
     <string name="select_profile_first">Bitte wähle zuerst ein Profil aus.</string>
-
+    <string name="edit_limits">Limits bearbeiten</string>
+    <string name="limits_quick_edit_hint">Tippe auf das Tune-Icon, um Limits zu bearbeiten.</string>
+    <string name="limit_time_action">Zeit</string>
+    <string name="limit_attempts_action">Öffnungen</string>
+    <string name="no_profile_selected">Bitte wähle ein Profil.</string>
+    <string name="profile_active_fmt">Profil: %1$s</string>
+    <!-- LIMITS - Unavailable app cleanup -->
     <string name="unavailable_app_label">Nicht verfügbare App</string>
     <string name="unavailable_app_state">Nicht installiert</string>
     <string name="unavailable_app_remove_hint">Zum Entfernen abwählen und speichern.</string>
@@ -47,156 +46,48 @@
         <item quantity="one">%1$d nicht verfügbarer App-Eintrag wurde zur Bereinigung geladen.</item>
         <item quantity="other">%1$d nicht verfügbare App-Einträge wurden zur Bereinigung geladen.</item>
     </plurals>
-
-    <!-- =========================
-         SCREEN TIME: Summary card
-         ========================= -->
-    <string name="screen_time_title">Bildschirmzeit</string>
-    <string name="screen_time_used_fmt">Genutzt: %1$s</string>
-    <string name="screen_time_total_fmt">Gesamt: %1$s</string>
-
-    <!-- =========================
-         STATISTICS HUB: Landing cards
-         ========================= -->
-    <string name="statistics_hub_title">Statistiken</string>
-
-    <string name="statistics_hub_usage_title">Nutzungsstatistiken</string>
-    <string name="statistics_hub_usage_desc">App-Nutzung pro Tag, Woche, Monat, Jahr und insgesamt.</string>
-
-    <string name="statistics_hub_blocking_title">App-Blockierungsstatistiken</string>
-    <string name="statistics_hub_blocking_desc">Wie oft Apps blockiert wurden und wie oft du versucht hast, sie zu öffnen.</string>
-
-    <string name="statistics_hub_runtime_title">App-Laufzeitstatistiken</string>
-    <string name="statistics_hub_runtime_desc">Wie lange Switchly gelaufen ist und dich geschützt hat.</string>
-
-    <string name="statistics_hub_other_title">Weitere Infos</string>
-    <string name="statistics_hub_other_desc">Notfall-Entsperrungen, Zeitpläne und mehr.</string>
-
-    <!-- =========================
-         STATS: Mode + range + sorting controls
-         ========================= -->
-    <string name="stats_mode_usage">Nutzung</string>
-    <string name="stats_mode_blocking">Blockierung</string>
-    <string name="stats_mode_runtime">Laufzeit</string>
-    <string name="stats_mode_other">Sonstiges</string>
-
+    <!-- USAGE - Screen title, tabs, and ranges -->
+    <string name="statistics_usage_title">Nutzungsstatistiken</string>
     <string name="stats_range_today">Heute</string>
     <string name="stats_range_week">Woche</string>
     <string name="stats_range_month">Monat</string>
     <string name="stats_range_year">Jahr</string>
     <string name="stats_range_overall">Insgesamt</string>
-
-    <string name="stats_sort_hint_default">Sortieren</string>
-    <string name="stats_sort_hint_fmt">Sortieren: %1$s</string>
-    <string name="stats_sort_az">Name (A–Z)</string>
-    <string name="stats_sort_za">Name (Z–A)</string>
-
-    <!-- =========================
-         STATS: Usage overview
-         ========================= -->
-    <string name="stats_title">Nutzung</string>
-    <string name="stats_today_subtitle">App-Nutzung (täglich) – Limits werden um Mitternacht zurückgesetzt</string>
-
-    <string name="stats_used_today_fmt">Heute genutzt: %1$s</string>
-    <string name="stats_used_week_fmt">Diese Woche genutzt: %1$s</string>
-    <string name="stats_used_month_fmt">Diesen Monat genutzt: %1$s</string>
-    <string name="stats_used_year_fmt">Dieses Jahr genutzt: %1$s</string>
-    <string name="stats_used_overall_fmt">Insgesamt genutzt: %1$s</string>
-
-    <string name="stats_limit_fmt">Limit: %1$d Min</string>
-    <string name="stats_limit_none">Limit: keines</string>
-    <string name="stats_meta_limit_used_fmt">%1$s • %2$s</string>
-    <!-- Shown when the current range has no recorded stats. -->
-    <string name="stats_empty_no_data">Noch keine Statistiken für diesen Zeitraum.</string>
-    <!-- Shown when the user hasn't configured any limits at all. -->
-    <string name="stats_empty_no_limits">Noch keine App- oder Webseiten-Limits eingerichtet.</string>
-    <!-- Kept for backwards compatibility with layout defaults (not used in code). -->
-    <string name="stats_empty">Noch keine Statistiken.</string>
-
-    <!-- =========================
-         STATS: Blocking
-         ========================= -->
-    <string name="stats_blocking_primary_caption">Gesparte Zeit (blockierte Zeit)</string>
-    <string name="stats_blocking_subtitle">Wie oft Apps blockiert wurden und wie viel Zeit sie blockiert waren.</string>
-    <string name="stats_blocking_details_fmt">Blockierte Meldungen: %1$d</string>
-
-    <!-- Blocking: details screen -->
-    <string name="stats_block_detail_title">Blockierungsdetails</string>
-    <string name="stats_detail_attempts_caption">Versuche</string>
-    <string name="stats_detail_blocked_msgs_caption">Blockierte Meldungen</string>
-    <string name="stats_detail_last3_title">Letzte 3 blockierte Meldungen</string>
-    <string name="stats_detail_no_messages">Noch keine blockierten Meldungen.</string>
-    <string name="stats_detail_open_inbox">Blockierte Meldungen öffnen</string>
-    <string name="stats_blocking_empty">Noch keine Blockierungsdaten.</string>
-
-    <!-- =========================
-         STATS: Runtime
-         ========================= -->
-    <string name="stats_runtime_subtitle">Wie lange Switchly heute lief und wie lange es blockierte.</string>
-    <string name="stats_runtime_secondary_caption">Switchly-Laufzeit</string>
-    <string name="stats_runtime_top_blocked">Am häufigsten blockierte Apps</string>
-
-    <!-- =========================
-         STATS: Other counters
-         ========================= -->
-    <string name="stats_other_subtitle">Zusätzliche Einblicke und Zähler.</string>
-    <string name="stats_other_tile_emergency">Notfall-Entsperrungen</string>
-    <string name="stats_other_tile_nfc">NFC-Tags</string>
-    <string name="stats_other_tile_schedules">Zeitpläne</string>
-    <string name="stats_other_tile_blocked_apps">Blockierte Apps</string>
-    <string name="stats_other_tile_profiles">Profile</string>
-    <string name="stats_other_tile_schedules_enabled">Aktivierte Zeitpläne</string>
-    <string name="stats_other_tile_limited_apps">Limitierte Apps</string>
-    <string name="stats_other_tile_qr">QR-Scans</string>
-    <string name="stats_other_tile_temp_enables">Temporäre Freigaben</string>
-    <string name="stats_other_tile_limits_reached">Limits erreicht</string>
-    <string name="stats_other_tile_blocked_attempts">Blockierte Versuche</string>
-    <string name="stats_other_total_fmt">Gesamt: %1$s</string>
-    <string name="stats_other_note_totals">Gesamtwerte (seit Installation)</string>
-
-    <!-- =========================
-         STATS: Premium insights
-         ========================= -->
-    <string name="stats_insights_title">Einblicke (Premium)</string>
-    <string name="stats_insights_ratio_fmt">%1$d%% deiner Nutzung wurde blockiert</string>
-    <string name="stats_insights_ratio_none">0%% deiner Nutzung wurde blockiert 🎉</string>
-    <string name="stats_insights_improved_fmt">Du hast die Nutzung von %1$s um %2$d%% reduziert</string>
-    <string name="stats_insights_improved_none">Noch keine am stärksten verbesserte App</string>
-    <string name="stats_insights_trend_fmt">%1$s %2$d%% gegenüber dem vorherigen Zeitraum</string>
-    <string name="stats_insights_trend_new">↑ Neu</string>
-    <string name="stats_insights_trend_no_data">→ Noch nicht genug Daten</string>
-
-    <!-- =========================
-         USAGE ACCESS: Missing permission prompts
-         ========================= -->
-    <string name="usage_access_missing_title">Nutzungszugriff erforderlich</string>
-    <string name="usage_access_missing_desc">Aktiviere den Nutzungszugriff, um deine Bildschirmzeit und meistgenutzten Apps zu sehen.</string>
-    <string name="usage_access_needed_desc">Bitte aktiviere für Switchly den Zugriff auf „App-Nutzungsdaten“, um deine Bildschirmzeit-Statistiken anzuzeigen.</string>
-    <string name="usage_access_open_settings">Einstellungen für Nutzungszugriff öffnen</string>
-    <string name="usage_open_settings">Einstellungen öffnen</string>
-
-    <!-- =========================
-         USAGE: Tabs/ranges/labels
-         ========================= -->
     <string name="usage_apps_tab">Apps</string>
     <string name="usage_websites_tab">Websites</string>
-
     <string name="usage_today">Heute</string>
     <string name="usage_week_total">7-Tage-Gesamt</string>
-
     <string name="usage_month_total">Diesen Monat gesamt</string>
     <string name="usage_year_total">Dieses Jahr gesamt</string>
     <string name="usage_overall_total">Gesamt (alle Zeit)</string>
-
+    <string name="usage_range_today">Heute</string>
     <string name="usage_range_week">Woche</string>
     <string name="usage_range_month">Monat</string>
     <string name="usage_range_year">Jahr</string>
-
     <string name="usage_range_overall">Gesamt</string>
-
+    <!-- USAGE - Permission prompts -->
+    <string name="usage_access_needed_desc">Bitte aktiviere für Switchly den Zugriff auf „App-Nutzungsdaten“, um deine Bildschirmzeit-Statistiken anzuzeigen.</string>
+    <string name="usage_open_settings">Einstellungen öffnen</string>
+    <!-- USAGE - Totals, attempts, and row hints -->
     <string name="usage_row_tap_hint_app">Tippe auf eine App-Zeile, um Details zu öffnen.</string>
     <string name="usage_row_tap_hint_website">Tippe auf eine Website-Zeile, um Details zu öffnen.</string>
-
+    <string name="usage_total_screen_time">Gesamte Bildschirmzeit</string>
+    <string name="usage_sessions_today">Öffnungen heute</string>
+    <string name="usage_sessions_week">Öffnungen diese Woche</string>
+    <string name="usage_sessions_month">Öffnungen diesen Monat</string>
+    <string name="usage_sessions_year">Öffnungen dieses Jahr</string>
+    <string name="usage_sessions_overall">Öffnungen gesamt</string>
+    <string name="usage_attempts_today">Versuche heute</string>
+    <string name="usage_attempts_week">Versuche diese Woche</string>
+    <string name="usage_attempts_month">Versuche diesen Monat</string>
+    <string name="usage_attempts_year">Versuche dieses Jahr</string>
+    <string name="usage_attempts_overall">Versuche gesamt</string>
+    <string name="usage_app_placeholder">App</string>
+    <string name="usage_open_details">Details ›</string>
+    <string name="usage_row_tap_hint">Tippe auf eine App-Zeile, um Details zu öffnen.</string>
+    <string name="usage_row_open_details_a11y">%1$s, %2$s, %3$s. Doppeltippen für Details.</string>
+    <string name="usage_row_basic_a11y">%1$s, %2$s, %3$s.</string>
+    <!-- USAGE - Website row actions -->
     <string name="website_manage_blocking">Blockierungseinstellungen</string>
     <string name="website_delete_data">Daten löschen</string>
     <string name="website_delete_title">Löschen: %1$s</string>
@@ -205,73 +96,39 @@
     <string name="website_delete_remove_limit">Tageslimit entfernen</string>
     <string name="website_delete_remove_block_rule">Blockierungsregel entfernen</string>
     <string name="website_deleted_toast">Website-Daten gelöscht</string>
-
-    <string name="usage_total_screen_time">Gesamte Bildschirmzeit</string>
-    <string name="usage_sessions_today">Öffnungen heute</string>
-    <string name="usage_app_placeholder">App</string>
-
-    <!-- =========================
-         USAGE: Website data states
-         ========================= -->
+    <!-- USAGE - Empty states and placeholders -->
     <string name="usage_web_placeholder">Website-Statistiken folgen bald.</string>
+    <string name="usage_apps_no_accessibility">Für die App-Nutzungsstatistik muss die Switchly-Bedienungshilfe aktiviert sein.</string>
+    <string name="usage_apps_no_data">Noch keine App-Nutzungsdaten vorhanden. Switchly erfasst die App-Nutzung, solange die Bedienungshilfe aktiviert ist.</string>
+    <string name="usage_apps_no_blocked">Noch keine blockierten Apps konfiguriert.</string>
     <string name="usage_websites_no_accessibility">Website-Tracking benötigt aktivierte Switchly-Bedienungshilfe.</string>
     <string name="usage_websites_no_data">Noch keine Website-Daten. Öffne eine Website in einem unterstützten Browser (Chrome, Brave, Edge, Firefox …), während die Switchly-Bedienungshilfe aktiviert ist.</string>
     <string name="usage_websites_no_blocked">Noch keine limitierten Websites konfiguriert.</string>
-
-    <!-- =========================
-         USAGE: Row interactions/accessibility
-         ========================= -->
-    <string name="usage_open_details">Details ›</string>
-    <string name="usage_row_tap_hint">Tippe auf eine App-Zeile, um Details zu öffnen.</string>
-    <string name="usage_row_open_details_a11y">%1$s, %2$s, %3$s. Doppeltippen für Details.</string>
-    <string name="usage_row_basic_a11y">%1$s, %2$s, %3$s.</string>
-
-    <!-- =========================
-         GENERIC FORMAT TOKENS/ZERO STATES
-         ========================= -->
+    <!-- USAGE - Generic formatting tokens and zero values -->
     <string name="usage_value_label">Nutzung</string>
     <string name="usage_share_of_period">Anteil am Zeitraum</string>
-
     <string name="usage_kv_fmt">%1$s: %2$s</string>
-    <string name="percent_fmt">%1$d%%</string>
     <string name="usage_percent_zero" formatted="false">0,0%</string>
     <string name="usage_time_zero_short">0 Min</string>
     <string name="usage_time_zero_medium">0 Std 00 Min</string>
     <string name="usage_time_zero_long">0 Std 00 Min 00 Sek</string>
-
+    <!-- STATS - Filters and sorting -->
+    <string name="stats_sort_az">Name (A–Z)</string>
+    <string name="stats_sort_za">Name (Z–A)</string>
     <string name="stats_filter_all_apps">Alle Apps</string>
     <string name="stats_filter_blocked_only">Nur blockierte Apps</string>
     <string name="stats_filter_all_websites">Alle Websites</string>
     <string name="stats_filter_blocked_only_websites">Nur limitierte Websites</string>
-
     <string name="stats_sort_filter_title">Sortieren &amp; Filtern</string>
     <string name="stats_section_filter">Filter</string>
     <string name="stats_section_sort">Sortieren</string>
     <string name="stats_apply">Anwenden</string>
     <string name="stats_sort_used_time_desc">Nutzungszeit (oben)</string>
     <string name="stats_sort_used_time_asc">Nutzungszeit (unten)</string>
-    <string name="stats_sort_attempts_desc">Versuche (oben)</string>
-    <string name="stats_sort_attempts_asc">Versuche (unten)</string>
-    <string name="stats_sort_blocked_time_desc">Blockierzeit (oben)</string>
-    <string name="stats_sort_blocked_time_asc">Blockierzeit (unten)</string>
-
-    <!-- Quick limit editor (used in Usage Stats + Details) -->
-    <string name="edit_limits">Limits bearbeiten</string>
-    <string name="limits_quick_edit_hint">Tippe auf das Tune-Icon, um Limits zu bearbeiten.</string>
-    <string name="limit_time_action">Zeit</string>
-    <string name="limit_attempts_action">Öffnungen</string>
-    <string name="no_profile_selected">Bitte wähle ein Profil.</string>
-    <string name="profile_active_fmt">Profil: %1$s</string>
-
-    <string name="stats_attempts_line">Versuche: %1$d</string>
-    <string name="stats_blocked_messages_line">Blockierte Nachrichten: %1$d</string>
-    <string name="stats_last_blocked_messages_title">Letzte blockierte Nachrichten</string>
-    <string name="stats_open_blocked_messages">Blockierte Nachrichten öffnen</string>
     <string name="stats_sort_filter">Sortieren &amp; filtern</string>
-
-    <!-- =========================
-         USAGE: Detail dialogs
-         ========================= -->
-    <string name="usage_point_dialog_title">%1$s · %2$s</string>
-
+    <!-- USAGE - Detail dialogs and fallback -->
+    <string name="usage_point_dialog_title">%1$s - %2$s</string>
+    <string name="usage_switchly_fallback_title">Noch keine Daten von Switchly</string>
+    <string name="usage_switchly_fallback_message">Für diesen Zeitraum hat Switchly noch keine Nutzungsdaten erfasst. Möchtest du stattdessen die aktuellen Statistiken deines Smartphones anzeigen?</string>
+    <string name="usage_switchly_fallback_positive">Handy-Statistiken anzeigen</string>
 </resources>
