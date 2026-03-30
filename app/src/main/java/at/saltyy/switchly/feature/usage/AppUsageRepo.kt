@@ -9,30 +9,39 @@ import at.saltyy.switchly.data.prefs.UsageStore
 object AppUsageRepo {
 
     fun getTodaySummary(ctx: Context, topN: Int = 20): UsageSummary {
-        val local = UsageStore.getUsageMsMapToday(ctx)
-        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.TODAY) else UsageStatsRepo.getTodaySummary(ctx, topN)
+        return UsageStatsRepo.getTodaySummary(ctx, topN)
     }
 
     fun getLastNDaysSummary(ctx: Context, days: Int, topN: Int = 20): UsageSummary {
         val local = UsageStore.getUsageMsMapForLastNDays(ctx, days)
-        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.WEEK) else UsageStatsRepo.getLastNDaysSummary(ctx, days, topN)
+        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.WEEK) else UsageSummary(0L, emptyList())
     }
 
     fun getThisMonthSummary(ctx: Context, topN: Int = 20): UsageSummary {
         val now = java.util.Calendar.getInstance()
         val local = UsageStore.getUsageMsMapForMonth(ctx, now.get(java.util.Calendar.YEAR), now.get(java.util.Calendar.MONTH) + 1)
-        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.MONTH) else UsageStatsRepo.getThisMonthSummary(ctx, topN)
+        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.MONTH) else UsageSummary(0L, emptyList())
     }
 
     fun getThisYearSummary(ctx: Context, topN: Int = 20): UsageSummary {
         val year = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
         val local = UsageStore.getUsageMsMapForYear(ctx, year)
-        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.YEAR) else UsageStatsRepo.getThisYearSummary(ctx, topN)
+        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.YEAR) else UsageSummary(0L, emptyList())
     }
 
     fun getOverallSummary(ctx: Context, topN: Int = 20): UsageSummary {
         val local = UsageStore.getUsageMsMapOverall(ctx)
-        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.OVERALL) else UsageStatsRepo.getOverallSummary(ctx, topN)
+        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.OVERALL) else UsageSummary(0L, emptyList())
+    }
+
+    fun getDeviceSummary(ctx: Context, daysOrRange: Int, topN: Int = 20): UsageSummary {
+        return when (daysOrRange) {
+            1 -> UsageStatsRepo.getTodaySummary(ctx, topN)
+            7 -> UsageStatsRepo.getLastNDaysSummary(ctx, 7, topN)
+            30 -> UsageStatsRepo.getThisMonthSummary(ctx, topN)
+            365 -> UsageStatsRepo.getThisYearSummary(ctx, topN)
+            else -> UsageStatsRepo.getOverallSummary(ctx, topN)
+        }
     }
 
     private fun buildSummary(ctx: Context, raw: Map<String, Long>, topN: Int, rangeCap: UsageSanity.RangeCap): UsageSummary {

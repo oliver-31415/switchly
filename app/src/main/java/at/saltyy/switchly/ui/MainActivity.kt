@@ -18,6 +18,7 @@ import android.os.Looper
 import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
+import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import android.view.MotionEvent
 import android.os.PowerManager
@@ -570,11 +571,22 @@ class MainActivity : AppCompatActivity() {
 
                 val isLimitReachedKey = key.startsWith("limit_reached_")
                 val isOpenCountKey = key.startsWith("open_count_")
+                val isManagedRuleKey =
+                    key.startsWith("blocked_apps_") ||
+                        key.startsWith("usage_limit_min__") ||
+                        key.startsWith("attempt_limit__") ||
+                        key.startsWith("session_limit_min__")
 
-                if (isLimitReachedKey || isOpenCountKey) {
-                    // Re-bind rows so chips update; keep it lightweight.
-                    notifyBlockedChipsChanged()
-                    updateBlockedNowCard()
+                when {
+                    isManagedRuleKey -> {
+                        // Limits can add/remove apps from the main managed list, so fully refresh it.
+                        refreshBlockedList()
+                    }
+                    isLimitReachedKey || isOpenCountKey -> {
+                        // Re-bind rows so chips update; keep it lightweight.
+                        notifyBlockedChipsChanged()
+                        updateBlockedNowCard()
+                    }
                 }
             }
             sp.registerOnSharedPreferenceChangeListener(livePrefsListener)
@@ -1345,8 +1357,11 @@ class MainActivity : AppCompatActivity() {
 
         for (app in blocked) {
             val limitMin = UsageLimitStore.getLimitMinutes(this, profile, app.pkg)
+            val sessionLimitMin = SessionLimitStore.getLimitMinutes(this, profile, app.pkg)
             val attemptLimit = AttemptLimitStore.getLimitAttempts(this, profile, app.pkg)
             val opensAtOrOver = attemptLimit > 0 && OpenCountStore.getToday(this, profile, app.pkg) >= attemptLimit
+            val hasAnyLimit = limitMin > 0 || sessionLimitMin > 0 || attemptLimit > 0
+
             if (limitMin > 0) {
                 if (LimitReachedStore.isReachedToday(this, app.pkg)) {
                     limitReached.add(
@@ -1371,7 +1386,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
-            } else {
+            } else if (!hasAnyLimit) {
                 hardBlocked.add(
                     BlockedNowItem(
                         label = app.label,
@@ -1883,7 +1898,13 @@ class MainActivity : AppCompatActivity() {
             rvBlocked.showFade()
         }
 
-        blockedAdapter.submitList(items)
+        blockedAdapter.submitList(items) {
+            // The managed-app rows include live status chips (e.g. "Limit reached") that are
+            // derived from runtime state rather than DiffUtil item content. When the list contents
+            // themselves have not changed, returning to Home after a limit is hit would otherwise
+            // keep the old chip text until some unrelated state change forced a rebind.
+            notifyBlockedChipsChanged()
+        }
 
         cachedBlockedApps = items
         updateBlockedNowCard()
@@ -1896,14 +1917,27 @@ class MainActivity : AppCompatActivity() {
         val key = "blocked_apps_$profile"
 
         // If the stored type is wrong, don't crash — drop the value.
-        val set = try {
+        val explicitlyBlocked = try {
             sp.getStringSet(key, emptySet())?.toSet() ?: emptySet()
         } catch (_: ClassCastException) {
             sp.edit { remove(key) }
             emptySet()
         }
 
-        return set.toList()
+        // Limited apps are also managed by the profile and should appear together with
+        // the other selected apps, even if the legacy blocked-app set was not updated.
+        val limited = buildSet {
+            addAll(UsageLimitStore.getAllLimitedPackages(this@MainActivity, profile))
+            addAll(SessionLimitStore.getAllLimitedPackages(this@MainActivity, profile))
+            addAll(AttemptLimitStore.getAllLimitedPackages(this@MainActivity, profile))
+        }
+
+        return (explicitlyBlocked + limited)
+            .asSequence()
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+            .toList()
     }
 
     private fun resolveAppDisplay(pkg: String): AppDisplay {
@@ -2026,6 +2060,7 @@ class MainActivity : AppCompatActivity() {
             val pkg: TextView = v.findViewById(R.id.appPkg)
             val unavailableChip: TextView = v.findViewById(R.id.tvUnavailableChip)
             val blockedNowChip: TextView = v.findViewById(R.id.tvBlockedNowChip)
+            val rule: TextView = v.findViewById(R.id.tvRule)
             val unavailableHint: TextView = v.findViewById(R.id.tvUnavailableHint)
 
             private fun dp(value: Float): Int =
@@ -2048,6 +2083,10 @@ class MainActivity : AppCompatActivity() {
                     UsageLimitStore.getLimitMinutes(ctx, profile, item.pkg)
                 } else 0
 
+                val sessionLimitMin = if (!profile.isNullOrBlank()) {
+                    SessionLimitStore.getLimitMinutes(ctx, profile, item.pkg)
+                } else 0
+
                 val attemptLimit = if (!profile.isNullOrBlank()) {
                     AttemptLimitStore.getLimitAttempts(ctx, profile, item.pkg)
                 } else 0
@@ -2062,12 +2101,13 @@ class MainActivity : AppCompatActivity() {
                     LimitReachedStore.isReachedToday(ctx, item.pkg) || usedMs >= limitMs
                 } else false
 
+                val hasAnyLimit = limitMin > 0 || sessionLimitMin > 0 || attemptLimit > 0
                 val isActive = enabled && !emergency && !profile.isNullOrBlank()
                 val reasonRes = when {
                     !isActive -> null
                     (limitMin > 0 && limitReached) -> R.string.dashboard_blocked_now_reason_limit
                     (attemptLimit > 0 && opensAtOrOver) -> R.string.dashboard_blocked_now_reason_attempts
-                    (limitMin <= 0 && attemptLimit <= 0) -> R.string.dashboard_blocked_now_reason_profile
+                    !hasAnyLimit -> R.string.dashboard_blocked_now_reason_profile
                     else -> null
                 }
 
@@ -2076,6 +2116,42 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     blockedNowChip.text = ctx.getString(reasonRes)
                     blockedNowChip.visibility = View.VISIBLE
+                }
+            }
+
+            private fun buildRuleText(ctx: Context, pkgName: String): String {
+                val profile = ProfileStore.getCurrent(ctx)
+                val limitMin = if (!profile.isNullOrBlank()) {
+                    UsageLimitStore.getLimitMinutes(ctx, profile, pkgName)
+                } else 0
+                val sessionLimitMin = if (!profile.isNullOrBlank()) {
+                    SessionLimitStore.getLimitMinutes(ctx, profile, pkgName)
+                } else 0
+                val attemptLimit = if (!profile.isNullOrBlank()) {
+                    AttemptLimitStore.getLimitAttempts(ctx, profile, pkgName)
+                } else 0
+
+                return when {
+                    limitMin > 0 || sessionLimitMin > 0 || attemptLimit > 0 -> buildString {
+                        if (limitMin > 0) {
+                            append(ctx.getString(R.string.daily_limit_value_format, limitMin))
+                        }
+                        if (sessionLimitMin > 0) {
+                            if (isNotEmpty()) append(" • ")
+                            append(ctx.getString(R.string.session_limit_label, sessionLimitMin))
+                        }
+                        if (attemptLimit > 0) {
+                            if (isNotEmpty()) append(" • ")
+                            append(
+                                ctx.resources.getQuantityString(
+                                    R.plurals.daily_attempt_limit_value_format,
+                                    attemptLimit,
+                                    attemptLimit
+                                )
+                            )
+                        }
+                    }
+                    else -> ctx.getString(R.string.in_app_surface_always_block)
                 }
             }
 
@@ -2088,11 +2164,14 @@ class MainActivity : AppCompatActivity() {
 
                 if (item.isAvailable) {
                     name.text = item.label
+                    rule.text = buildRuleText(ctx, item.pkg)
+                    rule.visibility = View.VISIBLE
                     cardRoot.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.switchly_card_bg))
                     cardRoot.strokeColor = ContextCompat.getColor(ctx, R.color.switchly_card_stroke)
                     unavailableChip.visibility = View.GONE
                     unavailableHint.visibility = View.GONE
                 } else {
+                    rule.visibility = View.GONE
                     name.text = ctx.getString(R.string.unavailable_app_label)
                     cardRoot.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.unavailable_row_bg))
                     cardRoot.strokeColor = ContextCompat.getColor(ctx, R.color.unavailable_row_stroke)

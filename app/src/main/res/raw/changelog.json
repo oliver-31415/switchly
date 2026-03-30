@@ -1,7 +1,19 @@
 {
     "releases": [
         {
-            "version": "v2.0.4",
+            "version": "v2.0.5",
+            "date": "Mar 30, 2026",
+            "body": [
+                "Added app limit status to the main screen app list, including limited apps alongside other selected apps",
+                "Fixed an issue where apps that reached their limit did not immediately update to show \"Limit reached\" on the main screen",
+                "Fixed an issue where Google login could fail for some users",
+                "Improved Firefox website blocking compatibility after recent browser changes affected URL detection",
+                "Improved browser website detection reliability to reduce missed blocks in Firefox",
+                "All additional features and improvements are detailed in the v2.0.4-beta release notes below"
+            ]
+        },
+        {
+            "version": "v2.0.4-beta",
             "date": "Mar 25, 2026",
             "body": [
                 "Fixed an issue where blocked apps could occasionally trigger one-handed mode on some Samsung devices",
@@ -108,7 +120,8 @@
                 "Fixed multiple Android 16 issues and other stability problems across schedules, NFC flows, themes, and general app behavior",
                 "Fixed theme and custom accent inconsistencies across dialogs, inputs, controls, charts, and other UI elements",
                 "Removed older or less reliable integrations such as TikTok/X in-app blocking and Snapchat support",
-                "Updated Switchly for better overall performance, cleanup, and consistency across the app"
+                "Updated Switchly for better overall performance, cleanup, and consistency across the app",
+                "All additional features and improvements are detailed in the v1.5.0-beta release notes below"
             ]
         },
         {

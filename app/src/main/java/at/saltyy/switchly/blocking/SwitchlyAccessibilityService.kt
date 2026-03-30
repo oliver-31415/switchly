@@ -86,6 +86,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     // Browser state cache for website blocking + per-domain website stats
     @Volatile private var currentBrowserPkg: String? = null
     @Volatile private var currentBrowserDomain: String? = null
+    @Volatile private var currentBrowserDomainAt: Long = 0L
     private var browserCandidateDomain: String? = null
     private var browserCandidateSince: Long = 0L
 
@@ -126,6 +127,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private val HOME_BOUNCE_COOLDOWN_MS = 900L
     private var lastHomeBounceAt: Long = 0L
     private val BROWSER_DOMAIN_CONFIRM_MS = 700L
+    private val FIREFOX_LAST_DOMAIN_TTL_MS = 12_000L
     private val SURFACE_CONFIRM_MS = 850L
     private val INAPP_POST_BLOCK_GRACE_MS = 1_800L
     private val INSTA_REELS_REENTRY_GUARD_MS = 1_800L
@@ -699,6 +701,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             if (!isBrowserPackage(pkg)) {
                 currentBrowserPkg = null
                 currentBrowserDomain = null
+                currentBrowserDomainAt = 0L
                 browserCandidateDomain = null
                 browserCandidateSince = 0L
             }
@@ -814,8 +817,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 maybeBlockWebsite(pkg, null)
             }
 
-            val d = currentBrowserDomain
-            if (!d.isNullOrBlank() && currentBrowserPkg == pkg) {
+            val d = currentTrackedBrowserDomain(pkg, now)
+            if (!d.isNullOrBlank()) {
                 WebUsageStore.addUsageMsToday(this, d, delta)
             }
         }
@@ -900,6 +903,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (!isBrowserPackage(top)) {
             currentBrowserPkg = null
             currentBrowserDomain = null
+            currentBrowserDomainAt = 0L
             browserCandidateDomain = null
             browserCandidateSince = 0L
         }
@@ -1411,6 +1415,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return value
     }
 
+    private fun isFirefoxFamily(pkg: String): Boolean = pkg.startsWith("org.mozilla.")
+
     private fun isBrowserPackage(pkg: String): Boolean {
         return pkg == "com.android.chrome" ||
             pkg == "com.brave.browser" ||
@@ -1582,20 +1588,105 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             val cls = node.className?.toString().orEmpty()
             val isEdit = node.isEditable || cls.contains("EditText", ignoreCase = true)
             val focused = node.isFocused || node.isAccessibilityFocused
-            if (focused) return true
 
             val type = event?.eventType ?: 0
             val inputEvent = type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED ||
                 type == AccessibilityEvent.TYPE_VIEW_FOCUSED ||
                 type == AccessibilityEvent.TYPE_VIEW_CLICKED
+
+            if (isFirefoxFamily(pkg)) {
+                val hasUrlSignal = firefoxEventDomainSignal(event) != null ||
+                    domainFromText(node.text?.toString().orEmpty()) != null ||
+                    domainFromText(node.contentDescription?.toString().orEmpty()) != null
+                return isEdit && (focused || inputEvent) && !hasUrlSignal
+            }
+
+            if (focused) return true
             return isEdit && inputEvent
         } finally {
             runCatching { node.recycle() }
         }
     }
 
-    private fun tryExtractDomainFromBrowser(root: AccessibilityNodeInfo?, pkg: String): String? {
+    private fun firefoxEventDomainSignal(event: AccessibilityEvent?): String? {
+        if (event == null) return null
+
+        event.text?.forEach { part ->
+            val raw = part?.toString()?.trim().orEmpty()
+            if (raw.isNotEmpty()) {
+                domainFromText(raw)?.let { return it }
+            }
+        }
+
+        val sourceCopy = runCatching { event.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+        try {
+            if (sourceCopy != null) {
+                val direct = sequenceOf(
+                    sourceCopy.text?.toString(),
+                    sourceCopy.contentDescription?.toString()
+                )
+                for (raw in direct) {
+                    val value = raw?.trim().orEmpty()
+                    if (value.isNotEmpty()) {
+                        domainFromText(value)?.let { return it }
+                    }
+                }
+
+                val parent = runCatching { sourceCopy.parent?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+                try {
+                    if (parent != null) {
+                        val parentDirect = sequenceOf(
+                            parent.text?.toString(),
+                            parent.contentDescription?.toString()
+                        )
+                        for (raw in parentDirect) {
+                            val value = raw?.trim().orEmpty()
+                            if (value.isNotEmpty()) {
+                                domainFromText(value)?.let { return it }
+                            }
+                        }
+
+                        val childCount = runCatching { parent.childCount }.getOrDefault(0)
+                        for (i in 0 until childCount) {
+                            val child = runCatching { parent.getChild(i) }.getOrNull() ?: continue
+                            try {
+                                val childDirect = sequenceOf(
+                                    child.text?.toString(),
+                                    child.contentDescription?.toString()
+                                )
+                                for (raw in childDirect) {
+                                    val value = raw?.trim().orEmpty()
+                                    if (value.isNotEmpty()) {
+                                        domainFromText(value)?.let { return it }
+                                    }
+                                }
+                            } finally {
+                                runCatching { child.recycle() }
+                            }
+                        }
+                    }
+                } finally {
+                    if (parent != null) runCatching { parent.recycle() }
+                }
+            }
+        } finally {
+            if (sourceCopy != null) runCatching { sourceCopy.recycle() }
+        }
+
+        return null
+    }
+
+    private fun tryExtractDomainFromBrowser(
+        root: AccessibilityNodeInfo?,
+        pkg: String,
+        event: AccessibilityEvent? = null
+    ): String? {
         if (root == null) return null
+
+        if (isFirefoxFamily(pkg)) {
+            firefoxEventDomainSignal(event)?.let { return it }
+        }
+
         val urlNode = findBrowserUrlNode(root, pkg)
         try {
             val t = urlNode?.text?.toString()?.trim().orEmpty()
@@ -1619,7 +1710,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val s0 = raw.trim()
         if (s0.isBlank()) return null
 
-        val token = s0.split(" ", "›", "·", "|", "—", "-", " ")
+        val token = s0.split(" ", "›", "·", "|", "—", " ")
             .firstOrNull { it.contains(".") } ?: s0
         val s = token.trim()
 
@@ -1719,10 +1810,21 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             ?: runCatching { windows?.firstOrNull()?.root }.getOrNull()
     }
 
+    private fun currentTrackedBrowserDomain(pkg: String, now: Long): String? {
+        if (currentBrowserPkg != pkg) return null
+        val host = currentBrowserDomain ?: return null
+        if (isFirefoxFamily(pkg) && now - currentBrowserDomainAt > FIREFOX_LAST_DOMAIN_TTL_MS) {
+            currentBrowserDomain = null
+            currentBrowserDomainAt = 0L
+            return null
+        }
+        return host
+    }
+
     private fun requiresDomainStability(pkg: String): Boolean {
         // Firefox/Fenix often emits fewer stable URL-bar events than Chromium browsers.
         // Avoid a second-event requirement there, otherwise blocks can be missed.
-        return !pkg.startsWith("org.mozilla.")
+        return !isFirefoxFamily(pkg)
     }
 
     private fun maybeBlockWebsite(pkg: String, event: AccessibilityEvent? = null) {
@@ -1737,19 +1839,22 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         // Don't block while user is typing in the address bar/autocomplete.
         if (isBrowserAddressEditing(root, pkg, event)) {
             currentBrowserPkg = pkg
-            currentBrowserDomain = null
-            browserCandidateDomain = null
-            browserCandidateSince = 0L
+            if (!isFirefoxFamily(pkg)) {
+                currentBrowserDomain = null
+                currentBrowserDomainAt = 0L
+                browserCandidateDomain = null
+                browserCandidateSince = 0L
+            }
             return
         }
 
         // Extra guard: ignore direct typing/focus events from the URL field.
         val et = event?.eventType ?: 0
-        if (et == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED || et == AccessibilityEvent.TYPE_VIEW_FOCUSED) {
+        if (!isFirefoxFamily(pkg) && (et == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED || et == AccessibilityEvent.TYPE_VIEW_FOCUSED)) {
             return
         }
 
-        val host = tryExtractDomainFromBrowser(root, pkg) ?: run {
+        val host = tryExtractDomainFromBrowser(root, pkg, event) ?: run {
             browserCandidateDomain = null
             browserCandidateSince = 0L
             return
@@ -1771,6 +1876,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         // Cache for web usage stats
         currentBrowserPkg = pkg
         currentBrowserDomain = host
+        currentBrowserDomainAt = now
 
         if (!isDomainBlockingEnabledCached()) return
         if (!prefsBoolProfile(true, BlockingToggleKeys.KEY_BLOCK_WEBSITES)) return

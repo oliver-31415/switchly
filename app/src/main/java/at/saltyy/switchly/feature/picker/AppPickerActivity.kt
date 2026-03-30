@@ -20,6 +20,7 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
@@ -94,7 +95,13 @@ class AppPickerActivity : AppCompatActivity() {
         currentProfile = ProfileStore.getCurrent(this)
 
         val preselectedManaged: Set<String> = if (!currentProfile.isNullOrEmpty()) {
-            ProfileStore.getBlockedForProfile(this, currentProfile!!).toSet()
+            buildSet {
+                val profile = currentProfile!!
+                addAll(ProfileStore.getBlockedForProfile(this@AppPickerActivity, profile))
+                addAll(UsageLimitStore.getAllLimitedPackages(this@AppPickerActivity, profile))
+                addAll(SessionLimitStore.getAllLimitedPackages(this@AppPickerActivity, profile))
+                addAll(AttemptLimitStore.getAllLimitedPackages(this@AppPickerActivity, profile))
+            }
         } else {
             emptySet()
         }

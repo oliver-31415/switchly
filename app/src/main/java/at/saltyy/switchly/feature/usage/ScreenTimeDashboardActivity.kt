@@ -23,6 +23,9 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.databinding.ActivityScreenTimeDashboardBinding
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.AttemptLimitStore
+import at.saltyy.switchly.data.prefs.SessionLimitStore
+import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.util.PermissionUtils
@@ -48,6 +51,8 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     private var currentBlockedSet: Set<String> = emptySet()
     private var currentWebsiteRuleSet: Set<String> = emptySet()
     private var isWebMode: Boolean = false
+    private var fallbackDeviceRange: Range? = null
+    private var fallbackPromptShownForRange: Range? = null
 
     private lateinit var b: ActivityScreenTimeDashboardBinding
     private lateinit var adapter: AppUsageAdapter
@@ -164,6 +169,8 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.chipYear.setOnClickListener { setRangeChip(b.chipYear.id) }
         b.chipOverall.setOnClickListener { setRangeChip(b.chipOverall.id) }
         b.toggleType.addOnButtonCheckedListener { _, _, _ ->
+            fallbackDeviceRange = null
+            fallbackPromptShownForRange = null
             updateRangeVisibilityForCurrentMode()
             refresh()
         }
@@ -225,6 +232,8 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     }
 
     private fun setRangeChip(chipId: Int) {
+        fallbackDeviceRange = null
+        fallbackPromptShownForRange = null
         syncRangeChipUi(chipId)
         refresh()
     }
@@ -268,6 +277,10 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
 
         val isWeb = b.toggleType.checkedButtonId == b.btnWeb.id
         isWebMode = isWeb
+        if (isWeb) {
+            fallbackDeviceRange = null
+            fallbackPromptShownForRange = null
+        }
         b.recycler.isVisible = true
         b.webPlaceholder.isVisible = false
 
@@ -326,22 +339,39 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.rowTapHint.text = getString(R.string.usage_row_tap_hint_app)
 
         val hasA11y = PermissionUtils.isAccessibilityServiceEnabled(this, SwitchlyAccessibilityService::class.java)
-        val summary = when (range) {
-            Range.TODAY -> AppUsageRepo.getTodaySummary(this)
-            Range.WEEK -> AppUsageRepo.getLastNDaysSummary(this, 7)
-            Range.MONTH -> AppUsageRepo.getThisMonthSummary(this)
-            Range.YEAR -> AppUsageRepo.getThisYearSummary(this)
-            Range.OVERALL -> AppUsageRepo.getOverallSummary(this)
+        val summary = when {
+            range == Range.TODAY -> AppUsageRepo.getTodaySummary(this)
+            fallbackDeviceRange == range -> getDeviceFallbackSummary(range)
+            else -> when (range) {
+                Range.TODAY -> AppUsageRepo.getTodaySummary(this)
+                Range.WEEK -> AppUsageRepo.getLastNDaysSummary(this, 7)
+                Range.MONTH -> AppUsageRepo.getThisMonthSummary(this)
+                Range.YEAR -> AppUsageRepo.getThisYearSummary(this)
+                Range.OVERALL -> AppUsageRepo.getOverallSummary(this)
+            }
         }
 
         b.totalTime.text = if (summary.totalTimeMs <= 0L) "—" else StatsFormat.prettyMsWithSeconds(summary.totalTimeMs)
 
         // Keep blocked-app filter in sync with current profile.
         val profile = ProfileStore.getCurrent(this)
-        currentBlockedSet = if (profile.isNullOrBlank()) emptySet() else ProfileStore.getBlockedForProfile(this, profile).toSet()
+        currentBlockedSet = if (profile.isNullOrBlank()) {
+            emptySet()
+        } else {
+            buildSet {
+                addAll(ProfileStore.getBlockedForProfile(this@ScreenTimeDashboardActivity, profile))
+                addAll(UsageLimitStore.getAllLimitedPackages(this@ScreenTimeDashboardActivity, profile))
+                addAll(SessionLimitStore.getAllLimitedPackages(this@ScreenTimeDashboardActivity, profile))
+                addAll(AttemptLimitStore.getAllLimitedPackages(this@ScreenTimeDashboardActivity, profile))
+            }
+        }
 
         lastApps = summary.topApps
         applyAndShowCurrent()
+
+        if (range != Range.TODAY && fallbackDeviceRange != range && summary.topApps.isEmpty() && hasA11y) {
+            maybeShowDeviceFallbackDialog(range)
+        }
 
         val visibleEmpty = adapter.itemCount == 0
         b.webPlaceholder.isVisible = visibleEmpty
@@ -363,6 +393,31 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
         b.rowTapHint.isVisible = !visibleEmpty
+    }
+
+
+    private fun getDeviceFallbackSummary(range: Range): UsageSummary {
+        return when (range) {
+            Range.TODAY -> AppUsageRepo.getTodaySummary(this)
+            Range.WEEK -> AppUsageRepo.getDeviceSummary(this, 7)
+            Range.MONTH -> AppUsageRepo.getDeviceSummary(this, 30)
+            Range.YEAR -> AppUsageRepo.getDeviceSummary(this, 365)
+            Range.OVERALL -> AppUsageRepo.getDeviceSummary(this, -1)
+        }
+    }
+
+    private fun maybeShowDeviceFallbackDialog(range: Range) {
+        if (fallbackPromptShownForRange == range) return
+        fallbackPromptShownForRange = range
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.usage_switchly_fallback_title)
+            .setMessage(R.string.usage_switchly_fallback_message)
+            .setPositiveButton(R.string.usage_switchly_fallback_positive) { _, _ ->
+                fallbackDeviceRange = range
+                refresh()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .showAccented()
     }
 
     private fun showSortFilterMenu(anchor: View) {

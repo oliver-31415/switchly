@@ -11,8 +11,12 @@ val firebaseEnabled = providers.gradleProperty("switchly.firebase")
     .orElse(false)
     .get()
 
-if (firebaseEnabled) {
+val googleServicesJsonExists = layout.projectDirectory.file("google-services.json").asFile.exists()
+if (googleServicesJsonExists) {
     apply(plugin = "com.google.gms.google-services")
+}
+
+if (firebaseEnabled) {
     apply(plugin = "com.google.firebase.crashlytics")
 }
 
@@ -25,8 +29,8 @@ android {
         minSdk = 27
         targetSdk = 36
 
-        versionCode = 204
-        versionName = "2.0.4"
+        versionCode = 205
+        versionName = "2.0.5"
     }
 
     buildFeatures {
