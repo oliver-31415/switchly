@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.settings
 
 import android.app.ActivityManager
@@ -13,6 +32,7 @@ import android.text.InputType
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.util.Patterns
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
@@ -21,6 +41,7 @@ import android.widget.FrameLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
@@ -312,7 +333,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             startActivity(Intent(requireContext(), TroubleshootingActivity::class.java))
             true
         }
-        
+
         // Manage blocked websites (domain blocking list)
         findPreference<Preference>("pref_manage_blocked_websites")?.apply {
             isVisible = true
@@ -479,7 +500,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
-        // Tutorial 
+        // Tutorial
         findPreference<Preference>("pref_tutorial")
             ?.setOnPreferenceClickListener {
                 startActivity(
@@ -1031,16 +1052,21 @@ class SettingsFragment : PreferenceFragmentCompat() {
         dialog.show()
     }
 
-    // Google Account (popup: sign in/out/delete only)
+    // Account (Google + email/password)
     private fun updateGooglePrefSummary() {
         val pref = findPreference<Preference>("pref_google_account") ?: return
         val ctx = requireContext()
-        val loggedIn = at.saltyy.switchly.auth.Auth.uid() != null
+        val user = runCatching { FirebaseAuth.getInstance().currentUser }.getOrNull()
 
-        val base = if (loggedIn) getString(R.string.settings_google_logged_in)
-        else getString(R.string.settings_google_logged_out)
+        val base = if (user != null) {
+            val email = user.email?.trim().orEmpty()
+            if (email.isNotEmpty()) getString(R.string.settings_account_logged_in_as, email)
+            else getString(R.string.settings_account_logged_in)
+        } else {
+            getString(R.string.settings_account_logged_out)
+        }
 
-        if (!loggedIn) {
+        if (user == null) {
             pref.summary = base
             return
         }
@@ -1057,58 +1083,55 @@ class SettingsFragment : PreferenceFragmentCompat() {
         pref.summary = "$base – " + getString(R.string.settings_last_backup, formatted)
     }
 
+    private fun makeIconAdapter(items: List<IconActionItem>): ArrayAdapter<IconActionItem> {
+        val ctx = requireContext()
+        return object : ArrayAdapter<IconActionItem>(ctx, android.R.layout.select_dialog_item, items) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val v = super.getView(position, convertView, parent)
+                val tv = v.findViewById<TextView>(android.R.id.text1)
+                val item = getItem(position) ?: return v
+
+                tv.text = item.title
+                tv.compoundDrawablePadding = (12 * ctx.resources.displayMetrics.density).toInt()
+
+                val normalColor = MaterialColors.getColor(tv, com.google.android.material.R.attr.colorOnSurface)
+                val dangerColor = ContextCompat.getColor(ctx, R.color.status_error)
+                val isDelete = item.iconRes == R.drawable.delete_24
+                val textColor = if (isDelete) dangerColor else normalColor
+                tv.setTextColor(textColor)
+
+                val d = ContextCompat.getDrawable(ctx, item.iconRes)
+                if (d != null) {
+                    val wrap = DrawableCompat.wrap(d.mutate())
+                    DrawableCompat.setTint(wrap, textColor)
+                    tv.setCompoundDrawablesWithIntrinsicBounds(wrap, null, null, null)
+                } else {
+                    tv.setCompoundDrawablesWithIntrinsicBounds(item.iconRes, 0, 0, 0)
+                }
+
+                return v
+            }
+        }
+    }
+
     private fun showGoogleAccountDialog() {
         val ctx = requireContext()
         val loggedIn = at.saltyy.switchly.auth.Auth.uid() != null
 
-        fun makeIconAdapter(items: List<IconActionItem>): ArrayAdapter<IconActionItem> {
-            return object : ArrayAdapter<IconActionItem>(ctx, android.R.layout.select_dialog_item, items) {
-                override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                    val v = super.getView(position, convertView, parent)
-                    val tv = v.findViewById<TextView>(android.R.id.text1)
-                    val item = getItem(position) ?: return v
-
-                    tv.text = item.title
-                    tv.compoundDrawablePadding = (12 * ctx.resources.displayMetrics.density).toInt()
-
-                    val normalColor = MaterialColors.getColor(tv, com.google.android.material.R.attr.colorOnSurface)
-                    val dangerColor = ContextCompat.getColor(ctx, R.color.status_error)
-
-                    val isDelete = item.iconRes == R.drawable.delete_24
-                    val textColor = if (isDelete) dangerColor else normalColor
-                    tv.setTextColor(textColor)
-
-                    // Tint icon to match (optional but looks consistent)
-                    val d = ContextCompat.getDrawable(ctx, item.iconRes)
-                    if (d != null) {
-                        val wrap = DrawableCompat.wrap(d.mutate())
-                        DrawableCompat.setTint(wrap, textColor)
-                        tv.setCompoundDrawablesWithIntrinsicBounds(wrap, null, null, null)
-                    } else {
-                        tv.setCompoundDrawablesWithIntrinsicBounds(item.iconRes, 0, 0, 0)
-                    }
-
-                    return v
-                }
-            }
-        }
-
         if (!loggedIn) {
             val items = listOf(
-                IconActionItem(getString(R.string.sign_in), R.drawable.login_24)
+                IconActionItem(getString(R.string.settings_account_action_sign_in), R.drawable.login_24),
+                IconActionItem(getString(R.string.settings_account_action_create), R.drawable.account_box_24),
+                IconActionItem(getString(R.string.settings_account_action_reset_password), R.drawable.lock_24)
             )
 
             val dialog = AlertDialog.Builder(ctx)
-                .setTitle(getString(R.string.settings_google_dialog_title))
+                .setTitle(getString(R.string.settings_account_dialog_title))
                 .setAdapter(makeIconAdapter(items)) { _, which ->
-                    if (which == 0) {
-                        findPreference<Preference>("pref_google_account")?.summary =
-                            getString(R.string.settings_google_signing_in)
-                        at.saltyy.switchly.auth.Auth.startSignIn(requireActivity()) { _, _ ->
-                            if (!isAdded) return@startSignIn
-                            updateGooglePrefSummary()
-                            updateCloudPrefVisibility()
-                        }
+                    when (which) {
+                        0 -> showAccountSignInDialog()
+                        1 -> showAccountCreateDialog()
+                        2 -> showPasswordResetDialog()
                     }
                 }
                 .setNegativeButton(getString(R.string.cancel), null)
@@ -1125,7 +1148,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         )
 
         val dialog = AlertDialog.Builder(ctx)
-            .setTitle(getString(R.string.settings_google_dialog_title))
+            .setTitle(getString(R.string.settings_account_dialog_title))
             .setAdapter(makeIconAdapter(items)) { _, which ->
                 when (which) {
                     0 -> confirmAction(
@@ -1156,6 +1179,208 @@ class SettingsFragment : PreferenceFragmentCompat() {
             .create()
 
         dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
+    }
+
+    private fun showAccountSignInDialog() {
+        val ctx = requireContext()
+        val items = listOf(
+            IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.login_24),
+            IconActionItem(getString(R.string.settings_account_sign_in_email), R.drawable.mail_24)
+        )
+
+        val dialog = AlertDialog.Builder(ctx)
+            .setTitle(getString(R.string.settings_account_action_sign_in))
+            .setAdapter(makeIconAdapter(items)) { _, which ->
+                when (which) {
+                    0 -> startGoogleAccountSignIn()
+                    1 -> showEmailPasswordDialog(createAccount = false)
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
+    }
+
+    private fun showAccountCreateDialog() {
+        val ctx = requireContext()
+        val items = listOf(
+            IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.login_24),
+            IconActionItem(getString(R.string.settings_account_create_email), R.drawable.mail_24)
+        )
+
+        val dialog = AlertDialog.Builder(ctx)
+            .setTitle(getString(R.string.settings_account_action_create))
+            .setAdapter(makeIconAdapter(items)) { _, which ->
+                when (which) {
+                    0 -> startGoogleAccountSignIn()
+                    1 -> showEmailPasswordDialog(createAccount = true)
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
+    }
+
+    private fun startGoogleAccountSignIn() {
+        findPreference<Preference>("pref_google_account")?.summary =
+            getString(R.string.settings_account_signing_in)
+        at.saltyy.switchly.auth.Auth.startSignIn(requireActivity()) { _, _ ->
+            if (!isAdded) return@startSignIn
+            updateGooglePrefSummary()
+            updateCloudPrefVisibility()
+        }
+    }
+
+    private fun showEmailPasswordDialog(createAccount: Boolean) {
+        val ctx = requireContext()
+        val density = resources.displayMetrics.density
+        val margin = (24 * density).toInt()
+        val spacing = (12 * density).toInt()
+
+        val emailInput = EditText(ctx).apply {
+            hint = getString(R.string.settings_account_email_hint)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            backgroundTintList = AccentColor.getActiveColor(ctx)
+        }
+
+        val passwordInput = EditText(ctx).apply {
+            hint = getString(R.string.settings_account_password_hint)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            backgroundTintList = AccentColor.getActiveColor(ctx)
+        }
+
+        val container = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(margin, 0, margin, 0)
+            addView(
+                emailInput,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+            addView(
+                passwordInput,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    topMargin = spacing
+                }
+            )
+        }
+
+        val titleRes = if (createAccount) {
+            R.string.settings_account_action_create
+        } else {
+            R.string.settings_account_action_sign_in
+        }
+        val positiveRes = if (createAccount) {
+            R.string.settings_account_create_email
+        } else {
+            R.string.settings_account_sign_in_email
+        }
+
+        val dialog = AlertDialog.Builder(ctx)
+            .setTitle(getString(titleRes))
+            .setView(container)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .setPositiveButton(getString(positiveRes), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
+                val email = emailInput.text?.toString()?.trim().orEmpty()
+                val password = passwordInput.text?.toString().orEmpty()
+
+                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    Toast.makeText(ctx, getString(R.string.settings_account_invalid_email), Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                if (password.isBlank()) {
+                    Toast.makeText(ctx, getString(R.string.settings_account_password_required), Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                if (createAccount && password.length < 8) {
+                    Toast.makeText(ctx, getString(R.string.settings_account_password_min_length, 8), Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                positive?.isEnabled = false
+
+                val onFinished: (Boolean, String?) -> Unit = { success, _ ->
+                    positive?.isEnabled = true
+                    if (success && isAdded) {
+                        updateGooglePrefSummary()
+                        updateCloudPrefVisibility()
+                        dialog.dismiss()
+                    }
+                }
+
+                if (createAccount) {
+                    at.saltyy.switchly.auth.Auth.createAccountWithEmail(ctx, email, password, onFinished)
+                } else {
+                    at.saltyy.switchly.auth.Auth.signInWithEmail(ctx, email, password, onFinished)
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showPasswordResetDialog() {
+        val ctx = requireContext()
+        val input = EditText(ctx).apply {
+            hint = getString(R.string.settings_account_email_hint)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            backgroundTintList = AccentColor.getActiveColor(ctx)
+        }
+
+        val container = FrameLayout(ctx).apply {
+            val margin = (24 * resources.displayMetrics.density).toInt()
+            setPadding(margin, 0, margin, 0)
+            addView(
+                input,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+
+        val dialog = AlertDialog.Builder(ctx)
+            .setTitle(getString(R.string.settings_account_action_reset_password))
+            .setMessage(getString(R.string.settings_account_reset_password_message))
+            .setView(container)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .setPositiveButton(getString(R.string.settings_account_send_reset_email), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
+                val email = input.text?.toString()?.trim().orEmpty()
+                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    Toast.makeText(ctx, getString(R.string.settings_account_invalid_email), Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                positive?.isEnabled = false
+                at.saltyy.switchly.auth.Auth.sendPasswordResetEmail(ctx, email) { success, _ ->
+                    if (!isAdded) return@sendPasswordResetEmail
+                    positive?.isEnabled = true
+                    if (success) {
+                        dialog.dismiss()
+                    }
+                }
+            }
+        }
         dialog.show()
     }
 

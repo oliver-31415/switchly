@@ -9,7 +9,7 @@ Designed for focus, control, and flexibility — without unnecessary complexity.
 ## Project Structure
 Source code root:
 ```text
-java/at/saltyy/switchly
+app/src/main/java/at/saltyy/switchly
 ```
 
 Icons are based on **Material Symbols**:
@@ -97,21 +97,14 @@ Follows **MAJOR.MINOR.PATCH**.
 
 ---
 
-## Development Notes
-The public Switchly repository mirrors the **publicly available releases only**. That means `main`(release) and `test`(open beta)
-Because of that, it may sometimes be **behind the current private development stage**.
-
-So code in this repository may occasionally not reflect the very latest internal work in progress.
-
----
-
 ## Contributing
 
 Before starting a contribution, please contact me first:
-
 **[andi@saltyy.at](mailto:andi@saltyy.at)**
 
-This helps avoid duplicate work and makes it easier to coordinate changes with the current development state.
+Please also read:
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 
 ---
 

@@ -1,30 +1,45 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.settings
 
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.FragmentManager
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
-import at.saltyy.switchly.feature.tools.ToolsHubActivity
-import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
+import at.saltyy.switchly.feature.tools.ToolsHubActivity
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var toolbar: MaterialToolbar
+    private lateinit var bottomNav: BottomNavigationView
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -36,52 +51,17 @@ class SettingsActivity : AppCompatActivity() {
         if (SwitchlyAppAccessGuard.blockIfLocked(this)) return
         setContentView(R.layout.activity_settings)
 
-        toolbar = findViewById(R.id.toolbar)
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
-        // Match NFC writer: classic system insets (toolbar below status bar)
-        EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar, bottomNav = bottomNav)
-        EdgeToEdgeUtils.applyBottomNavGestureInset(bottomNav)
-        setSupportActionBar(toolbar)
-        // Settings is a main tab now -> root has no back arrow.
-        supportActionBar?.setDisplayHomeAsUpEnabled(false)
-        toolbar.setNavigationOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
-        toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
-
-        // Show a back arrow when navigating into nested PreferenceScreens.
-        supportFragmentManager.addOnBackStackChangedListener {
-            val canGoBack = supportFragmentManager.backStackEntryCount > 0
-            supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
-            toolbar.navigationIcon = if (canGoBack) {
-                ContextCompat.getDrawable(this, R.drawable.arrow_back_ios_24)
-            } else {
-                null
-            }
-            updateTitleFromFragment()
-        }
-
-        setupBottomNav(bottomNav)
-
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container, SettingsFragment())
-                .commit()
-        }
-
-        // Ensure correct title (root or nested)
+        setupViews()
+        setupToolbar()
+        setupToolbarTitleSync()
+        setupBottomNav()
+        showRootFragment(savedInstanceState)
         updateTitleFromFragment()
     }
 
-    fun setToolbarTitle(title: String) {
-        supportActionBar?.title = title
-        toolbar.title = title
-    }
-
-    private fun updateTitleFromFragment() {
-        val f = supportFragmentManager.findFragmentById(R.id.container)
-        val t = if (f is SettingsFragment) f.currentScreenTitle() else getString(R.string.settings)
-        setToolbarTitle(t)
+    override fun onResume() {
+        super.onResume()
+        if (SwitchlyAppAccessGuard.blockIfLocked(this)) return
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -93,12 +73,39 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (SwitchlyAppAccessGuard.blockIfLocked(this)) return
+    fun setToolbarTitle(title: String) {
+        supportActionBar?.title = title
+        toolbar.title = title
     }
 
-    private fun setupBottomNav(bottomNav: BottomNavigationView) {
+    private fun setupViews() {
+        toolbar = findViewById(R.id.toolbar)
+        bottomNav = findViewById(R.id.bottomNav)
+    }
+
+    private fun setupToolbar() {
+        EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar, bottomNav = bottomNav)
+        EdgeToEdgeUtils.applyBottomNavGestureInset(bottomNav)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+    }
+
+    private fun setupToolbarTitleSync() {
+        supportFragmentManager.addOnBackStackChangedListener {
+            val canGoBack = supportFragmentManager.backStackEntryCount > 0
+            supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+            toolbar.navigationIcon = if (canGoBack) {
+                ContextCompat.getDrawable(this, R.drawable.arrow_back_ios_24)
+            } else {
+                null
+            }
+            updateTitleFromFragment()
+        }
+    }
+
+    private fun setupBottomNav() {
         bottomNav.selectedItemId = R.id.nav_settings
 
         bottomNav.setOnItemSelectedListener { item ->
@@ -112,25 +119,39 @@ class SettingsActivity : AppCompatActivity() {
                     finish()
                     true
                 }
-
                 R.id.nav_tools -> {
                     startActivity(Intent(this, ToolsHubActivity::class.java))
                     finish()
                     true
                 }
-
                 R.id.nav_settings -> true
-
                 else -> false
             }
         }
 
-        // If user taps Settings again while already here, jump back to top of settings.
         bottomNav.setOnItemReselectedListener { item ->
             if (item.itemId == R.id.nav_settings) {
                 resetSettingsToTop()
             }
         }
+    }
+
+    private fun showRootFragment(savedInstanceState: Bundle?) {
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container, SettingsFragment())
+                .commit()
+        }
+    }
+
+    private fun updateTitleFromFragment() {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.container)
+        val title = if (currentFragment is SettingsFragment) {
+            currentFragment.currentScreenTitle()
+        } else {
+            getString(R.string.settings)
+        }
+        setToolbarTitle(title)
     }
 
     private fun resetSettingsToTop() {

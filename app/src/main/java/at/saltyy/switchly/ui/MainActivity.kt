@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.ui
 
 import android.Manifest
@@ -75,6 +94,7 @@ import at.saltyy.switchly.feature.qr.QrGenerateActivity
 import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
+import at.saltyy.switchly.feature.usage.QuickLimitDialogs
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
@@ -191,7 +211,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvEmpty: TextView
     private lateinit var btnPickApps: MaterialButton
 
-    private val blockedAdapter = BlockedAppsAdapter()
+    private val blockedAdapter = BlockedAppsAdapter(
+        onAppClick = { app -> showBlockedAppQuickActions(app) },
+        onEditClick = { app -> showBlockedAppQuickActions(app) }
+    )
     private val blockedNowAdapter = BlockedNowAdapter()
 
     private fun notifyBlockedChipsChanged() {
@@ -634,8 +657,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    
 
     private fun applyAccentToButtons() {
         val accent = AccentColor.getAccentColorInt(this)
@@ -1484,26 +1505,8 @@ class MainActivity : AppCompatActivity() {
         val sb = StringBuilder()
         sb.append(getString(R.string.switch_mode_label, stateWord))
 
-        // Temp-mode details (show badge only while a temp timer is active)
-        when {
-            tempDisableRemaining > 0L -> {
-                chipTemp.visibility = View.VISIBLE
-                chipTemp.text = getString(
-                    R.string.dashboard_temp_badge_disabled,
-                    formatRemainingShort(tempDisableRemaining)
-                )
-            }
-            tempEnableRemaining > 0L -> {
-                chipTemp.visibility = View.VISIBLE
-                chipTemp.text = getString(
-                    R.string.dashboard_temp_badge_enabled,
-                    formatRemainingShort(tempEnableRemaining)
-                )
-            }
-            else -> {
-                chipTemp.visibility = View.GONE
-            }
-        }
+        // Temp-mode status now reuses the hint row below the main button instead of showing a separate chip.
+        chipTemp.visibility = View.GONE
 
         when {
             emergencyActive -> {
@@ -1565,15 +1568,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateTempHintVisibility() {
-        // Keep hint visible all the time for discoverability, but adjust wording when NFC lock blocks temp-disable.
         tvTempHint.isVisible = true
+
         val lockedByNfc = isNfcLocked()
-        tvTempHint.text = if (lockedByNfc) {
-            getString(R.string.dashboard_temp_hint_locked_nfc)
-        } else {
-            getString(R.string.dashboard_temp_hint)
+        val tempDisableRemaining = SwitchModeStore.getTemporaryRemainingMillis(this)
+        val tempEnableRemaining = SwitchModeStore.getTemporaryEnableRemainingMillis(this)
+
+        tvTempHint.text = when {
+            tempDisableRemaining > 0L -> getString(
+                R.string.dashboard_temp_status_disabled,
+                formatRemainingShort(tempDisableRemaining)
+            )
+            tempEnableRemaining > 0L -> getString(
+                R.string.dashboard_temp_status_enabled,
+                formatRemainingShort(tempEnableRemaining)
+            )
+            lockedByNfc -> getString(R.string.dashboard_temp_hint_locked_nfc)
+            else -> getString(R.string.dashboard_temp_hint)
         }
-        tvTempHint.alpha = if (lockedByNfc) 0.95f else 0.88f
+
+        tvTempHint.alpha = when {
+            tempDisableRemaining > 0L || tempEnableRemaining > 0L -> 0.96f
+            lockedByNfc -> 0.95f
+            else -> 0.88f
+        }
     }
 
     private fun updateEmergencyHintVisibility() {
@@ -1882,6 +1900,81 @@ class MainActivity : AppCompatActivity() {
         sheet.show()
     }
 
+    private fun showBlockedAppQuickActions(item: AppDisplay) {
+        if (!item.isAvailable) {
+            if (!ensureCanOpenAppPicker(showToast = true)) return
+            confirmRemoveBlockedApp(item)
+            return
+        }
+
+        val options = arrayOf(
+            getString(R.string.dashboard_blocked_app_action_time_limit),
+            getString(R.string.dashboard_blocked_app_action_open_limit),
+            getString(R.string.dashboard_blocked_app_action_remove)
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle(item.label)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> QuickLimitDialogs.showForApp(
+                        activity = this,
+                        pkg = item.pkg,
+                        label = item.label,
+                        startOnAttempts = false,
+                        onChanged = { refreshBlockedList() }
+                    )
+                    1 -> QuickLimitDialogs.showForApp(
+                        activity = this,
+                        pkg = item.pkg,
+                        label = item.label,
+                        startOnAttempts = true,
+                        onChanged = { refreshBlockedList() }
+                    )
+                    2 -> confirmRemoveBlockedApp(item)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .showAccented()
+    }
+
+    private fun confirmRemoveBlockedApp(item: AppDisplay) {
+        if (!ensureCanOpenAppPicker(showToast = true)) return
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.dashboard_blocked_app_remove_title)
+            .setMessage(getString(R.string.dashboard_blocked_app_remove_message, item.label))
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                removeBlockedApp(item)
+            }
+            .showAccented()
+    }
+
+    private fun removeBlockedApp(item: AppDisplay) {
+        val profile = ProfileStore.getCurrent(this)
+        if (profile.isNullOrBlank()) return
+
+        val blocked = ProfileStore.getBlockedForProfile(this, profile).toMutableSet()
+        blocked.remove(item.pkg)
+        ProfileStore.setBlockedForProfile(this, profile, blocked)
+
+        UsageLimitStore.setLimitMinutes(this, profile, item.pkg, 0)
+        SessionLimitStore.setLimitMinutes(this, profile, item.pkg, 0)
+        AttemptLimitStore.setLimitAttempts(this, profile, item.pkg, 0)
+        OpenCountStore.setToday(this, profile, item.pkg, 0)
+        LimitReachedStore.clearToday(this, item.pkg)
+
+        BlockingRuntime.ensureRunning(this)
+        refreshBlockedList()
+
+        Snackbar.make(
+            snackRoot(),
+            getString(R.string.dashboard_blocked_app_removed, item.label),
+            Snackbar.LENGTH_SHORT
+        ).show()
+    }
+
     private fun refreshBlockedList() {
         val current = ProfileStore.getCurrent(this)
         val pkgs: List<String> = loadBlockedPkgsFor(current)
@@ -2050,10 +2143,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private class BlockedAppsAdapter :
-        ListAdapter<AppDisplay, BlockedAppsAdapter.VH>(DIFF) {
+    private class BlockedAppsAdapter(
+        private val onAppClick: (AppDisplay) -> Unit,
+        private val onEditClick: (AppDisplay) -> Unit
+    ) : ListAdapter<AppDisplay, BlockedAppsAdapter.VH>(DIFF) {
 
-                class VH(v: View) : RecyclerView.ViewHolder(v) {
+        class VH(v: View) : RecyclerView.ViewHolder(v) {
             val cardRoot: MaterialCardView = v.findViewById(R.id.cardRoot)
             val icon: ImageView = v.findViewById(R.id.appIcon)
             val name: TextView = v.findViewById(R.id.appName)
@@ -2062,6 +2157,7 @@ class MainActivity : AppCompatActivity() {
             val blockedNowChip: TextView = v.findViewById(R.id.tvBlockedNowChip)
             val rule: TextView = v.findViewById(R.id.tvRule)
             val unavailableHint: TextView = v.findViewById(R.id.tvUnavailableHint)
+            val quickEditButton: View = v.findViewById(R.id.btnQuickEdit)
 
             private fun dp(value: Float): Int =
                 (value * itemView.resources.displayMetrics.density).toInt()
@@ -2207,7 +2303,12 @@ class MainActivity : AppCompatActivity() {
 
 
         override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.bind(getItem(position))
+            val item = getItem(position)
+            holder.bind(item)
+            holder.cardRoot.setOnClickListener { onAppClick(item) }
+            holder.quickEditButton.setOnClickListener { onEditClick(item) }
+            holder.quickEditButton.visibility = View.VISIBLE
+            holder.quickEditButton.alpha = if (item.isAvailable) 1f else 0.72f
         }
 
         companion object {

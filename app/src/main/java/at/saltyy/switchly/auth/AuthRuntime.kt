@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.auth
 
 import android.app.Activity
@@ -18,7 +37,13 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
 import at.saltyy.switchly.R
 
@@ -30,6 +55,13 @@ import at.saltyy.switchly.R
 object AuthRuntime {
 
     private const val TAG = "AuthRuntime"
+
+    enum class AuthAction {
+        GOOGLE_SIGN_IN,
+        EMAIL_SIGN_IN,
+        CREATE_ACCOUNT,
+        RESET_PASSWORD
+    }
 
     private fun ensureFirebaseAppOrNull(context: Context): FirebaseApp? {
         FirebaseApp.getApps(context).firstOrNull()?.let { return it }
@@ -64,19 +96,17 @@ object AuthRuntime {
 
     fun startSignIn(
         activity: Activity,
-        onResult: (Boolean, String?) -> Unit
+        onResult: (Boolean, Throwable?) -> Unit
     ) {
         val auth = firebaseAuthOrNull(activity)
         if (auth == null) {
-            val msg = activity.getString(R.string.auth_firebase_not_configured)
-            onResult(false, msg)
+            onResult(false, IllegalStateException(activity.getString(R.string.auth_firebase_not_configured)))
             return
         }
 
         val serverClientId = serverClientIdOrNull(activity)
         if (serverClientId == null) {
-            val msg = activity.getString(R.string.auth_missing_google_server_client_id)
-            onResult(false, msg)
+            onResult(false, IllegalStateException(activity.getString(R.string.auth_missing_google_server_client_id)))
             return
         }
 
@@ -95,7 +125,7 @@ object AuthRuntime {
         auth: FirebaseAuth,
         serverClientId: String,
         authorizedOnly: Boolean,
-        onResult: (Boolean, String?) -> Unit
+        onResult: (Boolean, Throwable?) -> Unit
     ) {
         val credentialManager = CredentialManager.create(activity)
 
@@ -131,19 +161,19 @@ object AuthRuntime {
                         } catch (e: GoogleIdTokenParsingException) {
                             Log.e(TAG, "Google ID token parsing failed", e)
                             val msg = activity.getString(R.string.auth_failed_to_process_google_token)
-                            onResult(false, msg)
+                            onResult(false, IllegalStateException(msg, e))
                             return
                         } catch (t: Throwable) {
                             Log.e(TAG, "Unexpected error handling Google credential", t)
                             val msg = activity.getString(R.string.auth_unexpected_error_sign_in)
-                            onResult(false, msg)
+                            onResult(false, IllegalStateException(msg, t))
                             return
                         }
                     }
 
                     Log.w(TAG, "Unsupported or cancelled credential: $credential")
                     val msg = activity.getString(R.string.auth_sign_in_cancelled)
-                    onResult(false, msg)
+                    onResult(false, IllegalStateException(msg))
                 }
 
                 override fun onError(e: GetCredentialException) {
@@ -169,18 +199,17 @@ object AuthRuntime {
     private fun handleCredentialError(
         activity: Activity,
         e: GetCredentialException,
-        onResult: (Boolean, String?) -> Unit
+        onResult: (Boolean, Throwable?) -> Unit
     ) {
         when (e) {
             is NoCredentialException -> {
                 Log.w(TAG, "No credentials available", e)
                 val msg = activity.getString(R.string.auth_no_matching_google_accounts_found)
-                onResult(false, msg)
+                onResult(false, IllegalStateException(msg))
             }
             else -> {
                 Log.e(TAG, "getCredential failed", e)
-                val msg = activity.getString(R.string.auth_sign_in_failed_generic)
-                onResult(false, msg)
+                onResult(false, e)
             }
         }
     }
@@ -189,7 +218,7 @@ object AuthRuntime {
         activity: Activity,
         auth: FirebaseAuth,
         idToken: String,
-        onResult: (Boolean, String?) -> Unit
+        onResult: (Boolean, Throwable?) -> Unit
     ) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
@@ -198,12 +227,127 @@ object AuthRuntime {
                     Log.d(TAG, "Firebase sign-in success")
                     onResult(true, null)
                 } else {
-                    val error = task.exception?.localizedMessage
-                        ?: activity.getString(R.string.auth_sign_in_failed_generic)
-                    Log.e(TAG, "Firebase sign-in failed: $error", task.exception)
+                    val error = task.exception
+                    Log.e(TAG, "Firebase sign-in failed", error)
                     onResult(false, error)
                 }
             }
+    }
+
+    fun signInWithEmail(
+        context: Context,
+        email: String,
+        password: String,
+        onResult: (Boolean, Throwable?) -> Unit
+    ) {
+        val auth = firebaseAuthOrNull(context)
+        if (auth == null) {
+            onResult(false, IllegalStateException(context.getString(R.string.auth_firebase_not_configured)))
+            return
+        }
+
+        auth.signInWithEmailAndPassword(email.trim(), password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(false, task.exception)
+                }
+            }
+    }
+
+    fun createAccountWithEmail(
+        context: Context,
+        email: String,
+        password: String,
+        onResult: (Boolean, Throwable?) -> Unit
+    ) {
+        val auth = firebaseAuthOrNull(context)
+        if (auth == null) {
+            onResult(false, IllegalStateException(context.getString(R.string.auth_firebase_not_configured)))
+            return
+        }
+
+        auth.createUserWithEmailAndPassword(email.trim(), password)
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    onResult(false, task.exception)
+                    return@addOnCompleteListener
+                }
+
+                auth.currentUser?.sendEmailVerification()
+                    ?.addOnCompleteListener {
+                        onResult(true, null)
+                    }
+                    ?: onResult(true, null)
+            }
+    }
+
+    fun sendPasswordResetEmail(
+        context: Context,
+        email: String,
+        onResult: (Boolean, Throwable?) -> Unit
+    ) {
+        val auth = firebaseAuthOrNull(context)
+        if (auth == null) {
+            onResult(false, IllegalStateException(context.getString(R.string.auth_firebase_not_configured)))
+            return
+        }
+
+        auth.sendPasswordResetEmail(email.trim())
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(false, task.exception)
+                }
+            }
+    }
+
+    fun userFacingError(context: Context, error: Throwable?, action: AuthAction): String {
+        val fallback = when (action) {
+            AuthAction.GOOGLE_SIGN_IN, AuthAction.EMAIL_SIGN_IN -> R.string.auth_error_sign_in_generic
+            AuthAction.CREATE_ACCOUNT -> R.string.auth_error_create_account_generic
+            AuthAction.RESET_PASSWORD -> R.string.auth_error_reset_password_generic
+        }
+
+        if (error == null) return context.getString(fallback)
+
+        val direct = error.message?.trim().orEmpty()
+        if (error is IllegalStateException && direct.isNotEmpty()) return direct
+
+        return when (error) {
+            is NoCredentialException -> context.getString(R.string.auth_sign_in_cancelled)
+            is FirebaseNetworkException -> context.getString(R.string.auth_error_network)
+            is FirebaseTooManyRequestsException -> context.getString(R.string.auth_error_too_many_requests)
+            is FirebaseAuthUserCollisionException -> context.getString(R.string.auth_error_email_already_in_use)
+            is FirebaseAuthInvalidUserException -> when (action) {
+                AuthAction.RESET_PASSWORD -> context.getString(R.string.auth_error_no_account_for_email)
+                else -> context.getString(R.string.auth_error_invalid_login)
+            }
+            is FirebaseAuthInvalidCredentialsException -> {
+                val code = error.errorCode
+                when {
+                    code.equals("ERROR_INVALID_EMAIL", ignoreCase = true) -> context.getString(R.string.settings_account_invalid_email)
+                    code.equals("ERROR_WRONG_PASSWORD", ignoreCase = true) -> context.getString(R.string.auth_error_invalid_login)
+                    code.equals("ERROR_INVALID_LOGIN_CREDENTIALS", ignoreCase = true) -> context.getString(R.string.auth_error_invalid_login)
+                    code.equals("ERROR_WEAK_PASSWORD", ignoreCase = true) -> context.getString(R.string.auth_error_weak_password)
+                    action == AuthAction.RESET_PASSWORD -> context.getString(R.string.auth_error_no_account_for_email)
+                    else -> context.getString(R.string.auth_error_invalid_login)
+                }
+            }
+            is FirebaseAuthException -> when (error.errorCode) {
+                "ERROR_USER_DISABLED" -> context.getString(R.string.auth_error_account_disabled)
+                "ERROR_INVALID_EMAIL" -> context.getString(R.string.settings_account_invalid_email)
+                "ERROR_EMAIL_ALREADY_IN_USE" -> context.getString(R.string.auth_error_email_already_in_use)
+                "ERROR_WEAK_PASSWORD" -> context.getString(R.string.auth_error_weak_password)
+                "ERROR_TOO_MANY_REQUESTS" -> context.getString(R.string.auth_error_too_many_requests)
+                "ERROR_USER_NOT_FOUND" -> context.getString(R.string.auth_error_no_account_for_email)
+                "ERROR_WRONG_PASSWORD", "ERROR_INVALID_LOGIN_CREDENTIALS", "ERROR_INVALID_CREDENTIAL" -> context.getString(R.string.auth_error_invalid_login)
+                else -> context.getString(fallback)
+            }
+            else -> context.getString(fallback)
+        }
     }
 
     fun signOut(context: Context, onDone: () -> Unit) {

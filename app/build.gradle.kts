@@ -29,8 +29,8 @@ android {
         minSdk = 27
         targetSdk = 36
 
-        versionCode = 205
-        versionName = "2.0.5"
+        versionCode = 206
+        versionName = "2.0.6"
     }
 
     buildFeatures {
@@ -100,7 +100,7 @@ dependencies {
     implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     // CameraX
-    val camerax = "1.5.3"
+    val camerax = "1.6.0"
     implementation("androidx.camera:camera-core:$camerax")
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")

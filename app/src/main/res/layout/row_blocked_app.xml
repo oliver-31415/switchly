@@ -116,6 +116,17 @@
                 android:visibility="gone" />
         </LinearLayout>
 
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnQuickEdit"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/edit"
+            android:padding="8dp"
+            android:src="@drawable/edit_24"
+            app:tint="?attr/colorOnSurface" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.settings
 
 import android.content.Intent
@@ -147,6 +166,13 @@ class InAppBlockingActivity : AppCompatActivity() {
             surfaceLabel = getString(R.string.in_app_surface_explore_label),
             tvLimit = tvLimit
         )
+        setupTimedSwitch(
+            R.id.swIgSearch,
+            BlockingToggleKeys.KEY_BLOCK_IG_SEARCH,
+            surfaceKey = "ig:search",
+            surfaceLabel = getString(R.string.in_app_surface_search_label),
+            tvLimit = tvLimit
+        )
         setupSwitch(R.id.swIgComments, BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS)
         setupTimedSwitch(
             R.id.swIgStories,
@@ -156,13 +182,74 @@ class InAppBlockingActivity : AppCompatActivity() {
             tvLimit = tvLimit
         )
 
+        // X / Twitter
+        setupTimedSwitch(
+            R.id.swXForYou,
+            BlockingToggleKeys.KEY_BLOCK_X_HOME,
+            surfaceKey = "x:foryou",
+            surfaceLabel = getString(R.string.in_app_surface_home_label),
+            tvLimit = tvLimit
+        )
+        setupTimedSwitch(
+            R.id.swXSearch,
+            BlockingToggleKeys.KEY_BLOCK_X_SEARCH,
+            surfaceKey = "x:search",
+            surfaceLabel = getString(R.string.in_app_surface_search_label),
+            tvLimit = tvLimit
+        )
+        setupTimedSwitch(
+            R.id.swXGrok,
+            BlockingToggleKeys.KEY_BLOCK_X_GROK,
+            surfaceKey = "x:grok",
+            surfaceLabel = getString(R.string.in_app_surface_grok_label),
+            tvLimit = tvLimit
+        )
+        setupTimedSwitch(
+            R.id.swXNotifications,
+            BlockingToggleKeys.KEY_BLOCK_X_NOTIFICATIONS,
+            surfaceKey = "x:notifications",
+            surfaceLabel = getString(R.string.in_app_surface_notifications_label),
+            tvLimit = tvLimit
+        )
+
+        // Snapchat
+        setupTimedSwitch(
+            R.id.swSnapMap,
+            BlockingToggleKeys.KEY_BLOCK_SNAP_MAP,
+            surfaceKey = "snap:map",
+            surfaceLabel = getString(R.string.in_app_surface_map_label),
+            tvLimit = tvLimit
+        )
+        setupTimedSwitch(
+            R.id.swSnapStories,
+            BlockingToggleKeys.KEY_BLOCK_SNAP_STORIES,
+            surfaceKey = "snap:stories",
+            surfaceLabel = getString(R.string.in_app_surface_stories_label),
+            tvLimit = tvLimit
+        )
+        setupTimedSwitch(
+            R.id.swSnapSpotlight,
+            BlockingToggleKeys.KEY_BLOCK_SNAP_SPOTLIGHT,
+            surfaceKey = "snap:spotlight",
+            surfaceLabel = getString(R.string.in_app_surface_spotlight_label),
+            tvLimit = tvLimit
+        )
+        setupTimedSwitch(
+            R.id.swSnapFollowing,
+            BlockingToggleKeys.KEY_BLOCK_SNAP_FOLLOWING,
+            surfaceKey = "snap:following",
+            surfaceLabel = getString(R.string.in_app_surface_following_label),
+            tvLimit = tvLimit
+        )
+
         // Expand/collapse sections
         bindExpand(R.id.headerYouTube, R.id.contentYouTube, R.id.arrowYouTube)
         bindExpand(R.id.headerInstagram, R.id.contentInstagram, R.id.arrowInstagram)
+        bindExpand(R.id.headerX, R.id.contentX, R.id.arrowX)
+        bindExpand(R.id.headerSnapchat, R.id.contentSnapchat, R.id.arrowSnapchat)
 
         refreshInAppLimit(tvLimit)
     }
-
 
     override fun onResume() {
         super.onResume()

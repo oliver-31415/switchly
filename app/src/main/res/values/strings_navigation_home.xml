@@ -38,10 +38,10 @@
     </plurals>
     <!-- DASHBOARD - Temporary disable controls -->
     <string name="dashboard_temp_chip">TEMP</string>
-    <string name="dashboard_temp_badge_enabled">TEMP ON • %1$s</string>
-    <string name="dashboard_temp_badge_disabled">TEMP OFF • %1$s</string>
     <string name="dashboard_temp_remaining_fmt">Remaining: %1$s</string>
     <string name="dashboard_temp_remaining_placeholder">Remaining: 00:00</string>
+    <string name="dashboard_temp_status_enabled">Temporarily enabled • %1$s left</string>
+    <string name="dashboard_temp_status_disabled">Temporarily disabled • %1$s left</string>
     <string name="dashboard_temp_sheet_sub_enable">Enable blocking for a short time</string>
     <string name="dashboard_temp_sheet_sub_disable">Disable Switchly for a short time</string>
     <string name="dashboard_temp_sheet_sub_disable_locked">Temporary disable is locked (NFC lock is active). Use Emergency Unlock if needed.</string>
@@ -77,6 +77,12 @@
     <string name="blocked_list_title">Blocked apps</string>
     <string name="blocked_app_default">App blocked</string>
     <string name="blocked_message">You can’t use this app while Switchly is active.</string>
+    <string name="dashboard_blocked_app_action_time_limit">Edit time limit</string>
+    <string name="dashboard_blocked_app_action_open_limit">Edit open limit</string>
+    <string name="dashboard_blocked_app_action_remove">Remove app</string>
+    <string name="dashboard_blocked_app_remove_title">Remove app</string>
+    <string name="dashboard_blocked_app_remove_message">Remove %1$s from the current profile?</string>
+    <string name="dashboard_blocked_app_removed">%1$s removed</string>
     <string name="no_blocked_apps">No blocked apps</string>
     <string name="pick_apps">Pick apps</string>
     <string name="search_apps">Search apps</string>

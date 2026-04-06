@@ -1,6 +1,31 @@
 {
     "releases": [
         {
+            "version": "v2.0.6-beta",
+            "date": "Apr 5, 2026",
+            "body": [
+                "Improved Firefox website blocking to reduce false triggers when typing or using autocomplete in the address bar",
+                "Added more in-app blocking options for Instagram, including Search as a separate surface",
+                "Added in-app blocking options for Snapchat, including Map, Stories, Spotlight, and Following",
+                "Added in-app blocking options for X, including Home, Search, Grok, and Notifications",
+                "Improved redirect behavior for blocked in-app social surfaces so apps return to a safer tab instead of closing",
+                "Changed NFC tag writing so tags are no longer paired automatically by default",
+                "Added an optional NFC Pair on write toggle",
+                "Improved NFC write action explanations and related option descriptions",
+                "Improved how temporary enable and temporary disable status is shown on the main screen",
+                "Changed temporary NFC tag limits so they only apply when paired NFC tags are enabled",
+                "Allowed enabling Switchly from the Quick Settings tile when button/tile enable is allowed",
+                "Added quick edit actions for blocked apps on the home screen",
+                "Hid the redundant button/tile enable option when the full button channel is already enabled",
+                "Updated button/tile enable controls so visibility changes apply immediately",
+                "Added email and password account support, together with email confirmation and password reset flows",
+                "Improved the account flow with better error handling, clearer input validation, and more helpful guidance for common issues",
+                "Improved authentication error messages",
+                "Added automated GitLab release builds with downloadable APK artifacts",
+                "Updated the FAQ with battery optimization setup, NFC tag pairing behavior, read-only tag information, and the public issue board"
+            ]
+        },
+        {
             "version": "v2.0.5",
             "date": "Mar 30, 2026",
             "body": [

@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.blocker
 
 import android.app.Activity
@@ -172,25 +191,19 @@ class BlockerActivity : Activity() {
     private fun handleCloseAction() {
         val pkg = intent?.getStringExtra(EXTRA_PKG).orEmpty()
         val postAckBackCount = intent?.getIntExtra(EXTRA_POST_ACK_BACK_COUNT, 0) ?: 0
+        val returnToPackageOnClose = intent?.getBooleanExtra(EXTRA_RETURN_TO_PACKAGE_ON_CLOSE, false) ?: false
 
-        // For surface-block popups we prefer staying in-app and letting Accessibility perform controlled back navigation. 
-        // This avoids accidental jumps to phone home (which can trigger PiP/miniplayer behavior in some apps).
+        // For surface-block popups we prefer revealing the previously running app task again.
+        // Re-launching the package from here can behave like a cold start on some OEMs and feel like the app was closed.
+        if (returnToPackageOnClose && postAckBackCount <= 0) {
+            BlockingRuntime.ensureRunning(this)
+            finish()
+            return
+        }
+
+        // When a controlled back navigation is queued we still need to bring the app task to the foreground first so Accessibility can consume the pending navigation against the correct package.
         if (pkg.isNotBlank() && postAckBackCount > 0) {
-            // YouTube Shorts can drop into PiP when this blocker screen is on top.
-            // Bring YouTube task to front first so post-ack routing happens in-app without a visible launcher detour.
-            if (pkg == "com.google.android.youtube") {
-                runCatching {
-                    packageManager.getLaunchIntentForPackage(pkg)?.apply {
-                        addFlags(
-                            Intent.FLAG_ACTIVITY_NEW_TASK or
-                                Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
-                                Intent.FLAG_ACTIVITY_NO_ANIMATION
-                        )
-                    }?.let { startActivity(it) }
-                }
-            }
-
+            bringPackageToFront(this, pkg)
             queuePendingBackNavigation(pkg, postAckBackCount)
             BlockingRuntime.ensureRunning(this)
             finish()
@@ -224,6 +237,7 @@ class BlockerActivity : Activity() {
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_MESSAGE = "message"
         private const val EXTRA_POST_ACK_BACK_COUNT = "post_ack_back_count"
+        private const val EXTRA_RETURN_TO_PACKAGE_ON_CLOSE = "return_to_package_on_close"
 
         //Used by [AppWatcherService] to re-show the blocker if the user swipes it away from recents.
         @Volatile
@@ -240,7 +254,8 @@ class BlockerActivity : Activity() {
             label: String?,
             title: String?,
             message: String?,
-            postAcknowledgeBackCount: Int = 0
+            postAcknowledgeBackCount: Int = 0,
+            returnToPackageOnClose: Boolean = false
         ) {
             val i = Intent(context, BlockerActivity::class.java).apply {
                 addFlags(
@@ -255,6 +270,9 @@ class BlockerActivity : Activity() {
                 if (!message.isNullOrEmpty()) putExtra(EXTRA_MESSAGE, message)
                 if (postAcknowledgeBackCount > 0) {
                     putExtra(EXTRA_POST_ACK_BACK_COUNT, postAcknowledgeBackCount)
+                }
+                if (returnToPackageOnClose) {
+                    putExtra(EXTRA_RETURN_TO_PACKAGE_ON_CLOSE, true)
                 }
             }
             context.startActivity(i)
@@ -274,6 +292,18 @@ class BlockerActivity : Activity() {
             context.startActivity(i)
         }
 
+        private fun bringPackageToFront(context: Context, pkg: String) {
+            runCatching {
+                context.packageManager.getLaunchIntentForPackage(pkg)?.apply {
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                            Intent.FLAG_ACTIVITY_NO_ANIMATION
+                    )
+                }?.let { context.startActivity(it) }
+            }
+        }
 
         private data class PendingBackNavigation(
             val pkg: String,

@@ -194,16 +194,6 @@
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
 
-                            <!-- Temporary mode badge (shows remaining time) -->
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipTemp"
-                                style="@style/Switchly.Chip"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:text="@string/dashboard_temp_chip"
-                                android:visibility="gone" />
-
                             <LinearLayout
                                 android:id="@+id/rowActiveProfile"
                                 android:layout_width="match_parent"
@@ -249,6 +239,20 @@
                         android:layout_height="52dp"
                         android:layout_marginTop="12dp"
                         android:text="@string/dashboard_toggle_enable" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipTemp"
+                        style="@style/Switchly.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/dashboard_temp_chip"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        app:chipIcon="@drawable/schedule_24"
+                        app:chipIconVisible="true"
+                        app:ensureMinTouchTargetSize="false" />
 
                     <TextView
                         android:id="@+id/tvTempHint"

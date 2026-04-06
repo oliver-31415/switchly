@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.data.prefs
 
 import android.content.Context
@@ -13,11 +32,8 @@ import androidx.core.content.edit
  * - MIXED: channel-specific toggles decide what is allowed
  */
 object AutomationModeStore {
-
     private const val PREFS = "switchly_prefs"
     private const val KEY_AUTOMATION_MODE = "automation_mode"
-
-    // Mixed-mode channel toggles
     private const val KEY_MIXED_ALLOW_NFC = "automation_mixed_allow_nfc"
     private const val KEY_MIXED_ALLOW_QR = "automation_mixed_allow_qr"
     private const val KEY_MIXED_ALLOW_BARCODE = "automation_mixed_allow_barcode"
@@ -44,109 +60,107 @@ object AutomationModeStore {
         }
     }
 
-    fun getMode(ctx: Context): Mode {
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return Mode.fromRaw(sp.getString(KEY_AUTOMATION_MODE, Mode.MIXED.raw))
+    private fun prefs(context: Context) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    fun getMode(context: Context): Mode {
+        return Mode.fromRaw(prefs(context).getString(KEY_AUTOMATION_MODE, Mode.MIXED.raw))
     }
 
-    fun setMode(ctx: Context, mode: Mode) {
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        sp.edit(commit = true) {
-            putString(KEY_AUTOMATION_MODE, mode.raw)
-        }
+    fun setMode(context: Context, mode: Mode) {
+        prefs(context).edit(commit = true) { putString(KEY_AUTOMATION_MODE, mode.raw) }
     }
 
-    fun isMixedMode(ctx: Context): Boolean = getMode(ctx) == Mode.MIXED
+    fun isMixedMode(context: Context): Boolean = getMode(context) == Mode.MIXED
 
-    fun isMixedAllowNfc(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_NFC, true)
+    fun isMixedAllowNfc(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_NFC, true)
 
-    fun setMixedAllowNfc(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_NFC, enabled)
+    fun setMixedAllowNfc(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_NFC, enabled)
     }
 
-    fun isMixedAllowQr(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_QR, true)
+    fun isMixedAllowQr(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_QR, true)
 
-    fun setMixedAllowQr(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_QR, enabled)
+    fun setMixedAllowQr(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_QR, enabled)
     }
 
-    fun isMixedAllowBarcode(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_BARCODE, true)
+    fun isMixedAllowBarcode(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_BARCODE, true)
 
-    fun setMixedAllowBarcode(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_BARCODE, enabled)
+    fun setMixedAllowBarcode(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_BARCODE, enabled)
     }
 
-    fun isMixedAllowSchedule(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_SCHEDULE, true)
+    fun isMixedAllowSchedule(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_SCHEDULE, true)
 
-    fun setMixedAllowSchedule(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_SCHEDULE, enabled)
+    fun setMixedAllowSchedule(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_SCHEDULE, enabled)
     }
 
-    fun isMixedAllowTile(ctx: Context): Boolean =
-        isMixedAllowButton(ctx)
+    fun isMixedAllowTile(context: Context): Boolean = isMixedAllowButton(context)
 
-    fun setMixedAllowTile(ctx: Context, enabled: Boolean) {
-        setMixedAllowButton(ctx, enabled)
+    fun setMixedAllowTile(context: Context, enabled: Boolean) {
+        setMixedAllowButton(context, enabled)
     }
 
-    fun isMixedAllowButton(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_BUTTON, true)
+    fun isMixedAllowButton(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_BUTTON, true)
 
-    fun setMixedAllowButton(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_BUTTON, enabled)
+    fun setMixedAllowButton(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_BUTTON, enabled)
     }
 
-    fun isButtonEnableAllowed(ctx: Context): Boolean =
-        getBool(ctx, KEY_ALLOW_BUTTON_ENABLE, false)
+    fun isButtonEnableAllowed(context: Context): Boolean =
+        getBool(context, KEY_ALLOW_BUTTON_ENABLE, false)
 
-    fun setButtonEnableAllowed(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_ALLOW_BUTTON_ENABLE, enabled)
+    fun setButtonEnableAllowed(context: Context, enabled: Boolean) {
+        putBool(context, KEY_ALLOW_BUTTON_ENABLE, enabled)
     }
 
-    fun isMixedAllowAppPicking(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_APP_PICKING, false)
+    fun isMixedAllowAppPicking(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_APP_PICKING, false)
 
-    fun setMixedAllowAppPicking(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_APP_PICKING, enabled)
+    fun setMixedAllowAppPicking(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_APP_PICKING, enabled)
     }
 
-    fun isMixedAllowProfileSwitching(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_PROFILE_SWITCHING, false)
+    fun isMixedAllowProfileSwitching(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_PROFILE_SWITCHING, false)
 
-    fun setMixedAllowProfileSwitching(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_PROFILE_SWITCHING, enabled)
+    fun setMixedAllowProfileSwitching(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_PROFILE_SWITCHING, enabled)
     }
 
-    fun isMixedAllowScheduleEditing(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_SCHEDULE_EDITING, false)
+    fun isMixedAllowScheduleEditing(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_SCHEDULE_EDITING, false)
 
-    fun setMixedAllowScheduleEditing(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_SCHEDULE_EDITING, enabled)
+    fun setMixedAllowScheduleEditing(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_SCHEDULE_EDITING, enabled)
     }
 
-    fun isMixedAllowNfcTagWriting(ctx: Context): Boolean =
-        getBool(ctx, KEY_MIXED_ALLOW_NFC_TAG_WRITING, false)
+    fun isMixedAllowNfcTagWriting(context: Context): Boolean =
+        getBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, false)
 
-    fun setMixedAllowNfcTagWriting(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_MIXED_ALLOW_NFC_TAG_WRITING, enabled)
+    fun setMixedAllowNfcTagWriting(context: Context, enabled: Boolean) {
+        putBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, enabled)
     }
 
-    fun isScheduleAllowed(ctx: Context): Boolean {
-        return when (getMode(ctx)) {
+    fun isScheduleAllowed(context: Context): Boolean {
+        return when (getMode(context)) {
             Mode.SCHEDULE -> true
-            Mode.MIXED -> isMixedAllowSchedule(ctx)
+            Mode.MIXED -> isMixedAllowSchedule(context)
             Mode.NFC, Mode.QR, Mode.BARCODE -> false
         }
     }
 
-    fun isNfcAllowed(ctx: Context): Boolean {
-        return when (getMode(ctx)) {
+    fun isNfcAllowed(context: Context): Boolean {
+        return when (getMode(context)) {
             Mode.NFC -> true
-            Mode.MIXED -> isMixedAllowNfc(ctx)
+            Mode.MIXED -> isMixedAllowNfc(context)
             Mode.SCHEDULE, Mode.QR, Mode.BARCODE -> false
         }
     }
@@ -154,68 +168,59 @@ object AutomationModeStore {
     /**
      * Pure capability check for QR based only on the selected control mode.
      */
-    fun isQrChannelAllowed(ctx: Context): Boolean {
-        return when (getMode(ctx)) {
+    fun isQrChannelAllowed(context: Context): Boolean {
+        return when (getMode(context)) {
             Mode.QR -> true
-            Mode.MIXED -> isMixedAllowQr(ctx)
+            Mode.MIXED -> isMixedAllowQr(context)
             Mode.SCHEDULE, Mode.NFC, Mode.BARCODE -> false
         }
     }
 
-    fun isQrAllowed(ctx: Context): Boolean {
-        return isQrChannelAllowed(ctx)
-    }
+    fun isQrAllowed(context: Context): Boolean = isQrChannelAllowed(context)
 
-    fun shouldShowQrTools(ctx: Context): Boolean {
-        return isQrChannelAllowed(ctx)
-    }
+    fun shouldShowQrTools(context: Context): Boolean = isQrChannelAllowed(context)
 
-    fun isBarcodeChannelAllowed(ctx: Context): Boolean {
-        return when (getMode(ctx)) {
+    fun isBarcodeChannelAllowed(context: Context): Boolean {
+        return when (getMode(context)) {
             Mode.BARCODE -> true
-            Mode.MIXED -> isMixedAllowBarcode(ctx)
+            Mode.MIXED -> isMixedAllowBarcode(context)
             Mode.SCHEDULE, Mode.NFC, Mode.QR -> false
         }
     }
 
-    fun isBarcodeAllowed(ctx: Context): Boolean {
-        return isBarcodeChannelAllowed(ctx)
-    }
+    fun isBarcodeAllowed(context: Context): Boolean = isBarcodeChannelAllowed(context)
 
-    fun shouldShowBarcodeTools(ctx: Context): Boolean {
-        return isBarcodeChannelAllowed(ctx)
-    }
+    fun shouldShowBarcodeTools(context: Context): Boolean = isBarcodeChannelAllowed(context)
 
-    fun isAnyScanFeatureEnabled(ctx: Context): Boolean =
-        isQrChannelAllowed(ctx) || isBarcodeChannelAllowed(ctx)
+    fun isAnyScanFeatureEnabled(context: Context): Boolean =
+        isQrChannelAllowed(context) || isBarcodeChannelAllowed(context)
 
     /**
      * Tile control follows the same Mixed-mode channel as the manual button.
      */
-    fun isTileAllowed(ctx: Context): Boolean {
-        return isButtonAllowed(ctx)
-    }
+    fun isTileAllowed(context: Context): Boolean = isButtonAllowed(context)
 
     /**
      * Manual dashboard button control channel:
      * Only available in Mixed mode and controlled by the dedicated toggle.
      */
-    fun isButtonAllowed(ctx: Context): Boolean {
-        return getMode(ctx) == Mode.MIXED && isMixedAllowButton(ctx)
+    fun isButtonAllowed(context: Context): Boolean {
+        return getMode(context) == Mode.MIXED && isMixedAllowButton(context)
     }
 
-    fun canButtonEnable(ctx: Context): Boolean {
-        return isButtonAllowed(ctx) || isButtonEnableAllowed(ctx)
+    fun canButtonEnable(context: Context): Boolean {
+        return isButtonAllowed(context) || isButtonEnableAllowed(context)
     }
 
-    fun isNfcExclusiveControlActive(ctx: Context): Boolean {
-        return when (getMode(ctx)) {
+    fun isNfcExclusiveControlActive(context: Context): Boolean {
+        return when (getMode(context)) {
             Mode.NFC -> true
-            Mode.MIXED -> isMixedAllowNfc(ctx) &&
-                !isMixedAllowSchedule(ctx) &&
-                !isMixedAllowQr(ctx) &&
-                !isMixedAllowBarcode(ctx) &&
-                !isMixedAllowButton(ctx)
+            Mode.MIXED ->
+                isMixedAllowNfc(context) &&
+                    !isMixedAllowSchedule(context) &&
+                    !isMixedAllowQr(context) &&
+                    !isMixedAllowBarcode(context) &&
+                    !isMixedAllowButton(context)
             Mode.SCHEDULE, Mode.QR, Mode.BARCODE -> false
         }
     }
@@ -224,53 +229,46 @@ object AutomationModeStore {
      * Optional exception while Switchly is enabled.
      * Locked by default; can be enabled regardless of the active control mode.
      */
-    fun isAppPickerAllowedWhileEnabled(ctx: Context): Boolean {
-        return isMixedAllowAppPicking(ctx)
-    }
+    fun isAppPickerAllowedWhileEnabled(context: Context): Boolean =
+        isMixedAllowAppPicking(context)
 
     /**
      * Optional exception while Switchly is enabled.
      * Locked by default; can be enabled regardless of the active control mode.
      */
-    fun isProfileSwitchingAllowedWhileEnabled(ctx: Context): Boolean {
-        return isMixedAllowProfileSwitching(ctx)
-    }
+    fun isProfileSwitchingAllowedWhileEnabled(context: Context): Boolean =
+        isMixedAllowProfileSwitching(context)
 
     /**
      * Optional exception while Switchly is enabled.
      * Locked by default; can be enabled regardless of the active control mode.
      */
-    fun isScheduleEditingAllowedWhileEnabled(ctx: Context): Boolean {
-        return isMixedAllowScheduleEditing(ctx)
-    }
+    fun isScheduleEditingAllowedWhileEnabled(context: Context): Boolean =
+        isMixedAllowScheduleEditing(context)
 
     /**
      * Optional exception while Switchly is enabled.
      * Locked by default; can be enabled regardless of the active control mode.
      */
-    fun isNfcTagWritingAllowedWhileEnabled(ctx: Context): Boolean {
-        return isMixedAllowNfcTagWriting(ctx)
-    }
+    fun isNfcTagWritingAllowedWhileEnabled(context: Context): Boolean =
+        isMixedAllowNfcTagWriting(context)
 
     /**
      * Optional hard lock for Switchly control surfaces while protection is active.
      * When enabled, settings/control screens are blocked until Switchly is disabled.
      */
-    fun isSwitchlyAppAccessLockEnabled(ctx: Context): Boolean {
-        return getBool(ctx, KEY_LOCK_SWITCHLY_APP_ACCESS, false)
+    fun isSwitchlyAppAccessLockEnabled(context: Context): Boolean =
+        getBool(context, KEY_LOCK_SWITCHLY_APP_ACCESS, false)
+
+    fun setSwitchlyAppAccessLockEnabled(context: Context, enabled: Boolean) {
+        putBool(context, KEY_LOCK_SWITCHLY_APP_ACCESS, enabled)
     }
 
-    fun setSwitchlyAppAccessLockEnabled(ctx: Context, enabled: Boolean) {
-        putBool(ctx, KEY_LOCK_SWITCHLY_APP_ACCESS, enabled)
+    private fun getBool(context: Context, key: String, defaultValue: Boolean): Boolean {
+        return prefs(context).getBoolean(key, defaultValue)
     }
 
-    private fun getBool(ctx: Context, key: String, def: Boolean): Boolean {
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getBoolean(key, def)
-    }
-
-    private fun putBool(ctx: Context, key: String, value: Boolean) {
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        sp.edit(commit = true) { putBoolean(key, value) }
+    private fun putBool(context: Context, key: String, value: Boolean) {
+        prefs(context).edit(commit = true) { putBoolean(key, value) }
     }
 }

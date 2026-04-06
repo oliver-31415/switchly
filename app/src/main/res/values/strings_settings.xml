@@ -72,11 +72,12 @@
     <string name="pref_block_notifications_summary">Keeps blocked apps quiet.</string>
     <string name="pref_block_inapp_title">Block in-app feeds</string>
     <string name="pref_block_inapp_summary">Master switch for in-app blocking surfaces</string>
-    <string name="pref_enable_reentry_in_write_summary">Shows the Temporary settings unlock action when writing NFC tags</string>
     <string name="pref_enable_paired_uids_title">Enable paired NFC tags</string>
     <string name="pref_enable_paired_uids_summary">Only paired NFC tags can toggle or unlock Switchly without a written action.</string>
+    <string name="pref_auto_pair_on_write_title">Pair NFC tag when writing</string>
+    <string name="pref_auto_pair_on_write_summary">Also add the tag UID to your paired tags after writing a Switchly action.</string>
     <string name="pref_limit_temp_disable_tags_title">Limit temporary NFC tags</string>
-    <string name="pref_limit_temp_disable_tags_summary">Limit how often temporary NFC tags can be used.</string>
+    <string name="pref_limit_temp_disable_tags_summary">When paired tags are enabled, you can manage optional limits in Paired tags.</string>
     <string name="pref_require_nfc_unlock_title">Require NFC to disable Switchly</string>
     <string name="pref_require_nfc_unlock_summary">When on, only a paired NFC tag (or QR fallback) can disable Switchly.</string>
     <string name="pref_qs_tile_title">Tile availability</string>
@@ -104,6 +105,7 @@
     <string name="toggle_locked_nfc_howto">Scan your paired NFC tag to disable Switchly and unlock protected controls. If QR unlock is enabled, you can use your QR fallback instead. After unlocking, schedules and protected settings are editable again.</string>
     <string name="toggle_info_paired_uids_body_enabled">Only accept NFC toggles from tags you have paired.\nPair tags in Settings → NFC tags, then use “Manage paired tags” to rename or remove them. If at least one UID is paired, only paired tags can toggle/unlock Switchly.</string>
     <string name="toggle_info_paired_uids_body_disabled">Pairing is currently disabled.\nWhat it does: if you pair at least one NFC tag, only paired tags can toggle/unlock Switchly (prevents random tags).\nHow to enable: Settings → Blocking &amp; control toggles → Enable paired NFC tags.</string>
+    <string name="toggle_detail_auto_pair_on_write">Off by default. When enabled, writing a Switchly NFC tag will also store that tag UID as a paired tag. Use this only if you intentionally want writing and pairing to happen together.</string>
     <!-- SETTINGS - Home/dashboard display options -->
     <string name="pref_show_next_schedule_title">Show next schedule</string>
     <string name="pref_show_next_schedule_summary">Show the next schedule on Home.</string>
@@ -123,7 +125,6 @@
     <string name="toggle_detail_mode_qr">Focus on QR workflows. NFC and schedules are ignored while this mode is active.</string>
     <string name="toggle_detail_mode_mixed">Flexible mode with per-channel controls. Use the channel controls below to choose which control methods and active-access exceptions are allowed.</string>
     <string name="mode_blocked_button_disable_enable_only">Manual buttons can only enable Switchly right now. Use your allowed control method to disable it.</string>
-    <string name="mode_selected_toast_fmt">%1$s enabled.</string>
     <string name="mode_already_active_fmt">%1$s is already active.</string>
     <string name="mode_one_must_stay_active">One mode must stay active.</string>
     <string name="mode_switch_info_toast">Modes are mutually exclusive. Switching now.</string>
@@ -169,9 +170,9 @@
     <string name="pref_lock_switchly_app_access_title">Block Switchly settings access</string>
     <string name="pref_lock_switchly_app_access_summary">Lock Switchly screens while protection is active.</string>
     <string name="toggle_detail_lock_switchly_app_access">When enabled, Switchly settings and control screens are blocked while protection is active. Disable Switchly first (via an allowed channel) to change settings again.</string>
-    <string name="pref_allow_button_enable_title">Allow button enable channel</string>
-    <string name="pref_allow_button_enable_summary">Lets the button channel turn Switchly on, while disabling still requires your allowed control methods.</string>
-    <string name="toggle_detail_allow_button_enable">When enabled, the button channel can turn Switchly on in any control mode. Turning it off still requires the currently allowed control methods.</string>
+    <string name="pref_allow_button_enable_title">Allow button/tile enable channel</string>
+    <string name="pref_allow_button_enable_summary">Lets the home button and Quick Settings tile turn Switchly on, while disabling still requires your allowed control methods.</string>
+    <string name="toggle_detail_allow_button_enable">When enabled, the home button and Quick Settings tile can turn Switchly on in any control mode. Turning it off still requires the currently allowed control methods.</string>
     <string name="control_mode_lock_inline_hint">Control mode is locked while Switchly is on. Disable Switchly first, then choose a mode.</string>
     <!-- SETTINGS - Locked editing messages and toggle details -->
     <string name="edit_locked_while_switchly_on_title">Unavailable while Switchly is on</string>
@@ -188,7 +189,7 @@
     <string name="toggle_detail_autostart">After a reboot, Switchly tries to start itself again so your protection profile comes back automatically.</string>
     <string name="toggle_detail_emergency">Allows one temporary unlock per day (15 minutes). During this window, Switchly is disabled so you can quickly access blocked apps.</string>
     <string name="toggle_detail_quick_actions">Shows dashboard buttons for common actions (e.g. temporary disable or profile shortcuts) directly on Home.</string>
-    <string name="toggle_detail_limit_temp_disable_tags">Limits how often Temporary disable and Temporary settings unlock NFC tags can be used. You can adjust per-tag limits in Manage Paired Tags.</string>
+    <string name="toggle_detail_limit_temp_disable_tags">When paired NFC tags are enabled, this limits how often Temporary disable and Temporary settings unlock NFC tags can be used. You can adjust per-tag limits in Manage Paired Tags.</string>
     <string name="edit_locked_manage_profiles">Turn Switchly off to manage profiles.</string>
     <string name="edit_locked_write_nfc_tags">Turn Switchly off to write or pair NFC tags.</string>
     <string name="edit_locked_manage_inapp">Turn Switchly off to manage in-app blocking.</string>

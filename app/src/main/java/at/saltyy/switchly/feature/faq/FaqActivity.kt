@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.faq
 
 import android.content.Context
@@ -18,11 +37,12 @@ import com.google.android.material.textfield.TextInputEditText
 
 class FaqActivity : AppCompatActivity() {
 
+    private lateinit var toolbar: MaterialToolbar
     private lateinit var recycler: RecyclerView
-    private lateinit var adapter: FaqAdapter
     private lateinit var searchInput: TextInputEditText
 
-    private lateinit var allItems: List<FaqListItem>
+    private lateinit var adapter: FaqAdapter
+    private var allItems: List<FaqListItem> = emptyList()
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -33,28 +53,35 @@ class FaqActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_faq)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
-        EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.setNavigationOnClickListener { finish() }
-        toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
-
-        recycler = findViewById(R.id.recycler)
-        searchInput = findViewById(R.id.etFaqSearch)
-
-        recycler.layoutManager = LinearLayoutManager(this)
-
-        allItems = buildFaqItems()
-        adapter = FaqAdapter(allItems)
-        recycler.adapter = adapter
-
+        setupToolbar()
+        setupViews()
+        setupRecycler()
         setupSearch()
+        loadInitialState()
+        renderFaqItems()
     }
 
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true
+    }
+
+    private fun setupToolbar() {
+        toolbar = findViewById(R.id.toolbar)
+        EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
+        toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+    }
+
+    private fun setupViews() {
+        recycler = findViewById(R.id.recycler)
+        searchInput = findViewById(R.id.etFaqSearch)
+    }
+
+    private fun setupRecycler() {
+        recycler.layoutManager = LinearLayoutManager(this)
     }
 
     private fun setupSearch() {
@@ -63,46 +90,55 @@ class FaqActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) = Unit
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val query = s?.toString()?.trim().orEmpty()
-                val filtered = filterFaqItems(allItems, query)
-                adapter = FaqAdapter(filtered)
-                recycler.adapter = adapter
+                renderFaqItems(s?.toString()?.trim().orEmpty())
             }
         })
+    }
+
+    private fun loadInitialState() {
+        allItems = buildFaqItems()
+    }
+
+    private fun renderFaqItems(query: String = "") {
+        val visibleItems = filterFaqItems(allItems, query)
+        adapter = FaqAdapter(visibleItems)
+        recycler.adapter = adapter
     }
 
     private fun filterFaqItems(source: List<FaqListItem>, query: String): List<FaqListItem> {
         if (query.isBlank()) return source
 
-        val q = query.lowercase()
-        val out = mutableListOf<FaqListItem>()
+        val lowerCaseQuery = query.lowercase()
+        val filteredItems = mutableListOf<FaqListItem>()
 
         var currentHeader: FaqListItem.Header? = null
-        val buffer = mutableListOf<FaqListItem.Item>()
+        val sectionItems = mutableListOf<FaqListItem.Item>()
 
-        fun flush() {
-            if (buffer.isNotEmpty()) {
-                currentHeader?.let { out += it }
-                out += buffer
-                buffer.clear()
+        fun flushSection() {
+            if (sectionItems.isNotEmpty()) {
+                currentHeader?.let { filteredItems += it }
+                filteredItems += sectionItems
+                sectionItems.clear()
             }
         }
 
         for (row in source) {
             when (row) {
                 is FaqListItem.Header -> {
-                    flush()
+                    flushSection()
                     currentHeader = row
                 }
                 is FaqListItem.Item -> {
-                    val hay = (row.question + "\n" + row.answer).lowercase()
-                    if (hay.contains(q)) buffer += row
+                    val haystack = (row.question + "\n" + row.answer).lowercase()
+                    if (haystack.contains(lowerCaseQuery)) {
+                        sectionItems += row
+                    }
                 }
             }
         }
-        flush()
 
-        return out
+        flushSection()
+        return filteredItems
     }
 
     private fun buildFaqItems(): List<FaqListItem> {
@@ -148,9 +184,11 @@ class FaqActivity : AppCompatActivity() {
         quick.header(R.string.faq_section_tags)
         quick.item(R.string.faq_q_idiot_tags, R.string.faq_a_idiot_tags, R.drawable.nfc_24)
         quick.item(R.string.faq_q_nfc_tag_types, R.string.faq_a_nfc_tag_types, R.drawable.nfc_24)
+        quick.item(R.string.faq_q_nfc_auto_pairing, R.string.faq_a_nfc_auto_pairing, R.drawable.nfc_24)
 
         quick.header(R.string.faq_section_gray)
         quick.item(R.string.faq_q_idiot_gray, R.string.faq_a_idiot_gray, R.drawable.lock_24)
+        quick.item(R.string.faq_q_battery_permission_still_needed, R.string.faq_a_battery_permission_still_needed, R.drawable.battery_24)
 
         quick.header(R.string.faq_section_backup_restore)
         quick.item(R.string.faq_q_idiot_save_data, R.string.faq_a_idiot_save_data, R.drawable.cloud_24)
@@ -186,6 +224,7 @@ class FaqActivity : AppCompatActivity() {
         detailed.item(R.string.faq_q_nfc, R.string.faq_a_nfc, R.drawable.nfc_24)
         detailed.item(R.string.faq_q_profile_nfc_sync, R.string.faq_a_profile_nfc_sync, R.drawable.switch_account_24)
         detailed.item(R.string.faq_q_nfc_uid_pair, R.string.faq_a_nfc_uid_pair, R.drawable.security_24)
+        detailed.item(R.string.faq_q_nfc_auto_pairing, R.string.faq_a_nfc_auto_pairing, R.drawable.nfc_24)
         detailed.item(R.string.faq_q_nfc_paired_tags, R.string.faq_a_nfc_paired_tags, R.drawable.nfc_24)
         detailed.item(R.string.faq_q_nfc_emergency_tag, R.string.faq_a_nfc_emergency_tag, R.drawable.lock_open_24)
 
@@ -225,6 +264,7 @@ class FaqActivity : AppCompatActivity() {
         detailed.item(R.string.faq_q_oem_limits, R.string.faq_a_oem_limits, R.drawable.info_24)
         detailed.item(R.string.faq_q_xiaomi_background, R.string.faq_a_xiaomi_background, R.drawable.battery_24)
         detailed.item(R.string.faq_q_battery, R.string.faq_a_battery, R.drawable.info_24)
+        detailed.item(R.string.faq_q_battery_permission_still_needed, R.string.faq_a_battery_permission_still_needed, R.drawable.battery_24)
         detailed.item(R.string.faq_q_tile, R.string.faq_a_tile, R.drawable.dashboard_24)
         detailed.item(R.string.faq_q_tile_why_missing, R.string.faq_a_tile_why_missing, R.drawable.dashboard_24)
 
@@ -239,6 +279,7 @@ class FaqActivity : AppCompatActivity() {
 
         detailed.header(R.string.faq_header_contact)
         detailed.item(R.string.faq_q_contact, R.string.faq_a_contact, R.drawable.mail_24)
+        detailed.item(R.string.faq_q_issue_board, R.string.faq_a_issue_board, R.drawable.info_24)
 
         return mergeWithoutDuplicateQuestions(primary = quick, secondary = detailed)
     }
@@ -247,14 +288,14 @@ class FaqActivity : AppCompatActivity() {
         primary: List<FaqListItem>,
         secondary: List<FaqListItem>
     ): List<FaqListItem> {
-        val out = mutableListOf<FaqListItem>()
+        val mergedItems = mutableListOf<FaqListItem>()
         val seenQuestions = mutableSetOf<String>()
 
         fun questionKey(item: FaqListItem.Item): String =
             item.question.trim().lowercase()
 
         for (row in primary) {
-            out += row
+            mergedItems += row
             if (row is FaqListItem.Item) {
                 seenQuestions += questionKey(row)
             }
@@ -268,15 +309,15 @@ class FaqActivity : AppCompatActivity() {
                 is FaqListItem.Item -> {
                     val key = questionKey(row)
                     if (key !in seenQuestions) {
-                        pendingHeader?.let { out += it }
+                        pendingHeader?.let { mergedItems += it }
                         pendingHeader = null
-                        out += row
+                        mergedItems += row
                         seenQuestions += key
                     }
                 }
             }
         }
 
-        return out
+        return mergedItems
     }
 }

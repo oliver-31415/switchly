@@ -62,10 +62,19 @@
     <string name="in_app_blocking_summary">Blockiere Teile von Apps wie Shorts, Reels und Explore.</string>
     <string name="in_app_blocking_youtube">YouTube</string>
     <string name="in_app_blocking_instagram">Instagram</string>
+    <string name="in_app_blocking_x">X / Twitter</string>
+    <string name="in_app_blocking_snapchat">Snapchat</string>
     <string name="in_app_blocking_block_shorts">Shorts blockieren</string>
     <string name="in_app_blocking_block_reels">Reels blockieren</string>
     <string name="in_app_blocking_block_explore">Explore-Tab blockieren</string>
+    <string name="in_app_blocking_block_search">Suche blockieren</string>
     <string name="in_app_blocking_block_stories">Stories blockieren</string>
+    <string name="in_app_blocking_block_home">Home blockieren</string>
+    <string name="in_app_blocking_block_grok">Grok blockieren</string>
+    <string name="in_app_blocking_block_notifications">Benachrichtigungen blockieren</string>
+    <string name="in_app_blocking_block_map">Karte blockieren</string>
+    <string name="in_app_blocking_block_spotlight">Spotlight blockieren</string>
+    <string name="in_app_blocking_block_following">Following blockieren</string>
     <string name="in_app_blocking_block_video_search">Videosuche blockieren</string>
     <string name="in_app_blocking_block_comments">Kommentare blockieren</string>
     <string name="in_app_blocking_block_pip">Bild-im-Bild-Modus blockieren</string>
@@ -76,7 +85,14 @@
     <string name="in_app_surface_shorts_label">Shorts</string>
     <string name="in_app_surface_reels_label">Reels</string>
     <string name="in_app_surface_explore_label">Entdecken</string>
+    <string name="in_app_surface_search_label">Suche</string>
     <string name="in_app_surface_stories_label">Stories</string>
+    <string name="in_app_surface_home_label">Home</string>
+    <string name="in_app_surface_grok_label">Grok</string>
+    <string name="in_app_surface_notifications_label">Benachrichtigungen</string>
+    <string name="in_app_surface_map_label">Karte</string>
+    <string name="in_app_surface_spotlight_label">Spotlight</string>
+    <string name="in_app_surface_following_label">Following</string>
     <string name="in_app_surface_use_global_limit_fmt">Globales Limit verwenden (%1$d Min/Tag)</string>
     <string name="in_app_surface_set_global_limit">Globales In-App-Limit festlegen…</string>
     <string name="in_app_surface_always_block">Immer blockieren</string>
@@ -92,12 +108,10 @@
     <string name="blocking_search_blocked_title">Suche ist blockiert!</string>
     <string name="blocking_comments_blocked_title">Kommentare sind blockiert!</string>
     <string name="blocking_pip_blocked_title">Bild-im-Bild ist blockiert!</string>
-    <string name="blocking_explore_blocked_title">Entdecken ist blockiert!</string>
     <string name="blocking_youtube_search_blocked_message">Die YouTube-Suche wird von Switchly blockiert.</string>
     <string name="blocking_youtube_comments_blocked_message">YouTube-Kommentare werden von Switchly blockiert.</string>
     <string name="blocking_youtube_pip_blocked_message">Der Bild-im-Bild-Modus wird von Switchly blockiert.</string>
     <string name="blocking_instagram_comments_blocked_message">Instagram-Kommentare werden von Switchly blockiert.</string>
-    <string name="blocking_instagram_explore_search_blocked_message">Instagram Entdecken/Suche wird von Switchly blockiert.</string>
     <string name="blocking_surface_base_message">Du kannst diese App-Funktion nicht nutzen, solange Switchly aktiv ist.</string>
     <string name="blocking_daily_limit_duration_fmt">Tägliches Limit: %1$s</string>
 </resources>
