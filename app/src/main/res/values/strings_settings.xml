@@ -16,7 +16,7 @@
     <string name="settings_focus_blocking_title">Focus &amp; blocking</string>
     <string name="settings_focus_blocking_summary">Blocking rules and in-app controls</string>
     <string name="settings_permissions_reliability_title">Permissions &amp; reliability</string>
-    <string name="settings_permissions_reliability_summary">Permissions, troubleshooting and background reliability</string>
+    <string name="settings_permissions_reliability_summary">Permissions and troubleshooting</string>
     <string name="settings_help_about_title">Help &amp; about</string>
     <string name="settings_help_about_summary">FAQ, support and app information</string>
     <string name="settings_info_title">Info</string>
@@ -24,6 +24,11 @@
     <!-- SETTINGS - Theme and language -->
     <string name="pref_theme_title">Appearance</string>
     <string name="pref_theme_mode_title">Display mode</string>
+    <string name="pref_time_format_title">Time format</string>
+    <string name="pref_time_format_summary">Choose how times are shown in schedules</string>
+    <string name="pref_time_format_system">Automatic</string>
+    <string name="pref_time_format_24h">24-hour</string>
+    <string name="pref_time_format_12h">12-hour</string>
     <string name="pref_theme_mode_summary">Choose how Switchly is displayed.</string>
     <string name="pref_theme_mode_light">Light</string>
     <string name="pref_theme_mode_dark">Dark</string>
@@ -214,8 +219,10 @@
     <string name="emergency_used_today">You can only use Emergency Unlock once per day.</string>
     <string name="emergency_pin_title">Set emergency PIN</string>
     <string name="emergency_pin_message">This PIN is required before Emergency Unlock can be activated.</string>
+    <string name="emergency_pin_enter_current_title">Enter current emergency PIN</string>
+    <string name="emergency_pin_enter_current_message">Enter your current emergency PIN to change it or use Emergency Unlock.</string>
+    <string name="emergency_pin_enter_current_hint">Enter current PIN</string>
     <string name="emergency_pin_choose_hint">Choose PIN (min. 4 digits)</string>
-    <string name="emergency_pin_enter_hint">Enter PIN</string>
     <string name="emergency_pin_incorrect">Incorrect PIN.</string>
     <string name="emergency_pin_too_short">PIN must be at least 4 digits.</string>
     <string name="pref_emergency_summary_disabled">Emergency unlock is off. Turn it on in Blocking controls.</string>

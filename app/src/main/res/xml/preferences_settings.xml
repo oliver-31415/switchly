@@ -58,6 +58,14 @@
             app:iconSpaceReserved="false" />
 
         <Preference
+            android:key="pref_time_format"
+            android:layout="@layout/item_pref_card"
+            android:title="@string/pref_time_format_title"
+            android:summary="@string/pref_time_format_summary"
+            android:icon="@drawable/schedule_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
             android:key="pref_theme_color"
             android:layout="@layout/item_pref_card"
             android:title="@string/pref_theme_color_title"
@@ -99,14 +107,6 @@
             android:title="@string/troubleshooting_title"
             android:summary="@string/troubleshooting_pref_summary"
             android:icon="@drawable/help_24"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_other_help_battery"
-            android:layout="@layout/item_pref_card"
-            android:title="@string/settings_battery_opt_title"
-            android:summary="@string/settings_battery_opt_summary"
-            android:icon="@drawable/battery_24"
             app:iconSpaceReserved="false" />
 
     </PreferenceScreen>

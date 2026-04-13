@@ -22,7 +22,6 @@ package at.saltyy.switchly.feature.schedule
 import android.Manifest
 import android.app.AlarmManager
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.pm.PackageManager
@@ -58,6 +57,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
+import at.saltyy.switchly.util.TimeFormatPrefs
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -1555,9 +1555,7 @@ class SchedulesActivity : AppCompatActivity() {
         }
 
         fun formatMinutes(m: Int): String {
-            val h = m / 60
-            val mm = m % 60
-            return String.format(Locale.getDefault(), "%02d:%02d", h, mm)
+            return TimeFormatPrefs.formatMinutesOfDay(this, m)
         }
 
         fun formatYmd(ymd: Int): String {
@@ -1800,21 +1798,21 @@ class SchedulesActivity : AppCompatActivity() {
             val h = initial / 60
             val m = initial % 60
 
+            val picker = MaterialTimePicker.Builder()
+                .setTimeFormat(if (TimeFormatPrefs.is24Hour(this)) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
+                .setHour(h)
+                .setMinute(m)
+                .build()
+
+            picker.addOnPositiveButtonClickListener {
+                onPicked(picker.hour * 60 + picker.minute)
+                updateLabels()
+            }
+
+            val tag = "switchly_timepicker_${SystemClock.uptimeMillis()}"
+            picker.show(supportFragmentManager, tag)
+
             if (CustomAccentApplier.isCustomAccentEnabled(this)) {
-                val picker = MaterialTimePicker.Builder()
-                    .setTimeFormat(TimeFormat.CLOCK_24H)
-                    .setHour(h)
-                    .setMinute(m)
-                    .build()
-
-                picker.addOnPositiveButtonClickListener {
-                    onPicked(picker.hour * 60 + picker.minute)
-                    updateLabels()
-                }
-
-                val tag = "switchly_timepicker_${SystemClock.uptimeMillis()}"
-                picker.show(supportFragmentManager, tag)
-
                 window.decorView.post {
                     val d = picker.dialog
                     val decor = d?.window?.decorView
@@ -1828,13 +1826,7 @@ class SchedulesActivity : AppCompatActivity() {
                         }
                     }
                 }
-                return
             }
-
-            TimePickerDialog(this, { _, hourOfDay, minute ->
-                onPicked(hourOfDay * 60 + minute)
-                updateLabels()
-            }, h, m, true).show()
         }
 
         fun pickDate(initialYmd: Int, onPicked: (Int) -> Unit) {

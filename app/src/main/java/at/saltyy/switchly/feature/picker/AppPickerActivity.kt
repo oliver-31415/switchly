@@ -337,6 +337,33 @@ class AppPickerActivity : AppCompatActivity() {
             }
 
             AppBlockSafety.Level.SOFT_WARNING -> {
+                if (AppBlockSafety.requiresStrictModeForBlocking(this, app.packageName)) {
+                    if (!AppBlockSafety.canAllowStrictModeBlocking(this, app.packageName)) {
+                        AlertDialog.Builder(this)
+                            .setTitle(R.string.app_picker_settings_requirements_title)
+                            .setMessage(R.string.app_picker_settings_requirements_message)
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .setPositiveButton(android.R.string.ok) { _, _ -> }
+                            .showAccented()
+                        return
+                    }
+
+                    AlertDialog.Builder(this)
+                        .setTitle(app.blockSafety.warningTitle ?: getString(R.string.app_picker_protected_caution_title))
+                        .setMessage(app.blockSafety.warningMessage ?: app.blockSafety.hint ?: getString(R.string.app_picker_protected_generic_hint))
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(R.string.continue_label) { _, _ ->
+                            AlertDialog.Builder(this)
+                                .setTitle(R.string.app_picker_settings_second_warning_title)
+                                .setMessage(R.string.app_picker_settings_second_warning_message)
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .setPositiveButton(R.string.app_picker_block_settings_confirm) { _, _ -> onAllowed() }
+                                .showAccented()
+                        }
+                        .showAccented()
+                    return
+                }
+
                 AlertDialog.Builder(this)
                     .setTitle(app.blockSafety.warningTitle ?: getString(R.string.app_picker_protected_caution_title))
                     .setMessage(app.blockSafety.warningMessage ?: app.blockSafety.hint ?: getString(R.string.app_picker_protected_generic_hint))
@@ -416,7 +443,7 @@ class AppPickerActivity : AppCompatActivity() {
                 .setTitle(R.string.custom_minutes_title)
                 .setView(container)
                 .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok) { _, _ ->
+                .setPositiveButton(android.R.string.ok) { _, _ ->
                     val m = input.text?.toString()?.trim()?.toIntOrNull()
                     if (m == null || m < 0) {
                         Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show()

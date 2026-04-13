@@ -16,7 +16,7 @@
     <string name="settings_focus_blocking_title">Fokus &amp; Blockierung</string>
     <string name="settings_focus_blocking_summary">Blockierregeln und In-App-Steuerung</string>
     <string name="settings_permissions_reliability_title">Berechtigungen &amp; Zuverlässigkeit</string>
-    <string name="settings_permissions_reliability_summary">Berechtigungen, Fehlerbehebung und Hintergrund-Zuverlässigkeit</string>
+    <string name="settings_permissions_reliability_summary">Berechtigungen und Fehlerbehebung</string>
     <string name="settings_help_about_title">Hilfe &amp; Über</string>
     <string name="settings_help_about_summary">FAQ, Support und App-Informationen</string>
     <string name="settings_info_title">Info</string>
@@ -24,6 +24,11 @@
     <!-- SETTINGS - Theme and language -->
     <string name="pref_theme_title">Darstellung</string>
     <string name="pref_theme_mode_title">Anzeigemodus</string>
+    <string name="pref_time_format_title">Zeitformat</string>
+    <string name="pref_time_format_summary">Lege fest, wie Zeiten in Zeitplänen angezeigt werden</string>
+    <string name="pref_time_format_system">Automatisch</string>
+    <string name="pref_time_format_24h">24-Stunden</string>
+    <string name="pref_time_format_12h">12-Stunden</string>
     <string name="pref_theme_mode_summary">Wähle, wie Switchly angezeigt wird.</string>
     <string name="pref_theme_mode_light">Hell</string>
     <string name="pref_theme_mode_dark">Dunkel</string>
@@ -214,8 +219,10 @@
     <string name="emergency_used_today">Du kannst die Notfall-Entsperrung nur einmal pro Tag verwenden.</string>
     <string name="emergency_pin_title">Notfall-PIN festlegen</string>
     <string name="emergency_pin_message">Diese PIN ist erforderlich, bevor die Notfall-Entsperrung aktiviert werden kann.</string>
+    <string name="emergency_pin_enter_current_title">Aktuelle Notfall-PIN eingeben</string>
+    <string name="emergency_pin_enter_current_message">Gib deine aktuelle Notfall-PIN ein, um sie zu ändern oder die Notfall-Entsperrung zu verwenden.</string>
+    <string name="emergency_pin_enter_current_hint">Aktuelle PIN eingeben</string>
     <string name="emergency_pin_choose_hint">PIN wählen (mind. 4 Ziffern)</string>
-    <string name="emergency_pin_enter_hint">PIN eingeben</string>
     <string name="emergency_pin_incorrect">Falsche PIN.</string>
     <string name="emergency_pin_too_short">Die PIN muss mindestens 4 Ziffern haben.</string>
     <string name="pref_emergency_summary_disabled">Notfall-Entsperrung ist aus. Aktiviere sie in der Blockier-Steuerung.</string>

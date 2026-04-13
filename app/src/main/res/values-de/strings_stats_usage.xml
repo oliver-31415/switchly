@@ -131,4 +131,7 @@
     <string name="usage_switchly_fallback_title">Noch keine Daten von Switchly</string>
     <string name="usage_switchly_fallback_message">Für diesen Zeitraum hat Switchly noch keine Nutzungsdaten erfasst. Möchtest du stattdessen die aktuellen Statistiken deines Smartphones anzeigen?</string>
     <string name="usage_switchly_fallback_positive">Handy-Statistiken anzeigen</string>
+    <string name="usage_details_premium_title">Detaillierte Statistiken sind Teil von Premium</string>
+    <string name="usage_details_premium_message">Hol dir Premium, um detaillierte Statistiken und Einblicke zu sehen.</string>
+    <string name="usage_details_premium_action">Premium ansehen</string>
 </resources>

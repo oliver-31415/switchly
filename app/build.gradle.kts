@@ -29,8 +29,8 @@ android {
         minSdk = 27
         targetSdk = 36
 
-        versionCode = 206
-        versionName = "2.0.6"
+        versionCode = 207
+        versionName = "2.0.7"
     }
 
     buildFeatures {
@@ -78,7 +78,7 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     // Firebase BOM + Modules
-    implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
 
     // Auth for Google-Login
     implementation("com.google.firebase:firebase-auth")
@@ -89,8 +89,8 @@ dependencies {
 
     // Google Sign-In/Credential Manager
     implementation("com.google.android.gms:play-services-auth:21.5.1")
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
 
     // Play Billing

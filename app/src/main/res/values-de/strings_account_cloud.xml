@@ -3,8 +3,6 @@
     <!-- AUTH - Sign-in flow and configuration errors -->
     <string name="auth_sign_in_success">Mit Google angemeldet</string>
     <string name="auth_sign_in_cancelled">Anmeldung abgebrochen</string>
-    <string name="auth_sign_in_failed_generic">Anmeldung fehlgeschlagen</string>
-    <string name="auth_sign_in_failed_fmt">Anmeldung fehlgeschlagen: %1$s</string>
     <string name="auth_unexpected_error_sign_in">Unerwarteter Fehler bei der Anmeldung</string>
     <string name="auth_failed_to_process_google_token">Google-Token konnte nicht verarbeitet werden</string>
     <string name="auth_no_matching_google_accounts_found">Keine passenden Google-Konten gefunden</string>
@@ -21,11 +19,8 @@
     <string name="account_deleted">Konto gelöscht</string>
     <string name="pref_google_account_title">Konto</string>
     <string name="pref_google_account_summary_logged_out">Nicht angemeldet</string>
-    <string name="settings_google_dialog_title">Konto</string>
     <string name="settings_confirm_sign_out_message">Von deinem Konto abmelden?</string>
-    <string name="settings_google_logged_in">Angemeldet</string>
     <string name="settings_google_logged_out">Nicht angemeldet</string>
-    <string name="settings_google_signing_in">Anmeldung läuft…</string>
     <string name="settings_signed_out">Abgemeldet</string>
     <string name="deleted">Gelöscht</string>
     <string name="error_unknown">Unbekannter Fehler</string>
@@ -72,7 +67,10 @@
     <string name="settings_account_password_hint">Passwort</string>
     <string name="settings_account_invalid_email">Gib eine gültige E-Mail-Adresse ein</string>
     <string name="settings_account_password_required">Gib dein Passwort ein</string>
-    <string name="settings_account_password_min_length">Das Passwort muss mindestens %1$d Zeichen lang sein</string>
+    <plurals name="settings_account_password_min_length">
+        <item quantity="one">Das Passwort muss mindestens %1$d Zeichen lang sein</item>
+        <item quantity="other">Das Passwort muss mindestens %1$d Zeichen lang sein</item>
+    </plurals>
     <string name="settings_account_reset_password_message">Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten.</string>
     <string name="auth_error_invalid_login">Ungültige E-Mail oder falsches Passwort</string>
     <string name="auth_error_no_account_for_email">Kein Konto für diese E-Mail-Adresse gefunden</string>

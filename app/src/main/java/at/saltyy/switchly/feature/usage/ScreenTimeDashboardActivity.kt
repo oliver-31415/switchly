@@ -41,6 +41,7 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.databinding.ActivityScreenTimeDashboardBinding
 import at.saltyy.switchly.feature.stats.StatsFormat
+import at.saltyy.switchly.feature.premium.PremiumInfoActivity
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
@@ -48,6 +49,7 @@ import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.util.PermissionUtils
+import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
 import com.google.android.material.color.MaterialColors
 import at.saltyy.switchly.ui.dialog.showAccented
@@ -100,36 +102,40 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
 
         adapter = AppUsageAdapter(
             onClick = { item ->
-            val selectedRange = when (b.chipGroupRange.checkedChipId) {
-                b.chipToday.id -> ScreenTimeDetailActivity.RANGE_TODAY
-                b.chipMonth.id -> ScreenTimeDetailActivity.RANGE_MONTH
-                b.chipYear.id -> ScreenTimeDetailActivity.RANGE_YEAR
-                b.chipOverall.id -> ScreenTimeDetailActivity.RANGE_OVERALL
-                else -> ScreenTimeDetailActivity.RANGE_WEEK
-            }
+                if (!PremiumManager.isPremium(this)) {
+                    showPremiumStatsDetailsGate()
+                } else {
+                    val selectedRange = when (b.chipGroupRange.checkedChipId) {
+                        b.chipToday.id -> ScreenTimeDetailActivity.RANGE_TODAY
+                        b.chipMonth.id -> ScreenTimeDetailActivity.RANGE_MONTH
+                        b.chipYear.id -> ScreenTimeDetailActivity.RANGE_YEAR
+                        b.chipOverall.id -> ScreenTimeDetailActivity.RANGE_OVERALL
+                        else -> ScreenTimeDetailActivity.RANGE_WEEK
+                    }
 
-            if (isWebMode) {
-                startActivity(
-                    Intent(this, WebsiteDetailActivity::class.java)
-                        .putExtra(WebsiteDetailActivity.EXTRA_DOMAIN, item.packageName)
-                        .putExtra(WebsiteDetailActivity.EXTRA_LABEL, item.label)
-                        .putExtra(WebsiteDetailActivity.EXTRA_INITIAL_RANGE, when (b.chipGroupRange.checkedChipId) {
-                            b.chipToday.id -> WebsiteDetailActivity.RANGE_TODAY
-                            b.chipMonth.id -> WebsiteDetailActivity.RANGE_MONTH
-                            b.chipYear.id -> WebsiteDetailActivity.RANGE_YEAR
-                            b.chipOverall.id -> WebsiteDetailActivity.RANGE_OVERALL
-                            else -> WebsiteDetailActivity.RANGE_WEEK
-                        })
-                )
-            } else {
-                startActivity(
-                    Intent(this, ScreenTimeDetailActivity::class.java)
-                        .putExtra(ScreenTimeDetailActivity.EXTRA_PKG, item.packageName)
-                        .putExtra(ScreenTimeDetailActivity.EXTRA_LABEL, item.label)
-                        .putExtra(ScreenTimeDetailActivity.EXTRA_INITIAL_RANGE, selectedRange)
-                )
-            }
-        },
+                    if (isWebMode) {
+                        startActivity(
+                            Intent(this, WebsiteDetailActivity::class.java)
+                                .putExtra(WebsiteDetailActivity.EXTRA_DOMAIN, item.packageName)
+                                .putExtra(WebsiteDetailActivity.EXTRA_LABEL, item.label)
+                                .putExtra(WebsiteDetailActivity.EXTRA_INITIAL_RANGE, when (b.chipGroupRange.checkedChipId) {
+                                    b.chipToday.id -> WebsiteDetailActivity.RANGE_TODAY
+                                    b.chipMonth.id -> WebsiteDetailActivity.RANGE_MONTH
+                                    b.chipYear.id -> WebsiteDetailActivity.RANGE_YEAR
+                                    b.chipOverall.id -> WebsiteDetailActivity.RANGE_OVERALL
+                                    else -> WebsiteDetailActivity.RANGE_WEEK
+                                })
+                        )
+                    } else {
+                        startActivity(
+                            Intent(this, ScreenTimeDetailActivity::class.java)
+                                .putExtra(ScreenTimeDetailActivity.EXTRA_PKG, item.packageName)
+                                .putExtra(ScreenTimeDetailActivity.EXTRA_LABEL, item.label)
+                                .putExtra(ScreenTimeDetailActivity.EXTRA_INITIAL_RANGE, selectedRange)
+                        )
+                    }
+                }
+            },
             onEditLimits = { item ->
                 if (isWebMode) {
                     QuickLimitDialogs.showForWebsite(
@@ -210,6 +216,17 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             val changed = withContext(Dispatchers.IO) { UsageHistoryBackfill.maybeRun(this@ScreenTimeDashboardActivity) }
             if (changed) refresh()
         }
+    }
+
+    private fun showPremiumStatsDetailsGate() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.usage_details_premium_title)
+            .setMessage(R.string.usage_details_premium_message)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.usage_details_premium_action) { _, _ ->
+                startActivity(Intent(this, PremiumInfoActivity::class.java))
+            }
+            .showAccented()
     }
 
     override fun onResume() {

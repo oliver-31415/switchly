@@ -59,6 +59,7 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import at.saltyy.switchly.util.TimeFormatPrefs
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -231,6 +232,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
             updateThemeModeSummary(this)
             setOnPreferenceClickListener {
                 showThemeModeDialog()
+                true
+            }
+        }
+
+        findPreference<Preference>("pref_time_format")?.apply {
+            updateTimeFormatSummary(this)
+            setOnPreferenceClickListener {
+                showTimeFormatDialog()
                 true
             }
         }
@@ -662,7 +671,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (nextMillis <= 0L) {
             pref.summary = getString(R.string.schedules_next_none)
         } else {
-            val text = android.text.format.DateFormat.getTimeFormat(ctx).format(Date(nextMillis))
+            val text = TimeFormatPrefs.formatMinutesOfDay(ctx, ((nextMillis / 60000L) % (24 * 60)).toInt())
             pref.summary = getString(R.string.schedules_next_at, text)
         }
     }
@@ -672,6 +681,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         (activity as? SettingsActivity)?.setToolbarTitle(currentScreenTitle())
         refreshLockUi()
         refreshEmergencyPref()
+        updateAppLockSummary()
+        updateTimeFormatSummary(findPreference("pref_time_format"))
         updateNextScheduleIndicator()
         updateGooglePrefSummary()
         updateCloudPrefVisibility()
@@ -756,6 +767,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
             else -> getString(R.string.pref_theme_mode_system)
         }
         pref.summary = label
+    }
+
+    private fun updateTimeFormatSummary(pref: Preference?) {
+        pref ?: return
+        pref.summary = when (TimeFormatPrefs.getMode(requireContext())) {
+            "12h" -> getString(R.string.pref_time_format_12h)
+            "24h" -> getString(R.string.pref_time_format_24h)
+            else -> getString(R.string.pref_time_format_system)
+        }
     }
 
     private fun updateThemeColorSummary(pref: Preference?) {
@@ -857,6 +877,28 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
             }
 
+            dialog.dismiss()
+        }
+    }
+
+    private fun showTimeFormatDialog() {
+        val ctx = requireContext()
+        val current = TimeFormatPrefs.getMode(ctx)
+        val entries = arrayOf(
+            getString(R.string.pref_time_format_system),
+            getString(R.string.pref_time_format_24h),
+            getString(R.string.pref_time_format_12h)
+        )
+        val values = arrayOf("system", "24h", "12h")
+        val checked = values.indexOf(current).coerceAtLeast(0)
+
+        showSingleSelectCheckboxDialog(
+            title = getString(R.string.pref_time_format_title),
+            entries = entries,
+            checkedIndex = checked,
+        ) { which, dialog ->
+            TimeFormatPrefs.setMode(ctx, values[which])
+            updateTimeFormatSummary(findPreference("pref_time_format"))
             dialog.dismiss()
         }
     }
@@ -1308,7 +1350,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     return@setOnClickListener
                 }
                 if (createAccount && password.length < 8) {
-                    Toast.makeText(ctx, getString(R.string.settings_account_password_min_length, 8), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(ctx, resources.getQuantityString(R.plurals.settings_account_password_min_length, 8, 8), Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
 
@@ -1602,8 +1644,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
      */
     private fun showChangeEmergencyPinFlow() {
         val ctx = requireContext()
-        val sp = ctx.getSharedPreferences(PREFS, 0)
-        val storedPin = sp.getString(KEY_EMERGENCY_PIN, null)
+        val storedPin = getStoredEmergencyPin(ctx)
 
         if (storedPin.isNullOrEmpty()) {
             showSetEmergencyPinDialog {
@@ -1626,8 +1667,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun showEmergencyUnlockWithPin() {
         val ctx = requireContext()
-        val sp = ctx.getSharedPreferences(PREFS, 0)
-        val storedPin = sp.getString(KEY_EMERGENCY_PIN, null)
+        val storedPin = getStoredEmergencyPin(ctx)
 
         if (!EmergencyBypassStore.isFeatureEnabled(ctx)) {
             val dialog = AlertDialog.Builder(ctx)
@@ -1768,6 +1808,28 @@ class SettingsFragment : PreferenceFragmentCompat() {
         refreshEmergencyPref()
     }
 
+    private fun getStoredEmergencyPin(ctx: Context): String? {
+        val appPrefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+
+        val candidates = listOf(
+            appPrefs.getString(KEY_EMERGENCY_PIN, null),
+            defaultPrefs.getString(KEY_EMERGENCY_PIN, null),
+            appPrefs.getString("emergency_pin", null),
+            defaultPrefs.getString("emergency_pin", null),
+            appPrefs.getString("pref_emergency_unlock_pin", null),
+            defaultPrefs.getString("pref_emergency_unlock_pin", null),
+            appPrefs.getString("emergency_unlock_pin", null),
+            defaultPrefs.getString("emergency_unlock_pin", null),
+        )
+
+        val resolved = candidates.firstOrNull { !it.isNullOrBlank() }?.trim()
+        if (!resolved.isNullOrEmpty() && appPrefs.getString(KEY_EMERGENCY_PIN, null) != resolved) {
+            appPrefs.edit { putString(KEY_EMERGENCY_PIN, resolved) }
+        }
+        return resolved
+    }
+
     private fun showSetEmergencyPinDialog(onSuccess: () -> Unit) {
         val ctx = requireContext()
         val input = EditText(ctx).apply {
@@ -1812,7 +1874,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val ctx = requireContext()
         val input = EditText(ctx).apply {
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-            hint = getString(R.string.emergency_pin_enter_hint)
+            hint = getString(R.string.emergency_pin_enter_current_hint)
             backgroundTintList = AccentColor.getActiveColor(ctx)
         }
 
@@ -1829,8 +1891,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         val dialog = AlertDialog.Builder(ctx)
-            .setTitle(getString(R.string.emergency_pin_title))
-            .setMessage(getString(R.string.emergency_pin_message))
+            .setTitle(getString(R.string.emergency_pin_enter_current_title))
+            .setMessage(getString(R.string.emergency_pin_enter_current_message))
             .setView(container)
             .setPositiveButton(getString(R.string.ok)) { _, _ ->
                 val pin = input.text.toString().trim()
@@ -1855,7 +1917,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 Toast.makeText(ctx, getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown)), Toast.LENGTH_SHORT).show()
                 return@listBackups
             }
-            val list = backups ?: emptyList()
+
+            val list = backups.orEmpty()
             if (list.isEmpty()) {
                 Toast.makeText(ctx, getString(R.string.cloud_no_backups), Toast.LENGTH_SHORT).show()
                 return@listBackups

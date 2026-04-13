@@ -131,4 +131,7 @@
     <string name="usage_switchly_fallback_title">No tracked data from Switchly yet</string>
     <string name="usage_switchly_fallback_message">Switchly doesn’t have usage data for this time range yet. Show your phone’s current usage statistics instead?</string>
     <string name="usage_switchly_fallback_positive">Show phone stats</string>
+    <string name="usage_details_premium_title">Detailed statistics are part of Premium</string>
+    <string name="usage_details_premium_message">Get Premium to view detailed statistics and insights.</string>
+    <string name="usage_details_premium_action">View Premium</string>
 </resources>

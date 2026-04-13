@@ -1,6 +1,29 @@
 {
     "releases": [
         {
+            "version": "v2.0.7-beta",
+            "date": "Apr 12, 2026",
+            "body": [
+                "Improved Firefox website blocking so typing and autocomplete suggestions in the address bar no longer trigger blocking before the page is actually opened",
+                "Improved browser redirect handling so blocked websites no longer close the whole browser app",
+                "Prevented removing blocked apps from the home screen while Switchly is active",
+                "Blocked app quick edit on the home screen is now unavailable while Switchly is active",
+                "Improved blocked apps on the home screen so configured limits are shown more clearly",
+                "Simplified blocked app quick edit actions on the home screen",
+                "Added optional home quick actions for writing NFC tags and opening blocked notifications",
+                "Fixed emergency PIN issues and improved compatibility with older beta PIN data",
+                "Fixed app lock status so it refreshes immediately",
+                "Improved NFC tools navigation and icons to make writing tags and managing paired tags easier to find",
+                "Added an option to use automatic, 24-hour, or 12-hour time format for schedules",
+                "Statistics now show all ranges in free mode, while detailed statistics remain part of Premium",
+                "Fixed crashes related to profile editing and blocked apps list updates",
+                "Improved device safety protections for critical Android apps such as Google, installers, permission controller, and other recovery-relevant system surfaces",
+                "Added loop protection so repeatedly reopened blocked apps no longer trap the device in an unusable blocking screen",
+                "Settings blocking now requires advanced safeguards, including Emergency Unlock configuration, and will automatically back off if recovery is needed",
+                "All additional features and improvements are detailed in the v2.0.6-beta release notes below"
+            ]
+        },
+        {
             "version": "v2.0.6-beta",
             "date": "Apr 5, 2026",
             "body": [

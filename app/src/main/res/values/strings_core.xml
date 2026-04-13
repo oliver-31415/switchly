@@ -15,7 +15,6 @@
     <string name="share">Share</string>
     <string name="info">Info</string>
     <!-- SIGN-IN AND GENERIC STATE LABELS -->
-    <string name="sign_in">Sign in</string>
     <string name="sign_out">Sign out</string>
     <string name="required">Required</string>
     <string name="invalid_value">Invalid value</string>

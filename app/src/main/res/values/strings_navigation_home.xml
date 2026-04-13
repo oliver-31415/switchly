@@ -68,6 +68,10 @@
     <string name="dashboard_tile_qr_sub">Tap to scan • hold to generate</string>
     <string name="dashboard_tile_barcode">Barcode</string>
     <string name="dashboard_tile_barcode_sub">Tap to scan • hold to manage</string>
+    <string name="dashboard_tile_write_nfc">Write NFC tag</string>
+    <string name="dashboard_tile_write_nfc_sub">Tap to write • hold for paired tags</string>
+    <string name="dashboard_tile_blocked_notifications">Blocked notifications</string>
+    <string name="dashboard_tile_blocked_notifications_sub">Inbox &amp; activity</string>
     <string name="dashboard_unavailable_hint_short">Not installed on this device.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Not installed on this device.\nOpen “Pick apps” to remove.</string>
     <string name="dashboard_quick_actions_toggle">Toggle quick actions</string>
@@ -77,6 +81,8 @@
     <string name="blocked_list_title">Blocked apps</string>
     <string name="blocked_app_default">App blocked</string>
     <string name="blocked_message">You can’t use this app while Switchly is active.</string>
+    <string name="dashboard_blocked_app_action_edit_limits">Edit limits</string>
+    <string name="dashboard_blocked_app_limits_title">Edit limits</string>
     <string name="dashboard_blocked_app_action_time_limit">Edit time limit</string>
     <string name="dashboard_blocked_app_action_open_limit">Edit open limit</string>
     <string name="dashboard_blocked_app_action_remove">Remove app</string>
@@ -126,4 +132,12 @@
     <string name="main_development_info_message">Switchly is still in development. I test it as carefully as I can with open beta phases, but Android behaves differently across devices, so I cannot catch every issue on my own.\nIf something is not working right for you, please send me a mail.\n\nDownloads:\nswitchly.saltyy.at/pages/download</string>
     <string name="main_info_contact_action">Contact</string>
     <string name="main_info_older_versions_action">Downloads</string>
+
+    <string name="app_picker_settings_requirements_title">Emergency Unlock required</string>
+    <string name="app_picker_settings_requirements_message">To block Settings, advanced protection must be enabled and Emergency Unlock with an Emergency PIN must already be configured.</string>
+    <string name="app_picker_settings_second_warning_title">Are you absolutely sure?</string>
+    <string name="app_picker_settings_second_warning_message">Blocking Settings can make your phone harder to recover if another issue occurs. This option is intended for advanced users only.</string>
+    <string name="app_picker_block_settings_confirm">Block Settings</string>
+    <string name="app_picker_settings_temporarily_allowed">Settings temporarily allowed to prevent a lockout.</string>
+
 </resources>

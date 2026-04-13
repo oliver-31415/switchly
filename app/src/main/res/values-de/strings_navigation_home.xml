@@ -67,6 +67,10 @@
     <string name="dashboard_tile_qr_sub">Tippen zum Scannen • halten zum Generieren</string>
     <string name="dashboard_tile_barcode">Barcode</string>
     <string name="dashboard_tile_barcode_sub">Tippen zum Scannen • halten zum Verwalten</string>
+    <string name="dashboard_tile_write_nfc">NFC-Tag schreiben</string>
+    <string name="dashboard_tile_write_nfc_sub">Tippen zum Schreiben • halten für gepaarte Tags</string>
+    <string name="dashboard_tile_blocked_notifications">Blockierte Benachrichtigungen</string>
+    <string name="dashboard_tile_blocked_notifications_sub">Postfach &amp; Aktivität</string>
     <string name="dashboard_unavailable_hint_short">Auf diesem Gerät nicht installiert.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Auf diesem Gerät nicht installiert.\nÖffne „Apps auswählen“, um sie zu entfernen.</string>
     <string name="dashboard_quick_actions_toggle">Schnellaktionen umschalten</string>
@@ -76,6 +80,8 @@
     <string name="blocked_list_title">Blockierte Apps</string>
     <string name="blocked_app_default">App blockiert</string>
     <string name="blocked_message">Du kannst diese App nicht nutzen, solange Switchly aktiv ist.</string>
+    <string name="dashboard_blocked_app_action_edit_limits">Limits bearbeiten</string>
+    <string name="dashboard_blocked_app_limits_title">Limits bearbeiten</string>
     <string name="dashboard_blocked_app_action_time_limit">Zeitlimit bearbeiten</string>
     <string name="dashboard_blocked_app_action_open_limit">Öffnen-Limit bearbeiten</string>
     <string name="dashboard_blocked_app_action_remove">App entfernen</string>
@@ -125,4 +131,12 @@
     <string name="main_development_info_message">Switchly ist noch in Entwicklung. Ich teste die App so sorgfältig wie möglich mit offenen Beta-Phasen, aber Android verhält sich je nach Gerät unterschiedlich, daher finde ich nicht jedes Problem selbst.\nWenn bei dir etwas nicht richtig funktioniert, schreib mir bitte eine Mail.\n\nDownloads:\nswitchly.saltyy.at/pages/download</string>
     <string name="main_info_contact_action">Kontakt</string>
     <string name="main_info_older_versions_action">Downloads</string>
+
+    <string name="app_picker_settings_requirements_title">Notfall-Entsperrung erforderlich</string>
+    <string name="app_picker_settings_requirements_message">Um Einstellungen zu blockieren, muss der erweiterte Schutz aktiviert sein und die Notfall-Entsperrung mit Notfall-PIN bereits eingerichtet sein.</string>
+    <string name="app_picker_settings_second_warning_title">Bist du dir ganz sicher?</string>
+    <string name="app_picker_settings_second_warning_message">Das Blockieren von Einstellungen kann die Wiederherstellung deines Telefons erschweren, falls ein weiteres Problem auftritt. Diese Option ist nur für fortgeschrittene Nutzer gedacht.</string>
+    <string name="app_picker_block_settings_confirm">Einstellungen blockieren</string>
+    <string name="app_picker_settings_temporarily_allowed">Einstellungen wurden vorübergehend erlaubt, um eine Sperrschleife zu verhindern.</string>
+
 </resources>

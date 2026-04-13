@@ -86,6 +86,7 @@ import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.util.AppUsageToday
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
 import at.saltyy.switchly.feature.onboarding.OnboardingActivity
 import at.saltyy.switchly.feature.picker.AppPickerActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
@@ -96,6 +97,7 @@ import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
 import at.saltyy.switchly.feature.usage.QuickLimitDialogs
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
+import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
@@ -110,6 +112,7 @@ import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
 import at.saltyy.switchly.util.getIntCompat
 import at.saltyy.switchly.util.ProtectionStatusNotifier
+import at.saltyy.switchly.util.TimeFormatPrefs
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.appbar.MaterialToolbar
@@ -146,9 +149,12 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_QA_WEBSITES = "home_quick_tile_websites"
         private const val KEY_QA_INAPP = "home_quick_tile_inapp"
         private const val KEY_QA_USAGE = "home_quick_tile_usage"
+        private const val KEY_QA_NFC_WRITE = "home_quick_tile_nfc_write"
+        private const val KEY_QA_BLOCKED_NOTIFICATIONS = "home_quick_tile_blocked_notifications"
         private const val KEY_QA_QR = "home_quick_tile_qr"
         private const val KEY_QA_BARCODE = "home_quick_tile_barcode"
         private val PAYLOAD_BLOCKED_CHIPS = Any()
+        private val PAYLOAD_BLOCKED_EDIT_STATE = Any()
 
     }
 
@@ -179,8 +185,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tileWriteNfc: MaterialCardView
     private lateinit var tileToggleOptions: MaterialCardView
     private lateinit var tilePermissions: MaterialCardView
+    private lateinit var tileNfcWrite: MaterialCardView
+    private lateinit var tileBlockedNotifications: MaterialCardView
     private lateinit var tileQr: MaterialCardView
     private lateinit var tileBarcode: MaterialCardView
+    private lateinit var rowToolsShortcuts: LinearLayout
     private lateinit var rowScanShortcuts: LinearLayout
 
     private lateinit var rowQuickActionsHeader: View
@@ -213,14 +222,28 @@ class MainActivity : AppCompatActivity() {
 
     private val blockedAdapter = BlockedAppsAdapter(
         onAppClick = { app -> showBlockedAppQuickActions(app) },
-        onEditClick = { app -> showBlockedAppQuickActions(app) }
+        onEditClick = { app -> showBlockedAppQuickActions(app) },
+        canEdit = { ensureCanRemoveBlockedApp(showToast = false) }
     )
     private val blockedNowAdapter = BlockedNowAdapter()
 
     private fun notifyBlockedChipsChanged() {
+        notifyBlockedAdapterRangeChanged(PAYLOAD_BLOCKED_CHIPS)
+    }
+
+    private fun notifyBlockedEditStateChanged() {
+        notifyBlockedAdapterRangeChanged(PAYLOAD_BLOCKED_EDIT_STATE)
+    }
+
+    private fun notifyBlockedAdapterRangeChanged(payload: Any) {
         val count = blockedAdapter.itemCount
-        if (count > 0) {
-            blockedAdapter.notifyItemRangeChanged(0, count, PAYLOAD_BLOCKED_CHIPS)
+        if (count <= 0) return
+
+        rvBlocked.post {
+            val postedCount = blockedAdapter.itemCount
+            if (postedCount > 0) {
+                blockedAdapter.notifyItemRangeChanged(0, postedCount, payload)
+            }
         }
     }
 
@@ -235,6 +258,7 @@ class MainActivity : AppCompatActivity() {
     // (enabled/emergency). Keep a small key so we can refresh row bindings when these
     // states change without re-binding every 1s tick.
     private var lastBlockedChipKey: String? = null
+    private var lastBlockedEditEnabled: Boolean? = null
 
     // Live updates: refresh "Blocked now" chips as soon as limits are reached while the app is open.
     private var livePrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
@@ -335,8 +359,11 @@ class MainActivity : AppCompatActivity() {
         tileWriteNfc = findViewById(R.id.tileWriteNfc)
         tileToggleOptions = findViewById(R.id.tileToggleOptions)
         tilePermissions = findViewById(R.id.tilePermissions)
+        tileNfcWrite = findViewById(R.id.tileNfcWrite)
+        tileBlockedNotifications = findViewById(R.id.tileBlockedNotifications)
         tileQr = findViewById(R.id.tileQr)
         tileBarcode = findViewById(R.id.tileBarcode)
+        rowToolsShortcuts = findViewById(R.id.rowToolsShortcuts)
         rowScanShortcuts = findViewById(R.id.rowScanShortcuts)
 
         rowQuickActionsHeader = findViewById(R.id.rowQuickActionsHeader)
@@ -369,7 +396,7 @@ class MainActivity : AppCompatActivity() {
 
         // Micro animations: subtle press-scale on interactive cards/buttons
         listOf(
-            tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileQr, tileBarcode,
+            tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode,
             cardNextSchedule, cardBlockedNow, rowActiveProfile, rowQuickActionsHeader
         ).forEach { applyPressScale(it) }
         applyPressScale(btnToggle)
@@ -453,6 +480,24 @@ class MainActivity : AppCompatActivity() {
         }
         tilePermissions.setOnClickListener {
             startActivity(ScreenTimeDashboardActivity.intent(this))
+        }
+        tileNfcWrite.setOnClickListener {
+            if (isNfcTagWritingLocked()) {
+                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_write_nfc_tags)
+            } else {
+                startActivity(Intent(this, NfcWriterActivity::class.java))
+            }
+        }
+        tileNfcWrite.setOnLongClickListener {
+            if (EditingLockGuard.isLocked(this)) {
+                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
+            } else {
+                startActivity(Intent(this, ManagePairedTagsActivity::class.java))
+            }
+            true
+        }
+        tileBlockedNotifications.setOnClickListener {
+            startActivity(Intent(this, BlockedInboxActivity::class.java))
         }
 
         syncScanQuickActions()
@@ -762,6 +807,22 @@ class MainActivity : AppCompatActivity() {
         if (isAppPickingLockedWhileEnabled()) {
             if (showToast) {
                 Toast.makeText(this, getString(R.string.toast_disable_switchly_to_edit_blocked_apps), Toast.LENGTH_SHORT).show()
+            }
+            return false
+        }
+        return true
+    }
+
+    private fun ensureCanRemoveBlockedApp(showToast: Boolean = true): Boolean {
+        if (isNfcLocked()) {
+            if (showToast) {
+                Toast.makeText(this, getString(R.string.toast_cannot_change_profile_while_locked), Toast.LENGTH_SHORT).show()
+            }
+            return false
+        }
+        if (SwitchModeStore.isEnabled(this)) {
+            if (showToast) {
+                Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
             }
             return false
         }
@@ -1150,7 +1211,7 @@ class MainActivity : AppCompatActivity() {
         if (nextMillis <= 0L) {
             tvNextScheduleValue.text = getString(R.string.schedules_next_none)
         } else {
-            val text = android.text.format.DateFormat.getTimeFormat(this).format(Date(nextMillis))
+            val text = TimeFormatPrefs.formatMinutesOfDay(this, ((nextMillis / 60000L) % (24 * 60)).toInt())
             tvNextScheduleValue.text = getString(R.string.schedules_next_at, text)
         }
     }
@@ -1213,6 +1274,8 @@ class MainActivity : AppCompatActivity() {
             add(Triple(KEY_QA_WEBSITES, getString(R.string.dashboard_tile_blocked_websites), isQuickActionTileEnabled(KEY_QA_WEBSITES)))
             add(Triple(KEY_QA_INAPP, getString(R.string.dashboard_tile_in_app), isQuickActionTileEnabled(KEY_QA_INAPP)))
             add(Triple(KEY_QA_USAGE, getString(R.string.dashboard_tile_usage), isQuickActionTileEnabled(KEY_QA_USAGE)))
+            add(Triple(KEY_QA_NFC_WRITE, getString(R.string.dashboard_tile_write_nfc), isQuickActionTileEnabled(KEY_QA_NFC_WRITE, defaultValue = false)))
+            add(Triple(KEY_QA_BLOCKED_NOTIFICATIONS, getString(R.string.dashboard_tile_blocked_notifications), isQuickActionTileEnabled(KEY_QA_BLOCKED_NOTIFICATIONS, defaultValue = false)))
             if (AutomationModeStore.isQrAllowed(this@MainActivity)) {
                 add(Triple(KEY_QA_QR, getString(R.string.dashboard_tile_qr), isQuickActionTileEnabled(KEY_QA_QR)))
             }
@@ -1280,6 +1343,8 @@ class MainActivity : AppCompatActivity() {
         val websitesVisible = isQuickActionTileEnabled(KEY_QA_WEBSITES)
         val inAppVisible = isQuickActionTileEnabled(KEY_QA_INAPP)
         val usageVisible = isQuickActionTileEnabled(KEY_QA_USAGE)
+        val nfcWriteVisible = isQuickActionTileEnabled(KEY_QA_NFC_WRITE, defaultValue = false)
+        val blockedNotificationsVisible = isQuickActionTileEnabled(KEY_QA_BLOCKED_NOTIFICATIONS, defaultValue = false)
         val qrVisible = isQuickActionTileEnabled(KEY_QA_QR) && AutomationModeStore.isQrAllowed(this)
         val barcodeVisible = isQuickActionTileEnabled(KEY_QA_BARCODE) && AutomationModeStore.isBarcodeAllowed(this)
 
@@ -1288,22 +1353,24 @@ class MainActivity : AppCompatActivity() {
             tileWriteNfc to websitesVisible,
             tileToggleOptions to inAppVisible,
             tilePermissions to usageVisible,
+            tileNfcWrite to nfcWriteVisible,
+            tileBlockedNotifications to blockedNotificationsVisible,
             tileQr to qrVisible,
             tileBarcode to barcodeVisible,
         )
 
-        listOf(tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileQr, tileBarcode).forEach { tile ->
+        listOf(tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode).forEach { tile ->
             (tile.parent as? LinearLayout)?.removeView(tile)
             tile.visibility = View.GONE
         }
 
-        listOf(rowManageShortcuts, rowUtilityShortcuts, rowScanShortcuts).forEach { row ->
+        listOf(rowManageShortcuts, rowUtilityShortcuts, rowToolsShortcuts, rowScanShortcuts).forEach { row ->
             row.removeAllViews()
             row.visibility = View.GONE
         }
 
         val visibleTiles = orderedTiles.filter { it.second }.map { it.first }
-        val rows = listOf(rowManageShortcuts, rowUtilityShortcuts, rowScanShortcuts)
+        val rows = listOf(rowManageShortcuts, rowUtilityShortcuts, rowToolsShortcuts, rowScanShortcuts)
         visibleTiles.chunked(2).forEachIndexed { index, chunk ->
             val row = rows.getOrNull(index) ?: return@forEachIndexed
             row.visibility = View.VISIBLE
@@ -1552,6 +1619,12 @@ class MainActivity : AppCompatActivity() {
             notifyBlockedChipsChanged()
         }
 
+        val editEnabled = ensureCanRemoveBlockedApp(showToast = false)
+        if (lastBlockedEditEnabled != editEnabled) {
+            lastBlockedEditEnabled = editEnabled
+            notifyBlockedEditStateChanged()
+        }
+
         // Cleanup stale timers
         if (tempDisableRemaining == 0L && enabled && baseEnabled) {
             SwitchModeStore.clearTemporary(this)
@@ -1772,16 +1845,27 @@ class MainActivity : AppCompatActivity() {
         tileProfiles.isEnabled = !profileLocked
         tileWriteNfc.isEnabled = true
         tileToggleOptions.isEnabled = true
+        tilePermissions.isEnabled = true
+        tileNfcWrite.isEnabled = !isNfcTagWritingLocked()
+        tileBlockedNotifications.isEnabled = true
         tileQr.isEnabled = true
         tileBarcode.isEnabled = true
 
         tileProfiles.alpha = profileAlpha
         tileWriteNfc.alpha = 1f
         tileToggleOptions.alpha = 1f
+        tilePermissions.alpha = 1f
+        tileNfcWrite.alpha = if (tileNfcWrite.isEnabled) 1f else 0.5f
+        tileBlockedNotifications.alpha = 1f
         tileQr.alpha = 1f
         tileBarcode.alpha = 1f
         rowActiveProfile.alpha = profileAlpha
         btnPickApps.alpha = appPickingAlpha
+    }
+
+    private fun isNfcTagWritingLocked(): Boolean {
+        return SwitchModeStore.isEnabled(this) &&
+            !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this)
     }
 
     private fun refreshProfilesUi() {
@@ -1902,19 +1986,36 @@ class MainActivity : AppCompatActivity() {
 
     private fun showBlockedAppQuickActions(item: AppDisplay) {
         if (!item.isAvailable) {
-            if (!ensureCanOpenAppPicker(showToast = true)) return
+            if (!ensureCanRemoveBlockedApp(showToast = true)) return
             confirmRemoveBlockedApp(item)
             return
         }
 
         val options = arrayOf(
-            getString(R.string.dashboard_blocked_app_action_time_limit),
-            getString(R.string.dashboard_blocked_app_action_open_limit),
+            getString(R.string.dashboard_blocked_app_action_edit_limits),
             getString(R.string.dashboard_blocked_app_action_remove)
         )
 
         AlertDialog.Builder(this)
             .setTitle(item.label)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showBlockedAppLimitActions(item)
+                    1 -> confirmRemoveBlockedApp(item)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .showAccented()
+    }
+
+    private fun showBlockedAppLimitActions(item: AppDisplay) {
+        val options = arrayOf(
+            getString(R.string.dashboard_blocked_app_action_time_limit),
+            getString(R.string.dashboard_blocked_app_action_open_limit)
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.dashboard_blocked_app_limits_title)
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> QuickLimitDialogs.showForApp(
@@ -1931,7 +2032,6 @@ class MainActivity : AppCompatActivity() {
                         startOnAttempts = true,
                         onChanged = { refreshBlockedList() }
                     )
-                    2 -> confirmRemoveBlockedApp(item)
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)
@@ -1939,7 +2039,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun confirmRemoveBlockedApp(item: AppDisplay) {
-        if (!ensureCanOpenAppPicker(showToast = true)) return
+        if (!ensureCanRemoveBlockedApp(showToast = true)) return
 
         AlertDialog.Builder(this)
             .setTitle(R.string.dashboard_blocked_app_remove_title)
@@ -2145,7 +2245,8 @@ class MainActivity : AppCompatActivity() {
 
     private class BlockedAppsAdapter(
         private val onAppClick: (AppDisplay) -> Unit,
-        private val onEditClick: (AppDisplay) -> Unit
+        private val onEditClick: (AppDisplay) -> Unit,
+        private val canEdit: () -> Boolean
     ) : ListAdapter<AppDisplay, BlockedAppsAdapter.VH>(DIFF) {
 
         class VH(v: View) : RecyclerView.ViewHolder(v) {
@@ -2227,36 +2328,39 @@ class MainActivity : AppCompatActivity() {
                     AttemptLimitStore.getLimitAttempts(ctx, profile, pkgName)
                 } else 0
 
-                return when {
-                    limitMin > 0 || sessionLimitMin > 0 || attemptLimit > 0 -> buildString {
-                        if (limitMin > 0) {
-                            append(ctx.getString(R.string.daily_limit_value_format, limitMin))
-                        }
-                        if (sessionLimitMin > 0) {
-                            if (isNotEmpty()) append(" • ")
-                            append(ctx.getString(R.string.session_limit_label, sessionLimitMin))
-                        }
-                        if (attemptLimit > 0) {
-                            if (isNotEmpty()) append(" • ")
-                            append(
-                                ctx.resources.getQuantityString(
-                                    R.plurals.daily_attempt_limit_value_format,
-                                    attemptLimit,
-                                    attemptLimit
-                                )
-                            )
-                        }
+                val lines = mutableListOf<String>()
+                if (limitMin > 0) {
+                    lines += ctx.getString(R.string.daily_limit_value_format, limitMin)
+                }
+                if (sessionLimitMin > 0) {
+                    lines += ctx.getString(R.string.session_limit_label, sessionLimitMin)
+                }
+                if (attemptLimit > 0) {
+                    lines += ctx.resources.getQuantityString(
+                        R.plurals.daily_attempt_limit_value_format,
+                        attemptLimit,
+                        attemptLimit
+                    )
+                }
+
+                return if (lines.isNotEmpty()) {
+                    when (lines.size) {
+                        1 -> lines.first()
+                        2 -> lines.joinToString(separator = "  –  ")
+                        else -> lines.joinToString(separator = "  •  ")
                     }
-                    else -> ctx.getString(R.string.in_app_surface_always_block)
+                } else {
+                    ctx.getString(R.string.in_app_surface_always_block)
                 }
             }
 
-            fun bind(item: AppDisplay) {
+            fun bind(item: AppDisplay, editEnabled: Boolean) {
                 val ctx = itemView.context
                 icon.setImageDrawable(item.icon)
                 pkg.text = item.pkg
 
                 updateBlockedNowChipOnly(item)
+                updateQuickEditState(item, editEnabled)
 
                 if (item.isAvailable) {
                     name.text = item.label
@@ -2284,6 +2388,29 @@ class MainActivity : AppCompatActivity() {
                     unavailableHint.visibility = View.GONE
                 }
             }
+
+            fun updateQuickEditState(item: AppDisplay, editEnabled: Boolean) {
+                val enabled = editEnabled
+                quickEditButton.visibility = View.VISIBLE
+                quickEditButton.isEnabled = enabled
+                quickEditButton.isClickable = enabled
+                quickEditButton.alpha = when {
+                    enabled -> if (item.isAvailable) 1f else 0.72f
+                    else -> 0.38f
+                }
+
+                cardRoot.isClickable = enabled
+                cardRoot.isFocusable = enabled
+            }
+        }
+
+        private fun bindActions(holder: VH, item: AppDisplay, editEnabled: Boolean) {
+            holder.cardRoot.setOnClickListener {
+                if (editEnabled) onAppClick(item)
+            }
+            holder.quickEditButton.setOnClickListener {
+                if (editEnabled) onEditClick(item)
+            }
         }
 
 
@@ -2294,21 +2421,29 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onBindViewHolder(holder: VH, position: Int, payloads: MutableList<Any>) {
+            val item = getItem(position)
+            var handled = false
+
             if (payloads.contains(PAYLOAD_BLOCKED_CHIPS)) {
-                holder.updateBlockedNowChipOnly(getItem(position))
-                return
+                holder.updateBlockedNowChipOnly(item)
+                handled = true
             }
+            if (payloads.contains(PAYLOAD_BLOCKED_EDIT_STATE)) {
+                val editEnabled = canEdit()
+                holder.updateQuickEditState(item, editEnabled)
+                bindActions(holder, item, editEnabled)
+                handled = true
+            }
+            if (handled) return
             super.onBindViewHolder(holder, position, payloads)
         }
 
 
         override fun onBindViewHolder(holder: VH, position: Int) {
             val item = getItem(position)
-            holder.bind(item)
-            holder.cardRoot.setOnClickListener { onAppClick(item) }
-            holder.quickEditButton.setOnClickListener { onEditClick(item) }
-            holder.quickEditButton.visibility = View.VISIBLE
-            holder.quickEditButton.alpha = if (item.isAvailable) 1f else 0.72f
+            val editEnabled = canEdit()
+            holder.bind(item, editEnabled)
+            bindActions(holder, item, editEnabled)
         }
 
         companion object {

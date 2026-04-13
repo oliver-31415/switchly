@@ -291,7 +291,8 @@ class ManageProfilesActivity : AppCompatActivity() {
         val input = content.findViewById<TextInputEditText>(R.id.etProfile)
 
         input.setText(initialValue)
-        input.setSelection(initialValue.length)
+        val currentLength = input.text?.length ?: 0
+        input.setSelection(currentLength.coerceAtMost(input.length()))
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(title)
