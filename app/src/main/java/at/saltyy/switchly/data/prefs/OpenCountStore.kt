@@ -187,8 +187,6 @@ object OpenCountStore {
         return getForYear(ctx, profile, pkg, now.get(Calendar.YEAR))
     }
 
-
-
     fun getTodayAllProfiles(ctx: Context, pkg: String): Int {
         return getForDayAllProfiles(ctx, todayYmdInt(), pkg)
     }
@@ -293,7 +291,6 @@ object OpenCountStore {
         }
         return sum
     }
-
 
     fun mergeLegacyForDay(ctx: Context, ymd: Int, pkg: String, count: Int) {
         if (pkg.isBlank() || count <= 0) return

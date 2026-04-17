@@ -33,6 +33,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
@@ -263,11 +264,13 @@ class ToolsHubActivity : AppCompatActivity() {
             addAction(getString(R.string.emergency_action_pause)) {
                 if (EmergencyBypassStore.pause(this)) {
                     SwitchModeStore.clearTemporary(this)
+                    AppLogStore.append(this, "Emergency", "Emergency mode paused from Tools")
                     Toast.makeText(this, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
                 }
             }
             addAction(getString(R.string.emergency_action_end)) {
+                AppLogStore.append(this, "Emergency", "Emergency mode ended from Tools")
                 EmergencyBypassStore.cancel(this)
                 SwitchModeStore.clearTemporary(this)
                 Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
@@ -278,6 +281,7 @@ class ToolsHubActivity : AppCompatActivity() {
                 if (EmergencyBypassStore.resume(this)) {
                     val minutes = EmergencyBypassStore.minutesRemaining(this).coerceAtLeast(1)
                     SwitchModeStore.setTemporarilyDisabled(this, minutes * 60_000L)
+                    AppLogStore.append(this, "Emergency", "Emergency mode resumed from Tools with ${minutes}m remaining")
                     Toast.makeText(this, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
                 }
@@ -295,6 +299,7 @@ class ToolsHubActivity : AppCompatActivity() {
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.ok) { _, _ ->
                     if (EmergencyBypassStore.enableIfAllowed(this, 15)) {
+                        AppLogStore.append(this, "Emergency", "Emergency mode started from Tools for 15m")
                         SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
                         Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
                         BlockingRuntime.ensureRunning(this)
@@ -334,12 +339,14 @@ class ToolsHubActivity : AppCompatActivity() {
     }
 
     private fun isProfileManagementLocked(): Boolean {
-        return if (isNfcLockedForProtectedEdits()) {
-            true
-        } else {
-            SwitchModeStore.isBaseEnabled(this) &&
-                !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
+        if (isNfcLockedForProtectedEdits()) {
+            return true
         }
+        val emergencyActive = EmergencyBypassStore.isActive(this) || EmergencyBypassStore.isPaused(this)
+        val enabled = SwitchModeStore.isEnabled(this)
+        if (!enabled && !emergencyActive) return false
+        if (emergencyActive) return true
+        return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
     }
 
     private fun isNfcTagWritingLocked(): Boolean {

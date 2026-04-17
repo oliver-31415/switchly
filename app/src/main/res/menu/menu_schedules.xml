@@ -15,6 +15,12 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_info"
+        android:title="@string/schedules_action_info_title"
+        android:icon="@drawable/info_24"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_delete_selected"
         android:title="@string/delete"
         android:icon="@drawable/delete_24"

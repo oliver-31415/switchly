@@ -29,6 +29,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +42,7 @@ import androidx.preference.PreferenceManager
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockedInboxStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
@@ -72,6 +74,7 @@ class SupportActivity : AppCompatActivity() {
     private companion object {
         private const val KEY_INCLUDE_DEBUG = "support_include_debug"
         private const val KEY_INCLUDE_ADVANCED_DEBUG = "support_include_advanced_debug"
+        private const val KEY_INCLUDE_LOGS = "support_include_logs"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,12 +95,19 @@ class SupportActivity : AppCompatActivity() {
         val email = getString(R.string.about_mail_address)
         findViewById<TextView>(R.id.tvSupportEmail).text = email
 
+        findViewById<ImageButton>(R.id.btnCopyEmailInline).setOnClickListener {
+            copyToClipboard(label = getString(R.string.support_copy_email), text = email)
+            Toast.makeText(this, getString(R.string.support_copied), Toast.LENGTH_SHORT).show()
+        }
+
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         val includeDebug = findViewById<SwitchMaterial>(R.id.switchIncludeDebug)
         val includeAdvancedDebug = findViewById<SwitchMaterial>(R.id.switchIncludeAdvancedDebug)
+        val includeLogs = findViewById<SwitchMaterial>(R.id.switchIncludeLogs)
 
         includeDebug.isChecked = sp.getBoolean(KEY_INCLUDE_DEBUG, true)
         includeAdvancedDebug.isChecked = sp.getBoolean(KEY_INCLUDE_ADVANCED_DEBUG, false)
+        includeLogs.isChecked = sp.getBoolean(KEY_INCLUDE_LOGS, false)
 
         fun syncAdvancedState() {
             val enabled = includeDebug.isChecked
@@ -114,19 +124,40 @@ class SupportActivity : AppCompatActivity() {
             sp.edit { putBoolean(KEY_INCLUDE_ADVANCED_DEBUG, isChecked) }
         }
 
+        includeLogs.setOnCheckedChangeListener { _, isChecked ->
+            sp.edit { putBoolean(KEY_INCLUDE_LOGS, isChecked) }
+        }
+
         syncAdvancedState()
 
         findViewById<MaterialButton>(R.id.btnCopyEmail).setOnClickListener {
-            copyToClipboard(label = getString(R.string.support_copy_email), text = email)
-            Toast.makeText(this, getString(R.string.support_copied), Toast.LENGTH_SHORT).show()
+            val payload = AppLogStore.export(this@SupportActivity)
+            copyToClipboard(label = getString(R.string.support_copy_latest_logs), text = payload)
+            Toast.makeText(this, getString(R.string.support_logs_copied), Toast.LENGTH_SHORT).show()
         }
 
         findViewById<MaterialButton>(R.id.btnOpenEmail).setOnClickListener {
             val subject = getString(R.string.support_email_subject)
-            val body = if (includeDebug.isChecked) {
+            val debugBody = if (includeDebug.isChecked) {
                 buildDebugInfo(includeAdvanced = includeAdvancedDebug.isChecked)
             } else {
                 ""
+            }
+            val logsBody = if (includeLogs.isChecked) {
+                AppLogStore.export(this@SupportActivity).trim()
+            } else {
+                ""
+            }
+            val body = buildString {
+                if (debugBody.isNotBlank()) append(debugBody.trim())
+
+                if (logsBody.isNotBlank()) {
+                    if (isNotEmpty()) append("\n\n")
+                    append("-----\n")
+                    append(getString(R.string.support_latest_logs_heading))
+                    append("\n-----\n")
+                    append(logsBody)
+                }
             }
 
             val intent = Intent(Intent.ACTION_SENDTO).apply {

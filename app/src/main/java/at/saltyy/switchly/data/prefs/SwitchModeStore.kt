@@ -41,6 +41,7 @@ object SwitchModeStore {
 
     // store previous base state so we can restore after temp-enable expires
     private const val KEY_BASE_BEFORE_TEMP_ENABLE = "switch_mode_base_before_temp_enable"
+    private const val KEY_PROFILE_BEFORE_TEMP_ENABLE = "switch_mode_profile_before_temp_enable"
 
     private val _enabledFlow: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val enabledFlow: StateFlow<Boolean> = _enabledFlow
@@ -122,9 +123,10 @@ object SwitchModeStore {
                 putLong(KEY_TEMP_DISABLE_UNTIL, 0L)
             }
 
-            // explicit on/off cancels temp-enable and its restore marker
+            // explicit on/off cancels temp-enable and its restore markers
             putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
+            remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
         }
 
         _enabledFlow.value = isEnabled(ctx)
@@ -186,6 +188,7 @@ object SwitchModeStore {
             putBoolean(KEY_ENABLED, enabled)
             putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
+            remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
         }
 
         _enabledFlow.value = isEnabled(ctx)
@@ -211,9 +214,11 @@ object SwitchModeStore {
             // mutually exclusive with temp-enable
             putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
+            remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
         }
 
         _enabledFlow.value = isEnabled(ctx)
+        AppLogStore.append(ctx, "Profiles", "Temp disable started duration=${durationMs}ms")
 
         // Keep runtime alive so our services can continue ticking and enforce schedules/limits.
         BlockingRuntime.ensureRunning(ctx)
@@ -241,6 +246,13 @@ object SwitchModeStore {
             sp.getBoolean(KEY_ENABLED, true)
         }
 
+        // Same rule for profile-scoped temp-enable: keep the ORIGINAL profile so expiry restores the last non-temporary profile.
+        val profileBefore = if (activeTempUntil > now && sp.contains(KEY_PROFILE_BEFORE_TEMP_ENABLE)) {
+            sp.getString(KEY_PROFILE_BEFORE_TEMP_ENABLE, ProfileStore.getCurrent(ctx))
+        } else {
+            ProfileStore.getCurrent(ctx)
+        }
+
         sp.edit {
             // clear temp-disable
             putLong(KEY_TEMP_DISABLE_UNTIL, 0L)
@@ -248,11 +260,18 @@ object SwitchModeStore {
             // remember base state and force-enable
             putBoolean(KEY_ENABLED, true)
             putBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, baseBefore)
+            if (profileBefore != null) {
+                putString(KEY_PROFILE_BEFORE_TEMP_ENABLE, profileBefore)
+            } else {
+                remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
+            }
 
             // set temp-enable window
             putLong(KEY_TEMP_ENABLE_UNTIL, until)
         }
         _enabledFlow.value = true
+        AppLogStore.append(ctx, "Profiles", "Temp enable started profile=${ProfileStore.getCurrent(ctx) ?: "-"} duration=${durationMs}ms")
+        AppLogStore.append(ctx, "Profiles", "Stored previous profile id=${profileBefore ?: "-"}")
         BlockingRuntime.ensureRunning(ctx)
     }
 
@@ -284,13 +303,23 @@ object SwitchModeStore {
         if (now < until) return
 
         val baseBefore = sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, true)
+        val profileBefore = sp.getString(KEY_PROFILE_BEFORE_TEMP_ENABLE, null)
 
         sp.edit {
             putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
+            remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
             putBoolean(KEY_ENABLED, baseBefore)
         }
 
+        if (!profileBefore.isNullOrBlank()) {
+            ProfileStore.setCurrent(ctx, profileBefore)
+            AppLogStore.append(ctx, "Profiles", "Restored previous profile id=$profileBefore")
+        } else {
+            AppLogStore.append(ctx, "Profiles", "Restore skipped reason=no_previous_profile")
+        }
+
+        AppLogStore.append(ctx, "Profiles", "Temp enable expired")
         _enabledFlow.value = isEnabled(ctx)
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
@@ -308,6 +337,7 @@ object SwitchModeStore {
 
         sp.edit { putLong(KEY_TEMP_DISABLE_UNTIL, 0L) }
 
+        AppLogStore.append(ctx, "Profiles", "Temp disable expired")
         _enabledFlow.value = isEnabled(ctx)
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
@@ -329,6 +359,7 @@ object SwitchModeStore {
         sp.edit {
             putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
+            remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
         }
 
         _enabledFlow.value = isEnabled(ctx)
@@ -363,11 +394,17 @@ object SwitchModeStore {
         if (!active) return
 
         val baseBefore = sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, true)
+        val profileBefore = sp.getString(KEY_PROFILE_BEFORE_TEMP_ENABLE, null)
 
         sp.edit {
             putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
+            remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
             putBoolean(KEY_ENABLED, baseBefore)
+        }
+
+        if (!profileBefore.isNullOrBlank()) {
+            ProfileStore.setCurrent(ctx, profileBefore)
         }
 
         _enabledFlow.value = isEnabled(ctx)

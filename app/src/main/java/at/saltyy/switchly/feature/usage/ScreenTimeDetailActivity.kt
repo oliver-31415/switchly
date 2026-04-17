@@ -562,8 +562,6 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         return out
     }
 
-
-
     private fun setupChartInteractions(label: String) {
         // Tap bars/points to see exact numbers.
         b.chart.setOnBarSelectedListener { index, valueMs ->

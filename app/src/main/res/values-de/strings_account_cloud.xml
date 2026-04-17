@@ -6,8 +6,8 @@
     <string name="auth_unexpected_error_sign_in">Unerwarteter Fehler bei der Anmeldung</string>
     <string name="auth_failed_to_process_google_token">Google-Token konnte nicht verarbeitet werden</string>
     <string name="auth_no_matching_google_accounts_found">Keine passenden Google-Konten gefunden</string>
-    <string name="auth_missing_google_server_client_id">Fehlende Google-Server-Client-ID (default_web_client_id). Prüfe die google-services.json und das Google-Services-Plugin.</string>
-    <string name="auth_firebase_not_configured">Firebase ist nicht konfiguriert (google-services.json fehlt?)</string>
+    <string name="auth_missing_google_server_client_id">Google-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
+    <string name="auth_firebase_not_configured">Cloud-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
     <!-- ACCOUNT - Account actions and sign-out state -->
     <string name="settings_account_action_delete">Konto löschen</string>
     <string name="settings_account_delete_confirm_title">Switchly-Konto löschen?</string>

@@ -1,6 +1,27 @@
 {
     "releases": [
         {
+            "version": "v2.0.8-beta",
+            "date": "Apr 15, 2026",
+            "body": [
+                "Fixed Google sign-in issues caused by unreliable client ID lookup, improving compatibility across devices",
+                "Improved error handling for Google sign-in so failures now show clearer messages instead of internal error text",
+                "Improved Settings stability by fixing crashes when leaving the screen during cloud backup and restore operations",
+                "Fixed temporary profile behavior so profiles correctly restore after a temporary enable ends",
+                "Improved Firefox website blocking with additional fallback handling and faster detection on devices where Firefox exposes the final page signal later than expected",
+                "Added support for Waterfox to browser website blocking",
+                "Added improved safety handling and warnings for critical system apps such as Settings, Play Store, Package Installer, Permission Controller, Files, and browsers",
+                "Added internal logging system to help diagnose issues reported by users",
+                "Expanded internal logs for website blocking, app blocking, profile changes, schedules, app lock, emergency mode, NFC, billing, cloud sync, and authentication issues",
+                "Added \"Copy latest logs\" option in Support to easily share recent app logs",
+                "Added option to include logs when contacting support for better troubleshooting",
+                "Added quick copy button for support email address",
+                "Added info actions in the top bar for Schedule Actions and NFC Write to explain how they work more clearly",
+                "Expanded FAQ and help content with more guidance for barcode and QR code usage",
+                "Improved overall reliability of cloud sync and background operations"
+            ]
+        },
+        {
             "version": "v2.0.7-beta",
             "date": "Apr 12, 2026",
             "body": [

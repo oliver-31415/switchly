@@ -715,7 +715,6 @@ class MainActivity : AppCompatActivity() {
         // Make the icon match the button text (otherwise it may stay default/black).
         btnFinishSetup.iconTint = ColorStateList.valueOf(onAccent)
 
-
         // Active temporary-mode chip should follow accent (was still green in custom mode).
         chipTemp.setTextColor(accent)
         chipTemp.chipBackgroundColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x20))
@@ -790,11 +789,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isProfileSwitchLockedWhileEnabled(): Boolean {
-        // Use the persisted base state here instead of the effective state.
-        // Effective state can temporarily change because of schedules or temp windows,
-        // which made profile switching appear to lock/unlock "randomly".
-        return SwitchModeStore.isBaseEnabled(this) &&
-            !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this) || EmergencyBypassStore.isPaused(this)
+        val enabled = SwitchModeStore.isEnabled(this)
+        if (!enabled && !emergencyActive) return false
+        if (emergencyActive) return true
+        return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
     }
 
     private fun ensureCanOpenAppPicker(showToast: Boolean = true): Boolean {
@@ -1397,7 +1396,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun updateBlockedNowCard() {
         // Dashboard section has been removed (card stays GONE). Keep logic as a no-op.
@@ -2413,7 +2411,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val v = LayoutInflater.from(parent.context)
                 .inflate(R.layout.row_blocked_app, parent, false)
@@ -2437,7 +2434,6 @@ class MainActivity : AppCompatActivity() {
             if (handled) return
             super.onBindViewHolder(holder, position, payloads)
         }
-
 
         override fun onBindViewHolder(holder: VH, position: Int) {
             val item = getItem(position)

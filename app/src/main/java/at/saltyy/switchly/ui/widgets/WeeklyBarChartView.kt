@@ -93,7 +93,6 @@ class WeeklyBarChartView @JvmOverloads constructor(
         isClickable = l != null
     }
 
-
     fun setValues(ms: List<Long>) {
         values = ms
         invalidate()

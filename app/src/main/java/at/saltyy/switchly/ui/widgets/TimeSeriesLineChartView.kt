@@ -103,7 +103,6 @@ class TimeSeriesLineChartView @JvmOverloads constructor(
         isClickable = l != null
     }
 
-
     fun setValues(ms: List<Long>) {
         values = ms
         maxValueMs = (values.maxOrNull() ?: 1L).coerceAtLeast(1L)

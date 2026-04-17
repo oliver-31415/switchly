@@ -44,6 +44,8 @@ object AppBlockSafety {
         PROVISIONING,
         ASSISTANT,
         STORE,
+        FILES,
+        BROWSER,
         SYSTEM_UI,
         LAUNCHER,
         DIALER,
@@ -97,6 +99,31 @@ object AppBlockSafety {
             PolicyAction.WARN_ONLY,
             "Play Store can install helper or escape apps."
         ),
+        "com.google.android.packageinstaller" to RiskRule(
+            RiskCategory.INSTALL,
+            PolicyAction.NEVER_BLOCK,
+            "Package installer can install or update apps."
+        ),
+        "com.google.android.permissioncontroller" to RiskRule(
+            RiskCategory.PERMISSIONS,
+            PolicyAction.NEVER_BLOCK,
+            "Permission controller manages sensitive grants."
+        ),
+        "com.android.documentsui" to RiskRule(
+            RiskCategory.FILES,
+            PolicyAction.WARN_ONLY,
+            "Files/Documents surfaces can matter for backup, restore, and recovery."
+        ),
+        "com.google.android.documentsui" to RiskRule(
+            RiskCategory.FILES,
+            PolicyAction.WARN_ONLY,
+            "Files/Documents surfaces can matter for backup, restore, and recovery."
+        ),
+        "com.google.android.apps.nbu.files" to RiskRule(
+            RiskCategory.FILES,
+            PolicyAction.WARN_ONLY,
+            "Files/Documents surfaces can matter for backup, restore, and recovery."
+        ),
         "com.google.android.permission" to RiskRule(
             RiskCategory.PERMISSIONS,
             PolicyAction.NEVER_BLOCK,
@@ -141,6 +168,71 @@ object AppBlockSafety {
             RiskCategory.ASSISTANT,
             PolicyAction.WARN_ONLY,
             "Bixby settings can affect assistant behavior and recovery paths."
+        ),
+        "com.android.chrome" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "org.mozilla.firefox" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "org.mozilla.firefox_beta" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "net.waterfox.android.release" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.brave.browser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.microsoft.emmx" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.sec.android.app.sbrowser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.sec.android.app.sbrowser.beta" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.vivaldi.browser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.opera.browser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.opera.browser.beta" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.opera.mini.native" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.kiwibrowser.browser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
         ),
         "com.google.android.apps.nexuslauncher" to RiskRule(
             RiskCategory.LAUNCHER,
@@ -188,9 +280,12 @@ object AppBlockSafety {
 
         val riskRule = matchRiskRule(context, pkg)
         if (riskRule?.action == PolicyAction.NEVER_BLOCK) {
+            val (hintRes, titleRes, messageRes) = resourcesForCategory(riskRule.category)
             return Info(
                 level = Level.HARD_EXCLUDED,
-                hint = context.getString(R.string.app_picker_protected_generic_hint)
+                hint = context.getString(hintRes),
+                warningTitle = titleRes?.let(context::getString),
+                warningMessage = messageRes?.let(context::getString)
             )
         }
 
@@ -228,11 +323,12 @@ object AppBlockSafety {
         }
 
         if (riskRule?.action == PolicyAction.WARN_ONLY) {
+            val (hintRes, titleRes, messageRes) = resourcesForCategory(riskRule.category)
             return Info(
                 level = Level.SOFT_WARNING,
-                hint = context.getString(R.string.app_picker_settings_hint),
-                warningTitle = context.getString(R.string.app_picker_settings_warning_title),
-                warningMessage = context.getString(R.string.app_picker_settings_warning_message)
+                hint = context.getString(hintRes),
+                warningTitle = titleRes?.let(context::getString),
+                warningMessage = messageRes?.let(context::getString)
             )
         }
 
@@ -368,6 +464,46 @@ object AppBlockSafety {
         }
 
         return null
+    }
+
+    private fun resourcesForCategory(category: RiskCategory): Triple<Int, Int?, Int?> {
+        return when (category) {
+            RiskCategory.SETTINGS -> Triple(
+                R.string.app_picker_settings_hint,
+                R.string.app_picker_settings_warning_title,
+                R.string.app_picker_settings_warning_message
+            )
+            RiskCategory.STORE -> Triple(
+                R.string.app_picker_play_store_hint,
+                R.string.app_picker_play_store_warning_title,
+                R.string.app_picker_play_store_warning_message
+            )
+            RiskCategory.INSTALL -> Triple(
+                R.string.app_picker_installer_hint,
+                R.string.app_picker_installer_warning_title,
+                R.string.app_picker_installer_warning_message
+            )
+            RiskCategory.PERMISSIONS -> Triple(
+                R.string.app_picker_permissions_hint,
+                R.string.app_picker_permissions_warning_title,
+                R.string.app_picker_permissions_warning_message
+            )
+            RiskCategory.FILES -> Triple(
+                R.string.app_picker_files_hint,
+                R.string.app_picker_files_warning_title,
+                R.string.app_picker_files_warning_message
+            )
+            RiskCategory.BROWSER -> Triple(
+                R.string.app_picker_browser_hint,
+                R.string.app_picker_browser_warning_title,
+                R.string.app_picker_browser_warning_message
+            )
+            else -> Triple(
+                R.string.app_picker_protected_generic_hint,
+                null,
+                null
+            )
+        }
     }
 
     private fun isWalletPackage(pkg: String): Boolean {

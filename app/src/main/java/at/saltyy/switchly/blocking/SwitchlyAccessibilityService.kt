@@ -71,6 +71,7 @@ import java.util.Locale
 import at.saltyy.switchly.data.prefs.SurfaceUsageStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
+import at.saltyy.switchly.data.prefs.AppLogStore
 
 /**
  * Main (stable) blocking runtime.
@@ -114,6 +115,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private var browserCandidateDomain: String? = null
     private var browserCandidateSince: Long = 0L
     private val browserAddressEditGraceUntilByPkg = HashMap<String, Long>()
+    private val pendingBrowserDomainByPkg = HashMap<String, String>()
+    private val pendingBrowserDomainAtByPkg = HashMap<String, Long>()
+    private val lastDiagnosticLogAtByKey = HashMap<String, Long>()
 
     // In-app surface tracking for usage + limits (Shorts/Reels/Explore)
     @Volatile private var currentSurfaceKey: String? = null
@@ -161,6 +165,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private val BROWSER_DOMAIN_CONFIRM_MS = 700L
     private val BROWSER_ADDRESS_EDIT_GRACE_MS = 1_400L
     private val FIREFOX_LAST_DOMAIN_TTL_MS = 12_000L
+    private val FIREFOX_PENDING_DOMAIN_TTL_MS = 8_000L
     private val SURFACE_CONFIRM_MS = 850L
     private val SURFACE_HINT_TTL_MS = 2_200L
     private val INAPP_POST_BLOCK_GRACE_MS = 1_800L
@@ -1167,6 +1172,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val count = recentBlockEvents.count { it.first == pkg }
         if (count < LOOP_BREAKER_THRESHOLD) return false
 
+        AppLogStore.append(this, "Blocking", "Loop protection triggered package=$pkg")
         suppressedBlockingUntilByPkg[pkg] = now + LOOP_BREAKER_SUPPRESS_MS
         clearSurfaceEvidenceForPackage(pkg)
         inAppGraceUntilByPkg[pkg] = now + LOOP_BREAKER_SUPPRESS_MS
@@ -1211,7 +1217,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
     }
 
-
     private fun pauseActiveMediaPlayback() {
         val audio = getSystemService(AUDIO_SERVICE) as? AudioManager ?: return
         val down = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
@@ -1224,6 +1229,47 @@ class SwitchlyAccessibilityService : AccessibilityService() {
      * "Soft" block: keep the app open, but force user out of the current surface (e.g., a website tab, Shorts/Reels), then show the blocker UI as feedback.
      * This avoids making the whole browser/app unusable.
      */
+    private fun appendBlockingLog(category: String, key: String, message: String, throttleMs: Long = 2_500L) {
+        val now = System.currentTimeMillis()
+        val last = lastDiagnosticLogAtByKey[key] ?: 0L
+        if (now - last < throttleMs) return
+        lastDiagnosticLogAtByKey[key] = now
+        AppLogStore.append(this, "Blocking", "[$category] $message")
+    }
+
+    private fun sanitizeWebsiteSignal(raw: String?, maxLen: Int = 120): String {
+        val value = raw?.trim()?.replace(Regex("\\s+"), " ")?.takeIf { it.isNotEmpty() } ?: return "-"
+        val withoutScheme = value.replace(Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://"), "")
+        val noQuery = withoutScheme.substringBefore('?').substringBefore('#')
+        val trimmed = noQuery.trim('/').ifBlank { withoutScheme.take(maxLen) }
+        return trimmed.take(maxLen)
+    }
+
+    private fun eventTypeLabel(event: AccessibilityEvent?): String {
+        return when (event?.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "WINDOW_STATE_CHANGED"
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> "WINDOWS_CHANGED"
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> "WINDOW_CONTENT_CHANGED"
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> "VIEW_TEXT_CHANGED"
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> "VIEW_CLICKED"
+            AccessibilityEvent.TYPE_VIEW_FOCUSED -> "VIEW_FOCUSED"
+            AccessibilityEvent.TYPE_VIEW_SELECTED -> "VIEW_SELECTED"
+            AccessibilityEvent.TYPE_VIEW_SCROLLED -> "VIEW_SCROLLED"
+            null -> "NO_EVENT"
+            else -> event.eventType.toString()
+        }
+    }
+
+    private fun firefoxSignalSummary(root: AccessibilityNodeInfo?, event: AccessibilityEvent?): String {
+        val eventText = sanitizeWebsiteSignal(event?.text?.joinToString(" | "))
+        val eventDesc = sanitizeWebsiteSignal(event?.contentDescription?.toString())
+        val sourceId = runCatching { event?.source?.viewIdResourceName }.getOrNull()?.takeIf { it.isNotBlank() } ?: "-"
+        val sourceText = sanitizeWebsiteSignal(runCatching { event?.source?.text?.toString() }.getOrNull())
+        val sourceDesc = sanitizeWebsiteSignal(runCatching { event?.source?.contentDescription?.toString() }.getOrNull())
+        val rootPkg = root?.packageName?.toString() ?: "-"
+        return "event=${eventTypeLabel(event)} srcId=$sourceId eventText=$eventText eventDesc=$eventDesc srcText=$sourceText srcDesc=$sourceDesc rootPkg=$rootPkg"
+    }
+
     private fun softBlockSurface(
         pkg: String,
         appLabel: String,
@@ -1247,6 +1293,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val canShow =
             (now - lastShown) >= BLOCK_SHOWN_COOLDOWN_MS && (now - lastGlobalBlockTs) >= 250L
         if (!canShow) return
+
+        appendBlockingLog(
+            category = "surface_block",
+            key = "surface-block|$pkg|$title",
+            message = "pkg=$pkg title=${sanitizeWebsiteSignal(title, 80)} backCount=$backCount defer=$deferNavigationUntilAcknowledge returnToPkg=$returnToPackageOnClose"
+        )
 
         // Short grace period after a surface block to prevent Reels/Shorts re-detect loops while the app is animating back to feed/home.
         inAppGraceUntilByPkg[pkg] = now + INAPP_POST_BLOCK_GRACE_MS
@@ -1364,6 +1416,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             val ai = packageManager.getApplicationInfo(pkg, 0)
             packageManager.getApplicationLabel(ai).toString()
         }.getOrNull() ?: pkg
+
+        if (countAsBlock) {
+            appendBlockingLog(
+                category = "app_block",
+                key = "app-block|$pkg",
+                message = "pkg=$pkg immediate=$immediate label=${sanitizeWebsiteSignal(label, 80)} countAttempt=$countAttempt countAsBlock=$countAsBlock",
+                throttleMs = 1_500L
+            )
+        }
 
         val delayMs = if (immediate) 20L else 60L
         handler.postDelayed({
@@ -1553,7 +1614,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return value
     }
 
-    private fun isFirefoxFamily(pkg: String): Boolean = pkg.startsWith("org.mozilla.")
+    private fun isFirefoxFamily(pkg: String): Boolean =
+        pkg.startsWith("org.mozilla.") || pkg == "net.waterfox.android.release"
 
     private fun isBrowserPackage(pkg: String): Boolean {
         return pkg == "com.android.chrome" ||
@@ -1569,6 +1631,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             pkg == "org.mozilla.fennec_fdroid" ||
             pkg == "org.mozilla.focus" ||
             pkg == "org.mozilla.fenix" ||
+            pkg == "net.waterfox.android.release" ||
             pkg == "com.kiwibrowser.browser" ||
             pkg == "com.vivaldi.browser" ||
             pkg == "com.duckduckgo.mobile.android" ||
@@ -1641,6 +1704,13 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     "org.mozilla.fenix:id/mozac_browser_toolbar_url_view"
                 )
 
+            "net.waterfox.android.release" ->
+                listOf(
+                    "net.waterfox.android.release:id/mozac_browser_toolbar_origin_view",
+                    "net.waterfox.android.release:id/mozac_browser_toolbar_display_url_view",
+                    "net.waterfox.android.release:id/mozac_browser_toolbar_url_view"
+                )
+
             "com.kiwibrowser.browser" ->
                 listOf(
                     "com.kiwibrowser.browser:id/url_bar",
@@ -1686,6 +1756,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             "org.mozilla.fennec_fdroid" -> listOf("org.mozilla.fennec_fdroid:id/mozac_browser_toolbar_edit_url_view")
             "org.mozilla.fenix" -> listOf("org.mozilla.fenix:id/mozac_browser_toolbar_edit_url_view")
             "org.mozilla.focus" -> listOf("org.mozilla.focus:id/urlInputView")
+            "net.waterfox.android.release" -> listOf("net.waterfox.android.release:id/mozac_browser_toolbar_edit_url_view")
             else -> emptyList()
         }
     }
@@ -1754,16 +1825,40 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         browserAddressEditGraceUntilByPkg[pkg] = now + BROWSER_ADDRESS_EDIT_GRACE_MS
     }
 
+    private fun notePendingBrowserDomain(pkg: String, host: String?, now: Long = System.currentTimeMillis()) {
+        val normalized = host?.let { DomainBlockStore.normalize(it) }
+        if (normalized.isNullOrBlank()) return
+        pendingBrowserDomainByPkg[pkg] = normalized
+        pendingBrowserDomainAtByPkg[pkg] = now
+    }
+
+    private fun currentPendingBrowserDomain(pkg: String, now: Long = System.currentTimeMillis()): String? {
+        val host = pendingBrowserDomainByPkg[pkg] ?: return null
+        val at = pendingBrowserDomainAtByPkg[pkg] ?: 0L
+        if (now - at > FIREFOX_PENDING_DOMAIN_TTL_MS) {
+            pendingBrowserDomainByPkg.remove(pkg)
+            pendingBrowserDomainAtByPkg.remove(pkg)
+            return null
+        }
+        return host
+    }
+
+    private fun clearPendingBrowserDomain(pkg: String) {
+        pendingBrowserDomainByPkg.remove(pkg)
+        pendingBrowserDomainAtByPkg.remove(pkg)
+    }
+
     private fun eventLooksLikeBrowserAddressEditing(pkg: String, event: AccessibilityEvent?): Boolean {
         if (event == null || !isBrowserPackage(pkg)) return false
 
         val type = event.eventType
+        val firefoxContentChange = isFirefoxFamily(pkg) && type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
         val addressishEvent =
             type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED ||
                 type == AccessibilityEvent.TYPE_VIEW_FOCUSED ||
                 type == AccessibilityEvent.TYPE_VIEW_CLICKED ||
                 type == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED ||
-                (isFirefoxFamily(pkg) && type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+                firefoxContentChange
         if (!addressishEvent) return false
 
         val source = runCatching { event.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
@@ -1778,8 +1873,17 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                         vid.contains("location") ||
                         vid.contains("toolbar") ||
                         vid.contains("mozac")
-                if (idHints) return true
-                if (source.isEditable || cls.contains("EditText", ignoreCase = true)) return true
+
+                if (firefoxContentChange) {
+                    val firefoxEditIds = firefoxEditingViewIds(pkg)
+                    val explicitEditNode = firefoxEditIds.any { it.equals(source.viewIdResourceName, ignoreCase = true) }
+                    if ((source.isEditable || cls.contains("EditText", ignoreCase = true) || explicitEditNode) && idHints) {
+                        return true
+                    }
+                } else {
+                    if (idHints) return true
+                    if (source.isEditable || cls.contains("EditText", ignoreCase = true)) return true
+                }
             }
         } finally {
             if (source != null) runCatching { source.recycle() }
@@ -2214,6 +2318,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 currentBrowserDomainAt = 0L
                 browserCandidateDomain = null
                 browserCandidateSince = 0L
+                clearPendingBrowserDomain(pkg)
                 noteBrowserAddressEditing(pkg)
                 return true
             }
@@ -2222,7 +2327,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun requiresDomainStability(pkg: String): Boolean {
-        return true
+        // Firefox/Fenix often emits fewer stable URL events than Chromium-based browsers.
+        // Requiring a second confirmation event there can cause website blocking to never trigger
+        // on some devices/builds even after navigation has committed.
+        return !isFirefoxFamily(pkg)
     }
 
     private fun maybeBlockWebsite(pkg: String, event: AccessibilityEvent? = null) {
@@ -2244,6 +2352,18 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val recentEditing = event != null && browserAddressEditingRecently(pkg, now)
         val loadedFirefoxPageEvent = isFirefoxFamily(pkg) && firefoxLooksLikeLoadedPageEvent(event)
         if (editingNow || (recentEditing && !loadedFirefoxPageEvent)) {
+            if (isFirefoxFamily(pkg)) {
+                val pendingHost = firefoxEventDomainSignal(event)
+                if (!pendingHost.isNullOrBlank()) {
+                    notePendingBrowserDomain(pkg, pendingHost, now)
+                }
+                appendBlockingLog(
+                    category = "website_skip",
+                    key = "web-skip-edit|$pkg|${eventTypeLabel(event)}",
+                    message = "pkg=$pkg reason=address_editing editingNow=$editingNow recentEditing=$recentEditing loadedPage=$loadedFirefoxPageEvent pendingHost=${sanitizeWebsiteSignal(pendingHost)} ${firefoxSignalSummary(root, event)}",
+                    throttleMs = 1_500L
+                )
+            }
             currentBrowserPkg = pkg
             currentBrowserDomain = null
             currentBrowserDomainAt = 0L
@@ -2262,12 +2382,44 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 null
             }
             ?: run {
+                if (isFirefoxFamily(pkg) && (loadedFirefoxPageEvent || !recentEditing)) {
+                    currentPendingBrowserDomain(pkg, now)?.let { pendingHost ->
+                        appendBlockingLog(
+                            category = "website_detect",
+                            key = "web-firefox-pending-host|$pkg|$pendingHost",
+                            message = "pkg=$pkg result=using_pending_host host=${sanitizeWebsiteSignal(pendingHost)} event=${eventTypeLabel(event)} loadedPage=$loadedFirefoxPageEvent ${firefoxSignalSummary(root, event)}",
+                            throttleMs = 1_200L
+                        )
+                        pendingHost
+                    }
+                } else null
+            }
+            ?: run {
+                if (isFirefoxFamily(pkg) && loadedFirefoxPageEvent) {
+                    currentTrackedBrowserDomain(pkg, now)?.let { cachedHost ->
+                        appendBlockingLog(
+                            category = "website_detect",
+                            key = "web-firefox-cached-host|$pkg|$cachedHost",
+                            message = "pkg=$pkg result=using_cached_host host=${sanitizeWebsiteSignal(cachedHost)} event=${eventTypeLabel(event)} ${firefoxSignalSummary(root, event)}",
+                            throttleMs = 1_500L
+                        )
+                        cachedHost
+                    }
+                } else null
+            }
+            ?: run {
+                if (isFirefoxFamily(pkg)) {
+                    appendBlockingLog(
+                        category = "website_detect",
+                        key = "web-no-host|$pkg|${eventTypeLabel(event)}",
+                        message = "pkg=$pkg result=no_host blockEnabled=$blockWebsitesEnabled blockedCount=${blockedDomainsList.size} ${firefoxSignalSummary(root, event)}",
+                        throttleMs = 1_500L
+                    )
+                }
                 browserCandidateDomain = null
                 browserCandidateSince = 0L
                 return
             }
-
-        val resolvedHost: String = host
 
         // Require a short stable domain signal to avoid premature blocks on autocomplete suggestions.
         // For Firefox/Fenix we skip the second-event requirement because some builds emit fewer URL events.
@@ -2275,9 +2427,22 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (browserCandidateDomain != host) {
             browserCandidateDomain = host
             browserCandidateSince = now
+            appendBlockingLog(
+                category = "website_detect",
+                key = "web-candidate|$pkg|$host",
+                message = "pkg=$pkg host=${sanitizeWebsiteSignal(host)} state=candidate needStability=$needStability event=${eventTypeLabel(event)}" +
+                    if (isFirefoxFamily(pkg)) " ${firefoxSignalSummary(root, event)}" else "",
+                throttleMs = 1_500L
+            )
             if (needStability) return
         }
         if (needStability && (now - browserCandidateSince < BROWSER_DOMAIN_CONFIRM_MS)) {
+            appendBlockingLog(
+                category = "website_detect",
+                key = "web-wait-stable|$pkg|$host",
+                message = "pkg=$pkg host=${sanitizeWebsiteSignal(host)} state=waiting_stability ageMs=${now - browserCandidateSince} confirmMs=$BROWSER_DOMAIN_CONFIRM_MS event=${eventTypeLabel(event)}",
+                throttleMs = 1_500L
+            )
             return
         }
 
@@ -2285,6 +2450,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         currentBrowserPkg = pkg
         currentBrowserDomain = host
         currentBrowserDomainAt = now
+        if (isFirefoxFamily(pkg)) {
+            clearPendingBrowserDomain(pkg)
+        }
 
         if (!blockWebsitesEnabled) return
 
@@ -2292,9 +2460,20 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val hardBlocked = blockedDomains.any { DomainBlockStore.matches(host, it) }
 
         val limitMin = DomainLimitStore.getLimitMinutes(this, host)
-        val limitReached = limitMin > 0 && WebUsageStore.getUsageMsToday(this, host) >= limitMin.toLong() * 60_000L
+        val usageMs = if (limitMin > 0) WebUsageStore.getUsageMsToday(this, host) else 0L
+        val limitReached = limitMin > 0 && usageMs >= limitMin.toLong() * 60_000L
 
-        if (!hardBlocked && !limitReached) return
+        if (!hardBlocked && !limitReached) {
+            if (isFirefoxFamily(pkg)) {
+                appendBlockingLog(
+                    category = "website_detect",
+                    key = "web-allowed|$pkg|$host",
+                    message = "pkg=$pkg host=${sanitizeWebsiteSignal(host)} matched=false limitMin=$limitMin usageMs=$usageMs event=${eventTypeLabel(event)}",
+                    throttleMs = 10_000L
+                )
+            }
+            return
+        }
 
         val appLabel = safeAppLabel(pkg)
         val title = if (hardBlocked) getString(R.string.blocking_website_blocked_title) else getString(R.string.blocking_website_limit_reached_title)
@@ -2304,6 +2483,13 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         // without dropping the user out of the whole app. Fall back to a single BACK only if the
         // redirect is not supported by the current browser build.
         val redirected = tryRedirectBrowserToSafePage(pkg)
+        appendBlockingLog(
+            category = "website_block",
+            key = "web-block|$pkg|$host",
+            message = "pkg=$pkg host=${sanitizeWebsiteSignal(host)} hardBlocked=$hardBlocked limitReached=$limitReached limitMin=$limitMin usageMs=$usageMs redirected=$redirected event=${eventTypeLabel(event)}" +
+                if (isFirefoxFamily(pkg)) " ${firefoxSignalSummary(root, event)}" else "",
+            throttleMs = 1_500L
+        )
         softBlockSurface(
             pkg,
             appLabel,

@@ -380,7 +380,6 @@
             android:name=".feature.about.DeveloperInfoActivity"
             android:exported="false" />
 
-
         <!-- re-register watcher after app updates -->
         <receiver
             android:name=".platform.receiver.system.PostUpdateReceiver"

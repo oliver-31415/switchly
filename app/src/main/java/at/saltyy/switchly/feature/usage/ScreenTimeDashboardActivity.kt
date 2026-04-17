@@ -431,7 +431,6 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.rowTapHint.isVisible = !visibleEmpty
     }
 
-
     private fun getDeviceFallbackSummary(range: Range): UsageSummary {
         return when (range) {
             Range.TODAY -> AppUsageRepo.getTodaySummary(this)
@@ -470,7 +469,6 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         v.findViewById<RadioButton>(R.id.rbFilterBlocked).text = getString(
             if (isWeb) R.string.stats_filter_blocked_only_websites else R.string.stats_filter_blocked_only
         )
-
 
         // Primary sort labels
         v.findViewById<RadioButton>(R.id.rbSortPrimaryDesc).text = getString(R.string.stats_sort_used_time_desc)

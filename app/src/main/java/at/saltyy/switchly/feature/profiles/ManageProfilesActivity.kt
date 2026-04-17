@@ -38,6 +38,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.theme.AccentColor
@@ -59,20 +60,21 @@ import kotlinx.coroutines.launch
 class ManageProfilesActivity : AppCompatActivity() {
 
     private fun isProfileLockActive(): Boolean {
-        // Use the persisted base state so temporary schedule/temp-disable changes do not make profile switching appear to randomly lock or unlock.
-        val enabled = SwitchModeStore.isBaseEnabled(this)
-        if (!enabled) return false
+        val enabled = SwitchModeStore.isEnabled(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this) || EmergencyBypassStore.isPaused(this)
+        if (!enabled && !emergencyActive) return false
 
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        if (requireNfc) return true
+        if (requireNfc || emergencyActive) return true
 
         return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
     }
 
     private fun profileLockReasonMessageRes(): Int {
-        val enabled = SwitchModeStore.isBaseEnabled(this)
+        val enabled = SwitchModeStore.isEnabled(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this) || EmergencyBypassStore.isPaused(this)
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        return if (enabled && !requireNfc) {
+        return if (enabled && !requireNfc && !emergencyActive) {
             R.string.toast_disable_switchly_to_switch_profiles
         } else {
             R.string.toast_cannot_change_profile_while_locked

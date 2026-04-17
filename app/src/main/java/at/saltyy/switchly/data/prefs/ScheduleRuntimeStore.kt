@@ -100,7 +100,6 @@ object ScheduleRuntimeStore {
         sp.edit { putBoolean(KEY_MANUAL_OVERRIDE_ACTIVE, value) }
     }
 
-
     fun getManualOverrideScheduleId(ctx: Context): Int {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return sp.getInt(KEY_MANUAL_OVERRIDE_SCHEDULE_ID, -1)

@@ -21,6 +21,13 @@
     <string name="schedules_action_toggle">Umschalten</string>
     <string name="schedules_action_enable_disable">Aktivieren &amp; Deaktivieren</string>
     <string name="schedules_action_disable_enable">Deaktivieren &amp; Aktivieren</string>
+    <string name="schedules_action_info_title">Zeitplan-Aktionen</string>
+    <string name="schedules_action_info_enable_body">Schaltet Switchly mit dem ausgewählten Profil ein, wenn dieser Zeitplan auslöst.</string>
+    <string name="schedules_action_info_disable_body">Schaltet Switchly aus, wenn dieser Zeitplan auslöst.</string>
+    <string name="schedules_action_info_toggle_body">Wechselt Switchly je nach aktuellem Zustand zwischen ein und aus.</string>
+    <string name="schedules_action_info_enable_disable_body">Schaltet Switchly zur Startzeit ein und zur Endzeit wieder aus.</string>
+    <string name="schedules_action_info_disable_enable_body">Schaltet Switchly zur Startzeit aus und zur Endzeit wieder ein.</string>
+    <string name="schedules_action_info_tip">Tipp: Wenn sich Zeitpläne überschneiden, hat die zuletzt ausgeführte Aktion Vorrang.</string>
     <string name="schedules_field_profile">Profil</string>
     <string name="schedules_field_title_hint">Titel (optional)</string>
     <string name="schedules_field_note_hint">Notizen (optional)</string>

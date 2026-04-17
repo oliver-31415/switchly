@@ -398,8 +398,6 @@ class WebsiteDetailActivity : AppCompatActivity() {
         return lastKeys.map { sumsByMonth[it] ?: 0L }
     }
 
-
-
     private fun setupChartInteractions(label: String) {
         b.chart.setOnBarSelectedListener { index, valueMs ->
             if (currentRange != Range.WEEK) return@setOnBarSelectedListener

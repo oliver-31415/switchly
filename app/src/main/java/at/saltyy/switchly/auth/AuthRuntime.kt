@@ -46,6 +46,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
 
 /**
  * Authentication runtime:
@@ -75,23 +76,32 @@ object AuthRuntime {
         val app = ensureFirebaseAppOrNull(context)
         if (app == null) {
             Log.w(TAG, "FirebaseApp not initialized.")
+            AppLogStore.append(context, TAG, "FirebaseApp not initialized")
             return null
         }
 
         return runCatching { FirebaseAuth.getInstance(app) }
-            .onFailure { Log.e(TAG, "Failed to get FirebaseAuth instance", it) }
+            .onFailure {
+                Log.e(TAG, "Failed to get FirebaseAuth instance", it)
+                AppLogStore.append(context, TAG, "Failed to get FirebaseAuth instance", it)
+            }
             .getOrNull()
     }
 
-    private fun serverClientIdOrNull(activity: Activity): String? {
-        val resId = runCatching {
-            Class.forName("${activity.packageName}.R\$string")
-                .getField("default_web_client_id")
-                .getInt(null)
-        }.getOrNull() ?: return null
+    private fun serverClientIdOrNull(context: Context): String? {
+        val raw = runCatching { context.getString(R.string.default_web_client_id) }
+            .onFailure {
+                Log.w(TAG, "default_web_client_id unavailable", it)
+                AppLogStore.append(context, TAG, "default_web_client_id unavailable", it)
+            }
+            .getOrNull()
+            ?.trim()
 
-        val raw = runCatching { activity.getString(resId) }.getOrNull()?.trim()
         return raw?.takeIf { it.isNotEmpty() && !it.startsWith("YOUR_") }
+    }
+
+    fun isGoogleSignInAvailable(context: Context): Boolean {
+        return firebaseAuthOrNull(context) != null && serverClientIdOrNull(context) != null
     }
 
     fun startSignIn(
@@ -100,12 +110,14 @@ object AuthRuntime {
     ) {
         val auth = firebaseAuthOrNull(activity)
         if (auth == null) {
+            AppLogStore.append(activity, TAG, "Google sign-in unavailable: Firebase not configured")
             onResult(false, IllegalStateException(activity.getString(R.string.auth_firebase_not_configured)))
             return
         }
 
         val serverClientId = serverClientIdOrNull(activity)
         if (serverClientId == null) {
+            AppLogStore.append(activity, TAG, "Google sign-in unavailable: missing default_web_client_id")
             onResult(false, IllegalStateException(activity.getString(R.string.auth_missing_google_server_client_id)))
             return
         }
@@ -160,11 +172,13 @@ object AuthRuntime {
                             return
                         } catch (e: GoogleIdTokenParsingException) {
                             Log.e(TAG, "Google ID token parsing failed", e)
+                            AppLogStore.append(activity, TAG, "Google ID token parsing failed", e)
                             val msg = activity.getString(R.string.auth_failed_to_process_google_token)
                             onResult(false, IllegalStateException(msg, e))
                             return
                         } catch (t: Throwable) {
                             Log.e(TAG, "Unexpected error handling Google credential", t)
+                            AppLogStore.append(activity, TAG, "Unexpected error handling Google credential", t)
                             val msg = activity.getString(R.string.auth_unexpected_error_sign_in)
                             onResult(false, IllegalStateException(msg, t))
                             return
@@ -172,6 +186,7 @@ object AuthRuntime {
                     }
 
                     Log.w(TAG, "Unsupported or cancelled credential: $credential")
+                    AppLogStore.append(activity, TAG, "Unsupported or cancelled credential: ${credential::class.java.simpleName}")
                     val msg = activity.getString(R.string.auth_sign_in_cancelled)
                     onResult(false, IllegalStateException(msg))
                 }
@@ -180,6 +195,7 @@ object AuthRuntime {
                     // Retry once with all accounts for first-time users.
                     if (e is NoCredentialException && authorizedOnly) {
                         Log.i(TAG, "No authorized Google account found; retrying with all accounts")
+                        AppLogStore.append(activity, TAG, "No authorized Google account found; retrying with all accounts")
                         launchGoogleFlow(
                             activity = activity,
                             auth = auth,
@@ -204,11 +220,13 @@ object AuthRuntime {
         when (e) {
             is NoCredentialException -> {
                 Log.w(TAG, "No credentials available", e)
+                AppLogStore.append(activity, TAG, "No Google credentials available", e)
                 val msg = activity.getString(R.string.auth_no_matching_google_accounts_found)
                 onResult(false, IllegalStateException(msg))
             }
             else -> {
                 Log.e(TAG, "getCredential failed", e)
+                AppLogStore.append(activity, TAG, "Credential Manager getCredential failed", e)
                 onResult(false, e)
             }
         }
@@ -225,10 +243,12 @@ object AuthRuntime {
             .addOnCompleteListener(activity) { task ->
                 if (task.isSuccessful) {
                     Log.d(TAG, "Firebase sign-in success")
+                    AppLogStore.append(activity, TAG, "Firebase Google sign-in success")
                     onResult(true, null)
                 } else {
                     val error = task.exception
                     Log.e(TAG, "Firebase sign-in failed", error)
+                    AppLogStore.append(activity, TAG, "Firebase Google sign-in failed", error)
                     onResult(false, error)
                 }
             }
@@ -355,6 +375,7 @@ object AuthRuntime {
             firebaseAuthOrNull(context)?.signOut()
         } catch (t: Throwable) {
             Log.e(TAG, "Error during Firebase signOut", t)
+            AppLogStore.append(context, TAG, "Error during Firebase signOut", t)
         }
 
         // Also clear provider state kept by Credential Manager.
@@ -370,6 +391,7 @@ object AuthRuntime {
 
                 override fun onError(e: ClearCredentialException) {
                     Log.w(TAG, "Could not clear credential state", e)
+                    AppLogStore.append(context, TAG, "Could not clear credential state", e)
                     onDone()
                 }
             }

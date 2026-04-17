@@ -48,7 +48,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 
 class BlockedInboxActivity : AppCompatActivity() {
 
-
     private lateinit var recycler: RecyclerView
     private lateinit var empty: TextView
     private lateinit var toolbar: MaterialToolbar

@@ -788,7 +788,6 @@
                             app:showText="false"/>
                     </LinearLayout>
 
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
@@ -1110,7 +1109,6 @@
                         android:layout_height="1dp"
                         android:alpha="0.12"
                         android:background="?attr/colorOnSurface" />
-
 
                     <View
                         android:layout_width="match_parent"

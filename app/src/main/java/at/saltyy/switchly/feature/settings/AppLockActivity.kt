@@ -32,6 +32,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.security.AppLockManager
 import at.saltyy.switchly.security.AppLockStore
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -76,6 +77,7 @@ class AppLockActivity : AppCompatActivity() {
             if (AppLockStore.matchesPin(this, pin)) {
                 unlockSuccess()
             } else {
+                AppLogStore.append(this, "AppLock", "Unlock failed reason=pin_mismatch")
                 Toast.makeText(this, R.string.app_lock_pin_incorrect, Toast.LENGTH_SHORT).show()
             }
         }
@@ -96,6 +98,7 @@ class AppLockActivity : AppCompatActivity() {
 
     private fun promptBiometric() {
         if (!isBiometricAvailable()) {
+            AppLogStore.append(this, "AppLock", "Unlock failed reason=biometric_unavailable")
             Toast.makeText(this, R.string.app_lock_biometric_not_available, Toast.LENGTH_SHORT).show()
             return
         }

@@ -82,10 +82,6 @@ import com.google.android.material.textfield.TextInputLayout
 
 class NfcWriterActivity : AppCompatActivity() {
 
-    companion object {
-        private const val MENU_INFO_ACTIONS = 1001
-    }
-
     private enum class WriteResult {
         OK,
         TOO_SMALL,
@@ -150,7 +146,6 @@ class NfcWriterActivity : AppCompatActivity() {
     private lateinit var tilAction: TextInputLayout
     private lateinit var tilTime: TextInputLayout
     private lateinit var tvActionHint: TextView
-    private lateinit var btnActionInfo: ImageButton
     private lateinit var btnArmWrite: Button
     private lateinit var statusRow: android.view.View
     private lateinit var tvStatus: TextView
@@ -249,7 +244,6 @@ class NfcWriterActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
-        setupInfoMenu(toolbar)
 
         EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar)
 
@@ -267,7 +261,6 @@ class NfcWriterActivity : AppCompatActivity() {
         ddAction = findViewById(R.id.ddAction)
         ddTime = findViewById(R.id.ddTime)
         tvActionHint = findViewById(R.id.tvActionHint)
-        btnActionInfo = findViewById(R.id.btnActionInfo)
         btnArmWrite = findViewById(R.id.btnArmWrite)
         statusRow = findViewById(R.id.statusRow)
         tvStatus = findViewById(R.id.tvStatus)
@@ -278,10 +271,6 @@ class NfcWriterActivity : AppCompatActivity() {
 
         // Button tinted with the accent color
         btnArmWrite.backgroundTintList = AccentColor.getActiveColor(this)
-
-        // Always-visible info button for action explanations
-        btnActionInfo.imageTintList = AccentColor.getActiveColor(this)
-        btnActionInfo.setOnClickListener { showActionInfoDialog() }
 
         // Text fields (dropdown outlines) accent tint
         tintTextFieldsWithAccent()
@@ -562,19 +551,18 @@ class NfcWriterActivity : AppCompatActivity() {
         return prefs.getString("pref_nfc_unlock_minutes", "10")?.toIntOrNull()?.coerceIn(1, 120) ?: 10
     }
 
-    private fun setupInfoMenu(toolbar: MaterialToolbar) {
-        val menu = toolbar.menu
-        menu.add(Menu.NONE, MENU_INFO_ACTIONS, Menu.NONE, R.string.nfc_action_info_title)
-            .setIcon(R.drawable.info_24)
-            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_nfc_writer, menu)
+        return true
+    }
 
-        toolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == MENU_INFO_ACTIONS) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_info -> {
                 showActionInfoDialog()
                 true
-            } else {
-                false
             }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 

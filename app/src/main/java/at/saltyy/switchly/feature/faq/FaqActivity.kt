@@ -168,6 +168,7 @@ class FaqActivity : AppCompatActivity() {
         quick.item(R.string.faq_q_idiot_nfc_how, R.string.faq_a_idiot_nfc_how, R.drawable.nfc_24)
         quick.item(R.string.faq_q_idiot_nfc, R.string.faq_a_idiot_nfc, R.drawable.nfc_24)
         quick.item(R.string.faq_q_idiot_qr, R.string.faq_a_idiot_qr, R.drawable.qr_code_24)
+        quick.item(R.string.faq_q_barcode_setup, R.string.faq_a_barcode_setup, R.drawable.barcode_24)
         quick.item(R.string.faq_q_idiot_both, R.string.faq_a_idiot_both, R.drawable.sync_24)
 
         quick.header(R.string.faq_section_features)
@@ -219,6 +220,8 @@ class FaqActivity : AppCompatActivity() {
 
         detailed.header(R.string.faq_header_qr_nfc)
         detailed.item(R.string.faq_q_qr_what, R.string.faq_a_qr_what, R.drawable.qr_code_24)
+        detailed.item(R.string.faq_q_barcode_what, R.string.faq_a_barcode_what, R.drawable.barcode_24)
+        detailed.item(R.string.faq_q_barcode_setup, R.string.faq_a_barcode_setup, R.drawable.barcode_24)
         detailed.item(R.string.faq_q_qr_generate, R.string.faq_a_qr_generate, R.drawable.add_24)
         detailed.item(R.string.faq_q_qr_scan, R.string.faq_a_qr_scan, R.drawable.qr_code_24)
         detailed.item(R.string.faq_q_nfc, R.string.faq_a_nfc, R.drawable.nfc_24)

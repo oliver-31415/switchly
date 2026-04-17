@@ -66,6 +66,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.radiobutton.MaterialRadioButton
 import at.saltyy.switchly.auth.AccountDeletion
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
@@ -457,7 +458,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     positiveText = getString(R.string.settings_confirm_backup_title),
                 ) {
                     CloudSyncRuntime.pushLocalState(requireContext()) { ok, err ->
-                        val c = requireContext()
+                        val c = context ?: return@pushLocalState
+                        if (!isAdded) return@pushLocalState
                         val msg = if (ok) {
                             PreferenceManager.getDefaultSharedPreferences(c).edit {
                                 putLong("pref_last_backup_epoch_ms", System.currentTimeMillis())
@@ -1226,17 +1228,18 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun showAccountSignInDialog() {
         val ctx = requireContext()
-        val items = listOf(
-            IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.login_24),
-            IconActionItem(getString(R.string.settings_account_sign_in_email), R.drawable.mail_24)
-        )
+        val googleAvailable = at.saltyy.switchly.auth.AuthRuntime.isGoogleSignInAvailable(ctx)
+        val items = buildList {
+            if (googleAvailable) add(IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.login_24))
+            add(IconActionItem(getString(R.string.settings_account_sign_in_email), R.drawable.mail_24))
+        }
 
         val dialog = AlertDialog.Builder(ctx)
             .setTitle(getString(R.string.settings_account_action_sign_in))
             .setAdapter(makeIconAdapter(items)) { _, which ->
-                when (which) {
-                    0 -> startGoogleAccountSignIn()
-                    1 -> showEmailPasswordDialog(createAccount = false)
+                when {
+                    googleAvailable && which == 0 -> startGoogleAccountSignIn()
+                    else -> showEmailPasswordDialog(createAccount = false)
                 }
             }
             .setNegativeButton(getString(R.string.cancel), null)
@@ -1248,17 +1251,18 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun showAccountCreateDialog() {
         val ctx = requireContext()
-        val items = listOf(
-            IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.login_24),
-            IconActionItem(getString(R.string.settings_account_create_email), R.drawable.mail_24)
-        )
+        val googleAvailable = at.saltyy.switchly.auth.AuthRuntime.isGoogleSignInAvailable(ctx)
+        val items = buildList {
+            if (googleAvailable) add(IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.login_24))
+            add(IconActionItem(getString(R.string.settings_account_create_email), R.drawable.mail_24))
+        }
 
         val dialog = AlertDialog.Builder(ctx)
             .setTitle(getString(R.string.settings_account_action_create))
             .setAdapter(makeIconAdapter(items)) { _, which ->
-                when (which) {
-                    0 -> startGoogleAccountSignIn()
-                    1 -> showEmailPasswordDialog(createAccount = true)
+                when {
+                    googleAvailable && which == 0 -> startGoogleAccountSignIn()
+                    else -> showEmailPasswordDialog(createAccount = true)
                 }
             }
             .setNegativeButton(getString(R.string.cancel), null)
@@ -1427,11 +1431,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun startRestoreFlowWithChoice() {
-        val ctx = requireContext()
         CloudSyncRuntime.listBackups(requireContext()) { ok, err, backups ->
+            val activeCtx = context ?: return@listBackups
+            if (!isAdded) return@listBackups
             if (!ok) {
                 Toast.makeText(
-                    ctx,
+                    activeCtx,
                     getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown)),
                     Toast.LENGTH_SHORT
                 ).show()
@@ -1440,13 +1445,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
             val list = backups ?: emptyList()
             if (list.isEmpty()) {
-                CloudSyncRuntime.pullRemoteState(ctx) { ok2, err2 ->
+                CloudSyncRuntime.pullRemoteState(activeCtx) { ok2, err2 ->
+                    val restoreCtx = context ?: return@pullRemoteState
+                    if (!isAdded) return@pullRemoteState
                     if (ok2) {
-                        Toast.makeText(ctx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(restoreCtx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
                         restartAppTask()
                     } else {
                         Toast.makeText(
-                            ctx,
+                            restoreCtx,
                             getString(R.string.cloud_error_fmt, err2 ?: getString(R.string.error_unknown)),
                             Toast.LENGTH_SHORT
                         ).show()
@@ -1458,17 +1465,19 @@ class SettingsFragment : PreferenceFragmentCompat() {
             val df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
             val labels = list.map { meta -> df.format(Date(meta.createdAt)) }.toTypedArray()
 
-            val dialog = AlertDialog.Builder(ctx)
+            val dialog = AlertDialog.Builder(activeCtx)
                 .setTitle(getString(R.string.settings_restore_choose_title))
                 .setItems(labels) { _, which ->
                     val meta = list[which]
-                    CloudSyncRuntime.pullBackup(ctx, meta.id) { ok3, err3 ->
+                    CloudSyncRuntime.pullBackup(activeCtx, meta.id) { ok3, err3 ->
+                        val restoreCtx = context ?: return@pullBackup
+                        if (!isAdded) return@pullBackup
                         if (ok3) {
-                            Toast.makeText(ctx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(restoreCtx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
                             restartAppTask()
                         } else {
                             Toast.makeText(
-                                ctx,
+                                restoreCtx,
                                 getString(R.string.cloud_error_fmt, err3 ?: getString(R.string.error_unknown)),
                                 Toast.LENGTH_SHORT
                             ).show()
@@ -1476,7 +1485,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
                 .setNeutralButton(getString(R.string.delete)) { _, _ ->
-                    showDeleteBackupsDialog(ctx, list)
+                    showDeleteBackupsDialog(activeCtx, list)
                 }
                 .setNegativeButton(getString(R.string.cancel), null)
                 .create()
@@ -1635,7 +1644,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-
     /**
      * Account setting: change the PIN used for Emergency Unlock.
      * Flow:
@@ -1741,10 +1749,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
                             val ok = EmergencyBypassStore.pause(ctx)
                             if (ok) {
                                 SwitchModeStore.clearTemporary(ctx)
+                                AppLogStore.append(ctx, "Emergency", "Emergency mode paused from Settings")
                                 Toast.makeText(ctx, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
                             }
                         }
                         1 -> {
+                            AppLogStore.append(ctx, "Emergency", "Emergency mode ended from Settings")
                             EmergencyBypassStore.cancel(ctx)
                             SwitchModeStore.clearTemporary(ctx)
                             Toast.makeText(ctx, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
@@ -1757,6 +1767,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                             if (ok) {
                                 val remaining = EmergencyBypassStore.minutesRemaining(ctx).coerceAtLeast(1)
                                 SwitchModeStore.setTemporarilyDisabled(ctx, remaining * 60_000L)
+                                AppLogStore.append(ctx, "Emergency", "Emergency mode resumed from Settings with ${remaining}m remaining")
                                 Toast.makeText(ctx, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
                             }
                         }
@@ -1799,6 +1810,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val minutes = 15
         val ok = EmergencyBypassStore.enableIfAllowed(ctx, minutes)
         if (ok) {
+            AppLogStore.append(ctx, "Emergency", "Emergency mode started from Settings for ${minutes}m")
             SwitchModeStore.setTemporarilyDisabled(ctx, minutes * 60_000L)
             Toast.makeText(ctx, getString(R.string.emergency_enabled_toast, minutes), Toast.LENGTH_SHORT).show()
             BlockingRuntime.ensureRunning(ctx)
@@ -1911,16 +1923,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun showDeleteBackupsDialog() {
-        val ctx = requireContext()
-        CloudSyncRuntime.listBackups(ctx) { ok, err, backups ->
+        CloudSyncRuntime.listBackups(requireContext()) { ok, err, backups ->
+            val activeCtx = context ?: return@listBackups
+            if (!isAdded) return@listBackups
             if (!ok) {
-                Toast.makeText(ctx, getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown)), Toast.LENGTH_SHORT).show()
+                Toast.makeText(activeCtx, getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown)), Toast.LENGTH_SHORT).show()
                 return@listBackups
             }
 
             val list = backups.orEmpty()
             if (list.isEmpty()) {
-                Toast.makeText(ctx, getString(R.string.cloud_no_backups), Toast.LENGTH_SHORT).show()
+                Toast.makeText(activeCtx, getString(R.string.cloud_no_backups), Toast.LENGTH_SHORT).show()
                 return@listBackups
             }
 
@@ -1928,7 +1941,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             val labels = list.map { df.format(Date(it.createdAt)) }.toTypedArray()
             val checked = BooleanArray(labels.size)
 
-            val dialog = AlertDialog.Builder(ctx)
+            val dialog = AlertDialog.Builder(activeCtx)
                 .setTitle(getString(R.string.settings_delete_backups_title))
                 .setMultiChoiceItems(labels, checked) { _, which, isChecked -> checked[which] = isChecked }
                 .setPositiveButton(getString(R.string.delete)) { _, _ ->
@@ -1937,10 +1950,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     // delete sequentially if API supports it; otherwise ignore
                     ids.forEach { id ->
                         runCatching {
-                            CloudSyncRuntime.deleteBackup(ctx, id) { _, _ -> }
+                            CloudSyncRuntime.deleteBackup(activeCtx, id) { _, _ -> }
                         }
                     }
-                    Toast.makeText(ctx, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activeCtx, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
                 }
                 .setNegativeButton(getString(R.string.cancel), null)
                 .create()

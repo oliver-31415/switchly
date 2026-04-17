@@ -26,6 +26,7 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Typeface
 import android.location.LocationManager
 import android.net.Uri
 import android.net.wifi.ScanResult
@@ -37,6 +38,9 @@ import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -45,6 +49,8 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ImageButton
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -393,6 +399,10 @@ class SchedulesActivity : AppCompatActivity() {
                 }
                 true
             }
+            R.id.action_info -> {
+                showScheduleActionInfoDialog()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -558,6 +568,73 @@ class SchedulesActivity : AppCompatActivity() {
         val dialog = builder.create()
         dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
         dialog.show()
+    }
+
+    private fun showScheduleActionInfoDialog() {
+        val bodyView = TextView(this).apply {
+            text = buildScheduleActionInfoBody()
+            textSize = 14f
+            setLineSpacing(0f, 1.18f)
+        }
+
+        val scroll = ScrollView(this).apply {
+            val padH = (20 * resources.displayMetrics.density).toInt()
+            val padV = (8 * resources.displayMetrics.density).toInt()
+            setPadding(padH, padV, padH, padV)
+            addView(
+                bodyView,
+                android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                )
+            )
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.schedules_action_info_title)
+            .setView(scroll)
+            .setPositiveButton(R.string.ok, null)
+            .showAccented()
+    }
+
+    private fun buildScheduleActionInfoBody(): CharSequence {
+        val sb = SpannableStringBuilder()
+
+        fun addItem(title: String, desc: String) {
+            val titleStart = sb.length
+            sb.append("• ").append(title)
+            sb.setSpan(
+                StyleSpan(Typeface.BOLD),
+                titleStart + 2,
+                titleStart + 2 + title.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            sb.append("  ").append(desc.trim()).append('\n')
+        }
+
+        addItem(
+            getString(R.string.schedules_action_enable),
+            getString(R.string.schedules_action_info_enable_body)
+        )
+        addItem(
+            getString(R.string.schedules_action_disable),
+            getString(R.string.schedules_action_info_disable_body)
+        )
+        addItem(
+            getString(R.string.schedules_action_toggle),
+            getString(R.string.schedules_action_info_toggle_body)
+        )
+        addItem(
+            getString(R.string.schedules_action_enable_disable),
+            getString(R.string.schedules_action_info_enable_disable_body)
+        )
+        addItem(
+            getString(R.string.schedules_action_disable_enable),
+            getString(R.string.schedules_action_info_disable_enable_body)
+        )
+
+        sb.append(getString(R.string.schedules_action_info_tip))
+        return sb
     }
 
     private fun tintPickButton(button: MaterialButton) {

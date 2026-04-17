@@ -9,8 +9,6 @@
     <string name="settings_changelog_summary">Versionshinweise</string>
     <string name="settings_backup_title">Backup</string>
     <string name="settings_backup_summary">Deine Konfiguration synchronisieren &amp; wiederherstellen</string>
-    <string name="settings_battery_opt_title">Akku-Optimierung</string>
-    <string name="settings_battery_opt_summary">Erlaube Switchly, im Hintergrund zuverlässig zu laufen</string>
     <string name="settings_contact_support_title">Support kontaktieren</string>
     <string name="settings_contact_support_summary">Entwickler per E-Mail kontaktieren</string>
     <string name="settings_focus_blocking_title">Fokus &amp; Blockierung</string>

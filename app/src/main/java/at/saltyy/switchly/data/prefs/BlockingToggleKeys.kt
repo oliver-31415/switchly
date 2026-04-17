@@ -40,7 +40,6 @@ object BlockingToggleKeys {
     const val KEY_BLOCK_IG_STORIES = "block_ig_stories"
     const val KEY_BLOCK_IG_COMMENTS = "block_ig_comments"
 
-
     // X / Twitter
     const val KEY_BLOCK_X_HOME = "block_x_home"
     const val KEY_BLOCK_X_FOR_YOU = KEY_BLOCK_X_HOME // legacy alias

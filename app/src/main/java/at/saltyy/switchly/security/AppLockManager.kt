@@ -24,6 +24,7 @@ import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import at.saltyy.switchly.feature.settings.AppLockActivity
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -31,6 +32,9 @@ object AppLockManager {
     private var startedActivities: Int = 0
     private val sessionUnlocked = AtomicBoolean(false)
     private val promptShowing = AtomicBoolean(false)
+
+    @Volatile
+    private var lastPromptActivity: Activity? = null
 
     fun register(app: Application) {
         app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
@@ -60,11 +64,13 @@ object AppLockManager {
     }
 
     fun maybeRequestUnlock(activity: Activity): Boolean {
+        lastPromptActivity = activity
         if (!shouldProtect(activity)) return false
         if (!AppLockStore.isEnabled(activity)) return false
         if (sessionUnlocked.get()) return false
         if (!promptShowing.compareAndSet(false, true)) return true
 
+        AppLogStore.append(activity, "AppLock", "Lock triggered package=${activity.javaClass.simpleName}")
         activity.startActivity(
             Intent(activity, AppLockActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NO_ANIMATION)
@@ -74,6 +80,7 @@ object AppLockManager {
     }
 
     fun markUnlocked() {
+        lastPromptActivity?.let { AppLogStore.append(it, "AppLock", "Unlock success method=pin_or_biometric") }
         sessionUnlocked.set(true)
         promptShowing.set(false)
     }

@@ -21,7 +21,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/waitProgress"
         android:layout_width="56dp"

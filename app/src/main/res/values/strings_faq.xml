@@ -166,4 +166,8 @@
     <string name="faq_a_manual_controls">Manual controls are the direct controls inside the app or system UI.\nThis usually includes the home toggle button, other manual buttons, and the Quick Settings tile.\n\nIf manual controls are blocked by the current control mode, those buttons may be disabled, ignored, or show a warning instead of changing Switchly.</string>
     <string name="faq_q_issue_board">Where can I track known issues or planned fixes?</string>
     <string name="faq_a_issue_board">You can check the public issue board for known issues, planned fixes, and current progress:\n\nhttps://gitlab.com/Saltyy/switchly-public/-/boards/10076025</string>
+    <string name="faq_q_barcode_what">What are barcode actions?</string>
+    <string name="faq_a_barcode_what">Barcode actions work like QR actions, but with regular barcodes. You can map a scanned barcode value to a Switchly action and use printed or physical codes as triggers.</string>
+    <string name="faq_q_barcode_setup">How do I use barcodes?</string>
+    <string name="faq_a_barcode_setup">Open Manage barcodes, add a barcode by scanning it or entering it manually, then choose the Switchly action it should trigger. Later, scan the same barcode in Switchly to run that action.</string>
 </resources>

@@ -23,6 +23,7 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.os.Handler
+import at.saltyy.switchly.data.prefs.AppLogStore
 import android.os.Looper
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
@@ -94,6 +95,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
                 isConnecting = false
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     Log.d(TAG, "Billing service connected")
+                    appContext?.let { AppLogStore.append(it, "Billing", "Billing connected") }
                     val req = pendingLaunchRequest
                     pendingLaunchRequest = null
                     if (req != null) {
@@ -104,6 +106,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
                     }
                 } else {
                     Log.e(TAG, "Billing setup failed: ${result.debugMessage}")
+                    appContext?.let { AppLogStore.append(it, "Billing", "Restore failed reason=billing_setup_failed") }
                 }
             }
 
@@ -222,6 +225,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
             handlePurchases(purchases)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
             Log.d(TAG, "Purchase canceled by user")
+            appContext?.let { AppLogStore.append(it, "Billing", "Restore failed reason=user_canceled") }
         } else {
             Log.e(TAG, "onPurchasesUpdated error: ${billingResult.responseCode} ${billingResult.debugMessage}")
         }
@@ -236,6 +240,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
 
             if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
                 Log.d(TAG, "handlePurchases: premium purchase detected")
+                ctx?.let { AppLogStore.append(it, "Billing", "Purchase success product=$PRODUCT_ID") }
 
                 // Immediately update local + cloud premium state
                 if (ctx != null) {

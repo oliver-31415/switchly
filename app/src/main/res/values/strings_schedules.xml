@@ -21,6 +21,13 @@
     <string name="schedules_action_toggle">Toggle</string>
     <string name="schedules_action_enable_disable">Enable &amp; Disable</string>
     <string name="schedules_action_disable_enable">Disable &amp; Enable</string>
+    <string name="schedules_action_info_title">Schedule actions</string>
+    <string name="schedules_action_info_enable_body">Turns Switchly on with the selected profile when this schedule runs.</string>
+    <string name="schedules_action_info_disable_body">Turns Switchly off when this schedule runs.</string>
+    <string name="schedules_action_info_toggle_body">Switches Switchly between enabled and disabled based on the current state.</string>
+    <string name="schedules_action_info_enable_disable_body">Turns Switchly on at the start time and back off at the end time.</string>
+    <string name="schedules_action_info_disable_enable_body">Turns Switchly off at the start time and back on at the end time.</string>
+    <string name="schedules_action_info_tip">Tip: If schedules overlap, the latest action that runs takes priority.</string>
     <string name="schedules_field_profile">Profile</string>
     <string name="schedules_field_title_hint">Title (optional)</string>
     <string name="schedules_field_note_hint">Notes (optional)</string>

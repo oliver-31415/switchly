@@ -776,7 +776,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             sp.edit { putBoolean(BlockingToggleKeys.KEY_LIMIT_TEMP_DISABLE_TAGS, isChecked) }
         }
 
-
         // Autostart
         switchAutostart.setOnCheckedChangeListener { _, isChecked ->
             AutostartStore.setEnabled(ctx, isChecked)

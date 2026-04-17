@@ -6,8 +6,8 @@
     <string name="auth_unexpected_error_sign_in">Unexpected error during sign-in</string>
     <string name="auth_failed_to_process_google_token">Failed to process Google token</string>
     <string name="auth_no_matching_google_accounts_found">No matching Google accounts found</string>
-    <string name="auth_missing_google_server_client_id">Missing Google server client ID (default_web_client_id). Check google-services.json and the Google Services plugin.</string>
-    <string name="auth_firebase_not_configured">Firebase is not configured (google-services.json missing?)</string>
+    <string name="auth_missing_google_server_client_id">Google sign-in is not available in this app build yet. Please update the app or contact support.</string>
+    <string name="auth_firebase_not_configured">Cloud sign-in is not available in this app build yet. Please update the app or contact support.</string>
     <!-- ACCOUNT - Account actions and sign-out state -->
     <string name="settings_account_action_delete">Delete account</string>
     <string name="settings_account_delete_confirm_title">Delete Switchly account?</string>

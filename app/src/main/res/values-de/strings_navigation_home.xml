@@ -110,6 +110,9 @@
     <string name="app_picker_settings_hint">Das Blockieren von Einstellungen kann Fehlerbehebung und Berechtigungsänderungen erschweren.</string>
     <string name="app_picker_settings_warning_title">Einstellungen trotzdem blockieren?</string>
     <string name="app_picker_settings_warning_message">Das Blockieren von Einstellungen kann Fehlerbehebung und Berechtigungsänderungen erschweren.</string>
+    <string name="app_picker_play_store_hint">Der Play Store ist sicherheitsrelevant, da er Apps installieren oder aktualisieren kann.</string>
+    <string name="app_picker_play_store_warning_title">Play Store trotzdem blockieren?</string>
+    <string name="app_picker_play_store_warning_message">Das Blockieren des Play Store kann Installationen, Updates und Wiederherstellung erschweren.</string>
     <string name="continue_label">Weiter</string>
     <string name="close">Schließen</string>
     <plurals name="app_picker_select_all_skipped_notice">

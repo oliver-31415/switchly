@@ -37,6 +37,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
@@ -77,6 +78,9 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
 
         val schedules = ScheduleStore.getAll(ctx).filter { it.enabled }
+        if (schedules.isNotEmpty()) {
+            AppLogStore.append(ctx, "Schedule", "Evaluating schedules profile=${ProfileStore.getCurrent(ctx) ?: "-"}")
+        }
 
         // "Trigger" schedules (Wi-Fi/BT based) use wifiSsid/btDeviceName.
         schedules.filter { !it.wifiSsid.isNullOrBlank() }
@@ -164,6 +168,7 @@ class ScheduleReceiver : BroadcastReceiver() {
 
         // BT name guard
         if (needsBtInfo && btName.isNullOrBlank() && btAddr.isNullOrBlank() && !hasBtEvent) {
+            AppLogStore.append(ctx, "Schedule", "Match failed reason=no_active_schedule")
             updateNextAlarmAndNotifyIfChanged(ctx)
             return
         }
@@ -326,6 +331,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
 
         val target = pickWinningMatch(matches, nowMinutes)
+        AppLogStore.append(ctx, "Schedule", "Match success day=$todayBit time=$nowMinutes")
         dbg("matches=${matches.size} -> winner id=${target.id} profile=${target.profile} start=${target.startMinutes} end=${target.endMinutes} action=${target.action}")
         val source = when {
             !target.wifiSsid.isNullOrBlank() -> SOURCE_WIFI
@@ -487,6 +493,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         if (stateWriteBlocked && !newEnabled && SwitchModeStore.isNfcRequiredForDisable(ctx)) {
             // Visible in schedules screen banner so users understand why end-times may not disable.
             ScheduleRuntimeStore.markDisableBlockedByNfc(ctx)
+            AppLogStore.append(ctx, "Schedule", "Match failed reason=disable_blocked_by_nfc")
             dbg("Schedule disable blocked by NFC lock (id=${s.id}, source=$source)")
         }
 
@@ -499,6 +506,8 @@ class ScheduleReceiver : BroadcastReceiver() {
         if (profileChanged || (stateActuallyChanged && baseEnabledAfter)) {
             BlockingRuntime.ensureRunning(ctx)
         }
+
+        AppLogStore.append(ctx, "Schedule", "Applied scheduled state enabled=$baseEnabledAfter")
 
         if (isRangeEnableDisable || isRangeDisableEnable) {
             ScheduleRuntimeStore.setActiveRangeScheduleId(ctx, s.id)

@@ -20,6 +20,15 @@ if (firebaseEnabled) {
     apply(plugin = "com.google.firebase.crashlytics")
 }
 
+afterEvaluate {
+    val isReleaseBuild = gradle.startParameter.taskNames.any { taskName ->
+        taskName.contains("Release", ignoreCase = true)
+    }
+    if (isReleaseBuild && !googleServicesJsonExists) {
+        throw GradleException("Missing app/google-services.json for release build")
+    }
+}
+
 android {
     namespace = "at.saltyy.switchly"
     compileSdk = 36
@@ -29,8 +38,8 @@ android {
         minSdk = 27
         targetSdk = 36
 
-        versionCode = 207
-        versionName = "2.0.7"
+        versionCode = 208
+        versionName = "2.0.8"
     }
 
     buildFeatures {
