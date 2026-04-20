@@ -155,6 +155,7 @@ class ToolsHubActivity : AppCompatActivity() {
                 startActivity(Intent(this, ManagePairedTagsActivity::class.java))
             }
         }
+
         findViewById<View>(R.id.cardWriteNfc).setOnClickListener {
             if (isNfcTagWritingLocked()) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_write_nfc_tags)

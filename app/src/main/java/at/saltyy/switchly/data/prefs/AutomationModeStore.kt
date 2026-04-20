@@ -225,22 +225,6 @@ object AutomationModeStore {
         }
     }
 
-    fun canButtonEnable(ctx: Context): Boolean {
-        return isButtonAllowed(ctx) || isButtonEnableAllowed(ctx)
-    }
-
-    fun isNfcExclusiveControlActive(ctx: Context): Boolean {
-        return when (getMode(ctx)) {
-            Mode.NFC -> true
-            Mode.MIXED -> isMixedAllowNfc(ctx) &&
-                !isMixedAllowSchedule(ctx) &&
-                !isMixedAllowQr(ctx) &&
-                !isMixedAllowBarcode(ctx) &&
-                !isMixedAllowButton(ctx)
-            Mode.SCHEDULE, Mode.QR, Mode.BARCODE -> false
-        }
-    }
-
     /**
      * Optional exception while Switchly is enabled.
      * Locked by default; can be enabled regardless of the active control mode.
