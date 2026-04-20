@@ -15,13 +15,30 @@ default:
       - .gradle/caches/
 
 build_release_apk:
+  image: eclipse-temurin:17-jdk-jammy
   stage: build
+
+  variables:
+    ANDROID_SDK_ROOT: /sdk
+
+  before_script:
+    - apt-get update
+    - apt-get install -y wget unzip
+    - mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+    - cd $ANDROID_SDK_ROOT/cmdline-tools
+    - wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+    - unzip -q tools.zip
+    - mv cmdline-tools latest
+    - export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+    - yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses > /dev/null || true
+    - sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+    - cd $CI_PROJECT_DIR
+
   script:
+    - chmod +x ./gradlew
     - ./gradlew :app:assembleRelease
+
   artifacts:
-    name: "switchly-release-$CI_COMMIT_SHORT_SHA"
-    expire_in: 90 days
+    when: on_success
     paths:
       - app/build/outputs/apk/release/*.apk
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
