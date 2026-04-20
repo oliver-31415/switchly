@@ -97,8 +97,8 @@ object SwitchModeStore {
 
     /**
      * Permanently enables or disables Switchly (user toggle).
-     * - When enabling, any temporary disable timestamp is cleared.
-     * - When disabling, temp-disable data is left untouched (for UI display/history purposes).
+     * - Any temporary disable timestamp is cleared, because a real manual on/off should win.
+     * - Active temp-enable state is cancelled and its previous profile is restored.
      */
     fun setEnabled(ctx: Context, enabled: Boolean) {
         setEnabled(ctx, enabled, allowNfcBypass = false)
@@ -116,17 +116,23 @@ object SwitchModeStore {
         }
 
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val hadActiveTempEnable = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L) > now
+        val profileBeforeTempEnable = if (hadActiveTempEnable) sp.getString(KEY_PROFILE_BEFORE_TEMP_ENABLE, null) else null
+
         sp.edit {
             putBoolean(KEY_ENABLED, enabled)
-
-            if (enabled) {
-                putLong(KEY_TEMP_DISABLE_UNTIL, 0L)
-            }
+            putLong(KEY_TEMP_DISABLE_UNTIL, 0L)
 
             // explicit on/off cancels temp-enable and its restore markers
             putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
             remove(KEY_BASE_BEFORE_TEMP_ENABLE)
             remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
+        }
+
+        if (!profileBeforeTempEnable.isNullOrBlank()) {
+            ProfileStore.setCurrent(ctx, profileBeforeTempEnable)
+            AppLogStore.append(ctx, "Profiles", "Restored previous profile id=$profileBeforeTempEnable")
         }
 
         _enabledFlow.value = isEnabled(ctx)
@@ -203,6 +209,14 @@ object SwitchModeStore {
     fun setTemporarilyDisabled(ctx: Context, durationMs: Long) {
         val until = System.currentTimeMillis() + durationMs
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val baseEnabled = sp.getBoolean(KEY_ENABLED, true)
+        val tempEnableActive = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L) > now
+
+        if (!baseEnabled && !tempEnableActive) {
+            AppLogStore.append(ctx, "Profiles", "Temp disable skipped reason=already_disabled")
+            return
+        }
 
         sp.edit {
             // IMPORTANT:

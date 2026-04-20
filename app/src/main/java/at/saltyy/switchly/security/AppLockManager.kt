@@ -26,6 +26,7 @@ import android.os.Bundle
 import at.saltyy.switchly.feature.settings.AppLockActivity
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.nfc.NfcEntryActivity
+import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicBoolean
 
 object AppLockManager {
@@ -34,7 +35,7 @@ object AppLockManager {
     private val promptShowing = AtomicBoolean(false)
 
     @Volatile
-    private var lastPromptActivity: Activity? = null
+    private var lastPromptActivityRef: WeakReference<Activity>? = null
 
     fun register(app: Application) {
         app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
@@ -59,12 +60,16 @@ object AppLockManager {
             }
 
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
-            override fun onActivityDestroyed(activity: Activity) = Unit
+            override fun onActivityDestroyed(activity: Activity) {
+                if (lastPromptActivityRef?.get() === activity) {
+                    lastPromptActivityRef = null
+                }
+            }
         })
     }
 
     fun maybeRequestUnlock(activity: Activity): Boolean {
-        lastPromptActivity = activity
+        lastPromptActivityRef = WeakReference(activity)
         if (!shouldProtect(activity)) return false
         if (!AppLockStore.isEnabled(activity)) return false
         if (sessionUnlocked.get()) return false
@@ -80,7 +85,7 @@ object AppLockManager {
     }
 
     fun markUnlocked() {
-        lastPromptActivity?.let { AppLogStore.append(it, "AppLock", "Unlock success method=pin_or_biometric") }
+        lastPromptActivityRef?.get()?.let { AppLogStore.append(it, "AppLock", "Unlock success method=pin_or_biometric") }
         sessionUnlocked.set(true)
         promptShowing.set(false)
     }

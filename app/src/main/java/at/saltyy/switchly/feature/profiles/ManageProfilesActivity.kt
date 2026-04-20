@@ -61,20 +61,22 @@ class ManageProfilesActivity : AppCompatActivity() {
 
     private fun isProfileLockActive(): Boolean {
         val enabled = SwitchModeStore.isEnabled(this)
-        val emergencyActive = EmergencyBypassStore.isActive(this) || EmergencyBypassStore.isPaused(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this)
+        val emergencyPaused = EmergencyBypassStore.isPaused(this)
         if (!enabled && !emergencyActive) return false
 
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        if (requireNfc || emergencyActive) return true
+        if (requireNfc || emergencyActive || (enabled && emergencyPaused)) return true
 
         return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
     }
 
     private fun profileLockReasonMessageRes(): Int {
         val enabled = SwitchModeStore.isEnabled(this)
-        val emergencyActive = EmergencyBypassStore.isActive(this) || EmergencyBypassStore.isPaused(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this)
+        val emergencyPaused = EmergencyBypassStore.isPaused(this)
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        return if (enabled && !requireNfc && !emergencyActive) {
+        return if (enabled && !requireNfc && !emergencyActive && !emergencyPaused) {
             R.string.toast_disable_switchly_to_switch_profiles
         } else {
             R.string.toast_cannot_change_profile_while_locked

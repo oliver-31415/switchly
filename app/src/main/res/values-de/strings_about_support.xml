@@ -129,6 +129,8 @@
     <string name="changelog_section_fixed">Behoben</string>
     <string name="changelog_section_removed">Entfernt</string>
     <string name="changelog_section_other">Sonstiges</string>
+    <string name="changelog_tab_public">Öffentlich</string>
+    <string name="changelog_tab_beta">Beta</string>
     <string name="support_include_logs">Logs anhängen</string>
     <string name="support_latest_logs_heading">Neueste Logs</string>
 </resources>

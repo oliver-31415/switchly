@@ -342,10 +342,11 @@ class ToolsHubActivity : AppCompatActivity() {
         if (isNfcLockedForProtectedEdits()) {
             return true
         }
-        val emergencyActive = EmergencyBypassStore.isActive(this) || EmergencyBypassStore.isPaused(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this)
+        val emergencyPaused = EmergencyBypassStore.isPaused(this)
         val enabled = SwitchModeStore.isEnabled(this)
         if (!enabled && !emergencyActive) return false
-        if (emergencyActive) return true
+        if (emergencyActive || (enabled && emergencyPaused)) return true
         return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
     }
 

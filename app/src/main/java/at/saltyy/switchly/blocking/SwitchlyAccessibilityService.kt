@@ -1246,20 +1246,21 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun eventTypeLabel(event: AccessibilityEvent?): String {
-        return when (event?.eventType) {
+        val type = event?.eventType ?: return "NO_EVENT"
+
+        return when (type) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "WINDOW_STATE_CHANGED"
-            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> "WINDOWS_CHANGED"
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> "WINDOW_CONTENT_CHANGED"
-            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> "VIEW_TEXT_CHANGED"
             AccessibilityEvent.TYPE_VIEW_CLICKED -> "VIEW_CLICKED"
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> "VIEW_TEXT_CHANGED"
+            AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> "VIEW_TEXT_SELECTION_CHANGED"
             AccessibilityEvent.TYPE_VIEW_FOCUSED -> "VIEW_FOCUSED"
             AccessibilityEvent.TYPE_VIEW_SELECTED -> "VIEW_SELECTED"
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> "VIEW_SCROLLED"
-            null -> "NO_EVENT"
-            else -> event.eventType.toString()
+            else -> type.toString()
         }
     }
-
+    
     private fun firefoxSignalSummary(root: AccessibilityNodeInfo?, event: AccessibilityEvent?): String {
         val eventText = sanitizeWebsiteSignal(event?.text?.joinToString(" | "))
         val eventDesc = sanitizeWebsiteSignal(event?.contentDescription?.toString())
@@ -2070,8 +2071,49 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return DomainBlockStore.normalize(parsed)
     }
 
-    private fun firefoxLooksLikeLoadedPageEvent(event: AccessibilityEvent?): Boolean {
-        if (event == null) return false
+    private fun isFirefoxAddressBarInputEvent(pkg: String, event: AccessibilityEvent?): Boolean {
+        if (event == null || !isFirefoxFamily(pkg)) return false
+
+        val type = event.eventType
+        val textInputEvent =
+            type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED ||
+                type == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED
+        if (!textInputEvent) return false
+
+        val source = runCatching { event.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+        try {
+            if (source != null) {
+                val viewId = source.viewIdResourceName.orEmpty()
+                val viewIdLower = viewId.lowercase(Locale.getDefault())
+                val className = source.className?.toString().orEmpty()
+                val explicitFirefoxEdit = firefoxEditingViewIds(pkg).any { it.equals(viewId, ignoreCase = true) }
+                val looksLikeAddressBar =
+                    explicitFirefoxEdit ||
+                        viewIdLower.contains("edit_url") ||
+                        viewIdLower.contains("url") ||
+                        viewIdLower.contains("toolbar") ||
+                        viewIdLower.contains("mozac")
+
+                if (looksLikeAddressBar) return true
+                if (source.isEditable && className.contains("EditText", ignoreCase = true)) return true
+            }
+        } finally {
+            if (source != null) runCatching { source.recycle() }
+        }
+
+        return false
+    }
+
+    private fun firefoxLooksLikeLoadedPageEvent(pkg: String, event: AccessibilityEvent?): Boolean {
+        if (event == null || !isFirefoxFamily(pkg)) return false
+        if (isFirefoxAddressBarInputEvent(pkg, event)) return false
+
+        val type = event.eventType
+        val pageishEvent =
+            type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||
+                type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+                type == AccessibilityEvent.TYPE_VIEW_SCROLLED
+        if (!pageishEvent) return false
 
         val source = runCatching { event.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
         try {
@@ -2341,6 +2383,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (eventLooksLikeBrowserAddressEditing(pkg, event)) {
             noteBrowserAddressEditing(pkg, now)
         }
+        val firefoxAddressBarInputEvent = isFirefoxAddressBarInputEvent(pkg, event)
 
         val root = currentRoot(event) ?: run {
             perf.rootMisses++
@@ -2350,8 +2393,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         // Don't block while user is typing in the address bar/autocomplete.
         val editingNow = isBrowserAddressEditing(root, pkg, event)
         val recentEditing = event != null && browserAddressEditingRecently(pkg, now)
-        val loadedFirefoxPageEvent = isFirefoxFamily(pkg) && firefoxLooksLikeLoadedPageEvent(event)
-        if (editingNow || (recentEditing && !loadedFirefoxPageEvent)) {
+        val loadedFirefoxPageEvent = firefoxLooksLikeLoadedPageEvent(pkg, event)
+        if (editingNow || firefoxAddressBarInputEvent || (recentEditing && !loadedFirefoxPageEvent)) {
             if (isFirefoxFamily(pkg)) {
                 val pendingHost = firefoxEventDomainSignal(event)
                 if (!pendingHost.isNullOrBlank()) {
@@ -2360,7 +2403,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 appendBlockingLog(
                     category = "website_skip",
                     key = "web-skip-edit|$pkg|${eventTypeLabel(event)}",
-                    message = "pkg=$pkg reason=address_editing editingNow=$editingNow recentEditing=$recentEditing loadedPage=$loadedFirefoxPageEvent pendingHost=${sanitizeWebsiteSignal(pendingHost)} ${firefoxSignalSummary(root, event)}",
+                    message = "pkg=$pkg reason=address_editing editingNow=$editingNow recentEditing=$recentEditing addressBarInput=$firefoxAddressBarInputEvent loadedPage=$loadedFirefoxPageEvent pendingHost=${sanitizeWebsiteSignal(pendingHost)} ${firefoxSignalSummary(root, event)}",
                     throttleMs = 1_500L
                 )
             }

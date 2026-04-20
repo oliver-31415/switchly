@@ -141,6 +141,8 @@
     <string name="changelog_section_fixed">Fixed</string>
     <string name="changelog_section_removed">Removed</string>
     <string name="changelog_section_other">Other</string>
+    <string name="changelog_tab_public">Public</string>
+    <string name="changelog_tab_beta">Beta</string>
     <string name="support_include_logs">Include the logs</string>
     <string name="support_latest_logs_heading">Latest logs</string>
 </resources>
