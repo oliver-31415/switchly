@@ -194,16 +194,6 @@
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
 
-                            <!-- Temporary mode badge (shows remaining time) -->
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipTemp"
-                                style="@style/Switchly.Chip"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:text="@string/dashboard_temp_chip"
-                                android:visibility="gone" />
-
                             <LinearLayout
                                 android:id="@+id/rowActiveProfile"
                                 android:layout_width="match_parent"
@@ -249,6 +239,20 @@
                         android:layout_height="52dp"
                         android:layout_marginTop="12dp"
                         android:text="@string/dashboard_toggle_enable" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipTemp"
+                        style="@style/Switchly.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/dashboard_temp_chip"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        app:chipIcon="@drawable/schedule_24"
+                        app:chipIconVisible="true"
+                        app:ensureMinTouchTargetSize="false" />
 
                     <TextView
                         android:id="@+id/tvTempHint"
@@ -558,7 +562,7 @@
                                 android:layout_height="40dp"
                                 android:layout_marginStart="-2dp"
                                 android:padding="8dp"
-                                android:src="@drawable/nfc_24"
+                                android:src="@drawable/language_24"
                                 app:tint="?attr/colorOnSurface"
                                 android:contentDescription="@string/dashboard_tile_blocked_websites" />
 
@@ -705,6 +709,113 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/dashboard_tile_usage_sub"
+                                android:textSize="12sp"
+                                android:alpha="0.75" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/rowToolsShortcuts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:visibility="gone">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/tileNfcWrite"
+                        style="@style/Switchly.TileCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="116dp"
+                        android:layout_margin="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="-2dp"
+                                android:padding="8dp"
+                                android:src="@drawable/nfc_24"
+                                app:tint="?attr/colorOnSurface"
+                                android:contentDescription="@string/dashboard_tile_write_nfc" />
+
+                            <Space
+                                android:layout_width="1dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_tile_write_nfc"
+                                android:textStyle="bold"
+                                android:textSize="15sp"
+                                android:alpha="0.95" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/dashboard_tile_write_nfc_sub"
+                                android:textSize="12sp"
+                                android:alpha="0.75" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/tileBlockedNotifications"
+                        style="@style/Switchly.TileCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="116dp"
+                        android:layout_margin="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="-2dp"
+                                android:padding="8dp"
+                                android:src="@drawable/notifications_24"
+                                app:tint="?attr/colorOnSurface"
+                                android:contentDescription="@string/dashboard_tile_blocked_notifications" />
+
+                            <Space
+                                android:layout_width="1dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_tile_blocked_notifications"
+                                android:textStyle="bold"
+                                android:textSize="15sp"
+                                android:alpha="0.95" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/dashboard_tile_blocked_notifications_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
                         </LinearLayout>

@@ -20,6 +20,15 @@ if (firebaseEnabled) {
     apply(plugin = "com.google.firebase.crashlytics")
 }
 
+afterEvaluate {
+    val isReleaseBuild = gradle.startParameter.taskNames.any { taskName ->
+        taskName.contains("Release", ignoreCase = true)
+    }
+    if (isReleaseBuild && !googleServicesJsonExists) {
+        throw GradleException("Missing app/google-services.json for release build")
+    }
+}
+
 android {
     namespace = "at.saltyy.switchly"
     compileSdk = 36
@@ -29,8 +38,8 @@ android {
         minSdk = 27
         targetSdk = 36
 
-        versionCode = 205
-        versionName = "2.0.5"
+        versionCode = 209
+        versionName = "2.0.9"
     }
 
     buildFeatures {
@@ -78,7 +87,7 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     // Firebase BOM + Modules
-    implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
 
     // Auth for Google-Login
     implementation("com.google.firebase:firebase-auth")
@@ -89,8 +98,8 @@ dependencies {
 
     // Google Sign-In/Credential Manager
     implementation("com.google.android.gms:play-services-auth:21.5.1")
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
 
     // Play Billing
@@ -100,7 +109,7 @@ dependencies {
     implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     // CameraX
-    val camerax = "1.5.3"
+    val camerax = "1.6.0"
     implementation("androidx.camera:camera-core:$camerax")
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")

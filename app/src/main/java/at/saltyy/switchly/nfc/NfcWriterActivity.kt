@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.nfc
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -63,10 +82,6 @@ import com.google.android.material.textfield.TextInputLayout
 
 class NfcWriterActivity : AppCompatActivity() {
 
-    companion object {
-        private const val MENU_INFO_ACTIONS = 1001
-    }
-
     private enum class WriteResult {
         OK,
         TOO_SMALL,
@@ -130,16 +145,11 @@ class NfcWriterActivity : AppCompatActivity() {
     private lateinit var tilProfile: TextInputLayout
     private lateinit var tilAction: TextInputLayout
     private lateinit var tilTime: TextInputLayout
-    private lateinit var tvTempHint: TextView
     private lateinit var tvActionHint: TextView
-    private lateinit var btnActionInfo: ImageButton
     private lateinit var btnArmWrite: Button
     private lateinit var statusRow: android.view.View
     private lateinit var tvStatus: TextView
     private lateinit var statusProgress: ProgressBar
-
-    // keep the default hint text from XML so we can restore it (no missing resources)
-    private var defaultTempHintText: CharSequence? = null
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -234,7 +244,6 @@ class NfcWriterActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
-        setupInfoMenu(toolbar)
 
         EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar)
 
@@ -251,9 +260,7 @@ class NfcWriterActivity : AppCompatActivity() {
         ddProfile = findViewById(R.id.ddProfile)
         ddAction = findViewById(R.id.ddAction)
         ddTime = findViewById(R.id.ddTime)
-        tvTempHint = findViewById(R.id.tvTempHint)
         tvActionHint = findViewById(R.id.tvActionHint)
-        btnActionInfo = findViewById(R.id.btnActionInfo)
         btnArmWrite = findViewById(R.id.btnArmWrite)
         statusRow = findViewById(R.id.statusRow)
         tvStatus = findViewById(R.id.tvStatus)
@@ -262,15 +269,8 @@ class NfcWriterActivity : AppCompatActivity() {
         // Give the status row a "card" look without adding any background/stroke drawable resources.
         applyStatusRowChrome()
 
-        // capture whatever text is set in XML as default
-        defaultTempHintText = tvTempHint.text
-
         // Button tinted with the accent color
         btnArmWrite.backgroundTintList = AccentColor.getActiveColor(this)
-
-        // Always-visible info button for action explanations
-        btnActionInfo.imageTintList = AccentColor.getActiveColor(this)
-        btnActionInfo.setOnClickListener { showActionInfoDialog() }
 
         // Text fields (dropdown outlines) accent tint
         tintTextFieldsWithAccent()
@@ -444,7 +444,9 @@ class NfcWriterActivity : AppCompatActivity() {
             } else {
                 val mins = values[position]
                 prefs.edit { putString("pref_nfc_unlock_minutes", mins.toString()) }
-                updateActionHintForSelection(ddAction.text?.toString().orEmpty())
+                val selectedAction = ddAction.text?.toString().orEmpty()
+                updateTimeVisibilityForAction(selectedAction)
+                updateActionHintForSelection(selectedAction)
             }
         }
     }
@@ -484,7 +486,9 @@ class NfcWriterActivity : AppCompatActivity() {
                         resources.getQuantityString(R.plurals.nfc_time_custom_label, mins, mins),
                         false
                     )
-                    updateActionHintForSelection(ddAction.text?.toString().orEmpty())
+                    val selectedAction = ddAction.text?.toString().orEmpty()
+                    updateTimeVisibilityForAction(selectedAction)
+                    updateActionHintForSelection(selectedAction)
                 }
             }
             .showAccented()
@@ -496,29 +500,7 @@ class NfcWriterActivity : AppCompatActivity() {
         val isReentry = selectedActionLabel == getString(R.string.nfc_action_reentry)
         val isTemp = isTempDisable || isTempEnable || isReentry
 
-        // KTX
         tilTime.isVisible = isTemp
-        tvTempHint.isVisible = isTemp
-
-        if (!isTemp) return
-
-        val noneLabel = getString(R.string.nfc_profile_none)
-        val profile = ddProfile.text?.toString()?.trim().orEmpty()
-        val isProfileSelected = profile.isNotEmpty() && profile != noneLabel
-
-        tvTempHint.text = when {
-            isProfileSelected -> {
-                if (isTempDisable || isReentry) {
-                    getString(R.string.nfc_temp_hint_profile_disable)
-                } else {
-                    getString(R.string.nfc_temp_hint_profile_enable)
-                }
-            }
-            else -> {
-                // restore whatever hint was originally in XML
-                defaultTempHintText ?: ""
-            }
-        }
     }
 
     private fun updateActionHintForSelection(selectedActionLabel: String) {
@@ -569,19 +551,18 @@ class NfcWriterActivity : AppCompatActivity() {
         return prefs.getString("pref_nfc_unlock_minutes", "10")?.toIntOrNull()?.coerceIn(1, 120) ?: 10
     }
 
-    private fun setupInfoMenu(toolbar: MaterialToolbar) {
-        val menu = toolbar.menu
-        menu.add(Menu.NONE, MENU_INFO_ACTIONS, Menu.NONE, R.string.nfc_action_info_title)
-            .setIcon(R.drawable.info_24)
-            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_nfc_writer, menu)
+        return true
+    }
 
-        toolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == MENU_INFO_ACTIONS) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_info -> {
                 showActionInfoDialog()
                 true
-            } else {
-                false
             }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -671,7 +652,6 @@ class NfcWriterActivity : AppCompatActivity() {
             )
         }
 
-        sb.append(getString(R.string.pref_enable_reentry_in_write_summary)).append("\n")
         sb.append(getString(R.string.pref_limit_temp_disable_tags_summary))
 
         return sb

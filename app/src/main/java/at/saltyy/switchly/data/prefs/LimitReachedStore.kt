@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.data.prefs
 
 import android.content.Context
@@ -12,37 +31,41 @@ object LimitReachedStore {
     private const val PREFS = "switchly_prefs"
     private const val PREFIX = "limit_reached_" // limit_reached_yyyymmdd_pkg
 
-    private fun key(ymd: Int, pkg: String): String = PREFIX + ymd.toString() + "_" + pkg
+    private fun prefs(context: Context) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    fun markReachedToday(ctx: Context, pkg: String) {
+    private fun key(ymd: Int, pkg: String): String = PREFIX + ymd + "_" + pkg
+
+    fun isReachedToday(context: Context, pkg: String): Boolean {
+        if (pkg.isBlank()) return false
+        return prefs(context).getBoolean(key(todayYmdInt(), pkg), false)
+    }
+
+    fun markReachedToday(context: Context, pkg: String) {
         if (pkg.isBlank()) return
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val k = key(todayYmdInt(), pkg)
-        val already = sp.getBoolean(k, false)
-        sp.edit { putBoolean(k, true) }
-        if (!already) {
-            LimitHitCountStore.incrementToday(ctx)
+
+        val sharedPreferences = prefs(context)
+        val key = key(todayYmdInt(), pkg)
+        val alreadyReached = sharedPreferences.getBoolean(key, false)
+
+        sharedPreferences.edit { putBoolean(key, true) }
+
+        if (!alreadyReached) {
+            LimitHitCountStore.incrementToday(context)
         }
     }
 
-    fun isReachedToday(ctx: Context, pkg: String): Boolean {
-        if (pkg.isBlank()) return false
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getBoolean(key(todayYmdInt(), pkg), false)
-    }
-
-    fun clearToday(ctx: Context, pkg: String) {
+    fun clearToday(context: Context, pkg: String) {
         if (pkg.isBlank()) return
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        sp.edit { remove(key(todayYmdInt(), pkg)) }
+        prefs(context).edit { remove(key(todayYmdInt(), pkg)) }
     }
 
     private fun todayYmdInt(): Int = ymdInt(Calendar.getInstance())
 
-    private fun ymdInt(cal: Calendar): Int {
-        val y = cal.get(Calendar.YEAR)
-        val m = cal.get(Calendar.MONTH) + 1
-        val d = cal.get(Calendar.DAY_OF_MONTH)
-        return (y * 10000) + (m * 100) + d
+    private fun ymdInt(calendar: Calendar): Int {
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH) + 1
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        return (year * 10000) + (month * 100) + day
     }
 }

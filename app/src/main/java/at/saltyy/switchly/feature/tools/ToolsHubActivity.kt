@@ -1,11 +1,30 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.tools
 
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +33,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
@@ -33,29 +53,59 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
-import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import at.saltyy.switchly.util.EditingLockGuard
+import at.saltyy.switchly.util.SwitchlyAppAccessGuard
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.color.MaterialColors
 
 class ToolsHubActivity : AppCompatActivity() {
+
+    private lateinit var toolbar: MaterialToolbar
+    private lateinit var bottomNav: BottomNavigationView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tools_hub)
 
-        val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
+        setupViews()
+        setupToolbar()
+        tintToolIcons()
+        reorderToolCards()
+        setupToolCardActions()
+        setupBottomNav()
+        syncOptionalFeatureVisibility()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        syncOptionalFeatureVisibility()
+    }
+
+    private fun setupViews() {
+        toolbar = findViewById(R.id.toolbar)
+        bottomNav = findViewById(R.id.bottomNav)
+    }
+
+    private fun setupToolbar() {
         EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar, bottomNav = bottomNav)
         EdgeToEdgeUtils.applyBottomNavGestureInset(bottomNav)
         window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
         window.navigationBarColor = ContextCompat.getColor(this, android.R.color.black)
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
+
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
         toolbar.navigationIcon = null
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+    }
+
+    private fun tintToolIcons() {
+        val iconTint = ColorStateList.valueOf(
+            MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, 0)
+        )
 
         listOf(
             R.id.ivSchedulesIcon,
@@ -67,35 +117,37 @@ class ToolsHubActivity : AppCompatActivity() {
             R.id.ivBlockedNotificationsIcon,
             R.id.ivEmergencyIcon,
             R.id.ivInsightsIcon,
-        ).forEach { id ->
-            findViewById<ImageView>(id).imageTintList = ColorStateList.valueOf(
-                MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, 0)
-            )
+        ).forEach { iconId ->
+            findViewById<ImageView>(iconId).imageTintList = iconTint
         }
+    }
 
-        reorderToolCards()
-
+    private fun setupToolCardActions() {
         findViewById<View>(R.id.cardSchedules).setOnClickListener {
             startActivity(Intent(this, SchedulesActivity::class.java))
         }
+
         findViewById<View>(R.id.cardProfiles).setOnClickListener {
             if (isProfileManagementLocked()) {
-                val msgRes = if (isNfcLockedForProtectedEdits()) {
+                val messageRes = if (isNfcLockedForProtectedEdits()) {
                     R.string.toast_cannot_change_profile_while_locked
                 } else {
                     R.string.edit_locked_manage_profiles
                 }
-                EditingLockGuard.showLockedDialog(this, msgRes)
+                EditingLockGuard.showLockedDialog(this, messageRes)
             } else {
                 startActivity(Intent(this, ManageProfilesActivity::class.java))
             }
         }
+
         findViewById<View>(R.id.cardBlockedNotifications).setOnClickListener {
             startActivity(Intent(this, BlockedInboxActivity::class.java))
         }
+
         findViewById<View>(R.id.cardEmergency).setOnClickListener {
             showEmergencyQuickSheet()
         }
+
         findViewById<View>(R.id.cardPairedTags).setOnClickListener {
             if (EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
@@ -110,9 +162,11 @@ class ToolsHubActivity : AppCompatActivity() {
                 startActivity(Intent(this, NfcWriterActivity::class.java))
             }
         }
+
         findViewById<View>(R.id.cardManageQr).setOnClickListener {
             startActivity(Intent(this, QrGenerateActivity::class.java))
         }
+
         findViewById<View>(R.id.cardManageBarcodes).setOnClickListener {
             if (EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
@@ -120,12 +174,13 @@ class ToolsHubActivity : AppCompatActivity() {
                 startActivity(Intent(this, ManageBarcodesActivity::class.java))
             }
         }
+
         findViewById<View>(R.id.cardInsights).setOnClickListener {
             startActivity(ScreenTimeDashboardActivity.intent(this))
         }
+    }
 
-        syncOptionalFeatureVisibility()
-
+    private fun setupBottomNav() {
         bottomNav.selectedItemId = R.id.nav_tools
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -152,41 +207,15 @@ class ToolsHubActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        syncOptionalFeatureVisibility()
-    }
-
-    private fun isNfcLockedForProtectedEdits(): Boolean {
-        return SwitchModeStore.isEnabled(this) && SwitchModeStore.isNfcRequiredForDisable(this)
-    }
-
-    private fun isProfileManagementLocked(): Boolean {
-        return if (isNfcLockedForProtectedEdits()) {
-            true
-        } else {
-            SwitchModeStore.isBaseEnabled(this) &&
-                !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
-        }
-    }
-
-    private fun isNfcTagWritingLocked(): Boolean {
-        return SwitchModeStore.isEnabled(this) &&
-            !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this)
-    }
-
     private fun syncOptionalFeatureVisibility() {
-        val defaultSp = PreferenceManager.getDefaultSharedPreferences(this)
-        val pairedTagsEnabled = defaultSp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-        val qrEnabled = AutomationModeStore.shouldShowQrTools(this)
-        val barcodeEnabled = AutomationModeStore.shouldShowBarcodeTools(this)
+        val defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val isPairedTagsEnabled = defaultSharedPreferences.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+        val isQrEnabled = AutomationModeStore.shouldShowQrTools(this)
+        val isBarcodeEnabled = AutomationModeStore.shouldShowBarcodeTools(this)
 
-        findViewById<View>(R.id.cardPairedTags).visibility =
-            if (pairedTagsEnabled) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.cardManageQr).visibility =
-            if (qrEnabled) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.cardManageBarcodes).visibility =
-            if (barcodeEnabled) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardPairedTags).visibility = if (isPairedTagsEnabled) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardManageQr).visibility = if (isQrEnabled) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardManageBarcodes).visibility = if (isBarcodeEnabled) View.VISIBLE else View.GONE
     }
 
     private fun reorderToolCards() {
@@ -205,8 +234,7 @@ class ToolsHubActivity : AppCompatActivity() {
     }
 
     private fun showEmergencyQuickSheet() {
-        val featureEnabled = EmergencyBypassStore.isFeatureEnabled(this)
-        if (!featureEnabled) {
+        if (!EmergencyBypassStore.isFeatureEnabled(this)) {
             AlertDialog.Builder(this)
                 .setTitle(R.string.pref_emergency_title)
                 .setMessage(R.string.emergency_disabled_message_controls)
@@ -218,34 +246,41 @@ class ToolsHubActivity : AppCompatActivity() {
             return
         }
 
-        val active = EmergencyBypassStore.isActive(this)
-        val paused = EmergencyBypassStore.isPaused(this)
-        val usedToday = EmergencyBypassStore.hasUsedToday(this)
-        val remaining = EmergencyBypassStore.minutesRemaining(this)
+        val isActive = EmergencyBypassStore.isActive(this)
+        val isPaused = EmergencyBypassStore.isPaused(this)
+        val hasUsedToday = EmergencyBypassStore.hasUsedToday(this)
+        val remainingMinutes = EmergencyBypassStore.minutesRemaining(this)
 
         val labels = mutableListOf<String>()
         val actions = mutableListOf<() -> Unit>()
-        fun addAction(label: String, action: () -> Unit) { labels += label; actions += action }
 
-        if (active) {
+        fun addAction(label: String, action: () -> Unit) {
+            labels += label
+            actions += action
+        }
+
+        if (isActive) {
             addAction(getString(R.string.emergency_action_pause)) {
                 if (EmergencyBypassStore.pause(this)) {
                     SwitchModeStore.clearTemporary(this)
+                    AppLogStore.append(this, "Emergency", "Emergency mode paused from Tools")
                     Toast.makeText(this, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
                 }
             }
             addAction(getString(R.string.emergency_action_end)) {
+                AppLogStore.append(this, "Emergency", "Emergency mode ended from Tools")
                 EmergencyBypassStore.cancel(this)
                 SwitchModeStore.clearTemporary(this)
                 Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
                 BlockingRuntime.ensureRunning(this)
             }
-        } else if (paused) {
+        } else if (isPaused) {
             addAction(getString(R.string.emergency_action_resume)) {
                 if (EmergencyBypassStore.resume(this)) {
-                    val mins = EmergencyBypassStore.minutesRemaining(this).coerceAtLeast(1)
-                    SwitchModeStore.setTemporarilyDisabled(this, mins * 60_000L)
+                    val minutes = EmergencyBypassStore.minutesRemaining(this).coerceAtLeast(1)
+                    SwitchModeStore.setTemporarilyDisabled(this, minutes * 60_000L)
+                    AppLogStore.append(this, "Emergency", "Emergency mode resumed from Tools with ${minutes}m remaining")
                     Toast.makeText(this, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
                 }
@@ -256,13 +291,14 @@ class ToolsHubActivity : AppCompatActivity() {
                 Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
                 BlockingRuntime.ensureRunning(this)
             }
-        } else if (!usedToday) {
+        } else if (!hasUsedToday) {
             AlertDialog.Builder(this)
                 .setTitle(getString(R.string.pref_emergency_title))
                 .setMessage(getString(R.string.emergency_action_start_15))
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.ok) { _, _ ->
                     if (EmergencyBypassStore.enableIfAllowed(this, 15)) {
+                        AppLogStore.append(this, "Emergency", "Emergency mode started from Tools for 15m")
                         SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
                         Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
                         BlockingRuntime.ensureRunning(this)
@@ -275,17 +311,46 @@ class ToolsHubActivity : AppCompatActivity() {
         }
 
         val title = when {
-            active -> getString(R.string.emergency_manage_title_active, remaining)
-            paused -> getString(R.string.emergency_manage_title_paused, remaining)
+            isActive -> getString(R.string.emergency_manage_title_active, remainingMinutes)
+            isPaused -> getString(R.string.emergency_manage_title_paused, remainingMinutes)
             else -> getString(R.string.pref_emergency_title)
         }
+
         val builder = AlertDialog.Builder(this)
             .setTitle(title)
             .setNegativeButton(R.string.cancel, null)
+
         if (labels.isNotEmpty()) {
-            builder.setItems(labels.toTypedArray()) { _, which -> runCatching { actions[which].invoke() } }
+            builder.setItems(labels.toTypedArray()) { _, which ->
+                runCatching { actions[which].invoke() }
+            }
         }
-        if (!active && !paused && usedToday) builder.setMessage(R.string.emergency_used_today)
+
+        if (!isActive && !isPaused && hasUsedToday) {
+            builder.setMessage(R.string.emergency_used_today)
+        }
+
         builder.showAccented()
+    }
+
+    private fun isNfcLockedForProtectedEdits(): Boolean {
+        return SwitchModeStore.isEnabled(this) && SwitchModeStore.isNfcRequiredForDisable(this)
+    }
+
+    private fun isProfileManagementLocked(): Boolean {
+        if (isNfcLockedForProtectedEdits()) {
+            return true
+        }
+        val emergencyActive = EmergencyBypassStore.isActive(this)
+        val emergencyPaused = EmergencyBypassStore.isPaused(this)
+        val enabled = SwitchModeStore.isEnabled(this)
+        if (!enabled && !emergencyActive) return false
+        if (emergencyActive || (enabled && emergencyPaused)) return true
+        return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
+    }
+
+    private fun isNfcTagWritingLocked(): Boolean {
+        return SwitchModeStore.isEnabled(this) &&
+            !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this)
     }
 }

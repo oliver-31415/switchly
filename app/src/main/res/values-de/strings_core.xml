@@ -15,7 +15,6 @@
     <string name="share">Teilen</string>
     <string name="info">Info</string>
     <!-- SIGN-IN AND GENERIC STATE LABELS -->
-    <string name="sign_in">Anmelden</string>
     <string name="sign_out">Abmelden</string>
     <string name="required">Erforderlich</string>
     <string name="invalid_value">Ungültiger Wert</string>

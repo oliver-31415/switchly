@@ -43,7 +43,6 @@
             android:paddingTop="2dp"
             android:paddingBottom="2dp" />
 
-
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

@@ -39,8 +39,6 @@
     <string name="nfc_action_emergency_tag_removed">Emergency-Disable per NFC-Tag wird nicht mehr unterstützt. Bitte nutze die Notfall-Entsperrung direkt in der App.</string>
     <string name="nfc_duration_hint">Temporäre Dauer</string>
     <string name="nfc_temp_hint_timer_behavior">Der temporäre Modus läuft für die gewählte Zeit und stellt danach automatisch den vorherigen Zustand wieder her.</string>
-    <string name="nfc_temp_hint_profile_disable">Hinweis: Temporäres Deaktivieren eines Profils gilt nur, wenn dieses Profil aktuell aktiv ist.</string>
-    <string name="nfc_temp_hint_profile_enable">Hinweis: Temporäres Aktivieren eines Profils aktiviert dieses Profil vorübergehend.</string>
     <string name="nfc_temp_hint_profile_disable_toast">Hinweis: Temporäres Deaktivieren eines Profils gilt nur, wenn dieses Profil aktuell aktiv ist.</string>
     <string name="nfc_temp_hint_profile_enable_toast">Hinweis: Temporäres Aktivieren eines Profils aktiviert dieses Profil vorübergehend.</string>
     <string name="nfc_ready_to_write">Bereit zum Schreiben</string>

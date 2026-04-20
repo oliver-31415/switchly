@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.usage
 
 import android.content.Intent
@@ -22,6 +41,7 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.databinding.ActivityScreenTimeDashboardBinding
 import at.saltyy.switchly.feature.stats.StatsFormat
+import at.saltyy.switchly.feature.premium.PremiumInfoActivity
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
@@ -29,6 +49,7 @@ import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.util.PermissionUtils
+import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
 import com.google.android.material.color.MaterialColors
 import at.saltyy.switchly.ui.dialog.showAccented
@@ -81,36 +102,40 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
 
         adapter = AppUsageAdapter(
             onClick = { item ->
-            val selectedRange = when (b.chipGroupRange.checkedChipId) {
-                b.chipToday.id -> ScreenTimeDetailActivity.RANGE_TODAY
-                b.chipMonth.id -> ScreenTimeDetailActivity.RANGE_MONTH
-                b.chipYear.id -> ScreenTimeDetailActivity.RANGE_YEAR
-                b.chipOverall.id -> ScreenTimeDetailActivity.RANGE_OVERALL
-                else -> ScreenTimeDetailActivity.RANGE_WEEK
-            }
+                if (!PremiumManager.isPremium(this)) {
+                    showPremiumStatsDetailsGate()
+                } else {
+                    val selectedRange = when (b.chipGroupRange.checkedChipId) {
+                        b.chipToday.id -> ScreenTimeDetailActivity.RANGE_TODAY
+                        b.chipMonth.id -> ScreenTimeDetailActivity.RANGE_MONTH
+                        b.chipYear.id -> ScreenTimeDetailActivity.RANGE_YEAR
+                        b.chipOverall.id -> ScreenTimeDetailActivity.RANGE_OVERALL
+                        else -> ScreenTimeDetailActivity.RANGE_WEEK
+                    }
 
-            if (isWebMode) {
-                startActivity(
-                    Intent(this, WebsiteDetailActivity::class.java)
-                        .putExtra(WebsiteDetailActivity.EXTRA_DOMAIN, item.packageName)
-                        .putExtra(WebsiteDetailActivity.EXTRA_LABEL, item.label)
-                        .putExtra(WebsiteDetailActivity.EXTRA_INITIAL_RANGE, when (b.chipGroupRange.checkedChipId) {
-                            b.chipToday.id -> WebsiteDetailActivity.RANGE_TODAY
-                            b.chipMonth.id -> WebsiteDetailActivity.RANGE_MONTH
-                            b.chipYear.id -> WebsiteDetailActivity.RANGE_YEAR
-                            b.chipOverall.id -> WebsiteDetailActivity.RANGE_OVERALL
-                            else -> WebsiteDetailActivity.RANGE_WEEK
-                        })
-                )
-            } else {
-                startActivity(
-                    Intent(this, ScreenTimeDetailActivity::class.java)
-                        .putExtra(ScreenTimeDetailActivity.EXTRA_PKG, item.packageName)
-                        .putExtra(ScreenTimeDetailActivity.EXTRA_LABEL, item.label)
-                        .putExtra(ScreenTimeDetailActivity.EXTRA_INITIAL_RANGE, selectedRange)
-                )
-            }
-        },
+                    if (isWebMode) {
+                        startActivity(
+                            Intent(this, WebsiteDetailActivity::class.java)
+                                .putExtra(WebsiteDetailActivity.EXTRA_DOMAIN, item.packageName)
+                                .putExtra(WebsiteDetailActivity.EXTRA_LABEL, item.label)
+                                .putExtra(WebsiteDetailActivity.EXTRA_INITIAL_RANGE, when (b.chipGroupRange.checkedChipId) {
+                                    b.chipToday.id -> WebsiteDetailActivity.RANGE_TODAY
+                                    b.chipMonth.id -> WebsiteDetailActivity.RANGE_MONTH
+                                    b.chipYear.id -> WebsiteDetailActivity.RANGE_YEAR
+                                    b.chipOverall.id -> WebsiteDetailActivity.RANGE_OVERALL
+                                    else -> WebsiteDetailActivity.RANGE_WEEK
+                                })
+                        )
+                    } else {
+                        startActivity(
+                            Intent(this, ScreenTimeDetailActivity::class.java)
+                                .putExtra(ScreenTimeDetailActivity.EXTRA_PKG, item.packageName)
+                                .putExtra(ScreenTimeDetailActivity.EXTRA_LABEL, item.label)
+                                .putExtra(ScreenTimeDetailActivity.EXTRA_INITIAL_RANGE, selectedRange)
+                        )
+                    }
+                }
+            },
             onEditLimits = { item ->
                 if (isWebMode) {
                     QuickLimitDialogs.showForWebsite(
@@ -191,6 +216,17 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             val changed = withContext(Dispatchers.IO) { UsageHistoryBackfill.maybeRun(this@ScreenTimeDashboardActivity) }
             if (changed) refresh()
         }
+    }
+
+    private fun showPremiumStatsDetailsGate() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.usage_details_premium_title)
+            .setMessage(R.string.usage_details_premium_message)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.usage_details_premium_action) { _, _ ->
+                startActivity(Intent(this, PremiumInfoActivity::class.java))
+            }
+            .showAccented()
     }
 
     override fun onResume() {
@@ -395,7 +431,6 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.rowTapHint.isVisible = !visibleEmpty
     }
 
-
     private fun getDeviceFallbackSummary(range: Range): UsageSummary {
         return when (range) {
             Range.TODAY -> AppUsageRepo.getTodaySummary(this)
@@ -434,7 +469,6 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         v.findViewById<RadioButton>(R.id.rbFilterBlocked).text = getString(
             if (isWeb) R.string.stats_filter_blocked_only_websites else R.string.stats_filter_blocked_only
         )
-
 
         // Primary sort labels
         v.findViewById<RadioButton>(R.id.rbSortPrimaryDesc).text = getString(R.string.stats_sort_used_time_desc)
@@ -484,7 +518,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
 
     private fun applyAndShowApps() {
 
-        // When the user selects "Only blocked apps" they typically expect to see *all* configured blocked apps, even if usage is 0 today. 
+        // When the user selects "Only blocked apps" they typically expect to see *all* configured blocked apps, even if usage is 0 today.
         // So we merge the blocked set into the list.
         val base = when (filter) {
             Filter.ALL_APPS -> lastApps

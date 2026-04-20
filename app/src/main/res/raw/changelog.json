@@ -1,51 +1,156 @@
 {
     "releases": [
         {
+            "version": "v2.0.9",
+            "date": "Apr 19, 2026",
+            "releaseType": "public",
+            "sourceVersions": [
+                "2.0.8-beta",
+                "2.0.7-beta",
+                "2.0.6-beta"
+            ],
+            "body": [
+                "Fixed crashes in Insights after restoring data from backup",
+                "Fixed temporary disable handling so disabling Switchly ends active timers and cannot start while already disabled",
+                "Fixed profile switching and restore edge cases around temporary profiles and paused emergency mode",
+                "Improved Firefox and Waterfox website blocking with faster and more reliable detection while preventing autocomplete false triggers",
+                "Improved browser redirect handling so blocked websites no longer close the browser",
+                "Fixed Google sign-in issues and improved sign-in error messages",
+                "Added email and password account support, including email confirmation and password reset flows",
+                "Improved Settings and cloud backup/restore stability",
+                "Added support logs with Copy latest logs, optional inclusion in support emails, and quick email copy button",
+                "Expanded internal logging across blocking, profiles, schedules, app lock, emergency mode, NFC, billing, cloud, and authentication",
+                "Added support for Waterfox",
+                "Added info actions for Schedule Actions and NFC Write, plus expanded FAQ/help for barcode and QR usage",
+                "Improved NFC tools navigation, NFC writing, pairing behavior, and related help/explanations",
+                "Improved blocked apps home screen behavior, including clearer limits, safer editing while active, and optional quick actions",
+                "Added an option to use automatic, 24-hour, or 12-hour time format for schedules",
+                "Improved app lock refresh behavior, emergency PIN compatibility, and temporary profile restore behavior",
+                "Improved safety handling and warnings for critical system and recovery apps such as Settings, Play Store, installers, permission controller, Files, and browsers",
+                "Improved overall reliability across cloud sync and background operations"
+            ]
+        },
+        {
+            "version": "v2.0.8-beta",
+            "date": "Apr 15, 2026",
+            "releaseType": "beta",
+            "body": [
+                "Fixed Google sign-in issues caused by unreliable client ID lookup",
+                "Improved Google sign-in error handling",
+                "Fixed Settings crashes during cloud backup/restore",
+                "Fixed Insights crashes after restoring backups",
+                "Fixed temporary profile restore behavior",
+                "Improved Firefox website blocking with fallback handling and faster detection",
+                "Added support for Waterfox",
+                "Added improved safety handling for critical system apps",
+                "Added internal logging system",
+                "Expanded logs across website blocking, app blocking, profiles, schedules, app lock, emergency mode, NFC, billing, cloud sync, and authentication",
+                "Added Copy latest logs option",
+                "Added option to include logs in support emails",
+                "Added quick copy button for support email",
+                "Added info actions in the top bar for Schedule Actions and NFC Write",
+                "Expanded FAQ/help for barcode and QR usage",
+                "Improved cloud sync and background reliability"
+            ]
+        },
+        {
+            "version": "v2.0.7-beta",
+            "date": "Apr 12, 2026",
+            "releaseType": "beta",
+            "body": [
+                "Improved Firefox blocking so typing and autocomplete suggestions no longer trigger before a page is actually opened",
+                "Improved browser redirect handling so blocked websites no longer close the whole browser app",
+                "Prevented removing blocked apps from the home screen while Switchly is active",
+                "Disabled blocked app quick edit on the home screen while Switchly is active",
+                "Improved blocked apps on the home screen so configured limits are shown more clearly",
+                "Simplified blocked app quick edit actions",
+                "Added optional home quick actions for writing NFC tags and opening blocked notifications",
+                "Fixed emergency PIN issues and improved compatibility with older beta PIN data",
+                "Fixed app lock refresh behavior",
+                "Improved NFC tools navigation and icons",
+                "Added schedule time format options",
+                "Expanded statistics visibility in free mode",
+                "Fixed crashes related to profile editing and blocked apps list updates",
+                "Improved safety protections for critical Android apps and recovery-related system surfaces",
+                "Added loop protection for repeated blocked app relaunches",
+                "Improved Settings blocking safeguards"
+            ]
+        },
+        {
+            "version": "v2.0.6-beta",
+            "date": "Apr 5, 2026",
+            "releaseType": "beta",
+            "body": [
+                "Improved Firefox blocking to reduce false triggers when typing or using autocomplete",
+                "Added more in-app blocking options for Instagram, Snapchat, and X",
+                "Improved redirect behavior for blocked in-app social surfaces",
+                "Changed NFC tag writing so tags are no longer paired automatically by default",
+                "Added an optional NFC Pair on write toggle",
+                "Improved NFC write action explanations and related option descriptions",
+                "Improved temporary enable and temporary disable status on the main screen",
+                "Changed temporary NFC tag limits so they only apply when paired NFC tags are enabled",
+                "Allowed enabling Switchly from the Quick Settings tile when button/tile enable is allowed",
+                "Added quick edit actions for blocked apps on the home screen",
+                "Hid the redundant button/tile enable option when the full button channel is already enabled",
+                "Updated button/tile enable controls so visibility changes apply immediately",
+                "Added email and password account support with email confirmation and password reset flows",
+                "Improved the account flow with better error handling, clearer input validation, and more helpful guidance",
+                "Improved authentication error messages",
+                "Added automated GitLab release builds with downloadable APK artifacts",
+                "Updated the FAQ with battery optimization setup, NFC tag pairing behavior, read-only tag information, and the public issue board"
+            ]
+        },
+        {
             "version": "v2.0.5",
             "date": "Mar 30, 2026",
+            "releaseType": "public",
+            "sourceVersions": [
+                "2.0.4-beta"
+            ],
             "body": [
                 "Added app limit status to the main screen app list, including limited apps alongside other selected apps",
-                "Fixed an issue where apps that reached their limit did not immediately update to show \"Limit reached\" on the main screen",
-                "Fixed an issue where Google login could fail for some users",
-                "Improved Firefox website blocking compatibility after recent browser changes affected URL detection",
-                "Improved browser website detection reliability to reduce missed blocks in Firefox",
-                "All additional features and improvements are detailed in the v2.0.4-beta release notes below"
+                "Fixed delayed Limit reached updates on the main screen",
+                "Fixed Google login issues for some users",
+                "Improved Firefox website blocking compatibility after browser URL detection changes",
+                "Improved browser website detection reliability"
             ]
         },
         {
             "version": "v2.0.4-beta",
             "date": "Mar 25, 2026",
+            "releaseType": "beta",
             "body": [
-                "Fixed an issue where blocked apps could occasionally trigger one-handed mode on some Samsung devices",
-                "Fixed Mixed Mode schedule handling when “NFC required to disable” was enabled",
-                "Schedules now work properly again without being blocked too aggressively by NFC-only disable protection",
+                "Fixed blocked apps occasionally triggering one-handed mode on some Samsung devices",
+                "Fixed Mixed Mode schedule handling when NFC required to disable was enabled",
+                "Made schedules work properly again without being blocked too aggressively by NFC-only disable protection",
                 "Clarified NFC channel wording in Mixed Mode settings and improved paired/read-only tag behavior",
                 "Added a new option to allow the button channel to enable Switchly without allowing it to disable it",
-                "Improved editing locks and clearer popups for blocked actions like app picking, profile management, and NFC writing while Switchly is active",
+                "Improved editing locks and clearer popups for blocked actions while Switchly is active",
                 "Improved debug info and support diagnostics with more details about editing permissions and Mixed Mode toggles",
-                "Fixed several rare ANRs and crashes related to accessibility scanning, browser website detection, and App Lock settings",
-                "Improved app usage and statistics screens, including clearer opens and attempts counts for Today/Week/Month",
-                "Fixed an issue where Today usage stats could appear empty unless a daily app limit was set",
-                "Fixed an issue where the Today usage graph could disappear in app details",
-                "Changed app usage to prefer Accessibility tracking as the primary source, with UsageStats used only as a fallback",
-                "Added sanity clamping to prevent impossible app usage totals from being shown in Today/Week/Month/Year/Overall views",
-                "Excluded your current launcher and keyboard from blocking for device safety, and made Select All skip critical apps automatically",
-                "Fixed an issue where the launcher exclusion message could appear on the wrong app while filtering",
-                "Changed app usage screens to exclude Switchly itself from tracked usage lists",
+                "Fixed several rare ANRs and crashes related to accessibility scanning, browser detection, and App Lock settings",
+                "Improved app usage and statistics screens, including clearer opens and attempts counts",
+                "Fixed Today usage stats appearing empty unless a daily app limit was set",
+                "Fixed Today usage graph disappearing in app details",
+                "Changed app usage to prefer Accessibility tracking as the primary source, with UsageStats only as a fallback",
+                "Added sanity clamping to prevent impossible app usage totals",
+                "Excluded the current launcher and keyboard from blocking for device safety, and made Select All skip critical apps automatically",
+                "Fixed launcher exclusion messages appearing on the wrong app while filtering",
+                "Excluded Switchly itself from tracked usage lists",
                 "Added clearer warnings before blocking risky apps such as wallet, phone, and Settings apps",
-                "Improved QR and barcode channel action visibility in the top bar when quick action tiles are hidden",
-                "Improved FAQ icon colors so they stay visually consistent when expanding and collapsing items",
-                "Improved blocking controls so schedule editing and NFC tag writing are only shown when those channels are actually relevant",
+                "Improved QR and barcode top bar action visibility when quick action tiles are hidden",
+                "Improved FAQ icon colors while expanding and collapsing items",
+                "Improved blocking controls so schedule editing and NFC tag writing are only shown when relevant",
                 "Changed QR code sharing to share the QR as an image instead of plain text",
-                "Improved Wi-Fi trigger reliability, reboot recovery, and permission guidance (including Android 13+ Nearby Wi-Fi devices)",
-                "Expanded Xiaomi / Redmi / POCO troubleshooting and FAQ guidance for devices with stricter background restrictions"
+                "Improved Wi-Fi trigger reliability, reboot recovery, and permission guidance",
+                "Expanded Xiaomi / Redmi / POCO troubleshooting guidance"
             ]
         },
         {
             "version": "v2.0.3",
             "date": "Mar 17, 2026",
+            "releaseType": "public",
             "body": [
-                "Fixed an issue where NFC scanning could stop working after writing a tag",
+                "Fixed NFC scanning stopping after writing a tag",
                 "Fixed the NFC write flow so the write screen no longer intercepts follow-up scans",
                 "Improved NFC entry and write handling for more reliable scanning and actions",
                 "Changed NFC handling so only explicit switchly:// tags are accepted",
@@ -55,6 +160,7 @@
         {
             "version": "v2.0.2",
             "date": "Mar 17, 2026",
+            "releaseType": "public",
             "body": [
                 "Added optional barcode support with barcode scanning, barcode management, and barcode-based actions",
                 "Added a new app lock with PIN and biometric unlock support",
@@ -69,249 +175,263 @@
         {
             "version": "v2.0.1",
             "date": "Mar 15, 2026",
+            "releaseType": "public",
             "body": [
-                "Fixed a crash when managing paired NFC tags.",
-                "Fixed a crash in the Add and Rename profile dialog.",
-                "Fixed a crash in the blocked websites rule dialog.",
-                "Fixed overlapping schedules so newer active schedule ranges correctly override older ones.",
-                "Fixed schedule manual overrides blocking newer overlapping schedule ranges.",
-                "Fixed daily app usage sometimes being overcounted, which could cause apps to be blocked before the actual limit was reached.",
-                "Improved app usage display so daily app timers and shown usage match system-reported screen time more closely.",
-                "Fixed app time limit changes being able to instantly unblock an app while protection was active.",
-                "Fixed NFC handling for blank or unwritten tags so they are detected more reliably.",
-                "Fixed NFC writing for tags that are NDEF-formatable but not yet formatted.",
-                "Improved NFC support for more tag types and devices.",
-                "Fixed schedule toggles and some statistics/progress visuals using system green instead of the selected app accent color.",
-                "Fixed inconsistent FAB sizing and spacing across several screens.",
-                "Fixed validation error styling in profile and blocked website dialogs.",
-                "Improved the Schedules screen when schedules are blocked by the current control mode.",
-                "Added a disabled and read-only state for Schedules when control mode does not allow schedule automation.",
-                "Added a shortcut from Schedules to Protection controls when schedules are blocked.",
-                "Added a clearer Next schedule status when schedules are inactive due to control mode.",
-                "Changed schedules to be read-only while Switchly is active by default.",
-                "Added a Mixed mode option to allow schedule editing while Switchly is active.",
-                "Changed NFC tag writing and pairing so they are locked while Switchly is active by default.",
-                "Added a Mixed mode option to allow NFC tag writing while Switchly is active.",
-                "Reworked Manage Paired Tags with improved add, delete, and editing flows.",
-                "Added clearer separation between writable NFC tags and read-only UID-paired tags.",
-                "Moved QR management to a more discoverable place in the app.",
-                "Changed QR actions to behave as an optional feature that can be enabled or disabled in Protection controls.",
-                "Improved feature visibility so optional tools like paired NFC tags and QR only appear when enabled.",
-                "Improved locked-state behavior across settings screens so they refresh immediately when Switchly is enabled or disabled via tile, NFC, schedules, or other triggers.",
-                "Improved blocked websites editing feedback so locked actions no longer feel unresponsive.",
-                "Improved install source labels, FAQ/help content, and various in-app explanations.",
-                "Improved battery optimization and exact alarm permission checks on devices with limited support.",
-                "Updated quick tile behavior.",
-                "Added a new info dialog on the home screen with support and download links.",
-                "Added direct download links in the app info screens.",
-                "Added Switchly Launcher to the Other apps section."
+                "Fixed crashes in paired NFC tags, profile dialogs, and blocked websites dialogs",
+                "Fixed overlapping schedules and schedule manual override issues",
+                "Improved daily app usage accuracy and limit enforcement",
+                "Improved NFC handling for blank, unwritten, and more tag types",
+                "Fixed schedule toggles and statistics/progress visuals using system green instead of the selected accent color",
+                "Fixed inconsistent FAB sizing, spacing, and validation error styling",
+                "Improved the Schedules screen when schedules are blocked by the current control mode",
+                "Added disabled and read-only schedule states plus a shortcut to Protection controls when schedules are blocked",
+                "Added clearer Next schedule status when schedules are inactive due to control mode",
+                "Changed schedules to be read-only while Switchly is active by default",
+                "Added a Mixed mode option to allow schedule editing while Switchly is active",
+                "Changed NFC tag writing and pairing so they are locked while Switchly is active by default",
+                "Added a Mixed mode option to allow NFC tag writing while Switchly is active",
+                "Reworked Manage Paired Tags with improved add, delete, and editing flows",
+                "Added clearer separation between writable NFC tags and read-only UID-paired tags",
+                "Moved QR management to a more discoverable place",
+                "Changed QR actions to behave as an optional feature that can be enabled or disabled in Protection controls",
+                "Improved feature visibility so optional tools only appear when enabled",
+                "Improved locked-state refresh behavior across settings screens",
+                "Improved blocked websites editing feedback so locked actions no longer feel unresponsive",
+                "Improved install source labels, FAQ/help content, and in-app explanations",
+                "Improved battery optimization and exact alarm permission checks",
+                "Updated quick tile behavior",
+                "Added a new info dialog on the home screen with support and download links",
+                "Added direct download links in the app info screens",
+                "Added Switchly Launcher to the Other apps section"
             ]
         },
         {
             "version": "v2.0.0",
             "date": "Mar 09, 2026",
+            "releaseType": "public",
+            "sourceVersions": [
+                "1.5.9-beta",
+                "1.5.8-beta",
+                "1.5.7-beta",
+                "1.5.6-beta",
+                "1.5.5-beta",
+                "1.5.4-beta"
+            ],
             "body": [
                 "Added new Control Modes: Schedule, NFC, QR, and Mixed, including per-channel toggles for supported trigger types",
                 "Added in-app limits, website blocking, attempt-based app limits, Settings blocking, and Re-entry",
-                "Improved the app with a complete UI rework, including better navigation, customization, onboarding, diagnostics, and support flows",
+                "Improved the app with a complete UI rework, including navigation, customization, onboarding, diagnostics, and support flows",
                 "Improved Usage Statistics with drill-down views, website tracking, Website Details screens, interactive charts, better labels, improved sorting, and more accurate time calculations",
                 "Improved automation and reliability across schedules, Wi-Fi, Bluetooth, NFC, paired tags, watchdog behavior, diagnostics, and profile switching",
-                "Improved limits and blocking clarity with clearer blocked reasons, profile indicators, limit badges, and a more polished limits experience overall",
+                "Improved limits and blocking clarity with clearer blocked reasons, profile indicators, limit badges, and a more polished limits experience",
                 "Fixed multiple Android 16 issues and other stability problems across schedules, NFC flows, themes, and general app behavior",
                 "Fixed theme and custom accent inconsistencies across dialogs, inputs, controls, charts, and other UI elements",
                 "Removed older or less reliable integrations such as TikTok/X in-app blocking and Snapchat support",
-                "Updated Switchly for better overall performance, cleanup, and consistency across the app",
-                "All additional features and improvements are detailed in the v1.5.0-beta release notes below"
+                "Updated Switchly for better overall performance, cleanup, and consistency"
             ]
         },
         {
             "version": "v1.5.9-beta",
             "date": "Mar 06, 2026",
+            "releaseType": "beta",
             "body": [
-                "Fixed NFC tag entry issues so NFC-triggered actions/profile changes apply more reliably",
-                "Fixed a profile switching issue where Wi-Fi/schedule automation could override the active profile unexpectedly",
-                "Removed Snapchat support completely from Switchly (including old Snapchat-specific surfaces/features)",
-                "Added some smaller fixes and improvements across the app",
+                "Fixed NFC tag entry issues so NFC-triggered actions and profile changes apply more reliably",
+                "Fixed a profile switching issue where Wi-Fi and schedule automation could override the active profile unexpectedly",
+                "Removed Snapchat support completely from Switchly",
+                "Added smaller fixes and improvements across the app",
                 "Added Switchly Lite info"
             ]
         },
         {
             "version": "v1.5.8-beta",
             "date": "Mar 04, 2026",
+            "releaseType": "beta",
             "body": [
-                "Fixed 'Blocked right now' status updating instantly when attempts run out, and added clearer blocked reasons (time limit, attempts limit, profile block)",
-                "Improved statistics charts: added better X-axis labeling, prevented popups while dragging, and ensured chart popups use the custom accent (no more default green OK)",
-                "Reworked limits UX: cleaner quick limit editor with Clear Limit, tappable limit cards, side-by-side Time/Attempts display, and clearer wording (e.g., Opens today)",
-                "Website limits: fixed the '0 minutes' bug (no longer creates a fake limit), and added an explicit 'Block always' option for domains",
-                "Profile clarity improvements: visible profile indicator when editing limits + per-row limit badges showing how each app/website is restricted",
-                "Removed ghost entries: uninstalled apps are no longer shown in Blocking/Statistics lists",
-                "Custom color consistency pass: unified dialog button style app-wide (account-popup style), fixed green checkboxes/radios/filters, fixed green cursor blink in text inputs, and polished schedule weekday spacing/colors",
-                "NFC/Paired tags polish: kept NFC writer visible when paired tags are disabled, updated 'actions explained' info text depending on enabled/disabled state, and improved paired tag edit dialog actions",
-                "Billing stability: mitigated a rare Google Play Billing ProxyBillingActivity crash by gating/enabling it only during real purchase flows"
+                "Fixed Blocked right now status updating instantly when attempts run out, and added clearer blocked reasons",
+                "Improved statistics charts with better X-axis labeling, prevented popups while dragging, and ensured chart popups use the custom accent",
+                "Reworked limits UX with cleaner quick limit editor, Clear Limit, tappable limit cards, side-by-side Time/Attempts display, and clearer wording",
+                "Fixed website limits 0 minutes bug and added an explicit Block always option for domains",
+                "Improved profile clarity with visible profile indicators and per-row limit badges",
+                "Removed ghost entries so uninstalled apps are no longer shown in Blocking and Statistics lists",
+                "Improved custom color consistency across dialogs, radios, filters, inputs, and schedule UI",
+                "Improved NFC and paired tags polish",
+                "Mitigated a rare Google Play Billing ProxyBillingActivity crash"
             ]
         },
         {
             "version": "v1.5.7-beta",
             "date": "Mar 01, 2026",
+            "releaseType": "beta",
             "body": [
-                "Added App Limit option: limit by attempts (number of launches)",
-                "Fixed custom color rendering for uninstalled apps (e.g., in lists/entries)",
-                "Minor UI/design adjustments and polish",
+                "Added app limits by attempts (number of launches)",
+                "Fixed custom color rendering for uninstalled apps",
+                "Minor UI and design adjustments",
                 "General bug fixes and stability improvements"
             ]
         },
         {
             "version": "v1.5.6-beta",
             "date": "Feb 27, 2026",
+            "releaseType": "beta",
             "body": [
-                "Fixed Statistics FAB filter icon color in dark mode (uses correct tint/styling)",
-                "Improved website usage tracking reliability (better handling when leaving/returning via Recents)",
-                "Added Website Details screen (weekly usage view + per-site stats)",
-                "Added usage range selector in Details: Week/Month/Year (+ Overall history)",
-                "Details now open on the same range you selected in Statistics (Week/Month/Year/Overall)",
-                "Added interactive charts: tap bars/points to see exact usage values and timestamps",
-                "Improved chart display to avoid confusing decimal hours (uses time format like 3:38 instead of 3.6h)",
-                "Reworked Overall history charts to show consistent monthly timeline (fills missing months and avoids empty series on some devices)",
-                "Website Details UI polish: moved Blocking settings next to Daily limit controls",
-                "Website delete action moved to top bar (trash icon) for better privacy/accessibility",
-                "Added website data deletion option (clear tracked usage; optional rule/limit cleanup)",
-                "Updated Firebase BOM to latest patch version (34.10.0)",
-                "Fixed Android lint issues (app:tint usage, KTX improvements, reduced allocations in custom chart drawing)",
-                "General cleanup: minor resource/layout lint adjustments and code tidying"
+                "Fixed Statistics FAB filter icon color in dark mode",
+                "Improved website usage tracking reliability",
+                "Added Website Details screen with weekly usage view and per-site stats",
+                "Added usage range selector in Details for Week, Month, Year, and Overall history",
+                "Made Details open on the same selected range as Statistics",
+                "Added interactive charts with exact values and timestamps",
+                "Improved chart display to avoid confusing decimal hours",
+                "Reworked Overall history charts to show a consistent monthly timeline",
+                "Improved Website Details UI and moved Blocking settings next to Daily limit controls",
+                "Moved website delete action to the top bar",
+                "Added website data deletion option",
+                "Updated Firebase BOM",
+                "Fixed Android lint issues and cleaned up chart drawing allocations",
+                "General cleanup and resource/layout tidying"
             ]
         },
         {
             "version": "v1.5.5-beta",
             "date": "Feb 25, 2026",
+            "releaseType": "beta",
             "body": [
-                "Fixed crash when opening Blocked Websites (handled stored limit as Long/Int safely)",
-                "Fixed schedule add/edit dialog crashes on Android 16 (TextInputLayout theme + dropdown handling)",
-                "Fixed NFC Writer screen crash on Android 16 (MaterialCardView/theme attribute resolution)",
-                "Updated NFC Writer dropdown UI (opened dropdown width matches field instead of full screen width)",
+                "Fixed crash when opening Blocked Websites",
+                "Fixed schedule add/edit dialog crashes on Android 16",
+                "Fixed NFC Writer screen crash on Android 16",
+                "Updated NFC Writer dropdown UI so the opened width matches the field instead of full screen width",
                 "Added sorting to Manage Paired NFC screen",
-                "Improved paired tag flow: added popup/confirmation after pairing a tag via UI",
-                "Improved paired tag screen layout: moved filter control to a FAB-style button",
-                "Fixed crash in Permissions screen (button type mismatch on some devices/layouts)",
-                "Fixed Settings single-select checkbox crash (StackOverflow loop on click)",
-                "Improved Settings blocking + re-entry logic and cleaned up related code",
-                "Updated Re-entry card info text for clarity",
-                "Cleaned up Blocking Controls screen (removed unused code + adjusted info texts)",
-                "Fixed blocked apps display and improved 'Other blocked' section visibility",
+                "Improved paired tag flow with popup confirmation after pairing via UI",
+                "Improved paired tag screen layout by moving the filter control to a FAB-style button",
+                "Fixed crash in Permissions screen",
+                "Fixed Settings single-select checkbox crash",
+                "Improved Settings blocking and re-entry logic",
+                "Updated Re-entry card info text",
+                "Cleaned up Blocking Controls screen",
+                "Fixed blocked apps display and improved Other blocked section visibility",
                 "Reworked and re-enabled Statistics logic and improved limit enforcement after limits are reached",
-                "Usage Statistics day boundaries now follow the device's local timezone",
-                "Fixed Usage Statistics percentage calculations (now displays correct values)",
-                "Fixed Stats screen crashes (missing GridLayout class + safe string formatting)",
-                "Fixed Statistics sorting: Attempts (top/bottom) now works correctly (was incorrectly falling back to A–Z)",
-                "Added Z–A sorting option in Statistics (Usage/Blocking) and ensured A–Z default works properly",
-                "Fixed Statistics UI issues (back button not working + incorrect colors)",
-                "Fixed incorrect labels/texts in Statistics screens",
-                "Improved visibility of Delete actions (less transparent to avoid looking disabled)",
-                "Improved readability of total screen time in Usage Statistics (larger value display)",
-                "Prevented rare Play Billing ProxyBillingActivity crash from external/invalid launch",
+                "Made usage day boundaries follow the device's local timezone",
+                "Fixed usage percentage calculations",
+                "Fixed Stats screen crashes",
+                "Fixed Statistics sorting and added Z–A sorting option",
+                "Fixed Statistics UI issues and incorrect labels",
+                "Improved delete action visibility",
+                "Improved readability of total screen time in Usage Statistics",
+                "Prevented rare Play Billing ProxyBillingActivity crash from external or invalid launch",
                 "Hardened system receivers by disabling unnecessary exported components",
-                "Fixed spots with wrong-colored icons across the app",
-                "Removed unused strings/resources and applied lint/Android Studio cleanup"
+                "Fixed wrong-colored icons across the app",
+                "Removed unused strings/resources and applied lint cleanup"
             ]
         },
         {
             "version": "v1.5.4-beta",
             "date": "Feb 21, 2026",
+            "releaseType": "beta",
             "body": [
                 "Removed in-app blocking for TikTok and X",
                 "Improved Instagram in-app blocking to address recent issues",
                 "Added Settings blocking",
-                "Added Re-entry (temporary settings window + automatic restore)",
+                "Added Re-entry with temporary settings window and automatic restore",
                 "Fixed Temporary disable behavior when Emergency bypass is used",
-                "Updated protection/permission health status checks and diagnostics",
-                "Redesigned the Schedule Add/Edit popup (cleaner layout, improved selections and quick picks)",
+                "Updated protection and permission health status checks and diagnostics",
+                "Redesigned the Schedule Add/Edit popup",
                 "Refreshed the NFC Write flow with a new writing screen and UI polish",
-                "Unified UI patterns (delete actions, status headers) and polished selection dialog spacing",
-                "Icon cleanup (removed duplicates, fixed mismatches)",
-                "Temporary disable statistics information, due to lots of issues with counting data correctly",
+                "Unified UI patterns and polished selection dialog spacing",
+                "Cleaned up icons and fixed mismatches",
+                "Removed temporary disable statistics information due to incorrect counting issues",
                 "General bug fixes, lint cleanup, and stability improvements"
             ]
         },
         {
             "version": "v1.5.3",
             "date": "Feb 13, 2026",
+            "releaseType": "public",
+            "sourceVersions": [
+                "1.5.2-beta",
+                "1.5.1-beta",
+                "1.5.0-beta"
+            ],
             "body": [
-                "Major control-system upgrade: added Schedule, NFC, QR, and Mixed control modes",
-                "Mixed mode now supports per-channel toggles (Allow Schedule, NFC, QR, Tile, and Button), all enabled by default",
-                "Control mode switching is now locked while Switchly is active, with a clear inline hint and toast guidance",
+                "Added major control-system upgrade with Schedule, NFC, QR, and Mixed control modes",
+                "Mixed mode now supports per-channel toggles, all enabled by default",
+                "Control mode switching is now locked while Switchly is active, with clearer hints and guidance",
                 "Default behavior changed to Mixed mode with all channels enabled",
-                "Permission Health was improved with better live status and battery optimization checks when schedules are active",
-                "Permission guidance and quick-setup text formatting were improved for clarity",
-                "Auth stability was improved",
-                "Uninstalled-app display was improved with clearer instructions and information",
-                "NFC writer now shows a specific \"tag too small\" error status and toast",
-                "NFC-required explanatory text was updated to better match real behavior",
-                "NFC UID storage/persistence was hardened for multi-tag scenarios",
-                "Onboarding was streamlined (Optional Features page removed) and advanced setup rows were refined to Details + Toggle style",
-                "“Show next schedule” control was moved into the Schedules screen",
-                "Emergency Unlock was moved out of schedule automation grouping to a better location",
+                "Improved Permission Health with better live status and battery optimization checks when schedules are active",
+                "Improved permission guidance and quick-setup text formatting",
+                "Improved auth stability",
+                "Improved uninstalled-app display with clearer instructions and information",
+                "Made NFC writer show a specific tag too small error status and toast",
+                "Updated NFC-required explanatory text",
+                "Hardened NFC UID storage and persistence for multi-tag scenarios",
+                "Streamlined onboarding and refined advanced setup rows",
+                "Moved Show next schedule control into the Schedules screen",
+                "Moved Emergency Unlock to a better location",
                 "Fixed duplicate QR details action in core controls",
-                "Fixed multiple UI consistency issues (custom colors/tints in dialogs, toggles, pickers, and FAQ cases)",
-                "Improved settings navigation/back behavior for nested pages and re-entry",
+                "Fixed multiple UI consistency issues",
+                "Improved settings navigation and back behavior for nested pages and re-entry",
                 "Improved schedule-permission routing UX when permissions are missing",
                 "Reduced app-picker back-transition flicker",
-                "Improved hint/label clarity and EN/DE string consistency",
+                "Improved wording and EN/DE consistency",
                 "Improved in-app blocking reliability for Instagram, YouTube, and Snapchat",
                 "Removed visible QA scaling matrix block from troubleshooting UI",
-                "Deprecated/hidden \"Require NFC to disable Switchly\" flow after the mode-system refactor",
+                "Deprecated/hidden Require NFC to disable Switchly after the mode-system refactor",
                 "Removed Facebook in-app blocking"
             ]
         },
         {
             "version": "v1.4.4",
             "date": "Feb 12, 2026",
+            "releaseType": "public",
             "body": [
                 "Official release focused on Google sign-in reliability",
                 "Fixed an issue where previously authorized accounts could sign in, but first-time accounts could fail",
-                "Resolved \"No matching Google accounts found\" errors for new Google account sign-ins",
+                "Resolved No matching Google accounts found errors for new Google account sign-ins",
                 "Updated the Google sign-in flow to reliably support both returning and first-time users"
             ]
         },
         {
             "version": "v1.5.2-beta",
             "date": "Feb 11, 2026",
+            "releaseType": "beta",
             "body": [
                 "Fixed Toggle Options crash caused by unsupported theme attribute resolution on some devices",
-                "Improved accent/theme consistency in Customize and Toggle Options to reduce fallback/default color flashes",
-                "Improved Accessibility/Settings hardening: protected permission/settings entry paths while lock/profile protections are active",
-                "Fixed temporary enable timer edge case (changing duration mid-run now restores state correctly)",
+                "Improved accent and theme consistency in Customize and Toggle Options",
+                "Improved Accessibility and Settings hardening",
+                "Fixed temporary enable timer edge case when changing duration mid-run",
                 "Improved in-app blocking performance with caching, throttling, and lower-cost detection paths",
-                "Improved Facebook/Instagram/Snapchat detection logic to reduce overly aggressive false triggers",
+                "Improved Facebook, Instagram, and Snapchat detection logic to reduce false triggers",
                 "Fixed Instagram repeated block-loop behavior after Reels detection",
-                "Removed Quick Actions toggle from main for a cleaner dashboard; visibility now follows dedicated settings",
+                "Removed Quick Actions toggle from main for a cleaner dashboard",
                 "Moved Toggle Options to a more visible position in Customize",
-                "Renamed 'Automation' to 'Schedules & Safety' for clearer wording",
-                "Refined Emergency Mode UX: better main-entry visibility and cleaner controls (start once/day 15 min, pause, resume, end)",
-                "Removed Emergency extend actions (+5/+15) and removed Emergency actions from Temporary Disable popup",
+                "Renamed Automation to Schedules & Safety",
+                "Refined Emergency Mode UX",
+                "Removed Emergency extend actions and removed Emergency actions from Temporary Disable popup",
                 "Improved Temporary Disable copy and layout alignment in the NFC sheet",
                 "Added clear messaging when Temporary Disable is unavailable while NFC-required mode is enabled",
-                "Improved cleanup of uninstalled apps so stale blocked-app entries are removed automatically",
+                "Improved cleanup of uninstalled apps",
                 "General UX polish, wording updates, and stability improvements"
             ]
         },
         {
             "version": "v1.5.1-beta",
             "date": "Feb 10, 2026",
+            "releaseType": "beta",
             "body": [
-                "Improved Schedule setup flow for Wi-Fi: scan-and-select is now the main path",
+                "Improved Schedule setup flow for Wi-Fi so scan-and-select is now the main path",
                 "Improved Bluetooth picker handling in Schedules",
-                "Fixed crash when using connected Bluetooth device in Schedules",
-                "Added clearer Schedule diagnostics (battery optimization, exact alarms, and last execution status)",
-                "Improved Schedule reliability with watchdog re-evaluation (boot, unlock, and around midnight)",
+                "Fixed crash when using a connected Bluetooth device in Schedules",
+                "Added clearer Schedule diagnostics",
+                "Improved Schedule reliability with watchdog re-evaluation",
                 "Added a second confirmation for enabling NFC-required unlock in onboarding optional features",
-                "Quick Summary in onboarding is now shown only when App Usage permission is granted",
+                "Made Quick Summary in onboarding only show when App Usage permission is granted",
                 "Improved NFC write help/info wording and formatting",
-                "Improved wording across the app for better clarity",
+                "Improved wording across the app",
                 "General bug fixes and stability improvements"
             ]
         },
         {
             "version": "v1.5.0-beta",
             "date": "Feb 09, 2026",
+            "releaseType": "beta",
             "body": [
                 "Major beta update with a complete UI rework",
                 "Added new bottom navigation and quick actions",
@@ -319,7 +439,7 @@
                 "Optimized many issues and improved overall stability",
                 "Updated onboarding flow",
                 "Updated permissions flow and handling",
-                "Improved support options (problem reporting + better contact mail support)",
+                "Improved support options with problem reporting and better contact mail support",
                 "Added in-app limits",
                 "Added website blocking",
                 "Added more ways to define limits",
@@ -329,117 +449,128 @@
                 "Added delete all app data option",
                 "Added more customization options",
                 "Added UID tag support",
-                "Added blocked notifications screen/inbox",
+                "Added blocked notifications screen and inbox",
                 "Improved About section with app info, device info, and developer info",
-                "Improved Coloring logic for elements, especially Custom Color trying to be conistent everywhere",
-                "Adding more hints and infos to understand the app better",
-                "Add a Info button to the NFC write, explaining the modes aside from FAQ"
+                "Improved coloring logic for better consistency with Custom Color",
+                "Added more hints and infos to understand the app better",
+                "Added an info button to NFC Write explaining the modes aside from FAQ"
             ]
         },
         {
             "version": "v1.4.3",
             "date": "Feb 07, 2026",
+            "releaseType": "public",
             "body": [
-                "Hotfix release focused on schedule + NFC reliability",
+                "Hotfix release focused on schedule and NFC reliability",
                 "Fixed schedules not triggering reliably on some devices",
                 "Fixed blocked apps not locking immediately if already open when a schedule starts",
-                "Fixed an NFC toggle + range schedule issue where profiles could remain enabled past the scheduled end time",
-                "Temporarily removed UID from NFC tag writing (will return in a later update)"
+                "Fixed an NFC toggle plus range schedule issue where profiles could remain enabled past the scheduled end time",
+                "Temporarily removed UID from NFC tag writing"
             ]
         },
         {
             "version": "v1.4.2",
             "date": "Jan 28, 2026",
+            "releaseType": "public",
             "body": [
-                "Bugfix + cleanup release",
-                "Fixed a critical issue where temporary disable/enable could behave incorrectly",
-                "Fixed schedules not reliably triggering on some devices (including newer Galaxy models) after reboot/update",
-                "Improved “NFC Required to unlock/disable” handling (safer logic, better protection against accidental lockouts)",
+                "Bugfix and cleanup release",
+                "Fixed a critical issue where temporary disable and enable could behave incorrectly",
+                "Fixed schedules not reliably triggering on some devices after reboot or update",
+                "Improved NFC Required to unlock/disable handling with safer logic and better protection against accidental lockouts",
                 "Fixed the Quick Settings tile icon display",
-                "Removed outdated/legacy support paths and adjusted related core logic",
-                "Polished UI spacing and cleaned translations (restored missing strings, removed unused ones)",
-                "Release channels: Website/Play Store"
+                "Removed outdated and legacy support paths and adjusted related core logic",
+                "Polished UI spacing and cleaned translations",
+                "Release channels: Website and Play Store"
             ]
         },
         {
             "version": "v1.4.1",
             "date": "Jan 22, 2026",
+            "releaseType": "public",
             "body": [
-                "New bottom navigation: Blocking/Insights/Settings",
-                "Settings hub rework (Help/Account/Customize/Appearance/About)",
-                "Dashboard main screen polish (quick actions, blocked now, next schedule)",
-                "Wi‑Fi schedule picker: scan + pick network",
-                "Troubleshooting screen + blocked notifications inbox",
-                "UI/spacing improvements and multiple stability fixes"
+                "Added new bottom navigation: Blocking, Insights, Settings",
+                "Reworked the Settings hub",
+                "Improved dashboard main screen with quick actions, blocked now, and next schedule",
+                "Added Wi-Fi schedule picker with scan and pick network",
+                "Added troubleshooting screen and blocked notifications inbox",
+                "Improved UI spacing and fixed multiple stability issues"
             ]
         },
         {
             "version": "v1.4.0",
             "date": "Jan 22, 2026",
+            "releaseType": "public",
             "body": [
-                "Major backend change: Accessibility-based blocking (better reliability)",
-                "Permissions screen refresh (battery optimisation + cleaner cards)",
-                "Wi‑Fi/Bluetooth monitoring only when needed",
-                "Schedule & blocking logic improvements + stability fixes"
+                "Major backend change: Accessibility-based blocking for better reliability",
+                "Refreshed Permissions screen with battery optimisation and cleaner cards",
+                "Made Wi-Fi and Bluetooth monitoring only run when needed",
+                "Improved schedule and blocking logic with stability fixes"
             ]
         },
         {
             "version": "v1.3.1",
             "date": "Jan 13, 2026",
+            "releaseType": "public",
             "body": [
-                "UI refresh for Permissions + Toggle Options",
+                "Refreshed UI for Permissions and Toggle Options",
                 "Improved onboarding/tutorial",
-                "Smarter permission logic for Wi‑Fi/Bluetooth",
-                "Schedule UI cleanup + performance fixes"
+                "Improved permission logic for Wi-Fi and Bluetooth",
+                "Cleaned up schedule UI and fixed performance issues"
             ]
         },
         {
             "version": "v1.3.0",
             "date": "Jan 2026",
+            "releaseType": "public",
             "body": [
-                "Revamped Wi‑Fi & Bluetooth trigger logic",
-                "New notification blocking option",
-                "Insights/statistics upgrade + onboarding improvements"
+                "Revamped Wi-Fi and Bluetooth trigger logic",
+                "Added new notification blocking option",
+                "Upgraded Insights/statistics and improved onboarding"
             ]
         },
         {
             "version": "v1.2.3",
             "date": "Dec 28, 2025",
+            "releaseType": "public",
             "body": [
-                "Scheduling reliability improvements",
-                "Time/Wi‑Fi/Bluetooth/NFC schedules apply more consistently",
-                "Better alarm handling + edge case fixes"
+                "Improved scheduling reliability",
+                "Made Time, Wi-Fi, Bluetooth, and NFC schedules apply more consistently",
+                "Improved alarm handling and fixed edge cases"
             ]
         },
         {
             "version": "v1.2.2",
             "date": "Dec 17, 2025",
+            "releaseType": "public",
             "body": [
-                "Temporary enable feature",
-                "Optional QR code usage",
-                "App limits + dedicated usage page",
+                "Added Temporary enable feature",
+                "Added optional QR code usage",
+                "Added app limits and dedicated usage page",
                 "Major UI rework and stability improvements"
             ]
         },
         {
             "version": "v1.2.1",
             "date": "Dec 01, 2025",
+            "releaseType": "public",
             "body": [
-                "Scheduler (time, Wi‑Fi, Bluetooth triggers)",
-                "Reworked permission flow + expanded FAQ",
-                "Backup upgrade and Firebase adjustments"
+                "Added scheduler with time, Wi-Fi, and Bluetooth triggers",
+                "Reworked permission flow and expanded FAQ",
+                "Upgraded backup handling and Firebase adjustments"
             ]
         },
         {
             "version": "v1.1.0",
             "date": "Nov 2025",
+            "releaseType": "public",
             "body": [
-                "Profiles improvements and general stability fixes"
+                "Improved profiles and general stability"
             ]
         },
         {
             "version": "v1.0.9",
             "date": "Nov 2025",
+            "releaseType": "public",
             "body": [
                 "Bug fixes and small UI polish"
             ]
@@ -447,8 +578,9 @@
         {
             "version": "v1.0.0",
             "date": "Nov 14, 2025",
+            "releaseType": "public",
             "body": [
-                "Start maintaining the repository of Switchly"
+                "Started maintaining the Switchly repository"
             ]
         }
     ]

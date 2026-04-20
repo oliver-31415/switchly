@@ -37,8 +37,6 @@
     </plurals>
     <!-- DASHBOARD - Temporary disable controls -->
     <string name="dashboard_temp_chip">TEMP</string>
-    <string name="dashboard_temp_badge_enabled">TEMP AN • %1$s</string>
-    <string name="dashboard_temp_badge_disabled">TEMP AUS • %1$s</string>
     <string name="dashboard_temp_remaining_fmt">Verbleibend: %1$s</string>
     <string name="dashboard_temp_remaining_placeholder">Verbleibend: 00:00</string>
     <string name="dashboard_temp_sheet_sub_enable">Blockierung für kurze Zeit aktivieren</string>
@@ -46,6 +44,8 @@
     <string name="dashboard_temp_sheet_sub_disable_locked">Temporäres Deaktivieren ist gesperrt (NFC-Sperre ist aktiv). Nutze bei Bedarf die Notfall-Entsperrung.</string>
     <string name="dashboard_temp_sheet_cancel_timer">Timer abbrechen</string>
     <string name="dashboard_temp_hint">Halte die Haupttaste gedrückt, um temporär zu aktivieren/deaktivieren.</string>
+    <string name="dashboard_temp_status_enabled">Vorübergehend aktiviert • noch %1$s</string>
+    <string name="dashboard_temp_status_disabled">Vorübergehend deaktiviert • noch %1$s</string>
     <string name="dashboard_temp_hint_locked_nfc">Temporäres Deaktivieren ist nicht verfügbar, solange „NFC erforderlich“ aktiviert ist.</string>
     <string name="dashboard_temp_nudge">Tipp: Nutze den temporären Modus für schnelle 5–60-Minuten-Sessions.</string>
     <string name="dashboard_temp_discovery_done">Temporärer Modus bereit. Nutze ihn jederzeit per langem Drücken.</string>
@@ -67,6 +67,10 @@
     <string name="dashboard_tile_qr_sub">Tippen zum Scannen • halten zum Generieren</string>
     <string name="dashboard_tile_barcode">Barcode</string>
     <string name="dashboard_tile_barcode_sub">Tippen zum Scannen • halten zum Verwalten</string>
+    <string name="dashboard_tile_write_nfc">NFC-Tag schreiben</string>
+    <string name="dashboard_tile_write_nfc_sub">Tippen zum Schreiben • halten für gepaarte Tags</string>
+    <string name="dashboard_tile_blocked_notifications">Blockierte Benachrichtigungen</string>
+    <string name="dashboard_tile_blocked_notifications_sub">Postfach &amp; Aktivität</string>
     <string name="dashboard_unavailable_hint_short">Auf diesem Gerät nicht installiert.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Auf diesem Gerät nicht installiert.\nÖffne „Apps auswählen“, um sie zu entfernen.</string>
     <string name="dashboard_quick_actions_toggle">Schnellaktionen umschalten</string>
@@ -76,6 +80,14 @@
     <string name="blocked_list_title">Blockierte Apps</string>
     <string name="blocked_app_default">App blockiert</string>
     <string name="blocked_message">Du kannst diese App nicht nutzen, solange Switchly aktiv ist.</string>
+    <string name="dashboard_blocked_app_action_edit_limits">Limits bearbeiten</string>
+    <string name="dashboard_blocked_app_limits_title">Limits bearbeiten</string>
+    <string name="dashboard_blocked_app_action_time_limit">Zeitlimit bearbeiten</string>
+    <string name="dashboard_blocked_app_action_open_limit">Öffnen-Limit bearbeiten</string>
+    <string name="dashboard_blocked_app_action_remove">App entfernen</string>
+    <string name="dashboard_blocked_app_remove_title">App entfernen</string>
+    <string name="dashboard_blocked_app_remove_message">%1$s aus dem aktuellen Profil entfernen?</string>
+    <string name="dashboard_blocked_app_removed">%1$s entfernt</string>
     <string name="no_blocked_apps">Keine blockierten Apps</string>
     <string name="pick_apps">Apps auswählen</string>
     <string name="search_apps">Apps suchen</string>
@@ -98,6 +110,21 @@
     <string name="app_picker_settings_hint">Das Blockieren von Einstellungen kann Fehlerbehebung und Berechtigungsänderungen erschweren.</string>
     <string name="app_picker_settings_warning_title">Einstellungen trotzdem blockieren?</string>
     <string name="app_picker_settings_warning_message">Das Blockieren von Einstellungen kann Fehlerbehebung und Berechtigungsänderungen erschweren.</string>
+    <string name="app_picker_play_store_hint">Der Play Store ist sicherheitsrelevant, da er Apps installieren oder aktualisieren kann.</string>
+    <string name="app_picker_play_store_warning_title">Play Store trotzdem blockieren?</string>
+    <string name="app_picker_play_store_warning_message">Das Blockieren des Play Store kann Installationen, Updates und Wiederherstellung erschweren.</string>
+    <string name="app_picker_installer_hint">Der Paket-Installer ist sicherheitsrelevant, da er Apps installieren oder aktualisieren kann.</string>
+    <string name="app_picker_installer_warning_title">Paket-Installer trotzdem blockieren?</string>
+    <string name="app_picker_installer_warning_message">Das Blockieren des Paket-Installers kann Installationen, Updates und Wiederherstellung erschweren.</string>
+    <string name="app_picker_permissions_hint">Der Berechtigungs-Controller ist sicherheitsrelevant, da er wichtige Android-Berechtigungen verwaltet.</string>
+    <string name="app_picker_permissions_warning_title">Berechtigungs-Controller trotzdem blockieren?</string>
+    <string name="app_picker_permissions_warning_message">Das Blockieren des Berechtigungs-Controllers kann Berechtigungen und Fehlerbehebung erschweren.</string>
+    <string name="app_picker_files_hint">Dateien- und Dokumentauswahl-Apps können für Backups, Wiederherstellungen, Exporte und Recovery wichtig sein.</string>
+    <string name="app_picker_files_warning_title">Dateien-App trotzdem blockieren?</string>
+    <string name="app_picker_files_warning_message">Das Blockieren von Dateien- oder Dokumentauswahl-Apps kann Backups, Wiederherstellungen, Exporte und Recovery erschweren.</string>
+    <string name="app_picker_browser_hint">Browser werden oft für Downloads, Support, Anmeldung und Wiederherstellungsschritte genutzt.</string>
+    <string name="app_picker_browser_warning_title">Browser-App trotzdem blockieren?</string>
+    <string name="app_picker_browser_warning_message">Das Blockieren eines Browsers kann Downloads, Support und Wiederherstellungsschritte erschweren.</string>
     <string name="continue_label">Weiter</string>
     <string name="close">Schließen</string>
     <plurals name="app_picker_select_all_skipped_notice">
@@ -119,4 +146,12 @@
     <string name="main_development_info_message">Switchly ist noch in Entwicklung. Ich teste die App so sorgfältig wie möglich mit offenen Beta-Phasen, aber Android verhält sich je nach Gerät unterschiedlich, daher finde ich nicht jedes Problem selbst.\nWenn bei dir etwas nicht richtig funktioniert, schreib mir bitte eine Mail.\n\nDownloads:\nswitchly.saltyy.at/pages/download</string>
     <string name="main_info_contact_action">Kontakt</string>
     <string name="main_info_older_versions_action">Downloads</string>
+
+    <string name="app_picker_settings_requirements_title">Notfall-Entsperrung erforderlich</string>
+    <string name="app_picker_settings_requirements_message">Um Einstellungen zu blockieren, muss der erweiterte Schutz aktiviert sein und die Notfall-Entsperrung mit Notfall-PIN bereits eingerichtet sein.</string>
+    <string name="app_picker_settings_second_warning_title">Bist du dir ganz sicher?</string>
+    <string name="app_picker_settings_second_warning_message">Das Blockieren von Einstellungen kann die Wiederherstellung deines Telefons erschweren, falls ein weiteres Problem auftritt. Diese Option ist nur für fortgeschrittene Nutzer gedacht.</string>
+    <string name="app_picker_block_settings_confirm">Einstellungen blockieren</string>
+    <string name="app_picker_settings_temporarily_allowed">Einstellungen wurden vorübergehend erlaubt, um eine Sperrschleife zu verhindern.</string>
+
 </resources>

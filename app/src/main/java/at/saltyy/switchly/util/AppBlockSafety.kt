@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.util
 
 import android.content.Context
@@ -8,6 +27,7 @@ import android.provider.Settings
 import android.telecom.TelecomManager
 import android.view.inputmethod.InputMethodManager
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 
 object AppBlockSafety {
 
@@ -16,6 +36,35 @@ object AppBlockSafety {
         SOFT_WARNING,
         HARD_EXCLUDED
     }
+
+    enum class RiskCategory {
+        SETTINGS,
+        INSTALL,
+        PERMISSIONS,
+        PROVISIONING,
+        ASSISTANT,
+        STORE,
+        FILES,
+        BROWSER,
+        SYSTEM_UI,
+        LAUNCHER,
+        DIALER,
+        INPUT_METHOD,
+        OTHER
+    }
+
+    enum class PolicyAction {
+        ALLOW,
+        WARN_ONLY,
+        STRICT_MODE_ONLY,
+        NEVER_BLOCK
+    }
+
+    data class RiskRule(
+        val category: RiskCategory,
+        val action: PolicyAction,
+        val reason: String
+    )
 
     data class Info(
         val level: Level = Level.NONE,
@@ -27,6 +76,187 @@ object AppBlockSafety {
     private val walletPackagePrefixes = listOf(
         "com.samsung.android.spay",
         "com.google.android.apps.walletnfcrel"
+    )
+
+    private val exactRiskRules = mapOf(
+        "com.android.settings" to RiskRule(
+            RiskCategory.SETTINGS,
+            PolicyAction.STRICT_MODE_ONLY,
+            "System settings can disable protections or grant privileged access."
+        ),
+        "com.google.android.packageinstaller" to RiskRule(
+            RiskCategory.INSTALL,
+            PolicyAction.NEVER_BLOCK,
+            "Package installer can install or update apps."
+        ),
+        "com.android.packageinstaller" to RiskRule(
+            RiskCategory.INSTALL,
+            PolicyAction.NEVER_BLOCK,
+            "Package installer can install or update apps."
+        ),
+        "com.android.vending" to RiskRule(
+            RiskCategory.STORE,
+            PolicyAction.WARN_ONLY,
+            "Play Store can install helper or escape apps."
+        ),
+        "com.google.android.packageinstaller" to RiskRule(
+            RiskCategory.INSTALL,
+            PolicyAction.NEVER_BLOCK,
+            "Package installer can install or update apps."
+        ),
+        "com.google.android.permissioncontroller" to RiskRule(
+            RiskCategory.PERMISSIONS,
+            PolicyAction.NEVER_BLOCK,
+            "Permission controller manages sensitive grants."
+        ),
+        "com.android.documentsui" to RiskRule(
+            RiskCategory.FILES,
+            PolicyAction.WARN_ONLY,
+            "Files/Documents surfaces can matter for backup, restore, and recovery."
+        ),
+        "com.google.android.documentsui" to RiskRule(
+            RiskCategory.FILES,
+            PolicyAction.WARN_ONLY,
+            "Files/Documents surfaces can matter for backup, restore, and recovery."
+        ),
+        "com.google.android.apps.nbu.files" to RiskRule(
+            RiskCategory.FILES,
+            PolicyAction.WARN_ONLY,
+            "Files/Documents surfaces can matter for backup, restore, and recovery."
+        ),
+        "com.google.android.permission" to RiskRule(
+            RiskCategory.PERMISSIONS,
+            PolicyAction.NEVER_BLOCK,
+            "Permission controller manages sensitive grants."
+        ),
+        "com.google.android.setupwizard" to RiskRule(
+            RiskCategory.PROVISIONING,
+            PolicyAction.NEVER_BLOCK,
+            "Setup flow is a privileged onboarding surface."
+        ),
+        "com.android.managedprovisioning" to RiskRule(
+            RiskCategory.PROVISIONING,
+            PolicyAction.NEVER_BLOCK,
+            "Managed provisioning is a privileged enterprise/device-owner flow."
+        ),
+        "com.google.android.googlequicksearchbox" to RiskRule(
+            RiskCategory.ASSISTANT,
+            PolicyAction.NEVER_BLOCK,
+            "Google app can be deeply integrated into launcher/search/assistant flows."
+        ),
+        "com.android.systemui" to RiskRule(
+            RiskCategory.SYSTEM_UI,
+            PolicyAction.NEVER_BLOCK,
+            "Blocking System UI can destabilize the device."
+        ),
+        "com.google.android.gms" to RiskRule(
+            RiskCategory.OTHER,
+            PolicyAction.WARN_ONLY,
+            "Google Play services is deeply integrated into Android."
+        ),
+        "com.google.android.as" to RiskRule(
+            RiskCategory.ASSISTANT,
+            PolicyAction.WARN_ONLY,
+            "Android System Intelligence may surface assistant or search flows."
+        ),
+        "com.samsung.android.oneconnect" to RiskRule(
+            RiskCategory.OTHER,
+            PolicyAction.WARN_ONLY,
+            "Samsung device-control surfaces can affect device usability."
+        ),
+        "com.samsung.android.app.settings.bixby" to RiskRule(
+            RiskCategory.ASSISTANT,
+            PolicyAction.WARN_ONLY,
+            "Bixby settings can affect assistant behavior and recovery paths."
+        ),
+        "com.android.chrome" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "org.mozilla.firefox" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "org.mozilla.firefox_beta" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "net.waterfox.android.release" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.brave.browser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.microsoft.emmx" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.sec.android.app.sbrowser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.sec.android.app.sbrowser.beta" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.vivaldi.browser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.opera.browser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.opera.browser.beta" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.opera.mini.native" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.kiwibrowser.browser" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.google.android.apps.nexuslauncher" to RiskRule(
+            RiskCategory.LAUNCHER,
+            PolicyAction.WARN_ONLY,
+            "Default or OEM launchers should be treated carefully."
+        ),
+        "com.sec.android.app.launcher" to RiskRule(
+            RiskCategory.LAUNCHER,
+            PolicyAction.WARN_ONLY,
+            "Default or OEM launchers should be treated carefully."
+        )
+    )
+
+    private val prefixRiskRules = listOf(
+        "com.google.android.permissioncontroller" to RiskRule(
+            RiskCategory.PERMISSIONS,
+            PolicyAction.NEVER_BLOCK,
+            "Permission controller manages sensitive grants."
+        ),
+        "com.android.permissioncontroller" to RiskRule(
+            RiskCategory.PERMISSIONS,
+            PolicyAction.NEVER_BLOCK,
+            "Permission controller manages sensitive grants."
+        )
     )
 
     fun resolve(context: Context, pkg: String): Info {
@@ -48,6 +278,17 @@ object AppBlockSafety {
             )
         }
 
+        val riskRule = matchRiskRule(context, pkg)
+        if (riskRule?.action == PolicyAction.NEVER_BLOCK) {
+            val (hintRes, titleRes, messageRes) = resourcesForCategory(riskRule.category)
+            return Info(
+                level = Level.HARD_EXCLUDED,
+                hint = context.getString(hintRes),
+                warningTitle = titleRes?.let(context::getString),
+                warningMessage = messageRes?.let(context::getString)
+            )
+        }
+
         if (isWalletPackage(pkg)) {
             val messageRes = if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) {
                 R.string.app_picker_wallet_warning_message_samsung
@@ -65,19 +306,29 @@ object AppBlockSafety {
         val defaultDialer = getDefaultDialerPackage(context)
         if (pkg == defaultDialer) {
             return Info(
-                level = Level.SOFT_WARNING,
+                level = Level.HARD_EXCLUDED,
                 hint = context.getString(R.string.app_picker_dialer_hint),
                 warningTitle = context.getString(R.string.app_picker_dialer_warning_title),
                 warningMessage = context.getString(R.string.app_picker_dialer_warning_message)
             )
         }
 
-        if (isSettingsPackage(context, pkg)) {
+        if (riskRule?.action == PolicyAction.STRICT_MODE_ONLY || isSettingsPackage(context, pkg)) {
             return Info(
                 level = Level.SOFT_WARNING,
                 hint = context.getString(R.string.app_picker_settings_hint),
                 warningTitle = context.getString(R.string.app_picker_settings_warning_title),
                 warningMessage = context.getString(R.string.app_picker_settings_warning_message)
+            )
+        }
+
+        if (riskRule?.action == PolicyAction.WARN_ONLY) {
+            val (hintRes, titleRes, messageRes) = resourcesForCategory(riskRule.category)
+            return Info(
+                level = Level.SOFT_WARNING,
+                hint = context.getString(hintRes),
+                warningTitle = titleRes?.let(context::getString),
+                warningMessage = messageRes?.let(context::getString)
             )
         }
 
@@ -94,6 +345,28 @@ object AppBlockSafety {
             .filter { it.isNotBlank() }
             .filterNot { isHardExcluded(context, it) }
             .toCollection(linkedSetOf())
+    }
+
+    fun requiresStrictModeForBlocking(context: Context, pkg: String): Boolean {
+        val normalized = pkg.trim()
+        if (normalized.isBlank()) return false
+        return matchRiskRule(context, normalized)?.action == PolicyAction.STRICT_MODE_ONLY || isSettingsPackage(context, normalized)
+    }
+
+    fun isStrictModeEnabled(context: Context): Boolean {
+        return context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_DEV_UNLOCKED, false)
+    }
+
+    fun hasEmergencyRecoveryConfigured(context: Context): Boolean {
+        val sp = context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        val hasPin = !sp.getString(KEY_EMERGENCY_PIN, null).isNullOrBlank()
+        return hasPin && EmergencyBypassStore.isFeatureEnabled(context)
+    }
+
+    fun canAllowStrictModeBlocking(context: Context, pkg: String): Boolean {
+        if (!requiresStrictModeForBlocking(context, pkg)) return true
+        return isStrictModeEnabled(context) && hasEmergencyRecoveryConfigured(context)
     }
 
     fun getDefaultInputMethodPackage(context: Context): String? {
@@ -148,6 +421,21 @@ object AppBlockSafety {
             .firstOrNull()
     }
 
+    fun getDefaultAssistantPackage(context: Context): String? {
+        val voiceInteraction = runCatching {
+            Settings.Secure.getString(context.contentResolver, "voice_interaction_service")
+        }.getOrNull().orEmpty().trim()
+        if (voiceInteraction.isNotBlank()) {
+            return voiceInteraction.substringBefore('/').trim().takeIf { it.isNotBlank() && it.contains('.') }
+        }
+
+        val assistant = runCatching {
+            Settings.Secure.getString(context.contentResolver, "assistant")
+        }.getOrNull().orEmpty().trim()
+        if (assistant.isBlank()) return null
+        return assistant.substringBefore('/').trim().takeIf { it.isNotBlank() && it.contains('.') }
+    }
+
     fun getDefaultDialerPackage(context: Context): String? {
         val telecomManager = runCatching {
             context.getSystemService(TelecomManager::class.java)
@@ -156,6 +444,66 @@ object AppBlockSafety {
             .getOrNull()
             ?.trim()
             ?.takeIf { it.isNotBlank() }
+    }
+
+    fun matchRiskRule(context: Context, pkg: String): RiskRule? {
+        val normalized = pkg.trim()
+        if (normalized.isBlank()) return null
+
+        exactRiskRules[normalized]?.let { return it }
+        prefixRiskRules.firstOrNull { (prefix, _) -> normalized == prefix || normalized.startsWith("$prefix.") }
+            ?.let { return it.second }
+
+        val defaultAssistant = getDefaultAssistantPackage(context)
+        if (!defaultAssistant.isNullOrBlank() && normalized == defaultAssistant) {
+            return RiskRule(
+                RiskCategory.ASSISTANT,
+                PolicyAction.WARN_ONLY,
+                "Default assistant can be used as an escape surface."
+            )
+        }
+
+        return null
+    }
+
+    private fun resourcesForCategory(category: RiskCategory): Triple<Int, Int?, Int?> {
+        return when (category) {
+            RiskCategory.SETTINGS -> Triple(
+                R.string.app_picker_settings_hint,
+                R.string.app_picker_settings_warning_title,
+                R.string.app_picker_settings_warning_message
+            )
+            RiskCategory.STORE -> Triple(
+                R.string.app_picker_play_store_hint,
+                R.string.app_picker_play_store_warning_title,
+                R.string.app_picker_play_store_warning_message
+            )
+            RiskCategory.INSTALL -> Triple(
+                R.string.app_picker_installer_hint,
+                R.string.app_picker_installer_warning_title,
+                R.string.app_picker_installer_warning_message
+            )
+            RiskCategory.PERMISSIONS -> Triple(
+                R.string.app_picker_permissions_hint,
+                R.string.app_picker_permissions_warning_title,
+                R.string.app_picker_permissions_warning_message
+            )
+            RiskCategory.FILES -> Triple(
+                R.string.app_picker_files_hint,
+                R.string.app_picker_files_warning_title,
+                R.string.app_picker_files_warning_message
+            )
+            RiskCategory.BROWSER -> Triple(
+                R.string.app_picker_browser_hint,
+                R.string.app_picker_browser_warning_title,
+                R.string.app_picker_browser_warning_message
+            )
+            else -> Triple(
+                R.string.app_picker_protected_generic_hint,
+                null,
+                null
+            )
+        }
     }
 
     private fun isWalletPackage(pkg: String): Boolean {
@@ -183,6 +531,10 @@ object AppBlockSafety {
         return normalized
     }
 
+    private const val APP_PREFS = "switchly_prefs"
+    private const val KEY_DEV_UNLOCKED = "pref_dev_unlocked"
+    private const val KEY_EMERGENCY_PIN = "pref_emergency_pin"
+
     private val knownSettingsPackages = setOf(
         "com.android.settings"
     )
@@ -191,6 +543,7 @@ object AppBlockSafety {
         "android",
         "com.android.settings",
         "com.android.intentresolver",
+        "com.google.android.permission",
         "com.google.android.permissioncontroller",
         "com.android.permissioncontroller"
     )

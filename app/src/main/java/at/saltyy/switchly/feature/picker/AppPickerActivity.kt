@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.picker
 
 import android.content.Context
@@ -318,6 +337,33 @@ class AppPickerActivity : AppCompatActivity() {
             }
 
             AppBlockSafety.Level.SOFT_WARNING -> {
+                if (AppBlockSafety.requiresStrictModeForBlocking(this, app.packageName)) {
+                    if (!AppBlockSafety.canAllowStrictModeBlocking(this, app.packageName)) {
+                        AlertDialog.Builder(this)
+                            .setTitle(R.string.app_picker_settings_requirements_title)
+                            .setMessage(R.string.app_picker_settings_requirements_message)
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .setPositiveButton(android.R.string.ok) { _, _ -> }
+                            .showAccented()
+                        return
+                    }
+
+                    AlertDialog.Builder(this)
+                        .setTitle(app.blockSafety.warningTitle ?: getString(R.string.app_picker_protected_caution_title))
+                        .setMessage(app.blockSafety.warningMessage ?: app.blockSafety.hint ?: getString(R.string.app_picker_protected_generic_hint))
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(R.string.continue_label) { _, _ ->
+                            AlertDialog.Builder(this)
+                                .setTitle(R.string.app_picker_settings_second_warning_title)
+                                .setMessage(R.string.app_picker_settings_second_warning_message)
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .setPositiveButton(R.string.app_picker_block_settings_confirm) { _, _ -> onAllowed() }
+                                .showAccented()
+                        }
+                        .showAccented()
+                    return
+                }
+
                 AlertDialog.Builder(this)
                     .setTitle(app.blockSafety.warningTitle ?: getString(R.string.app_picker_protected_caution_title))
                     .setMessage(app.blockSafety.warningMessage ?: app.blockSafety.hint ?: getString(R.string.app_picker_protected_generic_hint))
@@ -397,7 +443,7 @@ class AppPickerActivity : AppCompatActivity() {
                 .setTitle(R.string.custom_minutes_title)
                 .setView(container)
                 .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok) { _, _ ->
+                .setPositiveButton(android.R.string.ok) { _, _ ->
                     val m = input.text?.toString()?.trim()?.toIntOrNull()
                     if (m == null || m < 0) {
                         Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show()

@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.nfc
 
 import android.app.Activity
@@ -15,6 +34,7 @@ import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.NfcScanCountStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.data.prefs.ProfileStore
@@ -277,31 +297,40 @@ class NfcEntryActivity : Activity() {
                 toast(getString(R.string.nfc_action_emergency_tag_removed))
             }
 
-            else -> toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
+            else -> {
+                AppLogStore.append(this, "NFC", "Action failed reason=unknown_action")
+                toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
+            }
         }
     }
 
     private fun handleProfileAction(data: Uri, tag: android.nfc.Tag?) {
+        AppLogStore.append(this, "NFC", "Tag scanned")
         val segs = data.pathSegments ?: emptyList()
         val profile = segs.getOrNull(0)?.trim().orEmpty()
         val action = segs.getOrNull(1)?.lowercase() ?: "toggle"
 
         if (profile.isBlank()) {
+            AppLogStore.append(this, "NFC", "Action failed reason=missing_profile")
             toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_missing_profile)))
             return
         }
 
         val allProfiles = ProfileStore.getProfiles(this)
         if (!allProfiles.contains(profile)) {
+            AppLogStore.append(this, "NFC", "Action failed reason=unknown_profile")
             toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_profile_fmt, profile)))
             return
         }
+
+        AppLogStore.append(this, "NFC", "Tag resolved action=$action profile=$profile")
 
         when {
             action in listOf("start", "enable", "on", "activate") -> {
                 ProfileStore.setCurrent(this, profile)
                 SwitchModeStore.setEnabled(this, true)
                 BlockingRuntime.ensureRunning(this)
+                AppLogStore.append(this, "NFC", "Action applied action=$action profile=$profile")
                 toast(getString(R.string.nfc_feedback_started, profile))
             }
 
@@ -311,6 +340,7 @@ class NfcEntryActivity : Activity() {
                 if (current == profile) {
                     SwitchModeStore.setEnabled(this, false, allowNfcBypass = true)
                     BlockingRuntime.stop(this)
+                    AppLogStore.append(this, "NFC", "Action applied action=$action profile=$profile")
                     toast(getString(R.string.nfc_feedback_stopped, profile))
                 } else {
                     toast(getString(R.string.nfc_error_profile_not_active_nothing_to_disable_fmt, profile))
@@ -393,7 +423,12 @@ class NfcEntryActivity : Activity() {
         if (tag == null) return true
         if (!NfcTempDisableLimiterStore.isEnabled(this)) return true
 
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+        if (!pairedUidsEnabled) return true
+
         val uidHex = NfcTagUid.normalizeUidHex(NfcTagUid.uidHex(tag))
+        if (uidHex.isBlank()) return true
         val bucket = NfcTempDisableLimiterStore.bucketForUid(uidHex)
 
         return when (val result = NfcTempDisableLimiterStore.check(bucket, this)) {

@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.about
 
 import android.content.ClipData
@@ -6,14 +25,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.net.Uri
 import android.provider.Settings
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.net.toUri
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
@@ -22,6 +40,8 @@ import at.saltyy.switchly.util.PlayStoreUpdatePrompt
 import com.google.android.material.appbar.MaterialToolbar
 
 class AboutActivity : AppCompatActivity() {
+
+    private lateinit var toolbar: MaterialToolbar
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -32,49 +52,56 @@ class AboutActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_versions)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        setupToolbar()
+        hideUnusedRows()
+        bindAboutTiles()
+        bindContactTiles()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressedDispatcher.onBackPressed()
+        return true
+    }
+
+    private fun setupToolbar() {
+        toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+    }
 
-        // Hide sections we don't want to show in About
+    private fun hideUnusedRows() {
         runCatching { findViewById<View>(R.id.rowDeveloper).visibility = View.GONE }
         runCatching { findViewById<View>(R.id.rowDevice).visibility = View.GONE }
         runCatching { findViewById<View>(R.id.rowAndroid).visibility = View.GONE }
         runCatching { findViewById<View>(R.id.rowPackage).visibility = View.GONE }
+    }
 
-        val gitlab = getString(R.string.about_gitlab_url)
-        runCatching {
-            bindTile(
-                rootId = R.id.rowDiscord,
-                titleId = R.id.tvTitleDiscord,
-                subtitleId = R.id.tvSubtitleDiscord,
-                title = getString(R.string.about_gitlab_title),
-                subtitle = gitlab,
-                onClick = { openLink(gitlab) },
-                copyValue = gitlab
-            )
-        }
-
-        // values
+    private fun bindAboutTiles() {
         val appName = getString(R.string.app_name)
-        val versionName = runCatching {
-            val pi = packageManager.getPackageInfo(packageName, 0)
-            pi.versionName ?: "-"
-        }.getOrDefault("-")
-
-        val pkg = packageName
-        val website = getString(R.string.about_website_url)
-        val downloads = getString(R.string.about_downloads_url)
-        val androidVersion = getString(R.string.about_android_version_fmt, Build.VERSION.RELEASE, Build.VERSION.SDK_INT)
-        val deviceModel = buildDeviceLabel()
-
+        val versionName = resolveVersionName()
+        val packageNameLabel = packageName
+        val downloadsUrl = getString(R.string.about_downloads_url)
+        val androidVersionLabel = getString(
+            R.string.about_android_version_fmt,
+            Build.VERSION.RELEASE,
+            Build.VERSION.SDK_INT
+        )
+        val deviceModelLabel = buildDeviceLabel()
         val developerName = getString(R.string.about_developer_name)
-        val email = getString(R.string.about_mail_address)
-        val discord = getString(R.string.about_discord_url)
 
-        // bind app info tiles
+        val gitlabUrl = getString(R.string.about_gitlab_url)
+        bindTile(
+            rootId = R.id.rowDiscord,
+            titleId = R.id.tvTitleDiscord,
+            subtitleId = R.id.tvSubtitleDiscord,
+            title = getString(R.string.about_gitlab_title),
+            subtitle = gitlabUrl,
+            onClick = { openLink(gitlabUrl) },
+            copyValue = gitlabUrl
+        )
+
         bindTile(
             rootId = R.id.rowAppName,
             titleId = R.id.tvTitleAppName,
@@ -94,37 +121,24 @@ class AboutActivity : AppCompatActivity() {
             onClick = { PlayStoreUpdatePrompt.promptNow(this) },
             copyValue = versionName
         )
-
-        // If Play Store reports an update available, show a small hint inline.
-        PlayStoreUpdatePrompt.checkAvailability(this) { available ->
-            if (available) {
-                runCatching {
-                    val tv = findViewById<TextView>(R.id.tvSubtitleVersion)
-                    tv.text = getString(
-                        R.string.about_version_with_update,
-                        versionName,
-                        getString(R.string.update_available_inline)
-                    )
-                }
-            }
-        }
+        updateVersionSubtitleIfNeeded(versionName)
 
         bindTile(
             rootId = R.id.rowPackage,
             titleId = R.id.tvTitlePackage,
             subtitleId = R.id.tvSubtitlePackage,
             title = getString(R.string.about_package),
-            subtitle = pkg,
+            subtitle = packageNameLabel,
             onClick = {
                 runCatching {
                     startActivity(
                         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = "package:$pkg".toUri()
+                            data = "package:$packageNameLabel".toUri()
                         }
                     )
                 }
             },
-            copyValue = pkg
+            copyValue = packageNameLabel
         )
 
         bindTile(
@@ -132,9 +146,9 @@ class AboutActivity : AppCompatActivity() {
             titleId = R.id.tvTitleAndroid,
             subtitleId = R.id.tvSubtitleAndroid,
             title = getString(R.string.about_android),
-            subtitle = androidVersion,
+            subtitle = androidVersionLabel,
             onClick = null,
-            copyValue = androidVersion
+            copyValue = androidVersionLabel
         )
 
         bindTile(
@@ -142,12 +156,11 @@ class AboutActivity : AppCompatActivity() {
             titleId = R.id.tvTitleDevice,
             subtitleId = R.id.tvSubtitleDevice,
             title = getString(R.string.about_device),
-            subtitle = deviceModel,
+            subtitle = deviceModelLabel,
             onClick = null,
-            copyValue = deviceModel
+            copyValue = deviceModelLabel
         )
 
-        // developer info
         bindTile(
             rootId = R.id.rowDeveloper,
             titleId = R.id.tvTitleDeveloper,
@@ -163,10 +176,15 @@ class AboutActivity : AppCompatActivity() {
             titleId = R.id.tvTitleWebsite,
             subtitleId = R.id.tvSubtitleWebsite,
             title = getString(R.string.about_older_versions_label),
-            subtitle = downloads,
-            onClick = { openUrl(downloads) },
-            copyValue = downloads
+            subtitle = downloadsUrl,
+            onClick = { openUrl(downloadsUrl) },
+            copyValue = downloadsUrl
         )
+    }
+
+    private fun bindContactTiles() {
+        val discordUrl = getString(R.string.about_discord_url)
+        val emailAddress = getString(R.string.about_mail_address)
 
         bindTileWithCopyButton(
             rootId = R.id.rowDiscord,
@@ -174,9 +192,9 @@ class AboutActivity : AppCompatActivity() {
             subtitleId = R.id.tvSubtitleDiscord,
             copyBtnId = R.id.btnCopyDiscord,
             title = getString(R.string.about_discord),
-            subtitle = discord,
-            onClick = { openUrl(discord) },
-            copyValue = discord,
+            subtitle = discordUrl,
+            onClick = { openUrl(discordUrl) },
+            copyValue = discordUrl,
             copiedToast = getString(R.string.about_discord_copied)
         )
 
@@ -186,11 +204,33 @@ class AboutActivity : AppCompatActivity() {
             subtitleId = R.id.tvSubtitleMail,
             copyBtnId = R.id.btnCopyMail,
             title = getString(R.string.about_mail),
-            subtitle = email,
-            onClick = { openMail(email) },
-            copyValue = email,
+            subtitle = emailAddress,
+            onClick = { openMail(emailAddress) },
+            copyValue = emailAddress,
             copiedToast = getString(R.string.about_mail_copied)
         )
+    }
+
+    private fun updateVersionSubtitleIfNeeded(versionName: String) {
+        PlayStoreUpdatePrompt.checkAvailability(this) { available ->
+            if (available) {
+                runCatching {
+                    val subtitleView = findViewById<TextView>(R.id.tvSubtitleVersion)
+                    subtitleView.text = getString(
+                        R.string.about_version_with_update,
+                        versionName,
+                        getString(R.string.update_available_inline)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun resolveVersionName(): String {
+        return runCatching {
+            val packageInfo = packageManager.getPackageInfo(packageName, 0)
+            packageInfo.versionName ?: "-"
+        }.getOrDefault("-")
     }
 
     private fun bindTile(
@@ -203,15 +243,14 @@ class AboutActivity : AppCompatActivity() {
         copyValue: String
     ) {
         val root = findViewById<View>(rootId)
-        val tvTitle = findViewById<TextView>(titleId)
-        val tvSubtitle = findViewById<TextView>(subtitleId)
+        val titleView = findViewById<TextView>(titleId)
+        val subtitleView = findViewById<TextView>(subtitleId)
 
-        tvTitle.text = title
-        tvSubtitle.text = subtitle
+        titleView.text = title
+        subtitleView.text = subtitle
 
         root.isClickable = onClick != null
         root.setOnClickListener { onClick?.invoke() }
-
         root.setOnLongClickListener {
             copyToClipboard(copyValue)
             Toast.makeText(this, getString(R.string.copied), Toast.LENGTH_SHORT).show()
@@ -232,57 +271,56 @@ class AboutActivity : AppCompatActivity() {
     ) {
         bindTile(rootId, titleId, subtitleId, title, subtitle, onClick, copyValue)
 
-        val btn = findViewById<ImageButton>(copyBtnId)
-        btn.setOnClickListener {
+        val copyButton = findViewById<ImageButton>(copyBtnId)
+        copyButton.setOnClickListener {
             copyToClipboard(copyValue)
             Toast.makeText(this, copiedToast, Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun copyToClipboard(text: String) {
-        val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        cm.setPrimaryClip(ClipData.newPlainText("Switchly", text))
+        val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        clipboardManager.setPrimaryClip(ClipData.newPlainText("Switchly", text))
     }
 
     private fun openMail(email: String) {
-        val i = Intent(Intent.ACTION_SENDTO).apply {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = "mailto:$email".toUri()
             putExtra(Intent.EXTRA_SUBJECT, getString(R.string.about_mail_subject))
         }
+
         runCatching {
-            startActivity(Intent.createChooser(i, getString(R.string.about_mail)))
+            startActivity(Intent.createChooser(intent, getString(R.string.about_mail)))
         }.onFailure {
             Toast.makeText(this, getString(R.string.about_no_mail_app), Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun openUrl(url: String) {
-        val i = Intent(Intent.ACTION_VIEW, url.toUri())
-        runCatching { startActivity(i) }.onFailure {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+        runCatching { startActivity(intent) }.onFailure {
             Toast.makeText(this, getString(R.string.about_no_browser), Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun buildDeviceLabel(): String {
-        val manu = Build.MANUFACTURER.orEmpty().trim()
-        val model = Build.MODEL.orEmpty().trim()
-        val prettyManu = manu.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-        return when {
-            model.isBlank() -> prettyManu.ifBlank { "-" }
-            prettyManu.isBlank() -> model
-            model.startsWith(prettyManu, ignoreCase = true) -> model
-            else -> "$prettyManu $model"
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressedDispatcher.onBackPressed()
-        return true
     }
 
     private fun openLink(url: String) {
         runCatching {
             startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+        }
+    }
+
+    private fun buildDeviceLabel(): String {
+        val manufacturer = Build.MANUFACTURER.orEmpty().trim()
+        val model = Build.MODEL.orEmpty().trim()
+        val prettyManufacturer = manufacturer.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase() else it.toString()
+        }
+
+        return when {
+            model.isBlank() -> prettyManufacturer.ifBlank { "-" }
+            prettyManufacturer.isBlank() -> model
+            model.startsWith(prettyManufacturer, ignoreCase = true) -> model
+            else -> "$prettyManufacturer $model"
         }
     }
 }

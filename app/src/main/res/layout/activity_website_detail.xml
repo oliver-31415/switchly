@@ -171,7 +171,6 @@
                     android:layout_weight="1"
                     android:text="@string/usage_range_year" />
 
-
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRangeOverall"
                     style="@style/Switchly.OutlinedButton.CompactSegment"

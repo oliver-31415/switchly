@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Topbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,6 +18,15 @@
             android:minHeight="?attr/actionBarSize"
             app:title="@string/settings_changelog_title"
             app:navigationIcon="@drawable/arrow_back_ios_24" />
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayoutReleaseType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            app:tabGravity="fill"
+            app:tabIndicatorFullWidth="false"
+            app:tabMode="fixed" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView

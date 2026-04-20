@@ -74,6 +74,8 @@
     <string name="support_open_email">E-Mail öffnen</string>
     <string name="support_copy_email">E-Mail kopieren</string>
     <string name="support_copied">E-Mail kopiert</string>
+    <string name="support_copy_latest_logs">Neueste Logs kopieren</string>
+    <string name="support_logs_copied">Neueste Logs kopiert</string>
     <string name="support_include_debug">Debug-Infos anhängen</string>
     <string name="support_include_advanced_debug">Erweiterte Diagnoseinfos anhängen</string>
     <string name="support_debug_preface">Bitte beschreibe dein Problem oberhalb dieser Zeile.</string>
@@ -127,4 +129,8 @@
     <string name="changelog_section_fixed">Behoben</string>
     <string name="changelog_section_removed">Entfernt</string>
     <string name="changelog_section_other">Sonstiges</string>
+    <string name="changelog_tab_public">Öffentlich</string>
+    <string name="changelog_tab_beta">Beta</string>
+    <string name="support_include_logs">Logs anhängen</string>
+    <string name="support_latest_logs_heading">Neueste Logs</string>
 </resources>

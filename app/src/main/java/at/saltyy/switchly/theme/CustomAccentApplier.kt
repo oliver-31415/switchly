@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.theme
 
 import android.app.Activity
@@ -605,7 +624,7 @@ object CustomAccentApplier {
     private fun getOrCreateEditor(tv: TextView): Any? = null
 
     /**
-     * Force-tint text selection/insertion handles (the small dot/tear-drop shown when placing the cursor or selecting text). 
+     * Force-tint text selection/insertion handles (the small dot/tear-drop shown when placing the cursor or selecting text).
      * This is separate from the cursor drawable and can keep the theme default green even when the cursor itself is tinted.
      */
     private fun tintEditTextSelectionHandles(et: EditText, accent: Int) {
@@ -693,7 +712,7 @@ object CustomAccentApplier {
                 }
         }
 
-        // Some Android versions create the actual HandleView drawables lazily when the handle is shown (which can be slightly delayed after focus). 
+        // Some Android versions create the actual HandleView drawables lazily when the handle is shown (which can be slightly delayed after focus).
         // If so, tint those live drawables as well.
         runCatching { tintLiveHandleViews(et, accent) }
     }

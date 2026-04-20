@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.profiles
 
 import android.content.Context
@@ -19,6 +38,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.theme.AccentColor
@@ -40,20 +60,23 @@ import kotlinx.coroutines.launch
 class ManageProfilesActivity : AppCompatActivity() {
 
     private fun isProfileLockActive(): Boolean {
-        // Use the persisted base state so temporary schedule/temp-disable changes do not make profile switching appear to randomly lock or unlock.
-        val enabled = SwitchModeStore.isBaseEnabled(this)
-        if (!enabled) return false
+        val enabled = SwitchModeStore.isEnabled(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this)
+        val emergencyPaused = EmergencyBypassStore.isPaused(this)
+        if (!enabled && !emergencyActive) return false
 
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        if (requireNfc) return true
+        if (requireNfc || emergencyActive || (enabled && emergencyPaused)) return true
 
         return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
     }
 
     private fun profileLockReasonMessageRes(): Int {
-        val enabled = SwitchModeStore.isBaseEnabled(this)
+        val enabled = SwitchModeStore.isEnabled(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this)
+        val emergencyPaused = EmergencyBypassStore.isPaused(this)
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        return if (enabled && !requireNfc) {
+        return if (enabled && !requireNfc && !emergencyActive && !emergencyPaused) {
             R.string.toast_disable_switchly_to_switch_profiles
         } else {
             R.string.toast_cannot_change_profile_while_locked
@@ -272,7 +295,8 @@ class ManageProfilesActivity : AppCompatActivity() {
         val input = content.findViewById<TextInputEditText>(R.id.etProfile)
 
         input.setText(initialValue)
-        input.setSelection(initialValue.length)
+        val currentLength = input.text?.length ?: 0
+        input.setSelection(currentLength.coerceAtMost(input.length()))
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(title)

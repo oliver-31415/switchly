@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.settings
 
 import android.content.Context
@@ -13,6 +32,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.security.AppLockManager
 import at.saltyy.switchly.security.AppLockStore
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -57,6 +77,7 @@ class AppLockActivity : AppCompatActivity() {
             if (AppLockStore.matchesPin(this, pin)) {
                 unlockSuccess()
             } else {
+                AppLogStore.append(this, "AppLock", "Unlock failed reason=pin_mismatch")
                 Toast.makeText(this, R.string.app_lock_pin_incorrect, Toast.LENGTH_SHORT).show()
             }
         }
@@ -77,6 +98,7 @@ class AppLockActivity : AppCompatActivity() {
 
     private fun promptBiometric() {
         if (!isBiometricAvailable()) {
+            AppLogStore.append(this, "AppLock", "Unlock failed reason=biometric_unavailable")
             Toast.makeText(this, R.string.app_lock_biometric_not_available, Toast.LENGTH_SHORT).show()
             return
         }

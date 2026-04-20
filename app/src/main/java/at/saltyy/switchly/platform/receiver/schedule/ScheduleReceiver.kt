@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.platform.receiver.schedule
 
 import android.Manifest
@@ -18,6 +37,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
@@ -58,6 +78,9 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
 
         val schedules = ScheduleStore.getAll(ctx).filter { it.enabled }
+        if (schedules.isNotEmpty()) {
+            AppLogStore.append(ctx, "Schedule", "Evaluating schedules profile=${ProfileStore.getCurrent(ctx) ?: "-"}")
+        }
 
         // "Trigger" schedules (Wi-Fi/BT based) use wifiSsid/btDeviceName.
         schedules.filter { !it.wifiSsid.isNullOrBlank() }
@@ -88,13 +111,13 @@ class ScheduleReceiver : BroadcastReceiver() {
             }
         }
 
-        // On some devices ("use mobile data"/VPN/poor Wi-Fi), the active/default network can be CELLULAR even while Wi-Fi is still connected. 
+        // On some devices ("use mobile data"/VPN/poor Wi-Fi), the active/default network can be CELLULAR even while Wi-Fi is still connected.
         // We therefore treat Wi-Fi as connected when *any* network has TRANSPORT_WIFI.
         val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val wifiCaps = currentWifiCaps(cm)
         val wifiConnected = wifiCaps != null
 
-        // If Wi-Fi is connected but SSID hasn't been cached yet (or was unavailable during service start), attempt to read it directly here. 
+        // If Wi-Fi is connected but SSID hasn't been cached yet (or was unavailable during service start), attempt to read it directly here.
         // This prevents "Wi-Fi schedule does nothing" when enabling a schedule while already connected, and also makes time-boundary ticks independent from the Wi-Fi service timing.
         if (needsWifiSsid && wifiConnected && ssid.isNullOrBlank()) {
             // Try to read SSID directly from the current Wi-Fi network capabilities (even if not default).
@@ -145,6 +168,7 @@ class ScheduleReceiver : BroadcastReceiver() {
 
         // BT name guard
         if (needsBtInfo && btName.isNullOrBlank() && btAddr.isNullOrBlank() && !hasBtEvent) {
+            AppLogStore.append(ctx, "Schedule", "Match failed reason=no_active_schedule")
             updateNextAlarmAndNotifyIfChanged(ctx)
             return
         }
@@ -307,6 +331,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
 
         val target = pickWinningMatch(matches, nowMinutes)
+        AppLogStore.append(ctx, "Schedule", "Match success day=$todayBit time=$nowMinutes")
         dbg("matches=${matches.size} -> winner id=${target.id} profile=${target.profile} start=${target.startMinutes} end=${target.endMinutes} action=${target.action}")
         val source = when {
             !target.wifiSsid.isNullOrBlank() -> SOURCE_WIFI
@@ -468,6 +493,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         if (stateWriteBlocked && !newEnabled && SwitchModeStore.isNfcRequiredForDisable(ctx)) {
             // Visible in schedules screen banner so users understand why end-times may not disable.
             ScheduleRuntimeStore.markDisableBlockedByNfc(ctx)
+            AppLogStore.append(ctx, "Schedule", "Match failed reason=disable_blocked_by_nfc")
             dbg("Schedule disable blocked by NFC lock (id=${s.id}, source=$source)")
         }
 
@@ -480,6 +506,8 @@ class ScheduleReceiver : BroadcastReceiver() {
         if (profileChanged || (stateActuallyChanged && baseEnabledAfter)) {
             BlockingRuntime.ensureRunning(ctx)
         }
+
+        AppLogStore.append(ctx, "Schedule", "Applied scheduled state enabled=$baseEnabledAfter")
 
         if (isRangeEnableDisable || isRangeDisableEnable) {
             ScheduleRuntimeStore.setActiveRangeScheduleId(ctx, s.id)

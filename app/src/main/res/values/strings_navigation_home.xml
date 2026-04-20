@@ -38,10 +38,10 @@
     </plurals>
     <!-- DASHBOARD - Temporary disable controls -->
     <string name="dashboard_temp_chip">TEMP</string>
-    <string name="dashboard_temp_badge_enabled">TEMP ON • %1$s</string>
-    <string name="dashboard_temp_badge_disabled">TEMP OFF • %1$s</string>
     <string name="dashboard_temp_remaining_fmt">Remaining: %1$s</string>
     <string name="dashboard_temp_remaining_placeholder">Remaining: 00:00</string>
+    <string name="dashboard_temp_status_enabled">Temporarily enabled • %1$s left</string>
+    <string name="dashboard_temp_status_disabled">Temporarily disabled • %1$s left</string>
     <string name="dashboard_temp_sheet_sub_enable">Enable blocking for a short time</string>
     <string name="dashboard_temp_sheet_sub_disable">Disable Switchly for a short time</string>
     <string name="dashboard_temp_sheet_sub_disable_locked">Temporary disable is locked (NFC lock is active). Use Emergency Unlock if needed.</string>
@@ -68,6 +68,10 @@
     <string name="dashboard_tile_qr_sub">Tap to scan • hold to generate</string>
     <string name="dashboard_tile_barcode">Barcode</string>
     <string name="dashboard_tile_barcode_sub">Tap to scan • hold to manage</string>
+    <string name="dashboard_tile_write_nfc">Write NFC tag</string>
+    <string name="dashboard_tile_write_nfc_sub">Tap to write • hold for paired tags</string>
+    <string name="dashboard_tile_blocked_notifications">Blocked notifications</string>
+    <string name="dashboard_tile_blocked_notifications_sub">Inbox &amp; activity</string>
     <string name="dashboard_unavailable_hint_short">Not installed on this device.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Not installed on this device.\nOpen “Pick apps” to remove.</string>
     <string name="dashboard_quick_actions_toggle">Toggle quick actions</string>
@@ -77,6 +81,14 @@
     <string name="blocked_list_title">Blocked apps</string>
     <string name="blocked_app_default">App blocked</string>
     <string name="blocked_message">You can’t use this app while Switchly is active.</string>
+    <string name="dashboard_blocked_app_action_edit_limits">Edit limits</string>
+    <string name="dashboard_blocked_app_limits_title">Edit limits</string>
+    <string name="dashboard_blocked_app_action_time_limit">Edit time limit</string>
+    <string name="dashboard_blocked_app_action_open_limit">Edit open limit</string>
+    <string name="dashboard_blocked_app_action_remove">Remove app</string>
+    <string name="dashboard_blocked_app_remove_title">Remove app</string>
+    <string name="dashboard_blocked_app_remove_message">Remove %1$s from the current profile?</string>
+    <string name="dashboard_blocked_app_removed">%1$s removed</string>
     <string name="no_blocked_apps">No blocked apps</string>
     <string name="pick_apps">Pick apps</string>
     <string name="search_apps">Search apps</string>
@@ -99,6 +111,21 @@
     <string name="app_picker_settings_hint">Blocking Settings can make troubleshooting and permission changes harder.</string>
     <string name="app_picker_settings_warning_title">Block Settings anyway?</string>
     <string name="app_picker_settings_warning_message">Blocking Settings can make troubleshooting and permission changes harder.</string>
+    <string name="app_picker_play_store_hint">Play Store is safety-sensitive because it can install or update apps.</string>
+    <string name="app_picker_play_store_warning_title">Block Play Store anyway?</string>
+    <string name="app_picker_play_store_warning_message">Blocking Play Store can make app installs, updates, and recovery harder.</string>
+    <string name="app_picker_installer_hint">Package installer is safety-sensitive because it installs or updates apps.</string>
+    <string name="app_picker_installer_warning_title">Block package installer anyway?</string>
+    <string name="app_picker_installer_warning_message">Blocking the package installer can make app installs, updates, and recovery harder.</string>
+    <string name="app_picker_permissions_hint">Permission controller is safety-sensitive because it manages important Android permissions.</string>
+    <string name="app_picker_permissions_warning_title">Block permission controller anyway?</string>
+    <string name="app_picker_permissions_warning_message">Blocking the permission controller can make permissions and troubleshooting harder.</string>
+    <string name="app_picker_files_hint">Files and document picker apps can be important for backups, restores, exports, and recovery.</string>
+    <string name="app_picker_files_warning_title">Block files app anyway?</string>
+    <string name="app_picker_files_warning_message">Blocking files or document picker apps can make backups, restores, exports, and recovery harder.</string>
+    <string name="app_picker_browser_hint">Browsers are often used for downloads, support, sign-in, and recovery steps.</string>
+    <string name="app_picker_browser_warning_title">Block browser app anyway?</string>
+    <string name="app_picker_browser_warning_message">Blocking a browser can make downloads, support, and recovery steps harder.</string>
     <string name="continue_label">Continue</string>
     <string name="close">Close</string>
     <plurals name="app_picker_select_all_skipped_notice">
@@ -120,4 +147,12 @@
     <string name="main_development_info_message">Switchly is still in development. I test it as carefully as I can with open beta phases, but Android behaves differently across devices, so I cannot catch every issue on my own.\nIf something is not working right for you, please send me a mail.\n\nDownloads:\nswitchly.saltyy.at/pages/download</string>
     <string name="main_info_contact_action">Contact</string>
     <string name="main_info_older_versions_action">Downloads</string>
+
+    <string name="app_picker_settings_requirements_title">Emergency Unlock required</string>
+    <string name="app_picker_settings_requirements_message">To block Settings, advanced protection must be enabled and Emergency Unlock with an Emergency PIN must already be configured.</string>
+    <string name="app_picker_settings_second_warning_title">Are you absolutely sure?</string>
+    <string name="app_picker_settings_second_warning_message">Blocking Settings can make your phone harder to recover if another issue occurs. This option is intended for advanced users only.</string>
+    <string name="app_picker_block_settings_confirm">Block Settings</string>
+    <string name="app_picker_settings_temporarily_allowed">Settings temporarily allowed to prevent a lockout.</string>
+
 </resources>

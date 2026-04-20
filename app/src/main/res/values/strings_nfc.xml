@@ -39,8 +39,6 @@
     <string name="nfc_action_emergency_tag_removed">Emergency disable tag action is no longer supported. Please use the in-app Emergency unlock.</string>
     <string name="nfc_duration_hint">Temporary duration</string>
     <string name="nfc_temp_hint_timer_behavior">Temporary mode runs for the selected time, then returns to your previous state automatically.</string>
-    <string name="nfc_temp_hint_profile_disable">Note: Profile temporary disable only applies if that profile is currently active.</string>
-    <string name="nfc_temp_hint_profile_enable">Note: Profile temporary enable temporarily activates this profile.</string>
     <string name="nfc_temp_hint_profile_disable_toast">Heads-up: Profile temporary disable only applies if that profile is currently active.</string>
     <string name="nfc_temp_hint_profile_enable_toast">Heads-up: Profile temporary enable temporarily activates this profile.</string>
     <string name="nfc_ready_to_write">Ready to write</string>

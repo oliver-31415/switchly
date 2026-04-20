@@ -1,13 +1,32 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.schedule
 
 import android.Manifest
 import android.app.AlarmManager
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Typeface
 import android.location.LocationManager
 import android.net.Uri
 import android.net.wifi.ScanResult
@@ -19,6 +38,9 @@ import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -27,6 +49,8 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ImageButton
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,6 +63,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
+import at.saltyy.switchly.util.TimeFormatPrefs
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -374,6 +399,10 @@ class SchedulesActivity : AppCompatActivity() {
                 }
                 true
             }
+            R.id.action_info -> {
+                showScheduleActionInfoDialog()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -539,6 +568,73 @@ class SchedulesActivity : AppCompatActivity() {
         val dialog = builder.create()
         dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
         dialog.show()
+    }
+
+    private fun showScheduleActionInfoDialog() {
+        val bodyView = TextView(this).apply {
+            text = buildScheduleActionInfoBody()
+            textSize = 14f
+            setLineSpacing(0f, 1.18f)
+        }
+
+        val scroll = ScrollView(this).apply {
+            val padH = (20 * resources.displayMetrics.density).toInt()
+            val padV = (8 * resources.displayMetrics.density).toInt()
+            setPadding(padH, padV, padH, padV)
+            addView(
+                bodyView,
+                android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                )
+            )
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.schedules_action_info_title)
+            .setView(scroll)
+            .setPositiveButton(R.string.ok, null)
+            .showAccented()
+    }
+
+    private fun buildScheduleActionInfoBody(): CharSequence {
+        val sb = SpannableStringBuilder()
+
+        fun addItem(title: String, desc: String) {
+            val titleStart = sb.length
+            sb.append("• ").append(title)
+            sb.setSpan(
+                StyleSpan(Typeface.BOLD),
+                titleStart + 2,
+                titleStart + 2 + title.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            sb.append("  ").append(desc.trim()).append('\n')
+        }
+
+        addItem(
+            getString(R.string.schedules_action_enable),
+            getString(R.string.schedules_action_info_enable_body)
+        )
+        addItem(
+            getString(R.string.schedules_action_disable),
+            getString(R.string.schedules_action_info_disable_body)
+        )
+        addItem(
+            getString(R.string.schedules_action_toggle),
+            getString(R.string.schedules_action_info_toggle_body)
+        )
+        addItem(
+            getString(R.string.schedules_action_enable_disable),
+            getString(R.string.schedules_action_info_enable_disable_body)
+        )
+        addItem(
+            getString(R.string.schedules_action_disable_enable),
+            getString(R.string.schedules_action_info_disable_enable_body)
+        )
+
+        sb.append(getString(R.string.schedules_action_info_tip))
+        return sb
     }
 
     private fun tintPickButton(button: MaterialButton) {
@@ -1536,9 +1632,7 @@ class SchedulesActivity : AppCompatActivity() {
         }
 
         fun formatMinutes(m: Int): String {
-            val h = m / 60
-            val mm = m % 60
-            return String.format(Locale.getDefault(), "%02d:%02d", h, mm)
+            return TimeFormatPrefs.formatMinutesOfDay(this, m)
         }
 
         fun formatYmd(ymd: Int): String {
@@ -1781,21 +1875,21 @@ class SchedulesActivity : AppCompatActivity() {
             val h = initial / 60
             val m = initial % 60
 
+            val picker = MaterialTimePicker.Builder()
+                .setTimeFormat(if (TimeFormatPrefs.is24Hour(this)) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
+                .setHour(h)
+                .setMinute(m)
+                .build()
+
+            picker.addOnPositiveButtonClickListener {
+                onPicked(picker.hour * 60 + picker.minute)
+                updateLabels()
+            }
+
+            val tag = "switchly_timepicker_${SystemClock.uptimeMillis()}"
+            picker.show(supportFragmentManager, tag)
+
             if (CustomAccentApplier.isCustomAccentEnabled(this)) {
-                val picker = MaterialTimePicker.Builder()
-                    .setTimeFormat(TimeFormat.CLOCK_24H)
-                    .setHour(h)
-                    .setMinute(m)
-                    .build()
-
-                picker.addOnPositiveButtonClickListener {
-                    onPicked(picker.hour * 60 + picker.minute)
-                    updateLabels()
-                }
-
-                val tag = "switchly_timepicker_${SystemClock.uptimeMillis()}"
-                picker.show(supportFragmentManager, tag)
-
                 window.decorView.post {
                     val d = picker.dialog
                     val decor = d?.window?.decorView
@@ -1809,13 +1903,7 @@ class SchedulesActivity : AppCompatActivity() {
                         }
                     }
                 }
-                return
             }
-
-            TimePickerDialog(this, { _, hourOfDay, minute ->
-                onPicked(hourOfDay * 60 + minute)
-                updateLabels()
-            }, h, m, true).show()
         }
 
         fun pickDate(initialYmd: Int, onPicked: (Int) -> Unit) {

@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.settings
 
 import android.content.Context
@@ -179,6 +198,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
 
         // --- Switches (In-app)
         val switchEnablePairedUids = findViewById<SwitchMaterial>(R.id.switchEnablePairedUids)
+        val switchAutoPairOnWrite = findViewById<SwitchMaterial>(R.id.switchAutoPairOnWrite)
 
         // Rows clickable
         val rowModeSchedule = findViewById<View>(R.id.rowModeSchedule)
@@ -214,6 +234,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         val rowEmergency = findViewById<View>(R.id.rowEmergency)
         val rowShowQuickActions = findViewById<View>(R.id.rowShowQuickActions)
         val rowEnablePairedUids = findViewById<View>(R.id.rowEnablePairedUids)
+        val rowAutoPairOnWrite = findViewById<View>(R.id.rowAutoPairOnWrite)
 
         addInlineDetailsAction(
             row = rowModeSchedule,
@@ -335,6 +356,13 @@ class ToggleOptionsActivity : AppCompatActivity() {
             detailsRes = R.string.toggle_detail_limit_temp_disable_tags
         )
         addInlineDetailsAction(
+            row = rowAutoPairOnWrite,
+            switchView = switchAutoPairOnWrite,
+            titleRes = R.string.pref_auto_pair_on_write_title,
+            summaryRes = R.string.pref_auto_pair_on_write_summary,
+            detailsRes = R.string.toggle_detail_auto_pair_on_write
+        )
+        addInlineDetailsAction(
             row = rowQuickTile,
             switchView = switchQuickTile,
             titleRes = R.string.pref_qs_tile_title,
@@ -421,6 +449,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
         switchEmergency.isChecked = EmergencyBypassStore.isFeatureEnabled(ctx)
         switchShowQuickActions.isChecked = sp.getBoolean(KEY_SHOW_QUICK_ACTIONS, true)
         switchEnablePairedUids.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+        switchAutoPairOnWrite.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, false)
         switchQuickTile.isChecked = sp.getBoolean(KEY_QS_TILE_REQUESTED, false)
 
         fun modeLabel(mode: AutomationModeStore.Mode): String = when (mode) {
@@ -476,7 +505,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
             // Always relevant
             rowMixedAllowAppPicking.visibility = View.VISIBLE
             rowMixedAllowProfileSwitching.visibility = View.VISIBLE
-            rowAllowButtonEnable.visibility = View.VISIBLE
+            rowAllowButtonEnable.visibility = if (showMixedOnly && switchMixedAllowButton.isChecked) View.GONE else View.VISIBLE
 
             // Conditional
             rowMixedAllowScheduleEditing.visibility =
@@ -591,6 +620,9 @@ class ToggleOptionsActivity : AppCompatActivity() {
         rowEnablePairedUids.setOnClickListener {
             switchEnablePairedUids.toggle()
         }
+        rowAutoPairOnWrite.setOnClickListener {
+            switchAutoPairOnWrite.toggle()
+        }
 
         // Quick Tile: switch triggers add flow, disabling shows how-to-remove hint
         val addQuickTile: () -> Unit = {
@@ -688,6 +720,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
                 return@setOnCheckedChangeListener
             }
             AutomationModeStore.setMixedAllowButton(ctx, isChecked)
+            refreshMixedChannelInteractivity()
         }
 
         switchMixedAllowAppPicking.setOnCheckedChangeListener { buttonView, isChecked ->
@@ -743,7 +776,6 @@ class ToggleOptionsActivity : AppCompatActivity() {
             sp.edit { putBoolean(BlockingToggleKeys.KEY_LIMIT_TEMP_DISABLE_TAGS, isChecked) }
         }
 
-
         // Autostart
         switchAutostart.setOnCheckedChangeListener { _, isChecked ->
             AutostartStore.setEnabled(ctx, isChecked)
@@ -780,6 +812,9 @@ class ToggleOptionsActivity : AppCompatActivity() {
         // Blocking master toggles
         switchEnablePairedUids.setOnCheckedChangeListener { _, isChecked ->
             sp.edit { putBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, isChecked) }
+        }
+        switchAutoPairOnWrite.setOnCheckedChangeListener { _, isChecked ->
+            sp.edit { putBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, isChecked) }
         }
         switchShowQuickActions.setOnCheckedChangeListener { _, isChecked ->
             sp.edit { putBoolean(KEY_SHOW_QUICK_ACTIONS, isChecked) }
@@ -1045,6 +1080,7 @@ class ToggleOptionsActivity : AppCompatActivity() {
 
         val scheduleEditingVisible = isSchedule || isMixed
         val nfcTagWritingVisible = isNfc || isMixed
+        val hideButtonEnableRow = isMixed && AutomationModeStore.isMixedAllowButton(this)
 
         // apply visibility again (safety sync)
         findViewById<View>(R.id.rowMixedAllowScheduleEditing)?.visibility =
@@ -1052,6 +1088,9 @@ class ToggleOptionsActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.rowMixedAllowNfcTagWriting)?.visibility =
             if (nfcTagWritingVisible) View.VISIBLE else View.GONE
+
+        findViewById<View>(R.id.rowAllowButtonEnable)?.visibility =
+            if (hideButtonEnableRow) View.GONE else View.VISIBLE
 
         val mixedRowAlpha = if (mixedLocked) 0.68f else 1f
         val mixedSwitchAlpha = if (mixedLocked) 0.58f else 1f

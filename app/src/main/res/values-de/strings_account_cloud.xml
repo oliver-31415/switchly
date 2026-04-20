@@ -3,29 +3,24 @@
     <!-- AUTH - Sign-in flow and configuration errors -->
     <string name="auth_sign_in_success">Mit Google angemeldet</string>
     <string name="auth_sign_in_cancelled">Anmeldung abgebrochen</string>
-    <string name="auth_sign_in_failed_generic">Anmeldung fehlgeschlagen</string>
-    <string name="auth_sign_in_failed_fmt">Anmeldung fehlgeschlagen: %1$s</string>
     <string name="auth_unexpected_error_sign_in">Unerwarteter Fehler bei der Anmeldung</string>
     <string name="auth_failed_to_process_google_token">Google-Token konnte nicht verarbeitet werden</string>
     <string name="auth_no_matching_google_accounts_found">Keine passenden Google-Konten gefunden</string>
-    <string name="auth_missing_google_server_client_id">Fehlende Google-Server-Client-ID (default_web_client_id). Prüfe die google-services.json und das Google-Services-Plugin.</string>
-    <string name="auth_firebase_not_configured">Firebase ist nicht konfiguriert (google-services.json fehlt?)</string>
+    <string name="auth_missing_google_server_client_id">Google-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
+    <string name="auth_firebase_not_configured">Cloud-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
     <!-- ACCOUNT - Account actions and sign-out state -->
     <string name="settings_account_action_delete">Konto löschen</string>
     <string name="settings_account_delete_confirm_title">Switchly-Konto löschen?</string>
     <string name="settings_account_delete_confirm_message">Dadurch werden deine Switchly-Cloud-Daten, Backups und lokalen Einstellungen gelöscht. Dies kann nicht rückgängig gemacht werden.</string>
-    <string name="account_delete_recent_login_required">Aus Sicherheitsgründen melde dich bitte erneut mit Google an und versuche dann, das Konto erneut zu löschen.</string>
+    <string name="account_delete_recent_login_required">Aus Sicherheitsgründen melde dich bitte erneut an und versuche dann, das Konto erneut zu löschen.</string>
     <string name="account_delete_failed_delete_account_fmt">Konto konnte nicht gelöscht werden: %1$s</string>
     <string name="account_delete_failed_delete_cloud_data_fmt">Cloud-Daten konnten nicht gelöscht werden: %1$s</string>
     <string name="account_delete_failed_delete_backups_fmt">Backups konnten nicht gelöscht werden: %1$s</string>
     <string name="account_deleted">Konto gelöscht</string>
-    <string name="pref_google_account_title">Google-Konto</string>
-    <string name="pref_google_account_summary_logged_out">Nicht mit Google angemeldet</string>
-    <string name="settings_google_dialog_title">Google-Konto</string>
-    <string name="settings_confirm_sign_out_message">Von deinem Google-Konto abmelden?</string>
-    <string name="settings_google_logged_in">Angemeldet</string>
+    <string name="pref_google_account_title">Konto</string>
+    <string name="pref_google_account_summary_logged_out">Nicht angemeldet</string>
+    <string name="settings_confirm_sign_out_message">Von deinem Konto abmelden?</string>
     <string name="settings_google_logged_out">Nicht angemeldet</string>
-    <string name="settings_google_signing_in">Anmeldung läuft…</string>
     <string name="settings_signed_out">Abgemeldet</string>
     <string name="deleted">Gelöscht</string>
     <string name="error_unknown">Unbekannter Fehler</string>
@@ -52,4 +47,40 @@
     <string name="settings_confirm_backup_message">Aktuelle Einstellungen und Profile in der Cloud sichern?</string>
     <string name="settings_confirm_restore_title">Wiederherstellen</string>
     <string name="settings_confirm_restore_message">Backup aus der Cloud laden und lokale Einstellungen überschreiben?</string>
+
+    <string name="auth_email_sign_in_success">Angemeldet</string>
+    <string name="auth_email_create_success">Konto erstellt. Bestätigungs-E-Mail wurde gesendet.</string>
+    <string name="auth_password_reset_email_sent">E-Mail zum Zurücksetzen wurde gesendet</string>
+    <string name="settings_account_dialog_title">Konto</string>
+    <string name="settings_account_logged_in">Angemeldet</string>
+    <string name="settings_account_logged_in_as">Angemeldet als %1$s</string>
+    <string name="settings_account_logged_out">Nicht angemeldet</string>
+    <string name="settings_account_signing_in">Anmeldung läuft…</string>
+    <string name="settings_account_action_sign_in">Anmelden</string>
+    <string name="settings_account_action_create">Konto erstellen</string>
+    <string name="settings_account_action_reset_password">Passwort zurücksetzen</string>
+    <string name="settings_account_continue_google">Mit Google fortfahren</string>
+    <string name="settings_account_sign_in_email">Mit E-Mail anmelden</string>
+    <string name="settings_account_create_email">Konto mit E-Mail erstellen</string>
+    <string name="settings_account_send_reset_email">E-Mail zum Zurücksetzen senden</string>
+    <string name="settings_account_email_hint">E-Mail-Adresse</string>
+    <string name="settings_account_password_hint">Passwort</string>
+    <string name="settings_account_invalid_email">Gib eine gültige E-Mail-Adresse ein</string>
+    <string name="settings_account_password_required">Gib dein Passwort ein</string>
+    <plurals name="settings_account_password_min_length">
+        <item quantity="one">Das Passwort muss mindestens %1$d Zeichen lang sein</item>
+        <item quantity="other">Das Passwort muss mindestens %1$d Zeichen lang sein</item>
+    </plurals>
+    <string name="settings_account_reset_password_message">Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten.</string>
+    <string name="auth_error_invalid_login">Ungültige E-Mail oder falsches Passwort</string>
+    <string name="auth_error_no_account_for_email">Kein Konto für diese E-Mail-Adresse gefunden</string>
+    <string name="auth_error_email_already_in_use">Für diese E-Mail existiert bereits ein Konto</string>
+    <string name="auth_error_weak_password">Wähle ein stärkeres Passwort</string>
+    <string name="auth_error_network">Netzwerkfehler. Bitte versuche es erneut.</string>
+    <string name="auth_error_too_many_requests">Zu viele Versuche. Bitte versuche es später erneut.</string>
+    <string name="auth_error_account_disabled">Dieses Konto wurde deaktiviert</string>
+    <string name="auth_error_sign_in_generic">Anmeldung nicht möglich</string>
+    <string name="auth_error_create_account_generic">Konto konnte nicht erstellt werden</string>
+    <string name="auth_error_reset_password_generic">E-Mail zum Zurücksetzen konnte nicht gesendet werden</string>
+
 </resources>

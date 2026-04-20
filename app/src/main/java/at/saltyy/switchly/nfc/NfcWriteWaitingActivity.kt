@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.nfc
 
 import android.app.PendingIntent
@@ -17,9 +36,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.textfield.TextInputEditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import androidx.preference.PreferenceManager
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 
@@ -191,11 +210,9 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
             val result = writeUriToTag(uri, tag)
             when (result) {
                 WriteResult.OK -> {
-                    val sp = PreferenceManager.getDefaultSharedPreferences(this)
-                    val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-                    if (pairedUidsEnabled) {
+                    if (shouldAutoPairOnWrite()) {
                         val uid = NfcTagUid.uidHex(tag)
-                        if (!uid.isNullOrBlank()) {
+                        if (uid != null) {
                             val isNew = NfcUidPairingStore.addPairedUidHex(this, uid)
                             if (isNew) {
                                 showPairMetaPrompt(uid) {
@@ -204,12 +221,11 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
                             } else {
                                 finishWithOk(uidHex = uid, alreadyPaired = true)
                             }
-                        } else {
-                            finishWithOk(uidHex = null)
+                            return@post
                         }
-                    } else {
-                        finishWithOk(uidHex = null)
                     }
+
+                    finishWithOk(uidHex = null)
                 }
                 WriteResult.TOO_SMALL -> finishWithError(RESULT_TOO_SMALL_STR)
                 WriteResult.NOT_WRITABLE -> finishWithError(RESULT_NOT_WRITABLE_STR)
@@ -222,6 +238,11 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         runCatching {
             nfcAdapter?.disableForegroundDispatch(this)
         }
+    }
+
+    private fun shouldAutoPairOnWrite(): Boolean {
+        return PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, false)
     }
 
     private fun showPairMetaPrompt(uid: String, onDone: () -> Unit) {

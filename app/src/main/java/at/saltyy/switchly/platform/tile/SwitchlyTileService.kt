@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.platform.tile
 
 import android.graphics.drawable.Icon
@@ -27,18 +46,28 @@ class SwitchlyTileService : TileService() {
 
     private fun toggleAndRefresh() {
         val ctx = this
+        val currentlyEnabled = SwitchModeStore.isEnabled(ctx)
+        val canChange = if (currentlyEnabled) {
+            AutomationModeStore.isTileAllowed(ctx)
+        } else {
+            AutomationModeStore.isTileAllowed(ctx) || AutomationModeStore.isButtonEnableAllowed(ctx)
+        }
 
-        if (!AutomationModeStore.isTileAllowed(ctx)) {
+        if (!canChange) {
+            val messageRes = if (currentlyEnabled && AutomationModeStore.isButtonEnableAllowed(ctx)) {
+                R.string.mode_blocked_button_disable_enable_only
+            } else {
+                R.string.mode_blocked_tile_action
+            }
             Toast.makeText(
                 applicationContext,
-                getString(R.string.mode_blocked_tile_action),
+                getString(messageRes),
                 Toast.LENGTH_SHORT
             ).show()
             refreshTile()
             return
         }
 
-        val currentlyEnabled = SwitchModeStore.isEnabled(ctx)
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(ctx)
 
         // Disable only via NFC, when lock is enabled

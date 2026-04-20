@@ -1,3 +1,22 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package at.saltyy.switchly.feature.about
 
 import android.os.Bundle
@@ -5,6 +24,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.google.android.material.tabs.TabLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
 import at.saltyy.switchly.R
@@ -15,10 +35,16 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import org.json.JSONObject
 
+private enum class ReleaseType {
+    PUBLIC,
+    BETA
+}
+
 private data class ReleaseNote(
     val version: String,
     val date: String,
     val lines: List<String>,
+    val releaseType: ReleaseType,
 )
 
 private enum class ChangeKind {
@@ -48,14 +74,38 @@ class WhatsNewActivity : AppCompatActivity() {
         window.statusBarColor = getColor(android.R.color.black)
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
 
-        renderReleaseNotes()
+        val notes = loadReleaseNotes()
+        setupReleaseTypeTabs(notes)
     }
 
-    private fun renderReleaseNotes() {
+    private fun setupReleaseTypeTabs(notes: List<ReleaseNote>) {
+        val tabLayout = findViewById<TabLayout>(R.id.tabLayoutReleaseType)
+        tabLayout.removeAllTabs()
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.changelog_tab_public).setTag(ReleaseType.PUBLIC))
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.changelog_tab_beta).setTag(ReleaseType.BETA))
+
+        fun select(type: ReleaseType) {
+            renderReleaseNotes(notes.filter { it.releaseType == type })
+        }
+
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                select((tab.tag as? ReleaseType) ?: ReleaseType.PUBLIC)
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+            override fun onTabReselected(tab: TabLayout.Tab) = Unit
+        })
+
+        // Render the initial tab explicitly because the first tab may already be selected by TabLayout and selecting it again does not always trigger the callback.
+        select(ReleaseType.PUBLIC)
+        tabLayout.getTabAt(0)?.select()
+    }
+
+    private fun renderReleaseNotes(notes: List<ReleaseNote>) {
         val container = findViewById<LinearLayout>(R.id.releaseNotesContainer)
         container.removeAllViews()
 
-        val notes = loadReleaseNotes()
         val inflater = LayoutInflater.from(this)
 
         notes.forEachIndexed { index, note ->
@@ -237,6 +287,12 @@ class WhatsNewActivity : AppCompatActivity() {
                 val version = r.optString("version").trim()
                 val date = r.optString("date").trim()
 
+                val releaseType = when (r.optString("releaseType").trim().lowercase()) {
+                    "beta" -> ReleaseType.BETA
+                    "public" -> ReleaseType.PUBLIC
+                    else -> if (version.lowercase().contains("beta")) ReleaseType.BETA else ReleaseType.PUBLIC
+                }
+
                 val lines = mutableListOf<String>()
                 val bodyArr = r.optJSONArray("body")
                 if (bodyArr != null) {
@@ -255,7 +311,8 @@ class WhatsNewActivity : AppCompatActivity() {
                     out += ReleaseNote(
                         version = version,
                         date = date,
-                        lines = lines
+                        lines = lines,
+                        releaseType = releaseType
                     )
                 }
             }

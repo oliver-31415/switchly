@@ -55,14 +55,32 @@
                         android:text="@string/support_desc"
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
-                    <TextView
-                        android:id="@+id/tvSupportEmail"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:text="@string/support_email_placeholder"
-                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
+                        <TextView
+                            android:id="@+id/tvSupportEmail"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/support_email_placeholder"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+                        <ImageButton
+                            android:id="@+id/btnCopyEmailInline"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/support_copy_email"
+                            android:padding="8dp"
+                            android:src="@drawable/content_copy_24"
+                            app:tint="?attr/colorOnSurface" />
+
+                    </LinearLayout>
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchIncludeDebug"
@@ -78,6 +96,14 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="@string/support_include_advanced_debug"
+                        android:checked="false" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchIncludeLogs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/support_include_logs"
                         android:checked="false" />
 
                     <LinearLayout
@@ -112,7 +138,7 @@
                             android:maxLines="2"
                             android:gravity="center"
                             android:minHeight="56dp"
-                            android:text="@string/support_copy_email" />
+                            android:text="@string/support_copy_latest_logs" />
 
                     </LinearLayout>
                 </LinearLayout>
