@@ -20,6 +20,7 @@
 package at.saltyy.switchly.data.prefs
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.time.LocalDate
 import java.time.ZoneId
@@ -37,19 +38,49 @@ object EmergencyBypassStore {
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
+     * Reads a Long from SharedPreferences while safely migrating old Int/String/Number values.
+     *
+     * Android SharedPreferences throws ClassCastException if a value was previously stored as Int
+     * and later read using getLong(). This keeps existing user data and fixes crashes after upgrades.
+     */
+    private fun getLongCompat(
+        sp: SharedPreferences,
+        key: String,
+        defaultValue: Long
+    ): Long {
+        return try {
+            sp.getLong(key, defaultValue)
+        } catch (_: ClassCastException) {
+            val migratedValue = when (val raw = sp.all[key]) {
+                is Long -> raw
+                is Int -> raw.toLong()
+                is Number -> raw.toLong()
+                is String -> raw.toLongOrNull() ?: defaultValue
+                else -> defaultValue
+            }
+
+            sp.edit {
+                putLong(key, migratedValue)
+            }
+
+            migratedValue
+        }
+    }
+
+    /**
      * Emergency Unlock is intended to reset per calendar day (local time).
      * Without this, users can pause yesterday's remaining time and resume it today while also getting today's fresh allowance (rollover).
      */
     private fun clearStateIfDayChanged(context: Context) {
         val sp = prefs(context)
 
-        val hasAnyState = sp.getLong(KEY_UNTIL, 0L) > 0L ||
+        val hasAnyState = getLongCompat(sp, KEY_UNTIL, 0L) > 0L ||
             sp.getBoolean(KEY_PAUSED, false) ||
-            sp.getLong(KEY_PAUSED_REMAINING_MS, 0L) > 0L
+            getLongCompat(sp, KEY_PAUSED_REMAINING_MS, 0L) > 0L
 
         if (!hasAnyState) return
 
-        val lastUsedDay = sp.getLong(KEY_LAST_USED_EPOCH_DAY, Long.MIN_VALUE)
+        val lastUsedDay = getLongCompat(sp, KEY_LAST_USED_EPOCH_DAY, Long.MIN_VALUE)
         val today = LocalDate.now(ZoneId.systemDefault()).toEpochDay()
 
         if (lastUsedDay != today) {
@@ -85,7 +116,8 @@ object EmergencyBypassStore {
         // If feature is disabled, treat it as not usable at all
         if (!isFeatureEnabled(context)) return false
 
-        val last = prefs(context).getLong(KEY_LAST_USED_EPOCH_DAY, Long.MIN_VALUE)
+        val sp = prefs(context)
+        val last = getLongCompat(sp, KEY_LAST_USED_EPOCH_DAY, Long.MIN_VALUE)
         val today = LocalDate.now(ZoneId.systemDefault()).toEpochDay()
         return last == today
     }
@@ -138,7 +170,9 @@ object EmergencyBypassStore {
         clearStateIfDayChanged(context)
         clearExpiredIfNeeded(context)
         if (isPaused(context)) return false
-        val until = prefs(context).getLong(KEY_UNTIL, 0L)
+
+        val sp = prefs(context)
+        val until = getLongCompat(sp, KEY_UNTIL, 0L)
         return until > System.currentTimeMillis()
     }
 
@@ -146,11 +180,12 @@ object EmergencyBypassStore {
     fun isPaused(context: Context): Boolean {
         if (!isFeatureEnabled(context)) return false
         clearStateIfDayChanged(context)
+
         val sp = prefs(context)
         val paused = sp.getBoolean(KEY_PAUSED, false)
         if (!paused) return false
 
-        val remaining = sp.getLong(KEY_PAUSED_REMAINING_MS, 0L)
+        val remaining = getLongCompat(sp, KEY_PAUSED_REMAINING_MS, 0L)
         if (remaining <= 0L) {
             sp.edit {
                 putBoolean(KEY_PAUSED, false)
@@ -158,6 +193,7 @@ object EmergencyBypassStore {
             }
             return false
         }
+
         return true
     }
 
@@ -172,24 +208,28 @@ object EmergencyBypassStore {
             putLong(KEY_PAUSED_REMAINING_MS, remaining)
             putLong(KEY_UNTIL, 0L)
         }
+
         return true
     }
 
     // Resume a paused emergency bypass. Returns true if state changed.
     fun resume(context: Context): Boolean {
         if (!isPaused(context)) return false
-        val remaining = prefs(context).getLong(KEY_PAUSED_REMAINING_MS, 0L)
+
+        val sp = prefs(context)
+        val remaining = getLongCompat(sp, KEY_PAUSED_REMAINING_MS, 0L)
         if (remaining <= 0L) {
             cancel(context)
             return false
         }
 
         val until = System.currentTimeMillis() + remaining
-        prefs(context).edit {
+        sp.edit {
             putLong(KEY_UNTIL, until)
             putBoolean(KEY_PAUSED, false)
             putLong(KEY_PAUSED_REMAINING_MS, 0L)
         }
+
         return true
     }
 
@@ -200,20 +240,23 @@ object EmergencyBypassStore {
     fun extend(context: Context, minutes: Int): Boolean {
         if (!isFeatureEnabled(context)) return false
         clearStateIfDayChanged(context)
+
         val extraMs = minutes.coerceAtLeast(1) * 60_000L
         val sp = prefs(context)
 
         return when {
             isPaused(context) -> {
-                val current = sp.getLong(KEY_PAUSED_REMAINING_MS, 0L).coerceAtLeast(0L)
+                val current = getLongCompat(sp, KEY_PAUSED_REMAINING_MS, 0L).coerceAtLeast(0L)
                 sp.edit { putLong(KEY_PAUSED_REMAINING_MS, current + extraMs) }
                 true
             }
+
             isActive(context) -> {
-                val until = sp.getLong(KEY_UNTIL, 0L)
+                val until = getLongCompat(sp, KEY_UNTIL, 0L)
                 sp.edit { putLong(KEY_UNTIL, until + extraMs) }
                 true
             }
+
             else -> false
         }
     }
@@ -224,11 +267,13 @@ object EmergencyBypassStore {
 
         clearStateIfDayChanged(context)
 
+        val sp = prefs(context)
+
         if (isPaused(context)) {
-            return prefs(context).getLong(KEY_PAUSED_REMAINING_MS, 0L).coerceAtLeast(0L)
+            return getLongCompat(sp, KEY_PAUSED_REMAINING_MS, 0L).coerceAtLeast(0L)
         }
 
-        val until = prefs(context).getLong(KEY_UNTIL, 0L)
+        val until = getLongCompat(sp, KEY_UNTIL, 0L)
         val diff = until - System.currentTimeMillis()
         return diff.coerceAtLeast(0L)
     }
@@ -236,12 +281,13 @@ object EmergencyBypassStore {
     // Minutes remaining (rounded up so sub-1min still shows as 1).
     fun minutesRemaining(context: Context): Int {
         val rem = getRemainingMillis(context)
-        return if (rem > 0L) ((rem + 59_999L)/60_000L).toInt() else 0
+        return if (rem > 0L) ((rem + 59_999L) / 60_000L).toInt() else 0
     }
 
     private fun clearExpiredIfNeeded(context: Context) {
         val sp = prefs(context)
-        val until = sp.getLong(KEY_UNTIL, 0L)
+        val until = getLongCompat(sp, KEY_UNTIL, 0L)
+
         if (until > 0L && until <= System.currentTimeMillis()) {
             sp.edit { putLong(KEY_UNTIL, 0L) }
         }

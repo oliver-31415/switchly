@@ -19,7 +19,6 @@
 
 package at.saltyy.switchly.feature.blocker
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -32,6 +31,8 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import at.saltyy.switchly.R
@@ -39,7 +40,7 @@ import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
 
-class BlockerActivity : Activity() {
+class BlockerActivity : ComponentActivity() {
 
     private lateinit var titleView: TextView
     private lateinit var appNameView: TextView
@@ -74,6 +75,12 @@ class BlockerActivity : Activity() {
         }
 
         setContentView(R.layout.activity_blocker)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleCloseAction()
+            }
+        })
 
         // Make window background follow current theme (prevents "always dark" background on some OEMs)
         runCatching {
@@ -133,10 +140,6 @@ class BlockerActivity : Activity() {
         tickRunning = false
         handler.removeCallbacks(tick)
         super.onPause()
-    }
-
-    override fun onBackPressed() {
-        handleCloseAction()
     }
 
     override fun onDestroy() {

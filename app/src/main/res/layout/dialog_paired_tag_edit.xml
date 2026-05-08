@@ -28,10 +28,10 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:endIconMode="none"
+            android:hint="@string/paired_tag_name_hint"
             app:boxStrokeColor="?attr/colorPrimary"
-            app:hintTextColor="?attr/colorPrimary"
-            android:hint="@string/paired_tag_name_hint">
+            app:endIconMode="none"
+            app:hintTextColor="?attr/colorPrimary">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etTagName"
@@ -49,10 +49,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            app:endIconMode="none"
+            android:hint="@string/paired_tag_note_hint"
             app:boxStrokeColor="?attr/colorPrimary"
-            app:hintTextColor="?attr/colorPrimary"
-            android:hint="@string/paired_tag_note_hint">
+            app:endIconMode="none"
+            app:hintTextColor="?attr/colorPrimary">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etTagNote"
@@ -64,6 +64,46 @@
                 android:maxLines="4"
                 android:minLines="2" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:id="@+id/readOnlyActionGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/paired_tag_readonly_action_section_title"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/paired_tag_readonly_action_section_hint"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="@string/paired_tag_readonly_action_label"
+                app:boxStrokeColor="?attr/colorPrimary"
+                app:endIconMode="dropdown_menu"
+                app:hintTextColor="?attr/colorPrimary">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/acReadOnlyAction"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
@@ -97,10 +137,10 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:endIconMode="none"
+                    android:hint="@string/paired_tag_daily_limit_label"
                     app:boxStrokeColor="?attr/colorPrimary"
-                    app:hintTextColor="?attr/colorPrimary"
-                    android:hint="@string/paired_tag_daily_limit_label">
+                    app:endIconMode="none"
+                    app:hintTextColor="?attr/colorPrimary">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etTagDailyLimit"
@@ -132,10 +172,10 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:endIconMode="none"
+                    android:hint="@string/paired_tag_cooldown_label"
                     app:boxStrokeColor="?attr/colorPrimary"
-                    app:hintTextColor="?attr/colorPrimary"
-                    android:hint="@string/paired_tag_cooldown_label">
+                    app:endIconMode="none"
+                    app:hintTextColor="?attr/colorPrimary">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etTagCooldownMinutes"
@@ -155,7 +195,6 @@
 
         </LinearLayout>
 
-        <!-- Buttons (custom row so spacing/tint is consistent with the selected accent color) -->
         <LinearLayout
             android:id="@+id/rowButtons"
             android:layout_width="match_parent"
@@ -192,8 +231,8 @@
                 style="@style/Switchly.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textStyle="bold"
-                android:text="@string/save" />
+                android:text="@string/save"
+                android:textStyle="bold" />
         </LinearLayout>
 
     </LinearLayout>

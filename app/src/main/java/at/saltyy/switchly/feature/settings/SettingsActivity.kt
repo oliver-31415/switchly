@@ -22,17 +22,21 @@ package at.saltyy.switchly.feature.settings
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import androidx.core.view.isVisible
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import at.saltyy.switchly.R
+import at.saltyy.switchly.feature.premium.PremiumInfoActivity
+import at.saltyy.switchly.feature.tools.BlockingHubActivity
+import at.saltyy.switchly.feature.tools.ToolsHubActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
-import at.saltyy.switchly.feature.tools.ToolsHubActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -40,6 +44,8 @@ class SettingsActivity : AppCompatActivity() {
 
     private lateinit var toolbar: MaterialToolbar
     private lateinit var bottomNav: BottomNavigationView
+    private lateinit var rootScroll: View
+    private lateinit var container: View
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -55,7 +61,8 @@ class SettingsActivity : AppCompatActivity() {
         setupToolbar()
         setupToolbarTitleSync()
         setupBottomNav()
-        showRootFragment(savedInstanceState)
+        setupRootCards()
+        restoreScreenState(savedInstanceState)
         updateTitleFromFragment()
     }
 
@@ -65,7 +72,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        return if (supportFragmentManager.backStackEntryCount > 0) {
+        return if (supportFragmentManager.backStackEntryCount > 0 || container.isVisible) {
             onBackPressedDispatcher.onBackPressed()
             true
         } else {
@@ -81,6 +88,8 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupViews() {
         toolbar = findViewById(R.id.toolbar)
         bottomNav = findViewById(R.id.bottomNav)
+        rootScroll = findViewById(R.id.settingsRootScroll)
+        container = findViewById(R.id.container)
     }
 
     private fun setupToolbar() {
@@ -94,7 +103,12 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupToolbarTitleSync() {
         supportFragmentManager.addOnBackStackChangedListener {
-            val canGoBack = supportFragmentManager.backStackEntryCount > 0
+            if (supportFragmentManager.backStackEntryCount == 0) {
+                showRootSettings()
+            } else {
+                showNestedSettingsContainer()
+            }
+            val canGoBack = container.isVisible
             supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
             toolbar.navigationIcon = if (canGoBack) {
                 ContextCompat.getDrawable(this, R.drawable.arrow_back_ios_24)
@@ -119,6 +133,11 @@ class SettingsActivity : AppCompatActivity() {
                     finish()
                     true
                 }
+                R.id.nav_blocking -> {
+                    startActivity(Intent(this, BlockingHubActivity::class.java))
+                    finish()
+                    true
+                }
                 R.id.nav_tools -> {
                     startActivity(Intent(this, ToolsHubActivity::class.java))
                     finish()
@@ -136,17 +155,76 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun showRootFragment(savedInstanceState: Bundle?) {
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container, SettingsFragment())
-                .commit()
+    private fun setupRootCards() {
+        findViewById<View>(R.id.cardSettingsBlockingModes).setOnClickListener {
+            startActivity(Intent(this, BlockingModesActivity::class.java))
         }
+        findViewById<View>(R.id.cardSettingsBlockingFeatures).setOnClickListener {
+            startActivity(Intent(this, BlockingFeaturesActivity::class.java))
+        }
+        findViewById<View>(R.id.cardSettingsAppearance).setOnClickListener {
+            showNestedSettingsScreen("screen_appearance")
+        }
+        findViewById<View>(R.id.cardSettingsPermissions).setOnClickListener {
+            startActivity(Intent(this, PermissionsActivity::class.java))
+        }
+        findViewById<View>(R.id.cardSettingsAppLock).setOnClickListener {
+            startActivity(Intent(this, AppLockSettingsActivity::class.java))
+        }
+        findViewById<View>(R.id.cardSettingsAccountData).setOnClickListener {
+            showNestedSettingsScreen("screen_account")
+        }
+        findViewById<View>(R.id.cardSettingsPremium).setOnClickListener {
+            startActivity(Intent(this, PremiumInfoActivity::class.java))
+        }
+        findViewById<View>(R.id.cardSettingsHelpAbout).setOnClickListener {
+            showNestedSettingsScreen("screen_help_about")
+        }
+    }
+
+    private fun restoreScreenState(savedInstanceState: Bundle?) {
+        if (savedInstanceState == null) {
+            showRootSettings()
+            return
+        }
+        if (supportFragmentManager.findFragmentById(R.id.container) != null) {
+            showNestedSettingsContainer()
+        } else {
+            showRootSettings()
+        }
+    }
+
+    private fun showNestedSettingsScreen(screenKey: String) {
+        showNestedSettingsContainer()
+        val fragment = SettingsFragment().apply {
+            arguments = Bundle().apply {
+                putString("androidx.preference.PreferenceFragmentCompat.PREFERENCE_ROOT", screenKey)
+            }
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container, fragment)
+            .addToBackStack(screenKey)
+            .commit()
+    }
+
+    private fun showRootSettings() {
+        rootScroll.visibility = View.VISIBLE
+        container.visibility = View.GONE
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        toolbar.navigationIcon = null
+        setToolbarTitle(getString(R.string.settings))
+    }
+
+    private fun showNestedSettingsContainer() {
+        rootScroll.visibility = View.GONE
+        container.visibility = View.VISIBLE
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.navigationIcon = ContextCompat.getDrawable(this, R.drawable.arrow_back_ios_24)
     }
 
     private fun updateTitleFromFragment() {
         val currentFragment = supportFragmentManager.findFragmentById(R.id.container)
-        val title = if (currentFragment is SettingsFragment) {
+        val title = if (container.isVisible && currentFragment is SettingsFragment) {
             currentFragment.currentScreenTitle()
         } else {
             getString(R.string.settings)
@@ -157,6 +235,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun resetSettingsToTop() {
         supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         supportFragmentManager.executePendingTransactions()
-        (supportFragmentManager.findFragmentById(R.id.container) as? SettingsFragment)?.scrollToTop()
+        showRootSettings()
+        rootScroll.post { runCatching { rootScroll.scrollTo(0, 0) } }
     }
 }

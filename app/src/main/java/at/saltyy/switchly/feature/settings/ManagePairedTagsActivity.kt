@@ -30,38 +30,40 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
+import at.saltyy.switchly.nfc.NfcWriteWaitingActivity
+import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.radiobutton.MaterialRadioButton
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
 import java.text.NumberFormat
-import at.saltyy.switchly.ui.dialog.showAccented
-import at.saltyy.switchly.util.EditingLockGuard
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.preference.PreferenceManager
-import at.saltyy.switchly.nfc.NfcWriteWaitingActivity
-import at.saltyy.switchly.nfc.NfcWriterActivity
 
 class ManagePairedTagsActivity : AppCompatActivity() {
 
@@ -399,6 +401,8 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         val etNote = content.findViewById<EditText>(R.id.etTagNote)
         val etDailyLimit = content.findViewById<EditText>(R.id.etTagDailyLimit)
         val etCooldown = content.findViewById<EditText>(R.id.etTagCooldownMinutes)
+        val acReadOnlyAction = content.findViewById<MaterialAutoCompleteTextView>(R.id.acReadOnlyAction)
+        val readOnlyActionGroup = content.findViewById<View>(R.id.readOnlyActionGroup)
         val tvUid = content.findViewById<TextView>(R.id.tvUid)
 
         val btnSave = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSave)
@@ -413,6 +417,25 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         tvUid.text = tag.uid
         etName.setText(tag.name.orEmpty())
         etNote.setText(tag.note.orEmpty())
+
+        val readOnlyActionEntries = listOf(
+            NfcUidPairingStore.ReadOnlyAction.TOGGLE to getString(R.string.paired_tag_readonly_action_toggle),
+            NfcUidPairingStore.ReadOnlyAction.UNLOCK_ONLY to getString(R.string.paired_tag_readonly_action_unlock_only),
+            NfcUidPairingStore.ReadOnlyAction.LOCK_ONLY to getString(R.string.paired_tag_readonly_action_lock_only),
+        )
+        acReadOnlyAction.setAdapter(
+            ArrayAdapter(
+                this,
+                android.R.layout.simple_list_item_1,
+                readOnlyActionEntries.map { it.second }
+            )
+        )
+        acReadOnlyAction.setText(
+            readOnlyActionEntries.firstOrNull { it.first == tag.readOnlyAction }?.second
+                ?: getString(R.string.paired_tag_readonly_action_toggle),
+            false
+        )
+        readOnlyActionGroup.isVisible = tag.supportsUidOnlyAction
 
         NfcTempDisableLimiterStore.getDailyLimitOverride(uidBucket, this)
             ?.let { etDailyLimit.setText(NumberFormat.getIntegerInstance().format(it)) }
@@ -504,11 +527,17 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             val daily = dailyResult.takeIf { it != EMPTY_NUMBER }
             val cooldown = cooldownResult.takeIf { it != EMPTY_NUMBER }
 
+            val selectedReadOnlyAction = readOnlyActionEntries
+                .firstOrNull { it.second == acReadOnlyAction.text?.toString().orEmpty() }
+                ?.first
+                ?: NfcUidPairingStore.ReadOnlyAction.TOGGLE
+
             NfcUidPairingStore.setTagMeta(
                 this,
                 tag.uid,
                 etName.text?.toString(),
-                etNote.text?.toString()
+                etNote.text?.toString(),
+                if (tag.supportsUidOnlyAction) selectedReadOnlyAction else null
             )
             NfcTempDisableLimiterStore.setTagConfig(
                 uidBucket = uidBucket,
@@ -803,12 +832,23 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             holder.name.text = item.name ?: holder.itemView.context.getString(R.string.paired_tag_default_name)
             holder.uid.text = item.uid
 
-            if (item.note.isNullOrBlank()) {
-                holder.note.visibility = View.GONE
-            } else {
-                holder.note.visibility = View.VISIBLE
-                holder.note.text = item.note
+            val typeLabel = when (item.tagKind) {
+                NfcUidPairingStore.TagKind.WRITABLE -> holder.itemView.context.getString(R.string.paired_tag_type_writable)
+                NfcUidPairingStore.TagKind.READ_ONLY -> holder.itemView.context.getString(R.string.paired_tag_type_readonly)
+                NfcUidPairingStore.TagKind.UNKNOWN -> holder.itemView.context.getString(R.string.paired_tag_type_legacy)
             }
+            val noteParts = mutableListOf(typeLabel)
+            if (item.supportsUidOnlyAction) {
+                val readOnlyActionLabel = when (item.readOnlyAction) {
+                    NfcUidPairingStore.ReadOnlyAction.TOGGLE -> holder.itemView.context.getString(R.string.paired_tag_readonly_action_toggle)
+                    NfcUidPairingStore.ReadOnlyAction.UNLOCK_ONLY -> holder.itemView.context.getString(R.string.paired_tag_readonly_action_unlock_only)
+                    NfcUidPairingStore.ReadOnlyAction.LOCK_ONLY -> holder.itemView.context.getString(R.string.paired_tag_readonly_action_lock_only)
+                }
+                noteParts.add(holder.itemView.context.getString(R.string.paired_tag_readonly_action_summary_fmt, readOnlyActionLabel))
+            }
+            item.note?.takeIf { it.isNotBlank() }?.let { noteParts.add(it) }
+            holder.note.visibility = View.VISIBLE
+            holder.note.text = noteParts.joinToString(" · ")
 
             val sel = isSelectionMode.invoke()
             holder.cb.visibility = if (sel) View.VISIBLE else View.GONE

@@ -22,6 +22,8 @@ package at.saltyy.switchly.blocking
 import android.content.Context
 import android.os.SystemClock
 import androidx.core.content.edit
+import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.util.PermissionUtils
 
 /**
@@ -78,7 +80,13 @@ object BlockingRuntime {
     // No-op in the Accessibility-only runtime.
     fun ensureRunning(ctx: Context) {
         // Accessibility-only runtime: nothing to start here.
-        // But we do refresh the "protection inactive" notification state.
+        // But we do refresh the "protection inactive" notification state and reconcile auto-blocked new apps.
+        runCatching {
+            val changed = ProfileStore.reconcileAutoBlockNewApps(ctx)
+            if (changed > 0) {
+                AppLogStore.append(ctx, "Blocking", "Auto-block reconciled newly installed apps count=$changed")
+            }
+        }
         runCatching { at.saltyy.switchly.util.ProtectionStatusNotifier.refresh(ctx) }
     }
 

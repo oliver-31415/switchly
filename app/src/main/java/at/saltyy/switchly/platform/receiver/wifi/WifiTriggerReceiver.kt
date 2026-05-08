@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.platform.receiver.wifi
 
+import at.saltyy.switchly.BuildConfig
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -29,9 +30,9 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
-import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.WifiRuleStore
@@ -44,13 +45,13 @@ class WifiTriggerReceiver : BroadcastReceiver() {
         when (intent.action) {
             WifiManager.NETWORK_STATE_CHANGED_ACTION,
             WifiManager.WIFI_STATE_CHANGED_ACTION -> handle(context)
-            else -> Log.d(TAG, "Ignoring unrelated action=${intent.action}")
+            else -> if (BuildConfig.DEBUG) Log.d(TAG, "Ignoring unrelated action=${intent.action}")
         }
     }
 
     private fun handle(context: Context) {
         if (SwitchModeStore.hasActiveTemporaryOverride(context)) {
-            Log.d(TAG, "Temporary override active, skipping Wi-Fi profile apply/revert")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Temporary override active, skipping Wi-Fi profile apply/revert")
             return
         }
 
@@ -60,12 +61,12 @@ class WifiTriggerReceiver : BroadcastReceiver() {
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.d(TAG, "Location permission missing, skipping Wi-Fi rule check")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Location permission missing, skipping Wi-Fi rule check")
             return
         }
 
         if (!isLocationEnabled(context)) {
-            Log.d(TAG, "Location is disabled, skipping Wi-Fi rule check")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Location is disabled, skipping Wi-Fi rule check")
             return
         }
 
@@ -84,7 +85,7 @@ class WifiTriggerReceiver : BroadcastReceiver() {
             return
         }
 
-        Log.d(TAG, "Matched Wi-Fi rule for SSID=$ssid -> profile=${match.profile}")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Matched Wi-Fi rule for SSID=$ssid -> profile=${match.profile}")
         ProfileStore.setCurrent(context, match.profile)
         WifiTriggerStateStore.setLastAppliedProfile(context, match.profile)
     }
@@ -95,7 +96,7 @@ class WifiTriggerReceiver : BroadcastReceiver() {
 
         if (current != null && current == lastApplied) {
             val fallback = ProfileStore.getProfiles(context).firstOrNull() ?: return
-            Log.d(TAG, "Wi-Fi no longer matches; reverting profile $current -> $fallback")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Wi-Fi no longer matches; reverting profile $current -> $fallback")
             ProfileStore.setCurrent(context, fallback)
         }
         WifiTriggerStateStore.clear(context)
@@ -113,7 +114,7 @@ class WifiTriggerReceiver : BroadcastReceiver() {
             } else {
                 val wifiManager =
                     context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                wifiManager.connectionInfo?.ssid
+                wifiConnectionInfoCompat(wifiManager)?.ssid
             } ?: return null
 
             if (raw == WifiManager.UNKNOWN_SSID) return null
@@ -129,17 +130,16 @@ class WifiTriggerReceiver : BroadcastReceiver() {
         }
     }
 
+    private fun wifiConnectionInfoCompat(wifiManager: WifiManager): WifiInfo? {
+        return runCatching {
+            wifiManager.javaClass.getMethod("getConnectionInfo").invoke(wifiManager) as? WifiInfo
+        }.getOrNull()
+    }
+
     private fun isLocationEnabled(context: Context): Boolean {
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val lm = context.getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
-                lm.isLocationEnabled
-            } else {
-                Settings.Secure.getInt(
-                    context.contentResolver,
-                    Settings.Secure.LOCATION_MODE
-                ) != Settings.Secure.LOCATION_MODE_OFF
-            }
+            val lm = context.getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+            LocationManagerCompat.isLocationEnabled(lm)
         } catch (_: Exception) {
             true
         }

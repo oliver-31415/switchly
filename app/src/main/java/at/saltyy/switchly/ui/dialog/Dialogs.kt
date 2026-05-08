@@ -30,11 +30,11 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
+import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import androidx.core.view.isVisible
 
 // Central place for all dialogs so they are consistent and never fall back to OEM green.
 object Dialogs {
@@ -80,7 +80,7 @@ fun AlertDialog.styleSwitchlyDialogButtons() {
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
         val hp = dp(16)
         val vp = dp(10)
-        ViewCompat.setPaddingRelative(b, hp, vp, hp, vp)
+        b.setPaddingRelative(hp, vp, hp, vp)
         b.minHeight = dp(40)
         runCatching {
             TextViewCompat.setTextAppearance(b, com.google.android.material.R.style.TextAppearance_MaterialComponents_Button)

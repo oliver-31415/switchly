@@ -1,5 +1,6 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- LIMITS - Quick editors and value helpers -->
     <string name="set_daily_limit">Set daily limit</string>
     <string name="set_daily_limit_title">Daily limit: %1$s</string>
@@ -37,6 +38,7 @@
     <string name="limit_attempts_action">Attempts</string>
     <string name="no_profile_selected">Please select a profile.</string>
     <string name="profile_active_fmt">Profile: %1$s</string>
+
     <!-- LIMITS - Unavailable app cleanup -->
     <string name="unavailable_app_label">Unavailable app</string>
     <string name="unavailable_app_state">Not installed</string>
@@ -46,6 +48,7 @@
         <item quantity="one">%1$d unavailable app entry was loaded for cleanup.</item>
         <item quantity="other">%1$d unavailable app entries were loaded for cleanup.</item>
     </plurals>
+
     <!-- USAGE - Screen title, tabs, and ranges -->
     <string name="statistics_usage_title">Usage statistics</string>
     <string name="stats_range_today">Today</string>
@@ -65,9 +68,11 @@
     <string name="usage_range_month">Month</string>
     <string name="usage_range_year">Year</string>
     <string name="usage_range_overall">Overall</string>
+
     <!-- USAGE - Permission prompts -->
     <string name="usage_access_needed_desc">Please enable "App usage data" access for Switchly to show your screen time stats.</string>
     <string name="usage_open_settings">Open settings</string>
+
     <!-- USAGE - Totals, attempts, and row hints -->
     <string name="usage_row_tap_hint_app">Tap an app row to open details.</string>
     <string name="usage_row_tap_hint_website">Tap a website row to open details.</string>
@@ -87,6 +92,7 @@
     <string name="usage_row_tap_hint">Tap an app row to open details.</string>
     <string name="usage_row_open_details_a11y">%1$s, %2$s, %3$s. Double tap for details.</string>
     <string name="usage_row_basic_a11y">%1$s, %2$s, %3$s.</string>
+
     <!-- USAGE - Website row actions -->
     <string name="website_manage_blocking">Blocking settings</string>
     <string name="website_delete_data">Delete data</string>
@@ -96,6 +102,7 @@
     <string name="website_delete_remove_limit">Remove daily limit</string>
     <string name="website_delete_remove_block_rule">Remove block rule</string>
     <string name="website_deleted_toast">Website data deleted</string>
+
     <!-- USAGE - Empty states and placeholders -->
     <string name="usage_web_placeholder">Website stats coming soon.</string>
     <string name="usage_apps_no_accessibility">App usage tracking needs Switchly Accessibility enabled.</string>
@@ -104,6 +111,7 @@
     <string name="usage_websites_no_accessibility">Website tracking needs Switchly Accessibility enabled.</string>
     <string name="usage_websites_no_data">No website data yet. Open a website in a supported browser (Chrome, Brave, Edge, Firefox…) while Switchly Accessibility is enabled.</string>
     <string name="usage_websites_no_blocked">No limited websites configured yet.</string>
+
     <!-- USAGE - Generic formatting tokens and zero values -->
     <string name="usage_value_label">Usage</string>
     <string name="usage_share_of_period">Share of period</string>
@@ -112,6 +120,7 @@
     <string name="usage_time_zero_short">0m</string>
     <string name="usage_time_zero_medium">0h 00m</string>
     <string name="usage_time_zero_long">0h 00m 00s</string>
+
     <!-- STATS - Filters and sorting -->
     <string name="stats_sort_az">Name (A–Z)</string>
     <string name="stats_sort_za">Name (Z–A)</string>
@@ -126,6 +135,7 @@
     <string name="stats_sort_used_time_desc">Used time (top)</string>
     <string name="stats_sort_used_time_asc">Used time (bottom)</string>
     <string name="stats_sort_filter">Sort &amp; filter</string>
+
     <!-- USAGE - Detail dialogs and fallback -->
     <string name="usage_point_dialog_title">%1$s - %2$s</string>
     <string name="usage_switchly_fallback_title">No tracked data from Switchly yet</string>
@@ -134,4 +144,5 @@
     <string name="usage_details_premium_title">Detailed statistics are part of Premium</string>
     <string name="usage_details_premium_message">Get Premium to view detailed statistics and insights.</string>
     <string name="usage_details_premium_action">View Premium</string>
+
 </resources>

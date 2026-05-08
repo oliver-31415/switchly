@@ -1,10 +1,13 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- NAVIGATION -->
     <string name="app_icon">App icon</string>
-    <string name="nav_home">Blocking</string>
-    <string name="nav_tools">Tools</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_blocking">Blocking</string>
+    <string name="nav_tools">Manage</string>
     <string name="nav_settings">Settings</string>
+
     <!-- DASHBOARD - Setup and active profile -->
     <string name="dashboard_active_profile_fmt">Active profile: %1$s</string>
     <string name="dashboard_active_profile_unknown">Active profile: —</string>
@@ -18,6 +21,7 @@
     <string name="dashboard_setup_desc">Finish the required permissions so Switchly can block apps reliably.</string>
     <string name="dashboard_setup_missing_label">Still missing</string>
     <string name="dashboard_setup_cta">Finish setup</string>
+
     <!-- DASHBOARD - Blocked now card -->
     <string name="dashboard_blocked_now_title">Blocked right now</string>
     <string name="dashboard_blocked_now_off">Switchly is OFF — nothing is blocked</string>
@@ -36,6 +40,7 @@
         <item quantity="one">%1$d missing</item>
         <item quantity="other">%1$d missing</item>
     </plurals>
+
     <!-- DASHBOARD - Temporary disable controls -->
     <string name="dashboard_temp_chip">TEMP</string>
     <string name="dashboard_temp_remaining_fmt">Remaining: %1$s</string>
@@ -46,14 +51,21 @@
     <string name="dashboard_temp_sheet_sub_disable">Disable Switchly for a short time</string>
     <string name="dashboard_temp_sheet_sub_disable_locked">Temporary disable is locked (NFC lock is active). Use Emergency Unlock if needed.</string>
     <string name="dashboard_temp_sheet_cancel_timer">Cancel timer</string>
-    <string name="dashboard_temp_hint">Hold the main button for temporary enable/disable.</string>
-    <string name="dashboard_temp_hint_locked_nfc">Temporary disable is not available while NFC-required unlock is enabled.</string>
+    <string name="dashboard_temp_hint">Temporary mode - choose action</string>
+    <string name="dashboard_temp_hint_locked_nfc">Temporary mode unavailable while NFC-required unlock is enabled.</string>
     <string name="dashboard_temp_nudge">Tip: Use temporary mode for quick 5–60 minute sessions.</string>
-    <string name="dashboard_temp_discovery_done">Temporary mode is ready. Use long-press anytime.</string>
+    <string name="dashboard_temp_discovery_done">Temporary mode is ready. Open it from the status card anytime.</string>
     <string name="dashboard_toggle_enable">Enable</string>
     <string name="dashboard_toggle_disable">Disable</string>
+
     <!-- DASHBOARD - Tiles and quick actions -->
     <string name="dashboard_quick_actions">Quick actions</string>
+    <plurals name="dashboard_quick_actions_count">
+        <item quantity="one">Blocking controls • %1$d selected</item>
+        <item quantity="other">Blocking controls • %1$d selected</item>
+    </plurals>
+    <string name="dashboard_tile_apps">Manage apps</string>
+    <string name="dashboard_tile_apps_sub">Choose blocked apps</string>
     <string name="dashboard_tile_profiles">Profiles</string>
     <string name="dashboard_tile_profiles_sub">Create &amp; edit</string>
     <string name="dashboard_tile_blocked_websites">Blocked websites</string>
@@ -65,11 +77,11 @@
     <string name="dashboard_quick_actions_edit">Edit quick actions</string>
     <string name="dashboard_quick_actions_customize">Customize quick actions</string>
     <string name="dashboard_tile_qr">QR</string>
-    <string name="dashboard_tile_qr_sub">Tap to scan • hold to generate</string>
+    <string name="dashboard_tile_qr_sub">Scan or generate</string>
     <string name="dashboard_tile_barcode">Barcode</string>
-    <string name="dashboard_tile_barcode_sub">Tap to scan • hold to manage</string>
+    <string name="dashboard_tile_barcode_sub">Scan or manage</string>
     <string name="dashboard_tile_write_nfc">Write NFC tag</string>
-    <string name="dashboard_tile_write_nfc_sub">Tap to write • hold for paired tags</string>
+    <string name="dashboard_tile_write_nfc_sub">Write or manage paired tags</string>
     <string name="dashboard_tile_blocked_notifications">Blocked notifications</string>
     <string name="dashboard_tile_blocked_notifications_sub">Inbox &amp; activity</string>
     <string name="dashboard_unavailable_hint_short">Not installed on this device.</string>
@@ -77,6 +89,7 @@
     <string name="dashboard_quick_actions_toggle">Toggle quick actions</string>
     <string name="dashboard_quick_actions_expand">Expand quick actions</string>
     <string name="dashboard_quick_actions_collapse">Collapse quick actions</string>
+
     <!-- BLOCKED APPS LIST -->
     <string name="blocked_list_title">Blocked apps</string>
     <string name="blocked_app_default">App blocked</string>
@@ -92,6 +105,7 @@
     <string name="no_blocked_apps">No blocked apps</string>
     <string name="pick_apps">Pick apps</string>
     <string name="search_apps">Search apps</string>
+
     <!-- APP PICKER -->
     <string name="app_picker_select_all">Select all</string>
     <string name="app_picker_clear_all">Clear all</string>
@@ -136,23 +150,23 @@
         <item quantity="one">Removed %d protected app from this profile for device safety.</item>
         <item quantity="other">Removed %d protected apps from this profile for device safety.</item>
     </plurals>
+
     <!-- EMERGENCY HINTS -->
-    <string name="dashboard_emergency_hint_ready">Emergency unlock (15 min/day)</string>
+    <string name="dashboard_emergency_hint_ready">Emergency unlock - use once a day</string>
     <string name="dashboard_emergency_hint_active">Emergency active (%1$d min) — tap to pause or end</string>
     <string name="dashboard_emergency_hint_paused">Emergency paused (%1$d min) — tap to resume or end</string>
     <string name="dashboard_emergency_hint_used_today">Emergency unlock already used today</string>
-    <string name="dashboard_emergency_hint_disabled">Emergency unlock is off — enable it in Blocking controls</string>
+    <string name="dashboard_emergency_hint_disabled">Emergency unlock is off — open Blocking controls</string>
+
     <!-- INFO DIALOG -->
     <string name="main_info_title">Still in development</string>
-    <string name="main_development_info_message">Switchly is still in development. I test it as carefully as I can with open beta phases, but Android behaves differently across devices, so I cannot catch every issue on my own.\nIf something is not working right for you, please send me a mail.\n\nDownloads:\nswitchly.saltyy.at/pages/download</string>
+    <string name="main_development_info_message">Switchly is still in development. I test it as carefully as I can with open beta phases, but Android behaves differently across devices, so I cannot catch every issue on my own.\nIf something is not working right for you, please send me a mail.\n\nYou can open the download page from the button below.</string>
     <string name="main_info_contact_action">Contact</string>
     <string name="main_info_older_versions_action">Downloads</string>
-
     <string name="app_picker_settings_requirements_title">Emergency Unlock required</string>
     <string name="app_picker_settings_requirements_message">To block Settings, advanced protection must be enabled and Emergency Unlock with an Emergency PIN must already be configured.</string>
     <string name="app_picker_settings_second_warning_title">Are you absolutely sure?</string>
     <string name="app_picker_settings_second_warning_message">Blocking Settings can make your phone harder to recover if another issue occurs. This option is intended for advanced users only.</string>
     <string name="app_picker_block_settings_confirm">Block Settings</string>
     <string name="app_picker_settings_temporarily_allowed">Settings temporarily allowed to prevent a lockout.</string>
-
 </resources>

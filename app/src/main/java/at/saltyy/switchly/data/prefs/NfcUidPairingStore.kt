@@ -27,17 +27,45 @@ import at.saltyy.switchly.nfc.NfcTagUid
  * Stores paired NFC tag UIDs (serial numbers).
  * Supports multiple tags + optional user metadata (name, note) per tag.
  *
- * NOTE: Legacy single/csv keys + "wrong-type" fallbacks were intentionally removed.
- * This store now only reads/writes the canonical StringSet key.
+ * This store only reads/writes the canonical StringSet key.
  */
 object NfcUidPairingStore {
+
+    enum class TagKind(val id: String) {
+        UNKNOWN("unknown"),
+        WRITABLE("writable"),
+        READ_ONLY("read_only");
+
+        companion object {
+            fun fromId(id: String?): TagKind {
+                return entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: UNKNOWN
+            }
+        }
+    }
+
+    enum class ReadOnlyAction(val id: String) {
+        TOGGLE("toggle"),
+        UNLOCK_ONLY("unlock_only"),
+        LOCK_ONLY("lock_only");
+
+        companion object {
+            fun fromId(id: String?): ReadOnlyAction {
+                return entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: TOGGLE
+            }
+        }
+    }
 
     data class TagMeta(
         val uid: String,
         val name: String?,
         val note: String?,
-        val pairedAtMillis: Long
-    )
+        val pairedAtMillis: Long,
+        val tagKind: TagKind,
+        val readOnlyAction: ReadOnlyAction
+    ) {
+        val supportsUidOnlyAction: Boolean
+            get() = tagKind != TagKind.WRITABLE
+    }
 
     private const val PREFS = "switchly_prefs"
     private const val KEY_PAIRED_UID_HEX_SET = "nfc_paired_uid_hex_set"
@@ -45,49 +73,31 @@ object NfcUidPairingStore {
     private const val KEY_TAG_NAME_PREFIX = "nfc_tag_name_"
     private const val KEY_TAG_NOTE_PREFIX = "nfc_tag_note_"
     private const val KEY_TAG_PAIRED_AT_PREFIX = "nfc_tag_paired_at_"
+    private const val KEY_TAG_KIND_PREFIX = "nfc_tag_kind_"
+    private const val KEY_TAG_READ_ONLY_ACTION_PREFIX = "nfc_tag_read_only_action_"
 
     private fun normalize(uid: String?): String = NfcTagUid.normalizeUidHex(uid)
 
     @Synchronized
     fun getPairedUidsHex(ctx: Context): Set<String> {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val rawSet = runCatching {
-            sp.getStringSet(KEY_PAIRED_UID_HEX_SET, emptySet())?.toSet()
-        }.getOrNull()
-
-        val migrated = rawSet ?: migrateLegacyOrInvalidUidStorage(ctx)
-        return migrated.map(::normalize).filter { it.isNotBlank() }.toSet()
-    }
-
-    private fun migrateLegacyOrInvalidUidStorage(ctx: Context): Set<String> {
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val all = runCatching { sp.all }.getOrDefault(emptyMap())
-        val raw = all[KEY_PAIRED_UID_HEX_SET]
-
-        val migrated = when (raw) {
-            is Set<*> -> raw.mapNotNull { it?.toString() }
-            is String -> raw.split(',', ';', '\n')
-            is Collection<*> -> raw.mapNotNull { it?.toString() }
-            else -> emptyList()
-        }.map(::normalize).filter { it.isNotBlank() }.toSet()
-
-        sp.edit(commit = true) {
-            if (migrated.isEmpty()) {
-                remove(KEY_PAIRED_UID_HEX_SET)
-            } else {
-                putStringSet(KEY_PAIRED_UID_HEX_SET, migrated)
-            }
+        val rawSet = try {
+            sp.getStringSet(KEY_PAIRED_UID_HEX_SET, emptySet())?.toSet().orEmpty()
+        } catch (_: ClassCastException) {
+            sp.edit(commit = true) { remove(KEY_PAIRED_UID_HEX_SET) }
+            emptySet()
         }
-        return migrated
+
+        return rawSet.map(::normalize).filter { it.isNotBlank() }.toSet()
     }
 
     fun isPaired(ctx: Context): Boolean = getPairedUidsHex(ctx).isNotEmpty()
 
-    @Synchronized
     /**
      * @return true if this UID was newly added (was not previously paired)
      */
-    fun addPairedUidHex(ctx: Context, uidHex: String): Boolean {
+    @Synchronized
+    fun addPairedUidHex(ctx: Context, uidHex: String, tagKind: TagKind? = null): Boolean {
         val clean = normalize(uidHex)
         if (clean.isBlank()) return false
 
@@ -100,10 +110,14 @@ object NfcUidPairingStore {
         sp.edit(commit = true) {
             putStringSet(KEY_PAIRED_UID_HEX_SET, current)
 
-            // Track pairing time for sorting (best-effort; legacy tags may not have it).
+            // Track pairing time for sorting (best-effort; existing tags may not have it).
             if (isNew && !sp.contains(KEY_TAG_PAIRED_AT_PREFIX + clean)) {
                 putLong(KEY_TAG_PAIRED_AT_PREFIX + clean, System.currentTimeMillis())
             }
+
+            // Store the pairing type when the user explicitly adds the tag as writable/read-only.
+            // Existing tags can be re-paired through the correct flow to update their type.
+            tagKind?.let { putString(KEY_TAG_KIND_PREFIX + clean, it.id) }
         }
 
         return isNew
@@ -121,6 +135,8 @@ object NfcUidPairingStore {
             remove(KEY_TAG_NAME_PREFIX + clean)
             remove(KEY_TAG_NOTE_PREFIX + clean)
             remove(KEY_TAG_PAIRED_AT_PREFIX + clean)
+            remove(KEY_TAG_KIND_PREFIX + clean)
+            remove(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean)
         }
 
         // Also remove optional per-tag limiter overrides.
@@ -140,11 +156,48 @@ object NfcUidPairingStore {
             ?.trim()
             ?.takeIf { it.isNotBlank() }
         val pairedAt = sp.getLong(KEY_TAG_PAIRED_AT_PREFIX + clean, 0L)
-        return TagMeta(uid = clean, name = name, note = note, pairedAtMillis = pairedAt)
+        val tagKind = TagKind.fromId(sp.getString(KEY_TAG_KIND_PREFIX + clean, null))
+        val readOnlyAction = ReadOnlyAction.fromId(sp.getString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, null))
+        return TagMeta(
+            uid = clean,
+            name = name,
+            note = note,
+            pairedAtMillis = pairedAt,
+            tagKind = tagKind,
+            readOnlyAction = readOnlyAction
+        )
+    }
+
+    fun supportsUidOnlyAction(ctx: Context, uidHex: String): Boolean {
+        val clean = normalize(uidHex)
+        if (clean.isBlank()) return false
+        return getTagMeta(ctx, clean).supportsUidOnlyAction
+    }
+
+    fun getReadOnlyAction(ctx: Context, uidHex: String): ReadOnlyAction {
+        val clean = normalize(uidHex)
+        if (clean.isBlank()) return ReadOnlyAction.TOGGLE
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return ReadOnlyAction.fromId(sp.getString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, null))
     }
 
     @Synchronized
-    fun setTagMeta(ctx: Context, uidHex: String, name: String?, note: String?) {
+    fun setReadOnlyAction(ctx: Context, uidHex: String, action: ReadOnlyAction) {
+        val clean = normalize(uidHex)
+        if (clean.isBlank()) return
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit(commit = true) { putString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, action.id) }
+    }
+
+    @Synchronized
+    fun setTagMeta(
+        ctx: Context,
+        uidHex: String,
+        name: String?,
+        note: String?,
+        readOnlyAction: ReadOnlyAction? = null,
+        tagKind: TagKind? = null,
+    ) {
         val clean = normalize(uidHex)
         if (clean.isBlank()) return
 
@@ -164,6 +217,8 @@ object NfcUidPairingStore {
         sp.edit(commit = true) {
             if (n == null) remove(KEY_TAG_NAME_PREFIX + clean) else putString(KEY_TAG_NAME_PREFIX + clean, n)
             if (no == null) remove(KEY_TAG_NOTE_PREFIX + clean) else putString(KEY_TAG_NOTE_PREFIX + clean, no)
+            readOnlyAction?.let { putString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, it.id) }
+            tagKind?.let { putString(KEY_TAG_KIND_PREFIX + clean, it.id) }
         }
     }
 
@@ -182,6 +237,9 @@ object NfcUidPairingStore {
             uids.forEach { uid ->
                 remove(KEY_TAG_NAME_PREFIX + uid)
                 remove(KEY_TAG_NOTE_PREFIX + uid)
+                remove(KEY_TAG_PAIRED_AT_PREFIX + uid)
+                remove(KEY_TAG_KIND_PREFIX + uid)
+                remove(KEY_TAG_READ_ONLY_ACTION_PREFIX + uid)
             }
         }
         uids.forEach { uid ->

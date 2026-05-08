@@ -69,8 +69,12 @@ object SchedulePlanner {
 
         val all = ScheduleStore.getAll(ctx).filter { it.enabled }
 
-        // WiFi/Bluetooth schedules are connection-triggered; ignore for time-based boundary calc if they are "always active".
-        val timeBased = all.filterNot { s ->
+        // Location schedules are transition-driven and do not have a predictable "next" boundary,
+        // so exclude them from the next-schedule preview/alarm planner entirely.
+        // Wi-Fi/Bluetooth schedules may still contribute a next boundary when they have an actual time window.
+        val timeBased = all.filter { s ->
+            !s.isLocationSchedule()
+        }.filterNot { s ->
             val isConn = !s.wifiSsid.isNullOrBlank() || !s.btDeviceName.isNullOrBlank()
             isConn && s.startMinutes == 0 && s.endMinutes >= 1439
         }

@@ -19,13 +19,14 @@
 
 package at.saltyy.switchly.data.sync
 
+import at.saltyy.switchly.BuildConfig
 import android.content.Context
 import android.util.Log
-import at.saltyy.switchly.data.prefs.AppLogStore
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.auth.Auth
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
@@ -41,7 +42,7 @@ object CloudSyncRuntime {
     private const val TAG = "CloudSyncRuntime"
     private const val COLLECTION = "switchly_users"
     private const val SUB_BACKUPS = "backups"
-    private const val LEGACY_ROOT_BACKUP_ID = "__legacy_root__"
+    private const val ROOT_DOCUMENT_BACKUP_ID = "__root_document__"
 
     private const val FIELD_PREFS = "prefs"
     private const val FIELD_SWITCHLY_PREFS = "switchly_prefs"
@@ -52,6 +53,31 @@ object CloudSyncRuntime {
     // ScheduleStore prefs name in the project
     private const val SCHEDULES_PREFS_NAME = "switchly_prefs_schedules"
     private const val SCHEDULES_KEY_ITEMS = "items" // JSON list stored by ScheduleStore
+
+    private val backupExcludedKeyMarkers = listOf(
+        "access_token",
+        "app_lock",
+        "auth_token",
+        "billing",
+        "emergency_pin",
+        "entitlement",
+        "firebase",
+        "id_token",
+        "password",
+        "pin_hash",
+        "pin_salt",
+        "premium",
+        "purchase",
+        "refresh_token",
+        "subscription",
+        "unlock_pin"
+    )
+
+    private fun isBackupExcludedKey(key: String): Boolean {
+        val normalized = key.trim().lowercase()
+        if (normalized.isBlank()) return true
+        return backupExcludedKeyMarkers.any { marker -> normalized.contains(marker) }
+    }
 
     data class CloudBackupMeta(
         val id: String,
@@ -73,6 +99,8 @@ object CloudSyncRuntime {
     private fun normalizePrefsMap(src: Map<String, *>): Map<String, Any?> {
         val out = mutableMapOf<String, Any?>()
         for ((rawKey, value) in src) {
+            if (isBackupExcludedKey(rawKey)) continue
+
             val v: Any? = when (value) {
                 is Set<*> -> value.filterNotNull().toList()
                 is Collection<*> -> value.filterNotNull().toList()
@@ -262,6 +290,28 @@ object CloudSyncRuntime {
         }
     }
 
+    fun createLocalBackupPayload(ctx: Context): Map<String, Any?> {
+        val now = System.currentTimeMillis()
+
+        val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx).all
+        val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE).all
+        val schedulesPrefs = ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE).all
+
+        val all = normalizePrefsMap(defaultPrefs)
+        val internalAllRaw = normalizePrefsMap(internalPrefs)
+        val schedulesAll = normalizePrefsMap(schedulesPrefs)
+
+        val (internalAll, statsMap) = extractStatsFromInternalPrefs(internalAllRaw)
+
+        return mapOf(
+            FIELD_PREFS to all,
+            FIELD_SWITCHLY_PREFS to internalAll,
+            FIELD_STATS to statsMap,
+            FIELD_SCHEDULES_PREFS to schedulesAll,
+            FIELD_CREATED_AT to now
+        )
+    }
+
     @JvmStatic
     fun pushLocalState(ctx: Context, onDone: (Boolean, String?) -> Unit) {
         val uid = Auth.uid()
@@ -271,33 +321,14 @@ object CloudSyncRuntime {
         }
 
         try {
-            val now = System.currentTimeMillis()
-
-            val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx).all
-            val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE).all
-            val schedulesPrefs = ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE).all
-
-            val all = normalizePrefsMap(defaultPrefs)
-            val internalAllRaw = normalizePrefsMap(internalPrefs)
-            val schedulesAll = normalizePrefsMap(schedulesPrefs)
-
-            val (internalAll, statsMap) = extractStatsFromInternalPrefs(internalAllRaw)
-
-            val data = mapOf(
-                FIELD_PREFS to all,
-                FIELD_SWITCHLY_PREFS to internalAll,
-                FIELD_STATS to statsMap,
-                FIELD_SCHEDULES_PREFS to schedulesAll,
-                FIELD_CREATED_AT to now
-            )
-
+            val data = createLocalBackupPayload(ctx)
             val db = FirebaseFirestore.getInstance()
             val userRef = db.collection(COLLECTION).document(uid)
 
             userRef.collection(SUB_BACKUPS)
                 .add(data)
                 .addOnSuccessListener { created ->
-                    Log.d(TAG, "pushLocalState: backup version created: ${created.id}")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "pushLocalState: backup version created: ${created.id}")
                     AppLogStore.append(ctx, TAG, "Cloud backup created: ${created.id}")
                     onDone(true, null)
                 }
@@ -345,13 +376,13 @@ object CloudSyncRuntime {
                         val combined = versioned.toMutableList()
                         if (hasBackupPayload(userSnapshot)) {
                             val ts = userSnapshot.getLong(FIELD_CREATED_AT) ?: 0L
-                            combined += CloudBackupMeta(LEGACY_ROOT_BACKUP_ID, ts)
+                            combined += CloudBackupMeta(ROOT_DOCUMENT_BACKUP_ID, ts)
                         }
                         onDone(true, null, combined.sortedByDescending { it.createdAt }.take(limit.toInt()))
                     }
                     .addOnFailureListener { e ->
-                        Log.w(TAG, "listBackups: legacy root fallback check failed", e)
-                        AppLogStore.append(ctx, TAG, "Cloud backup legacy fallback check failed", e)
+                        Log.w(TAG, "listBackups: root document backup check failed", e)
+                        AppLogStore.append(ctx, TAG, "Cloud backup root document check failed", e)
                         onDone(true, null, versioned)
                     }
             }
@@ -387,7 +418,7 @@ object CloudSyncRuntime {
         }
 
         val userRef = FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
-        val snapshotTask = if (backupId == LEGACY_ROOT_BACKUP_ID) {
+        val snapshotTask = if (backupId == ROOT_DOCUMENT_BACKUP_ID) {
             userRef.get()
         } else {
             userRef.collection(SUB_BACKUPS)
@@ -407,7 +438,6 @@ object CloudSyncRuntime {
                     onDone(true, null)
                 } catch (e: Exception) {
                     Log.e(TAG, "pullBackup failed", e)
-                AppLogStore.append(ctx, TAG, "Cloud restore failed", e)
                     AppLogStore.append(ctx, TAG, "Cloud restore failed", e)
                     onDone(false, e.localizedMessage)
                 }
@@ -419,12 +449,15 @@ object CloudSyncRuntime {
             }
     }
 
-    // Applies a backup document (a versioned backup document) to local storage.
-    private fun applyBackupSnapshot(ctx: Context, snapshot: DocumentSnapshot) {
-        val prefsMap = snapshot.get(FIELD_PREFS) as? Map<*, *> ?: emptyMap<Any, Any>()
-        val internalMap = snapshot.get(FIELD_SWITCHLY_PREFS) as? Map<*, *> ?: emptyMap<Any, Any>()
-        val schedulesMap = snapshot.get(FIELD_SCHEDULES_PREFS) as? Map<*, *> ?: emptyMap<Any, Any>()
-        val stats = snapshot.get(FIELD_STATS)
+    fun applyBackupPayload(ctx: Context, payload: Map<*, *>) {
+        if (!hasBackupPayload(payload)) {
+            throw IllegalArgumentException(ctx.getString(R.string.cloud_error_backup_not_found))
+        }
+
+        val prefsMap = payload[FIELD_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
+        val internalMap = payload[FIELD_SWITCHLY_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
+        val schedulesMap = payload[FIELD_SCHEDULES_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
+        val stats = payload[FIELD_STATS]
 
         applyPrefsMapToLocal(ctx, prefsMap, isInternal = false, isSchedules = false)
         applyPrefsMapToLocal(ctx, internalMap, isInternal = true, isSchedules = false)
@@ -440,6 +473,24 @@ object CloudSyncRuntime {
         forceDisableSwitchlyAfterRestore(ctx)
     }
 
+    private fun hasBackupPayload(payload: Map<*, *>): Boolean {
+        return payload.containsKey(FIELD_PREFS) ||
+            payload.containsKey(FIELD_SWITCHLY_PREFS) ||
+            payload.containsKey(FIELD_SCHEDULES_PREFS) ||
+            payload.containsKey(FIELD_STATS)
+    }
+
+    // Applies a backup document (a versioned backup document) to local storage.
+    private fun applyBackupSnapshot(ctx: Context, snapshot: DocumentSnapshot) {
+        val payload = mapOf(
+            FIELD_PREFS to snapshot.get(FIELD_PREFS),
+            FIELD_SWITCHLY_PREFS to snapshot.get(FIELD_SWITCHLY_PREFS),
+            FIELD_SCHEDULES_PREFS to snapshot.get(FIELD_SCHEDULES_PREFS),
+            FIELD_STATS to snapshot.get(FIELD_STATS)
+        )
+        applyBackupPayload(ctx, payload)
+    }
+
     // Applies a Firestore-loaded map to local SharedPreferences.
     private fun applyPrefsMapToLocal(
         ctx: Context,
@@ -452,6 +503,7 @@ object CloudSyncRuntime {
             isInternal -> ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
             else -> PreferenceManager.getDefaultSharedPreferences(ctx)
         }
+        val preservedEntitlementPrefs = prefs.all.filterKeys { key -> isBackupExcludedKey(key) }
 
         // Firestore returns integral numbers as Long. Some of our prefs are truly Int-based.
         // If we store them as Long, SharedPreferences.getInt(...) will crash with ClassCastException.
@@ -462,8 +514,7 @@ object CloudSyncRuntime {
         prefs.edit(commit = true) {
             clear()
 
-            for ((rawKey, value) in map) {
-                val key = rawKey as? String ?: continue
+            fun putSupportedValue(key: String, value: Any?) {
                 when (value) {
                     is Boolean -> putBoolean(key, value)
                     is Int -> putInt(key, value)
@@ -484,6 +535,16 @@ object CloudSyncRuntime {
                     else -> Unit
                 }
             }
+
+            for ((rawKey, value) in map) {
+                val key = rawKey as? String ?: continue
+                if (isBackupExcludedKey(key)) continue
+                putSupportedValue(key, value)
+            }
+
+            for ((key, value) in preservedEntitlementPrefs) {
+                putSupportedValue(key, value)
+            }
         }
     }
 
@@ -503,7 +564,7 @@ object CloudSyncRuntime {
 
             if (patched != raw) {
                 sp.edit { putString(SCHEDULES_KEY_ITEMS, patched) }
-                Log.d(TAG, "forceDisableAllSchedules: patched schedules enabled->false")
+                if (BuildConfig.DEBUG) Log.d(TAG, "forceDisableAllSchedules: patched schedules enabled->false")
             }
         } catch (t: Throwable) {
             Log.w(TAG, "forceDisableAllSchedules failed: ${t.message}")

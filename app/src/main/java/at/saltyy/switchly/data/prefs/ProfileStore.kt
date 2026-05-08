@@ -20,6 +20,7 @@
 package at.saltyy.switchly.data.prefs
 
 import android.content.Context
+import android.content.Intent
 import androidx.core.content.edit
 import at.saltyy.switchly.util.AppBlockSafety
 
@@ -30,6 +31,8 @@ object ProfileStore {
     private const val KEY_CURRENT = "current_profile"  // String
 
     private fun keyBlocked(profile: String) = "blocked_apps_$profile" // Set<String>
+    private fun keyAutoBlockNewApps(profile: String) = "auto_block_new_apps_$profile" // Boolean
+    private fun keyAutoBlockKnownApps(profile: String) = "auto_block_known_apps_$profile" // Set<String>
 
     // Returns all profiles (Set).
     fun getProfiles(context: Context): Set<String> {
@@ -165,5 +168,102 @@ object ProfileStore {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val sanitized = AppBlockSafety.sanitizeManagedPackages(context, pkgs)
         sp.edit { putStringSet(keyBlocked(profile), sanitized) }
+    }
+
+    fun isAutoBlockNewAppsEnabled(context: Context, profile: String): Boolean {
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getBoolean(keyAutoBlockNewApps(profile), false)
+    }
+
+    fun setAutoBlockNewAppsEnabled(context: Context, profile: String, enabled: Boolean) {
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit {
+            putBoolean(keyAutoBlockNewApps(profile), enabled)
+            if (enabled && !sp.contains(keyAutoBlockKnownApps(profile))) {
+                putStringSet(keyAutoBlockKnownApps(profile), getLaunchablePackages(context))
+            }
+        }
+    }
+
+    fun setAutoBlockKnownPackages(context: Context, profile: String, packages: Set<String>) {
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit { putStringSet(keyAutoBlockKnownApps(profile), packages.filterTo(linkedSetOf()) { it.isNotBlank() }) }
+    }
+
+    private fun getAutoBlockKnownPackages(context: Context, profile: String): Set<String> {
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return try {
+            sp.getStringSet(keyAutoBlockKnownApps(profile), emptySet()) ?: emptySet()
+        } catch (_: ClassCastException) {
+            emptySet()
+        }
+    }
+
+    private fun markAutoBlockKnownPackage(context: Context, profile: String, pkg: String) {
+        if (pkg.isBlank()) return
+        val current = getAutoBlockKnownPackages(context, profile).toMutableSet()
+        if (current.add(pkg)) {
+            setAutoBlockKnownPackages(context, profile, current)
+        }
+    }
+
+    fun getLaunchablePackages(context: Context): Set<String> {
+        val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        return context.packageManager
+            .queryIntentActivities(launcherIntent, 0)
+            .mapNotNull { it.activityInfo?.applicationInfo?.packageName }
+            .filterTo(linkedSetOf()) { it.isNotBlank() && it != context.packageName }
+    }
+
+    fun addBlockedAppToAutoBlockProfiles(context: Context, pkg: String): Int {
+        if (pkg.isBlank()) return 0
+        var changed = 0
+        getProfiles(context).forEach { profile ->
+            if (!isAutoBlockNewAppsEnabled(context, profile)) return@forEach
+            val current = getBlockedForProfile(context, profile)
+            if (pkg in current) return@forEach
+
+            val sanitized = AppBlockSafety.sanitizeManagedPackages(context, current + pkg)
+            if (pkg !in sanitized) return@forEach
+
+            setBlockedForProfile(context, profile, sanitized)
+            changed++
+            markAutoBlockKnownPackage(context, profile, pkg)
+        }
+        return changed
+    }
+
+    /**
+     * Safety net for missed PACKAGE_ADDED broadcasts. If auto-block is enabled for a profile,
+     * any launchable packages that appeared after the stored baseline are added automatically.
+     * If no baseline exists yet, create one without adding existing apps to avoid surprise bulk changes.
+     */
+    fun reconcileAutoBlockNewApps(context: Context): Int {
+        val installed = getLaunchablePackages(context)
+        if (installed.isEmpty()) return 0
+
+        var changed = 0
+        getProfiles(context).forEach { profile ->
+            if (!isAutoBlockNewAppsEnabled(context, profile)) return@forEach
+
+            val known = getAutoBlockKnownPackages(context, profile)
+            if (known.isEmpty()) {
+                setAutoBlockKnownPackages(context, profile, installed)
+                return@forEach
+            }
+
+            val newlyInstalled = installed - known
+            if (newlyInstalled.isEmpty()) return@forEach
+
+            val current = getBlockedForProfile(context, profile)
+            val sanitized = AppBlockSafety.sanitizeManagedPackages(context, current + newlyInstalled)
+            val actuallyAdded = sanitized - current
+            if (actuallyAdded.isNotEmpty()) {
+                setBlockedForProfile(context, profile, sanitized)
+                changed += actuallyAdded.size
+            }
+            setAutoBlockKnownPackages(context, profile, known + installed)
+        }
+        return changed
     }
 }

@@ -49,6 +49,8 @@ object ScheduleRuntimeStore {
     private const val KEY_LAST_DISABLE_BLOCKED_NFC_MS = "last_disable_blocked_nfc_ms"
 
     private const val KEY_LAST_FIRED_PREFIX = "last_fired_" // + scheduleId -> token
+    private const val KEY_LAST_LOCATION_TRANSITION_PREFIX = "last_location_transition_" // + scheduleId + _enter/_exit -> ms
+    private const val KEY_LOCATION_ARMED_PREFIX = "location_armed_" // + scheduleId -> bool
 
     fun wasEnabledBySchedule(ctx: Context): Boolean {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -180,6 +182,29 @@ object ScheduleRuntimeStore {
         sp.edit { remove(KEY_LAST_DISABLE_BLOCKED_NFC_MS) }
     }
 
+    fun getLastLocationTransitionMs(ctx: Context, scheduleId: Int, transitionKey: String): Long {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getLong(KEY_LAST_LOCATION_TRANSITION_PREFIX + scheduleId + "_" + transitionKey, 0L)
+    }
+
+    fun setLastLocationTransitionMs(ctx: Context, scheduleId: Int, transitionKey: String, value: Long) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit { putLong(KEY_LAST_LOCATION_TRANSITION_PREFIX + scheduleId + "_" + transitionKey, value) }
+    }
+
+    fun isLocationArmed(ctx: Context, scheduleId: Int): Boolean {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getBoolean(KEY_LOCATION_ARMED_PREFIX + scheduleId, false)
+    }
+
+    fun setLocationArmed(ctx: Context, scheduleId: Int, armed: Boolean) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit {
+            if (armed) putBoolean(KEY_LOCATION_ARMED_PREFIX + scheduleId, true)
+            else remove(KEY_LOCATION_ARMED_PREFIX + scheduleId)
+        }
+    }
+
     fun resetActiveScheduleState(ctx: Context) {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit {
@@ -190,7 +215,11 @@ object ScheduleRuntimeStore {
             putBoolean(KEY_MANUAL_OVERRIDE_ACTIVE, false)
             remove(KEY_MANUAL_OVERRIDE_SCHEDULE_ID)
             remove(KEY_ACTIVE_RANGE_SCHEDULE_ID)
-            val keys = sp.all.keys.filter { it.startsWith(KEY_LAST_FIRED_PREFIX) }
+            val keys = sp.all.keys.filter {
+                it.startsWith(KEY_LAST_FIRED_PREFIX) ||
+                    it.startsWith(KEY_LAST_LOCATION_TRANSITION_PREFIX) ||
+                    it.startsWith(KEY_LOCATION_ARMED_PREFIX)
+            }
             for (k in keys) remove(k)
         }
     }

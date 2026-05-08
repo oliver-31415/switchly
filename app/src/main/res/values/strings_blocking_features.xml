@@ -1,10 +1,10 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- WEBSITE BLOCKING - Overview and rules -->
     <string name="block_websites">Block websites</string>
     <string name="block_websites_desc">Block specific domains in supported browsers.\nYou can also set a daily time limit.</string>
     <string name="blocked_websites_title">Blocked websites</string>
-    <string name="blocked_websites_summary">Block specific domains in supported browsers</string>
     <string name="blocked_websites_empty">No blocked websites yet. Tap + to add one.</string>
     <string name="blocked_websites_add_title">Add website</string>
     <plurals name="delete_websites_confirm">
@@ -23,6 +23,7 @@
     <string name="set_daily_limit_desc">Set how many minutes per day are allowed before Switchly blocks it.</string>
     <string name="daily_limit_value_format">%1$d min/day</string>
     <string name="clear_limit">Clear limit</string>
+
     <!-- BLOCKED INBOX -->
     <string name="blocked_inbox_title">Blocked notifications</string>
     <string name="blocked_inbox_detail_title">Blocked notification</string>
@@ -57,9 +58,9 @@
     </plurals>
     <string name="select">Select</string>
     <string name="blocked_inbox_subtitle_compact_fmt">%1$s%2$s</string>
+
     <!-- IN-APP BLOCKING -->
     <string name="in_app_blocking_title">In-app blocking</string>
-    <string name="in_app_blocking_summary">Block parts of apps like Shorts, Reels, and Explore.</string>
     <string name="in_app_blocking_youtube">YouTube</string>
     <string name="in_app_blocking_instagram">Instagram</string>
     <string name="in_app_blocking_x">X / Twitter</string>
@@ -99,6 +100,7 @@
     <string name="in_app_surface_custom">Custom…</string>
     <string name="in_app_surface_rule_dialog_title">%1$s</string>
     <string name="in_app_surface_daily_limit_title">%1$s: daily limit</string>
+
     <!-- BLOCKING MESSAGES AND OVERLAYS -->
     <string name="blocking_website_blocked_title">Website is blocked!</string>
     <string name="blocking_website_limit_reached_title">Website limit reached!</string>
@@ -114,4 +116,8 @@
     <string name="blocking_instagram_comments_blocked_message">Instagram comments are blocked by Switchly.</string>
     <string name="blocking_surface_base_message">You can’t use this app’s feature while Switchly is active.</string>
     <string name="blocking_daily_limit_duration_fmt">Daily limit: %1$s</string>
+
+    <string name="app_picker_auto_block_new_apps_title">Automatically block newly installed apps</string>
+    <string name="app_picker_auto_block_new_apps_summary">When enabled, newly installed launchable apps are added to this profile automatically. Select all also turns this on for future installs.</string>
+
 </resources>

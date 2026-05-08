@@ -21,8 +21,8 @@ package at.saltyy.switchly.data.statsdb
 
 import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.runBlocking
 import java.util.Calendar
+import kotlinx.coroutines.runBlocking
 
 /**
  * Simple Firestore mapping for daily aggregates.

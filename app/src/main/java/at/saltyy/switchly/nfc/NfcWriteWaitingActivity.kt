@@ -32,15 +32,16 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.TextView
 import android.widget.Toast
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import at.saltyy.switchly.ui.dialog.showAccented
-import com.google.android.material.textfield.TextInputEditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.IntentCompat
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
-import com.google.android.material.progressindicator.CircularProgressIndicator
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
+import at.saltyy.switchly.ui.dialog.showAccented
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.textfield.TextInputEditText
 
 /**
  * Full-screen "ready to write" screen.
@@ -155,11 +156,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         if (intent == null) return
 
-        val tag: Tag? = if (android.os.Build.VERSION.SDK_INT >= 33) {
-            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
-        } else {
-            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
-        }
+        val tag: Tag? = IntentCompat.getParcelableExtra(intent, NfcAdapter.EXTRA_TAG, Tag::class.java)
 
         if (tag == null) {
             Toast.makeText(this, getString(R.string.nfc_tag_error), Toast.LENGTH_SHORT).show()
@@ -190,7 +187,12 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
                     return@post
                 }
 
-                val isNew = NfcUidPairingStore.addPairedUidHex(this, uid)
+                val tagKind = if (mode == MODE_PAIR_UID_WRITABLE) {
+                    NfcUidPairingStore.TagKind.WRITABLE
+                } else {
+                    NfcUidPairingStore.TagKind.READ_ONLY
+                }
+                val isNew = NfcUidPairingStore.addPairedUidHex(this, uid, tagKind)
                 if (isNew) {
                     showPairMetaPrompt(uid) {
                         finishWithOk(uidHex = uid, alreadyPaired = false)
@@ -213,7 +215,11 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
                     if (shouldAutoPairOnWrite()) {
                         val uid = NfcTagUid.uidHex(tag)
                         if (uid != null) {
-                            val isNew = NfcUidPairingStore.addPairedUidHex(this, uid)
+                            val isNew = NfcUidPairingStore.addPairedUidHex(
+                                this,
+                                uid,
+                                NfcUidPairingStore.TagKind.WRITABLE
+                            )
                             if (isNew) {
                                 showPairMetaPrompt(uid) {
                                     finishWithOk(uidHex = uid, alreadyPaired = false)

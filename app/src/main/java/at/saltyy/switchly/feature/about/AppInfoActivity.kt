@@ -22,9 +22,11 @@ package at.saltyy.switchly.feature.about
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.core.net.toUri
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
 import java.text.DateFormat
 import java.util.Date
@@ -62,7 +64,12 @@ class AppInfoActivity : TilesInfoActivity() {
             Tile(
                 getString(R.string.about_version_label),
                 "$versionName ($versionCode)",
-                onClick = { PlayStoreUpdatePrompt.promptNow(this) }
+                onClick = { PlayStoreUpdatePrompt.promptNow(this) },
+                onLongClick = {
+                    unlockAndOpenAdvancedMode()
+                    true
+                },
+                enableLongPressCopy = false
             ),
             Tile(
                 getString(R.string.about_build_type_label),
@@ -124,12 +131,27 @@ class AppInfoActivity : TilesInfoActivity() {
         )
     }
 
+    private fun unlockAndOpenAdvancedMode() {
+        val wasEnabled = AdvancedModeStore.isEnabled(this)
+        if (!wasEnabled) {
+            AdvancedModeStore.setEnabled(this, true)
+            Toast.makeText(this, getString(R.string.advanced_mode_unlocked_toast), Toast.LENGTH_SHORT).show()
+        }
+        openAdvancedMode()
+    }
+
+    private fun openAdvancedMode() {
+        startActivity(Intent(this, AdvancedModeActivity::class.java))
+    }
+
     private fun resolveInstallerPackageName(): String? {
         return runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 packageManager.getInstallSourceInfo(packageName).installingPackageName
             } else {
-                packageManager.getInstallerPackageName(packageName)
+                packageManager.javaClass
+                    .getMethod("getInstallerPackageName", String::class.java)
+                    .invoke(packageManager, packageName) as? String
             }
         }.getOrNull()?.takeIf { it.isNotBlank() }
     }

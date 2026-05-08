@@ -21,10 +21,11 @@ package at.saltyy.switchly.premium
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
 import android.os.Handler
-import at.saltyy.switchly.data.prefs.AppLogStore
 import android.os.Looper
+import android.util.Log
+import at.saltyy.switchly.BuildConfig
+import at.saltyy.switchly.data.prefs.AppLogStore
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -94,7 +95,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
             override fun onBillingSetupFinished(result: BillingResult) {
                 isConnecting = false
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    Log.d(TAG, "Billing service connected")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Billing service connected")
                     appContext?.let { AppLogStore.append(it, "Billing", "Billing connected") }
                     val req = pendingLaunchRequest
                     pendingLaunchRequest = null
@@ -118,6 +119,11 @@ object PremiumRuntime : PurchasesUpdatedListener {
 
     // Refreshes the premium state by querying existing purchases. Typically called on app start.
     fun refreshFromPlay(context: Context) {
+        if (!BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) {
+            if (BuildConfig.DEBUG) Log.d(TAG, "Play Billing disabled for this build; skipping refresh")
+            return
+        }
+
         ensureClient(context) {
             val client = billingClient ?: return@ensureClient
 
@@ -147,6 +153,11 @@ object PremiumRuntime : PurchasesUpdatedListener {
 
     // Starts the purchase flow for the given product.
     fun launchPurchase(activity: Activity, productId: String) {
+        if (!BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) {
+            if (BuildConfig.DEBUG) Log.d(TAG, "Play Billing disabled for this build; purchase ignored")
+            return
+        }
+
         ensureClient(activity) {
             val client = billingClient ?: return@ensureClient
 
@@ -202,7 +213,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
 
                         runCatching {
                             val res = client.launchBillingFlow(activity, flowParams)
-                            Log.d(TAG, "launchBillingFlow result: ${res.responseCode} ${res.debugMessage}")
+                            if (BuildConfig.DEBUG) Log.d(TAG, "launchBillingFlow result: ${res.responseCode} ${res.debugMessage}")
                         }.onFailure { t ->
                             Log.e(TAG, "launchBillingFlow threw", t)
                             disableLater.run()
@@ -224,7 +235,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
             handlePurchases(purchases)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-            Log.d(TAG, "Purchase canceled by user")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Purchase canceled by user")
             appContext?.let { AppLogStore.append(it, "Billing", "Restore failed reason=user_canceled") }
         } else {
             Log.e(TAG, "onPurchasesUpdated error: ${billingResult.responseCode} ${billingResult.debugMessage}")
@@ -239,7 +250,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
             if (!purchase.products.contains(PRODUCT_ID)) continue
 
             if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-                Log.d(TAG, "handlePurchases: premium purchase detected")
+                if (BuildConfig.DEBUG) Log.d(TAG, "handlePurchases: premium purchase detected")
                 ctx?.let { AppLogStore.append(it, "Billing", "Purchase success product=$PRODUCT_ID") }
 
                 // Immediately update local + cloud premium state
@@ -253,7 +264,7 @@ object PremiumRuntime : PurchasesUpdatedListener {
                         .setPurchaseToken(purchase.purchaseToken)
                         .build()
                     client.acknowledgePurchase(params) { result ->
-                        Log.d(TAG, "acknowledgePurchase: ${result.responseCode} ${result.debugMessage}")
+                        if (BuildConfig.DEBUG) Log.d(TAG, "acknowledgePurchase: ${result.responseCode} ${result.debugMessage}")
                     }
                 }
             }

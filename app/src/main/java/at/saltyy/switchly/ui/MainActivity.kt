@@ -27,28 +27,22 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import at.saltyy.switchly.data.prefs.UsageLimitStore
-import at.saltyy.switchly.data.prefs.LimitReachedStore
-import at.saltyy.switchly.data.prefs.AttemptLimitStore
-import at.saltyy.switchly.data.prefs.SessionLimitStore
-import at.saltyy.switchly.data.prefs.OpenCountStore
-import android.view.MotionEvent
 import android.os.PowerManager
 import android.text.InputType
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
-import android.view.HapticFeedbackConstants
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -67,8 +61,8 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
-import androidx.core.widget.TextViewCompat
 import androidx.core.view.iterator
+import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -79,42 +73,52 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
-import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
+import at.saltyy.switchly.data.prefs.LimitReachedStore
+import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
-import at.saltyy.switchly.util.AppUsageToday
+import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.data.prefs.UsageLimitStore
+import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
 import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
 import at.saltyy.switchly.feature.onboarding.OnboardingActivity
 import at.saltyy.switchly.feature.picker.AppPickerActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
-import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
 import at.saltyy.switchly.feature.qr.QrGenerateActivity
 import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.schedule.SchedulesActivity
-import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
-import at.saltyy.switchly.feature.usage.QuickLimitDialogs
+import at.saltyy.switchly.feature.settings.InAppBlockingActivity
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
-import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
+import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
-import at.saltyy.switchly.feature.settings.InAppBlockingActivity
 import at.saltyy.switchly.feature.support.SupportActivity
+import at.saltyy.switchly.feature.tools.BlockingHubActivity
 import at.saltyy.switchly.feature.tools.ToolsHubActivity
+import at.saltyy.switchly.feature.usage.QuickLimitDialogs
+import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
 import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.ui.dialog.Dialogs
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.AppUsageToday
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
-import at.saltyy.switchly.util.getIntCompat
 import at.saltyy.switchly.util.ProtectionStatusNotifier
-import at.saltyy.switchly.util.TimeFormatPrefs
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
-import at.saltyy.switchly.util.EditingLockGuard
+import at.saltyy.switchly.util.SystemBarColorCompat
+import at.saltyy.switchly.util.TimeFormatPrefs
+import at.saltyy.switchly.util.getIntCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -125,18 +129,16 @@ import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.chip.Chip
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import at.saltyy.switchly.ui.dialog.Dialogs
-import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.Date
-import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -145,6 +147,8 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TEMP_MODE_DISCOVERED = "temp_mode_discovered"
         private const val KEY_PRIMARY_TOGGLE_TAP_COUNT = "primary_toggle_tap_count"
         private const val KEY_QUICK_ACTIONS_EXPANDED = "home_quick_actions_expanded"
+        private const val KEY_EXPERIMENTAL_NOTICE_211 = "experimental_notice_2_1_1_shown"
+        private const val KEY_QA_APPS = "home_quick_tile_apps"
         private const val KEY_QA_PROFILES = "home_quick_tile_profiles"
         private const val KEY_QA_WEBSITES = "home_quick_tile_websites"
         private const val KEY_QA_INAPP = "home_quick_tile_inapp"
@@ -181,6 +185,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnFinishSetup: MaterialButton
 
     // Quick actions tiles
+    private lateinit var tileManageApps: MaterialCardView
     private lateinit var tileProfiles: MaterialCardView
     private lateinit var tileWriteNfc: MaterialCardView
     private lateinit var tileToggleOptions: MaterialCardView
@@ -263,6 +268,22 @@ class MainActivity : AppCompatActivity() {
     // Live updates: refresh "Blocked now" chips as soon as limits are reached while the app is open.
     private var livePrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
+    private fun showExperimentalFeaturesNoticeIfNeeded() {
+        val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE_211, false)) return
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.experimental_notice_title)
+            .setMessage(R.string.experimental_notice_body)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_211, true) }
+            }
+            .setOnCancelListener {
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_211, true) }
+            }
+            .showAccented()
+    }
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
     }
@@ -318,14 +339,15 @@ class MainActivity : AppCompatActivity() {
         EdgeToEdgeUtils.applyBottomNavGestureInset(bottomNav)
 
         // Keep status/navigation bars neutral (no accent bleed into system bar)
-        window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
-        window.navigationBarColor = ContextCompat.getColor(this, android.R.color.black)
+        SystemBarColorCompat.setStatusBarColor(window, ContextCompat.getColor(this, android.R.color.black))
+        SystemBarColorCompat.setNavigationBarColor(window, ContextCompat.getColor(this, android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
         }
 
         setSupportActionBar(toolbar)
+        showExperimentalFeaturesNoticeIfNeeded()
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
         // Force white toolbar action/overflow icons (some devices/theme combos render them black in light mode)
@@ -355,6 +377,7 @@ class MainActivity : AppCompatActivity() {
         tvSetupDesc = findViewById(R.id.tvSetupDesc)
         btnFinishSetup = findViewById(R.id.btnFinishSetup)
 
+        tileManageApps = findViewById(R.id.tileManageApps)
         tileProfiles = findViewById(R.id.tileProfiles)
         tileWriteNfc = findViewById(R.id.tileWriteNfc)
         tileToggleOptions = findViewById(R.id.tileToggleOptions)
@@ -396,7 +419,7 @@ class MainActivity : AppCompatActivity() {
 
         // Micro animations: subtle press-scale on interactive cards/buttons
         listOf(
-            tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode,
+            tileManageApps, tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode,
             cardNextSchedule, cardBlockedNow, rowActiveProfile, rowQuickActionsHeader
         ).forEach { applyPressScale(it) }
         applyPressScale(btnToggle)
@@ -405,16 +428,6 @@ class MainActivity : AppCompatActivity() {
         btnToggle.setOnClickListener {
             trackPrimaryToggleTapForTempNudge()
             toggleSwitchIfAllowed()
-        }
-
-        // Long-press = temporary enable/disable
-        btnToggle.setOnLongClickListener { v ->
-            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            val opened = showTempToggleSheet()
-            if (opened) {
-                markTempModeDiscovered(showSnack = true)
-            }
-            opened
         }
 
         // Temp badge (visible when a temp timer is active)
@@ -449,6 +462,7 @@ class MainActivity : AppCompatActivity() {
         // Quick actions
         rowQuickActionsHeader.setOnClickListener { toggleQuickActionsExpanded() }
         ivQuickActionsEdit.setOnClickListener { showQuickActionsCustomizeDialog() }
+        tileManageApps.setOnClickListener { openAppPickerIfUnlocked() }
         tileProfiles.setOnClickListener { openProfilesIfUnlocked() }
         tileWriteNfc.setOnClickListener {
             if (EditingLockGuard.isLocked(this)) {
@@ -464,20 +478,8 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, InAppBlockingActivity::class.java))
             }
         }
-        tileQr.setOnClickListener { startActivity(Intent(this, QrScanActivity::class.java)) }
-        tileQr.setOnLongClickListener {
-            showQrChoiceDialog()
-            true
-        }
-        tileBarcode.setOnClickListener { startActivity(Intent(this, BarcodeScanActivity::class.java)) }
-        tileBarcode.setOnLongClickListener {
-            if (EditingLockGuard.isLocked(this)) {
-                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
-            } else {
-                startActivity(Intent(this, ManageBarcodesActivity::class.java))
-            }
-            true
-        }
+        tileQr.setOnClickListener { showQrChoiceDialog() }
+        tileBarcode.setOnClickListener { showBarcodeChoiceDialog() }
         tilePermissions.setOnClickListener {
             startActivity(ScreenTimeDashboardActivity.intent(this))
         }
@@ -488,16 +490,8 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, NfcWriterActivity::class.java))
             }
         }
-        tileNfcWrite.setOnLongClickListener {
-            if (EditingLockGuard.isLocked(this)) {
-                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
-            } else {
-                startActivity(Intent(this, ManagePairedTagsActivity::class.java))
-            }
-            true
-        }
         tileBlockedNotifications.setOnClickListener {
-            startActivity(Intent(this, BlockedInboxActivity::class.java))
+            openBlockedNotificationsIfAllowed()
         }
 
         syncScanQuickActions()
@@ -513,7 +507,18 @@ class MainActivity : AppCompatActivity() {
         // Profile dropdown: selection only, no free text allowed
         profileDropdown.inputType = InputType.TYPE_NULL
         profileDropdown.keyListener = null
+        profileDropdown.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus && !ensureCanSwitchProfiles(showToast = false)) {
+                profileDropdown.dismissDropDown()
+                profileDropdown.clearFocus()
+            }
+        }
         profileDropdown.setOnClickListener { v ->
+            if (!ensureCanSwitchProfiles(showToast = true)) {
+                profileDropdown.dismissDropDown()
+                profileDropdown.clearFocus()
+                return@setOnClickListener
+            }
             v.post {
                 if (v.windowToken != null && !isFinishing && !isDestroyed) {
                     profileDropdown.showDropDown()
@@ -584,6 +589,7 @@ class MainActivity : AppCompatActivity() {
         syncScanQuickActions()
 
         ExactAlarmPermissionSync.syncAndReschedule(this, reason = "main_resume")
+        BlockingRuntime.ensureRunning(this)
 
         refreshProfilesUi()
         refreshBlockedList()
@@ -682,6 +688,11 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> true
+
+                R.id.nav_blocking -> {
+                    startActivity(Intent(this, BlockingHubActivity::class.java))
+                    true
+                }
 
                 R.id.nav_tools -> {
                     startActivity(Intent(this, ToolsHubActivity::class.java))
@@ -789,10 +800,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isProfileSwitchLockedWhileEnabled(): Boolean {
-        val emergencyActive = EmergencyBypassStore.isActive(this) || EmergencyBypassStore.isPaused(this)
         val enabled = SwitchModeStore.isEnabled(this)
+        val emergencyActive = EmergencyBypassStore.isActive(this)
+        val emergencyPaused = EmergencyBypassStore.isPaused(this)
         if (!enabled && !emergencyActive) return false
-        if (emergencyActive) return true
+
+        val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
+        if (requireNfc || emergencyActive || (enabled && emergencyPaused)) return true
+
         return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
     }
 
@@ -831,13 +846,13 @@ class MainActivity : AppCompatActivity() {
     private fun ensureCanSwitchProfiles(showToast: Boolean = true): Boolean {
         if (isNfcLocked()) {
             if (showToast) {
-                Toast.makeText(this, getString(R.string.toast_cannot_change_profile_while_locked), Toast.LENGTH_SHORT).show()
+                EditingLockGuard.showLockedDialog(this, R.string.toast_cannot_change_profile_while_locked)
             }
             return false
         }
         if (isProfileSwitchLockedWhileEnabled()) {
             if (showToast) {
-                Toast.makeText(this, getString(R.string.toast_disable_switchly_to_switch_profiles), Toast.LENGTH_SHORT).show()
+                EditingLockGuard.showLockedDialog(this, R.string.toast_disable_switchly_to_switch_profiles)
             }
             return false
         }
@@ -847,7 +862,7 @@ class MainActivity : AppCompatActivity() {
     private fun toggleSwitchIfAllowed() {
         val enabled = SwitchModeStore.isEnabled(this)
         val canChange = if (enabled) {
-            AutomationModeStore.isButtonAllowed(this)
+            AutomationModeStore.isButtonAllowed(this) || AutomationModeStore.isBarcodeSetupMissing(this)
         } else {
             AutomationModeStore.canButtonEnable(this)
         }
@@ -859,6 +874,10 @@ class MainActivity : AppCompatActivity() {
             }
             Toast.makeText(this, getString(msg), Toast.LENGTH_SHORT).show()
             return
+        }
+
+        if (enabled && AutomationModeStore.isBarcodeSetupMissing(this)) {
+            AppLogStore.append(this, "Safety", "Allowing manual disable because barcode control is enabled but no managed barcodes exist")
         }
 
         if (enabled && isNfcLocked()) {
@@ -1218,6 +1237,13 @@ class MainActivity : AppCompatActivity() {
     private fun updateQuickActionsVisibility() {
         val show = areQuickActionsEnabled()
         val expanded = areQuickActionsExpanded()
+        val enabledCount = getVisibleQuickActionsCount()
+
+        tvQuickActionsTitle.text = if (expanded || enabledCount <= 0) {
+            getString(R.string.dashboard_quick_actions)
+        } else {
+            resources.getQuantityString(R.plurals.dashboard_quick_actions_count, enabledCount, enabledCount)
+        }
 
         if (show) {
             rowQuickActionsHeader.showFade()
@@ -1252,6 +1278,18 @@ class MainActivity : AppCompatActivity() {
         return sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_QUICK_ACTIONS, true)
     }
 
+    private fun isProtectionActivelyEnforced(): Boolean {
+        return SwitchModeStore.isEnabled(this) && !EmergencyBypassStore.isActive(this)
+    }
+
+    private fun openBlockedNotificationsIfAllowed() {
+        if (isProtectionActivelyEnforced()) {
+            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_blocked_notifications)
+            return
+        }
+        startActivity(Intent(this, BlockedInboxActivity::class.java))
+    }
+
     private fun areQuickActionsExpanded(): Boolean {
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         return sp.getBoolean(KEY_QUICK_ACTIONS_EXPANDED, false)
@@ -1262,6 +1300,20 @@ class MainActivity : AppCompatActivity() {
         return sp.getBoolean(key, defaultValue)
     }
 
+    private fun getVisibleQuickActionsCount(): Int {
+        var count = 0
+        if (isQuickActionTileEnabled(KEY_QA_APPS)) count++
+        if (isQuickActionTileEnabled(KEY_QA_PROFILES)) count++
+        if (isQuickActionTileEnabled(KEY_QA_WEBSITES)) count++
+        if (isQuickActionTileEnabled(KEY_QA_INAPP)) count++
+        if (isQuickActionTileEnabled(KEY_QA_USAGE)) count++
+        if (isQuickActionTileEnabled(KEY_QA_NFC_WRITE, defaultValue = false)) count++
+        if (isQuickActionTileEnabled(KEY_QA_BLOCKED_NOTIFICATIONS, defaultValue = false)) count++
+        if (isQuickActionTileEnabled(KEY_QA_QR) && AutomationModeStore.isQrAllowed(this)) count++
+        if (isQuickActionTileEnabled(KEY_QA_BARCODE) && AutomationModeStore.isBarcodeAllowed(this)) count++
+        return count
+    }
+
     private fun setQuickActionTileEnabled(key: String, enabled: Boolean) {
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         sp.edit { putBoolean(key, enabled) }
@@ -1269,6 +1321,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showQuickActionsCustomizeDialog() {
         val items = buildList {
+            add(Triple(KEY_QA_APPS, getString(R.string.dashboard_tile_apps), isQuickActionTileEnabled(KEY_QA_APPS)))
             add(Triple(KEY_QA_PROFILES, getString(R.string.dashboard_tile_profiles), isQuickActionTileEnabled(KEY_QA_PROFILES)))
             add(Triple(KEY_QA_WEBSITES, getString(R.string.dashboard_tile_blocked_websites), isQuickActionTileEnabled(KEY_QA_WEBSITES)))
             add(Triple(KEY_QA_INAPP, getString(R.string.dashboard_tile_in_app), isQuickActionTileEnabled(KEY_QA_INAPP)))
@@ -1330,6 +1383,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             gridQuickActions.hideFade()
         }
+        tvQuickActionsTitle.text = if (expanded || getVisibleQuickActionsCount() <= 0) {
+            getString(R.string.dashboard_quick_actions)
+        } else {
+            resources.getQuantityString(R.plurals.dashboard_quick_actions_count, getVisibleQuickActionsCount(), getVisibleQuickActionsCount())
+        }
         ivQuickActionsChevron.contentDescription = getString(
             if (expanded) R.string.dashboard_quick_actions_collapse else R.string.dashboard_quick_actions_expand
         )
@@ -1338,6 +1396,7 @@ class MainActivity : AppCompatActivity() {
     private fun syncScanQuickActions() {
         if (!::tileQr.isInitialized) return
 
+        val appsVisible = isQuickActionTileEnabled(KEY_QA_APPS)
         val profilesVisible = isQuickActionTileEnabled(KEY_QA_PROFILES)
         val websitesVisible = isQuickActionTileEnabled(KEY_QA_WEBSITES)
         val inAppVisible = isQuickActionTileEnabled(KEY_QA_INAPP)
@@ -1348,9 +1407,10 @@ class MainActivity : AppCompatActivity() {
         val barcodeVisible = isQuickActionTileEnabled(KEY_QA_BARCODE) && AutomationModeStore.isBarcodeAllowed(this)
 
         val orderedTiles = listOf(
-            tileProfiles to profilesVisible,
+            tileManageApps to appsVisible,
             tileWriteNfc to websitesVisible,
             tileToggleOptions to inAppVisible,
+            tileProfiles to profilesVisible,
             tilePermissions to usageVisible,
             tileNfcWrite to nfcWriteVisible,
             tileBlockedNotifications to blockedNotificationsVisible,
@@ -1358,7 +1418,7 @@ class MainActivity : AppCompatActivity() {
             tileBarcode to barcodeVisible,
         )
 
-        listOf(tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode).forEach { tile ->
+        listOf(tileManageApps, tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode).forEach { tile ->
             (tile.parent as? LinearLayout)?.removeView(tile)
             tile.visibility = View.GONE
         }
@@ -1382,19 +1442,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun quickActionTileLayoutParams(single: Boolean): LinearLayout.LayoutParams {
-        val margin = (6 * resources.displayMetrics.density).toInt()
+        val density = resources.displayMetrics.density
+        val margin = (6 * density).toInt()
+        val tileHeight = (164 * density).toInt()
         return if (single) {
             LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+                tileHeight
             ).apply {
                 setMargins(margin, margin, margin, margin)
             }
         } else {
-            LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+            LinearLayout.LayoutParams(0, tileHeight, 1f).apply {
                 setMargins(margin, margin, margin, margin)
             }
         }
+    }
+
+    private fun activeControlLabels(): String {
+        val labels = mutableListOf<String>()
+        if (AutomationModeStore.isButtonAllowed(this)) labels += getString(R.string.control_manual)
+        if (AutomationModeStore.isNfcAllowed(this)) labels += getString(R.string.control_nfc)
+        if (AutomationModeStore.isScheduleAllowed(this)) labels += getString(R.string.control_schedules)
+        if (AutomationModeStore.isQrAllowed(this)) labels += getString(R.string.control_qr)
+        if (AutomationModeStore.isBarcodeAllowed(this)) labels += getString(R.string.control_barcode)
+        return labels.joinToString(", ")
     }
 
     private fun updateBlockedNowCard() {
@@ -1831,35 +1903,45 @@ class MainActivity : AppCompatActivity() {
     private fun applyLockedUi(locked: Boolean) {
         val profileLocked = locked || isProfileSwitchLockedWhileEnabled()
         val appPickingLocked = locked || isAppPickingLockedWhileEnabled()
+        val websitesLocked = EditingLockGuard.isLocked(this)
+        val inAppLocked = SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)
+        val nfcWriteLocked = isNfcTagWritingLocked()
+        val blockedNotificationsLocked = isProtectionActivelyEnforced()
 
-        profileDropdown.isEnabled = !profileLocked
-        rowActiveProfile.isEnabled = !profileLocked
+        // Keep locked profile controls clickable so they can show the explanatory dialog instead of silently disabling the dropdown/end icon.
+        profileDropdown.isEnabled = true
+        rowActiveProfile.isEnabled = true
         btnPickApps.isEnabled = !appPickingLocked
 
         val profileAlpha = if (profileLocked) 0.5f else 1f
         val appPickingAlpha = if (appPickingLocked) 0.5f else 1f
 
         // Quick actions (Permissions stays available so users can fix setup)
-        tileProfiles.isEnabled = !profileLocked
+        // Keep locked tiles clickable so they can show the explanatory lock dialog.
+        tileManageApps.isEnabled = true
+        tileProfiles.isEnabled = true
         tileWriteNfc.isEnabled = true
         tileToggleOptions.isEnabled = true
         tilePermissions.isEnabled = true
-        tileNfcWrite.isEnabled = !isNfcTagWritingLocked()
+        tileNfcWrite.isEnabled = true
         tileBlockedNotifications.isEnabled = true
         tileQr.isEnabled = true
         tileBarcode.isEnabled = true
 
+        tileManageApps.alpha = appPickingAlpha
         tileProfiles.alpha = profileAlpha
-        tileWriteNfc.alpha = 1f
-        tileToggleOptions.alpha = 1f
+        tileWriteNfc.alpha = if (websitesLocked) lockedTileAlpha() else 1f
+        tileToggleOptions.alpha = if (inAppLocked) lockedTileAlpha() else 1f
         tilePermissions.alpha = 1f
-        tileNfcWrite.alpha = if (tileNfcWrite.isEnabled) 1f else 0.5f
-        tileBlockedNotifications.alpha = 1f
+        tileNfcWrite.alpha = if (nfcWriteLocked) lockedTileAlpha() else 1f
+        tileBlockedNotifications.alpha = if (blockedNotificationsLocked) lockedTileAlpha() else 1f
         tileQr.alpha = 1f
         tileBarcode.alpha = 1f
         rowActiveProfile.alpha = profileAlpha
         btnPickApps.alpha = appPickingAlpha
     }
+
+    private fun lockedTileAlpha(): Float = LockedUi.cardAlpha(this)
 
     private fun isNfcTagWritingLocked(): Boolean {
         return SwitchModeStore.isEnabled(this) &&
@@ -2090,10 +2172,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         blockedAdapter.submitList(items) {
-            // The managed-app rows include live status chips (e.g. "Limit reached") that are
-            // derived from runtime state rather than DiffUtil item content. When the list contents
-            // themselves have not changed, returning to Home after a limit is hit would otherwise
-            // keep the old chip text until some unrelated state change forced a rebind.
+            // The managed-app rows include live status chips (e.g. "Limit reached") that are  derived from runtime state rather than DiffUtil item content. 
+            // When the list contents themselves have not changed, returning to Home after a limit is hit would otherwise keep the old chip text until some unrelated state change forced a rebind.
             notifyBlockedChipsChanged()
         }
 
@@ -2115,8 +2195,7 @@ class MainActivity : AppCompatActivity() {
             emptySet()
         }
 
-        // Limited apps are also managed by the profile and should appear together with
-        // the other selected apps, even if the legacy blocked-app set was not updated.
+        // Limited apps are also managed by the profile and should appear together with the other selected apps, even if the stored blocked-app set was not updated.
         val limited = buildSet {
             addAll(UsageLimitStore.getAllLimitedPackages(this@MainActivity, profile))
             addAll(SessionLimitStore.getAllLimitedPackages(this@MainActivity, profile))
@@ -2513,6 +2592,26 @@ class MainActivity : AppCompatActivity() {
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, downloadsUrl.toUri())) }
             }
             .setNegativeButton(getString(R.string.close), null)
+            .showAccented()
+    }
+
+    private fun showBarcodeChoiceDialog() {
+        val items = arrayOf(getString(R.string.barcode_scan_title), getString(R.string.manage_barcodes_title))
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.dashboard_tile_barcode))
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> startActivity(Intent(this, BarcodeScanActivity::class.java))
+                    1 -> {
+                        if (EditingLockGuard.isLocked(this)) {
+                            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
+                        } else {
+                            startActivity(Intent(this, ManageBarcodesActivity::class.java))
+                        }
+                    }
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
             .showAccented()
     }
 

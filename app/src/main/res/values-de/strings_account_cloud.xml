@@ -1,5 +1,6 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- AUTH - Sign-in flow and configuration errors -->
     <string name="auth_sign_in_success">Mit Google angemeldet</string>
     <string name="auth_sign_in_cancelled">Anmeldung abgebrochen</string>
@@ -8,6 +9,7 @@
     <string name="auth_no_matching_google_accounts_found">Keine passenden Google-Konten gefunden</string>
     <string name="auth_missing_google_server_client_id">Google-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
     <string name="auth_firebase_not_configured">Cloud-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
+
     <!-- ACCOUNT - Account actions and sign-out state -->
     <string name="settings_account_action_delete">Konto löschen</string>
     <string name="settings_account_delete_confirm_title">Switchly-Konto löschen?</string>
@@ -24,6 +26,7 @@
     <string name="settings_signed_out">Abgemeldet</string>
     <string name="deleted">Gelöscht</string>
     <string name="error_unknown">Unbekannter Fehler</string>
+
     <!-- CLOUD - Backup and restore status -->
     <string name="cloud_backup_ok">Backup abgeschlossen</string>
     <string name="cloud_restore_ok_restart">Wiederherstellung abgeschlossen — App wird neu gestartet…</string>
@@ -39,6 +42,15 @@
     <string name="pref_cloud_restore_summary">Lade ein Backup und überschreibe lokale Einstellungen</string>
     <string name="pref_cloud_delete_backups_title">Cloud-Backups löschen</string>
     <string name="pref_cloud_delete_backups_summary">Ausgewählte Backups aus dem Cloud-Verlauf entfernen</string>
+    <string name="pref_file_backup_title">In Datei sichern</string>
+    <string name="pref_file_backup_summary">Lokales JSON-Backup ohne Anmeldung exportieren</string>
+    <string name="pref_file_restore_title">Aus Datei wiederherstellen</string>
+    <string name="pref_file_restore_summary">Lokales JSON-Backup importieren und lokale Einstellungen überschreiben</string>
+    <string name="file_backup_ok">Datei-Backup gespeichert</string>
+    <string name="file_restore_ok_restart">Datei-Wiederherstellung abgeschlossen — App wird neu gestartet…</string>
+    <string name="file_backup_error_fmt">Datei-Backup fehlgeschlagen: %1$s</string>
+    <string name="file_restore_error_fmt">Datei-Wiederherstellung fehlgeschlagen: %1$s</string>
+
     <!-- CLOUD - Backup and restore dialogs -->
     <string name="settings_delete_backups_title">Backups löschen</string>
     <string name="settings_restore_choose_title">Backup auswählen</string>
@@ -47,7 +59,10 @@
     <string name="settings_confirm_backup_message">Aktuelle Einstellungen und Profile in der Cloud sichern?</string>
     <string name="settings_confirm_restore_title">Wiederherstellen</string>
     <string name="settings_confirm_restore_message">Backup aus der Cloud laden und lokale Einstellungen überschreiben?</string>
-
+    <string name="settings_confirm_file_backup_title">In Datei sichern</string>
+    <string name="settings_confirm_file_backup_message">Erstelle ein lokales JSON-Backup deiner Switchly-Einstellungen, Profile, Zeitpläne, Statistiken und gekoppelten Tags. Bewahre diese Datei sicher auf.</string>
+    <string name="settings_confirm_file_restore_title">Aus Datei wiederherstellen</string>
+    <string name="settings_confirm_file_restore_message">Lokales JSON-Backup wiederherstellen und aktuelle Switchly-Daten überschreiben? Aus Sicherheitsgründen werden Switchly und aktive Zeitpläne nach der Wiederherstellung deaktiviert.</string>
     <string name="auth_email_sign_in_success">Angemeldet</string>
     <string name="auth_email_create_success">Konto erstellt. Bestätigungs-E-Mail wurde gesendet.</string>
     <string name="auth_password_reset_email_sent">E-Mail zum Zurücksetzen wurde gesendet</string>

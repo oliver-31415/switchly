@@ -1,0 +1,63 @@
+# External payments for non-Play APKs
+Switchly supports an external checkout entry point for APKs that are not distributed through Google Play.
+
+## Build behavior
+| Build | Billing behavior |
+| ----- | ---------------- |
+| `fullRelease` / Play Store AAB | Google Play Billing only |
+| `firebaseEmailRelease` APK | external checkout URL, e.g. Stripe/Adyen |
+| `offlineRelease` APK | no Premium purchase, restore, or unlock; use file backup only |
+
+The Play Store build deliberately has `SWITCHLY_EXTERNAL_PAYMENTS_ENABLED=false`, so it does not show Stripe/Adyen checkout.
+
+## Local config
+Put the external payment URLs in `signing.properties` or pass them as Gradle properties/environment variables:
+```properties
+SWITCHLY_EXTERNAL_PAYMENT_PROVIDER=stripe
+SWITCHLY_EXTERNAL_CHECKOUT_URL=https://your-domain.example/pages/pay/checkout/
+SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://your-domain.example/pages/pay/customer-portal/
+```
+
+The app appends these query parameters when it opens the URL:
+```text
+app=at.saltyy.switchly
+variant=firebase-email
+version=2.1.0
+provider=stripe
+action=checkout or portal
+uid=<Firebase uid, only when signed in>
+```
+
+Do not put Stripe secret keys, Adyen API keys, webhook signing secrets, or private license signing keys in Android resources, Gradle properties that are committed, or source code.
+
+## Recommended Stripe setup
+1. Create a Stripe account.
+2. Create a one-time product/price for Switchly Premium.
+3. Create a small backend endpoint, for example `/switchly/checkout`.
+4. In that endpoint, create a Stripe Checkout Session or PaymentIntent server-side.
+5. Redirect the user to the Stripe-hosted Checkout URL, or return the URL from your backend and redirect.
+6. Configure a Stripe webhook endpoint for completed checkout/payment events.
+7. In the webhook, verify the event signature and then grant the user an entitlement. For the Firebase APK, store the Firebase `uid` from the checkout URL/metadata in the Stripe Checkout Session and write one of these fields to `switchly_users/<uid>`: `hasPremiumExternal=true` or `hasPremium=true`.
+   - for `firebaseEmail`: the app can restore this Firestore entitlement from the Premium screen;
+   - for `offline`: Premium is unavailable; do not issue account entitlements for this build.
+8. Point `SWITCHLY_EXTERNAL_CHECKOUT_URL` to your backend checkout endpoint.
+9. Point `SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL` to your backend portal endpoint or account page.
+10. Keep `offlineRelease` free/offline-only; users who want Premium should use `firebaseEmailRelease` or the full Play Store build.
+11. Build non-Play APKs with:
+```bash
+./gradlew :app:assembleFirebaseEmailRelease
+./gradlew :app:assembleOfflineRelease
+```
+
+## Important security note
+Opening checkout is not the same as activating Premium. The app only opens the configured external payment URL. Premium should only be activated after your backend verifies the payment. Use `PremiumManager.setPremiumFromExternalVerified(context, true)` only from a future verified entitlement/licensing flow, not immediately after checkout opens.
+
+## Switchly hosted endpoint
+The matching website ZIP contains PHP endpoints for this setup on the Switchly subdomain:
+```text
+https://your-domain.example/pages/pay/checkout/
+https://your-domain.example/pages/pay/customer-portal/
+https://your-domain.example/pages/pay/stripe-webhook/
+```
+
+The app sends `uid` and `email` query parameters when the user is signed in. The hosted webhook writes `hasPremiumExternal=true` to Firestore so the Firebase/email APK can restore Premium.

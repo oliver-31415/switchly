@@ -23,6 +23,8 @@ import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
+import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -33,6 +35,7 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 
 class FaqActivity : AppCompatActivity() {
@@ -42,6 +45,10 @@ class FaqActivity : AppCompatActivity() {
     private lateinit var searchInput: TextInputEditText
 
     private lateinit var adapter: FaqAdapter
+    private lateinit var emptyState: View
+    private lateinit var emptyTitle: TextView
+    private lateinit var emptyBody: TextView
+    private lateinit var clearSearchButton: MaterialButton
     private var allItems: List<FaqListItem> = emptyList()
 
     override fun attachBaseContext(newBase: Context) {
@@ -78,6 +85,17 @@ class FaqActivity : AppCompatActivity() {
     private fun setupViews() {
         recycler = findViewById(R.id.recycler)
         searchInput = findViewById(R.id.etFaqSearch)
+        emptyState = findViewById(R.id.layoutFaqEmpty)
+        emptyTitle = findViewById(R.id.tvFaqEmptyTitle)
+        emptyBody = findViewById(R.id.tvFaqEmptyBody)
+        clearSearchButton = findViewById(R.id.btnFaqClearSearch)
+
+        emptyTitle.text = getString(R.string.faq_empty_title)
+        emptyBody.text = getString(R.string.faq_empty_body)
+        clearSearchButton.setOnClickListener {
+            searchInput.setText("")
+            searchInput.requestFocus()
+        }
     }
 
     private fun setupRecycler() {
@@ -103,6 +121,11 @@ class FaqActivity : AppCompatActivity() {
         val visibleItems = filterFaqItems(allItems, query)
         adapter = FaqAdapter(visibleItems)
         recycler.adapter = adapter
+
+        val showEmpty = query.isNotBlank() && visibleItems.isEmpty()
+        emptyState.visibility = if (showEmpty) View.VISIBLE else View.GONE
+        recycler.visibility = if (showEmpty) View.GONE else View.VISIBLE
+        clearSearchButton.visibility = if (query.isBlank()) View.GONE else View.VISIBLE
     }
 
     private fun filterFaqItems(source: List<FaqListItem>, query: String): List<FaqListItem> {
@@ -163,6 +186,14 @@ class FaqActivity : AppCompatActivity() {
             )
         }
 
+        quick.header(R.string.faq_header_popular)
+        quick.item(R.string.faq_q_get_started, R.string.faq_a_get_started, R.drawable.play_arrow_24)
+        quick.item(R.string.faq_q_temp_disable, R.string.faq_a_temp_disable, R.drawable.toggle_off_24)
+        quick.item(R.string.faq_q_control_mode, R.string.faq_a_control_mode, R.drawable.tune_24)
+        quick.item(R.string.faq_q_blocked_websites, R.string.faq_a_blocked_websites, R.drawable.language_24)
+        quick.item(R.string.faq_q_advanced_mode_open, R.string.faq_a_advanced_mode_open, R.drawable.info_24)
+        quick.item(R.string.faq_q_xiaomi_background, R.string.faq_a_xiaomi_background, R.drawable.battery_24)
+
         quick.header(R.string.faq_section_idiot_safe)
         quick.item(R.string.faq_q_idiot_nutshell, R.string.faq_a_idiot_nutshell, R.drawable.play_arrow_24)
         quick.item(R.string.faq_q_idiot_nfc_how, R.string.faq_a_idiot_nfc_how, R.drawable.nfc_24)
@@ -180,6 +211,7 @@ class FaqActivity : AppCompatActivity() {
         quick.item(R.string.faq_q_in_app_blocking, R.string.faq_a_in_app_blocking, R.drawable.security_24)
         quick.item(R.string.faq_q_blocked_notifications, R.string.faq_a_blocked_notifications, R.drawable.notifications_24)
         quick.item(R.string.faq_q_schedule_types, R.string.faq_a_schedule_types, R.drawable.schedule_24)
+        quick.item(R.string.faq_q_uninstall_friction, R.string.faq_a_uninstall_friction, R.drawable.lock_24)
         quick.item(R.string.faq_q_switchly_lite, R.string.faq_a_switchly_lite, R.drawable.info_24)
 
         quick.header(R.string.faq_section_tags)
@@ -253,6 +285,7 @@ class FaqActivity : AppCompatActivity() {
         detailed.item(R.string.faq_q_schedules_actions, R.string.faq_a_schedules_actions, R.drawable.schedule_24)
         detailed.item(R.string.faq_q_schedules_wifi, R.string.faq_a_schedules_wifi, R.drawable.wifi_24)
         detailed.item(R.string.faq_q_schedules_bluetooth, R.string.faq_a_schedules_bluetooth, R.drawable.bluetooth_24)
+        detailed.item(R.string.faq_q_schedules_location, R.string.faq_a_schedules_location, R.drawable.location_on_24)
 
         detailed.header(R.string.faq_header_limits_usage)
         detailed.item(R.string.faq_q_usage_limit_what, R.string.faq_a_usage_limit_what, R.drawable.info_24)
@@ -270,6 +303,10 @@ class FaqActivity : AppCompatActivity() {
         detailed.item(R.string.faq_q_battery_permission_still_needed, R.string.faq_a_battery_permission_still_needed, R.drawable.battery_24)
         detailed.item(R.string.faq_q_tile, R.string.faq_a_tile, R.drawable.dashboard_24)
         detailed.item(R.string.faq_q_tile_why_missing, R.string.faq_a_tile_why_missing, R.drawable.dashboard_24)
+        detailed.item(R.string.faq_q_uninstall_friction, R.string.faq_a_uninstall_friction, R.drawable.lock_24)
+        detailed.item(R.string.faq_q_advanced_mode_open, R.string.faq_a_advanced_mode_open, R.drawable.info_24)
+        detailed.item(R.string.faq_q_advanced_mode_device_admin, R.string.faq_a_advanced_mode_device_admin, R.drawable.security_24)
+        detailed.item(R.string.faq_q_advanced_mode_adb_requirements, R.string.faq_a_advanced_mode_adb_requirements, R.drawable.info_24)
 
         detailed.header(R.string.faq_header_premium)
         detailed.item(R.string.faq_q_privacy, R.string.faq_a_privacy, R.drawable.lock_24)

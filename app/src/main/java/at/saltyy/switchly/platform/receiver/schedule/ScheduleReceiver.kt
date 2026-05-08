@@ -28,6 +28,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
@@ -40,11 +41,12 @@ import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
-import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import com.google.android.gms.location.Geofence
 import java.util.Calendar
 import kotlin.math.abs
 
@@ -59,6 +61,13 @@ class ScheduleReceiver : BroadcastReceiver() {
 
         if (!AutomationModeStore.isScheduleAllowed(ctx)) {
             // Schedule automation channel is currently disabled by control mode.
+            return
+        }
+
+        val locationScheduleId = intent.getIntExtra(EXTRA_LOCATION_SCHEDULE_ID, -1)
+        val locationTransition = intent.getIntExtra(EXTRA_LOCATION_TRANSITION, -1)
+        if (locationScheduleId > 0 && locationTransition > 0) {
+            handleLocationTransition(ctx, locationScheduleId, locationTransition)
             return
         }
 
@@ -183,6 +192,8 @@ class ScheduleReceiver : BroadcastReceiver() {
 
         for (s in schedules) {
             val ok = when {
+                s.isLocationSchedule() -> false
+
                 !s.wifiSsid.isNullOrBlank() -> {
                     val appliesToday = when (s.type) {
                         ScheduleStore.Type.WEEKLY -> (s.daysMask and todayBit) != 0
@@ -398,6 +409,88 @@ class ScheduleReceiver : BroadcastReceiver() {
      * For range schedules we must set "ownership" even if the baseEnabled state did not change.
      * Otherwise exit-revert can't happen reliably.
      */
+    private fun handleLocationTransition(ctx: Context, scheduleId: Int, transition: Int) {
+
+        val schedule = ScheduleStore.getAll(ctx).firstOrNull {
+            it.id == scheduleId && it.enabled && it.isLocationSchedule()
+        } ?: return
+
+        val transitionKey = when (transition) {
+            Geofence.GEOFENCE_TRANSITION_ENTER -> "enter"
+            Geofence.GEOFENCE_TRANSITION_EXIT -> "exit"
+            else -> return
+        }
+
+        val now = Calendar.getInstance()
+        val nowMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+        val todayBit = ScheduleStore.Days.fromCalendarDay(now.get(Calendar.DAY_OF_WEEK))
+
+        val wantsEnter = schedule.locationTrigger == ScheduleStore.LocationTrigger.ENTER ||
+            schedule.locationTrigger == ScheduleStore.LocationTrigger.ENTER_EXIT
+        val wantsExit = schedule.locationTrigger == ScheduleStore.LocationTrigger.EXIT ||
+            schedule.locationTrigger == ScheduleStore.LocationTrigger.ENTER_EXIT
+
+        val isEnter = transition == Geofence.GEOFENCE_TRANSITION_ENTER
+        val isExit = transition == Geofence.GEOFENCE_TRANSITION_EXIT
+        if ((isEnter && !wantsEnter) || (isExit && !wantsExit)) return
+
+        val pairedMode = schedule.locationTrigger == ScheduleStore.LocationTrigger.ENTER_EXIT && (
+            schedule.action == ScheduleStore.Action.ENABLE_AND_DISABLE ||
+                schedule.action == ScheduleStore.Action.DISABLE_AND_ENABLE
+            )
+
+        if (isExit && pairedMode && !ScheduleRuntimeStore.isLocationArmed(ctx, schedule.id)) {
+            return
+        }
+
+        val withinDayAndTime = (schedule.daysMask and todayBit) != 0 && (
+            (schedule.startMinutes == 0 && schedule.endMinutes >= 1439) ||
+                inTimeRange(nowMinutes, schedule.startMinutes, schedule.endMinutes)
+            )
+
+        if (isEnter && !withinDayAndTime) return
+        if (isExit && !withinDayAndTime && !pairedMode) return
+
+        val lastMs = ScheduleRuntimeStore.getLastLocationTransitionMs(ctx, schedule.id, transitionKey)
+        val cooldownMs = schedule.locationCooldownMinutes.coerceAtLeast(0) * 60_000L
+        val nowMs = System.currentTimeMillis()
+        if (cooldownMs > 0L && lastMs > 0L && nowMs - lastMs < cooldownMs) {
+            return
+        }
+        ScheduleRuntimeStore.setLastLocationTransitionMs(ctx, schedule.id, transitionKey, nowMs)
+
+        val effectiveAction = when (schedule.locationTrigger) {
+            ScheduleStore.LocationTrigger.ENTER -> if (isEnter) schedule.action else null
+            ScheduleStore.LocationTrigger.EXIT -> if (isExit) schedule.action else null
+            ScheduleStore.LocationTrigger.ENTER_EXIT -> when (schedule.action) {
+                ScheduleStore.Action.ENABLE_AND_DISABLE ->
+                    if (isEnter) ScheduleStore.Action.ENABLE else if (isExit) ScheduleStore.Action.DISABLE else null
+                ScheduleStore.Action.DISABLE_AND_ENABLE ->
+                    if (isEnter) ScheduleStore.Action.DISABLE else if (isExit) ScheduleStore.Action.ENABLE else null
+                else -> if (isEnter || isExit) schedule.action else null
+            }
+            null -> null
+        } ?: return
+
+        applySchedule(ctx, schedule.copy(action = effectiveAction), SOURCE_LOCATION)
+        ScheduleRuntimeStore.markExecutedNow(ctx)
+
+        if (pairedMode) {
+            if (isEnter) {
+                ScheduleRuntimeStore.setLocationArmed(ctx, schedule.id, true)
+            } else if (isExit) {
+                ScheduleRuntimeStore.setLocationArmed(ctx, schedule.id, false)
+            }
+        }
+
+        ScheduleExecutionCountStore.incrementToday(ctx)
+        AppLogStore.append(
+            ctx,
+            "Schedule",
+            "Applied location schedule id=${schedule.id} transition=$transitionKey action=${effectiveAction.name}"
+        )
+    }
+
     private fun dbg(msg: String) {
         if (BuildConfig.DEBUG) Log.d(TAG, msg)
     }
@@ -626,13 +719,25 @@ class ScheduleReceiver : BroadcastReceiver() {
     private fun cachedSsid(ctx: Context) =
         ctx.getSharedPreferences(PREFS_WIFI, Context.MODE_PRIVATE).getString(KEY_LAST_SSID, null)
 
+    private fun allNetworksCompat(cm: ConnectivityManager): Array<Network> {
+        val value = runCatching {
+            cm.javaClass.getMethod("getAllNetworks").invoke(cm)
+        }.getOrNull()
+        return (value as? Array<*>)?.filterIsInstance<Network>()?.toTypedArray() ?: emptyArray()
+    }
+
+    private fun wifiConnectionInfoCompat(wifiManager: WifiManager): WifiInfo? {
+        return runCatching {
+            wifiManager.javaClass.getMethod("getConnectionInfo").invoke(wifiManager) as? WifiInfo
+        }.getOrNull()
+    }
     /**
      * Returns the capabilities for any currently connected Wi‑Fi network.
      * We intentionally do NOT use [ConnectivityManager.activeNetwork] because the "default" network can be CELLULAR (or a VPN) while Wi‑Fi is still connected.
      */
     private fun currentWifiCaps(cm: ConnectivityManager): NetworkCapabilities? {
         return try {
-            for (n in cm.allNetworks) {
+            for (n in allNetworksCompat(cm)) {
                 val caps = cm.getNetworkCapabilities(n) ?: continue
                 if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return caps
             }
@@ -657,11 +762,11 @@ class ScheduleReceiver : BroadcastReceiver() {
                     // Some OEMs return null transportInfo even while connected.
                     // Fallback to WifiManager.connectionInfo (still requires Location permission).
                     val wifiManager = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                    wifiManager.connectionInfo?.ssid
+                    wifiConnectionInfoCompat(wifiManager)?.ssid
                 }
             } else {
                 val wifiManager = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                wifiManager.connectionInfo?.ssid
+                wifiConnectionInfoCompat(wifiManager)?.ssid
             } ?: return null
 
             if (raw == WifiManager.UNKNOWN_SSID) return null
@@ -731,9 +836,12 @@ class ScheduleReceiver : BroadcastReceiver() {
         private const val BT_FRESHNESS_MS = 90_000L
         private const val PREFS_RUNTIME = "switchly_runtime"
         private const val KEY_LAST_SOURCE = "last_activation_source"
+        const val EXTRA_LOCATION_SCHEDULE_ID = "locationScheduleId"
+        const val EXTRA_LOCATION_TRANSITION = "locationTransition"
         private const val SOURCE_WIFI = "wifi"
         private const val SOURCE_BT = "bt"
         private const val SOURCE_TIME = "time"
+        private const val SOURCE_LOCATION = "location"
         private const val SINGLE_FIRE_WINDOW_MS = 90_000L
     }
 }

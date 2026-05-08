@@ -18,11 +18,6 @@
  */
 
 package at.saltyy.switchly.feature.usage
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.launch
-
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
@@ -31,25 +26,29 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import at.saltyy.switchly.theme.CustomAccentApplier
-import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
-import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.databinding.ActivityWebsiteDetailBinding
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
-import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.feature.stats.StatsFormat
+import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import at.saltyy.switchly.ui.dialog.showAccented
+import kotlinx.coroutines.launch
 
 class WebsiteDetailActivity : AppCompatActivity() {
 

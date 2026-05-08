@@ -1,5 +1,6 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- PREMIUM - Overview and current status -->
     <string name="premium_title">Switchly Premium</string>
     <string name="premium_summary">Schalte Premium-Funktionen frei.</string>
@@ -9,10 +10,26 @@
     <string name="premium_status_inactive">Premium ist noch nicht aktiv</string>
     <string name="premium_already_owned">Du hast Premium bereits</string>
     <string name="premium_checking_purchases">Käufe werden geprüft…</string>
+
     <!-- PREMIUM - Purchase actions -->
     <string name="premium_button_buy">Premium kaufen</string>
     <string name="premium_button_restore">Käufe wiederherstellen</string>
     <string name="premium_button_thanks">Danke für deine Unterstützung!</string>
+    <string name="premium_button_buy_external">Premium kaufen (%1$s)</string>
+    <string name="premium_button_manage_external">Externen Kauf wiederherstellen/verwalten</string>
+    <string name="premium_payments_unavailable">Zahlungen sind in diesem Build nicht verfügbar.</string>
+    <string name="premium_unavailable_offline_build">Premium ist in diesem Offline-Build nicht verfügbar. Installiere den Firebase-E-Mail/Passwort-Build oder den vollständigen Build, um Premium zu kaufen und wiederherzustellen.</string>
+    <string name="premium_button_unavailable_offline">Premium im Offline-Build nicht verfügbar</string>
+    <string name="premium_external_payments_disabled">Externe Zahlungen sind in diesem Build deaktiviert.</string>
+    <string name="premium_external_payments_not_configured">Externer Checkout ist für diesen Build nicht konfiguriert.</string>
+    <string name="premium_external_portal_not_configured">Externe Kaufverwaltung ist für diesen Build nicht konfiguriert.</string>
+    <string name="premium_external_invalid_url">Die externe Zahlungs-URL ist ungültig.</string>
+    <string name="premium_external_no_browser">Keine Browser-App konnte die Zahlungsseite öffnen.</string>
+    <string name="premium_external_entitlement_active">Premium wurde erfolgreich wiederhergestellt.</string>
+    <string name="premium_external_entitlement_missing">Für dieses Konto wurde noch keine externe Premium-Berechtigung gefunden.</string>
+    <string name="premium_external_sign_in_to_buy">Melde dich zuerst mit E-Mail/Passwort an und kaufe dann Premium.</string>
+    <string name="premium_external_sign_in_to_restore">Melde dich zuerst an und versuche dann erneut, deinen externen Kauf wiederherzustellen.</string>
+
     <!-- PREMIUM - Unlock cards and feature highlights -->
     <string name="premium_unlock_title">Designs &amp; Farben</string>
     <string name="premium_unlock_desc">Schalte zusätzliche Akzentfarben frei und aktiviere den Farbwähler für vollständig personalisierte Designs.</string>
@@ -23,6 +40,8 @@
     <string name="premium_stats_title">Statistiken &amp; Einblicke</string>
     <string name="premium_stats_desc">Schalte detaillierte Nutzungseinblicke frei, um zu sehen, wie oft du Switchly nutzt und welche Apps dich am meisten ablenken.</string>
     <string name="premium_required_for_theme">Diese Farbe ist nur mit Switchly Premium verfügbar.</string>
+
     <!-- PREMIUM - Support note -->
     <string name="premium_support_note">Danke, dass du Switchly unterstützt 💜</string>
+
 </resources>

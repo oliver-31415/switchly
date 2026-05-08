@@ -25,8 +25,8 @@ import androidx.preference.PreferenceManager
 
 /**
  * Daily per-domain limit (minutes), scoped to the active profile.
- * Legacy builds stored website limits globally by domain. We still read those keys as a fallback
- * so older user data continues to work, but new writes are profile-scoped.
+ * Older builds stored website limits globally by domain. We still read those profileless keys
+ * once so existing user data is migrated into the active profile.
  */
 object DomainLimitStore {
 
@@ -43,7 +43,7 @@ object DomainLimitStore {
     private fun currentProfile(ctx: Context): String =
         sanitizeProfile(ProfileStore.getCurrent(ctx) ?: "default")
 
-    private fun legacyKey(domain: String): String = PREFIX + domain
+    private fun profilelessKey(domain: String): String = PREFIX + domain
 
     private fun scopedKey(profile: String, domain: String): String =
         PREFIX + PROFILE_SEGMENT + profile + "__" + domain
@@ -67,15 +67,15 @@ object DomainLimitStore {
         val scopedMinutes = readMinutesRaw(ctx, scoped)
         if (scopedMinutes > 0) return scopedMinutes
 
-        val legacy = readMinutesRaw(ctx, legacyKey(d))
-        if (legacy > 0) {
+        val profileless = readMinutesRaw(ctx, profilelessKey(d))
+        if (profileless > 0) {
             // One-time lazy migration for the active profile.
             prefs(ctx).edit {
-                putInt(scoped, legacy)
-                remove(legacyKey(d))
+                putInt(scoped, profileless)
+                remove(profilelessKey(d))
             }
         }
-        return legacy
+        return profileless
     }
 
     fun setLimitMinutes(ctx: Context, domain: String, minutes: Int) {
@@ -84,8 +84,8 @@ object DomainLimitStore {
         val scoped = scopedKey(currentProfile(ctx), d)
         prefs(ctx).edit {
             if (m <= 0) remove(scoped) else putInt(scoped, m)
-            // Clear legacy global storage for this domain once it is touched in a newer build.
-            remove(legacyKey(d))
+            // Clear profileless storage once this domain is touched in a profile-scoped build.
+            remove(profilelessKey(d))
         }
     }
 
@@ -93,13 +93,13 @@ object DomainLimitStore {
         val d = DomainBlockStore.normalize(domain) ?: return
         prefs(ctx).edit {
             remove(scopedKey(currentProfile(ctx), d))
-            remove(legacyKey(d))
+            remove(profilelessKey(d))
         }
     }
 
     /**
      * Returns all domains that currently have a stored limit key for the active profile.
-     * Legacy global keys are included and lazily migrated when they are read.
+     * Profileless global keys are included and lazily migrated when they are read.
      */
     fun getDomainsWithLimit(ctx: Context): Set<String> {
         val p = prefs(ctx)
@@ -111,14 +111,14 @@ object DomainLimitStore {
             .filter { it.isNotBlank() }
             .toMutableSet()
 
-        val legacy = p.all.keys
+        val profileless = p.all.keys
             .asSequence()
             .filter { it.startsWith(PREFIX) && !it.startsWith(PREFIX + PROFILE_SEGMENT) }
             .map { it.removePrefix(PREFIX) }
             .filter { it.isNotBlank() }
             .toSet()
 
-        scoped.addAll(legacy)
+        scoped.addAll(profileless)
         return scoped
     }
 

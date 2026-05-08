@@ -36,23 +36,25 @@ import androidx.preference.PreferenceManager
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import at.saltyy.switchly.R
-import at.saltyy.switchly.ui.ThemeUtils
-import at.saltyy.switchly.ui.EdgeToEdgeUtils
-import at.saltyy.switchly.theme.AccentColor
-import at.saltyy.switchly.theme.CustomAccentApplier
-import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
-import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.InAppLimitStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.theme.CustomAccentApplier
+import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Locale
 
 class InAppBlockingActivity : AppCompatActivity() {
+
+    private var contentReady = false
 
     private val prefs by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 
@@ -111,6 +113,7 @@ class InAppBlockingActivity : AppCompatActivity() {
             return
         }
         setContentView(R.layout.activity_in_app_blocking)
+        contentReady = true
 
         CustomAccentApplier.applyIfNeeded(this)
 
@@ -253,10 +256,16 @@ class InAppBlockingActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        // If editing is locked, onCreate() exits before setContentView().
+        // Android still calls onResume(), so avoid touching layout views that do not exist in that path.
+        if (!contentReady) return
+
         CustomAccentApplier.applyIfNeeded(this)
-        refreshInAppLimit(findViewById(R.id.tvInAppLimitValue))
-        findViewById<SwitchCompat>(R.id.swInAppMaster).isChecked =
-            readProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, true)
+        val limitView: TextView? = findViewById(R.id.tvInAppLimitValue)
+        limitView?.let { refreshInAppLimit(it) }
+        val masterSwitch: SwitchCompat? = findViewById(R.id.swInAppMaster)
+        masterSwitch?.isChecked = readProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, true)
     }
 
     private fun setupSwitch(switchId: Int, prefKey: String) {

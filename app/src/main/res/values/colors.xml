@@ -2,14 +2,15 @@
 <resources>
 
     <!-- =========================
-         TEXT COLORS
+         APP / BRAND
          ========================= -->
-    <color name="font_white">#FFFFFF</color>
+    <color name="ic_launcher_background">#2E8B57</color>
+    <color name="switchly_bg">#FFF3F4F6</color>
 
     <!-- =========================
-         BRAND COLORS
+         TEXT
          ========================= -->
-     <color name="ic_launcher_background">#2E8B57</color>
+    <color name="font_white">#FFFFFFFF</color>
 
     <!-- =========================
          ACCENT PALETTE
@@ -17,58 +18,61 @@
     <color name="accent_default_green">#2E8B57</color>
     <color name="accent_green">#2E8B57</color>
     <color name="accent_blue">#FF1565C0</color>
-    <color name="accent_orange">#FFEF6C00</color>
+    <color name="accent_teal">#FF00897B</color>
     <color name="accent_purple">#FF6A1B9A</color>
-    <color name="accent_pink">#EC407A</color>
-    <color name="accent_teal">#00897B</color>
+    <color name="accent_pink">#FFEC407A</color>
     <color name="accent_red">#FFC62828</color>
-    <color name="accent_amber">#FFA000</color>
-    <color name="accent_gray">#546E7A</color>
+    <color name="accent_orange">#FFEF6C00</color>
+    <color name="accent_amber">#FFFFA000</color>
+    <color name="accent_gray">#FF546E7A</color>
 
     <!-- =========================
          SEMANTIC STATES
          ========================= -->
-    <color name="status_ok">#2E8B57</color>      <!-- Material Green 500 -->
-    <color name="status_error">#D32F2F</color>   <!-- Material Red 500 -->
-    <color name="status_neutral">#90A4AE</color>
-    <color name="status_border">#3390A4AE</color> <!-- Blue Grey 400 -->
+    <color name="status_ok">#FF2E8B57</color>
+    <color name="status_error">#FFD32F2F</color>
+    <color name="status_neutral">#FF90A4AE</color>
+    <color name="status_border">#3390A4AE</color>
 
     <!-- =========================
-         SURFACES/BACKGROUND/DIVIDERS
+         COMMON SURFACES / STROKES / DIVIDERS
          ========================= -->
-    <!-- Semi-transparent white lets the soft background shine through a bit -->
     <color name="switchly_card_bg">#F7FFFFFF</color>
     <color name="switchly_card_stroke">#14000000</color>
-
-    <!-- App background -->
-    <color name="switchly_bg">#FFF3F4F6</color>
-
-    <!-- Dividers inside cards -->
     <color name="switchly_divider">#14000000</color>
 
     <!-- =========================
-         SIMPLE ALIASES (troubleshooting UI)
+         SIMPLE ALIASES
          ========================= -->
     <color name="switchly_ok">@color/status_ok</color>
     <color name="switchly_error">@color/status_error</color>
 
     <!-- =========================
-         ONBOARDING
+         ONBOARDING SUMMARY
          ========================= -->
     <color name="onb_summary_surface">#FFFFFFFF</color>
-    <color name="onb_summary_text_primary">#FF111827</color>
-    <color name="onb_summary_text_on_dark">#FFF5F7FA</color>
-    <color name="onb_summary_text_secondary">#D9111827</color>
-
-    <color name="onb_summary_stroke">#1A111827</color>
     <color name="onb_summary_card_alt">#FFF8FAFC</color>
+    <color name="onb_summary_stroke">#1A111827</color>
+
+    <color name="onb_summary_text_primary">#FF111827</color>
+    <color name="onb_summary_text_secondary">#D9111827</color>
+    <color name="onb_summary_text_on_dark">#FFF5F7FA</color>
 
     <!-- =========================
-         APP PICKER: Unavailable app row
+         APP PICKER / UNAVAILABLE ROW
          ========================= -->
     <color name="unavailable_row_bg">#FFF2F4F7</color>
     <color name="unavailable_row_stroke">#1A000000</color>
     <color name="unavailable_chip_bg">#FFE3E8EE</color>
     <color name="unavailable_chip_text">#FF39424D</color>
+
+    <!-- =========================
+         WIDGET SCANNER
+         ========================= -->
+    <color name="widget_scanner_surface">#4D111827</color>
+    <color name="widget_scanner_button_surface">#66111827</color>
+    <color name="widget_scanner_stroke">#33FFFFFF</color>
+    <color name="widget_scanner_title">#FFFFFFFF</color>
+    <color name="widget_scanner_text">#E6FFFFFF</color>
 
 </resources>

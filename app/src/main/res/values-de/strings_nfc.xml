@@ -1,5 +1,6 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- NFC WRITER - Intro, action selection, and helpers -->
     <string name="write_nfc_tag">NFC-Tag schreiben</string>
     <string name="nfc_write_intro_title">Switchly-Aktions-Tag schreiben</string>
@@ -7,7 +8,7 @@
     <string name="nfc_action_hint">Aktion</string>
     <string name="nfc_action_hint_default">Wähle eine Aktion aus, um zu sehen, was sie macht.</string>
     <string name="nfc_profile_hint">Profil</string>
-    <string name="nfc_profile_none">Keines</string>
+    <string name="nfc_profile_none">Universell</string>
     <string name="nfc_action_enable">Aktivieren</string>
     <string name="nfc_action_disable">Deaktivieren</string>
     <string name="nfc_action_toggle">Umschalten</string>
@@ -34,7 +35,7 @@
     </plurals>
     <string name="nfc_action_desc_pair_uid">Keine Schreibaktion. Das ist nur UID-Kopplung, auch für schreibgeschützte Karten. Beim Scannen wird die UID als erlaubt gespeichert, aber es wird keine Deaktivieren/Profil-Aktion auf die Karte geschrieben. Sobald mindestens eine UID gekoppelt ist, können nur gekoppelte Tags Switchly umschalten oder entsperren.</string>
     <string name="nfc_action_desc_profile_selected">Ausgewähltes Profil: %1$s</string>
-    <string name="nfc_action_desc_profile_none">Profil: keines (globale Aktion)</string>
+    <string name="nfc_action_desc_profile_none">Profil: Universell (globale Aktion)</string>
     <string name="nfc_action_error_fmt">Aktion fehlgeschlagen: %1$s</string>
     <string name="nfc_action_emergency_tag_removed">Emergency-Disable per NFC-Tag wird nicht mehr unterstützt. Bitte nutze die Notfall-Entsperrung direkt in der App.</string>
     <string name="nfc_duration_hint">Temporäre Dauer</string>
@@ -45,6 +46,7 @@
     <string name="nfc_hold_still">Handy ruhig halten…</string>
     <string name="nfc_close">Schließen</string>
     <string name="nfc_action_desc_pair_uid_disabled">„Tag koppeln“ ist deaktiviert. Aktiviere es in Einstellungen → Blocking &amp; Control Toggles → Gepaarte NFC-Tags aktivieren und scanne dann einen Tag, um seine UID zu speichern.</string>
+
     <!-- NFC WRITER - Writing state, toggles, and write errors -->
     <string name="nfc_arm_write">Tag-Writer starten</string>
     <string name="nfc_waiting_tag">Halte das Tag an das Smartphone…</string>
@@ -53,13 +55,10 @@
     <string name="nfc_write_error_generic">Auf NFC-Tag konnte nicht geschrieben werden.</string>
     <string name="nfc_write_error_too_small">Das NFC-Tag ist für diese Aktion zu klein. Nutze ein Tag mit mehr Speicher.</string>
     <string name="nfc_not_available">NFC ist auf diesem Gerät nicht verfügbar</string>
-    <string name="nfc_state_on">EIN</string>
-    <string name="nfc_state_off">AUS</string>
     <string name="nfc_required_confirm_title">NFC erforderlich</string>
     <string name="nfc_required_confirm_enable_msg">Wenn aktiviert, kann Switchly nur mit einem gekoppelten NFC-Tag (oder QR-Fallback) deaktiviert werden. Zeitpläne und Schnellumschalter können es dann nicht mehr ausschalten.</string>
     <string name="nfc_feedback_started">%1$s aktiviert</string>
     <string name="nfc_feedback_stopped">%1$s deaktiviert</string>
-    <string name="nfc_toggle_via_nfc_fmt">Switchly %1$s (über NFC)</string>
     <string name="nfc_error_invalid_or_missing_uri">Ungültige oder fehlende URI</string>
     <string name="nfc_error_unknown_host">Unbekannter Host</string>
     <string name="nfc_error_unknown_action">Unbekannte Aktion</string>
@@ -70,6 +69,7 @@
     <string name="nfc_write_locked_while_enabled">NFC-Tag-Schreiben ist gesperrt, solange Switchly aktiv ist.</string>
     <string name="nfc_write_locked_status">Deaktiviere Switchly, um ein neues NFC-Tag zu schreiben oder zu koppeln, oder erlaube NFC-Tag-Schreiben im Mixed-Mode.</string>
     <string name="nfc_write_locked_button">NFC-Tag-Schreiben gesperrt</string>
+
     <!-- NFC TEMPORARY ACTION DURATIONS -->
     <string name="nfc_temp_disable_limiter_cooldown">Dieses Tag ist im Cooldown. Bitte in %1$d Min erneut versuchen.</string>
     <plurals name="nfc_temp_disable_limiter_daily_limit">
@@ -90,8 +90,9 @@
         <item quantity="one">%1$d Minute</item>
         <item quantity="other">%1$d Minuten</item>
     </plurals>
+
     <!-- NFC PAIRING FLOW -->
-    <string name="nfc_pair_waiting_readonly">Halte ein NFC-Tag an, um seine UID für die Toggle-Nutzung zu koppeln</string>
+    <string name="nfc_pair_waiting_readonly">Halte ein NFC-Tag an, um seine UID für Umschalten/Entsperren zu koppeln</string>
     <string name="nfc_pair_waiting_writable">Halte ein beschreibbares NFC-Tag an, um seine UID zu koppeln</string>
     <string name="nfc_pair_ok">Tag gekoppelt</string>
     <string name="nfc_pair_ok_with_uid">Tag gekoppelt: %1$s</string>
@@ -101,9 +102,10 @@
     <string name="nfc_pair_already_added_open_writer">Tag bereits hinzugefügt. Aktions-Writer wird geöffnet…</string>
     <string name="nfc_pair_writable_requires_writable_tag">Dieses Tag ist schreibgeschützt. Füge es stattdessen als schreibgeschütztes Tag hinzu.</string>
     <string name="nfc_wrong_tag_paired_uid_required">Falsches NFC-Tag (gekoppelte UID erforderlich).</string>
+
     <!-- PAIRED TAGS - Overview, dialogs, and editing -->
     <string name="paired_tags_setup_title">NFC-Tags hinzufügen und verwalten</string>
-    <string name="paired_tags_setup_body">Nutze die + Schaltfläche, um ein neues NFC-Tag hinzuzufügen.\n\n• Beschreibbares Tag hinzufügen: Der erste Scan koppelt die UID des Tags. Wenn du dasselbe Tag erneut scannst, öffnet Switchly den Aktions-Writer, damit du eine Aktion darauf schreiben kannst.\n• Schreibgeschütztes Tag hinzufügen: koppelt die UID des Tags für Toggle-/Entsperr-Nutzung, ohne etwas auf die Karte zu schreiben. Nur hier gekoppelte Tags funktionieren so als schreibgeschützte Tags.</string>
+    <string name="paired_tags_setup_body">Nutze die + Schaltfläche, um ein neues NFC-Tag hinzuzufügen.\n\n• Beschreibbares Tag hinzufügen: Der erste Scan koppelt die UID des Tags. Wenn du dasselbe Tag erneut scannst, öffnet Switchly den Aktions-Writer, damit du eine Aktion darauf schreiben kannst.\n• Schreibgeschütztes Tag hinzufügen: koppelt die UID des Tags, ohne etwas auf die Karte zu schreiben. Du kannst pro Tag festlegen, ob es umschaltet, nur entsperrt oder nur sperrt.</string>
     <string name="paired_tags_add_title">NFC-Tag hinzufügen</string>
     <string name="paired_tags_add_writable_title">Beschreibbares Tag hinzufügen</string>
     <string name="paired_tags_add_readonly_title">Schreibgeschütztes Tag hinzufügen</string>
@@ -134,8 +136,23 @@
     <string name="paired_tag_cooldown_helper">1–1440, leer = Standard</string>
     <string name="paired_tag_daily_limit_invalid">Bitte ein gültiges Tageslimit (1–50) eingeben oder leer lassen.</string>
     <string name="paired_tag_cooldown_invalid">Bitte gültige Cooldown-Minuten (1–1440) eingeben oder leer lassen.</string>
+
+    <string name="paired_tag_readonly_action_section_title">Aktion für schreibgeschützte Tags</string>
+    <string name="paired_tag_readonly_action_section_hint">Wähle, was dieses gekoppelte UID-Tag tun soll, wenn keine Switchly-Aktion darauf geschrieben ist.</string>
+    <string name="paired_tag_readonly_action_label">Aktion bei schreibgeschütztem Scan</string>
+    <string name="paired_tag_readonly_action_toggle">Umschalten</string>
+    <string name="paired_tag_readonly_action_unlock_only">Nur entsperren</string>
+    <string name="paired_tag_readonly_action_lock_only">Nur sperren</string>
+    <string name="paired_tag_type_writable">Beschreibbares Tag</string>
+    <string name="paired_tag_type_readonly">Schreibgeschütztes Tag</string>
+    <string name="paired_tag_type_legacy">Altes gekoppeltes Tag</string>
+    <string name="paired_tag_readonly_action_summary_fmt">Schreibgeschütztes Tag - Aktion: %1$s</string>
+    <string name="nfc_feedback_already_started">%1$s ist bereits aktiviert</string>
+    <string name="nfc_feedback_already_stopped">%1$s ist bereits deaktiviert</string>
+
     <!-- NFC TOASTS -->
     <string name="toast_disable_requires_nfc">Switchly kann derzeit nur per NFC-Tag deaktiviert werden.</string>
     <string name="toast_cannot_disable_while_locked">Switchly ist gesperrt. Nutze dein NFC-Tag, um es zu deaktivieren.</string>
     <string name="toast_cannot_change_profile_while_locked">Profile sind gesperrt. Nutze dein NFC-Tag, um Switchly umzuschalten oder zu deaktivieren.</string>
+
 </resources>

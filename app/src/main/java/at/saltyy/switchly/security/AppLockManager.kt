@@ -23,9 +23,10 @@ import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.os.Bundle
-import at.saltyy.switchly.feature.settings.AppLockActivity
 import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.feature.settings.AppLockActivity
 import at.saltyy.switchly.nfc.NfcEntryActivity
+import at.saltyy.switchly.util.ActivityTransitionCompat
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -80,7 +81,7 @@ object AppLockManager {
             Intent(activity, AppLockActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NO_ANIMATION)
         )
-        activity.overridePendingTransition(0, 0)
+        ActivityTransitionCompat.finishWithoutAnimation(activity)
         return true
     }
 

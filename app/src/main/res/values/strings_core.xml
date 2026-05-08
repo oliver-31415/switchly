@@ -1,8 +1,10 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- APP AND COMMON ACTIONS -->
+
+    <!-- App -->
     <string name="app_name">Switchly</string>
-    <string name="settings">Settings</string>
+
+    <!-- Common actions -->
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="not_now">Not now</string>
@@ -14,19 +16,34 @@
     <string name="copied">Copied</string>
     <string name="share">Share</string>
     <string name="info">Info</string>
-    <!-- SIGN-IN AND GENERIC STATE LABELS -->
-    <string name="sign_out">Sign out</string>
+    <string name="settings">Settings</string>
+
+    <!-- Generic states -->
     <string name="required">Required</string>
     <string name="invalid_value">Invalid value</string>
     <string name="state_enabled">Enabled</string>
     <string name="state_disabled">Disabled</string>
-    <!-- PAIRED TAG SORTING -->
+    <string name="sign_out">Sign out</string>
+
+    <!-- Common UI tokens -->
+    <string name="common_dash">—</string>
+    <string name="common_bullet">•</string>
+    <string name="switch_mode_label">Switch mode: %1$s</string>
+    <string name="control_manual">Manual</string>
+    <string name="control_nfc">NFC</string>
+    <string name="control_schedules">Schedules</string>
+    <string name="control_qr">QR</string>
+    <string name="control_barcode">Barcode</string>
+    <string name="switch_mode_status_placeholder">Switch mode: …</string>
+
+    <!-- Paired tag sorting -->
     <string name="paired_tags_sort_title">Sort paired tags</string>
     <string name="paired_tags_sort_new_old">New → old</string>
     <string name="paired_tags_sort_old_new">Old → new</string>
     <string name="paired_tags_sort_name_az">Name A → Z</string>
     <string name="paired_tags_sort_name_za">Name Z → A</string>
-    <!-- QUICK SETTINGS TILE -->
+
+    <!-- Quick Settings tile -->
     <string name="qs_label_on">Switchly ON</string>
     <string name="qs_label_off">Switchly OFF</string>
     <string name="qs_added_ok">Tile added</string>
@@ -34,13 +51,14 @@
     <string name="qs_added_cancel">Canceled</string>
     <string name="qs_tile_add_hint">Open Quick Settings → Edit → drag “Switchly” into your active tiles</string>
     <string name="qs_tile_remove_hint">To remove the tile: Quick Settings → Edit → remove “Switchly”</string>
-    <!-- UPDATE STATUS -->
+
+    <!-- Update status -->
     <string name="update_available_title">Update available</string>
     <string name="update_available_message">A new Switchly version is available on Google Play.</string>
-    <string name="update_available_inline">New update available!</string>
     <string name="update_available_cta">Update</string>
     <string name="switchly_update_up_to_date">You are already up to date</string>
-    <!-- ACCENT COLORS AND CUSTOM COLOR CHANNELS -->
+
+    <!-- Accent colors -->
     <string name="accent_default">Default (Green)</string>
     <string name="accent_blue">Blue</string>
     <string name="accent_teal">Teal</string>
@@ -50,14 +68,58 @@
     <string name="accent_orange">Orange</string>
     <string name="accent_amber">Amber</string>
     <string name="accent_gray">Gray</string>
+
+    <!-- Color channels -->
     <string name="color_channel_r">R</string>
     <string name="color_channel_g">G</string>
     <string name="color_channel_b">B</string>
-    <!-- COMMON FORMAT TOKENS -->
-    <string name="switch_mode_label">Switch mode: %1$s</string>
-    <string name="switch_mode_status_placeholder">Switch mode: …</string>
-    <string name="common_dash">—</string>
-    <string name="common_bullet">•</string>
-    <!-- QR SHARE -->
+
+    <!-- QR share -->
     <string name="qr_share_failed">Could not share QR code.</string>
+
+    <!-- App shortcuts -->
+    <string name="shortcut_qr_short">QR scan</string>
+    <string name="shortcut_qr_long">Start QR scanning</string>
+    <string name="shortcut_barcode_short">Barcode scan</string>
+    <string name="shortcut_barcode_long">Start barcode scanning</string>
+    <string name="shortcut_nfc_short">Write NFC</string>
+    <string name="shortcut_focus_now_short">Focus now</string>
+    <string name="shortcut_focus_now_long">Enable Switchly now</string>
+
+    <!-- Hub widget -->
+    <string name="widget_scanner_name">Switchly Hub</string>
+    <string name="widget_scanner_title">Switchly Hub</string>
+    <string name="widget_scanner_open_app">Open app</string>
+    <string name="widget_hub_nfc">NFC write</string>
+    <string name="widget_hub_blocked_notifications">Blocked</string>
+    <string name="widget_hub_focus_now">Focus</string>
+
+    <!-- Focus widget -->
+    <string name="widget_focus_now_name">Focus now</string>
+    <string name="widget_focus_now_applied">Switchly enabled.</string>
+    <string name="widget_focus_already_active">Switchly is already active.</string>
+
+    <!-- Widget actions / shared widget state -->
+    <string name="widget_action_requires_permissions">Finish permissions first.</string>
+    <string name="widget_pause_15">15 min</string>
+    <string name="widget_pause_30">30 min</string>
+    <string name="widget_pause_60">1 hour</string>
+    <plurals name="widget_pause_applied_fmt">
+        <item quantity="one">Switchly paused for %1$d minute.</item>
+        <item quantity="other">Switchly paused for %1$d minutes.</item>
+    </plurals>
+    <string name="widget_pause_already_disabled">Switchly is already disabled.</string>
+    <string name="widget_next_schedule_open">Open schedules</string>
+
+    <!-- Individual widgets -->
+    <string name="widget_qr_name">QR scanner</string>
+    <string name="widget_barcode_name">Barcode scanner</string>
+    <string name="widget_nfc_name">NFC writer</string>
+    <string name="widget_blocked_notifications_name">Blocked notifications</string>
+    <string name="widget_pause_blocker_name">Pause blocker</string>
+    <string name="widget_next_schedule_name">Next schedule</string>
+
+    <string name="experimental_notice_title">Experimental features in 2.1.1</string>
+    <string name="experimental_notice_body">Some features and UI flows in this version need extra testing.\n\nPlease send feedback if something feels wrong with:\n• Location-based schedules\n• Advanced / ADB tools\n• Device admin features\n• The new Home / Blocking / Manage / Settings menu layout\n• Manage keys actions for NFC tags, paired tags, QR codes, and barcodes\n• Local backup / restore behavior\n• App lock and uninstall protection\n\nThese may behave differently depending on your device, especially on Xiaomi, Samsung, and other OEM-customized Android versions.\n\nYou can still use Switchly normally — core blocking is stable.</string>
+
 </resources>

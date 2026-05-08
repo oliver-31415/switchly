@@ -22,8 +22,8 @@ package at.saltyy.switchly.feature.onboarding
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -34,33 +34,33 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.content.getSystemService
-import androidx.core.content.ContextCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import androidx.viewpager2.widget.ViewPager2
 import at.saltyy.switchly.R
+import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
 import at.saltyy.switchly.data.onboarding.OnboardingPage
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
-import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
 import at.saltyy.switchly.feature.onboarding.adapters.OnboardingPagerAdapter
 import at.saltyy.switchly.feature.picker.AppPickerActivity
 import at.saltyy.switchly.feature.premium.PremiumInfoActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
+import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.theme.AccentColor
-import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.PermissionUtils
 import at.saltyy.switchly.util.getIntCompat
-import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -79,7 +79,7 @@ class OnboardingActivity : ComponentActivity() {
          * v1: initial release
          * v2: change app blocking core permission to Accessibility.
          * v3: add required Usage Access step + 7-day usage summary.
-         * v4: make battery optimization required + improved permission completion states.
+         * v4: previously made battery optimization required + improved permission completion states.
          * v5: hide quick summary until Usage Access is granted + add second opt-in confirm for NFC-required optional toggle.
          * v6: onboarding optional-features NFC toggle now shows the same immediate confirm popup as Settings.
          */
@@ -353,8 +353,9 @@ class OnboardingActivity : ComponentActivity() {
     private fun isCorePermissionsReady(ctx: Context): Boolean {
         val accessibility = PermissionUtils.isAccessibilityServiceEnabled(ctx, SwitchlyAccessibilityService::class.java)
         val usageAccess = UsageStatsRepo.hasUsageAccess(ctx)
-        val batteryIgnored = isBatteryOptimizationIgnored(ctx)
-        return accessibility && usageAccess && batteryIgnored
+        // Battery optimization is still strongly recommended and shown in the permissions checklist, but it should not block onboarding.
+        // Some Android/OEM settings screens are inconsistent and can leave users stuck even after they tried to allow it.
+        return accessibility && usageAccess
     }
 
     private fun buildPages(): List<OnboardingPage> = listOfNotNull(

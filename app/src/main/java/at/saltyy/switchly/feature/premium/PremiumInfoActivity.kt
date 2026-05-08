@@ -25,6 +25,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import at.saltyy.switchly.BuildConfig
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import at.saltyy.switchly.R
@@ -101,12 +102,7 @@ class PremiumInfoActivity : AppCompatActivity() {
         }
 
         restoreButton.setOnClickListener {
-            PremiumManager.refreshFromPlay(this)
-            Toast.makeText(
-                this,
-                getString(R.string.premium_checking_purchases),
-                Toast.LENGTH_SHORT
-            ).show()
+            PremiumManager.restorePurchases(this)
         }
     }
 
@@ -121,8 +117,33 @@ class PremiumInfoActivity : AppCompatActivity() {
         } else {
             statusTextView.text = getString(R.string.premium_status_inactive)
             thanksTextView.visibility = View.GONE
-            purchaseButton.text = getString(R.string.premium_button_buy)
+
+            val premiumSupportedBuild = PremiumManager.isPremiumSupportedBuild()
+
+            if (!premiumSupportedBuild) {
+                statusTextView.text = getString(R.string.premium_unavailable_offline_build)
+                purchaseButton.text = getString(R.string.premium_button_unavailable_offline)
+                purchaseButton.isEnabled = false
+                restoreButton.isVisible = false
+                return
+            }
+
+            purchaseButton.text = when {
+                BuildConfig.SWITCHLY_EXTERNAL_PAYMENTS_ENABLED ->
+                    getString(R.string.premium_button_buy_external, PremiumManager.externalPaymentProviderName())
+                BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED ->
+                    getString(R.string.premium_button_buy)
+                else ->
+                    getString(R.string.premium_payments_unavailable)
+            }
             purchaseButton.isEnabled = true
+
+            restoreButton.isVisible = true
+            restoreButton.text = if (BuildConfig.SWITCHLY_EXTERNAL_PAYMENTS_ENABLED) {
+                getString(R.string.premium_button_manage_external)
+            } else {
+                getString(R.string.premium_button_restore)
+            }
         }
     }
 }

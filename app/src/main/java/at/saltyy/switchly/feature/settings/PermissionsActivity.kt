@@ -53,15 +53,15 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
-import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.BatteryOptimizationCompat
+import at.saltyy.switchly.util.LocaleHelper
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /**
  * Permissions overview screen.
@@ -359,12 +359,13 @@ class PermissionsActivity : AppCompatActivity() {
         val accessibilityEnabled = accessibilityRuntime
 
         val usageAccessOk = UsageStatsRepo.hasUsageAccess(this)
-        val locationNeeded = isLocationNeededForFeatures()
-        val locationState = if (locationNeeded) getLocationStateForWifi() else LocationState.OK
+        val locationState = getLocationStateForWifi()
         val locationOk = locationState == LocationState.OK
 
-        val bluetoothNeeded = isBluetoothNeededForFeatures()
-        val btGranted = if (bluetoothNeeded) hasBluetoothPermission() else true
+        val btGranted = hasBluetoothPermission()
+
+        val locationNeeded = ScheduleStore.hasEnabledWifiSchedules(this) || ScheduleStore.hasEnabledLocationSchedules(this)
+        val bluetoothNeeded = ScheduleStore.hasEnabledBluetoothSchedules(this)
 
         val batteryOk = isBatteryOptimizationEffectivelyOk()
         val hasEnabledSchedules = ScheduleStore.getAll(this).any { it.enabled }
@@ -387,41 +388,27 @@ class PermissionsActivity : AppCompatActivity() {
                 getString(R.string.permissions_btn_open)
             }
 
-        if (locationNeeded) {
-            applyLocationStatus(locationState)
-        } else {
-            val green = ContextCompat.getColor(this, R.color.status_ok)
-            tvLocationStatus.text = getString(R.string.permissions_for_wifi_not_needed)
-            tvLocationStatus.setTextColor(green)
-        }
-
-        if (bluetoothNeeded) {
-            applyStatus(tvBluetoothStatus, btGranted)
-        } else {
-            val green = ContextCompat.getColor(this, R.color.status_ok)
-            tvBluetoothStatus.text = getString(R.string.permissions_for_bluetooth_not_needed)
-            tvBluetoothStatus.setTextColor(green)
-        }
+        applyLocationStatus(locationState)
+        applyStatus(tvBluetoothStatus, btGranted)
 
         applyBatteryStatus(tvBatteryStatus, batteryOk)
         applyExactAlarmsStatus(tvExactAlarmsStatus, exactAlarmsOk)
 
         // Location request button
-        btnReqLocation.visibility = if (!locationNeeded || locationOk) View.GONE else View.VISIBLE
-        if (locationNeeded) {
-            btnReqLocation.text = when (locationState) {
-                LocationState.MISSING -> getString(R.string.permissions_btn_request)
-                LocationState.APPROX_ONLY -> getString(R.string.permissions_btn_enable_precise)
-                LocationState.BACKGROUND_MISSING -> getString(R.string.permissions_btn_enable_all_the_time)
-                LocationState.OK -> getString(R.string.permissions_status_enabled)
-            }
+        btnReqLocation.visibility = if (locationOk) View.GONE else View.VISIBLE
+        btnReqLocation.text = when (locationState) {
+            LocationState.MISSING -> getString(R.string.permissions_btn_set_permission)
+            LocationState.APPROX_ONLY -> getString(R.string.permissions_btn_enable_precise)
+            LocationState.BACKGROUND_MISSING -> getString(R.string.permissions_btn_enable_all_the_time)
+            LocationState.OK -> getString(R.string.permissions_status_enabled)
         }
 
-        btnOpenLocation.visibility = if (locationNeeded) View.VISIBLE else View.GONE
+        btnOpenLocation.visibility = View.VISIBLE
 
         // Bluetooth request button
-        btnReqBluetooth.visibility = if (!bluetoothNeeded || btGranted) View.GONE else View.VISIBLE
-        btnOpenBluetooth.visibility = if (bluetoothNeeded) View.VISIBLE else View.GONE
+        btnReqBluetooth.visibility = if (btGranted || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) View.GONE else View.VISIBLE
+        btnReqBluetooth.text = getString(R.string.permissions_btn_set_permission)
+        btnOpenBluetooth.visibility = View.VISIBLE
 
         // Battery request button
         btnReqBattery.visibility = if (batteryRelevant && !batteryOk) View.VISIBLE else View.GONE
@@ -446,8 +433,8 @@ class PermissionsActivity : AppCompatActivity() {
             permissionsLocked && notificationAccessGranted
         )
         applyProtectedButtonState(btnOpenNotifications, permissionsLocked && notificationsOk)
-        applyProtectedButtonState(btnOpenLocation, permissionsLocked && (!locationNeeded || locationOk))
-        applyProtectedButtonState(btnOpenBluetooth, permissionsLocked && (!bluetoothNeeded || btGranted))
+        applyProtectedButtonState(btnOpenLocation, permissionsLocked && locationOk)
+        applyProtectedButtonState(btnOpenBluetooth, permissionsLocked && btGranted)
         applyProtectedButtonState(btnOpenBattery, permissionsLocked && batteryOk)
         applyProtectedButtonState(btnOpenAutostart, permissionsLocked)
         applyProtectedButtonState(btnOpenExactAlarms, permissionsLocked && exactAlarmsOk)
@@ -652,15 +639,6 @@ class PermissionsActivity : AppCompatActivity() {
         }
     }
 
-    // FEATURE NEEDS
-    private fun isLocationNeededForFeatures(): Boolean {
-        return ScheduleStore.hasEnabledWifiSchedules(this)
-    }
-
-    private fun isBluetoothNeededForFeatures(): Boolean {
-        return ScheduleStore.hasEnabledBluetoothSchedules(this)
-    }
-
     // LOCATION
     private fun hasCoarseLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
@@ -717,7 +695,7 @@ class PermissionsActivity : AppCompatActivity() {
         // 1) Precise location
         if (!hasFineLocationPermission()) {
             requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
                 REQ_LOC_FINE
             )
             return

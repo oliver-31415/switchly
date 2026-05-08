@@ -25,8 +25,8 @@ import android.service.quicksettings.TileService
 import android.widget.Toast
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
-import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 
 class SwitchlyTileService : TileService() {
 

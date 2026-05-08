@@ -21,8 +21,10 @@ package at.saltyy.switchly.feature.support
 
 import android.Manifest
 import android.app.AlarmManager
+import android.app.admin.DevicePolicyManager
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -42,6 +44,7 @@ import androidx.preference.PreferenceManager
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockedInboxStore
@@ -58,9 +61,11 @@ import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.SwitchlyRuntimeStore
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.premium.PremiumManager
+import at.saltyy.switchly.receiver.DPMReceiver
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.util.SystemBarColorCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -89,7 +94,7 @@ class SupportActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
-        window.statusBarColor = getColor(android.R.color.black)
+        SystemBarColorCompat.setStatusBarColor(window, getColor(android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
 
         val email = getString(R.string.about_mail_address)
@@ -277,6 +282,13 @@ class SupportActivity : AppCompatActivity() {
         line("Allowed while enabled: schedule editing", AutomationModeStore.isScheduleEditingAllowedWhileEnabled(this@SupportActivity))
         line("Allowed while enabled: NFC tag writing", AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this@SupportActivity))
         line("Lock Switchly app access", AutomationModeStore.isSwitchlyAppAccessLockEnabled(this@SupportActivity))
+        line("Uninstall friction", AutomationModeStore.isUninstallFrictionEnabled(this@SupportActivity))
+        line("Advanced mode", AdvancedModeStore.isEnabled(this@SupportActivity))
+        val dpm = getSystemService(DevicePolicyManager::class.java)
+        val adminComponent = ComponentName(this@SupportActivity, DPMReceiver::class.java)
+        line("Device admin active", dpm?.isAdminActive(adminComponent) == true)
+        line("Profile owner active", dpm?.isProfileOwnerApp(packageName) == true)
+        line("Device owner active", dpm?.isDeviceOwnerApp(packageName) == true)
 
         if (mode == AutomationModeStore.Mode.MIXED) {
             line("Mixed toggle: schedule", AutomationModeStore.isMixedAllowSchedule(this@SupportActivity))

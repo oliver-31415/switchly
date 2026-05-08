@@ -243,6 +243,16 @@ object AppBlockSafety {
             RiskCategory.LAUNCHER,
             PolicyAction.WARN_ONLY,
             "Default or OEM launchers should be treated carefully."
+        ),
+        "com.oplus.games" to RiskRule(
+            RiskCategory.OTHER,
+            PolicyAction.NEVER_BLOCK,
+            "OEM game hub wrappers can appear as foreground packages and cause false app blocks."
+        ),
+        "com.oneplus.gamespace" to RiskRule(
+            RiskCategory.OTHER,
+            PolicyAction.NEVER_BLOCK,
+            "OEM game hub wrappers can appear as foreground packages and cause false app blocks."
         )
     )
 

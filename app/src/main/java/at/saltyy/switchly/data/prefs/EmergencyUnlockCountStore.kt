@@ -120,13 +120,17 @@ object EmergencyUnlockCountStore {
     }
 
     private fun readIntCompat(sharedPreferences: SharedPreferences, key: String): Int {
-        return when (val value = sharedPreferences.all[key]) {
-            is Int -> value
-            is Long -> value.toInt()
-            is Number -> value.toInt()
-            is String -> value.toLongOrNull()?.toInt() ?: value.toIntOrNull() ?: 0
-            else -> 0
+        val longValue = when (val value = sharedPreferences.all[key]) {
+            is Int -> value.toLong()
+            is Long -> value
+            is Number -> value.toLong()
+            is String -> value.toLongOrNull() ?: 0L
+            else -> 0L
         }
+
+        return longValue
+            .coerceIn(0L, Int.MAX_VALUE.toLong())
+            .toInt()
     }
 
     private fun todayYmdInt(): Int = ymdInt(Calendar.getInstance())

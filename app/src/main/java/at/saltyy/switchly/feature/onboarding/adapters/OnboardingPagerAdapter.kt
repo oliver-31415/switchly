@@ -33,8 +33,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.text.HtmlCompat
-import androidx.core.view.isVisible
 import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
@@ -95,7 +95,7 @@ class OnboardingPagerAdapter(
             title.text = page.title
 
             // Allow lightweight formatting (bold, line breaks, bullet points) in onboarding copy.
-            desc.text = HtmlCompat.fromHtml(page.desc, HtmlCompat.FROM_HTML_MODE_LEGACY)
+            desc.text = HtmlCompat.fromHtml(page.desc, HtmlCompat.FROM_HTML_MODE_COMPACT)
 
             val isQuickSetupPage = page.title == activity.getString(R.string.onb_quick_setup_title)
             // Keep onboarding copy centered and avoid ultra-wide lines on larger screens.

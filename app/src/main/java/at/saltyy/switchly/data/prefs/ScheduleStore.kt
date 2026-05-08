@@ -21,18 +21,19 @@ package at.saltyy.switchly.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import java.util.Calendar
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.Calendar
 
 object ScheduleStore {
 
     private const val PREFS = "switchly_prefs_schedules"
     private const val KEY_SCHEDULES = "items"
 
-    // Derived flags to avoid repeatedly parsing JSON in hot paths (Wi-Fi/BT retry logic).
+    // Derived flags to avoid repeatedly parsing JSON in hot paths.
     private const val KEY_HAS_WIFI_SCHEDULES = "has_enabled_wifi_schedules"
     private const val KEY_HAS_BT_SCHEDULES = "has_enabled_bt_schedules"
+    private const val KEY_HAS_LOCATION_SCHEDULES = "has_enabled_location_schedules"
 
     private val cacheLock = Any()
     @Volatile private var cachedJson: String? = null
@@ -46,6 +47,12 @@ object ScheduleStore {
         ENABLE_AND_DISABLE,
         DISABLE_AND_ENABLE,
         TOGGLE
+    }
+
+    enum class LocationTrigger {
+        ENTER,
+        EXIT,
+        ENTER_EXIT
     }
 
     object Days {
@@ -83,8 +90,17 @@ object ScheduleStore {
         val endDate: Int,
         val wifiSsid: String? = null,
         val btDeviceName: String? = null,
+        val locationLabel: String? = null,
+        val locationLat: Double? = null,
+        val locationLng: Double? = null,
+        val locationRadiusMeters: Int = 250,
+        val locationTrigger: LocationTrigger? = null,
+        val locationCooldownMinutes: Int = 15,
         val action: Action = Action.ENABLE
-    )
+    ) {
+        fun isLocationSchedule(): Boolean =
+            locationLat != null && locationLng != null && locationTrigger != null
+    }
 
     fun todayYmd(): Int {
         val c = Calendar.getInstance()
@@ -104,9 +120,8 @@ object ScheduleStore {
 
     fun getAll(context: Context): List<Schedule> {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        var arrStr = sp.getString(KEY_SCHEDULES, "[]") ?: "[]"
+        val arrStr = sp.getString(KEY_SCHEDULES, "[]") ?: "[]"
 
-        // Fast path: return cached parse if JSON hasn't changed.
         val cached = cachedJson
         if (cached != null && cached == arrStr) return cachedList
 
@@ -118,6 +133,12 @@ object ScheduleStore {
 
             val actionStr = o.optString("action", "ENABLE")
             val action = runCatching { Action.valueOf(actionStr) }.getOrElse { Action.ENABLE }
+
+            val locationTrigger = runCatching {
+                o.optString("locationTrigger")
+                    .takeIf { it.isNotBlank() }
+                    ?.let(LocationTrigger::valueOf)
+            }.getOrNull()
 
             out += Schedule(
                 id = o.getInt("id"),
@@ -133,6 +154,12 @@ object ScheduleStore {
                 endDate = o.optInt("endDate"),
                 wifiSsid = o.optString("wifiSsid").ifBlank { null },
                 btDeviceName = o.optString("btDeviceName").ifBlank { null },
+                locationLabel = o.optString("locationLabel").ifBlank { null },
+                locationLat = if (o.has("locationLat") && !o.isNull("locationLat")) o.optDouble("locationLat") else null,
+                locationLng = if (o.has("locationLng") && !o.isNull("locationLng")) o.optDouble("locationLng") else null,
+                locationRadiusMeters = o.optInt("locationRadiusMeters", 250).coerceIn(50, 1000),
+                locationTrigger = locationTrigger,
+                locationCooldownMinutes = o.optInt("locationCooldownMinutes", 15).coerceAtLeast(0),
                 action = action
             )
         }
@@ -161,6 +188,14 @@ object ScheduleStore {
         return has
     }
 
+    fun hasEnabledLocationSchedules(context: Context): Boolean {
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (sp.contains(KEY_HAS_LOCATION_SCHEDULES)) return sp.getBoolean(KEY_HAS_LOCATION_SCHEDULES, false)
+        val has = getAll(context).any { it.enabled && it.isLocationSchedule() }
+        sp.edit { putBoolean(KEY_HAS_LOCATION_SCHEDULES, has) }
+        return has
+    }
+
     fun saveAll(context: Context, list: List<Schedule>) {
         val arr = JSONArray()
         for (s in list) {
@@ -178,6 +213,12 @@ object ScheduleStore {
             o.put("endDate", s.endDate)
             o.put("wifiSsid", s.wifiSsid ?: "")
             o.put("btDeviceName", s.btDeviceName ?: "")
+            o.put("locationLabel", s.locationLabel ?: "")
+            if (s.locationLat != null) o.put("locationLat", s.locationLat) else o.put("locationLat", JSONObject.NULL)
+            if (s.locationLng != null) o.put("locationLng", s.locationLng) else o.put("locationLng", JSONObject.NULL)
+            o.put("locationRadiusMeters", s.locationRadiusMeters)
+            o.put("locationTrigger", s.locationTrigger?.name ?: "")
+            o.put("locationCooldownMinutes", s.locationCooldownMinutes)
             o.put("action", s.action.name)
             arr.put(o)
         }
@@ -186,11 +227,13 @@ object ScheduleStore {
         val json = arr.toString()
         val hasWifi = list.any { it.enabled && !it.wifiSsid.isNullOrBlank() }
         val hasBt = list.any { it.enabled && !it.btDeviceName.isNullOrBlank() }
+        val hasLocation = list.any { it.enabled && it.isLocationSchedule() }
 
         sp.edit {
             putString(KEY_SCHEDULES, json)
             putBoolean(KEY_HAS_WIFI_SCHEDULES, hasWifi)
             putBoolean(KEY_HAS_BT_SCHEDULES, hasBt)
+            putBoolean(KEY_HAS_LOCATION_SCHEDULES, hasLocation)
         }
 
         synchronized(cacheLock) {

@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -147,7 +148,7 @@ object SwitchModeStore {
             if (activeRangeScheduleId > 0) {
                 ScheduleRuntimeStore.setManualOverrideScheduleId(ctx, activeRangeScheduleId)
             } else {
-                // Legacy / recovery path: avoid keeping a sticky override without an owner.
+                // Recovery path: avoid keeping a sticky override without an owner.
                 ScheduleRuntimeStore.clearManualOverrideScheduleId(ctx)
             }
         } else {
@@ -164,6 +165,7 @@ object SwitchModeStore {
         } else {
             // Service can remain running but becomes idle by isEnabled() checks
         }
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
 
         return true
     }
@@ -203,6 +205,7 @@ object SwitchModeStore {
         if (enabled) {
             BlockingRuntime.ensureRunning(ctx)
         }
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     // Temporarily disables Switchly for the given duration in milliseconds.
@@ -236,6 +239,7 @@ object SwitchModeStore {
 
         // Keep runtime alive so our services can continue ticking and enforce schedules/limits.
         BlockingRuntime.ensureRunning(ctx)
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     /**
@@ -245,7 +249,12 @@ object SwitchModeStore {
      * - set temp-enable until
      * - clear temp-disable + any pending reenable from temp-disable
      */
-    fun setTemporarilyEnabled(ctx: Context, durationMs: Long) {
+    fun setTemporarilyEnabled(
+        ctx: Context,
+        durationMs: Long,
+        previousProfileOverride: String? = null,
+        targetProfileForLog: String? = null
+    ) {
         val until = System.currentTimeMillis() + durationMs
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -261,7 +270,7 @@ object SwitchModeStore {
         }
 
         // Same rule for profile-scoped temp-enable: keep the ORIGINAL profile so expiry restores the last non-temporary profile.
-        val profileBefore = if (activeTempUntil > now && sp.contains(KEY_PROFILE_BEFORE_TEMP_ENABLE)) {
+        val profileBefore = previousProfileOverride ?: if (activeTempUntil > now && sp.contains(KEY_PROFILE_BEFORE_TEMP_ENABLE)) {
             sp.getString(KEY_PROFILE_BEFORE_TEMP_ENABLE, ProfileStore.getCurrent(ctx))
         } else {
             ProfileStore.getCurrent(ctx)
@@ -284,9 +293,11 @@ object SwitchModeStore {
             putLong(KEY_TEMP_ENABLE_UNTIL, until)
         }
         _enabledFlow.value = true
-        AppLogStore.append(ctx, "Profiles", "Temp enable started profile=${ProfileStore.getCurrent(ctx) ?: "-"} duration=${durationMs}ms")
+        val loggedTargetProfile = targetProfileForLog ?: ProfileStore.getCurrent(ctx) ?: "-"
+        AppLogStore.append(ctx, "Profiles", "Temp enable started profile=$loggedTargetProfile duration=${durationMs}ms")
         AppLogStore.append(ctx, "Profiles", "Stored previous profile id=${profileBefore ?: "-"}")
         BlockingRuntime.ensureRunning(ctx)
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     fun getTemporaryRemainingMillis(ctx: Context): Long {
@@ -338,6 +349,7 @@ object SwitchModeStore {
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         }
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     // Clears an expired temp-disable window.
@@ -356,6 +368,7 @@ object SwitchModeStore {
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         }
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     fun clearTemporary(ctx: Context) {
@@ -366,6 +379,7 @@ object SwitchModeStore {
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         }
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     fun clearTemporaryEnable(ctx: Context) {
@@ -381,6 +395,7 @@ object SwitchModeStore {
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         }
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     // Cancels an active temporary disable window and re-enables Switchly immediately.
@@ -396,6 +411,7 @@ object SwitchModeStore {
         // TempReenableStore.clear(ctx)
         _enabledFlow.value = isEnabled(ctx)
         BlockingRuntime.ensureRunning(ctx)
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     /**
@@ -425,6 +441,7 @@ object SwitchModeStore {
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         }
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
     fun isNfcDisableLockEnforced(ctx: Context): Boolean {

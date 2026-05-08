@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.platform.receiver.bluetooth
 
+import at.saltyy.switchly.BuildConfig
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -42,6 +43,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.platform.receiver.wifi.WifiBtCache
@@ -197,7 +199,7 @@ class BluetoothTriggerService : Service() {
     private fun sendTick(reason: String, eventBtConnected: Boolean? = null) {
         val cached = WifiBtCache.getBt(applicationContext)
 
-        Log.d(
+        if (BuildConfig.DEBUG) Log.d(
             TAG,
             "bt tick: $reason cachedName=${cached.name} cachedAddr=${cached.addr} connected=$eventBtConnected"
         )
@@ -214,11 +216,7 @@ class BluetoothTriggerService : Service() {
     }
 
     private fun cacheFromIntent(intent: Intent, reason: String) {
-        val device: BluetoothDevice? = if (Build.VERSION.SDK_INT >= 33) {
-            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-        } else {
-            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-        }
+        val device: BluetoothDevice? = IntentCompat.getParcelableExtra(intent, BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
         if (device != null) cacheDevice(device, reason)
     }
 
@@ -226,7 +224,7 @@ class BluetoothTriggerService : Service() {
         val bm = getSystemService(BluetoothManager::class.java)
         val adapter = bm?.adapter ?: return
         if (!adapter.isEnabled) return
-        Log.d(TAG, "bt system start ($reason) - waiting for events")
+        if (BuildConfig.DEBUG) Log.d(TAG, "bt system start ($reason) - waiting for events")
     }
 
     private fun cacheDevice(device: BluetoothDevice, reason: String) {
@@ -234,7 +232,7 @@ class BluetoothTriggerService : Service() {
         val name = safeGetName(device)
 
         WifiBtCache.setBt(applicationContext, name, addr)
-        Log.d(TAG, "cached bt name='${name}' addr='${addr}' ($reason)")
+        if (BuildConfig.DEBUG) Log.d(TAG, "cached bt name='${name}' addr='${addr}' ($reason)")
         retryCount = 0
     }
 
@@ -282,7 +280,7 @@ class BluetoothTriggerService : Service() {
             sendTick(reason = "retry")
         }, delay)
 
-        Log.d(TAG, "scheduled bt retry in ${delay}ms ($reason)")
+        if (BuildConfig.DEBUG) Log.d(TAG, "scheduled bt retry in ${delay}ms ($reason)")
     }
 
     companion object {

@@ -26,6 +26,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
@@ -37,6 +38,7 @@ import at.saltyy.switchly.security.AppLockManager
 import at.saltyy.switchly.security.AppLockStore
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.util.ActivityTransitionCompat
 import at.saltyy.switchly.util.LocaleHelper
 
 class AppLockActivity : AppCompatActivity() {
@@ -57,12 +59,23 @@ class AppLockActivity : AppCompatActivity() {
         if (!AppLockStore.isEnabled(this)) {
             AppLockManager.markUnlocked()
             finish()
-            overridePendingTransition(0, 0)
+            ActivityTransitionCompat.finishWithoutAnimation(this)
             return
         }
 
         setContentView(R.layout.activity_app_lock)
         CustomAccentApplier.applyIfNeeded(this)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (!unlocked) {
+                    AppLockManager.clearPromptFlag()
+                    finishAffinity()
+                } else {
+                    finish()
+                }
+            }
+        })
 
         findViewById<TextView>(R.id.tvTitle).text = getString(R.string.app_lock_unlock_title)
         findViewById<TextView>(R.id.tvSubtitle).text = getString(R.string.app_lock_unlock_message)
@@ -127,15 +140,7 @@ class AppLockActivity : AppCompatActivity() {
         AppLockManager.markUnlocked()
         setResult(RESULT_OK)
         finish()
-        overridePendingTransition(0, 0)
-    }
-
-    override fun onBackPressed() {
-        super.onBackPressed()
-        if (!unlocked) {
-            AppLockManager.clearPromptFlag()
-            finishAffinity()
-        }
+        ActivityTransitionCompat.finishWithoutAnimation(this)
     }
 
     override fun onDestroy() {

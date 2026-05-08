@@ -1,10 +1,15 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- FAQ -->
     <string name="faq_screen_title">FAQ</string>
     <string name="faq_search_hint">Fragen suchen…</string>
     <string name="faq_expand_description">Antwort ein- oder ausklappen</string>
     <string name="faq_icon_description">FAQ-Symbol</string>
+    <string name="faq_header_popular">Top-Fragen</string>
+    <string name="faq_empty_title">Keine passende FAQ gefunden</string>
+    <string name="faq_empty_body">Versuche ein anderes Stichwort wie NFC, QR, Zeitplan, Profil oder Notfall-Entsperrung.</string>
+    <string name="faq_clear_search">Suche leeren</string>
     <string name="faq_header_general">Grundlagen</string>
     <string name="faq_header_profiles">Profile</string>
     <string name="faq_header_modes">Schutzmodi</string>
@@ -98,15 +103,26 @@
     <string name="faq_q_idiot_tags">Welche NFC-Tags sind empfohlen?</string>
     <string name="faq_a_idiot_tags">Empfohlen: NTAG213, NTAG215, NTAG216 (beste Kompatibilität). NTAG213 reicht für die meisten Nutzer. Kaufe bei einem zuverlässigen Verkäufer und vermeide zufällige, extrem günstige No-Name-Pakete.</string>
     <string name="faq_q_schedules_basic">Wie funktionieren Zeitpläne?</string>
-    <string name="faq_a_schedules_basic">Mit Zeitplänen kann Switchly ein Profil automatisch basierend auf Zeit, WLAN oder Bluetooth aktivieren oder deaktivieren.\n• Zeitbasiert: Wähle Tage und ein Zeitfenster.\n• WLAN: Der Zeitplan ist aktiv, solange du mit einem bestimmten Netzwerk verbunden bist.\n• Bluetooth: Der Zeitplan ist aktiv, solange ein bestimmtes Gerät verbunden ist.\n\nZeitpläne sind optional und nie erforderlich, um Switchly zu nutzen.</string>
+    <string name="faq_a_schedules_basic">Mit Zeitplänen kann Switchly automatisch reagieren, wenn eine Bedingung zutrifft.\n\nEin Zeitplan hat zwei Teile:\n• Bedingung: wann er aktiv werden soll (Zeit, WLAN, Bluetooth oder Standort)\n• Aktion: was Switchly dann tun soll\n\nBeispiele:\n• Zeitplan: werktags von 08:00 bis 16:00\n• WLAN-Zeitplan: solange du mit deinem Arbeitsnetz verbunden bist\n• Bluetooth-Zeitplan: wenn dein Auto verbunden ist\n• Standort-Zeitplan: wenn du einen Ort betrittst oder verlässt\n\nManche Aktionen lösen nur einmal aus, andere gelten für die ganze aktive Zeit und werden am Ende wieder zurückgenommen.</string>
     <string name="faq_q_schedules_actions">Was macht die Zeitplan-„Aktion“?</string>
     <string name="faq_a_schedules_actions">Jeder Zeitplan kann festlegen, wie er Switchly beeinflusst:\n\n• Profil aktivieren: Aktiviert Switchly und das gewählte Profil, solange die Zeitplan-Bedingung erfüllt ist.\n• Switchly deaktivieren: Schaltet Switchly aus, wenn die Zeitplan-Bedingung erfüllt ist, aber nur, wenn es zuvor durch einen Zeitplan aktiviert wurde.\n• Während aktivieren, danach deaktivieren: Aktiviert das Profil, solange die Bedingung erfüllt ist, und schaltet Switchly aus, sobald dieser Zeitplan nicht mehr zutrifft.\n\nFür WLAN-Zeitpläne wähle „Profil aktivieren“, wenn Switchly nur in bestimmten Netzwerken starten soll, ohne sich beim Verlassen wieder auszuschalten.</string>
     <string name="faq_q_schedule_types">Welche Zeitplan-Typen kann ich nutzen?</string>
-    <string name="faq_a_schedule_types">Switchly unterstützt Zeitpläne nach Zeit (Einzelzeit/Zeitspanne/Datumsbereich), WLAN-basierte Zeitpläne (SSID) und Bluetooth-basierte Zeitpläne (Gerätename). Je nach Anwendungsfall kannst du Aktionen wie Aktivieren, Deaktivieren, Umschalten oder Aktivieren + Deaktivieren wählen.</string>
+    <string name="faq_a_schedule_types">Switchly unterstützt Zeitpläne nach Zeit (Einzelzeit/Zeitspanne/Datumsbereich), WLAN-Zeitpläne (SSID), Bluetooth-Zeitpläne (Gerätename) und Standort-Zeitpläne (Geofence mit Radius). Je nach Anwendungsfall kannst du Aktionen wie Aktivieren, Deaktivieren, Umschalten oder Aktivieren + Deaktivieren wählen.</string>
     <string name="faq_q_schedules_wifi">Warum benötigen WLAN-Zeitpläne die Standortberechtigung?</string>
-    <string name="faq_a_schedules_wifi">Android behandelt den WLAN-Namen (SSID) als standortähnliche Information.\nIn neueren Versionen benötigen Apps die Standortberechtigung, um die aktuelle SSID zu lesen.\n\nOhne diese Berechtigung können WLAN-Zeitpläne nicht zuverlässig erkennen, in welchem Netzwerk du bist, und lösen möglicherweise nicht aus.</string>
+    <string name="faq_a_schedules_wifi">Android behandelt den WLAN-Namen (SSID) als standortbezogene Information. In neueren Android-Versionen benötigen Apps die Standortberechtigung, um die aktuelle SSID zu lesen. Auf manchen Geräten mit Android 13 und neuer ist für eine zuverlässige WLAN-Erkennung zusätzlich „WLAN-Geräte in der Nähe“ nötig.\n\nOhne diese Berechtigungen können WLAN-Zeitpläne nicht zuverlässig erkennen, in welchem Netzwerk du bist, und lösen möglicherweise nicht aus.\n\nTipp: Du kannst die benötigten Berechtigungen schon vorher in Switchly → Berechtigungen aktivieren, bevor du den Zeitplan erstellst.</string>
     <string name="faq_q_schedules_bluetooth">Können Zeitpläne auf Bluetooth reagieren?</string>
-    <string name="faq_a_schedules_bluetooth">Ja. Du kannst Aktionen auslösen, wenn ein bestimmtes Bluetooth-Gerät verbunden oder getrennt wird (je nach Zeitplan-Optionen).</string>
+    <string name="faq_a_schedules_bluetooth">Ja. Du kannst Aktionen auslösen, wenn ein bestimmtes Bluetooth-Gerät verbunden oder getrennt wird, je nach Zeitplan-Optionen. Unter Android 12 und neuer musst du dafür zuerst die Berechtigung „Geräte in der Nähe“ freigeben.\n\nTipp: Du kannst die Berechtigung schon vorher in Switchly → Berechtigungen aktivieren, bevor du den Zeitplan erstellst.</string>
+    <string name="faq_q_schedules_location">Wie funktionieren Standort-Zeitpläne?</string>
+    <string name="faq_a_schedules_location">Standort-Zeitpläne verwenden Geofences: Du wählst einen Ort, einen Radius und ob die Aktion beim Betreten, beim Verlassen oder bei beidem ausgelöst werden soll.\n\nDamit das zuverlässig funktioniert, benötigt Switchly präzisen Standort. Wenn der Trigger auch dann funktionieren soll, wenn die App nicht geöffnet ist, ist unter Android 10 und neuer zusätzlich Standort im Hintergrund („Immer erlauben“) nötig. Android kann Geofence-Ereignisse zum Akkusparen trotzdem leicht verzögern, deshalb sind Trigger meist nicht komplett sofort.\n\nTipp: Du kannst die benötigte Standortberechtigung schon vorher in Switchly → Berechtigungen aktivieren, bevor du den Zeitplan erstellst.</string>
+    <string name="faq_q_uninstall_friction">Kann Switchly eine Deinstallation verhindern?</string>
+    <string name="faq_a_uninstall_friction">Auf einem normalen persönlichen Android-Gerät kann keine App ihre eigene Deinstallation so zuverlässig hart blockieren wie auf einem verwalteten Enterprise-Gerät. Deshalb verwendet Switchly nur Deinstallations-Reibung: Es kann deinstallationsbezogene Screens erschweren, solange der Schutz aktiv ist, behauptet aber keine garantierte Deinstallationssperre.</string>
+    <string name="faq_q_advanced_mode_open">Wie öffne ich den erweiterten Modus?</string>
+    <string name="faq_a_advanced_mode_open">Öffne App-Info und drücke lange auf die Versions-Zeile. Ein normaler Tipp startet weiter die Versions-/Update-Prüfung, ein langes Drücken öffnet den erweiterten Modus.</string>
+    <string name="faq_q_advanced_mode_device_admin">Was macht Switchly-Geräteadmin?</string>
+    <string name="faq_a_advanced_mode_device_admin">Switchly-Geräteadmin ist ein optionaler alter Admin-Hook für fortgeschrittene Tests. Er kann zusätzliche Reibung hinzufügen und hilft bei manchen Managed-Device-Experimenten, entspricht auf einem normalen persönlichen Android-Gerät aber trotzdem keiner echten Enterprise-Deinstallationssperre.</string>
+    <string name="faq_q_advanced_mode_adb_requirements">Warum funktionieren die ADB-Managed-Device-Befehle oft nicht?</string>
+    <string name="faq_a_advanced_mode_adb_requirements">Befehle wie set-device-owner oder set-profile-owner funktionieren meist nur in speziellen Bereitstellungsszenarien. Device Owner erfordert normalerweise ein frisch eingerichtetes Gerät, und Profile Owner hat eigene Grenzen, deshalb sind Fehler auf einem normalen bereits genutzten Smartphone erwartbar.</string>
+
     <string name="faq_q_usage_limit_what">Wie funktionieren App-Limits?</string>
     <string name="faq_a_usage_limit_what">Wenn du ein tägliches Limit setzt, erfasst Switchly die Nutzungszeit und blockiert die App, sobald das Limit erreicht ist.</string>
     <string name="faq_q_usage_limit_set">Wo kann ich ein tägliches Limit festlegen?</string>
@@ -146,7 +162,7 @@
     <string name="faq_q_tile_why_missing">Warum fehlt die Schnelleinstellungen-Kachel?</string>
     <string name="faq_a_tile_why_missing">Füge sie über den Android-Bearbeitungsbildschirm der Schnelleinstellungen hinzu. Einige OEMs zeigen Kacheln erst an, nachdem die App einmal geöffnet wurde.</string>
     <string name="faq_q_contact">Wie kann ich den Entwickler kontaktieren?</string>
-    <string name="faq_a_contact">Tritt dem Community-Discord-Server für Feedback und Support bei:\n\nhttps://discord.gg/PC5zn2NeCg\n\nOder kontaktiere den Entwickler direkt per E-Mail:\nsupport@saltyy.at</string>
+    <string name="faq_a_contact">Tritt dem Community-Discord-Server für Feedback und Support bei:\n\nhttps://discord.gg/PC5zn2NeCg\n\nFür direkten Support nutze den Kontakt aus dem Info-/Support-Bereich.</string>
     <string name="faq_q_donate">Kann ich spenden, um Switchly zu unterstützen?</string>
     <string name="faq_a_donate">Premium ist bewusst sehr günstig bepreist. Wenn du die Entwicklung trotzdem unterstützen möchtest, kannst du Premium als „Trinkgeld“ kaufen oder mich für eine Spende kontaktieren.\nIch plane, Switchly als Open Source zu veröffentlichen, sobald ich einen kleinen Puffer habe, damit ich die Entwicklung stressfrei fortsetzen kann, ohne dass es sofort 1:1 kopiert wird.\n\nSpendenlink:\nhttps://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY</string>
     <string name="faq_a_donate_clean">Switchly ist bereits sehr günstig. Wenn du die Entwicklung trotzdem unterstützen möchtest, kannst du Premium als Trinkgeld nutzen oder direkt per PayPal spenden: https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY</string>
@@ -170,4 +186,5 @@
     <string name="faq_a_barcode_what">Barcode-Aktionen funktionieren ähnlich wie QR-Aktionen, aber mit normalen Barcodes. Du kannst einen gescannten Barcode-Wert einer Switchly-Aktion zuordnen und gedruckte oder physische Codes als Auslöser verwenden.</string>
     <string name="faq_q_barcode_setup">Wie nutze ich Barcodes?</string>
     <string name="faq_a_barcode_setup">Öffne „Barcodes verwalten“, füge einen Barcode per Scan oder manuell hinzu und wähle dann die Switchly-Aktion aus, die er auslösen soll. Später scannst du denselben Barcode in Switchly, um diese Aktion auszuführen.</string>
+
 </resources>

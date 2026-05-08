@@ -37,7 +37,7 @@ object OpenCountStore {
     private fun key(ymd: Int, profile: String, pkg: String): String =
         PREFIX + ymd.toString() + "__" + profile + "__" + pkg
 
-    private fun legacyKey(ymd: Int, pkg: String): String =
+    private fun profilelessKey(ymd: Int, pkg: String): String =
         PREFIX + ymd.toString() + "_" + pkg
 
     /**
@@ -55,13 +55,13 @@ object OpenCountStore {
             return readIntWithLongMigration(sp, k)
         }
 
-        // Fallback to legacy key and migrate
-        val legacy = legacyKey(ymd, pkg)
-        if (sp.contains(legacy)) {
-            val v = readIntWithLongMigration(sp, legacy)
+        // Fallback to the older profileless key and migrate
+        val profileless = profilelessKey(ymd, pkg)
+        if (sp.contains(profileless)) {
+            val v = readIntWithLongMigration(sp, profileless)
             sp.edit {
                 if (v <= 0) remove(k) else putInt(k, v)
-                remove(legacy)
+                remove(profileless)
             }
             return v
         }
@@ -75,7 +75,7 @@ object OpenCountStore {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val ymd = todayYmdInt()
         val k = key(ymd, safeProfile, pkg)
-        val legacy = legacyKey(ymd, pkg)
+        val profileless = profilelessKey(ymd, pkg)
 
         sp.edit {
             if (count <= 0) {
@@ -83,8 +83,8 @@ object OpenCountStore {
             } else {
                 putInt(k, count.coerceAtLeast(0))
             }
-            // Clean legacy key to avoid mixed behaviour.
-            remove(legacy)
+            // Clean profileless key to avoid mixed behaviour.
+            remove(profileless)
         }
     }
 
@@ -261,13 +261,13 @@ object OpenCountStore {
         if (pkg.isBlank()) return 0
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         var sum = 0
-        val legacySuffix = '_' + pkg
+        val profilelessSuffix = '_' + pkg
         val newSuffix = "__" + pkg
         for ((k, _v) in sp.all) {
             if (!k.startsWith(PREFIX)) continue
             when {
                 k.endsWith(newSuffix) -> sum += readIntWithLongMigration(sp, k)
-                k.endsWith(legacySuffix) && !k.contains("__") -> sum += readIntWithLongMigration(sp, k)
+                k.endsWith(profilelessSuffix) && !k.contains("__") -> sum += readIntWithLongMigration(sp, k)
             }
         }
         return sum
@@ -286,16 +286,16 @@ object OpenCountStore {
             foundNew = true
         }
         if (!foundNew) {
-            val legacy = legacyKey(ymd, pkg)
-            if (sp.contains(legacy)) sum += readIntWithLongMigration(sp, legacy)
+            val profileless = profilelessKey(ymd, pkg)
+            if (sp.contains(profileless)) sum += readIntWithLongMigration(sp, profileless)
         }
         return sum
     }
 
-    fun mergeLegacyForDay(ctx: Context, ymd: Int, pkg: String, count: Int) {
+    fun mergeProfilelessForDay(ctx: Context, ymd: Int, pkg: String, count: Int) {
         if (pkg.isBlank() || count <= 0) return
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val k = legacyKey(ymd, pkg)
+        val k = profilelessKey(ymd, pkg)
         val cur = if (sp.contains(k)) readIntWithLongMigration(sp, k) else 0
         val merged = maxOf(cur, count.coerceAtLeast(0))
         if (merged == cur) return

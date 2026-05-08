@@ -27,6 +27,7 @@ import android.text.InputType
 import android.text.TextWatcher
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -37,9 +38,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
-import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
@@ -49,6 +50,7 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.ActivityTransitionCompat
 import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
@@ -62,6 +64,7 @@ class AppPickerActivity : AppCompatActivity() {
 
     private lateinit var adapter: AppListAdapter
     private var currentProfile: String? = null
+    private var autoBlockNewAppsCheckbox: CheckBox? = null
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -108,6 +111,8 @@ class AppPickerActivity : AppCompatActivity() {
         val btnSelectAll = findViewById<MaterialButton>(R.id.btnSelectAll)
         val btnClearAll = findViewById<MaterialButton>(R.id.btnClearAll)
         val btnSave = findViewById<Button>(R.id.btnSave)
+        val cbAutoBlockNewApps = findViewById<CheckBox>(R.id.cbAutoBlockNewApps)
+        autoBlockNewAppsCheckbox = cbAutoBlockNewApps
 
         rvApps.layoutManager = LinearLayoutManager(this)
 
@@ -152,6 +157,7 @@ class AppPickerActivity : AppCompatActivity() {
         searchBox.hintTextColor = AccentColor.getActiveColor(this)
         etSearch.backgroundTintList = AccentColor.getActiveColor(this)
 
+        setupAutoBlockNewAppsCheckbox(cbAutoBlockNewApps)
         setupBulkButtons(btnSelectAll, btnClearAll)
 
         Thread {
@@ -216,7 +222,7 @@ class AppPickerActivity : AppCompatActivity() {
 
     override fun finish() {
         super.finish()
-        overridePendingTransition(0, 0)
+        ActivityTransitionCompat.finishWithoutAnimation(this)
     }
 
     private data class PickerLoadResult(
@@ -293,9 +299,29 @@ class AppPickerActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupAutoBlockNewAppsCheckbox(cbAutoBlockNewApps: CheckBox) {
+        val profile = currentProfile
+        cbAutoBlockNewApps.isEnabled = !profile.isNullOrBlank()
+        cbAutoBlockNewApps.isChecked = profile?.let { ProfileStore.isAutoBlockNewAppsEnabled(this, it) } ?: false
+        cbAutoBlockNewApps.setOnCheckedChangeListener { _, isChecked ->
+            val activeProfile = currentProfile
+            if (activeProfile.isNullOrBlank()) return@setOnCheckedChangeListener
+            ProfileStore.setAutoBlockNewAppsEnabled(this, activeProfile, isChecked)
+            if (isChecked) {
+                ProfileStore.setAutoBlockKnownPackages(this, activeProfile, ProfileStore.getLaunchablePackages(this))
+            }
+        }
+    }
+
     private fun setupBulkButtons(btnSelectAll: MaterialButton, btnClearAll: MaterialButton) {
         btnSelectAll.setOnClickListener {
             val skipped = adapter.selectAllVisible()
+            val activeProfile = currentProfile
+            if (!activeProfile.isNullOrBlank()) {
+                ProfileStore.setAutoBlockNewAppsEnabled(this, activeProfile, true)
+                ProfileStore.setAutoBlockKnownPackages(this, activeProfile, ProfileStore.getLaunchablePackages(this))
+                autoBlockNewAppsCheckbox?.isChecked = true
+            }
             if (skipped > 0) {
                 Toast.makeText(
                     this,

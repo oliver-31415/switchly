@@ -57,8 +57,13 @@ object NfcTempDisableLimiterStore {
 
     private fun prefs(ctx: Context) = PreferenceManager.getDefaultSharedPreferences(ctx)
 
-    fun isEnabled(ctx: Context): Boolean =
-        prefs(ctx).getBoolean(BlockingToggleKeys.KEY_LIMIT_TEMP_DISABLE_TAGS, false)
+    fun isEnabled(ctx: Context): Boolean {
+        val p = prefs(ctx)
+        if (p.getBoolean(BlockingToggleKeys.KEY_LIMIT_TEMP_DISABLE_TAGS, false)) return true
+        return p.all.keys.any { key ->
+            key.startsWith(KEY_CFG_DAILY_PREFIX) || key.startsWith(KEY_CFG_COOLDOWN_PREFIX)
+        }
+    }
 
     fun getTagConfig(uidBucket: String, ctx: Context): TagConfig {
         val bucket = bucketForUid(uidBucket)

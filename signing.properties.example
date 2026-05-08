@@ -1,0 +1,45 @@
+# Copy this file to signing.properties. Gradle loads signing.properties automatically.
+# You can also provide the same keys via ~/.gradle/gradle.properties, -P... or environment variables.
+# Never commit signing.properties, keystores, passwords, API keys, or a real google-services.json.
+
+# Release signing keystore.
+# Local release builds can run without these, but real APK/AAB releases should be signed.
+SWITCHLY_RELEASE_STORE_FILE=C:/dev/keys/switchly-release.jks
+SWITCHLY_RELEASE_STORE_PASSWORD=change-me
+SWITCHLY_RELEASE_KEY_ALIAS=switchly
+SWITCHLY_RELEASE_KEY_PASSWORD=change-me
+
+# Google Maps key for the location picker.
+# Keep this out of committed gradle.properties/local.properties.
+MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY_HERE
+
+# Optional: where Firebase google-services.json is stored outside the repo.
+# Gradle copies it to app/google-services.json during configuration if needed, because the Google Services plugin expects the file in the app module.
+GOOGLE_SERVICES_JSON_PATH=C:/dev/secrets/switchly/google-services.json
+
+# Optional override for Google Sign-In.
+# If left empty, Gradle reads the Web client ID from google-services.json (oauth_client.client_type=3).
+GOOGLE_WEB_CLIENT_ID=
+
+# Gradle release task:
+# ./gradlew :app:release-apk
+#
+# Creates:
+# - dist/Switchly-<version>-full.apk                Firebase + Google Sign-In + file backup
+# - dist/Switchly-<version>-firebase-email.apk      Firebase email/password + file backup, Google Sign-In disabled
+# - dist/Switchly-<version>-offline.apk             File backup only, Firebase/Google Sign-In disabled
+# - dist/Switchly-<version>-full-playstore.aab      Full build for Google Play Console
+
+# Public links/contact values compiled into official builds.
+# Forks can set their own values or keep them empty.
+SWITCHLY_WEBSITE_URL=https://your-domain.example
+SWITCHLY_DOWNLOADS_URL=https://your-domain.example/pages/download
+SWITCHLY_SUPPORT_EMAIL=support@example.com
+SWITCHLY_DEV_EMAIL=developer@example.com
+
+# External payments for the non-Play Firebase email APK. Offline builds keep in-app payments disabled.
+# Keep Play Store/full AAB on Google Play Billing only.
+# These are public URLs; never put Stripe/Adyen secret keys in the app.
+SWITCHLY_EXTERNAL_PAYMENT_PROVIDER=stripe
+SWITCHLY_EXTERNAL_CHECKOUT_URL=https://your-domain.example/pages/pay/checkout/
+SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://your-domain.example/pages/pay/customer-portal/

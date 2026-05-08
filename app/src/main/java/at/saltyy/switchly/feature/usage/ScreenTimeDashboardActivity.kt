@@ -21,38 +21,39 @@ package at.saltyy.switchly.feature.usage
 
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.os.Bundle
 import android.graphics.Color
+import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import androidx.core.view.isVisible
-import androidx.core.graphics.ColorUtils
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.content.ContextCompat
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import at.saltyy.switchly.R
-import at.saltyy.switchly.ui.ThemeUtils
-import at.saltyy.switchly.ui.EdgeToEdgeUtils
-import at.saltyy.switchly.theme.AccentColor
-import at.saltyy.switchly.databinding.ActivityScreenTimeDashboardBinding
-import at.saltyy.switchly.feature.stats.StatsFormat
-import at.saltyy.switchly.feature.premium.PremiumInfoActivity
-import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
-import at.saltyy.switchly.data.prefs.SessionLimitStore
-import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
-import at.saltyy.switchly.util.PermissionUtils
+import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.SessionLimitStore
+import at.saltyy.switchly.data.prefs.UsageLimitStore
+import at.saltyy.switchly.databinding.ActivityScreenTimeDashboardBinding
+import at.saltyy.switchly.feature.premium.PremiumInfoActivity
+import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.premium.PremiumManager
-import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
-import com.google.android.material.color.MaterialColors
+import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.PermissionUtils
+import at.saltyy.switchly.util.SystemBarColorCompat
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -95,8 +96,8 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
         // Keep system bars dark for readability (matches Stats/Schedules).
-        window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
-        window.navigationBarColor = ContextCompat.getColor(this, android.R.color.black)
+        SystemBarColorCompat.setStatusBarColor(window, ContextCompat.getColor(this, android.R.color.black))
+        SystemBarColorCompat.setNavigationBarColor(window, ContextCompat.getColor(this, android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 
@@ -165,8 +166,8 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
                 } else {
                     val profile = ProfileStore.getCurrent(this)
                     if (profile.isNullOrBlank()) return@limitBadgeProvider null
-                    val t = at.saltyy.switchly.data.prefs.UsageLimitStore.getLimitMinutes(this, profile, item.packageName)
-                    val a = at.saltyy.switchly.data.prefs.AttemptLimitStore.getLimitAttempts(this, profile, item.packageName)
+                    val t = UsageLimitStore.getLimitMinutes(this, profile, item.packageName)
+                    val a = AttemptLimitStore.getLimitAttempts(this, profile, item.packageName)
                     val parts = mutableListOf<String>()
                     if (t > 0) parts += getString(R.string.daily_limit_value_format, t)
                     if (a > 0) parts += resources.getQuantityString(R.plurals.daily_attempt_limit_value_format, a, a)
@@ -184,7 +185,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.recycler.adapter = adapter
 
         // default selections
-        syncRangeChipUi(b.chipWeek.id)
+        syncRangeChipUi(b.chipToday.id)
         b.toggleType.check(b.btnApps.id)
         updateRangeVisibilityForCurrentMode()
 
@@ -232,7 +233,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         applyAccentUi()
-        syncRangeChipUi(b.chipGroupRange.checkedChipId.takeIf { it != View.NO_ID } ?: b.chipWeek.id)
+        syncRangeChipUi(b.chipGroupRange.checkedChipId.takeIf { it != View.NO_ID } ?: b.chipToday.id)
         updateRangeVisibilityForCurrentMode()
         refresh()
     }
@@ -263,7 +264,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.chipYear.visibility = View.VISIBLE
         b.chipOverall.visibility = View.VISIBLE
         if (b.chipGroupRange.checkedChipId == View.NO_ID) {
-            syncRangeChipUi(if (isWeb) b.chipWeek.id else b.chipWeek.id)
+            syncRangeChipUi(b.chipToday.id)
         }
     }
 
@@ -308,7 +309,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             b.chipMonth.id -> Range.MONTH
             b.chipYear.id -> Range.YEAR
             b.chipOverall.id -> Range.OVERALL
-            else -> Range.WEEK
+            else -> Range.TODAY
         }
 
         val isWeb = b.toggleType.checkedButtonId == b.btnWeb.id
