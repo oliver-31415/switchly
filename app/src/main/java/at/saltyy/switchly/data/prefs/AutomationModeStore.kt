@@ -21,6 +21,7 @@ package at.saltyy.switchly.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 
 /**
  * Selects which control channel is allowed to change Switchly automatically.
@@ -45,6 +46,7 @@ object AutomationModeStore {
     private const val KEY_MIXED_ALLOW_SCHEDULE_EDITING = "automation_mixed_allow_schedule_editing"
     private const val KEY_MIXED_ALLOW_NFC_TAG_WRITING = "automation_mixed_allow_nfc_tag_writing"
     private const val KEY_LOCK_SWITCHLY_APP_ACCESS = "pref_lock_switchly_app_access"
+    private const val KEY_UNINSTALL_FRICTION = "pref_uninstall_friction"
 
     enum class Mode(val raw: String) {
         SCHEDULE("schedule"),
@@ -115,35 +117,35 @@ object AutomationModeStore {
     }
 
     fun isButtonEnableAllowed(context: Context): Boolean =
-        getBool(context, KEY_ALLOW_BUTTON_ENABLE, false)
+        getBool(context, KEY_ALLOW_BUTTON_ENABLE, true)
 
     fun setButtonEnableAllowed(context: Context, enabled: Boolean) {
         putBool(context, KEY_ALLOW_BUTTON_ENABLE, enabled)
     }
 
     fun isMixedAllowAppPicking(context: Context): Boolean =
-        getBool(context, KEY_MIXED_ALLOW_APP_PICKING, false)
+        getBool(context, KEY_MIXED_ALLOW_APP_PICKING, true)
 
     fun setMixedAllowAppPicking(context: Context, enabled: Boolean) {
         putBool(context, KEY_MIXED_ALLOW_APP_PICKING, enabled)
     }
 
     fun isMixedAllowProfileSwitching(context: Context): Boolean =
-        getBool(context, KEY_MIXED_ALLOW_PROFILE_SWITCHING, false)
+        getBool(context, KEY_MIXED_ALLOW_PROFILE_SWITCHING, true)
 
     fun setMixedAllowProfileSwitching(context: Context, enabled: Boolean) {
         putBool(context, KEY_MIXED_ALLOW_PROFILE_SWITCHING, enabled)
     }
 
     fun isMixedAllowScheduleEditing(context: Context): Boolean =
-        getBool(context, KEY_MIXED_ALLOW_SCHEDULE_EDITING, false)
+        getBool(context, KEY_MIXED_ALLOW_SCHEDULE_EDITING, true)
 
     fun setMixedAllowScheduleEditing(context: Context, enabled: Boolean) {
         putBool(context, KEY_MIXED_ALLOW_SCHEDULE_EDITING, enabled)
     }
 
     fun isMixedAllowNfcTagWriting(context: Context): Boolean =
-        getBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, false)
+        getBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, true)
 
     fun setMixedAllowNfcTagWriting(context: Context, enabled: Boolean) {
         putBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, enabled)
@@ -192,20 +194,31 @@ object AutomationModeStore {
 
     fun shouldShowBarcodeTools(context: Context): Boolean = isBarcodeChannelAllowed(context)
 
+    /**
+     * Safety fallback: barcode control can lock users out if it is the only practical disable method but no managed barcode exists yet. 
+     * In that setup, keep setup/disable paths reachable until at least one barcode has been added.
+     */
+    fun isBarcodeSetupMissing(context: Context): Boolean {
+        return isBarcodeChannelAllowed(context) &&
+            !ScanCodeStore.hasEntries(context, ScanCodeStore.Kind.BARCODE)
+    }
+
     fun isAnyScanFeatureEnabled(context: Context): Boolean =
         isQrChannelAllowed(context) || isBarcodeChannelAllowed(context)
 
     /**
-     * Tile control follows the same Mixed-mode channel as the manual button.
+     * Tile control follows the same full-control channel as the manual button.
      */
     fun isTileAllowed(context: Context): Boolean = isButtonAllowed(context)
 
     /**
-     * Manual dashboard button control channel:
-     * Only available in Mixed mode and controlled by the dedicated toggle.
+     * Manual dashboard button / Quick Settings tile full-control channel.
+     *
+     * This is intentionally mode-independent: when enabled, manual controls can turn Switchly on and off regardless of the selected control mode.
+     * The older key name is kept for migration compatibility.
      */
     fun isButtonAllowed(context: Context): Boolean {
-        return getMode(context) == Mode.MIXED && isMixedAllowButton(context)
+        return isMixedAllowButton(context)
     }
 
     fun canButtonEnable(context: Context): Boolean {
@@ -262,6 +275,14 @@ object AutomationModeStore {
 
     fun setSwitchlyAppAccessLockEnabled(context: Context, enabled: Boolean) {
         putBool(context, KEY_LOCK_SWITCHLY_APP_ACCESS, enabled)
+    }
+
+    fun isUninstallFrictionEnabled(context: Context): Boolean =
+        getBool(context, KEY_UNINSTALL_FRICTION, false)
+
+    fun setUninstallFrictionEnabled(context: Context, enabled: Boolean) {
+        putBool(context, KEY_UNINSTALL_FRICTION, enabled)
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(context)
     }
 
     private fun getBool(context: Context, key: String, defaultValue: Boolean): Boolean {

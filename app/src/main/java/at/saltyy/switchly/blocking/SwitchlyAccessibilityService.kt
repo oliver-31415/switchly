@@ -19,23 +19,19 @@
 
 package at.saltyy.switchly.blocking
 
+import at.saltyy.switchly.BuildConfig
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.GestureDescription
-import android.app.ActivityManager
-import android.app.usage.UsageEvents
-import android.app.usage.UsageStatsManager
 import android.app.KeyguardManager
 import android.content.Intent
 import android.graphics.Path
 import android.graphics.Rect
-import android.media.AudioManager
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
-import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
@@ -43,18 +39,23 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.data.prefs.AttemptLimitStore
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockAttemptStore
 import at.saltyy.switchly.data.prefs.BlockCountStore
 import at.saltyy.switchly.data.prefs.BlockedTimeStore
-import at.saltyy.switchly.data.prefs.AttemptLimitStore
-import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
-import at.saltyy.switchly.data.prefs.InAppLimitStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
+import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.InAppLimitStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
+import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
+import at.saltyy.switchly.data.prefs.SurfaceLimitStore
+import at.saltyy.switchly.data.prefs.SurfaceUsageStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.TempAllowStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
@@ -62,16 +63,12 @@ import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.feature.blocker.BlockerActivity
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
-import at.saltyy.switchly.util.AppUsageToday
-import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
+import at.saltyy.switchly.util.AppBlockSafety
+import at.saltyy.switchly.util.AppUsageToday
 import java.util.ArrayDeque
-import kotlin.math.abs
 import java.util.Locale
-import at.saltyy.switchly.data.prefs.SurfaceUsageStore
-import at.saltyy.switchly.data.prefs.SurfaceLimitStore
-import at.saltyy.switchly.data.prefs.DomainLimitStore
-import at.saltyy.switchly.data.prefs.AppLogStore
+import kotlin.math.abs
 
 /**
  * Main (stable) blocking runtime.
@@ -83,6 +80,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private var usageWorkerThread: HandlerThread? = null
     private var usageWorker: Handler? = null
+    private val usageEventsForegroundResolver by lazy { UsageEventsForegroundResolver(this) }
+    private val blockLaunchController by lazy { BlockLaunchController(this, handler) }
     @Volatile private var topRefreshInFlight: Boolean = false
     @Volatile private var usageOpenScanInFlight: Boolean = false
 
@@ -97,7 +96,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     // Some OEMs/apps don't emit reliable WINDOW_STATE_CHANGED transitions.
     private var lastTopRefreshAt: Long = 0L
 
-    // Attempt-based limits: scan UsageEvents for MOVE_TO_FOREGROUND to count opens reliably.
+    // Attempt-based limits: scan UsageEvents for ACTIVITY_RESUMED to count opens reliably.
     private var lastUsageOpenScanAt: Long = 0L
     private var cachedHasAttemptLimitsAt: Long = 0L
     private var cachedHasAttemptLimits: Boolean = false
@@ -109,14 +108,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private var lastTransitionAt: Long = 0L
 
     // Browser state cache for website blocking + per-domain website stats
-    @Volatile private var currentBrowserPkg: String? = null
-    @Volatile private var currentBrowserDomain: String? = null
-    @Volatile private var currentBrowserDomainAt: Long = 0L
-    private var browserCandidateDomain: String? = null
-    private var browserCandidateSince: Long = 0L
-    private val browserAddressEditGraceUntilByPkg = HashMap<String, Long>()
-    private val pendingBrowserDomainByPkg = HashMap<String, String>()
-    private val pendingBrowserDomainAtByPkg = HashMap<String, Long>()
+    private val browserWebsiteState = BrowserWebsiteState()
     private val lastDiagnosticLogAtByKey = HashMap<String, Long>()
 
     // In-app surface tracking for usage + limits (Shorts/Reels/Explore)
@@ -139,33 +131,34 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private val lastAttemptAt = HashMap<String, Long>()
     private val lastBlockShownAt = HashMap<String, Long>()
     private val lastSurfaceBlockAt = HashMap<String, Long>()
+    private val lastWebsiteFollowUpAt = HashMap<String, Long>()
+    private val lastFirefoxShortcutProbeAt = HashMap<String, Long>()
     private val lastOpenCountAt = HashMap<String, Long>()
-    private val surfaceEvidenceCount = HashMap<String, Int>()
-    private val surfaceEvidenceAt = HashMap<String, Long>()
-    private val recentSurfaceHintKeyByPkg = HashMap<String, String>()
-    private val recentSurfaceHintAtByPkg = HashMap<String, Long>()
+    private var lastOpenSessionPkg: String? = null
+    private var lastOpenSessionAt: Long = 0L
+    private val inAppSurfaceEvidence = InAppSurfaceEvidence()
     private val inAppGraceUntilByPkg = HashMap<String, Long>()
     private val surfaceBlockGuardUntil = HashMap<String, Long>()
 
     private val SURFACE_BLOCK_COOLDOWN_MS = 1_200L
+    private val WEBSITE_REDIRECT_FOLLOW_UP_COOLDOWN_MS = 1_800L
+    private val FIREFOX_SHORTCUT_PROBE_COOLDOWN_MS = 2_500L
     private var lastGlobalBlockTs: Long = 0L
     private val recentBlockEvents = ArrayDeque<Pair<String, Long>>()
     private val LOOP_BREAKER_WINDOW_MS = 12_000L
     private val LOOP_BREAKER_THRESHOLD = 5
-    private val LOOP_BREAKER_SUPPRESS_MS = 60_000L
+    private val LOOP_BREAKER_SUPPRESS_MS = 8_000L
+    private val STRICT_LOCKOUT_RECOVERY_ALLOW_MS = 30_000L
     private val suppressedBlockingUntilByPkg = HashMap<String, Long>()
 
     private val ATTEMPT_COOLDOWN_MS = 1_200L
-    // Count an "open" when the app becomes foreground.
-    // Keep this short so users can legitimately open/close the same app a few times without missing counts.
+    // Count an "open" once per foreground session. 
+    // Apps such as Gmail and Instagram can emit multiple ACTIVITY_RESUMED events while the user is still inside the same app, 
+    // so a short cooldown alone would incorrectly count one real open many times.
     private val OPEN_COUNT_COOLDOWN_MS = 800L
     private val BLOCK_SHOWN_COOLDOWN_MS = 800L
     private val HOME_BOUNCE_COOLDOWN_MS = 900L
     private var lastHomeBounceAt: Long = 0L
-    private val BROWSER_DOMAIN_CONFIRM_MS = 700L
-    private val BROWSER_ADDRESS_EDIT_GRACE_MS = 1_400L
-    private val FIREFOX_LAST_DOMAIN_TTL_MS = 12_000L
-    private val FIREFOX_PENDING_DOMAIN_TTL_MS = 8_000L
     private val SURFACE_CONFIRM_MS = 850L
     private val SURFACE_HINT_TTL_MS = 2_200L
     private val INAPP_POST_BLOCK_GRACE_MS = 1_800L
@@ -176,8 +169,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     private val MAX_NODE_SCAN_COUNT = 120
     private val MAX_NODE_SCAN_DEPTH = 12
-
-    private val INAPP_GLOBAL_LIMIT_KEY_LEGACY = "inapp:global"
 
     // Short-lived policy cache to avoid repeated SharedPreferences/ProfileStore reads on every event.
     private val POLICY_CACHE_TTL_MS = 1_200L
@@ -262,7 +253,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             putLong("acc_window_ended_at", now)
             putString("acc_window_summary", summary)
         }
-        runCatching { Log.d("SwitchlyPerf", summary) }
+        if (BuildConfig.DEBUG) runCatching { Log.d("SwitchlyPerf", summary) }
 
         perf.clear()
         perfWindowStartedAt = now
@@ -429,7 +420,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS)
 
             pkg == "com.twitter.android" ->
-                prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_FOR_YOU) ||
+                prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_HOME) ||
                     prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_SEARCH) ||
                     prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_GROK) ||
                     prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_NOTIFICATIONS)
@@ -602,6 +593,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (pkg.isBlank()) return
         if (pkg == packageName) return // avoid loops
 
+        if (maybeBlockUninstallFrictionSurface(pkg, event)) return
+
         val pendingBackCount = BlockerActivity.consumePendingBackNavigationFor(pkg)
         if (pendingBackCount > 0) {
             val ackNow = System.currentTimeMillis()
@@ -704,7 +697,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
 
             if (effectiveBackCount > 0) {
-                performBackSequence(effectiveBackCount, initialDelayMs = 0L, stepMs = 130L)
+                blockLaunchController.performBackSequence(effectiveBackCount, initialDelayMs = 0L, stepMs = 130L)
             }
 
             // Let app navigation settle before processing additional enforcement.
@@ -759,11 +752,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 maybeCountOpenAndEnforceAttemptLimit(pkg, now)
             }
             if (!isBrowserPackage(pkg)) {
-                currentBrowserPkg = null
-                currentBrowserDomain = null
-                currentBrowserDomainAt = 0L
-                browserCandidateDomain = null
-                browserCandidateSince = 0L
+                browserWebsiteState.clearCurrent()
             }
             if (shouldRunDeepProbe(pkg, type, isTransition = true, now = now)) {
                 maybeBlockNow(pkg, event)
@@ -874,13 +863,13 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (isBrowserPackage(pkg)) {
             // Some devices/browsers emit sparse transition events, especially when returning via Recents.
             // If we don't have a current domain signal, probe periodically so website stats + limits keep tracking.
-            if ((currentBrowserDomain.isNullOrBlank() || currentBrowserPkg != pkg) &&
+            if (browserWebsiteState.needsDomainProbe(pkg) &&
                 shouldRunDeepProbe(pkg, AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED, isTransition = false, now = now)
             ) {
                 maybeBlockWebsite(pkg, null)
             }
 
-            val d = currentTrackedBrowserDomain(pkg, now)
+            val d = browserWebsiteState.currentTrackedDomain(pkg, now, isFirefox = isFirefoxFamily(pkg))
             if (!d.isNullOrBlank()) {
                 WebUsageStore.addUsageMsToday(this, d, delta)
             }
@@ -928,7 +917,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
      * The UsageStats binder can stall unpredictably on some devices, so the query runs on a  worker thread and only the lightweight state update is posted back to the main thread.
      */
     private fun refreshTopPackageIfNeeded(now: Long) {
-        if (now - lastTopRefreshAt < 3_000L) return
+        // Keep this fairly tight: some devices miss accessibility transitions when an app is
+        // resumed from Recents/Overview, so UsageEvents becomes the fallback that re-enforces
+        // hard blocks. Running it roughly once per tick keeps reopen loopholes short.
+        if (now - lastTopRefreshAt < 1_000L) return
         if (topRefreshInFlight) return
 
         lastTopRefreshAt = now
@@ -936,7 +928,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         val start = (now - 10_000L).coerceAtLeast(0L)
         usageWorker?.post {
-            val top = runCatching { resolveTopPackageFromUsageEvents(start, now) }.getOrNull()
+            val top = runCatching { usageEventsForegroundResolver.resolveTopPackage(start, now) }.getOrNull()
             topRefreshInFlight = false
             if (top.isNullOrBlank()) return@post
 
@@ -964,20 +956,21 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         clearSurfaceEvidenceForPackage(top)
         if (!isBrowserPackage(top)) {
-            currentBrowserPkg = null
-            currentBrowserDomain = null
-            currentBrowserDomainAt = 0L
-            browserCandidateDomain = null
-            browserCandidateSince = 0L
+            browserWebsiteState.clearCurrent()
         }
 
         // If the foreground package was corrected via UsageEvents, also count an "open" here.
         // This covers devices that miss accessibility transition events when switching via Recents.
         maybeCountOpenAndEnforceAttemptLimit(top, now)
+
+        // And enforce immediately in the same correction pass.
+        // Without this, hard-blocked apps reopened from Recents can slip through until the next
+        // accessibility event or periodic tick notices the corrected top package.
+        maybeBlockNow(top, force = true)
     }
 
     /**
-     * Scans UsageEvents for MOVE_TO_FOREGROUND to count app opens reliably.
+     * Scans UsageEvents for ACTIVITY_RESUMED to count app opens reliably.
      *
      * Some OEMs (and some navigation flows) do not emit consistent accessibility transition
      * events when leaving/returning to apps (especially via Recents). UsageEvents is
@@ -1005,7 +998,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         usageOpenScanInFlight = true
 
         usageWorker?.post {
-            val events = runCatching { queryForegroundEvents(from, to) }.getOrDefault(emptyList())
+            val events = runCatching { usageEventsForegroundResolver.queryForegroundEvents(from, to) }.getOrDefault(emptyList())
             usageOpenScanInFlight = false
             if (events.isEmpty()) return@post
 
@@ -1019,49 +1012,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun resolveTopPackageFromUsageEvents(start: Long, end: Long): String? {
-        val usm = getSystemService(USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
-        val events = usm.queryEvents(start, end)
-        val e = UsageEvents.Event()
-        var lastPkg: String? = null
-        var lastTs = 0L
-
-        while (events.hasNextEvent()) {
-            events.getNextEvent(e)
-            if (e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                if (e.timeStamp >= lastTs && !e.packageName.isNullOrBlank()) {
-                    lastTs = e.timeStamp
-                    lastPkg = e.packageName
-                }
-            }
-        }
-        return lastPkg
-    }
-
-    private fun queryForegroundEvents(start: Long, end: Long): List<Pair<String, Long>> {
-        val usm = getSystemService(USAGE_STATS_SERVICE) as? UsageStatsManager ?: return emptyList()
-        val events = try {
-            usm.queryEvents(start, end)
-        } catch (_: SecurityException) {
-            return emptyList()
-        } catch (_: Throwable) {
-            return emptyList()
-        }
-
-        val out = ArrayList<Pair<String, Long>>()
-        val e = UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(e)
-            if (e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                val pkg = e.packageName?.trim().orEmpty()
-                if (pkg.isNotBlank() && pkg != packageName) {
-                    out += pkg to e.timeStamp
-                }
-            }
-        }
-        return out
-    }
-
     /**
      * Attempt-based limits: block an app after it has been opened N times today.
      * We count an "open" when the app becomes the foreground package.
@@ -1070,6 +1020,20 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private fun maybeCountOpenAndEnforceAttemptLimit(pkg: String, now: Long) {
         if (pkg.isBlank() || pkg == packageName) return
         if (AppBlockSafety.isHardExcluded(this, pkg)) return
+
+        val previousSessionPkg = lastOpenSessionPkg
+        val sameForegroundSession = previousSessionPkg == pkg
+
+        // Track every observed foreground package, even if that package has no attempt limit.
+        // This lets the next limited app count as a new open after the user really switched away.
+        lastOpenSessionPkg = pkg
+        lastOpenSessionAt = now
+
+        if (sameForegroundSession) {
+            // Still inside the same app session. Do not count repeated ACTIVITY_RESUMED events from
+            // internal activity changes, tab switches, notification updates, or OEM foreground flaps.
+            return
+        }
 
         // Only count while we would normally enforce.
         if (!pm.isInteractive) return
@@ -1096,8 +1060,14 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (now - last < OPEN_COUNT_COOLDOWN_MS) return
         lastOpenCountAt[pkg] = now
 
-        OpenCountStore.incrementToday(this, profile, pkg)
-        val opensToday = OpenCountStore.getToday(this, profile, pkg)
+        val opensToday = OpenCountStore.incrementToday(this, profile, pkg)
+        appendBlockingLog(
+            category = "open_count",
+            key = "open-count|$profile|$pkg",
+            message = "profile=$profile pkg=$pkg opens=$opensToday limit=$attemptLimit previousSession=${previousSessionPkg ?: "none"}",
+            throttleMs = 1_000L
+        )
+
         if (opensToday > attemptLimit) {
             // Block immediately on the first open past the cap.
             maybeBlockNow(pkg, force = true)
@@ -1107,7 +1077,24 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private fun maybeBlockNow(pkg: String, event: AccessibilityEvent? = null, force: Boolean = false) {
         perf.maybeBlockCalls++
         if (AppBlockSafety.isHardExcluded(this, pkg)) return
-        if (isBlockSuppressed(pkg)) return
+        val now = System.currentTimeMillis()
+
+        // Strict-mode lockout fallback: when Settings or another strict recovery surface is temporarily allowed, do not let loop-protection suppression immediately bounce it back home again. 
+        // This keeps the short recovery window real instead of only showing a toast while the activity is still closed.
+        if (AppBlockSafety.requiresStrictModeForBlocking(this, pkg) && TempAllowStore.isAllowed(this, pkg)) {
+            appendBlockingLog(
+                category = "temp_allow",
+                key = "temp-allow|$pkg",
+                message = "pkg=$pkg reason=strict_lockout_recovery",
+                throttleMs = 2_000L
+            )
+            return
+        }
+
+        if (isBlockSuppressed(pkg, now)) {
+            enforceSuppressedBlock(pkg, now)
+            return
+        }
 
         if (!pm.isInteractive) return
         if (km?.isKeyguardLocked == true) return
@@ -1131,28 +1118,20 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val attemptLimit = getAttemptLimitCached(profile, pkg, nowForCache)
 
         val opensExceeded = attemptLimit > 0 && OpenCountStore.getToday(this, profile, pkg) > attemptLimit
-        // Same precedence rule as above: only hard-block when *no* limits are configured.
-        val hardBlocked = isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0
+        val decision = resolveAppBlockDecision(
+            pkg = pkg,
+            blockedPackages = blocked,
+            limitMinutes = limitMin,
+            attemptLimit = attemptLimit,
+            opensExceeded = opensExceeded,
+            effectiveUsageMsToday = getEffectiveUsageMsToday(pkg, System.currentTimeMillis()),
+            lockActive = lockActive,
+            highRisk = isHighRiskBlockTarget(this, pkg),
+            force = force
+        )
 
-        // Enforcement should apply either when the app is hard-blocked OR when it has a daily limit.
-        // (Users can set a daily limit without adding the app to the hard-block list.)
-        val managed = isManagedPackage(pkg, blocked) || (limitMin > 0) || (attemptLimit > 0)
-        if (!managed) return
-
-        val shouldBlockNow =
-            hardBlocked ||
-                opensExceeded ||
-                (limitMin > 0 && (force || getEffectiveUsageMsToday(pkg, System.currentTimeMillis()) >= limitMin * 60_000L))
-
-        if (lockActive && isHighRisk(pkg)) {
-            blockNow(pkg, immediate = true)
-            return
-        }
-
-        if (!shouldBlockNow) return
-
-        val immediate = hardBlocked || opensExceeded || force
-        blockNow(pkg, immediate = immediate)
+        if (!decision.shouldBlock) return
+        blockNow(pkg, immediate = decision.immediate)
     }
 
     private fun isBlockSuppressed(pkg: String, now: Long = System.currentTimeMillis()): Boolean {
@@ -1164,6 +1143,26 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return true
     }
 
+    private fun enforceSuppressedBlock(pkg: String, now: Long = System.currentTimeMillis()) {
+        if (!isBlockSuppressed(pkg, now)) return
+
+        appendBlockingLog(
+            category = "loop_block",
+            key = "loop-block|$pkg",
+            message = "pkg=$pkg silent=true",
+            throttleMs = 1_500L
+        )
+
+        clearSurfaceEvidenceForPackage(pkg)
+        inAppGraceUntilByPkg[pkg] = maxOf(inAppGraceUntilByPkg[pkg] ?: 0L, now + 1_500L)
+        lastBlockShownAt[pkg] = now
+        lastGlobalBlockTs = now
+
+        blockLaunchController.postHome()
+        blockLaunchController.postHome(delayMs = 180L)
+        blockLaunchController.postKillBackgroundPackage(pkg, delayMs = 120L)
+    }
+
     private fun shouldSuppressForLoop(pkg: String, now: Long = System.currentTimeMillis()): Boolean {
         while (recentBlockEvents.isNotEmpty() && now - recentBlockEvents.first().second > LOOP_BREAKER_WINDOW_MS) {
             recentBlockEvents.removeFirst()
@@ -1172,24 +1171,20 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val count = recentBlockEvents.count { it.first == pkg }
         if (count < LOOP_BREAKER_THRESHOLD) return false
 
-        AppLogStore.append(this, "Blocking", "Loop protection triggered package=$pkg")
+        AppLogStore.append(this, "Blocking", "Loop protection triggered package=$pkg mode=safety suppressMs=$LOOP_BREAKER_SUPPRESS_MS enforcement=home_bounce")
         suppressedBlockingUntilByPkg[pkg] = now + LOOP_BREAKER_SUPPRESS_MS
         clearSurfaceEvidenceForPackage(pkg)
         inAppGraceUntilByPkg[pkg] = now + LOOP_BREAKER_SUPPRESS_MS
         lastBlockShownAt[pkg] = now
         lastGlobalBlockTs = now
-        runCatching { performGlobalAction(GLOBAL_ACTION_HOME) }
-        handler.postDelayed({
-            runCatching { performGlobalAction(GLOBAL_ACTION_HOME) }
-        }, 250L)
+        blockLaunchController.postHome()
+        blockLaunchController.postHome(delayMs = 250L)
+        blockLaunchController.postKillBackgroundPackage(pkg)
         runCatching {
-            val am = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-            am.killBackgroundProcesses(pkg)
-        }
-        runCatching {
-            Log.w("Switchly", "Loop breaker triggered for $pkg; suppressing blocks for ${LOOP_BREAKER_SUPPRESS_MS}ms")
+            Log.w("Switchly", "Loop breaker triggered for $pkg in safety mode; using home-bounce enforcement for ${LOOP_BREAKER_SUPPRESS_MS}ms")
         }
         if (AppBlockSafety.requiresStrictModeForBlocking(this, pkg)) {
+            TempAllowStore.allow(this, pkg, STRICT_LOCKOUT_RECOVERY_ALLOW_MS)
             handler.post {
                 runCatching {
                     Toast.makeText(this, getString(R.string.app_picker_settings_temporarily_allowed), Toast.LENGTH_LONG).show()
@@ -1197,32 +1192,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
         }
         return true
-    }
-
-    private fun performBackSequence(
-        backCount: Int,
-        initialDelayMs: Long = 0L,
-        stepMs: Long = 120L
-    ) {
-        if (backCount <= 0) return
-        for (i in 0 until backCount) {
-            val delay = initialDelayMs + i.toLong() * stepMs
-            if (delay <= 0L) {
-                runCatching { performGlobalAction(GLOBAL_ACTION_BACK) }
-            } else {
-                handler.postDelayed({
-                    runCatching { performGlobalAction(GLOBAL_ACTION_BACK) }
-                }, delay)
-            }
-        }
-    }
-
-    private fun pauseActiveMediaPlayback() {
-        val audio = getSystemService(AUDIO_SERVICE) as? AudioManager ?: return
-        val down = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
-        val up = KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE)
-        runCatching { audio.dispatchMediaKeyEvent(down) }
-        runCatching { audio.dispatchMediaKeyEvent(up) }
     }
 
     /**
@@ -1235,40 +1204,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (now - last < throttleMs) return
         lastDiagnosticLogAtByKey[key] = now
         AppLogStore.append(this, "Blocking", "[$category] $message")
-    }
-
-    private fun sanitizeWebsiteSignal(raw: String?, maxLen: Int = 120): String {
-        val value = raw?.trim()?.replace(Regex("\\s+"), " ")?.takeIf { it.isNotEmpty() } ?: return "-"
-        val withoutScheme = value.replace(Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://"), "")
-        val noQuery = withoutScheme.substringBefore('?').substringBefore('#')
-        val trimmed = noQuery.trim('/').ifBlank { withoutScheme.take(maxLen) }
-        return trimmed.take(maxLen)
-    }
-
-    private fun eventTypeLabel(event: AccessibilityEvent?): String {
-        val type = event?.eventType ?: return "NO_EVENT"
-
-        return when (type) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "WINDOW_STATE_CHANGED"
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> "WINDOW_CONTENT_CHANGED"
-            AccessibilityEvent.TYPE_VIEW_CLICKED -> "VIEW_CLICKED"
-            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> "VIEW_TEXT_CHANGED"
-            AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> "VIEW_TEXT_SELECTION_CHANGED"
-            AccessibilityEvent.TYPE_VIEW_FOCUSED -> "VIEW_FOCUSED"
-            AccessibilityEvent.TYPE_VIEW_SELECTED -> "VIEW_SELECTED"
-            AccessibilityEvent.TYPE_VIEW_SCROLLED -> "VIEW_SCROLLED"
-            else -> type.toString()
-        }
-    }
-    
-    private fun firefoxSignalSummary(root: AccessibilityNodeInfo?, event: AccessibilityEvent?): String {
-        val eventText = sanitizeWebsiteSignal(event?.text?.joinToString(" | "))
-        val eventDesc = sanitizeWebsiteSignal(event?.contentDescription?.toString())
-        val sourceId = runCatching { event?.source?.viewIdResourceName }.getOrNull()?.takeIf { it.isNotBlank() } ?: "-"
-        val sourceText = sanitizeWebsiteSignal(runCatching { event?.source?.text?.toString() }.getOrNull())
-        val sourceDesc = sanitizeWebsiteSignal(runCatching { event?.source?.contentDescription?.toString() }.getOrNull())
-        val rootPkg = root?.packageName?.toString() ?: "-"
-        return "event=${eventTypeLabel(event)} srcId=$sourceId eventText=$eventText eventDesc=$eventDesc srcText=$sourceText srcDesc=$sourceDesc rootPkg=$rootPkg"
     }
 
     private fun softBlockSurface(
@@ -1329,10 +1264,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         if (!deferNavigationUntilAcknowledge) {
             // Go back out of the current screen/tab immediately.
-            performBackSequence(backCount, initialDelayMs = 0L, stepMs = 120L)
+            blockLaunchController.performBackSequence(backCount, initialDelayMs = 0L, stepMs = 120L)
         } else if (pkg == "com.google.android.youtube" && title.contains(getString(R.string.in_app_surface_shorts_label), ignoreCase = true)) {
             // Reduce visible PiP/miniplayer flashes while the blocker popup is shown: try to leave Shorts in-app before opening the popup (without global BACK).
-            runCatching { pauseActiveMediaPlayback() }
+            runCatching { blockLaunchController.pauseActiveMediaPlayback() }
             runCatching {
                 val rootNow = rootInActiveWindow
                 if (isRootFromPackage(rootNow, "com.google.android.youtube")) {
@@ -1389,11 +1324,162 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
     }
 
+    private data class UninstallSurfaceSignal(
+        val reason: String,
+        val backCount: Int = 1
+    )
+
+    private fun maybeBlockUninstallFrictionSurface(pkg: String, event: AccessibilityEvent?): Boolean {
+        if (!SwitchModeStore.isEnabled(this)) return false
+        if (EmergencyBypassStore.isActive(this)) return false
+        if (TempAllowStore.isAllowed(this, pkg)) return false
+        if (!AutomationModeStore.isUninstallFrictionEnabled(this)) return false
+        if (pkg != "com.android.settings" && pkg != "com.android.vending" && pkg != "com.google.android.packageinstaller" && pkg != "com.android.packageinstaller") {
+            return false
+        }
+
+        val root = currentRoot(event) ?: return false
+        val signal = detectSwitchlyUninstallSurface(pkg, root, event) ?: return false
+        val appLabel = safeAppLabel(pkg)
+        appendBlockingLog(
+            category = "uninstall_friction",
+            key = "uninstall-friction|$pkg|${signal.reason}",
+            message = "pkg=$pkg reason=${signal.reason} event=${eventTypeLabel(event)}",
+            throttleMs = 1_200L
+        )
+        softBlockSurface(
+            pkg = pkg,
+            appLabel = appLabel,
+            title = getString(R.string.blocking_uninstall_friction_title),
+            message = getString(R.string.blocking_uninstall_friction_message),
+            backCount = signal.backCount,
+            deferNavigationUntilAcknowledge = false,
+            returnToPackageOnClose = false
+        )
+        return true
+    }
+
+    private fun detectSwitchlyUninstallSurface(
+        pkg: String,
+        root: AccessibilityNodeInfo,
+        event: AccessibilityEvent?
+    ): UninstallSurfaceSignal? {
+        val lowered = collectNodeTextBlob(root, event)
+        val loweredIds = collectNodeIdBlob(root)
+
+        val mentionsSwitchly =
+            lowered.contains("switchly") ||
+                lowered.contains(packageName.lowercase(Locale.ROOT)) ||
+                loweredIds.contains(packageName.lowercase(Locale.ROOT))
+
+        if (!mentionsSwitchly) return null
+
+        val hasUninstall = lowered.contains("uninstall") || lowered.contains("deinstall") || lowered.contains("remove")
+        val hasAppInfo = lowered.contains("app info") || lowered.contains("app-info") || lowered.contains("app details") || lowered.contains("app-information") || lowered.contains("anwendungsinfo") || lowered.contains("app-informationen")
+        val hasForceStop = lowered.contains("force stop") || lowered.contains("stopp erzwingen")
+        val uninstallId = loweredIds.contains("uninstall") || loweredIds.contains("btn_uninstall")
+        val installerPrompt = lowered.contains("do you want to uninstall") || lowered.contains("möchtest du") || lowered.contains("wirklich deinstallieren")
+
+        return when (pkg) {
+            "com.android.settings" -> {
+                when {
+                    (hasUninstall || uninstallId) && (hasAppInfo || hasForceStop || loweredIds.contains("force_stop")) -> UninstallSurfaceSignal("settings_app_info")
+                    (hasAppInfo && hasUninstall) -> UninstallSurfaceSignal("settings_app_info")
+                    else -> null
+                }
+            }
+            "com.android.vending" -> {
+                when {
+                    hasUninstall || uninstallId -> UninstallSurfaceSignal("play_store_uninstall")
+                    else -> null
+                }
+            }
+            "com.google.android.packageinstaller", "com.android.packageinstaller" -> {
+                when {
+                    hasUninstall || installerPrompt || uninstallId -> UninstallSurfaceSignal("package_installer_uninstall")
+                    else -> null
+                }
+            }
+            else -> null
+        }
+    }
+
+    private fun collectNodeTextBlob(root: AccessibilityNodeInfo, event: AccessibilityEvent?): String {
+        data class WorkItem(val node: AccessibilityNodeInfo, val depth: Int, val owned: Boolean)
+
+        val parts = ArrayList<String>(24)
+        event?.text?.forEach { if (!it.isNullOrBlank()) parts += it.toString() }
+        event?.contentDescription?.toString()?.takeIf { it.isNotBlank() }?.let { parts += it }
+
+        val stack = ArrayDeque<WorkItem>()
+        stack.addLast(WorkItem(root, 0, false))
+        var visited = 0
+        while (stack.isNotEmpty() && visited < MAX_NODE_SCAN_COUNT && parts.size < 80) {
+            val item = stack.removeLast()
+            val current = item.node
+            try {
+                visited++
+                current.text?.toString()?.takeIf { it.isNotBlank() }?.let { parts += it }
+                current.contentDescription?.toString()?.takeIf { it.isNotBlank() }?.let { parts += it }
+                if (item.depth >= MAX_NODE_SCAN_DEPTH) continue
+                val childCount = runCatching { current.childCount }.getOrDefault(0)
+                for (i in childCount - 1 downTo 0) {
+                    if (visited + stack.size >= MAX_NODE_SCAN_COUNT) break
+                    val child = runCatching { current.getChild(i) }.getOrNull() ?: continue
+                    stack.addLast(WorkItem(child, item.depth + 1, true))
+                }
+            } finally {
+            }
+        }
+        return parts.joinToString(separator = " ").lowercase(Locale.ROOT)
+    }
+
+    private fun collectNodeIdBlob(root: AccessibilityNodeInfo): String {
+        data class WorkItem(val node: AccessibilityNodeInfo, val depth: Int, val owned: Boolean)
+
+        val parts = ArrayList<String>(24)
+        val stack = ArrayDeque<WorkItem>()
+        stack.addLast(WorkItem(root, 0, false))
+        var visited = 0
+        while (stack.isNotEmpty() && visited < MAX_NODE_SCAN_COUNT && parts.size < 48) {
+            val item = stack.removeLast()
+            val current = item.node
+            try {
+                visited++
+                runCatching { current.viewIdResourceName }.getOrNull()?.takeIf { it.isNotBlank() }?.let { parts += it }
+                if (item.depth >= MAX_NODE_SCAN_DEPTH) continue
+                val childCount = runCatching { current.childCount }.getOrDefault(0)
+                for (i in childCount - 1 downTo 0) {
+                    if (visited + stack.size >= MAX_NODE_SCAN_COUNT) break
+                    val child = runCatching { current.getChild(i) }.getOrNull() ?: continue
+                    stack.addLast(WorkItem(child, item.depth + 1, true))
+                }
+            } finally {
+            }
+        }
+        return parts.joinToString(separator = " ").lowercase(Locale.ROOT)
+    }
+
     private fun blockNow(pkg: String, immediate: Boolean) {
         val now = System.currentTimeMillis()
-        if (isBlockSuppressed(pkg, now)) return
-        if (shouldSuppressForLoop(pkg, now)) return
-        if (BlockerActivity.isVisible) return
+        val allowLoopSafetyMode = shouldUseLoopSafetyMode(this, pkg)
+        if (allowLoopSafetyMode && isBlockSuppressed(pkg, now)) {
+            enforceSuppressedBlock(pkg, now)
+            return
+        }
+        if (!allowLoopSafetyMode) {
+            suppressedBlockingUntilByPkg.remove(pkg)
+        }
+        if (BlockerActivity.isVisible) {
+            appendBlockingLog(
+                category = "app_block_skip",
+                key = "app-block-visible|$pkg",
+                message = "pkg=$pkg reason=blocker_visible",
+                throttleMs = 1_500L
+            )
+            return
+        }
+        if (allowLoopSafetyMode && shouldSuppressForLoop(pkg, now)) return
 
         val lastAttempt = lastAttemptAt[pkg] ?: 0L
         val countAttempt = (now - lastAttempt) >= ATTEMPT_COOLDOWN_MS
@@ -1428,27 +1514,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
 
         val delayMs = if (immediate) 20L else 60L
-        handler.postDelayed({
-            runCatching { BlockerActivity.show(this, pkg, label) }
-            handler.postDelayed({
-                runCatching {
-                    val am = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-                    am.killBackgroundProcesses(pkg)
-                }
-            }, 220L)
-        }, delayMs)
-    }
-
-    private fun formatDuration(ms: Long): String {
-        val totalMin = (ms/60_000L).coerceAtLeast(0L)
-        val h = totalMin/60L
-        val m = totalMin % 60L
-        return when {
-            h > 0L && m > 0L -> "${h}h ${m}m"
-            h > 0L -> "${h}h"
-            totalMin > 0L -> "${totalMin}m"
-            else -> "<1m"
-        }
+        blockLaunchController.showAppBlocker(pkg, label, delayMs)
     }
 
     private fun safeAppLabel(pkg: String): String {
@@ -1518,7 +1584,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_STORIES)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "ig:stories")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_FOR_YOU)) {
+        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_HOME)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "x:foryou")
         }
         if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_SEARCH)) {
@@ -1550,25 +1616,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (limitMin <= 0) return ""
         return "In-app limit: ${formatDuration(limitMin.toLong() * 60_000L)}"
     }
-    private fun sanitizeProfile(profile: String): String {
-        return profile.trim()
-            .lowercase(Locale.getDefault())
-            .replace(Regex("[^a-z0-9]+"), "_")
-            .trim('_')
-            .ifBlank { "default" }
-    }
-
-    private fun scopedKey(profile: String, baseKey: String): String {
-        return "p_${sanitizeProfile(profile)}_$baseKey"
-    }
-
-    /**
-     * Profile-scoped preference read.
-     * Order:
-     * 1) scoped key for current profile
-     * 2) base (global) key
-     * 3) default
-     */
     private fun prefsBoolProfile(def: Boolean, baseKey: String): Boolean {
         val now = System.currentTimeMillis()
         val profile = getCurrentProfileCached(now)
@@ -1615,153 +1662,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return value
     }
 
-    private fun isFirefoxFamily(pkg: String): Boolean =
-        pkg.startsWith("org.mozilla.") || pkg == "net.waterfox.android.release"
-
-    private fun isBrowserPackage(pkg: String): Boolean {
-        return pkg == "com.android.chrome" ||
-            pkg == "com.brave.browser" ||
-            pkg == "com.microsoft.emmx" ||
-            pkg == "com.opera.browser" ||
-            pkg == "com.opera.browser.beta" ||
-            pkg == "com.opera.mini.native" ||
-            pkg == "com.sec.android.app.sbrowser" ||
-            pkg == "com.sec.android.app.sbrowser.beta" ||
-            pkg == "org.mozilla.firefox" ||
-            pkg == "org.mozilla.firefox_beta" ||
-            pkg == "org.mozilla.fennec_fdroid" ||
-            pkg == "org.mozilla.focus" ||
-            pkg == "org.mozilla.fenix" ||
-            pkg == "net.waterfox.android.release" ||
-            pkg == "com.kiwibrowser.browser" ||
-            pkg == "com.vivaldi.browser" ||
-            pkg == "com.duckduckgo.mobile.android" ||
-            pkg == "com.google.android.apps.chrome" ||
-            pkg == "com.chrome.beta" ||
-            pkg == "com.chrome.dev"
-    }
-
-    private fun browserUrlViewIds(pkg: String): List<String> {
-        return when (pkg) {
-            "com.android.chrome" ->
-                listOf(
-                    "com.android.chrome:id/url_bar"
-                )
-
-            "com.brave.browser" ->
-                listOf(
-                    "com.brave.browser:id/url_bar",
-                    "com.android.chrome:id/url_bar"
-                )
-
-            "com.microsoft.emmx" ->
-                listOf(
-                    "com.microsoft.emmx:id/url_bar",
-                    "com.android.chrome:id/url_bar"
-                )
-
-            "com.opera.browser", "com.opera.browser.beta", "com.opera.mini.native" ->
-                listOf(
-                    "com.opera.browser:id/url_field",
-                    "com.opera.browser:id/url_bar",
-                    "com.opera.browser:id/address_bar"
-                )
-
-            "com.sec.android.app.sbrowser", "com.sec.android.app.sbrowser.beta" ->
-                listOf(
-                    "com.sec.android.app.sbrowser:id/location_bar_edit_text",
-                    "com.sec.android.app.sbrowser:id/location_bar"
-                )
-
-            "org.mozilla.firefox" -> listOf(
-                "org.mozilla.firefox:id/mozac_browser_toolbar_origin_view",
-                "org.mozilla.firefox:id/mozac_browser_toolbar_display_url_view",
-                "org.mozilla.firefox:id/mozac_browser_toolbar_url_view"
-            )
-
-            "org.mozilla.firefox_beta" ->
-                listOf(
-                    "org.mozilla.firefox_beta:id/mozac_browser_toolbar_origin_view",
-                    "org.mozilla.firefox_beta:id/mozac_browser_toolbar_display_url_view",
-                    "org.mozilla.firefox_beta:id/mozac_browser_toolbar_url_view"
-                )
-
-            "org.mozilla.fennec_fdroid" ->
-                listOf(
-                    "org.mozilla.fennec_fdroid:id/mozac_browser_toolbar_origin_view",
-                    "org.mozilla.fennec_fdroid:id/mozac_browser_toolbar_display_url_view",
-                    "org.mozilla.fennec_fdroid:id/mozac_browser_toolbar_url_view"
-                )
-
-            "org.mozilla.focus" ->
-                listOf(
-                    "org.mozilla.focus:id/urlInputView"
-                )
-
-            "org.mozilla.fenix" ->
-                listOf(
-                    "org.mozilla.fenix:id/mozac_browser_toolbar_origin_view",
-                    "org.mozilla.fenix:id/mozac_browser_toolbar_display_url_view",
-                    "org.mozilla.fenix:id/mozac_browser_toolbar_url_view"
-                )
-
-            "net.waterfox.android.release" ->
-                listOf(
-                    "net.waterfox.android.release:id/mozac_browser_toolbar_origin_view",
-                    "net.waterfox.android.release:id/mozac_browser_toolbar_display_url_view",
-                    "net.waterfox.android.release:id/mozac_browser_toolbar_url_view"
-                )
-
-            "com.kiwibrowser.browser" ->
-                listOf(
-                    "com.kiwibrowser.browser:id/url_bar",
-                    "com.android.chrome:id/url_bar"
-                )
-
-            "com.vivaldi.browser" ->
-                listOf(
-                    "com.vivaldi.browser:id/url_bar",
-                    "com.android.chrome:id/url_bar"
-                )
-
-            "com.duckduckgo.mobile.android" ->
-                listOf(
-                    "com.duckduckgo.mobile.android:id/omnibarTextInput"
-                )
-
-            "com.google.android.apps.chrome" ->
-                listOf(
-                    "com.android.chrome:id/url_bar"
-                )
-
-            "com.chrome.beta" ->
-                listOf(
-                    "com.chrome.beta:id/url_bar",
-                    "com.android.chrome:id/url_bar"
-                )
-
-            "com.chrome.dev" ->
-                listOf(
-                    "com.chrome.dev:id/url_bar",
-                    "com.android.chrome:id/url_bar"
-                )
-
-            else -> emptyList()
-        }
-    }
-
-    private fun firefoxEditingViewIds(pkg: String): List<String> {
-        return when (pkg) {
-            "org.mozilla.firefox" -> listOf("org.mozilla.firefox:id/mozac_browser_toolbar_edit_url_view")
-            "org.mozilla.firefox_beta" -> listOf("org.mozilla.firefox_beta:id/mozac_browser_toolbar_edit_url_view")
-            "org.mozilla.fennec_fdroid" -> listOf("org.mozilla.fennec_fdroid:id/mozac_browser_toolbar_edit_url_view")
-            "org.mozilla.fenix" -> listOf("org.mozilla.fenix:id/mozac_browser_toolbar_edit_url_view")
-            "org.mozilla.focus" -> listOf("org.mozilla.focus:id/urlInputView")
-            "net.waterfox.android.release" -> listOf("net.waterfox.android.release:id/mozac_browser_toolbar_edit_url_view")
-            else -> emptyList()
-        }
-    }
-
     private fun tryExtractDomainFromBrowserUrlViews(root: AccessibilityNodeInfo, pkg: String): String? {
         val ids = browserUrlViewIds(pkg)
         for (id in ids) {
@@ -1779,7 +1679,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     }
                 }
             } finally {
-                nodes.forEach { runCatching { it.recycle() } }
             }
         }
         return null
@@ -1794,9 +1693,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     !it.text?.toString().isNullOrBlank() ||
                         !it.contentDescription?.toString().isNullOrBlank()
                 } ?: nodes.firstOrNull()
-                best?.let { AccessibilityNodeInfo.obtain(it) }
+                best?.let { it }
             } finally {
-                nodes.forEach { runCatching { it.recycle() } }
             }
             if (copy != null) return copy
         }
@@ -1818,37 +1716,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return null
     }
 
-    private fun browserAddressEditingRecently(pkg: String, now: Long = System.currentTimeMillis()): Boolean {
-        return (browserAddressEditGraceUntilByPkg[pkg] ?: 0L) > now
-    }
-
-    private fun noteBrowserAddressEditing(pkg: String, now: Long = System.currentTimeMillis()) {
-        browserAddressEditGraceUntilByPkg[pkg] = now + BROWSER_ADDRESS_EDIT_GRACE_MS
-    }
-
-    private fun notePendingBrowserDomain(pkg: String, host: String?, now: Long = System.currentTimeMillis()) {
-        val normalized = host?.let { DomainBlockStore.normalize(it) }
-        if (normalized.isNullOrBlank()) return
-        pendingBrowserDomainByPkg[pkg] = normalized
-        pendingBrowserDomainAtByPkg[pkg] = now
-    }
-
-    private fun currentPendingBrowserDomain(pkg: String, now: Long = System.currentTimeMillis()): String? {
-        val host = pendingBrowserDomainByPkg[pkg] ?: return null
-        val at = pendingBrowserDomainAtByPkg[pkg] ?: 0L
-        if (now - at > FIREFOX_PENDING_DOMAIN_TTL_MS) {
-            pendingBrowserDomainByPkg.remove(pkg)
-            pendingBrowserDomainAtByPkg.remove(pkg)
-            return null
-        }
-        return host
-    }
-
-    private fun clearPendingBrowserDomain(pkg: String) {
-        pendingBrowserDomainByPkg.remove(pkg)
-        pendingBrowserDomainAtByPkg.remove(pkg)
-    }
-
     private fun eventLooksLikeBrowserAddressEditing(pkg: String, event: AccessibilityEvent?): Boolean {
         if (event == null || !isBrowserPackage(pkg)) return false
 
@@ -1862,7 +1729,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 firefoxContentChange
         if (!addressishEvent) return false
 
-        val source = runCatching { event.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+        val source = runCatching { event.source?.let { it } }.getOrNull()
         try {
             if (source != null) {
                 val vid = source.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
@@ -1887,7 +1754,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 }
             }
         } finally {
-            if (source != null) runCatching { source.recycle() }
         }
 
         val cd = event.contentDescription?.toString()?.lowercase(Locale.getDefault()).orEmpty()
@@ -1908,7 +1774,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             if (isFirefoxFamily(pkg)) {
                 val firefoxEditIds = firefoxEditingViewIds(pkg)
                 if (firefoxEditIds.isNotEmpty() && nodeHasViewId(root, firefoxEditIds)) {
-                    noteBrowserAddressEditing(pkg)
+                    browserWebsiteState.noteAddressEditing(pkg)
                     return true
                 }
             }
@@ -1928,23 +1794,22 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 // As long as the editable URL field itself is active, treat that as editing and
                 // do not allow website blocking to trigger yet.
                 if (isEdit && focused) {
-                    noteBrowserAddressEditing(pkg)
+                    browserWebsiteState.noteAddressEditing(pkg)
                     return true
                 }
                 val editing = isEdit && inputEvent
-                if (editing) noteBrowserAddressEditing(pkg)
+                if (editing) browserWebsiteState.noteAddressEditing(pkg)
                 return editing
             }
 
             if (focused) {
-                noteBrowserAddressEditing(pkg)
+                browserWebsiteState.noteAddressEditing(pkg)
                 return true
             }
             val editing = isEdit && inputEvent
-            if (editing) noteBrowserAddressEditing(pkg)
+            if (editing) browserWebsiteState.noteAddressEditing(pkg)
             return editing
         } finally {
-            runCatching { node.recycle() }
         }
     }
 
@@ -1958,7 +1823,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
         }
 
-        val sourceCopy = runCatching { event.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+        val sourceCopy = runCatching { event.source?.let { it } }.getOrNull()
         try {
             if (sourceCopy != null) {
                 val direct = sequenceOf(
@@ -1972,7 +1837,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     }
                 }
 
-                val parent = runCatching { sourceCopy.parent?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+                val parent = runCatching { sourceCopy.parent?.let { it } }.getOrNull()
                 try {
                     if (parent != null) {
                         val parentDirect = sequenceOf(
@@ -2001,16 +1866,13 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                                     }
                                 }
                             } finally {
-                                runCatching { child.recycle() }
                             }
                         }
                     }
                 } finally {
-                    if (parent != null) runCatching { parent.recycle() }
                 }
             }
         } finally {
-            if (sourceCopy != null) runCatching { sourceCopy.recycle() }
         }
 
         return null
@@ -2027,7 +1889,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         val firefoxEditing = isFirefoxFamily(pkg) && isBrowserAddressEditing(root, pkg, event)
         if (firefoxEditing) return null
-        if (event != null && browserAddressEditingRecently(pkg)) return null
+        if (event != null && browserWebsiteState.addressEditingRecently(pkg)) return null
 
         val urlNode = findBrowserUrlNode(root, pkg)
         try {
@@ -2041,7 +1903,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 domainFromText(cd)?.let { return it }
             }
         } finally {
-            if (urlNode != null) runCatching { urlNode.recycle() }
         }
 
         if (isFirefoxFamily(pkg) && !firefoxEditing) {
@@ -2080,7 +1941,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 type == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED
         if (!textInputEvent) return false
 
-        val source = runCatching { event.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+        val source = runCatching { event.source?.let { it } }.getOrNull()
         try {
             if (source != null) {
                 val viewId = source.viewIdResourceName.orEmpty()
@@ -2098,7 +1959,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 if (source.isEditable && className.contains("EditText", ignoreCase = true)) return true
             }
         } finally {
-            if (source != null) runCatching { source.recycle() }
         }
 
         return false
@@ -2115,7 +1975,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 type == AccessibilityEvent.TYPE_VIEW_SCROLLED
         if (!pageishEvent) return false
 
-        val source = runCatching { event.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+        val source = runCatching { event.source?.let { it } }.getOrNull()
         try {
             if (source != null) {
                 val cls = source.className?.toString().orEmpty()
@@ -2126,7 +1986,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 }
             }
         } finally {
-            if (source != null) runCatching { source.recycle() }
         }
 
         return false
@@ -2156,24 +2015,22 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         event?.text?.forEach { add(it?.toString()) }
         add(event?.contentDescription?.toString())
 
-        val source = runCatching { event?.source?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+        val source = runCatching { event?.source?.let { it } }.getOrNull()
         try {
             if (source != null) {
                 add(source.text?.toString())
                 add(source.contentDescription?.toString())
 
-                val parent = runCatching { source.parent?.let { AccessibilityNodeInfo.obtain(it) } }.getOrNull()
+                val parent = runCatching { source.parent?.let { it } }.getOrNull()
                 try {
                     if (parent != null) {
                         add(parent.text?.toString())
                         add(parent.contentDescription?.toString())
                     }
                 } finally {
-                    if (parent != null) runCatching { parent.recycle() }
                 }
             }
         } finally {
-            if (source != null) runCatching { source.recycle() }
         }
 
         data class WorkItem(val node: AccessibilityNodeInfo, val depth: Int, val owned: Boolean)
@@ -2198,7 +2055,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     stack.addLast(WorkItem(child, item.depth + 1, true))
                 }
             } finally {
-                if (item.owned) runCatching { current.recycle() }
             }
         }
 
@@ -2282,7 +2138,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     stack.addLast(WorkItem(child, item.depth + 1, true))
                 }
             } finally {
-                if (item.owned) runCatching { current.recycle() }
             }
         }
         return null
@@ -2312,7 +2167,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     stack.addLast(WorkItem(child, item.depth + 1, true))
                 }
             } finally {
-                if (item.owned) runCatching { current.recycle() }
             }
         }
         return null
@@ -2323,17 +2177,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             ?: event?.source
             ?: runCatching { windows?.firstOrNull { it.isActive }?.root }.getOrNull()
             ?: runCatching { windows?.firstOrNull()?.root }.getOrNull()
-    }
-
-    private fun currentTrackedBrowserDomain(pkg: String, now: Long): String? {
-        if (currentBrowserPkg != pkg) return null
-        val host = currentBrowserDomain ?: return null
-        if (isFirefoxFamily(pkg) && now - currentBrowserDomainAt > FIREFOX_LAST_DOMAIN_TTL_MS) {
-            currentBrowserDomain = null
-            currentBrowserDomainAt = 0L
-            return null
-        }
-        return host
     }
 
     private fun tryRedirectBrowserToSafePage(pkg: String): Boolean {
@@ -2355,13 +2198,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 true
             }.getOrDefault(false)
             if (ok) {
-                currentBrowserPkg = pkg
-                currentBrowserDomain = null
-                currentBrowserDomainAt = 0L
-                browserCandidateDomain = null
-                browserCandidateSince = 0L
-                clearPendingBrowserDomain(pkg)
-                noteBrowserAddressEditing(pkg)
+                browserWebsiteState.resetAfterRedirect(pkg)
                 return true
             }
         }
@@ -2381,7 +2218,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         val now = System.currentTimeMillis()
         if (eventLooksLikeBrowserAddressEditing(pkg, event)) {
-            noteBrowserAddressEditing(pkg, now)
+            browserWebsiteState.noteAddressEditing(pkg, now)
         }
         val firefoxAddressBarInputEvent = isFirefoxAddressBarInputEvent(pkg, event)
 
@@ -2392,13 +2229,13 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         // Don't block while user is typing in the address bar/autocomplete.
         val editingNow = isBrowserAddressEditing(root, pkg, event)
-        val recentEditing = event != null && browserAddressEditingRecently(pkg, now)
+        val recentEditing = event != null && browserWebsiteState.addressEditingRecently(pkg, now)
         val loadedFirefoxPageEvent = firefoxLooksLikeLoadedPageEvent(pkg, event)
         if (editingNow || firefoxAddressBarInputEvent || (recentEditing && !loadedFirefoxPageEvent)) {
             if (isFirefoxFamily(pkg)) {
                 val pendingHost = firefoxEventDomainSignal(event)
                 if (!pendingHost.isNullOrBlank()) {
-                    notePendingBrowserDomain(pkg, pendingHost, now)
+                    browserWebsiteState.notePendingDomain(pkg, pendingHost, now)
                 }
                 appendBlockingLog(
                     category = "website_skip",
@@ -2407,11 +2244,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     throttleMs = 1_500L
                 )
             }
-            currentBrowserPkg = pkg
-            currentBrowserDomain = null
-            currentBrowserDomainAt = 0L
-            browserCandidateDomain = null
-            browserCandidateSince = 0L
+            browserWebsiteState.clearCurrentFor(pkg)
             return
         }
 
@@ -2426,7 +2259,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
             ?: run {
                 if (isFirefoxFamily(pkg) && (loadedFirefoxPageEvent || !recentEditing)) {
-                    currentPendingBrowserDomain(pkg, now)?.let { pendingHost ->
+                    browserWebsiteState.currentPendingDomain(pkg, now)?.let { pendingHost ->
                         appendBlockingLog(
                             category = "website_detect",
                             key = "web-firefox-pending-host|$pkg|$pendingHost",
@@ -2439,7 +2272,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
             ?: run {
                 if (isFirefoxFamily(pkg) && loadedFirefoxPageEvent) {
-                    currentTrackedBrowserDomain(pkg, now)?.let { cachedHost ->
+                    browserWebsiteState.currentTrackedDomain(pkg, now, isFirefox = true)?.let { cachedHost ->
                         appendBlockingLog(
                             category = "website_detect",
                             key = "web-firefox-cached-host|$pkg|$cachedHost",
@@ -2458,18 +2291,18 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                         message = "pkg=$pkg result=no_host blockEnabled=$blockWebsitesEnabled blockedCount=${blockedDomainsList.size} ${firefoxSignalSummary(root, event)}",
                         throttleMs = 1_500L
                     )
+                    if (blockWebsitesEnabled && blockedDomainsList.isNotEmpty()) {
+                        scheduleFirefoxShortcutWebsiteProbe(pkg, blockedDomainsList)
+                    }
                 }
-                browserCandidateDomain = null
-                browserCandidateSince = 0L
+                browserWebsiteState.resetCandidate()
                 return
             }
 
         // Require a short stable domain signal to avoid premature blocks on autocomplete suggestions.
         // For Firefox/Fenix we skip the second-event requirement because some builds emit fewer URL events.
         val needStability = requiresDomainStability(pkg)
-        if (browserCandidateDomain != host) {
-            browserCandidateDomain = host
-            browserCandidateSince = now
+        if (browserWebsiteState.noteCandidate(host, now)) {
             appendBlockingLog(
                 category = "website_detect",
                 key = "web-candidate|$pkg|$host",
@@ -2479,22 +2312,21 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             )
             if (needStability) return
         }
-        if (needStability && (now - browserCandidateSince < BROWSER_DOMAIN_CONFIRM_MS)) {
+        val candidateAgeMs = browserWebsiteState.candidateAgeMs(now)
+        if (needStability && candidateAgeMs < BrowserWebsiteState.DOMAIN_CONFIRM_MS) {
             appendBlockingLog(
                 category = "website_detect",
                 key = "web-wait-stable|$pkg|$host",
-                message = "pkg=$pkg host=${sanitizeWebsiteSignal(host)} state=waiting_stability ageMs=${now - browserCandidateSince} confirmMs=$BROWSER_DOMAIN_CONFIRM_MS event=${eventTypeLabel(event)}",
+                message = "pkg=$pkg host=${sanitizeWebsiteSignal(host)} state=waiting_stability ageMs=$candidateAgeMs confirmMs=${BrowserWebsiteState.DOMAIN_CONFIRM_MS} event=${eventTypeLabel(event)}",
                 throttleMs = 1_500L
             )
             return
         }
 
         // Cache for web usage stats
-        currentBrowserPkg = pkg
-        currentBrowserDomain = host
-        currentBrowserDomainAt = now
+        browserWebsiteState.updateCurrentDomain(pkg, host, now)
         if (isFirefoxFamily(pkg)) {
-            clearPendingBrowserDomain(pkg)
+            browserWebsiteState.clearPendingDomain(pkg)
         }
 
         if (!blockWebsitesEnabled) return
@@ -2533,6 +2365,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 if (isFirefoxFamily(pkg)) " ${firefoxSignalSummary(root, event)}" else "",
             throttleMs = 1_500L
         )
+        scheduleWebsiteBlockFollowUp(pkg, host, appLabel, title, msg, redirected)
         softBlockSurface(
             pkg,
             appLabel,
@@ -2544,13 +2377,158 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         )
     }
 
+    private fun scheduleFirefoxShortcutWebsiteProbe(pkg: String, blockedDomains: List<String>) {
+        if (!isFirefoxFamily(pkg)) return
+        val now = System.currentTimeMillis()
+        val last = lastFirefoxShortcutProbeAt[pkg] ?: 0L
+        if (now - last < FIREFOX_SHORTCUT_PROBE_COOLDOWN_MS) return
+        lastFirefoxShortcutProbeAt[pkg] = now
+
+        appendBlockingLog(
+            category = "website_followup",
+            key = "web-firefox-shortcut-probe-scheduled|$pkg",
+            message = "pkg=$pkg reason=no_host_firefox_shortcut blockedCount=${blockedDomains.size}",
+            throttleMs = 1_500L
+        )
+
+        handler.postDelayed({ enforceFirefoxShortcutWebsiteIfVisible(pkg) }, 450L)
+        handler.postDelayed({ enforceFirefoxShortcutWebsiteIfVisible(pkg) }, 1_250L)
+        handler.postDelayed({ enforceFirefoxShortcutWebsiteIfVisible(pkg) }, 2_200L)
+    }
+
+    private fun enforceFirefoxShortcutWebsiteIfVisible(pkg: String) {
+        if (!SwitchModeStore.isEnabled(this)) return
+        if (EmergencyBypassStore.isActive(this)) return
+        if (!isDomainBlockingEnabledCached()) return
+        if (!prefsBoolProfile(true, BlockingToggleKeys.KEY_BLOCK_WEBSITES)) return
+
+        val root = currentRoot(null) ?: return
+        if (!isRootFromPackage(root, pkg)) return
+
+        val blockedDomains = DomainBlockStore.getDomains(this).toList()
+        if (blockedDomains.isEmpty()) return
+
+        val visibleHost = tryExtractDomainFromBrowserUrlViews(root, pkg)
+            ?: inferFirefoxDomainFromTexts(root, null, blockedDomains)
+            ?: browserWebsiteState.currentPendingDomain(pkg)
+            ?: browserWebsiteState.currentTrackedDomain(pkg, System.currentTimeMillis(), isFirefox = true)
+            ?: return
+
+        val hardBlocked = blockedDomains.any { DomainBlockStore.matches(visibleHost, it) }
+        val limitMin = DomainLimitStore.getLimitMinutes(this, visibleHost)
+        val limitReached = limitMin > 0 && WebUsageStore.getUsageMsToday(this, visibleHost) >= limitMin.toLong() * 60_000L
+        if (!hardBlocked && !limitReached) return
+
+        val appLabel = safeAppLabel(pkg)
+        val title = if (hardBlocked) getString(R.string.blocking_website_blocked_title) else getString(R.string.blocking_website_limit_reached_title)
+        val msg = domainUsageLine(visibleHost, limitMin)
+
+        appendBlockingLog(
+            category = "website_followup",
+            key = "web-firefox-shortcut-block|$pkg|$visibleHost",
+            message = "pkg=$pkg host=${sanitizeWebsiteSignal(visibleHost)} reason=firefox_home_shortcut hardBlocked=$hardBlocked limitReached=$limitReached",
+            throttleMs = 1_000L
+        )
+
+        val redirected = tryRedirectBrowserToSafePage(pkg)
+        scheduleWebsiteBlockFollowUp(pkg, visibleHost, appLabel, title, msg, redirected)
+        softBlockSurface(
+            pkg,
+            appLabel,
+            title,
+            msg,
+            backCount = if (redirected) 0 else 1,
+            deferNavigationUntilAcknowledge = !redirected,
+            returnToPackageOnClose = true
+        )
+    }
+
+    private fun scheduleWebsiteBlockFollowUp(
+        pkg: String,
+        host: String,
+        appLabel: String,
+        title: String,
+        message: String,
+        redirected: Boolean
+    ) {
+        // Some Chromium/OEM combinations can restore the blocked tab immediately after our
+        // safe-page redirect. Re-check shortly after a successful website block and enforce once
+        // more if the same blocked host is still visible.
+        val now = System.currentTimeMillis()
+        val key = "$pkg|$host"
+        val last = lastWebsiteFollowUpAt[key] ?: 0L
+        if (now - last < WEBSITE_REDIRECT_FOLLOW_UP_COOLDOWN_MS) return
+        lastWebsiteFollowUpAt[key] = now
+
+        val firstDelay = if (redirected) 650L else 1_100L
+        handler.postDelayed({ enforceWebsiteBlockIfStillVisible(pkg, host, appLabel, title, message, finalAttempt = false) }, firstDelay)
+        handler.postDelayed({ enforceWebsiteBlockIfStillVisible(pkg, host, appLabel, title, message, finalAttempt = true) }, firstDelay + 1_250L)
+    }
+
+    private fun enforceWebsiteBlockIfStillVisible(
+        pkg: String,
+        host: String,
+        appLabel: String,
+        title: String,
+        message: String,
+        finalAttempt: Boolean
+    ) {
+        if (!SwitchModeStore.isEnabled(this)) return
+        if (EmergencyBypassStore.isActive(this)) return
+        if (!isDomainBlockingEnabledCached()) return
+        if (!prefsBoolProfile(true, BlockingToggleKeys.KEY_BLOCK_WEBSITES)) return
+
+        val root = currentRoot(null) ?: return
+        if (!isRootFromPackage(root, pkg)) return
+
+        val visibleHost = tryExtractDomainFromBrowserUrlViews(root, pkg)
+            ?: tryExtractDomainFromBrowser(root, pkg, null)
+            ?: return
+
+        val stillBlocked = DomainBlockStore.matches(visibleHost, host) ||
+            DomainBlockStore.getDomains(this).any { DomainBlockStore.matches(visibleHost, it) }
+        val limitMin = DomainLimitStore.getLimitMinutes(this, visibleHost)
+        val limitReached = limitMin > 0 && WebUsageStore.getUsageMsToday(this, visibleHost) >= limitMin.toLong() * 60_000L
+
+        if (!stillBlocked && !limitReached) return
+
+        appendBlockingLog(
+            category = "website_followup",
+            key = "web-followup|$pkg|$visibleHost|$finalAttempt",
+            message = "pkg=$pkg host=${sanitizeWebsiteSignal(visibleHost)} original=${sanitizeWebsiteSignal(host)} final=$finalAttempt",
+            throttleMs = 1_000L
+        )
+
+        val redirectedAgain = tryRedirectBrowserToSafePage(pkg)
+        if (!redirectedAgain || finalAttempt) {
+            // Last resort for browsers/OEMs that immediately restore the blocked tab after redirect.
+            // First try one browser back step, then bounce Home on the final attempt so the blocked
+            // page cannot remain visible even if Chrome/Xiaomi restores the tab content.
+            blockLaunchController.performBackSequence(1, initialDelayMs = 80L, stepMs = 120L)
+            if (finalAttempt) {
+                blockLaunchController.postHome(delayMs = 220L)
+                blockLaunchController.postHome(delayMs = 520L)
+            }
+            if (!BlockerActivity.isVisible && finalAttempt) {
+                softBlockSurface(
+                    pkg,
+                    appLabel,
+                    title,
+                    message,
+                    backCount = 0,
+                    deferNavigationUntilAcknowledge = false,
+                    returnToPackageOnClose = true
+                )
+            }
+        }
+    }
+
     private fun nodeHasViewId(root: AccessibilityNodeInfo, viewIds: List<String>): Boolean {
         for (id in viewIds) {
             val nodes = runCatching { root.findAccessibilityNodeInfosByViewId(id) }.getOrNull() ?: emptyList()
             val hasNodes = try {
                 nodes.isNotEmpty()
             } finally {
-                nodes.forEach { runCatching { it.recycle() } }
             }
             if (hasNodes) return true
         }
@@ -2570,7 +2548,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             try {
                 visited++
                 if (pred(current)) {
-                    return AccessibilityNodeInfo.obtain(current)
+                    return current
                 }
 
                 if (item.depth >= MAX_NODE_SCAN_DEPTH) continue
@@ -2582,7 +2560,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     stack.addLast(WorkItem(child, item.depth + 1, true))
                 }
             } finally {
-                if (item.owned) runCatching { current.recycle() }
             }
         }
         return null
@@ -2598,7 +2575,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return try {
             found != null
         } finally {
-            if (found != null) runCatching { found.recycle() }
         }
     }
 
@@ -2626,7 +2602,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return try {
             found != null
         } finally {
-            if (found != null) runCatching { found.recycle() }
         }
     }
 
@@ -2649,7 +2624,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return try {
             found != null
         } finally {
-            if (found != null) runCatching { found.recycle() }
         }
     }
 
@@ -2661,7 +2635,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             val lowered = needles.map { it.lowercase(Locale.getDefault()) }
             lowered.any { text.contains(it) }
         } finally {
-            if (source != null) runCatching { source.recycle() }
         }
     }
 
@@ -2729,11 +2702,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         classifyBottomTab(direct)?.let { return it }
 
-        val normalized = firstClickableAncestorInPackage(direct, "com.snapchat.android") ?: AccessibilityNodeInfo.obtain(direct)
+        val normalized = firstClickableAncestorInPackage(direct, "com.snapchat.android") ?: direct
         return try {
             classifyBottomTab(normalized)
         } finally {
-            runCatching { normalized.recycle() }
         }
     }
 
@@ -2746,7 +2718,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val found = findAnyNode(r) { node ->
             val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
             if (nodePkg != "com.snapchat.android") return@findAnyNode false
-            if (!node.isSelected && !node.isChecked) return@findAnyNode false
+            if (!node.isSelected) return@findAnyNode false
 
             val bounds = Rect()
             runCatching { node.getBoundsInScreen(bounds) }
@@ -2762,7 +2734,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         try {
             return best?.first
         } finally {
-            if (found != null) runCatching { found.recycle() }
         }
     }
 
@@ -2782,7 +2753,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         pkg: String,
         maxHops: Int = 6
     ): AccessibilityNodeInfo? {
-        var current = node?.let { AccessibilityNodeInfo.obtain(it) } ?: return null
+        var current = node?.let { it } ?: return null
         var hops = 0
         val targetPkg = pkg.lowercase(Locale.getDefault())
         while (hops < maxHops) {
@@ -2790,11 +2761,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             val canClick = current.isClickable || (current.actionList?.any { it.id == AccessibilityNodeInfo.ACTION_CLICK } == true)
             if (nodePkg == targetPkg && canClick) return current
             val parent = runCatching { current.parent }.getOrNull()
-            runCatching { current.recycle() }
             current = parent ?: return null
             hops++
         }
-        runCatching { current.recycle() }
         return null
     }
 
@@ -2813,7 +2782,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val heightRatio = bounds.height() / height.toFloat()
         val likelyOversized = widthRatio > 0.42f || heightRatio > 0.20f
         return if (likelyOversized) {
-            runCatching { generic.recycle() }
             null
         } else {
             generic
@@ -2855,8 +2823,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                         if (centerY >= 0.72f) {
                             val score = abs(centerX - targetCenterRatio) + abs(centerY - 0.90f) * 0.35f
                             if (score < bestScore) {
-                                bestNode?.let { runCatching { it.recycle() } }
-                                bestNode = AccessibilityNodeInfo.obtain(current)
+                                bestNode = current
                                 bestScore = score
                             }
                         }
@@ -2872,7 +2839,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     stack.addLast(WorkItem(child, item.depth + 1, true))
                 }
             } finally {
-                if (item.owned) runCatching { current.recycle() }
             }
         }
 
@@ -2889,7 +2855,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val cameraClicked = try {
             clickNodeOrClickableParent(cameraNode)
         } finally {
-            if (cameraNode != null) runCatching { cameraNode.recycle() }
         }
         if (cameraClicked) return true
 
@@ -2901,7 +2866,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val chatClicked = try {
             clickNodeOrClickableParent(chatNode)
         } finally {
-            if (chatNode != null) runCatching { chatNode.recycle() }
         }
         if (chatClicked) return true
 
@@ -2939,7 +2903,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             return try {
                 rawSourceSurface
             } finally {
-                if (source != null) runCatching { source.recycle() }
             }
         }
 
@@ -2983,8 +2946,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 }
             }
         } finally {
-            if (target !== source && target != null) runCatching { target.recycle() }
-            if (source != null) runCatching { source.recycle() }
         }
     }
 
@@ -3001,7 +2962,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return try {
             found != null
         } finally {
-            if (found != null) runCatching { found.recycle() }
         }
     }
 
@@ -3017,12 +2977,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 if (canClick) {
                     val clicked = runCatching { current.performAction(AccessibilityNodeInfo.ACTION_CLICK) }.getOrDefault(false)
                     if (clicked) {
-                        next?.let { runCatching { it.recycle() } }
                         return true
                     }
                 }
             } finally {
-                runCatching { current.recycle() }
             }
             current = next
             hops++
@@ -3103,7 +3061,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return try {
             alreadyHomeNode != null
         } finally {
-            if (alreadyHomeNode != null) runCatching { alreadyHomeNode.recycle() }
         }
     }
 
@@ -3689,19 +3646,14 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun rememberSurfaceHint(pkg: String, key: String, now: Long = System.currentTimeMillis()) {
-        recentSurfaceHintKeyByPkg[pkg] = key
-        recentSurfaceHintAtByPkg[pkg] = now
+        inAppSurfaceEvidence.rememberSurfaceHint(pkg, key, now)
     }
 
-    private fun recentSurfaceHintMatches(pkg: String, key: String, now: Long = System.currentTimeMillis()): Boolean {
-        val hintKey = recentSurfaceHintKeyByPkg[pkg] ?: return false
-        val hintAt = recentSurfaceHintAtByPkg[pkg] ?: return false
-        return hintKey == key && (now - hintAt) <= SURFACE_HINT_TTL_MS
-    }
+    private fun recentSurfaceHintMatches(pkg: String, key: String, now: Long = System.currentTimeMillis()): Boolean =
+        inAppSurfaceEvidence.recentSurfaceHintMatches(pkg, key, SURFACE_HINT_TTL_MS, now)
 
     private fun clearSurfaceHintForPackage(pkg: String) {
-        recentSurfaceHintKeyByPkg.remove(pkg)
-        recentSurfaceHintAtByPkg.remove(pkg)
+        inAppSurfaceEvidence.clearSurfaceHintForPackage(pkg)
     }
 
     private fun captureSurfaceHintFromEvent(pkg: String, event: AccessibilityEvent?, now: Long = System.currentTimeMillis()) {
@@ -3735,9 +3687,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun clearSurfaceEvidence(vararg keys: String) {
+        inAppSurfaceEvidence.clearSurfaceEvidence(*keys)
         for (key in keys) {
-            surfaceEvidenceCount.remove(key)
-            surfaceEvidenceAt.remove(key)
             if (currentSurfaceKey == key) {
                 currentSurfaceKey = null
                 currentSurfacePkg = null
@@ -3746,26 +3697,21 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun clearSurfaceEvidenceForPackage(pkg: String) {
-        when (pkg) {
-            "com.google.android.youtube" -> clearSurfaceEvidence("yt:shorts")
-            "com.instagram.android" -> clearSurfaceEvidence("ig:reels", "ig:explore", "ig:search", "ig:stories")
-            "com.twitter.android" -> clearSurfaceEvidence("x:foryou", "x:search", "x:grok", "x:notifications")
-            "com.snapchat.android" -> clearSurfaceEvidence("snap:map", "snap:stories", "snap:spotlight", "snap:following")
-        }
+        clearSurfaceEvidence(*inAppSurfaceEvidence.surfaceKeysForPackage(pkg))
         clearSurfaceHintForPackage(pkg)
     }
 
     private fun surfaceConfirmed(key: String, detected: Boolean, required: Int = 2): Boolean {
-        val now = System.currentTimeMillis()
         if (!detected) {
             clearSurfaceEvidence(key)
             return false
         }
-        val lastAt = surfaceEvidenceAt[key] ?: 0L
-        val count = if (now - lastAt <= SURFACE_CONFIRM_MS) (surfaceEvidenceCount[key] ?: 0) + 1 else 1
-        surfaceEvidenceAt[key] = now
-        surfaceEvidenceCount[key] = count
-        return count >= required.coerceAtLeast(1)
+        return inAppSurfaceEvidence.surfaceConfirmed(
+            key = key,
+            required = required,
+            confirmMs = SURFACE_CONFIRM_MS,
+            now = System.currentTimeMillis()
+        )
     }
 
     private fun nodeTextOrDesc(node: AccessibilityNodeInfo?): String {
@@ -3812,8 +3758,25 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun isYouTubeShortsScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
-        return nodeTextMatches(root, listOf("shorts", "short")) ||
-            eventTextMatches(event, listOf("shorts", "short"))
+        // Do not treat any visible "Shorts" text as the Shorts surface.
+        // YouTube keeps the bottom navigation visible on unrelated screens such as Subscriptions and the profile/You tab, so a global node-text scan causes false positives there. 
+        // The Shorts surface should be detected only when the YouTube Shorts tab/surface itself is selected or the selected event source is the Shorts tab.
+        return hasSelectedLabelInPackage(root, listOf("shorts"), "com.google.android.youtube") || isSelectedYouTubeShortsEvent(event)
+    }
+
+    private fun isSelectedYouTubeShortsEvent(event: AccessibilityEvent?): Boolean {
+        if (event == null) return false
+        val source = runCatching { event.source }.getOrNull() ?: return false
+
+        return try {
+            val sourcePkg = source.packageName?.toString().orEmpty()
+            if (sourcePkg != "com.google.android.youtube") return false
+            if (!source.isSelected) return false
+
+            val text = nodeTextOrDesc(source)
+            text.contains("shorts")
+        } finally {
+        }
     }
 
     private fun isYouTubeSearchScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
@@ -3826,35 +3789,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun bounceHomeAndKill(pkg: String) {
-        // Accessibility can do HOME globally (more reliable than launching CATEGORY_HOME intents)
-        runCatching { performGlobalAction(GLOBAL_ACTION_HOME) }
-        runCatching {
-            val am = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-            am.killBackgroundProcesses(pkg)
-        }
+        blockLaunchController.bounceHomeAndKill(pkg)
     }
 
-    private fun isHighRisk(pkg: String): Boolean {
-        return when (AppBlockSafety.matchRiskRule(this, pkg)?.action) {
-            AppBlockSafety.PolicyAction.NEVER_BLOCK,
-            AppBlockSafety.PolicyAction.WARN_ONLY,
-            AppBlockSafety.PolicyAction.STRICT_MODE_ONLY -> true
-            else -> false
-        }
-    }
-
-    private fun isManagedPackage(pkg: String, blocked: Set<String>): Boolean {
-        // Profiles store exact package names. Using startsWith() can cause accidental matches
-        // (especially with OEM/system containers), resulting in random false blocks.
-        //
-        // Optional: allow prefix entries when they end with ".*".
-        return blocked.any { raw ->
-            val e = raw.trim()
-            when {
-                e.isBlank() -> false
-                e.endsWith(".*") -> pkg.startsWith(e.removeSuffix(".*"))
-                else -> pkg == e
-            }
-        }
-    }
 }

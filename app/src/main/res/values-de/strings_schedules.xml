@@ -1,5 +1,6 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- SCHEDULES - Screen titles and overview -->
     <string name="schedules_title">Zeitpläne</string>
     <string name="schedules_add">Zeitplan hinzufügen</string>
@@ -11,11 +12,13 @@
     <string name="schedules_next_at">Nächster Zeitplan: %1$s</string>
     <string name="schedules_next_none">Kein kommender Zeitplan</string>
     <string name="schedules_next_inactive_control_mode">Inaktiv — der Steuerungsmodus blockiert Zeitpläne</string>
+
     <!-- SCHEDULES - Types, actions, and basic fields -->
     <string name="schedules_type_time">Zeitplan nach Uhrzeit</string>
     <string name="schedules_type_wifi">WLAN-Zeitplan</string>
     <string name="schedules_type_bt">Bluetooth-Zeitplan</string>
-    <string name="schedules_field_action">Aktion</string>
+    <string name="schedules_type_location">Standort-Zeitplan</string>
+    <string name="schedules_field_action">Das tun</string>
     <string name="schedules_action_enable">Aktivieren</string>
     <string name="schedules_action_disable">Deaktivieren</string>
     <string name="schedules_action_toggle">Umschalten</string>
@@ -31,6 +34,7 @@
     <string name="schedules_field_profile">Profil</string>
     <string name="schedules_field_title_hint">Titel (optional)</string>
     <string name="schedules_field_note_hint">Notizen (optional)</string>
+
     <!-- SCHEDULES - Time, date, and day selection -->
     <string name="schedules_time_mode">Zeitmodus</string>
     <string name="schedules_time_mode_single">Einzelzeit</string>
@@ -54,6 +58,7 @@
     <string name="day_short_fri">Fr</string>
     <string name="day_short_sat">Sa</string>
     <string name="day_short_sun">So</string>
+
     <!-- SCHEDULES - Connectivity conditions and subtitles -->
     <string name="schedules_conn_time_all_day">Ganztägig aktiv</string>
     <string name="schedules_conn_time_window">Auf Zeitfenster begrenzen (optional)</string>
@@ -61,10 +66,31 @@
     <string name="schedules_conn_bt_fmt">BT: %1$s</string>
     <string name="schedules_conn_wifi_bt_fmt">WLAN: %1$s - BT: %2$s</string>
     <string name="schedules_subtitle_fmt">%1$s - %2$s</string>
+    <string name="schedules_conn_location_fmt">Ort: %1$s</string>
+    <string name="schedules_location_label_hint">Ortsname (optional)</string>
+    <string name="schedules_location_trigger_title">Standort-Auslöser</string>
+    <string name="schedules_location_trigger_enter">Beim Betreten des Bereichs</string>
+    <string name="schedules_location_trigger_exit">Beim Verlassen des Bereichs</string>
+    <string name="schedules_location_trigger_both">Beim Betreten und Verlassen</string>
+    <string name="schedules_location_pick_current">Aktuellen Standort verwenden</string>
+    <string name="schedules_location_fetching">Aktueller Standort wird ermittelt…</string>
+    <string name="schedules_location_not_set">Es wurde noch kein Standort ausgewählt.</string>
+    <string name="schedules_location_selected_fmt">%1$s · %2$dm</string>
+    <string name="schedules_location_coords_fmt">%1$.5f, %2$.5f</string>
+    <string name="schedules_location_radius_title">Radius</string>
+    <string name="schedules_location_radius_100">100 m</string>
+    <string name="schedules_location_radius_250">250 m</string>
+    <string name="schedules_location_radius_500">500 m</string>
+    <string name="schedules_location_cooldown_title">Abklingzeit</string>
+    <string name="schedules_location_cooldown_none">Keine Abklingzeit</string>
+    <string name="schedules_location_cooldown_5">5 Minuten</string>
+    <string name="schedules_location_cooldown_15">15 Minuten</string>
+    <string name="schedules_location_cooldown_30">30 Minuten</string>
     <string name="schedules_label_value_fmt">%1$s: %2$s</string>
     <string name="schedules_label_value_multiline_fmt">%1$s\n%2$s</string>
     <string name="schedules_time_range_fmt">%1$s-%2$s</string>
     <string name="schedules_once_range_fmt">Einmalig - %1$s-%2$s</string>
+
     <!-- SCHEDULES - Validation errors -->
     <string name="schedules_error_no_profile">Bitte wähle ein Profil aus.</string>
     <string name="schedules_error_no_days">Bitte wähle mindestens einen Tag aus.</string>
@@ -73,6 +99,13 @@
     <string name="schedules_error_time_range_empty">Die Endzeit muss sich von der Startzeit unterscheiden.</string>
     <string name="schedules_error_wifi_required">Bitte gib eine WLAN-SSID ein.</string>
     <string name="schedules_error_bt_required">Bitte gib einen Bluetooth-Gerätenamen ein.</string>
+    <string name="schedules_location_picker_body">Suche nach einem Ort oder füge Koordinaten ein.</string>
+    <string name="schedules_location_picker_hint">Adresse oder Koordinaten</string>
+    <string name="schedules_location_picker_helper">Beispiel: 48.2082, 16.3738 oder Wien Stephansplatz</string>
+    <string name="schedules_location_picker_invalid">Gib zuerst eine Adresse oder Koordinaten ein.</string>
+    <string name="schedules_location_picker_not_found">Dieser Ort konnte nicht gefunden werden.</string>
+    <string name="schedules_error_location_required">Bitte wähle zuerst einen Standort aus.</string>
+
     <!-- SCHEDULES - Bluetooth picker -->
     <string name="schedules_bt_enable_bt">Bitte schalte zuerst Bluetooth ein.</string>
     <string name="schedules_bt_name_hint">Bluetooth-Gerätename (exakt)</string>
@@ -80,6 +113,7 @@
     <string name="schedules_bt_use_connected">Verbundenes Gerät verwenden</string>
     <string name="schedules_bt_no_paired">Keine gekoppelten Bluetooth-Geräte gefunden.</string>
     <string name="schedules_bt_no_connected">Kein verbundenes Bluetooth-Gerät gefunden.</string>
+
     <!-- SCHEDULES - Wi-Fi picker and location guidance -->
     <string name="schedules_wifi_enable_wifi">Bitte schalte zuerst WLAN ein.</string>
     <string name="schedules_wifi_location_required">Der Standort muss aktiviert sein, um die WLAN-SSID zu lesen.</string>
@@ -94,18 +128,20 @@
     <string name="schedules_wifi_ssid_hint">WLAN-SSID (exakt)</string>
     <string name="schedules_wifi_enter_manually">Manuell eingeben</string>
     <string name="schedules_wifi_pick_action">WLAN auswählen</string>
+
     <!-- SCHEDULES - Health and reliability guidance -->
     <string name="schedules_health_info_title">Zeitplan-Status</string>
     <string name="schedules_health_info_body">Dieses Banner zeigt häufige Gründe, warum Zeitpläne unzuverlässig auslösen können (Akku-Optimierung, exakte Alarme, erforderliche Berechtigungen und Status des Accessibility-Dienstes).</string>
     <string name="schedules_health_action_title">Empfohlene Aktion</string>
     <string name="schedules_health_action_permissions">Berechtigungen beheben</string>
     <string name="schedules_health_action_toggle_options">Umschaltoptionen öffnen</string>
-    <string name="schedules_health_last_exec_never">nie</string>
-    <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
-    <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>
     <string name="schedules_health_battery_title">Akkueinstellungen</string>
     <string name="schedules_health_battery_max_available_body">Dein Gerät bietet möglicherweise keine höhere Akku-Berechtigungsstufe wie „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, kannst du diesen Schritt als erledigt markieren.</string>
     <string name="schedules_health_action_mark_battery_done">Höchste verfügbare Stufe bereits aktiviert</string>
+    <string name="schedules_health_last_exec_never">nie</string>
+    <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
+    <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>
+
     <!-- SCHEDULES - Lock hints and read-only states -->
     <string name="schedules_dialog_nfc_lock_hint">NFC-Sperre aktiv: Diese Aktion kann den Switchly-Status erst nach dem Entsperren per NFC/QR ändern.</string>
     <string name="schedules_nfc_lock_add_dialog_hint">NFC-Sperre ist aktiv. Derzeit werden nur Aktionen angezeigt, die Switchly nicht deaktivieren.</string>
@@ -121,8 +157,23 @@
     <string name="schedules_disabled_action_open_controls">Schutzsteuerung öffnen</string>
     <string name="schedules_disabled_read_only_toast">Zeitpläne sind schreibgeschützt, bis der aktuelle Steuerungsmodus Zeitplan-Automationen erlaubt.</string>
     <string name="schedules_locked_title">Zeitpläne sind gesperrt, solange Switchly aktiv ist</string>
-    <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst. Der Notfall-Bypass entsperrt die Zeitplan-Bearbeitung ebenfalls vorübergehend. Im Mixed-Mode kannst du optional die Zeitplan-Bearbeitung trotz aktivem Schutz erlauben.</string>
+    <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst.</string>
     <string name="schedules_locked_footer">Aktueller Steuerungsmodus: %1$s - Zeitplan-Bearbeitung: gesperrt</string>
     <string name="schedules_locked_action_open_controls">Schutzsteuerung öffnen</string>
-    <string name="schedules_locked_read_only_toast">Deaktiviere Switchly, nutze den Notfall-Bypass oder erlaube die Zeitplan-Bearbeitung im Mixed-Mode.</string>
+    <string name="schedules_locked_read_only_toast">Deaktiviere Switchly, um Zeitpläne zu ändern.</string>
+
+    <string name="schedules_location_choose">Standort auswählen</string>
+    <string name="schedules_location_method_title">Standort auswählen</string>
+    <string name="schedules_location_method_picker">Standort-Picker</string>
+    <string name="schedules_location_method_search">Ort suchen oder einfügen</string>
+    <string name="schedules_location_method_current">Aktuellen Standort verwenden</string>
+    <string name="schedules_location_search_title">Standort suchen</string>
+    <string name="schedules_location_map_picker_title">Standort-Picker</string>
+    <string name="schedules_location_map_picker_body">Suche nach einem Ort oder tippe auf die Karte, um einen Pin zu setzen. Du kannst die Karte vorher verschieben und zoomen.</string>
+    <string name="schedules_location_map_picker_search_action">Auf Karte suchen</string>
+    <string name="schedules_location_map_picker_no_selection">Tippe auf die Karte, um einen Standort auszuwählen.</string>
+    <string name="schedules_location_map_picker_selected">Ausgewählt: %1$s</string>
+    <string name="schedules_location_picker_premium_title">Standortauswahl ist Premium</string>
+    <string name="schedules_location_picker_premium_message">Standortbasierte Zeitpläne und die visuelle Standortauswahl sind Teil von Switchly Premium. Normale Zeitpläne kannst du weiterhin kostenlos nutzen.</string>
+
 </resources>

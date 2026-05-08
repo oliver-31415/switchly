@@ -1,23 +1,35 @@
 # Privacy Notes
-This document is a **high-level** overview of data handling in Switchly.
-It is not legal advice.
+This document provides a general overview of how Switchly handles data.
+It is not a formal legal privacy policy.
 
 ## Local data
-- App preferences and profiles are stored locally on the device (SharedPreferences / Room).
-- App blocking decisions are made on-device.
+* App preferences, profiles, schedules, and configuration are primarily stored locally on the device.
+* App blocking decisions are processed on-device.
+* Local backups are only created when explicitly triggered by the user.
 
 ## Optional cloud features (Firebase)
-Cloud features are **disabled** unless you add `app/google-services.json` and rebuild.
+Some Switchly variants optionally support Firebase-based features such as:
+* Firebase Authentication
+* Cloud backup/sync
+* Firebase Crashlytics crash reporting
 
-When enabled:
-- **Firebase Authentication** is used for sign-in.
-- **Cloud Firestore** may be used to sync/backup certain settings and stats tied to the signed-in user.
-- **Firebase Crashlytics** may collect crash reports to help diagnose app stability issues.
+These features require a configured Firebase project and are not active in offline-only builds.
 
-What exactly gets stored/sent depends on the feature you use and how your Firebase project is configured.
+Depending on the enabled features and project configuration, limited account-related data, settings, backups, or crash diagnostics may be processed through Google Firebase services.
 
 ## Third-party services
-If you enable Firebase, data is processed by Google/Firebase services under their terms.
+When Firebase-based features are enabled, related data is processed through Google/Firebase services under their own terms and privacy policies.
+
+Switchly may also support optional external payment providers depending on the APK variant.
+
+## Open-source builds / forks
+Public source releases may require developers to provide their own:
+* Firebase project
+* API keys
+* payment configuration
+* hosting configuration
+
+Official Switchly infrastructure and credentials are not included in the repository.
 
 ## Questions / contact
-See the in-app About screen for contact details.
+See the in-app About screen or official website for contact information.

@@ -32,6 +32,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.core.content.edit
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.security.AppLockStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -47,6 +48,7 @@ class AppLockSettingsActivity : AppCompatActivity() {
     private lateinit var switchEnabled: SwitchMaterial
     private lateinit var switchBiometric: SwitchMaterial
     private lateinit var tvStatus: TextView
+    private lateinit var switchUninstallFriction: SwitchMaterial
     private lateinit var rowSetPin: View
     private lateinit var tvSetPinLabel: TextView
     private var ignoreChanges = false
@@ -70,13 +72,16 @@ class AppLockSettingsActivity : AppCompatActivity() {
 
         switchEnabled = findViewById(R.id.switchAppLockEnabled)
         switchBiometric = findViewById(R.id.switchAppLockBiometric)
+        switchUninstallFriction = findViewById(R.id.switchUninstallFriction)
         tvStatus = findViewById(R.id.tvAppLockStatus)
         rowSetPin = findViewById(R.id.rowSetPin)
         tvSetPinLabel = findViewById(R.id.tvSetPinLabel)
 
         findViewById<View>(R.id.rowAppLockEnabled).setOnClickListener { switchEnabled.toggle() }
         findViewById<View>(R.id.rowAppLockBiometric).setOnClickListener { switchBiometric.toggle() }
+        findViewById<View>(R.id.rowUninstallFriction).setOnClickListener { switchUninstallFriction.toggle() }
         rowSetPin.setOnClickListener { showSetPinDialog() }
+        findViewById<View>(R.id.rowEmergencyPin).setOnClickListener { showEmergencyPinDialog() }
 
         switchEnabled.setOnCheckedChangeListener { _, isChecked ->
             if (ignoreChanges) return@setOnCheckedChangeListener
@@ -111,6 +116,11 @@ class AppLockSettingsActivity : AppCompatActivity() {
             refreshUi()
         }
 
+        switchUninstallFriction.setOnCheckedChangeListener { _, isChecked ->
+            if (ignoreChanges) return@setOnCheckedChangeListener
+            AutomationModeStore.setUninstallFrictionEnabled(this, isChecked)
+        }
+
         refreshUi()
     }
 
@@ -123,6 +133,7 @@ class AppLockSettingsActivity : AppCompatActivity() {
         ignoreChanges = true
         switchEnabled.isChecked = AppLockStore.isEnabled(this)
         switchBiometric.isChecked = AppLockStore.isBiometricEnabled(this)
+        switchUninstallFriction.isChecked = AutomationModeStore.isUninstallFrictionEnabled(this)
         ignoreChanges = false
 
         tvSetPinLabel.text = getString(
@@ -182,8 +193,53 @@ class AppLockSettingsActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    private fun showEmergencyPinDialog() {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            hint = getString(R.string.emergency_pin_choose_hint)
+            backgroundTintList = AccentColor.getActiveColor(this@AppLockSettingsActivity)
+        }
+
+        val container = FrameLayout(this).apply {
+            val margin = (24 * resources.displayMetrics.density).toInt()
+            setPadding(margin, 0, margin, 0)
+            addView(input, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            ))
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.emergency_pin_title))
+            .setMessage(getString(R.string.emergency_pin_message))
+            .setView(container)
+            .setPositiveButton(getString(R.string.save), null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (pin.length < 4) {
+                    Toast.makeText(this, R.string.emergency_pin_too_short, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                getSharedPreferences(PREFS, MODE_PRIVATE).edit { putString(KEY_EMERGENCY_PIN, pin) }
+                Toast.makeText(this, R.string.emergency_pin_changed, Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+    }
+
     private fun isBiometricAvailable(): Boolean {
         val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
         return BiometricManager.from(this).canAuthenticate(authenticators) == BiometricManager.BIOMETRIC_SUCCESS
+    }
+
+    companion object {
+        private const val PREFS = "switchly_prefs"
+        private const val KEY_EMERGENCY_PIN = "pref_emergency_pin"
     }
 }

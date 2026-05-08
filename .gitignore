@@ -1,6 +1,5 @@
 # Gradle
 .gradle/
-**/build/
 !gradle/wrapper/gradle-wrapper.jar
 
 # Android Studio
@@ -17,6 +16,7 @@ captures/
 
 # Local config
 local.properties
+signing.properties
 
 # OS
 .DS_Store
@@ -25,6 +25,10 @@ Thumbs.db
 # Keystores
 *.keystore
 *.jks
+
+# Build
+**/build/
+**/dist/
 
 # Firebase / Google Services
 **/google-services.json

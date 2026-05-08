@@ -1,3 +1,8 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
+
 stages:
   - build
 
@@ -17,6 +22,8 @@ default:
 build_release_apk:
   image: eclipse-temurin:17-jdk-jammy
   stage: build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
   variables:
     ANDROID_SDK_ROOT: /sdk
@@ -28,17 +35,21 @@ build_release_apk:
     - cd $ANDROID_SDK_ROOT/cmdline-tools
     - wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
     - unzip -q tools.zip
+    - rm -rf latest
     - mv cmdline-tools latest
     - export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
     - yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses > /dev/null || true
-    - sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+    - sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-36" "build-tools;36.0.0"
     - cd $CI_PROJECT_DIR
+    - if [ -n "$GOOGLE_SERVICES_JSON_B64" ]; then echo "$GOOGLE_SERVICES_JSON_B64" | base64 -d > app/google-services.json; fi
 
   script:
     - chmod +x ./gradlew
-    - ./gradlew :app:assembleRelease
+    - ./gradlew :app:assembleOfflineRelease
 
   artifacts:
     when: on_success
     paths:
-      - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/apk/offline/release/*.apk
+      - dist/*.apk
+      - dist/*.aab

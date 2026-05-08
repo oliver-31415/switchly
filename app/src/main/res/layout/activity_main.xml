@@ -259,40 +259,46 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:alpha="0.88"
+                        android:alpha="0.9"
+                        android:background="?attr/selectableItemBackground"
                         android:clickable="true"
+                        android:ellipsize="end"
                         android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
-                        android:minHeight="36dp"
+                        android:maxLines="1"
+                        android:minHeight="40dp"
                         android:paddingStart="10dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="8dp"
+                        android:paddingTop="9dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="9dp"
                         app:drawableStartCompat="@drawable/schedule_24"
-                        android:drawablePadding="8dp"
+                        app:drawableEndCompat="@drawable/arrow_forward_ios_24"
+                        android:drawablePadding="10dp"
                         android:text="@string/dashboard_temp_hint"
-                        android:textSize="12sp" />
+                        android:textSize="13sp" />
 
                     <TextView
                         android:id="@+id/tvEmergencyHint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:alpha="0.88"
+                        android:alpha="0.9"
+                        android:background="?attr/selectableItemBackground"
                         android:clickable="true"
+                        android:ellipsize="end"
                         android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
-                        android:minHeight="36dp"
+                        android:maxLines="1"
+                        android:minHeight="40dp"
                         android:paddingStart="10dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="8dp"
+                        android:paddingTop="9dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="9dp"
                         app:drawableStartCompat="@drawable/security_24"
-                        android:drawablePadding="8dp"
+                        app:drawableEndCompat="@drawable/arrow_forward_ios_24"
+                        android:drawablePadding="10dp"
                         android:text="@string/dashboard_emergency_hint_ready"
-                        android:textSize="12sp" />
+                        android:textSize="13sp" />
 
                     <com.google.android.material.divider.MaterialDivider
                         style="@style/Switchly.Divider"
@@ -376,120 +382,59 @@
                 android:layout_marginTop="8dp"
                 android:orientation="vertical">
 
-                <!-- QR / Barcode quick actions -->
-                <LinearLayout
-                    android:id="@+id/rowScanShortcuts"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:weightSum="2"
-                    android:visibility="gone">
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileQr"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="-2dp"
-                                android:padding="8dp"
-                                android:src="@drawable/qr_code_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_qr" />
-
-                            <Space
-                                android:layout_width="1dp"
-                                android:layout_height="0dp"
-                                android:layout_weight="1" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/dashboard_tile_qr"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/dashboard_tile_qr_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileBarcode"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="-2dp"
-                                android:padding="8dp"
-                                android:src="@drawable/barcode_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_barcode" />
-
-                            <Space
-                                android:layout_width="1dp"
-                                android:layout_height="0dp"
-                                android:layout_weight="1" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/dashboard_tile_barcode"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/dashboard_tile_barcode_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
-
                 <LinearLayout
                     android:id="@+id/rowManageShortcuts"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:weightSum="2">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/tileManageApps"
+                        style="@style/Switchly.TileCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="116dp"
+                        android:layout_margin="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="0dp"
+                                android:padding="8dp"
+                                android:src="@drawable/apps_24"
+                                app:tint="?attr/colorOnSurface"
+                                android:contentDescription="@string/dashboard_tile_apps" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:text="@string/dashboard_tile_apps"
+                                android:textStyle="bold"
+                                android:textSize="15sp"
+                                android:alpha="0.95" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:gravity="center"
+                                android:text="@string/dashboard_tile_apps_sub"
+                                android:textSize="12sp"
+                                android:alpha="0.75" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/tileProfiles"
@@ -506,25 +451,22 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:orientation="vertical"
+                            android:gravity="center"
                             android:padding="16dp">
 
                             <ImageView
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
-                                android:layout_marginStart="-2dp"
+                                android:layout_marginStart="0dp"
                                 android:padding="8dp"
                                 android:src="@drawable/switch_account_24"
                                 app:tint="?attr/colorOnSurface"
                                 android:contentDescription="@string/dashboard_tile_profiles" />
 
-                            <Space
-                                android:layout_width="1dp"
-                                android:layout_height="0dp"
-                                android:layout_weight="1" />
-
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_profiles"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
@@ -534,6 +476,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_profiles_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
@@ -555,25 +498,22 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:orientation="vertical"
+                            android:gravity="center"
                             android:padding="16dp">
 
                             <ImageView
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
-                                android:layout_marginStart="-2dp"
+                                android:layout_marginStart="0dp"
                                 android:padding="8dp"
                                 android:src="@drawable/language_24"
                                 app:tint="?attr/colorOnSurface"
                                 android:contentDescription="@string/dashboard_tile_blocked_websites" />
 
-                            <Space
-                                android:layout_width="1dp"
-                                android:layout_height="0dp"
-                                android:layout_weight="1" />
-
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_blocked_websites"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
@@ -583,6 +523,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_blocked_websites_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
@@ -612,25 +553,22 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:orientation="vertical"
+                            android:gravity="center"
                             android:padding="16dp">
 
                             <ImageView
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
-                                android:layout_marginStart="-2dp"
+                                android:layout_marginStart="0dp"
                                 android:padding="8dp"
                                 android:src="@drawable/apps_24"
                                 app:tint="?attr/colorOnSurface"
                                 android:contentDescription="@string/dashboard_tile_in_app" />
 
-                            <Space
-                                android:layout_width="1dp"
-                                android:layout_height="0dp"
-                                android:layout_weight="1" />
-
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_in_app"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
@@ -640,6 +578,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_in_app_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
@@ -661,44 +600,30 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:orientation="vertical"
+                            android:gravity="center"
                             android:padding="16dp">
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
 
-                                <ImageView
+                            <ImageView
                                     android:layout_width="40dp"
                                     android:layout_height="40dp"
-                                    android:layout_marginStart="-2dp"
+                                    android:layout_marginStart="0dp"
                                     android:padding="8dp"
                                     android:src="@drawable/bar_chart_24"
                                     app:tint="?attr/colorOnSurface"
                                     android:contentDescription="@string/dashboard_tile_usage" />
 
-                                <Space
-                                    android:layout_width="0dp"
-                                    android:layout_height="1dp"
-                                    android:layout_weight="1" />
-
-                                <TextView
-                                    android:id="@+id/badgePermissions"
-                                    style="@style/Switchly.TileBadge"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/dashboard_badge_default_count"
-                                    android:visibility="gone" />
-                            </LinearLayout>
-
-                            <Space
-                                android:layout_width="1dp"
-                                android:layout_height="0dp"
-                                android:layout_weight="1" />
+                            <TextView
+                                android:id="@+id/badgePermissions"
+                                style="@style/Switchly.TileBadge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_badge_default_count"
+                                android:visibility="gone" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_usage"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
@@ -708,7 +633,112 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_usage_sub"
+                                android:textSize="12sp"
+                                android:alpha="0.75" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <!-- QR / Barcode quick actions -->
+                <LinearLayout
+                    android:id="@+id/rowScanShortcuts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:visibility="gone">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/tileQr"
+                        style="@style/Switchly.TileCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="116dp"
+                        android:layout_margin="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="0dp"
+                                android:padding="8dp"
+                                android:src="@drawable/qr_code_24"
+                                app:tint="?attr/colorOnSurface"
+                                android:contentDescription="@string/dashboard_tile_qr" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:text="@string/dashboard_tile_qr"
+                                android:textStyle="bold"
+                                android:textSize="15sp"
+                                android:alpha="0.95" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:gravity="center"
+                                android:text="@string/dashboard_tile_qr_sub"
+                                android:textSize="12sp"
+                                android:alpha="0.75" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/tileBarcode"
+                        style="@style/Switchly.TileCard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="116dp"
+                        android:layout_margin="6dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginStart="0dp"
+                                android:padding="8dp"
+                                android:src="@drawable/barcode_24"
+                                app:tint="?attr/colorOnSurface"
+                                android:contentDescription="@string/dashboard_tile_barcode" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:text="@string/dashboard_tile_barcode"
+                                android:textStyle="bold"
+                                android:textSize="15sp"
+                                android:alpha="0.95" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:gravity="center"
+                                android:text="@string/dashboard_tile_barcode_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
                         </LinearLayout>
@@ -738,25 +768,22 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:orientation="vertical"
+                            android:gravity="center"
                             android:padding="16dp">
 
                             <ImageView
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
-                                android:layout_marginStart="-2dp"
+                                android:layout_marginStart="0dp"
                                 android:padding="8dp"
                                 android:src="@drawable/nfc_24"
                                 app:tint="?attr/colorOnSurface"
                                 android:contentDescription="@string/dashboard_tile_write_nfc" />
 
-                            <Space
-                                android:layout_width="1dp"
-                                android:layout_height="0dp"
-                                android:layout_weight="1" />
-
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_write_nfc"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
@@ -766,6 +793,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_write_nfc_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
@@ -787,25 +815,22 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:orientation="vertical"
+                            android:gravity="center"
                             android:padding="16dp">
 
                             <ImageView
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
-                                android:layout_marginStart="-2dp"
+                                android:layout_marginStart="0dp"
                                 android:padding="8dp"
                                 android:src="@drawable/notifications_24"
                                 app:tint="?attr/colorOnSurface"
                                 android:contentDescription="@string/dashboard_tile_blocked_notifications" />
 
-                            <Space
-                                android:layout_width="1dp"
-                                android:layout_height="0dp"
-                                android:layout_weight="1" />
-
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_blocked_notifications"
                                 android:textStyle="bold"
                                 android:textSize="15sp"
@@ -815,6 +840,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:gravity="center"
                                 android:text="@string/dashboard_tile_blocked_notifications_sub"
                                 android:textSize="12sp"
                                 android:alpha="0.75" />
@@ -838,6 +864,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:padding="16dp">
 
@@ -871,113 +898,116 @@
                     </LinearLayout>
 
                     <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:scaleType="centerInside"
+                        android:alpha="0.72"
                         android:src="@drawable/arrow_forward_ios_24"
                         android:contentDescription="@string/open" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-<!-- Blocked right now (live) -->
-<com.google.android.material.card.MaterialCardView
-    android:id="@+id/cardBlockedNow"
-    style="@style/Switchly.Card"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="16dp"
-    android:visibility="gone">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        tools:ignore="UseCompoundDrawables">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            tools:ignore="UseCompoundDrawables">
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/app_blocking_black_24"
-                android:contentDescription="@string/dashboard_blocked_now_title" />
-
-            <TextView
-                android:id="@+id/tvBlockedNowTitle"
-                android:layout_width="0dp"
+            <!-- Blocked right now (live) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardBlockedNow"
+                style="@style/Switchly.Card"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:text="@string/dashboard_blocked_now_title"
-                android:textStyle="bold"
-                android:textSize="16sp" />
-        </LinearLayout>
+                android:layout_marginTop="16dp"
+                android:visibility="gone">
 
-        <com.google.android.material.divider.MaterialDivider
-            style="@style/Switchly.Divider"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="12dp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    tools:ignore="UseCompoundDrawables">
 
-        <LinearLayout
-            android:id="@+id/layoutBlockedNowEmpty"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:visibility="visible"
-            tools:ignore="UseCompoundDrawables">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        tools:ignore="UseCompoundDrawables">
 
-            <ImageView
-                android:id="@+id/ivBlockedNowEmptyIcon"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_marginStart="-2dp"
-                android:padding="7dp"
-                android:src="@drawable/toggle_on_24"
-                android:alpha="0.75"
-                app:tint="?attr/colorOnSurface"
-                android:contentDescription="@string/dashboard_blocked_now_title" />
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/app_blocking_black_24"
+                            android:contentDescription="@string/dashboard_blocked_now_title" />
 
-            <TextView
-                android:id="@+id/tvBlockedNowEmpty"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="10dp"
-                android:text="@string/dashboard_blocked_now_all_allowed"
-                android:textSize="13sp"
-                android:alpha="0.85"
-                android:singleLine="true"
-                android:ellipsize="end" />
-        </LinearLayout>
+                        <TextView
+                            android:id="@+id/tvBlockedNowTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/dashboard_blocked_now_title"
+                            android:textStyle="bold"
+                            android:textSize="16sp" />
+                    </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvBlockedNow"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            android:layout_marginTop="10dp"
-            android:visibility="gone" />
+                    <com.google.android.material.divider.MaterialDivider
+                        style="@style/Switchly.Divider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="12dp" />
 
-        <TextView
-            android:id="@+id/tvBlockedNowMore"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="@string/dashboard_blocked_now_more_preview"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="?attr/colorPrimary"
-            android:visibility="gone" />
-    </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+                    <LinearLayout
+                        android:id="@+id/layoutBlockedNowEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:visibility="visible"
+                        tools:ignore="UseCompoundDrawables">
+
+                        <ImageView
+                            android:id="@+id/ivBlockedNowEmptyIcon"
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="-2dp"
+                            android:padding="7dp"
+                            android:src="@drawable/toggle_on_24"
+                            android:alpha="0.75"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@string/dashboard_blocked_now_title" />
+
+                        <TextView
+                            android:id="@+id/tvBlockedNowEmpty"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="10dp"
+                            android:text="@string/dashboard_blocked_now_all_allowed"
+                            android:textSize="13sp"
+                            android:alpha="0.85"
+                            android:singleLine="true"
+                            android:ellipsize="end" />
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvBlockedNow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:layout_marginTop="10dp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvBlockedNowMore"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/dashboard_blocked_now_more_preview"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorPrimary"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Blocked apps -->
             <com.google.android.material.card.MaterialCardView
@@ -1086,6 +1116,7 @@
         android:background="?attr/colorSurface"
         android:paddingTop="0dp"
         android:paddingBottom="0dp"
+        app:labelVisibilityMode="labeled"
         app:menu="@menu/menu_bottom_main" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

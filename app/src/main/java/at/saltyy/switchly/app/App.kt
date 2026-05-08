@@ -20,28 +20,37 @@
 package at.saltyy.switchly.app
 
 import android.app.Application
+import at.saltyy.switchly.BuildConfig
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
-import com.google.firebase.FirebaseApp
 import at.saltyy.switchly.SwitchlyCore
 import at.saltyy.switchly.blocking.BlockingRuntime
-import at.saltyy.switchly.premium.BillingProxyActivityGate
-import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageStore
+import at.saltyy.switchly.feature.entry.QuickShortcutRegistrar
 import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
+import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
 import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
+import at.saltyy.switchly.premium.BillingProxyActivityGate
 import at.saltyy.switchly.security.AppLockManager
+import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.ManagedDevicePolicyHelper
+import com.google.firebase.FirebaseApp
 
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Firebase (Crashlytics/Auth) - safe even if google-services.json is missing
-        runCatching { FirebaseApp.initializeApp(this) }
+        // Firebase (Auth/Cloud Sync) is only initialized for Firebase-enabled APK builds.
+        // Offline/file-backup builds skip Firebase startup completely.
+        if (BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            runCatching { FirebaseApp.initializeApp(this) }
+        }
 
         // Billing workaround: keep ProxyBillingActivity disabled unless we are actively launching a purchase.
-        BillingProxyActivityGate.disable(this)
+        if (BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) {
+            BillingProxyActivityGate.disable(this)
+        }
 
         // language
         LocaleHelper.setLanguage(this, LocaleHelper.getSavedLanguage(this))
@@ -58,11 +67,15 @@ class App : Application() {
         // start/stop trigger monitors based on active rules
         WifiTriggerMonitor.ensureStarted(this)
         BluetoothTriggerMonitor.ensureStarted(this)
+        LocationTriggerMonitor.ensureStarted(this)
 
         AppLockManager.register(this)
+        QuickShortcutRegistrar.refresh(this)
 
         // One-time sanity cleanup for old inflated usage imports.
         runCatching { UsageStore.sanitizeImpossibleDailyTotals(this) }
+
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(this)
 
         // auto-start blocking runtime if enabled and Accessibility is available
         val enabled = SwitchModeStore.isEnabled(this)

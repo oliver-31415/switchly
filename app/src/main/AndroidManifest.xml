@@ -100,7 +100,29 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.Switchly"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        tools:replace="android:allowBackup">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <receiver
+            android:name=".receiver.DPMReceiver"
+            android:exported="true"
+            android:label="@string/advanced_mode_admin_label"
+            android:description="@string/advanced_mode_admin_description"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/switchly_device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Main launcher -->
         <activity
@@ -109,6 +131,23 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".feature.entry.ScanLauncherActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="at.saltyy.switchly.action.OPEN_QR_SCAN" />
+                <action android:name="at.saltyy.switchly.action.OPEN_BARCODE_SCAN" />
+                <action android:name="at.saltyy.switchly.action.OPEN_NFC_WRITE" />
+                <action android:name="at.saltyy.switchly.action.OPEN_BLOCKED_NOTIFICATIONS" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -131,7 +170,13 @@
             android:exported="false"
             android:label="@string/settings" />
 
-        <!-- Tools hub -->
+        <!-- Blocking hub -->
+        <activity
+            android:name=".feature.tools.BlockingHubActivity"
+            android:exported="false"
+            android:label="@string/nav_blocking" />
+
+        <!-- Manage hub -->
         <activity
             android:name=".feature.tools.ToolsHubActivity"
             android:exported="false"
@@ -166,6 +211,10 @@
 
         <!-- NFC writer -->
         <activity
+            android:name=".feature.tools.ManageKeysActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".nfc.NfcWriterActivity"
             android:exported="false"
             android:theme="@style/Theme.Switchly" />
@@ -175,7 +224,7 @@
             android:exported="false"
             android:theme="@style/Theme.Switchly" />
 
-        <!-- NFC deep links -->
+        <!-- NFC NDEF dispatch -->
         <activity
             android:name=".nfc.NfcEntryActivity"
             android:exported="true"
@@ -203,17 +252,6 @@
                 <action android:name="android.nfc.action.TAG_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
-            <!-- Optional: also handle app links/browser deep links -->
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <!-- we only need our two hosts -->
-                <data android:scheme="switchly" android:host="switch" android:pathPattern=".*" />
-                <data android:scheme="switchly" android:host="profile" android:pathPattern=".*" />
-            </intent-filter>
         </activity>
 
         <!-- Blocker -->
@@ -224,6 +262,12 @@
             android:taskAffinity=""
             android:launchMode="singleTask"
             android:theme="@style/Theme.Switchly.Blocker" />
+
+        <!-- About / advanced -->
+        <activity
+            android:name=".feature.about.AdvancedModeActivity"
+            android:exported="false"
+            android:label="@string/advanced_mode_title" />
 
         <!-- FAQ -->
         <activity
@@ -263,6 +307,24 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
+        <activity
+            android:name=".feature.settings.BlockingModesActivity"
+            android:exported="false"
+            android:parentActivityName=".feature.settings.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.settings.SettingsActivity" />
+        </activity>
+
+        <activity
+            android:name=".feature.settings.BlockingFeaturesActivity"
+            android:exported="false"
+            android:parentActivityName=".feature.settings.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.settings.SettingsActivity" />
+        </activity>
+
         <!-- Blocked notifications inbox -->
         <activity
             android:name=".feature.inbox.BlockedInboxActivity"
@@ -288,12 +350,6 @@
         <activity
             android:name=".feature.qr.QrGenerateActivity"
             android:exported="false" />
-
-        <!-- About -->
-        <activity
-            android:name=".feature.about.AboutActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Switchly" />
 
         <!-- What's new (release notes) -->
         <activity
@@ -380,6 +436,16 @@
             android:name=".feature.about.DeveloperInfoActivity"
             android:exported="false" />
 
+        <!-- Package Added Receiver -->
+        <receiver
+            android:name=".platform.receiver.apps.PackageAddedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
         <!-- re-register watcher after app updates -->
         <receiver
             android:name=".platform.receiver.system.PostUpdateReceiver"
@@ -429,6 +495,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- Geofence receiver (location-based schedules) -->
+        <receiver
+            android:name=".platform.receiver.location.LocationGeofenceReceiver"
+            android:exported="false" />
+
         <!-- Schedule receiver (triggered via explicit PendingIntent) -->
         <receiver
             android:name=".platform.receiver.schedule.ScheduleReceiver"
@@ -446,6 +517,141 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <!-- Scanner Quick Settings tiles -->
+        <service
+            android:name=".platform.tile.QrScanTileService"
+            android:exported="true"
+            android:icon="@drawable/qs_qr_24"
+            android:label="@string/qr_scan_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".platform.tile.BarcodeScanTileService"
+            android:exported="true"
+            android:icon="@drawable/qs_barcode_24"
+            android:label="@string/barcode_scan_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".widget.QuickActionReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".widget.ScannerWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_scanner_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/scanner_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.QrScanWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_qr_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/qr_scan_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.BarcodeScanWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_barcode_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/barcode_scan_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.NfcWriteWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_nfc_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/nfc_write_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.FocusNowWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_focus_now_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/focus_now_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.BlockedNotificationsWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_blocked_notifications_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/blocked_notifications_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.PauseBlockerWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_pause_blocker_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/pause_blocker_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.NextScheduleWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_next_schedule_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="at.saltyy.switchly.schedule.NEXT_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/next_schedule_widget_info" />
+        </receiver>
 
         <!-- Accessibility based blocker -->
         <service

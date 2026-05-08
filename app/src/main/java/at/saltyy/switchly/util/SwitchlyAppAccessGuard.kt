@@ -25,6 +25,7 @@ import android.widget.Toast
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.util.ActivityTransitionCompat
 
 object SwitchlyAppAccessGuard {
 
@@ -45,7 +46,7 @@ object SwitchlyAppAccessGuard {
         if (!isLocked(activity)) return false
         showLockedToast(activity)
         activity.finish()
-        activity.overridePendingTransition(0, 0)
+        ActivityTransitionCompat.finishWithoutAnimation(activity)
         return true
     }
 }

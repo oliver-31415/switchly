@@ -40,8 +40,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.edit
-import at.saltyy.switchly.R
 import at.saltyy.switchly.BuildConfig
+import at.saltyy.switchly.R
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.ui.MainActivity
 
@@ -223,12 +223,19 @@ class WifiTriggerService : Service() {
     }
 
     private fun cacheWifiFromAnyWifiNetwork(reason: String) {
-        val nets = cm.allNetworks ?: return
+        val nets = allNetworksCompat(cm)
         for (n in nets) {
             val caps = cm.getNetworkCapabilities(n) ?: continue
             if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) continue
             if (cacheWifiFromCaps(caps, "$reason(allNetworks)")) return
         }
+    }
+
+    private fun allNetworksCompat(cm: ConnectivityManager): Array<Network> {
+        val value = runCatching {
+            cm.javaClass.getMethod("getAllNetworks").invoke(cm)
+        }.getOrNull()
+        return (value as? Array<*>)?.filterIsInstance<Network>()?.toTypedArray() ?: emptyArray()
     }
 
     private fun cacheWifiFromCaps(caps: NetworkCapabilities, reason: String): Boolean {
@@ -245,15 +252,15 @@ class WifiTriggerService : Service() {
             }
 
             // Some OEMs return null transportInfo even while connected to Wi-Fi.
-            // Fallback to WifiManager.connectionInfo (still requires Location permission on modern Android).
+            // Compatibility fallback to WifiManager connection info (still requires Location permission on modern Android).
             if (ssid.isNullOrBlank() && bssid.isNullOrBlank()) {
-                readWifiInfoLegacy()?.let { info ->
+                readWifiInfoCompat()?.let { info ->
                     ssid = info.ssid
                     bssid = info.bssid
                 }
             }
         } else {
-            readWifiInfoLegacy()?.let { info ->
+            readWifiInfoCompat()?.let { info ->
                 ssid = info.ssid
                 bssid = info.bssid
             }
@@ -287,9 +294,9 @@ class WifiTriggerService : Service() {
         return true
     }
 
-    private fun readWifiInfoLegacy(): WifiInfo? {
+    private fun readWifiInfoCompat(): WifiInfo? {
         return try {
-            wifi.connectionInfo
+            wifiConnectionInfoCompat(wifi)
         } catch (_: SecurityException) {
             null
         } catch (_: Throwable) {
@@ -297,6 +304,11 @@ class WifiTriggerService : Service() {
         }
     }
 
+    private fun wifiConnectionInfoCompat(wifiManager: WifiManager): WifiInfo? {
+        return runCatching {
+            wifiManager.javaClass.getMethod("getConnectionInfo").invoke(wifiManager) as? WifiInfo
+        }.getOrNull()
+    }
     private fun scheduleWifiRetryIfNeeded(reason: String) {
         val hasWifiSchedules = at.saltyy.switchly.data.prefs.ScheduleStore
             .hasEnabledWifiSchedules(applicationContext)

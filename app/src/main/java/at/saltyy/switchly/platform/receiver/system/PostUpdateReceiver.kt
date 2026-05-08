@@ -28,8 +28,9 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import at.saltyy.switchly.R
-import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
 import at.saltyy.switchly.theme.AccentColor
 
 /**
@@ -40,6 +41,8 @@ class PostUpdateReceiver : BroadcastReceiver() {
 
     override fun onReceive(ctx: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_PACKAGE_REPLACED) return
+
+        runCatching { LocationTriggerMonitor.ensureStarted(ctx.applicationContext) }
 
         val enabled = SwitchModeStore.isEnabled(ctx)
         if (!enabled) return

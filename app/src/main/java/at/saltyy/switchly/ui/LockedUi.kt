@@ -1,0 +1,21 @@
+/*
+ * Switchly
+ * Copyright (C) 2025-2026 Saltyy
+ * Copyright (C) 2026 Switchly Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+package at.saltyy.switchly.ui
+
+import android.content.Context
+import at.saltyy.switchly.R
+
+object LockedUi {
+    fun cardAlpha(context: Context): Float {
+        return context.resources.getFraction(R.fraction.locked_card_alpha, 1, 1)
+    }
+}

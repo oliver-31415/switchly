@@ -22,11 +22,15 @@ package at.saltyy.switchly.feature.schedule
 import android.Manifest
 import android.app.AlarmManager
 import android.app.DatePickerDialog
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
+import android.location.Geocoder
 import android.location.LocationManager
 import android.net.Uri
 import android.net.wifi.ScanResult
@@ -46,10 +50,11 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -63,7 +68,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
-import at.saltyy.switchly.util.TimeFormatPrefs
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -81,8 +86,11 @@ import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.ScheduleStore.Days
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.feature.premium.PremiumInfoActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
+import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
+import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -90,10 +98,16 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothProfile
-import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
+import at.saltyy.switchly.util.SystemBarColorCompat
+import at.saltyy.switchly.util.TimeFormatPrefs
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
@@ -107,12 +121,14 @@ import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SchedulesActivity : AppCompatActivity() {
 
-    private enum class NewScheduleMode { TIME, WIFI, BT }
-    private enum class Kind { TIME, WIFI, BT }
+    private enum class NewScheduleMode { TIME, WIFI, BT, LOCATION }
+    private enum class Kind { TIME, WIFI, BT, LOCATION }
     private enum class TimeMode { SINGLE, TIME_RANGE, DATE_RANGE }
 
     private companion object {
@@ -120,6 +136,12 @@ class SchedulesActivity : AppCompatActivity() {
         const val KEY_BATTERY_OPTIMIZATION_CONFIRMED_MAX_AVAILABLE =
             "battery_optimization_confirmed_max_available"
     }
+
+    private data class ResolvedLocation(
+        val latitude: Double,
+        val longitude: Double,
+        val label: String?
+    )
 
     private lateinit var adapter: ScheduleAdapter
     private lateinit var cardScheduleHealth: View
@@ -140,6 +162,7 @@ class SchedulesActivity : AppCompatActivity() {
     private val selectedScheduleIds = linkedSetOf<Int>()
 
     private var pendingAfterLocationGrant: (() -> Unit)? = null
+    private var pendingAfterFineLocationGrant: (() -> Unit)? = null
     private var pendingAfterBluetoothGrant: (() -> Unit)? = null
 
     private val nfcLockedActions = setOf(
@@ -159,6 +182,22 @@ class SchedulesActivity : AppCompatActivity() {
                 Toast.makeText(
                     this,
                     getString(R.string.perm_location_denied_wifi_schedule),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            refreshList()
+        }
+
+    private val requestFineLocationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            val action = pendingAfterFineLocationGrant
+            pendingAfterFineLocationGrant = null
+            if (granted) {
+                action?.invoke()
+            } else {
+                Toast.makeText(
+                    this,
+                    getString(R.string.perm_location_denied_geofence_schedule),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -221,9 +260,7 @@ class SchedulesActivity : AppCompatActivity() {
     }
 
     private fun isScheduleEditingLocked(): Boolean {
-        if (EmergencyBypassStore.isActive(this)) return false
-        return SwitchModeStore.isEnabled(this) &&
-            !AutomationModeStore.isScheduleEditingAllowedWhileEnabled(this)
+        return SwitchModeStore.isEnabled(this) && !EmergencyBypassStore.isActive(this)
     }
 
     private fun canEditSchedules(): Boolean {
@@ -272,7 +309,7 @@ class SchedulesActivity : AppCompatActivity() {
             toolbar = toolbar
         )
 
-        window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
+        SystemBarColorCompat.setStatusBarColor(window, ContextCompat.getColor(this, android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
@@ -327,6 +364,7 @@ class SchedulesActivity : AppCompatActivity() {
                         if (it.id == schedule.id) it.copy(enabled = enabled) else it
                     }
                     ScheduleStore.saveAll(this, list)
+                    LocationTriggerMonitor.syncNow(this)
                     reapplySchedulesNow()
                     SchedulePlanner.updateNextAlarm(this)
                     SchedulePlanner.notifyNextChanged(this)
@@ -465,6 +503,7 @@ class SchedulesActivity : AppCompatActivity() {
                 val remaining = ScheduleStore.getAll(this)
                     .filterNot { selectedScheduleIds.contains(it.id) }
                 ScheduleStore.saveAll(this, remaining)
+                LocationTriggerMonitor.syncNow(this)
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
                 exitSelectionMode()
@@ -529,6 +568,7 @@ class SchedulesActivity : AppCompatActivity() {
             if (isPremium && !nfcLockOn) {
                 add(TypeItem(getString(R.string.schedules_type_wifi), R.drawable.wifi_24, NewScheduleMode.WIFI))
                 add(TypeItem(getString(R.string.schedules_type_bt), R.drawable.bluetooth_24, NewScheduleMode.BT))
+                add(TypeItem(getString(R.string.schedules_type_location), R.drawable.location_on_24, NewScheduleMode.LOCATION))
             }
         }.toTypedArray()
 
@@ -557,6 +597,7 @@ class SchedulesActivity : AppCompatActivity() {
                     NewScheduleMode.TIME -> showScheduleDialog(null, NewScheduleMode.TIME)
                     NewScheduleMode.WIFI -> showScheduleDialog(null, NewScheduleMode.WIFI)
                     NewScheduleMode.BT -> showScheduleDialog(null, NewScheduleMode.BT)
+                    NewScheduleMode.LOCATION -> showScheduleDialog(null, NewScheduleMode.LOCATION)
                 }
             }
             .setNegativeButton(R.string.cancel, null)
@@ -583,9 +624,9 @@ class SchedulesActivity : AppCompatActivity() {
             setPadding(padH, padV, padH, padV)
             addView(
                 bodyView,
-                android.view.ViewGroup.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                 )
             )
         }
@@ -843,8 +884,10 @@ class SchedulesActivity : AppCompatActivity() {
 
         val wifiSchedulesNeedPerm = enabledSchedules.any { !it.wifiSsid.isNullOrBlank() }
         val btSchedulesNeedPerm = enabledSchedules.any { !it.btDeviceName.isNullOrBlank() }
+        val locationSchedulesNeedPerm = enabledSchedules.any { it.isLocationSchedule() }
         val wifiPermMissing = wifiSchedulesNeedPerm && !hasWifiSsidPermission()
         val btPermMissing = btSchedulesNeedPerm && !hasBluetoothConnectPermission()
+        val locationPermMissing = locationSchedulesNeedPerm && !hasLocationSchedulePermission()
 
         val nfcLockActiveForSchedules = isNfcLockActiveForSchedules()
         val nfcConflict = nfcLockActiveForSchedules &&
@@ -856,7 +899,7 @@ class SchedulesActivity : AppCompatActivity() {
             (System.currentTimeMillis() - blockedAt) < 24L * 60L * 60L * 1000L
 
         val hasPermissionIssue = !accessibilityActive || wifiPermMissing || btPermMissing ||
-            batteryOptimizationActive || !exactAlarmsAllowed
+            locationPermMissing || batteryOptimizationActive || !exactAlarmsAllowed
         val hasAnyIssue = hasPermissionIssue || nfcConflict || nfcBlockedRecently
 
         if (!hasAnyIssue) {
@@ -958,6 +1001,18 @@ class SchedulesActivity : AppCompatActivity() {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    private fun hasBackgroundLocationPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun hasLocationSchedulePermission(): Boolean {
+        return hasFineLocationPermission() && hasBackgroundLocationPermission()
+    }
+
     private fun hasWifiSsidPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= 33) {
             hasNearbyWifiPermission() || hasFineLocationPermission()
@@ -1010,6 +1065,32 @@ class SchedulesActivity : AppCompatActivity() {
                 requestLocationPermission.launch(wifiSsidPermissionName())
             }
             .setNeutralButton(R.string.schedules_health_action_permissions) { _, _ ->
+                openPermissionsOverview()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .showAccented()
+    }
+
+    private fun showWhyLocationDialogForGeofence(onGranted: (() -> Unit)? = null) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.perm_location_title)
+            .setMessage(R.string.perm_location_why_geofence)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                pendingAfterFineLocationGrant = onGranted
+                requestFineLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+            .setNeutralButton(R.string.schedules_health_action_permissions) { _, _ ->
+                openPermissionsOverview()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .showAccented()
+    }
+
+    private fun showWhyBackgroundLocationDialogForGeofence() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.perm_location_background_title)
+            .setMessage(R.string.perm_location_background_why_geofence)
+            .setPositiveButton(R.string.schedules_health_action_permissions) { _, _ ->
                 openPermissionsOverview()
             }
             .setNegativeButton(R.string.cancel, null)
@@ -1081,14 +1162,27 @@ class SchedulesActivity : AppCompatActivity() {
         val btnUseConnectedBt = view.findViewById<MaterialButton>(R.id.btnUseConnectedBt)
         val btnPickPairedBt = view.findViewById<MaterialButton>(R.id.btnPickPairedBt)
 
+        val inputLocationLabel = view.findViewById<EditText>(R.id.inputLocationLabel)
+        val layoutLocationLabel = view.findViewById<TextInputLayout>(R.id.layoutLocationLabel)
+        val groupLocationActions = view.findViewById<View>(R.id.groupLocationActions)
+        val spinnerLocationTrigger = view.findViewById<android.widget.AutoCompleteTextView>(R.id.spinnerLocationTrigger)
+        val textLocationSummary = view.findViewById<TextView>(R.id.textLocationSummary)
+        val btnUseCurrentLocation = view.findViewById<MaterialButton>(R.id.btnUseCurrentLocation)
+        val spinnerLocationCooldown = view.findViewById<android.widget.AutoCompleteTextView>(R.id.spinnerLocationCooldown)
+        val chipRadius100 = view.findViewById<Chip>(R.id.chipRadius100)
+        val chipRadius250 = view.findViewById<Chip>(R.id.chipRadius250)
+        val chipRadius500 = view.findViewById<Chip>(R.id.chipRadius500)
+
         if (isCustomAccent) {
             tintPickButton(btnScanWifi)
             tintPickButton(btnUseConnectedBt)
             tintPickButton(btnPickPairedBt)
+            tintPickButton(btnUseCurrentLocation)
             tintSwitchCompat(switchConnTimeWindow)
             val accent = AccentColor.getAccentColorInt(this)
             layoutWifiSsid.boxStrokeColor = accent
             layoutBtName.boxStrokeColor = accent
+            layoutLocationLabel.boxStrokeColor = accent
         }
 
         val groupWeekly = view.findViewById<View>(R.id.groupWeekly)
@@ -1155,15 +1249,18 @@ class SchedulesActivity : AppCompatActivity() {
         val kind: Kind = when {
             preselectedMode == NewScheduleMode.WIFI -> Kind.WIFI
             preselectedMode == NewScheduleMode.BT -> Kind.BT
+            preselectedMode == NewScheduleMode.LOCATION -> Kind.LOCATION
             preselectedMode == NewScheduleMode.TIME -> Kind.TIME
             existing?.wifiSsid?.isNotBlank() == true -> Kind.WIFI
             existing?.btDeviceName?.isNotBlank() == true -> Kind.BT
+            existing?.isLocationSchedule() == true -> Kind.LOCATION
             else -> Kind.TIME
         }
 
         if (!isPremium) {
             layoutWifiSsid.visibility = View.GONE
             layoutBtName.visibility = View.GONE
+            layoutLocationLabel.visibility = View.GONE
         }
 
         fun applyKindVisibility() {
@@ -1172,13 +1269,16 @@ class SchedulesActivity : AppCompatActivity() {
 
             val showWifi = isPremium && kind == Kind.WIFI
             val showBt = isPremium && kind == Kind.BT
+            val showLocation = isPremium && kind == Kind.LOCATION
 
             layoutWifiSsid.isVisible = showWifi
             groupWifiActions.isVisible = showWifi
             layoutBtName.isVisible = showBt
             groupBtActions.isVisible = showBt
+            layoutLocationLabel.isVisible = showLocation
+            groupLocationActions.isVisible = showLocation
 
-            val isConn = kind == Kind.WIFI || kind == Kind.BT
+            val isConn = kind == Kind.WIFI || kind == Kind.BT || kind == Kind.LOCATION
             switchConnTimeWindow.isVisible = isConn
             textConnAllDayHint.isVisible = false
         }
@@ -1186,6 +1286,11 @@ class SchedulesActivity : AppCompatActivity() {
         fun requestWifiPermissionThenRetry(action: () -> Unit) {
             pendingAfterLocationGrant = action
             requestLocationPermission.launch(wifiSsidPermissionName())
+        }
+
+        fun requestFineLocationPermissionThenRetry(action: () -> Unit) {
+            pendingAfterFineLocationGrant = action
+            requestFineLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
         fun requestBluetoothPermissionThenRetry(action: () -> Unit) {
@@ -1212,6 +1317,14 @@ class SchedulesActivity : AppCompatActivity() {
             return s
         }
 
+        fun scanResultSsid(scan: ScanResult): String? {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                scan.wifiSsid?.toString()
+            } else {
+                runCatching { scan.javaClass.getField("SSID").get(scan) as? String }.getOrNull()
+            }
+        }
+
         fun markNeedsLocationHintOnce() {
             getSharedPreferences("switchly_wifi_cache", MODE_PRIVATE).edit {
                 putBoolean("wifi_needs_location_hint", true)
@@ -1236,7 +1349,7 @@ class SchedulesActivity : AppCompatActivity() {
 
         fun showWifiPickerFromResults(results: List<ScanResult>) {
             val ssids = results
-                .mapNotNull { cleanSsid(it.SSID) }
+                .mapNotNull { cleanSsid(scanResultSsid(it)) }
                 .distinct()
                 .sorted()
 
@@ -1325,7 +1438,7 @@ class SchedulesActivity : AppCompatActivity() {
 
             Toast.makeText(this, getString(R.string.schedules_wifi_scanning), Toast.LENGTH_SHORT).show()
             val started = try {
-                if (canReadWifi) wifi.startScan() else false
+                false
             } catch (_: SecurityException) {
                 false
             }
@@ -1441,7 +1554,7 @@ class SchedulesActivity : AppCompatActivity() {
                 requestBluetoothPermissionThenRetry { pickPairedBt() }
                 return
             }
-            val adapter = BluetoothAdapter.getDefaultAdapter()
+            val adapter = (getSystemService(BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
             if (adapter == null || !adapter.isEnabled) {
                 Toast.makeText(this, getString(R.string.schedules_bt_enable_bt), Toast.LENGTH_LONG).show()
                 runCatching { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
@@ -1500,6 +1613,213 @@ class SchedulesActivity : AppCompatActivity() {
             }
         }
         btnPickPairedBt.setOnClickListener { pickPairedBt() }
+
+        var locationLat: Double? = existing?.locationLat
+        var locationLng: Double? = existing?.locationLng
+        var locationRadiusMeters = existing?.locationRadiusMeters ?: 250
+        var locationTrigger = existing?.locationTrigger ?: ScheduleStore.LocationTrigger.ENTER
+        val cooldownOptions = listOf(0, 5, 15, 30)
+        var selectedCooldownMinutes = existing?.locationCooldownMinutes ?: 15
+        var refreshActionUi: () -> Unit = {}
+
+        fun selectedRadiusMeters(): Int = when {
+            chipRadius100.isChecked -> 100
+            chipRadius500.isChecked -> 500
+            else -> 250
+        }
+
+        fun syncRadiusChips() {
+            when (locationRadiusMeters) {
+                100 -> chipRadius100.isChecked = true
+                500 -> chipRadius500.isChecked = true
+                else -> chipRadius250.isChecked = true
+            }
+        }
+
+        fun currentLocationLabelText(): String {
+            val manual = inputLocationLabel.text?.toString()?.trim().orEmpty()
+            if (manual.isNotBlank()) return manual
+            val lat = locationLat
+            val lng = locationLng
+            if (lat == null || lng == null) return getString(R.string.schedules_location_not_set)
+            return getString(R.string.schedules_location_coords_fmt, lat, lng)
+        }
+
+        fun updateLocationSummary() {
+            val lat = locationLat
+            val lng = locationLng
+            if (lat == null || lng == null) {
+                textLocationSummary.text = getString(R.string.schedules_location_not_set)
+            } else {
+                val label = currentLocationLabelText()
+                textLocationSummary.text = getString(
+                    R.string.schedules_location_selected_fmt,
+                    label,
+                    selectedRadiusMeters()
+                )
+            }
+        }
+
+        fun applyPickedLocation(latitude: Double, longitude: Double, suggestedLabel: String?) {
+            val previousLat = locationLat
+            val previousLng = locationLng
+            val previousCoordsLabel = if (previousLat != null && previousLng != null) {
+                getString(R.string.schedules_location_coords_fmt, previousLat, previousLng)
+            } else {
+                ""
+            }
+            val manualLabel = inputLocationLabel.text?.toString()?.trim().orEmpty()
+            locationLat = latitude
+            locationLng = longitude
+            val replacementLabel = suggestedLabel?.trim().orEmpty()
+            if (replacementLabel.isNotBlank() && (manualLabel.isBlank() || manualLabel == previousCoordsLabel)) {
+                inputLocationLabel.setText(replacementLabel)
+            }
+            updateLocationSummary()
+        }
+
+        fun setupLocationTriggerSpinner() {
+            val triggerOptions = listOf(
+                ScheduleStore.LocationTrigger.ENTER,
+                ScheduleStore.LocationTrigger.EXIT,
+                ScheduleStore.LocationTrigger.ENTER_EXIT
+            )
+            val labels = triggerOptions.map {
+                when (it) {
+                    ScheduleStore.LocationTrigger.ENTER -> getString(R.string.schedules_location_trigger_enter)
+                    ScheduleStore.LocationTrigger.EXIT -> getString(R.string.schedules_location_trigger_exit)
+                    ScheduleStore.LocationTrigger.ENTER_EXIT -> getString(R.string.schedules_location_trigger_both)
+                }
+            }
+            spinnerLocationTrigger.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, labels))
+            val idx = triggerOptions.indexOf(locationTrigger).takeIf { it >= 0 } ?: 0
+            spinnerLocationTrigger.setText(labels[idx], false)
+            spinnerLocationTrigger.setOnItemClickListener { _, _, position, _ ->
+                locationTrigger = triggerOptions.getOrElse(position) { ScheduleStore.LocationTrigger.ENTER }
+                refreshActionUi()
+            }
+        }
+
+        fun setupLocationCooldownSpinner() {
+            val labels = cooldownOptions.map {
+                when (it) {
+                    0 -> getString(R.string.schedules_location_cooldown_none)
+                    5 -> getString(R.string.schedules_location_cooldown_5)
+                    15 -> getString(R.string.schedules_location_cooldown_15)
+                    else -> getString(R.string.schedules_location_cooldown_30)
+                }
+            }
+            spinnerLocationCooldown.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, labels))
+            val idx = cooldownOptions.indexOf(selectedCooldownMinutes).takeIf { it >= 0 } ?: 2
+            selectedCooldownMinutes = cooldownOptions[idx]
+            spinnerLocationCooldown.setText(labels[idx], false)
+            spinnerLocationCooldown.setOnItemClickListener { _, _, position, _ ->
+                selectedCooldownMinutes = cooldownOptions.getOrElse(position) { 15 }
+            }
+        }
+
+        fun useCurrentLocation() {
+            if (!hasFineLocationPermission()) {
+                showWhyLocationDialogForGeofence { useCurrentLocation() }
+                return
+            }
+            if (!isLocationEnabled()) {
+                Toast.makeText(this, getString(R.string.schedules_wifi_location_required), Toast.LENGTH_LONG).show()
+                openLocationSettings()
+                return
+            }
+
+            Toast.makeText(this, getString(R.string.schedules_location_fetching), Toast.LENGTH_SHORT).show()
+            val client = LocationServices.getFusedLocationProviderClient(this)
+            val cts = CancellationTokenSource()
+            runCatching {
+                client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cts.token)
+                    .addOnSuccessListener { loc ->
+                        if (loc != null) {
+                            val fallbackLabel = getString(
+                                R.string.schedules_location_coords_fmt,
+                                loc.latitude,
+                                loc.longitude
+                            )
+                            reverseGeocodeLabel(loc.latitude, loc.longitude, fallbackLabel) { label ->
+                                applyPickedLocation(loc.latitude, loc.longitude, label ?: fallbackLabel)
+                            }
+                        } else {
+                            Toast.makeText(this, getString(R.string.schedules_location_not_set), Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, getString(R.string.schedules_location_not_set), Toast.LENGTH_SHORT).show()
+                    }
+            }.onFailure {
+                Toast.makeText(this, getString(R.string.schedules_location_not_set), Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        fun openLocationSearchDialog() {
+            val seedQuery = inputLocationLabel.text?.toString()?.trim().orEmpty()
+            showLocationPickerDialog(
+                initialQuery = seedQuery,
+                onUseCurrentLocation = { useCurrentLocation() }
+            ) { picked ->
+                applyPickedLocation(picked.latitude, picked.longitude, picked.label)
+            }
+        }
+
+        fun openVisualLocationPickerDialog() {
+            showLocationMapPickerDialog(
+                initialLatitude = locationLat,
+                initialLongitude = locationLng,
+                initialLabel = inputLocationLabel.text?.toString()?.trim().orEmpty().takeIf { it.isNotBlank() }
+            ) { picked ->
+                applyPickedLocation(picked.latitude, picked.longitude, picked.label)
+            }
+        }
+
+        fun showChooseLocationMethodDialog() {
+            if (!PremiumManager.isPremium(this)) {
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.schedules_location_picker_premium_title)
+                    .setMessage(R.string.schedules_location_picker_premium_message)
+                    .setPositiveButton(R.string.usage_details_premium_action) { _, _ ->
+                        startActivity(Intent(this, PremiumInfoActivity::class.java))
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+                    .styleSwitchlyDialogButtons()
+                return
+            }
+
+            val options = arrayOf(
+                getString(R.string.schedules_location_method_picker),
+                getString(R.string.schedules_location_method_search),
+                getString(R.string.schedules_location_method_current)
+            )
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.schedules_location_method_title)
+                .setItems(options) { dialog, which ->
+                    when (which) {
+                        0 -> openVisualLocationPickerDialog()
+                        1 -> openLocationSearchDialog()
+                        else -> useCurrentLocation()
+                    }
+                    dialog.dismiss()
+                }
+                .show()
+                .styleSwitchlyDialogButtons()
+        }
+
+        inputLocationLabel.addTextChangedListener {
+            updateLocationSummary()
+        }
+        btnUseCurrentLocation.setOnClickListener { showChooseLocationMethodDialog() }
+        chipRadius100.setOnCheckedChangeListener { _, checked -> if (checked) { locationRadiusMeters = 100; updateLocationSummary() } }
+        chipRadius250.setOnCheckedChangeListener { _, checked -> if (checked) { locationRadiusMeters = 250; updateLocationSummary() } }
+        chipRadius500.setOnCheckedChangeListener { _, checked -> if (checked) { locationRadiusMeters = 500; updateLocationSummary() } }
+        syncRadiusChips()
+        setupLocationTriggerSpinner()
+        setupLocationCooldownSpinner()
+        updateLocationSummary()
 
         val profiles = ProfileStore.getProfiles(this)
         val profileList: List<String> =
@@ -1714,9 +2034,29 @@ class SchedulesActivity : AppCompatActivity() {
                         preferred
                     )
                 }
+
+                Kind.LOCATION -> {
+                    val options = when (locationTrigger) {
+                        ScheduleStore.LocationTrigger.ENTER,
+                        ScheduleStore.LocationTrigger.EXIT -> listOf(
+                            ScheduleStore.Action.ENABLE,
+                            ScheduleStore.Action.DISABLE,
+                            ScheduleStore.Action.TOGGLE
+                        )
+                        ScheduleStore.LocationTrigger.ENTER_EXIT -> listOf(
+                            ScheduleStore.Action.ENABLE_AND_DISABLE,
+                            ScheduleStore.Action.DISABLE_AND_ENABLE
+                        )
+                    }
+
+                    val preferred = existing?.action?.takeIf { it in options } ?: options.first()
+                    setActionOptions(filterActionsForNfc(options), preferred)
+                }
             }
             updateActionNfcHint()
         }
+
+        refreshActionUi = { updateActionUi() }
 
         fun updateVisibilityForMode() {
             when (kind) {
@@ -1747,7 +2087,7 @@ class SchedulesActivity : AppCompatActivity() {
                     }
                 }
 
-                Kind.WIFI, Kind.BT -> {
+                Kind.WIFI, Kind.BT, Kind.LOCATION -> {
                     groupTime.isVisible = true
                     textEndTime.isVisible = true
                     groupWeekly.isVisible = true
@@ -1814,6 +2154,18 @@ class SchedulesActivity : AppCompatActivity() {
 
             if (kind == Kind.WIFI && isPremium) inputWifiSsid.setText(existing.wifiSsid.orEmpty())
             if (kind == Kind.BT && isPremium) inputBtName.setText(existing.btDeviceName.orEmpty())
+            if (kind == Kind.LOCATION && isPremium) {
+                inputLocationLabel.setText(existing.locationLabel.orEmpty())
+                locationLat = existing.locationLat
+                locationLng = existing.locationLng
+                locationRadiusMeters = existing.locationRadiusMeters
+                locationTrigger = existing.locationTrigger ?: ScheduleStore.LocationTrigger.ENTER
+                selectedCooldownMinutes = existing.locationCooldownMinutes
+                syncRadiusChips()
+                setupLocationTriggerSpinner()
+                setupLocationCooldownSpinner()
+                updateLocationSummary()
+            }
         } else {
             selectProfile(ProfileStore.getCurrent(this))
             chipMon.isChecked = true
@@ -1823,7 +2175,7 @@ class SchedulesActivity : AppCompatActivity() {
             chipFri.isChecked = true
         }
 
-        val isConnKind = kind == Kind.WIFI || kind == Kind.BT
+        val isConnKind = kind == Kind.WIFI || kind == Kind.BT || kind == Kind.LOCATION
         if (isConnKind) {
             val hasWindow = !(startMinutes == 0 && endMinutes >= 24 * 60 - 1)
             switchConnTimeWindow.isChecked = hasWindow
@@ -1837,7 +2189,7 @@ class SchedulesActivity : AppCompatActivity() {
         updateActionNfcHint()
 
         switchConnTimeWindow.setOnCheckedChangeListener { _, checked ->
-            if (kind != Kind.WIFI && kind != Kind.BT) return@setOnCheckedChangeListener
+            if (kind != Kind.WIFI && kind != Kind.BT && kind != Kind.LOCATION) return@setOnCheckedChangeListener
 
             if (!checked) {
                 startMinutes = 0
@@ -2056,8 +2408,10 @@ class SchedulesActivity : AppCompatActivity() {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 layoutWifiSsid.error = null
                 layoutBtName.error = null
+                layoutLocationLabel.error = null
                 inputWifiSsid.error = null
                 inputBtName.error = null
+                inputLocationLabel.error = null
 
                 val profile = profileList.getOrNull(selectedProfileIndex)
                     ?: spinnerProfile.text?.toString().orEmpty()
@@ -2078,6 +2432,12 @@ class SchedulesActivity : AppCompatActivity() {
                     null
                 }
 
+                val locationLabel: String? = if (kind == Kind.LOCATION && isPremium) {
+                    inputLocationLabel.text.toString().trim().ifEmpty { null }
+                } else {
+                    null
+                }
+
                 if (kind == Kind.WIFI && isPremium && wifiSsid.isNullOrBlank()) {
                     layoutWifiSsid.error = getString(R.string.schedules_error_wifi_required)
                     inputWifiSsid.error = getString(R.string.schedules_error_wifi_required)
@@ -2094,6 +2454,14 @@ class SchedulesActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
+                if (kind == Kind.LOCATION && isPremium && (locationLat == null || locationLng == null)) {
+                    layoutLocationLabel.error = getString(R.string.schedules_error_location_required)
+                    inputLocationLabel.error = getString(R.string.schedules_error_location_required)
+                    inputLocationLabel.requestFocus()
+                    showSnack(R.string.schedules_error_location_required)
+                    return@setOnClickListener
+                }
+
                 if (kind == Kind.WIFI && isPremium && !wifiSsid.isNullOrBlank() && !hasWifiSsidPermission()) {
                     showWhyLocationDialogForWifi()
                     return@setOnClickListener
@@ -2104,8 +2472,17 @@ class SchedulesActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
+                if (kind == Kind.LOCATION && isPremium && !hasFineLocationPermission()) {
+                    showWhyLocationDialogForGeofence()
+                    return@setOnClickListener
+                }
+                if (kind == Kind.LOCATION && isPremium && !hasBackgroundLocationPermission()) {
+                    showWhyBackgroundLocationDialogForGeofence()
+                    return@setOnClickListener
+                }
+
                 var daysMask = 0
-                val isConn = kind == Kind.WIFI || kind == Kind.BT
+                val isConn = kind == Kind.WIFI || kind == Kind.BT || kind == Kind.LOCATION
                 val isDateRange = kind == Kind.TIME && currentTimeMode() == TimeMode.DATE_RANGE
 
                 if (!isDateRange) {
@@ -2188,6 +2565,12 @@ class SchedulesActivity : AppCompatActivity() {
                     endDate = if (type == ScheduleStore.Type.ONE_TIME) endDateYmd else 0,
                     wifiSsid = wifiSsid,
                     btDeviceName = btName,
+                    locationLabel = locationLabel,
+                    locationLat = if (kind == Kind.LOCATION && isPremium) locationLat else null,
+                    locationLng = if (kind == Kind.LOCATION && isPremium) locationLng else null,
+                    locationRadiusMeters = if (kind == Kind.LOCATION && isPremium) selectedRadiusMeters() else 250,
+                    locationTrigger = if (kind == Kind.LOCATION && isPremium) locationTrigger else null,
+                    locationCooldownMinutes = if (kind == Kind.LOCATION && isPremium) selectedCooldownMinutes else 15,
                     action = action
                 )
 
@@ -2199,11 +2582,393 @@ class SchedulesActivity : AppCompatActivity() {
                 }
 
                 ScheduleStore.saveAll(this, newList)
+                LocationTriggerMonitor.syncNow(this)
                 reapplySchedulesNow()
                 SchedulePlanner.updateNextAlarm(this)
                 SchedulePlanner.notifyNextChanged(this)
                 refreshList()
                 dialog.dismiss()
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun parseLocationCoordinateQuery(raw: String): Pair<Double, Double>? {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return null
+
+        val patterns = listOf(
+            Regex("""^\s*([+-]?\d+(?:[.,]\d+)?)\s*[,;]\s*([+-]?\d+(?:[.,]\d+)?)\s*$"""),
+            Regex("""^\s*([+-]?\d+(?:[.,]\d+)?)\s+([+-]?\d+(?:[.,]\d+)?)\s*$""")
+        )
+
+        for (pattern in patterns) {
+            val match = pattern.matchEntire(trimmed) ?: continue
+            val lat = match.groupValues[1].replace(',', '.').toDoubleOrNull() ?: continue
+            val lng = match.groupValues[2].replace(',', '.').toDoubleOrNull() ?: continue
+            if (lat in -90.0..90.0 && lng in -180.0..180.0) {
+                return lat to lng
+            }
+        }
+
+        return null
+    }
+
+    private fun formatGeocoderLabel(address: android.location.Address?): String? {
+        if (address == null) return null
+
+        val candidates = listOf(
+            listOfNotNull(address.featureName, address.subLocality, address.locality)
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .joinToString(", ")
+                .takeIf { it.isNotBlank() },
+            listOfNotNull(address.locality, address.adminArea)
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .joinToString(", ")
+                .takeIf { it.isNotBlank() },
+            address.getAddressLine(0)?.trim()?.takeIf { it.isNotBlank() }
+        )
+
+        return candidates.firstOrNull { !it.isNullOrBlank() }
+    }
+
+    private fun reverseGeocodeLabel(
+        latitude: Double,
+        longitude: Double,
+        fallback: String? = null,
+        onResult: (String?) -> Unit
+    ) {
+        if (!Geocoder.isPresent()) {
+            onResult(fallback)
+            return
+        }
+
+        val geocoder = Geocoder(this, Locale.getDefault())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            geocoder.getFromLocation(latitude, longitude, 1) { addresses ->
+                val label = formatGeocoderLabel(addresses.firstOrNull()) ?: fallback
+                runOnUiThread { onResult(label) }
+            }
+        } else {
+            lifecycleScope.launch {
+                val label = withContext(Dispatchers.IO) {
+                    runCatching {
+                        getFromLocationBlockingCompat(geocoder, latitude, longitude)
+                            .firstOrNull()
+                    }.getOrNull()?.let(::formatGeocoderLabel) ?: fallback
+                }
+                onResult(label)
+            }
+        }
+    }
+
+    private fun getFromLocationBlockingCompat(
+        geocoder: Geocoder,
+        latitude: Double,
+        longitude: Double
+    ): List<android.location.Address> {
+        return runCatching {
+            val method = Geocoder::class.java.getMethod(
+                "getFromLocation",
+                java.lang.Double.TYPE,
+                java.lang.Double.TYPE,
+                java.lang.Integer.TYPE
+            )
+            val result = method.invoke(geocoder, latitude, longitude, 1)
+            (result as? List<*>)?.filterIsInstance<android.location.Address>().orEmpty()
+        }.getOrDefault(emptyList())
+    }
+
+    private fun getFromLocationNameBlockingCompat(
+        geocoder: Geocoder,
+        query: String
+    ): List<android.location.Address> {
+        return runCatching {
+            val method = Geocoder::class.java.getMethod(
+                "getFromLocationName",
+                String::class.java,
+                java.lang.Integer.TYPE
+            )
+            val result = method.invoke(geocoder, query, 1)
+            (result as? List<*>)?.filterIsInstance<android.location.Address>().orEmpty()
+        }.getOrDefault(emptyList())
+    }
+
+    private fun resolveLocationQuery(query: String, onResult: (ResolvedLocation?) -> Unit) {
+        val coordinateMatch = parseLocationCoordinateQuery(query)
+        if (coordinateMatch != null) {
+            val (latitude, longitude) = coordinateMatch
+            val fallbackLabel = getString(R.string.schedules_location_coords_fmt, latitude, longitude)
+            reverseGeocodeLabel(latitude, longitude, fallbackLabel) { label ->
+                onResult(ResolvedLocation(latitude, longitude, label ?: fallbackLabel))
+            }
+            return
+        }
+
+        if (!Geocoder.isPresent()) {
+            onResult(null)
+            return
+        }
+
+        val geocoder = Geocoder(this, Locale.getDefault())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            geocoder.getFromLocationName(query, 1) { addresses ->
+                val first = addresses.firstOrNull()
+                val resolved = if (first != null) {
+                    ResolvedLocation(
+                        latitude = first.latitude,
+                        longitude = first.longitude,
+                        label = formatGeocoderLabel(first) ?: query.trim()
+                    )
+                } else {
+                    null
+                }
+                runOnUiThread { onResult(resolved) }
+            }
+        } else {
+            lifecycleScope.launch {
+                val resolved = withContext(Dispatchers.IO) {
+                    runCatching {
+                        getFromLocationNameBlockingCompat(geocoder, query).firstOrNull()
+                    }.getOrNull()?.let { address ->
+                        ResolvedLocation(
+                            latitude = address.latitude,
+                            longitude = address.longitude,
+                            label = formatGeocoderLabel(address) ?: query.trim()
+                        )
+                    }
+                }
+                onResult(resolved)
+            }
+        }
+    }
+
+    private fun showLocationMapPickerDialog(
+        initialLatitude: Double?,
+        initialLongitude: Double?,
+        initialLabel: String?,
+        onPicked: (ResolvedLocation) -> Unit
+    ) {
+
+        val dialogContext = androidx.appcompat.view.ContextThemeWrapper(
+            this,
+            R.style.ThemeOverlay_Switchly_Dialog
+        )
+        val dialogView = LayoutInflater.from(dialogContext)
+            .inflate(R.layout.dialog_location_picker_map, null, false)
+        val mapView = dialogView.findViewById<MapView>(R.id.mapLocationPicker)
+        val selectionView = dialogView.findViewById<TextView>(R.id.tvMapPickerSelection)
+        val layoutQuery = dialogView.findViewById<TextInputLayout>(R.id.layoutMapLocationQuery)
+        val inputQuery = dialogView.findViewById<EditText>(R.id.inputMapLocationQuery)
+        val btnSearch = dialogView.findViewById<MaterialButton>(R.id.btnMapPickerSearch)
+
+        val mapBundle = Bundle()
+        mapView.onCreate(mapBundle)
+        mapView.onResume()
+
+        val startLatLng = when {
+            initialLatitude != null && initialLongitude != null -> LatLng(initialLatitude, initialLongitude)
+            else -> LatLng(48.2082, 16.3738)
+        }
+
+        if (!initialLabel.isNullOrBlank()) {
+            inputQuery.setText(initialLabel)
+        }
+
+        var pickedLatLng: LatLng? = if (initialLatitude != null && initialLongitude != null) {
+            LatLng(initialLatitude, initialLongitude)
+        } else {
+            null
+        }
+        var pickedLabel: String? = initialLabel
+        var googleMapRef: GoogleMap? = null
+
+        if (pickedLatLng != null) {
+            val label = pickedLabel ?: getString(
+                R.string.schedules_location_coords_fmt,
+                pickedLatLng!!.latitude,
+                pickedLatLng!!.longitude
+            )
+            selectionView.text = getString(R.string.schedules_location_map_picker_selected, label)
+        } else {
+            selectionView.text = getString(R.string.schedules_location_map_picker_no_selection)
+        }
+
+        fun updateSelectionLabel(point: LatLng, label: String? = null) {
+            val displayLabel = label ?: getString(
+                R.string.schedules_location_coords_fmt,
+                point.latitude,
+                point.longitude
+            )
+            pickedLabel = displayLabel
+            selectionView.text = getString(R.string.schedules_location_map_picker_selected, displayLabel)
+        }
+
+        fun renderMarker(point: LatLng, label: String? = null, moveCamera: Boolean = false) {
+            googleMapRef?.let { googleMap ->
+                googleMap.clear()
+                googleMap.addMarker(MarkerOptions().position(point))
+                if (moveCamera) {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, 17f))
+                }
+            }
+            updateSelectionLabel(point, label)
+        }
+
+        fun runSearch() {
+            val query = inputQuery.text?.toString()?.trim().orEmpty()
+            if (query.isBlank()) {
+                layoutQuery.error = getString(R.string.schedules_location_picker_invalid)
+                return
+            }
+            layoutQuery.error = null
+            btnSearch.isEnabled = false
+            resolveLocationQuery(query) { resolved ->
+                btnSearch.isEnabled = true
+                if (resolved == null) {
+                    layoutQuery.error = getString(R.string.schedules_location_picker_not_found)
+                    return@resolveLocationQuery
+                }
+                val point = LatLng(resolved.latitude, resolved.longitude)
+                pickedLatLng = point
+                renderMarker(point, resolved.label, moveCamera = true)
+            }
+        }
+
+        inputQuery.addTextChangedListener { layoutQuery.error = null }
+        inputQuery.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                runSearch()
+                true
+            } else {
+                false
+            }
+        }
+        btnSearch.setOnClickListener { runSearch() }
+
+        mapView.getMapAsync { googleMap ->
+            googleMapRef = googleMap
+            googleMap.mapType = GoogleMap.MAP_TYPE_NORMAL
+            googleMap.setMinZoomPreference(6f)
+
+            with(googleMap.uiSettings) {
+                isZoomControlsEnabled = true
+                isZoomGesturesEnabled = true
+                isScrollGesturesEnabled = true
+                isTiltGesturesEnabled = false
+                isRotateGesturesEnabled = false
+                isCompassEnabled = true
+                isMapToolbarEnabled = false
+                isMyLocationButtonEnabled = false
+            }
+
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLatLng, 16f))
+
+            pickedLatLng?.let { point ->
+                renderMarker(point, pickedLabel)
+            }
+
+            googleMap.setOnMapClickListener { latLng ->
+                pickedLatLng = latLng
+                renderMarker(latLng)
+            }
+        }
+
+        val dialog = MaterialAlertDialogBuilder(dialogContext)
+            .setTitle(R.string.schedules_location_map_picker_title)
+            .setView(dialogView)
+            .setPositiveButton(R.string.ok, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.setOnDismissListener {
+            googleMapRef?.setOnMapClickListener(null)
+            mapView.onPause()
+            mapView.onDestroy()
+        }
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            val btnApply = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            btnApply.setOnClickListener {
+                val point = pickedLatLng
+                if (point == null) {
+                    selectionView.text = getString(R.string.schedules_location_map_picker_no_selection)
+                    return@setOnClickListener
+                }
+                val fallbackLabel = getString(
+                    R.string.schedules_location_coords_fmt,
+                    point.latitude,
+                    point.longitude
+                )
+                reverseGeocodeLabel(point.latitude, point.longitude, fallbackLabel) { label ->
+                    onPicked(ResolvedLocation(point.latitude, point.longitude, label ?: fallbackLabel))
+                    dialog.dismiss()
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun showLocationPickerDialog(
+        initialQuery: String,
+        onUseCurrentLocation: () -> Unit,
+        onPicked: (ResolvedLocation) -> Unit
+    ) {
+        val dialogContext = androidx.appcompat.view.ContextThemeWrapper(
+            this,
+            R.style.ThemeOverlay_Switchly_Dialog
+        )
+        val dialogView = LayoutInflater.from(dialogContext)
+            .inflate(R.layout.dialog_location_picker_search, null, false)
+        val layoutQuery = dialogView.findViewById<TextInputLayout>(R.id.layoutLocationQuery)
+        val inputQuery = dialogView.findViewById<EditText>(R.id.inputLocationQuery)
+        val btnCurrent = dialogView.findViewById<MaterialButton>(R.id.btnPickerUseCurrentLocation)
+        inputQuery.setText(initialQuery)
+
+        val dialog = MaterialAlertDialogBuilder(dialogContext)
+            .setTitle(R.string.schedules_location_search_title)
+            .setView(dialogView)
+            .setPositiveButton(R.string.ok, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            val btnApply = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+
+            btnApply.setOnClickListener {
+                val query = inputQuery.text?.toString()?.trim().orEmpty()
+                if (query.isBlank()) {
+                    layoutQuery.error = getString(R.string.schedules_location_picker_invalid)
+                    return@setOnClickListener
+                }
+
+                layoutQuery.error = null
+                btnApply.isEnabled = false
+                btnCurrent.isEnabled = false
+
+                resolveLocationQuery(query) { resolved ->
+                    btnApply.isEnabled = true
+                    btnCurrent.isEnabled = true
+                    if (resolved == null) {
+                        layoutQuery.error = getString(R.string.schedules_location_picker_not_found)
+                    } else {
+                        onPicked(resolved)
+                        dialog.dismiss()
+                    }
+                }
+            }
+
+            btnCurrent.setOnClickListener {
+                dialog.dismiss()
+                onUseCurrentLocation()
             }
         }
 
@@ -2360,8 +3125,10 @@ private class ScheduleViewHolder(
 
         val hasWifi = !s.wifiSsid.isNullOrBlank()
         val hasBt = !s.btDeviceName.isNullOrBlank()
+        val hasLocation = s.isLocationSchedule()
 
         val iconRes = when {
+            hasLocation -> R.drawable.location_on_24
             hasWifi && hasBt -> R.drawable.layers_24
             hasWifi -> R.drawable.wifi_24
             hasBt -> R.drawable.bluetooth_24
@@ -2388,8 +3155,23 @@ private class ScheduleViewHolder(
             ScheduleStore.Action.DISABLE_AND_ENABLE -> ctx.getString(R.string.schedules_action_disable_enable)
         }
 
-        val timeOrConn: String = if (hasWifi || hasBt) {
+        val timeOrConn: String = if (hasWifi || hasBt || hasLocation) {
             val conn = when {
+                hasLocation -> {
+                    val label = s.locationLabel?.takeIf { it.isNotBlank() } ?: run {
+                        val lat = s.locationLat
+                        val lng = s.locationLng
+                        if (lat != null && lng != null) {
+                            String.format(Locale.getDefault(), "%.5f, %.5f", lat, lng)
+                        } else {
+                            "-"
+                        }
+                    }
+                    ctx.getString(
+                        R.string.schedules_conn_location_fmt,
+                        "$label · ${s.locationRadiusMeters}m"
+                    )
+                }
                 hasWifi && hasBt -> ctx.getString(
                     R.string.schedules_conn_wifi_bt_fmt,
                     s.wifiSsid,

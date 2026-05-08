@@ -24,15 +24,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.google.android.material.tabs.TabLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.util.SystemBarColorCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.tabs.TabLayout
 import org.json.JSONObject
 
 private enum class ReleaseType {
@@ -71,7 +72,7 @@ class WhatsNewActivity : AppCompatActivity() {
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
         // Keep status bar neutral (like other screens)
-        window.statusBarColor = getColor(android.R.color.black)
+        SystemBarColorCompat.setStatusBarColor(window, getColor(android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
 
         val notes = loadReleaseNotes()

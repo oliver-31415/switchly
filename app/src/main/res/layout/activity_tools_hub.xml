@@ -194,7 +194,7 @@
                         android:id="@+id/ivWriteNfcIcon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="@string/tools_nfc_write_title"
+                        android:contentDescription="@string/tools_tags_codes_title"
                         android:src="@drawable/nfc_24" />
 
                     <LinearLayout
@@ -207,7 +207,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/tools_nfc_write_title"
+                            android:text="@string/tools_tags_codes_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -215,7 +215,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/tools_nfc_write_summary"
+                            android:text="@string/tools_tags_codes_summary"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -224,7 +224,7 @@
                         android:layout_width="18dp"
                         android:layout_height="18dp"
                         android:alpha="0.7"
-                        android:contentDescription="@string/tools_nfc_write_title"
+                        android:contentDescription="@string/tools_tags_codes_title"
                         android:src="@drawable/arrow_forward_ios_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
@@ -605,5 +605,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="?attr/colorSurface"
+        app:labelVisibilityMode="labeled"
         app:menu="@menu/menu_bottom_main" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

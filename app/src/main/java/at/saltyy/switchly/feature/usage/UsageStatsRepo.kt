@@ -32,6 +32,12 @@ import java.util.concurrent.TimeUnit
 
 object UsageStatsRepo {
 
+    // UsageEvents.Event ACTIVITY_* numeric values.
+    // Referencing these as local constants keeps minSdk 27 builds lint-clean without using newer SDK fields directly.
+    private const val EVENT_ACTIVITY_RESUMED = 1
+    private const val EVENT_ACTIVITY_PAUSED = 2
+    private const val EVENT_ACTIVITY_STOPPED = 23
+
     private fun startOfDayLocal(timeMs: Long): Long {
         val c = Calendar.getInstance()
         c.timeInMillis = timeMs
@@ -180,16 +186,14 @@ object UsageStatsRepo {
                 events.getNextEvent(e)
                 if (e.packageName != packageName) continue
                 when (e.eventType) {
-                    UsageEvents.Event.MOVE_TO_FOREGROUND,
-                    UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    EVENT_ACTIVITY_RESUMED -> {
                         val startAt = e.timeStamp.coerceIn(dayStart, safeNow)
                         val prev = activeStart
                         if (prev == null || startAt < prev) activeStart = startAt
                     }
 
-                    UsageEvents.Event.MOVE_TO_BACKGROUND,
-                    UsageEvents.Event.ACTIVITY_PAUSED,
-                    UsageEvents.Event.ACTIVITY_STOPPED -> {
+                    EVENT_ACTIVITY_PAUSED,
+                    EVENT_ACTIVITY_STOPPED -> {
                         val startAt = activeStart ?: continue
                         val endAt = e.timeStamp.coerceIn(dayStart, safeNow)
                         addRangeToHourlyBuckets(buckets, dayStart, startAt, endAt)
@@ -223,7 +227,7 @@ object UsageStatsRepo {
         val e = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
-            if (e.packageName == packageName && e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+            if (e.packageName == packageName && e.eventType == EVENT_ACTIVITY_RESUMED) {
                 sessions++
             }
         }
@@ -269,7 +273,7 @@ object UsageStatsRepo {
         val e = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
-            if (e.packageName == packageName && e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+            if (e.packageName == packageName && e.eventType == EVENT_ACTIVITY_RESUMED) {
                 sessions++
             }
         }
@@ -368,7 +372,7 @@ object UsageStatsRepo {
         if (safeEnd <= dayStart) return emptyMap()
         val windowMs = (safeEnd - dayStart).coerceAtLeast(0L)
 
-        // Import legacy data conservatively.
+        // Import existing app-open data conservatively.
         // For the one-time migration we intentionally do NOT merge multiple system sources, because that can inflate historical values on some devices.
         // We only import the raw daily UsageStats values that Android already exposes for the requested window.
         val byPkg = queryDailyUsage(
@@ -408,7 +412,7 @@ object UsageStatsRepo {
             val pkg = e.packageName ?: continue
             if (shouldExcludePackage(ctx, pkg, homePkgs)) continue
             if (!isInstalled(ctx, pkg)) continue
-            if (e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+            if (e.eventType == EVENT_ACTIVITY_RESUMED) {
                 out[pkg] = (out[pkg] ?: 0) + 1
             }
         }
@@ -631,16 +635,14 @@ object UsageStatsRepo {
             val pkg = e.packageName ?: continue
             if (onlyPackage != null && pkg != onlyPackage) continue
             when (e.eventType) {
-                UsageEvents.Event.MOVE_TO_FOREGROUND,
-                UsageEvents.Event.ACTIVITY_RESUMED -> {
+                EVENT_ACTIVITY_RESUMED -> {
                     val startAt = e.timeStamp.coerceAtLeast(from)
                     val prev = starts[pkg]
                     if (prev == null || startAt < prev) starts[pkg] = startAt
                 }
 
-                UsageEvents.Event.MOVE_TO_BACKGROUND,
-                UsageEvents.Event.ACTIVITY_PAUSED,
-                UsageEvents.Event.ACTIVITY_STOPPED -> {
+                EVENT_ACTIVITY_PAUSED,
+                EVENT_ACTIVITY_STOPPED -> {
                     val startAt = starts.remove(pkg) ?: continue
                     val endAt = e.timeStamp.coerceAtMost(to)
                     if (endAt > startAt) {

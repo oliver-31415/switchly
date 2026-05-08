@@ -22,9 +22,9 @@ package at.saltyy.switchly.theme
 import android.content.Context
 import android.content.res.ColorStateList
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
-import androidx.core.graphics.toColorInt
 
 object AccentColor {
 

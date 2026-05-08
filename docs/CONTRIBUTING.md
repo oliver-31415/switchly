@@ -29,9 +29,9 @@ To set it up:
 1. Create a Firebase project
 2. Add an Android app with the application ID `at.saltyy.switchly`
 3. Download `google-services.json`
-4. Place it in `app/google-services.json`
+4. Either place it in `app/google-services.json` locally, or keep it outside the repo and set `GOOGLE_SERVICES_JSON_PATH` in `signing.properties`
 
-`google-services.json` is intentionally git-ignored and should not be committed.
+`google-services.json` and `signing.properties` are intentionally git-ignored and should not be committed.
 
 ## Guidelines
 - Keep changes focused and easy to review

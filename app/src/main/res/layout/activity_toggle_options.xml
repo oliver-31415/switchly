@@ -87,6 +87,57 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardGuidedSetupHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                app:cardUseCompatPadding="true"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/toggle_guided_card_title" />
+
+                    <TextView
+                        style="@style/TextAppearance.MaterialComponents.Body2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:alpha="0.84"
+                        android:text="@string/toggle_guided_card_body" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnOpenFaqTips"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/toggle_guided_card_action" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvManageBlockingModesTitle"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/toggle_group_manage_blocking_modes"
+                android:textStyle="bold" />
+
             <!-- Control mode -->
             <TextView
                 android:id="@+id/tvControlModeSection"
@@ -99,6 +150,15 @@
                 android:drawablePadding="8dp"
                 app:drawableTint="?attr/colorOnSurface"
                 android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/tvControlModeSectionSummary"
+                style="@style/TextAppearance.MaterialComponents.Body2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:alpha="0.82"
+                android:text="@string/toggle_section_control_mode_summary" />
 
             <TextView
                 android:id="@+id/tvControlModeLockHint"
@@ -409,6 +469,15 @@
                 android:drawablePadding="8dp"
                 app:drawableTint="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:id="@+id/tvMixedChannelsSectionSummary"
+                style="@style/TextAppearance.MaterialComponents.Body2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:alpha="0.82"
+                android:text="@string/toggle_section_mixed_channels_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardMixedChannels"
@@ -789,6 +858,7 @@
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/dividerAfterMixedAllowProfileSwitching"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
@@ -796,6 +866,7 @@
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowScheduleEditing"
+                        android:visibility="gone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
@@ -952,6 +1023,16 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <TextView
+                android:id="@+id/tvManageOtherBlockingFeaturesTitle"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/toggle_group_manage_other_blocking_features"
+                android:textStyle="bold" />
+
             <!-- Additional features -->
             <TextView
                 android:id="@+id/tvAdditionalFeaturesSection"
@@ -964,6 +1045,15 @@
                 android:drawablePadding="8dp"
                 app:drawableTint="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:id="@+id/tvAdditionalFeaturesSectionSummary"
+                style="@style/TextAppearance.MaterialComponents.Body2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:alpha="0.82"
+                android:text="@string/toggle_section_additional_features_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAdditionalFeatures"
@@ -1046,12 +1136,6 @@
 
                         </LinearLayout>
                     </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
 
                     <!-- Require NFC to unlock -->
                     <LinearLayout
@@ -1166,15 +1250,9 @@
                             app:showText="false"/>
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
-
-                    <!-- NFC temp-disable limiter -->
+                    <!-- NFC Pairing: enable paired UID enforcement + management UI -->
                     <LinearLayout
-                        android:id="@+id/rowLimitTempDisableTags"
+                        android:id="@+id/rowEnablePairedUids"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
@@ -1185,7 +1263,7 @@
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
-                            android:src="@drawable/lock_open_24"
+                            android:src="@drawable/nfc_24"
                             app:tint="?attr/colorOnSurface"
                             android:contentDescription="@null" />
 
@@ -1203,14 +1281,14 @@
                                 style="@style/TextAppearance.MaterialComponents.Body1"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/pref_limit_temp_disable_tags_title" />
+                                android:text="@string/pref_enable_paired_uids_title" />
 
                             <TextView
                                 style="@style/TextAppearance.MaterialComponents.Body2"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="@string/pref_limit_temp_disable_tags_summary" />
+                                android:text="@string/pref_enable_paired_uids_summary" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -1220,7 +1298,7 @@
                             android:gravity="center_horizontal">
 
                             <androidx.appcompat.widget.AppCompatImageButton
-                                android:id="@+id/btnInfoLimitTempDisableTags"
+                                android:id="@+id/btnInfoEnablePairedUids"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -1230,15 +1308,76 @@
                                 app:tint="?attr/colorOnSurface" />
 
                             <com.google.android.material.switchmaterial.SwitchMaterial
-                                android:id="@+id/switchLimitTempDisableTags"
+                                android:id="@+id/switchEnablePairedUids"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textOn=""
                                 android:textOff=""
-                                app:showText="false" />
+                                app:showText="false"/>
 
                         </LinearLayout>
                     </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
+                    <LinearLayout
+                        android:id="@+id/rowAutoPairOnWrite"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/nfc_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@null" />
+
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_auto_pair_on_write_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/pref_auto_pair_on_write_summary" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchAutoPairOnWrite"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textOn=""
+                            android:textOff=""
+                            app:showText="false"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -1256,6 +1395,15 @@
                 android:drawablePadding="8dp"
                 app:drawableTint="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:id="@+id/tvProtectionSectionSummary"
+                style="@style/TextAppearance.MaterialComponents.Body2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:alpha="0.82"
+                android:text="@string/toggle_section_protection_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSafetyControls"
@@ -1390,6 +1538,15 @@
                 app:drawableTint="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp"/>
 
+            <TextView
+                android:id="@+id/tvUiSectionSummary"
+                style="@style/TextAppearance.MaterialComponents.Body2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:alpha="0.82"
+                android:text="@string/toggle_section_ui_summary" />
+
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDisplayControls"
                 android:layout_width="match_parent"
@@ -1505,141 +1662,6 @@
                             android:textOff=""
                             app:showText="false"/>
                     </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
-
-                    <!-- NFC Pairing: enable paired UID enforcement + management UI -->
-                    <LinearLayout
-                        android:id="@+id/rowEnablePairedUids"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/nfc_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
-
-                        <Space
-                            android:layout_width="14dp"
-                            android:layout_height="1dp" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/pref_enable_paired_uids_title" />
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body2"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/pref_enable_paired_uids_summary" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:gravity="center_horizontal">
-
-                            <androidx.appcompat.widget.AppCompatImageButton
-                                android:id="@+id/btnInfoEnablePairedUids"
-                                android:layout_width="44dp"
-                                android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
-                                android:padding="10dp"
-                                android:src="@drawable/info_24"
-                                app:tint="?attr/colorOnSurface" />
-
-                            <com.google.android.material.switchmaterial.SwitchMaterial
-                                android:id="@+id/switchEnablePairedUids"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textOn=""
-                                android:textOff=""
-                                app:showText="false"/>
-
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
-
-                    <LinearLayout
-                        android:id="@+id/rowAutoPairOnWrite"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/nfc_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
-
-                        <Space
-                            android:layout_width="14dp"
-                            android:layout_height="1dp" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/pref_auto_pair_on_write_title" />
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body2"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/pref_auto_pair_on_write_summary" />
-                        </LinearLayout>
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchAutoPairOnWrite"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textOn=""
-                            android:textOff=""
-                            app:showText="false"/>
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
 
                     <!-- Show next schedule -->
                     <LinearLayout

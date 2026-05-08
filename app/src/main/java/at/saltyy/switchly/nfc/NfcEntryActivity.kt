@@ -25,17 +25,17 @@ import android.net.Uri
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.nfc.tech.Ndef
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.core.content.IntentCompat
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
-import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
-import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.NfcScanCountStore
+import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
@@ -65,10 +65,8 @@ class NfcEntryActivity : Activity() {
     }
 
     private fun handleIncomingIntent(intent: Intent?) {
-        val tag = if (Build.VERSION.SDK_INT >= 33) {
-            intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG, android.nfc.Tag::class.java)
-        } else {
-            intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG) as? android.nfc.Tag
+        val tag = intent?.let {
+            IntentCompat.getParcelableExtra(it, NfcAdapter.EXTRA_TAG, android.nfc.Tag::class.java)
         }
 
         // If an NFC tag parcelable exists, this came from NFC.
@@ -76,7 +74,21 @@ class NfcEntryActivity : Activity() {
         val fromNfc = tag != null
         val scanSource = intent?.getStringExtra(QrScanActivity.EXTRA_SCAN_SOURCE)
         val fromBarcode = !fromNfc && scanSource == "barcode"
-        val fromQr = !fromNfc && !fromBarcode
+        val fromQr = !fromNfc && scanSource == "qr"
+
+        // NfcEntryActivity is exported for Android's NFC dispatch system.
+        // Do not treat arbitrary non-NFC ACTION_VIEW launches as trusted QR/barcode scans. 
+        // The in-app QR and barcode scanners explicitly set EXTRA_SCAN_SOURCE before routing here.
+        if (!fromNfc && !fromQr && !fromBarcode) {
+            toast(
+                getString(
+                    R.string.nfc_action_error_fmt,
+                    getString(R.string.nfc_error_invalid_or_missing_uri)
+                )
+            )
+            finish()
+            return
+        }
 
         // Respect user-selected control mode.
         if (fromNfc && !AutomationModeStore.isNfcAllowed(this)) {
@@ -123,8 +135,10 @@ class NfcEntryActivity : Activity() {
                 val pairedUids = if (pairedUidsEnabled) NfcUidPairingStore.getPairedUidsHex(this) else emptySet()
                 val seenUid = NfcTagUid.normalizeUidHex(NfcTagUid.uidHex(tag))
                 if (pairedUidsEnabled && pairedUids.isNotEmpty() && seenUid.isNotBlank() &&
-                    pairedUids.any { it.equals(seenUid, ignoreCase = true) }) {
-                    handleReadOnlyPairedTagToggle()
+                    pairedUids.any { it.equals(seenUid, ignoreCase = true) } &&
+                    NfcUidPairingStore.supportsUidOnlyAction(this, seenUid)) {
+                    NfcScanCountStore.incrementToday(this)
+                    handleReadOnlyPairedTagAction(seenUid)
                     finish()
                     return
                 }
@@ -149,8 +163,8 @@ class NfcEntryActivity : Activity() {
         }
 
         when (data.host?.lowercase()) {
-            NfcSchema.HOST_SWITCH -> handleGlobalAction(data, tag)
-            NfcSchema.HOST_PROFILE -> handleProfileAction(data, tag)
+            NfcSchema.HOST_SWITCH -> handleGlobalAction(data, tag, fromNfc, fromBarcode)
+            NfcSchema.HOST_PROFILE -> handleProfileAction(data, tag, fromNfc, fromBarcode)
             else -> toast(
                 getString(
                     R.string.nfc_action_error_fmt,
@@ -172,17 +186,17 @@ class NfcEntryActivity : Activity() {
             return direct
         }
 
-        val rawMessages = if (Build.VERSION.SDK_INT >= 33) {
-            intent?.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
-        } else {
-            intent?.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-                ?.mapNotNull { it as? NdefMessage }
-                ?.toTypedArray()
+        val rawMessages: Array<NdefMessage>? = intent?.let { src ->
+            IntentCompat.getParcelableArrayExtra(
+                src,
+                NfcAdapter.EXTRA_NDEF_MESSAGES,
+                NdefMessage::class.java
+            )?.filterIsInstance<NdefMessage>()?.toTypedArray()
         }
 
         rawMessages
             ?.asSequence()
-            ?.flatMap { it.records.asSequence() }
+            ?.flatMap { message -> message.records.asSequence() }
             ?.mapNotNull { record ->
                 try {
                     record.toUri()
@@ -196,10 +210,8 @@ class NfcEntryActivity : Activity() {
             }
             ?.let { return it }
 
-        val tag = if (Build.VERSION.SDK_INT >= 33) {
-            intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG, android.nfc.Tag::class.java)
-        } else {
-            intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG) as? android.nfc.Tag
+        val tag = intent?.let {
+            IntentCompat.getParcelableExtra(it, NfcAdapter.EXTRA_TAG, android.nfc.Tag::class.java)
         }
 
         val ndef = tag?.let { Ndef.get(it) } ?: return null
@@ -227,7 +239,15 @@ class NfcEntryActivity : Activity() {
         }
     }
 
-    private fun handleReadOnlyPairedTagToggle() {
+    private fun handleReadOnlyPairedTagAction(uidHex: String) {
+        when (NfcUidPairingStore.getReadOnlyAction(this, uidHex)) {
+            NfcUidPairingStore.ReadOnlyAction.TOGGLE -> toggleSwitchFromReadOnlyTag()
+            NfcUidPairingStore.ReadOnlyAction.UNLOCK_ONLY -> unlockOnlyFromReadOnlyTag()
+            NfcUidPairingStore.ReadOnlyAction.LOCK_ONLY -> lockOnlyFromReadOnlyTag()
+        }
+    }
+
+    private fun toggleSwitchFromReadOnlyTag() {
         val enabled = SwitchModeStore.isEnabled(this)
         if (enabled) {
             SwitchModeStore.setEnabled(this, false, allowNfcBypass = true)
@@ -240,7 +260,29 @@ class NfcEntryActivity : Activity() {
         }
     }
 
-    private fun handleGlobalAction(data: Uri, tag: android.nfc.Tag?) {
+    private fun unlockOnlyFromReadOnlyTag() {
+        if (!SwitchModeStore.isEnabled(this)) {
+            toast(getString(R.string.nfc_feedback_already_stopped, getString(R.string.app_name)))
+            return
+        }
+
+        SwitchModeStore.setEnabled(this, false, allowNfcBypass = true)
+        BlockingRuntime.stop(this)
+        toast(getString(R.string.nfc_feedback_stopped, getString(R.string.app_name)))
+    }
+
+    private fun lockOnlyFromReadOnlyTag() {
+        if (SwitchModeStore.isEnabled(this)) {
+            toast(getString(R.string.nfc_feedback_already_started, getString(R.string.app_name)))
+            return
+        }
+
+        SwitchModeStore.setEnabled(this, true)
+        BlockingRuntime.ensureRunning(this)
+        toast(getString(R.string.nfc_feedback_started, getString(R.string.app_name)))
+    }
+
+    private fun handleGlobalAction(data: Uri, tag: android.nfc.Tag?, fromNfc: Boolean, fromBarcode: Boolean) {
         val action = data.lastPathSegment?.lowercase() ?: return
 
         when {
@@ -298,39 +340,40 @@ class NfcEntryActivity : Activity() {
             }
 
             else -> {
-                AppLogStore.append(this, "NFC", "Action failed reason=unknown_action")
+                AppLogStore.append(this, scanSourceLogTag(fromNfc, fromBarcode), "Action failed reason=unknown_action")
                 toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
             }
         }
     }
 
-    private fun handleProfileAction(data: Uri, tag: android.nfc.Tag?) {
-        AppLogStore.append(this, "NFC", "Tag scanned")
+    private fun handleProfileAction(data: Uri, tag: android.nfc.Tag?, fromNfc: Boolean, fromBarcode: Boolean) {
+        val sourceLogTag = scanSourceLogTag(fromNfc, fromBarcode)
+        AppLogStore.append(this, sourceLogTag, "Tag scanned")
         val segs = data.pathSegments ?: emptyList()
         val profile = segs.getOrNull(0)?.trim().orEmpty()
         val action = segs.getOrNull(1)?.lowercase() ?: "toggle"
 
         if (profile.isBlank()) {
-            AppLogStore.append(this, "NFC", "Action failed reason=missing_profile")
+            AppLogStore.append(this, sourceLogTag, "Action failed reason=missing_profile")
             toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_missing_profile)))
             return
         }
 
         val allProfiles = ProfileStore.getProfiles(this)
         if (!allProfiles.contains(profile)) {
-            AppLogStore.append(this, "NFC", "Action failed reason=unknown_profile")
+            AppLogStore.append(this, sourceLogTag, "Action failed reason=unknown_profile")
             toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_profile_fmt, profile)))
             return
         }
 
-        AppLogStore.append(this, "NFC", "Tag resolved action=$action profile=$profile")
+        AppLogStore.append(this, sourceLogTag, "Tag resolved action=$action profile=$profile")
 
         when {
             action in listOf("start", "enable", "on", "activate") -> {
                 ProfileStore.setCurrent(this, profile)
                 SwitchModeStore.setEnabled(this, true)
                 BlockingRuntime.ensureRunning(this)
-                AppLogStore.append(this, "NFC", "Action applied action=$action profile=$profile")
+                AppLogStore.append(this, sourceLogTag, "Action applied action=$action profile=$profile")
                 toast(getString(R.string.nfc_feedback_started, profile))
             }
 
@@ -340,7 +383,7 @@ class NfcEntryActivity : Activity() {
                 if (current == profile) {
                     SwitchModeStore.setEnabled(this, false, allowNfcBypass = true)
                     BlockingRuntime.stop(this)
-                    AppLogStore.append(this, "NFC", "Action applied action=$action profile=$profile")
+                    AppLogStore.append(this, sourceLogTag, "Action applied action=$action profile=$profile")
                     toast(getString(R.string.nfc_feedback_stopped, profile))
                 } else {
                     toast(getString(R.string.nfc_error_profile_not_active_nothing_to_disable_fmt, profile))
@@ -377,11 +420,18 @@ class NfcEntryActivity : Activity() {
             }
 
             action.startsWith("temp_enable") -> {
-                ProfileStore.setCurrent(this, profile)
+                val previousProfile = ProfileStore.getCurrent(this)
                 val durationMs = resolveTempDurationMs(action, prefix = "temp_enable")
-                SwitchModeStore.setTemporarilyEnabled(this, durationMs)
+                SwitchModeStore.setTemporarilyEnabled(
+                    this,
+                    durationMs,
+                    previousProfileOverride = previousProfile,
+                    targetProfileForLog = profile
+                )
+                ProfileStore.setCurrent(this, profile)
                 BlockingRuntime.ensureRunning(this)
                 TempEnableCountStore.incrementToday(this)
+                AppLogStore.append(this, sourceLogTag, "Action applied action=$action profile=$profile")
                 toast(getString(R.string.nfc_feedback_started, profile))
             }
 
@@ -416,6 +466,14 @@ class NfcEntryActivity : Activity() {
             }
 
             else -> toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
+        }
+    }
+
+    private fun scanSourceLogTag(fromNfc: Boolean, fromBarcode: Boolean): String {
+        return when {
+            fromNfc -> "NFC"
+            fromBarcode -> "Barcode"
+            else -> "QR"
         }
     }
 

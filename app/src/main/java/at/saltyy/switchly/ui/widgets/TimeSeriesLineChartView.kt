@@ -25,8 +25,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
 import android.util.TypedValue
-import android.view.ViewConfiguration
 import android.view.View
+import android.view.ViewConfiguration
 import at.saltyy.switchly.theme.AccentColor
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -94,7 +94,7 @@ class TimeSeriesLineChartView @JvmOverloads constructor(
     private val axisTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
-        textSize = 10f * resources.displayMetrics.scaledDensity
+        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 10f, resources.displayMetrics)
         alpha = 170
     }
 
@@ -209,7 +209,11 @@ class TimeSeriesLineChartView @JvmOverloads constructor(
         val right = w - left
         val top = 10f * resources.displayMetrics.density
 
-        val labelArea = if (xLabels.isNotEmpty()) (18f * resources.displayMetrics.scaledDensity) else 0f
+        val labelArea = if (xLabels.isNotEmpty()) {
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 18f, resources.displayMetrics)
+        } else {
+            0f
+        }
         val bottom = (h - top - labelArea).coerceAtLeast(top + 12f * resources.displayMetrics.density)
 
         val accent = AccentColor.getAccentColorInt(context)

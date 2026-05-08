@@ -23,19 +23,17 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.graphics.Bitmap
-import androidx.core.content.FileProvider
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import at.saltyy.switchly.ui.dialog.Dialogs
-import at.saltyy.switchly.ui.dialog.showAccented
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import at.saltyy.switchly.R
@@ -45,14 +43,16 @@ import at.saltyy.switchly.databinding.ActivityQrGenerateBinding
 import at.saltyy.switchly.nfc.NfcSchema
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.Dialogs
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.LocaleHelper
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
-import java.util.Locale
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Locale
 
 class QrGenerateActivity : AppCompatActivity() {
 

@@ -39,6 +39,7 @@ import androidx.core.net.toUri
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.QrScanCountStore
+import at.saltyy.switchly.data.prefs.QrTempActionLimiterStore
 import at.saltyy.switchly.data.prefs.ScanCodeStore
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -175,6 +176,16 @@ class QrScanActivity : AppCompatActivity() {
 
         val managed = ScanCodeStore.findEntry(this, ScanCodeStore.Kind.QR, raw)
         if (managed != null) {
+            val check = ScanCodeStore.checkLimits(this, managed)
+            if (check != null) {
+                Toast.makeText(this, check, Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
+
+            if (!consumeTemporaryQrQuotaIfNeeded(managed.actionUri)) return
+
+            ScanCodeStore.consume(this, managed)
             QrScanCountStore.incrementToday(this)
             dispatchActionUri(managed.actionUri)
             return
@@ -182,6 +193,8 @@ class QrScanActivity : AppCompatActivity() {
 
         val uri = raw.toUri()
         if (uri.scheme.equals("switchly", ignoreCase = true)) {
+            if (!consumeTemporaryQrQuotaIfNeeded(raw)) return
+
             QrScanCountStore.incrementToday(this)
             dispatchActionUri(raw)
             return
@@ -189,6 +202,34 @@ class QrScanActivity : AppCompatActivity() {
 
         Toast.makeText(this, R.string.invalid_qr_code, Toast.LENGTH_SHORT).show()
         finish()
+    }
+
+    private fun consumeTemporaryQrQuotaIfNeeded(rawUri: String): Boolean {
+        if (!QrTempActionLimiterStore.isEnabled(this)) return true
+        if (!QrTempActionLimiterStore.isLimitedTemporaryAction(rawUri)) return true
+
+        return when (val result = QrTempActionLimiterStore.check(rawUri, this)) {
+            QrTempActionLimiterStore.CheckResult.Allowed -> {
+                QrTempActionLimiterStore.consume(rawUri, this)
+                true
+            }
+
+            is QrTempActionLimiterStore.CheckResult.Cooldown -> {
+                Toast.makeText(this, getString(R.string.qr_temp_limiter_cooldown, result.minutesRemaining), Toast.LENGTH_SHORT).show()
+                finish()
+                false
+            }
+
+            is QrTempActionLimiterStore.CheckResult.DailyLimitReached -> {
+                Toast.makeText(
+                    this,
+                    resources.getQuantityString(R.plurals.qr_temp_limiter_daily_limit, result.limit, result.limit),
+                    Toast.LENGTH_SHORT
+                ).show()
+                finish()
+                false
+            }
+        }
     }
 
     private fun dispatchActionUri(rawUri: String) {

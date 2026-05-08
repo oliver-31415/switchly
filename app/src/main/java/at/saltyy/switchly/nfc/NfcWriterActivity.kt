@@ -18,11 +18,6 @@
  */
 
 package at.saltyy.switchly.nfc
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.launch
-
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.Intent
@@ -48,37 +43,41 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import at.saltyy.switchly.ui.dialog.showAccented
-import com.google.android.material.textfield.TextInputEditText
-import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
-import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
+import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
-import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.LocaleHelper
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
+import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.launch
 
 class NfcWriterActivity : AppCompatActivity() {
 
@@ -321,7 +320,7 @@ class NfcWriterActivity : AppCompatActivity() {
             elevation = 2f * density
         }
 
-        ViewCompat.setBackground(statusRow, bg)
+        statusRow.background = bg
         statusRow.clipToOutline = true
     }
 

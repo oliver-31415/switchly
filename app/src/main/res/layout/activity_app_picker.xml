@@ -74,6 +74,22 @@
                 android:text="@string/app_picker_clear_all" />
         </LinearLayout>
 
+        <CheckBox
+            android:id="@+id/cbAutoBlockNewApps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/app_picker_auto_block_new_apps_title"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/app_picker_auto_block_new_apps_summary"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp" />
+
         <!-- App list -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvApps"

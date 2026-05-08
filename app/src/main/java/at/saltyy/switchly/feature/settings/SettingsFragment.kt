@@ -25,8 +25,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import android.os.Bundle
+import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.SystemClock
 import android.text.InputType
 import android.text.SpannableString
@@ -38,11 +39,12 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.SeekBar
-import android.widget.TextView
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
@@ -59,11 +61,8 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import at.saltyy.switchly.util.TimeFormatPrefs
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.radiobutton.MaterialRadioButton
 import at.saltyy.switchly.auth.AccountDeletion
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppLogStore
@@ -71,36 +70,40 @@ import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
-import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.sync.CloudSyncRuntime
-import at.saltyy.switchly.feature.about.WhatsNewActivity
+import at.saltyy.switchly.data.sync.FileBackupRuntime
 import at.saltyy.switchly.feature.about.AppInfoActivity
+import at.saltyy.switchly.feature.about.DeveloperInfoActivity
 import at.saltyy.switchly.feature.about.DeviceInfoActivity
 import at.saltyy.switchly.feature.about.OtherSwitchlyProductsActivity
-import at.saltyy.switchly.feature.about.DeveloperInfoActivity
+import at.saltyy.switchly.feature.about.WhatsNewActivity
 import at.saltyy.switchly.feature.faq.FaqActivity
 import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
-import at.saltyy.switchly.ui.dialog.showAccented
-import at.saltyy.switchly.feature.premium.PremiumInfoActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
+import at.saltyy.switchly.feature.schedule.SchedulesActivity
+import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.support.SupportActivity
 import at.saltyy.switchly.nfc.NfcWriterActivity
-import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
-import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.MainActivity
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
-import at.saltyy.switchly.security.AppLockStore
+import at.saltyy.switchly.util.TimeFormatPrefs
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
+import kotlinx.coroutines.launch
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
@@ -127,10 +130,27 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private val categoryTitles = mutableSetOf<String>()
     private var devVisible: Boolean = false
+    private fun refreshBlockedInboxPreferenceState() {
+        findPreference<Preference>("pref_blocked_inbox")?.isVisible = true
+    }
     private var authListener: FirebaseAuth.AuthStateListener? = null
     private var nextChangedReceiver: BroadcastReceiver? = null
     private var lastNestedNavKey: String? = null
     private var lastNestedNavAtMs: Long = 0L
+
+    private val createBackupFileLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        uri ?: return@registerForActivityResult
+        writeBackupFile(uri)
+    }
+
+    private val restoreBackupFileLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri ?: return@registerForActivityResult
+        restoreBackupFile(uri)
+    }
 
     private data class IconActionItem(val title: String, val iconRes: Int)
 
@@ -258,16 +278,22 @@ class SettingsFragment : PreferenceFragmentCompat() {
             isVisible = true
             setOnPreferenceClickListener {
                 val ctx = requireContext()
-                // Use base enabled state so schedule/temporary windows do not make
-                // profile management appear to randomly lock or unlock.
-                val enabled = SwitchModeStore.isBaseEnabled(ctx)
+                val enabled = SwitchModeStore.isEnabled(ctx)
+                val emergencyActive = EmergencyBypassStore.isActive(ctx)
+                val emergencyPaused = EmergencyBypassStore.isPaused(ctx)
                 val requireNfc = SwitchModeStore.isNfcRequiredForDisable(ctx)
-                val mixedProfileSwitchAllowed = AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(ctx)
-                if (enabled && (requireNfc || !mixedProfileSwitchAllowed)) {
-                    val msgRes = if (requireNfc) {
-                        R.string.toast_cannot_change_profile_while_locked
-                    } else {
+                val profileLocked = if (!enabled && !emergencyActive) {
+                    false
+                } else if (requireNfc || emergencyActive || (enabled && emergencyPaused)) {
+                    true
+                } else {
+                    !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(ctx)
+                }
+                if (profileLocked) {
+                    val msgRes = if (enabled && !requireNfc && !emergencyActive && !emergencyPaused) {
                         R.string.edit_locked_manage_profiles
+                    } else {
+                        R.string.toast_cannot_change_profile_while_locked
                     }
                     EditingLockGuard.showLockedDialog(ctx, msgRes)
                     return@setOnPreferenceClickListener true
@@ -344,37 +370,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
-        // Manage blocked websites (domain blocking list)
-        findPreference<Preference>("pref_manage_blocked_websites")?.apply {
-            isVisible = true
-            setOnPreferenceClickListener {
-                if (EditingLockGuard.isLocked(requireContext())) {
-                    EditingLockGuard.showLockedDialog(requireContext(), R.string.edit_locked_manage_websites)
-                } else {
-                    startActivity(Intent(requireContext(), ManageBlockedWebsitesActivity::class.java))
-                }
-                true
-            }
-        }
-
-        // In-App Blocking
-        findPreference<Preference>("pref_in_app_blocking")?.apply {
-            isVisible = true
-            setOnPreferenceClickListener {
-                if (SwitchModeStore.isBaseEnabled(requireContext()) || EditingLockGuard.isLocked(requireContext())) {
-                    EditingLockGuard.showLockedDialog(requireContext(), R.string.edit_locked_manage_inapp)
-                } else {
-                    startActivity(Intent(requireContext(), InAppBlockingActivity::class.java))
-                }
-                true
-            }
-        }
-
         // Blocked notifications inbox
         findPreference<Preference>("pref_blocked_inbox")?.setOnPreferenceClickListener {
-            startActivity(Intent(requireContext(), BlockedInboxActivity::class.java))
+            val ctx = requireContext()
+            if (SwitchModeStore.isEnabled(ctx) && !EmergencyBypassStore.isActive(ctx)) {
+                EditingLockGuard.showLockedDialog(ctx, R.string.edit_locked_manage_blocked_notifications)
+            } else {
+                startActivity(Intent(ctx, BlockedInboxActivity::class.java))
+            }
             true
         }
+        refreshBlockedInboxPreferenceState()
 
         // Open schedules (Customize -> Schedules)
         findPreference<Preference>("pref_open_schedules")?.setOnPreferenceClickListener {
@@ -432,9 +438,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         // Google account (popup only for sign-in/out/delete)
-        findPreference<Preference>("pref_google_account")?.setOnPreferenceClickListener {
-            showGoogleAccountDialog()
-            true
+        findPreference<Preference>("pref_google_account")?.apply {
+            isVisible = BuildConfig.SWITCHLY_FIREBASE_ENABLED
+            setOnPreferenceClickListener {
+                showGoogleAccountDialog()
+                true
+            }
         }
 
         // Emergency unlock PIN (Account)
@@ -442,12 +451,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
             showChangeEmergencyPinFlow()
             true
         }
-
-        findPreference<Preference>("pref_app_lock")?.setOnPreferenceClickListener {
-            startActivity(Intent(requireContext(), AppLockSettingsActivity::class.java))
-            true
-        }
-        updateAppLockSummary()
 
         // Backup as standalone prefs
         findPreference<Preference>("pref_cloud_backup")?.apply {
@@ -491,6 +494,34 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
+        findPreference<Preference>("pref_file_backup")?.apply {
+            setOnPreferenceClickListener {
+                confirmAction(
+                    title = getString(R.string.settings_confirm_file_backup_title),
+                    message = getString(R.string.settings_confirm_file_backup_message),
+                    positiveText = getString(R.string.settings_confirm_file_backup_title),
+                ) {
+                    createBackupFileLauncher.launch(defaultBackupFileName())
+                }
+                true
+            }
+        }
+
+        findPreference<Preference>("pref_file_restore")?.apply {
+            setOnPreferenceClickListener {
+                confirmAction(
+                    title = getString(R.string.settings_confirm_file_restore_title),
+                    message = getString(R.string.settings_confirm_file_restore_message),
+                    positiveText = getString(R.string.settings_confirm_file_restore_title),
+                ) {
+                    restoreBackupFileLauncher.launch(
+                        arrayOf("application/json", "text/json", "text/plain", "*/*")
+                    )
+                }
+                true
+            }
+        }
+
         // Delete backups
         findPreference<Preference>("pref_cloud_delete_backups")?.apply {
             setOnPreferenceClickListener {
@@ -502,12 +533,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Local in-app reset (clear ALL app data)
         findPreference<Preference>("pref_reset_app_data")?.setOnPreferenceClickListener {
             showResetAllDataDialog()
-            true
-        }
-
-        // Premium
-        findPreference<Preference>("pref_premium_upgrade")?.setOnPreferenceClickListener {
-            startActivity(Intent(requireContext(), PremiumInfoActivity::class.java))
             true
         }
 
@@ -524,7 +549,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Initial UI state
         updateGooglePrefSummary()
         updateCloudPrefVisibility()
-        updateAppLockSummary()
         refreshEmergencyPref()
         refreshLockUi()
 
@@ -539,17 +563,19 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        // Auth listener for Google account
-        authListener = FirebaseAuth.AuthStateListener {
-            if (isAdded) {
-                updateGooglePrefSummary()
-                updateCloudPrefVisibility()
+        // Auth listener for Firebase account builds only.
+        if (BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            authListener = FirebaseAuth.AuthStateListener {
+                if (isAdded) {
+                    updateGooglePrefSummary()
+                    updateCloudPrefVisibility()
+                }
             }
-        }
-        // Firebase can be missing during dev builds (e.g. no google-services.json).
-        // Don't crash Settings screen if Firebase isn't initialized.
-        authListener?.let { listener ->
-            runCatching { FirebaseAuth.getInstance().addAuthStateListener(listener) }
+            // Firebase can be missing during dev builds (e.g. no google-services.json).
+            // Don't crash Settings screen if Firebase isn't initialized.
+            authListener?.let { listener ->
+                runCatching { FirebaseAuth.getInstance().addAuthStateListener(listener) }
+            }
         }
     }
 
@@ -601,13 +627,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    // Hide/show cloud backup section depending on login state
+    // Hide/show cloud backup actions depending on login state. File backup stays available offline.
     private fun updateCloudPrefVisibility() {
-        val loggedIn = at.saltyy.switchly.auth.Auth.uid() != null
-        findPreference<PreferenceScreen>("screen_backup")?.isVisible = loggedIn
+        val loggedIn = BuildConfig.SWITCHLY_FIREBASE_ENABLED && at.saltyy.switchly.auth.Auth.uid() != null
+        findPreference<PreferenceScreen>("screen_backup")?.isVisible = true
         findPreference<Preference>("pref_cloud_backup")?.isVisible = loggedIn
         findPreference<Preference>("pref_cloud_restore")?.isVisible = loggedIn
         findPreference<Preference>("pref_cloud_delete_backups")?.isVisible = loggedIn
+        findPreference<Preference>("pref_file_backup")?.isVisible = true
+        findPreference<Preference>("pref_file_restore")?.isVisible = true
     }
 
     private fun tintCategoryViewsInList() {
@@ -683,11 +711,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         (activity as? SettingsActivity)?.setToolbarTitle(currentScreenTitle())
         refreshLockUi()
         refreshEmergencyPref()
-        updateAppLockSummary()
         updateTimeFormatSummary(findPreference("pref_time_format"))
         updateNextScheduleIndicator()
         updateGooglePrefSummary()
         updateCloudPrefVisibility()
+        refreshBlockedInboxPreferenceState()
         CustomAccentApplier.applyIfNeeded(requireActivity())
         tintCategories()
         ensureDeveloperInfoIconAccent()
@@ -719,8 +747,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     override fun onDestroyView() {
-        authListener?.let { listener ->
-            runCatching { FirebaseAuth.getInstance().removeAuthStateListener(listener) }
+        if (BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            authListener?.let { listener ->
+                runCatching { FirebaseAuth.getInstance().removeAuthStateListener(listener) }
+            }
         }
         authListener = null
 
@@ -730,14 +760,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         super.onDestroyView()
     }
 
-    private fun updateAppLockSummary() {
-        val pref = findPreference<Preference>("pref_app_lock") ?: return
-        pref.summary = when {
-            !AppLockStore.isEnabled(requireContext()) -> getString(R.string.app_lock_status_off)
-            AppLockStore.isBiometricEnabled(requireContext()) -> getString(R.string.app_lock_status_pin_biometric)
-            else -> getString(R.string.app_lock_status_pin_only)
-        }
-    }
 
     // Language
     private fun updateLanguageSummary(pref: Preference?) {
@@ -1100,6 +1122,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private fun updateGooglePrefSummary() {
         val pref = findPreference<Preference>("pref_google_account") ?: return
         val ctx = requireContext()
+        pref.isVisible = BuildConfig.SWITCHLY_FIREBASE_ENABLED
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            return
+        }
         val user = runCatching { FirebaseAuth.getInstance().currentUser }.getOrNull()
 
         val base = if (user != null) {
@@ -1428,6 +1454,44 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         }
         dialog.show()
+    }
+
+    private fun defaultBackupFileName(): String {
+        val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
+        return "switchly-backup-$stamp.json"
+    }
+
+    private fun writeBackupFile(uri: Uri) {
+        val activeCtx = context ?: return
+        val result = FileBackupRuntime.writeLocalBackupToUri(activeCtx, uri)
+        val msg = result.fold(
+            onSuccess = {
+                PreferenceManager.getDefaultSharedPreferences(activeCtx).edit {
+                    putLong("pref_last_backup_epoch_ms", System.currentTimeMillis())
+                }
+                updateGooglePrefSummary()
+                getString(R.string.file_backup_ok)
+            },
+            onFailure = { e ->
+                getString(R.string.file_backup_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown))
+            }
+        )
+        Toast.makeText(activeCtx, msg, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun restoreBackupFile(uri: Uri) {
+        val activeCtx = context ?: return
+        val result = FileBackupRuntime.restoreBackupFromUri(activeCtx, uri)
+        val msg = result.fold(
+            onSuccess = { getString(R.string.file_restore_ok_restart) },
+            onFailure = { e ->
+                getString(R.string.file_restore_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown))
+            }
+        )
+        Toast.makeText(activeCtx, msg, Toast.LENGTH_SHORT).show()
+        if (result.isSuccess) {
+            restartAppTask()
+        }
     }
 
     private fun startRestoreFlowWithChoice() {

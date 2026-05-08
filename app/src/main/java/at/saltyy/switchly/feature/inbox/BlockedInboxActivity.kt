@@ -19,32 +19,36 @@
 
 package at.saltyy.switchly.feature.inbox
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import androidx.core.graphics.ColorUtils
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.BlockedInboxStore
 import at.saltyy.switchly.data.prefs.BlockedNotificationEvent
-import at.saltyy.switchly.ui.EdgeToEdgeUtils
-import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
+import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.EditingLockGuard
+import at.saltyy.switchly.widget.BlockedNotificationsWidgetProvider
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.color.MaterialColors
-import android.content.res.ColorStateList
-import androidx.core.graphics.ColorUtils
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.text.DateFormat
 import java.util.Date
-import at.saltyy.switchly.ui.dialog.showAccented
-import androidx.recyclerview.widget.LinearLayoutManager
 
 class BlockedInboxActivity : AppCompatActivity() {
 
@@ -68,6 +72,11 @@ class BlockedInboxActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
+        if (SwitchModeStore.isEnabled(this) && !EmergencyBypassStore.isActive(this)) {
+            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_blocked_notifications)
+            finish()
+            return
+        }
         setContentView(R.layout.activity_blocked_inbox)
 
         // Ensure selection checkboxes and other widgets never fall back to OEM green in CUSTOM accent mode.
@@ -213,6 +222,7 @@ class BlockedInboxActivity : AppCompatActivity() {
             .setPositiveButton(android.R.string.ok, null)
             .setNeutralButton(R.string.delete) { _, _ ->
                 BlockedInboxStore.remove(this, e)
+                BlockedNotificationsWidgetProvider.refreshAll(this)
                 load()
             }
             .showAccented()
@@ -385,6 +395,7 @@ class BlockedInboxActivity : AppCompatActivity() {
             .setPositiveButton(getString(R.string.delete)) { _, _ ->
                 val toDelete = visibleItems.filterIndexed { idx, _ -> checked.getOrNull(idx) == true }
                 toDelete.forEach { BlockedInboxStore.remove(this, it) }
+                BlockedNotificationsWidgetProvider.refreshAll(this)
                 load()
             }
             .setNegativeButton(getString(R.string.cancel), null)
@@ -403,6 +414,7 @@ class BlockedInboxActivity : AppCompatActivity() {
             .setPositiveButton(getString(R.string.delete)) { _, _ ->
                 val toDelete = visibleItems.filter { selectedKeys.contains(eventKey(it)) }
                 toDelete.forEach { BlockedInboxStore.remove(this, it) }
+                BlockedNotificationsWidgetProvider.refreshAll(this)
                 exitSelectionMode()
                 load()
             }

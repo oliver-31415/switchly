@@ -36,21 +36,21 @@ import android.text.style.URLSpan
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
-import android.widget.CompoundButton
+import android.widget.AbsListView
+import android.widget.AdapterView
 import android.widget.CheckedTextView
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
-import android.widget.AbsListView
-import android.widget.AdapterView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
-import androidx.core.graphics.drawable.toDrawable
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.ViewCompat
 import androidx.core.widget.TextViewCompat
 import at.saltyy.switchly.R
@@ -368,8 +368,10 @@ object CustomAccentApplier {
                         view.setCardBackgroundColor(accent)
                     }
                 }
-                if (matchesAccent(view.strokeColor, defaultAccent)) {
-                    view.strokeColor = accent
+                view.strokeColorStateList?.let {
+                    if (matchesAccent(it.defaultColor, defaultAccent)) {
+                        view.setStrokeColor(ColorStateList.valueOf(accent))
+                    }
                 }
             }
 

@@ -21,8 +21,8 @@ package at.saltyy.switchly.feature.picker
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import androidx.core.content.ContextCompat
 import android.util.LruCache
+import androidx.core.content.ContextCompat
 
 /**
  * Tiny in-memory icon cache for the App Picker lists.

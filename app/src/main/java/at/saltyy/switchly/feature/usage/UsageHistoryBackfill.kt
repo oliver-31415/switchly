@@ -20,6 +20,7 @@
 package at.saltyy.switchly.feature.usage
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.UsageStore
@@ -34,7 +35,7 @@ object UsageHistoryBackfill {
 
     fun maybeRun(ctx: Context): Boolean {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (sp.getInt(KEY_IMPORT_VERSION, 0) >= CURRENT_VERSION) return false
+        if (readImportVersion(sp) >= CURRENT_VERSION) return false
         if (!UsageStatsRepo.hasUsageAccess(ctx)) return false
         // Accessibility-backed local history is the source of truth. Only do a one-time import
         // on fresh installs / fresh data stores to seed older history conservatively.
@@ -81,7 +82,7 @@ object UsageHistoryBackfill {
 
             val sessions = UsageStatsRepo.getSessionCountMapForWindow(ctx, cursor, dayEnd)
             for ((pkg, count) in sessions) {
-                OpenCountStore.mergeLegacyForDay(ctx, ymd, pkg, count)
+                OpenCountStore.mergeProfilelessForDay(ctx, ymd, pkg, count)
                 if (count > 0) changed = true
             }
 
@@ -89,6 +90,23 @@ object UsageHistoryBackfill {
         }
 
         return changed
+    }
+
+    private fun readImportVersion(sp: SharedPreferences): Int {
+        val raw = sp.all[KEY_IMPORT_VERSION] ?: return 0
+        val value = when (raw) {
+            is Int -> raw
+            is Long -> raw.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+            is Number -> raw.toLong().coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+            is String -> raw.toLongOrNull()?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt() ?: 0
+            else -> 0
+        }
+
+        if (raw !is Int) {
+            sp.edit { putInt(KEY_IMPORT_VERSION, value) }
+        }
+
+        return value
     }
 
     private fun startOfDay(timeMs: Long): Long {

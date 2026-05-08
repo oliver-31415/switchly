@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.platform.receiver.system
 
+import at.saltyy.switchly.BuildConfig
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -32,7 +33,7 @@ class TimeChangeReceiver : BroadcastReceiver() {
         val action = intent?.action ?: return
         val ctx = context.applicationContext
 
-        Log.d(TAG, "time change event: $action -> replan next alarm")
+        if (BuildConfig.DEBUG) Log.d(TAG, "time change event: $action -> replan next alarm")
         runCatching { SchedulePlanner.updateNextAlarm(ctx) }
         runCatching { SchedulePlanner.notifyNextChanged(ctx) }
 

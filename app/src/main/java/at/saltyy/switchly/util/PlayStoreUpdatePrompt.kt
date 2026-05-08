@@ -21,14 +21,14 @@ package at.saltyy.switchly.util
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Build
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppPreferences
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import at.saltyy.switchly.ui.dialog.showAccented
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
@@ -59,13 +59,7 @@ object PlayStoreUpdatePrompt {
 
                 val currentVersionCode = activity.packageManager
                     .getPackageInfo(activity.packageName, 0)
-                    .let { pi ->
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                            pi.longVersionCode
-                        } else {
-                            pi.versionCode.toLong()
-                        }
-                    }
+                    .let(PackageInfoCompat::getLongVersionCode)
 
                 // Store the "prompted" version in DataStore (single source of truth).
                 val owner = activity as? LifecycleOwner

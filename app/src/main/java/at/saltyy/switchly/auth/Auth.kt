@@ -22,8 +22,8 @@ package at.saltyy.switchly.auth
 import android.app.Activity
 import android.content.Context
 import android.widget.Toast
-import at.saltyy.switchly.auth.AuthRuntime.AuthAction
 import at.saltyy.switchly.R
+import at.saltyy.switchly.auth.AuthRuntime.AuthAction
 
 /**
  * Simple facade for authentication.
@@ -115,4 +115,9 @@ object Auth {
      * Returns the current Firebase UID (or null if not signed in).
      */
     fun uid(): String? = AuthRuntime.uid()
+
+    /**
+     * Returns the current Firebase email address (or null if not signed in).
+     */
+    fun email(): String? = AuthRuntime.email()
 }

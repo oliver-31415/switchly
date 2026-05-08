@@ -42,7 +42,6 @@ object BlockingToggleKeys {
 
     // X / Twitter
     const val KEY_BLOCK_X_HOME = "block_x_home"
-    const val KEY_BLOCK_X_FOR_YOU = KEY_BLOCK_X_HOME // legacy alias
     const val KEY_BLOCK_X_SEARCH = "block_x_search"
     const val KEY_BLOCK_X_GROK = "block_x_grok"
     const val KEY_BLOCK_X_NOTIFICATIONS = "block_x_notifications"
@@ -61,8 +60,9 @@ object BlockingToggleKeys {
     const val KEY_ENABLE_PAIRED_UIDS = "enable_paired_uids"
     const val KEY_AUTO_PAIR_ON_WRITE = "auto_pair_on_write"
 
-    // NFC anti-overuse
+    // Temporary action anti-overuse
     const val KEY_LIMIT_TEMP_DISABLE_TAGS = "limit_temp_disable_tags"
+    const val KEY_LIMIT_TEMP_QR_CODES = "limit_temp_qr_codes"
 
     // lock Settings/control screens while protection is active
     const val KEY_LOCK_SWITCHLY_APP_ACCESS = "lock_switchly_app_access"

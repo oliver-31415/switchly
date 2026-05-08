@@ -3,41 +3,29 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- FOCUS & BLOCKING -->
-    <PreferenceScreen
-        android:key="screen_focus_blocking"
+    <PreferenceCategory
+        android:key="category_settings_controls"
+        android:order="5"
+        android:layout="@layout/item_pref_section_header"
+        android:title="@string/settings_section_controls"
+        app:iconSpaceReserved="false" />
+
+    <!-- BLOCKING CONTROLS -->
+    <Preference
+        android:key="pref_toggle_options_blocking"
         android:order="10"
         android:layout="@layout/item_pref_card"
-        android:title="@string/settings_focus_blocking_title"
-        android:summary="@string/settings_focus_blocking_summary"
-        android:icon="@drawable/apps_24"
-        app:iconSpaceReserved="false">
+        android:title="@string/toggle_options_blocking_title"
+        android:summary="@string/toggle_options_blocking_summary"
+        android:icon="@drawable/tune_24"
+        app:iconSpaceReserved="false" />
 
-        <Preference
-            android:key="pref_toggle_options_blocking"
-            android:layout="@layout/item_pref_card"
-            android:title="@string/toggle_options_blocking_title"
-            android:summary="@string/toggle_options_blocking_summary"
-            android:icon="@drawable/tune_24"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_in_app_blocking"
-            android:layout="@layout/item_pref_card"
-            android:title="@string/in_app_blocking_title"
-            android:summary="@string/in_app_blocking_summary"
-            android:icon="@drawable/tune_24"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_manage_blocked_websites"
-            android:layout="@layout/item_pref_card"
-            android:title="@string/blocked_websites_title"
-            android:summary="@string/blocked_websites_summary"
-            android:icon="@drawable/language_24"
-            app:iconSpaceReserved="false" />
-
-    </PreferenceScreen>
+    <PreferenceCategory
+        android:key="category_settings_personalization"
+        android:order="20"
+        android:layout="@layout/item_pref_section_header"
+        android:title="@string/settings_section_personalization"
+        app:iconSpaceReserved="false" />
 
     <!-- APPEARANCE -->
     <PreferenceScreen
@@ -83,6 +71,13 @@
 
     </PreferenceScreen>
 
+    <PreferenceCategory
+        android:key="category_settings_reliability"
+        android:order="35"
+        android:layout="@layout/item_pref_section_header"
+        android:title="@string/settings_section_reliability"
+        app:iconSpaceReserved="false" />
+
     <!-- PERMISSIONS & RELIABILITY -->
     <PreferenceScreen
         android:key="screen_permissions_reliability"
@@ -101,15 +96,14 @@
             android:icon="@drawable/security_24"
             app:iconSpaceReserved="false" />
 
-        <Preference
-            android:key="pref_troubleshooting"
-            android:layout="@layout/item_pref_card"
-            android:title="@string/troubleshooting_title"
-            android:summary="@string/troubleshooting_pref_summary"
-            android:icon="@drawable/help_24"
-            app:iconSpaceReserved="false" />
-
     </PreferenceScreen>
+
+    <PreferenceCategory
+        android:key="category_settings_data"
+        android:order="45"
+        android:layout="@layout/item_pref_section_header"
+        android:title="@string/settings_section_data"
+        app:iconSpaceReserved="false" />
 
     <!-- ACCOUNT -->
     <PreferenceScreen
@@ -129,22 +123,6 @@
             android:icon="@drawable/cloud_24"
             app:iconSpaceReserved="false" />
 
-        <Preference
-            android:key="pref_change_emergency_pin"
-            android:layout="@layout/item_pref_card"
-            android:title="@string/pref_change_emergency_pin_title"
-            android:summary="@string/pref_change_emergency_pin_summary"
-            android:icon="@drawable/lock_24"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_app_lock"
-            android:layout="@layout/item_pref_card"
-            android:title="@string/pref_app_lock_title"
-            android:summary="@string/pref_app_lock_summary"
-            android:icon="@drawable/security_24"
-            app:iconSpaceReserved="false" />
-
         <PreferenceScreen
             android:key="screen_backup"
             android:layout="@layout/item_pref_card"
@@ -153,38 +131,64 @@
             android:icon="@drawable/cloud_24"
             app:iconSpaceReserved="false">
 
-            <Preference
-                android:key="pref_cloud_backup"
+            <PreferenceScreen
+                android:key="screen_backup_create"
                 android:layout="@layout/item_pref_card"
-                android:title="@string/pref_cloud_backup_title"
-                android:summary="@string/pref_cloud_backup_summary"
+                android:title="@string/settings_backup_create_title"
+                android:summary="@string/settings_backup_create_summary"
                 android:icon="@drawable/cloud_upload_24"
-                app:iconSpaceReserved="false" />
+                app:iconSpaceReserved="false">
 
-            <Preference
-                android:key="pref_cloud_restore"
+                <Preference
+                    android:key="pref_cloud_backup"
+                    android:layout="@layout/item_pref_card"
+                    android:title="@string/pref_cloud_backup_title"
+                    android:summary="@string/pref_cloud_backup_summary"
+                    android:icon="@drawable/cloud_upload_24"
+                    app:iconSpaceReserved="false" />
+
+                <Preference
+                    android:key="pref_file_backup"
+                    android:layout="@layout/item_pref_card"
+                    android:title="@string/pref_file_backup_title"
+                    android:summary="@string/pref_file_backup_summary"
+                    android:icon="@drawable/content_copy_24"
+                    app:iconSpaceReserved="false" />
+            </PreferenceScreen>
+
+            <PreferenceScreen
+                android:key="screen_backup_restore"
                 android:layout="@layout/item_pref_card"
-                android:title="@string/pref_cloud_restore_title"
-                android:summary="@string/pref_cloud_restore_summary"
+                android:title="@string/settings_restore_title"
+                android:summary="@string/settings_restore_summary"
                 android:icon="@drawable/cloud_download_24"
-                app:iconSpaceReserved="false" />
+                app:iconSpaceReserved="false">
 
-            <Preference
-                android:key="pref_cloud_delete_backups"
-                android:layout="@layout/item_pref_card"
-                android:title="@string/pref_cloud_delete_backups_title"
-                android:summary="@string/pref_cloud_delete_backups_summary"
-                android:icon="@drawable/delete_24"
-                app:iconSpaceReserved="false" />
+                <Preference
+                    android:key="pref_cloud_restore"
+                    android:layout="@layout/item_pref_card"
+                    android:title="@string/pref_cloud_restore_title"
+                    android:summary="@string/pref_cloud_restore_summary"
+                    android:icon="@drawable/cloud_download_24"
+                    app:iconSpaceReserved="false" />
+
+                <Preference
+                    android:key="pref_file_restore"
+                    android:layout="@layout/item_pref_card"
+                    android:title="@string/pref_file_restore_title"
+                    android:summary="@string/pref_file_restore_summary"
+                    android:icon="@drawable/cloud_download_24"
+                    app:iconSpaceReserved="false" />
+
+                <Preference
+                    android:key="pref_cloud_delete_backups"
+                    android:layout="@layout/item_pref_card"
+                    android:title="@string/pref_cloud_delete_backups_title"
+                    android:summary="@string/pref_cloud_delete_backups_summary"
+                    android:icon="@drawable/delete_24"
+                    app:iconSpaceReserved="false" />
+            </PreferenceScreen>
         </PreferenceScreen>
-
-        <Preference
-            android:key="pref_premium_upgrade"
-            android:layout="@layout/item_pref_card"
-            android:title="@string/premium_title"
-            android:summary="@string/premium_summary"
-            android:icon="@drawable/star_24"
-            app:iconSpaceReserved="false" />
 
         <Preference
             android:key="pref_reset_app_data"
@@ -195,6 +199,13 @@
             app:iconSpaceReserved="false" />
 
     </PreferenceScreen>
+
+    <PreferenceCategory
+        android:key="category_settings_help"
+        android:order="55"
+        android:layout="@layout/item_pref_section_header"
+        android:title="@string/settings_section_help"
+        app:iconSpaceReserved="false" />
 
     <!-- HELP & ABOUT -->
     <PreferenceScreen
@@ -219,6 +230,14 @@
             android:layout="@layout/item_pref_card"
             android:title="@string/pref_faq_title"
             android:summary="@string/pref_faq_summary"
+            android:icon="@drawable/help_24"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_troubleshooting"
+            android:layout="@layout/item_pref_card"
+            android:title="@string/troubleshooting_title"
+            android:summary="@string/troubleshooting_pref_summary"
             android:icon="@drawable/help_24"
             app:iconSpaceReserved="false" />
 

@@ -29,7 +29,9 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.ColorRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
@@ -42,9 +44,13 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         val title: String,
         val subtitle: String,
         val onClick: (() -> Unit)? = null,
+        val onLongClick: (() -> Boolean)? = null,
+        val enableLongPressCopy: Boolean = true,
         val copyValue: String = subtitle,
         val showCopyButton: Boolean = false,
-        val copiedToast: String? = null
+        val copiedToast: String? = null,
+        @param:ColorRes @field:ColorRes val subtitleColorRes: Int? = null,
+        val subtitleAlpha: Float? = null
     )
 
     private lateinit var toolbar: MaterialToolbar
@@ -64,7 +70,7 @@ abstract class TilesInfoActivity : AppCompatActivity() {
 
         setupToolbar()
         setupContent()
-        renderTiles()
+        refreshTiles()
     }
 
     private fun setupToolbar() {
@@ -87,7 +93,7 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvSection).visibility = View.GONE
     }
 
-    private fun renderTiles() {
+    protected fun refreshTiles() {
         rowsContainer.removeAllViews()
 
         val inflater = LayoutInflater.from(this)
@@ -111,13 +117,21 @@ abstract class TilesInfoActivity : AppCompatActivity() {
 
         titleView.text = tile.title
         subtitleView.text = tile.subtitle
+        tile.subtitleColorRes?.let { subtitleView.setTextColor(ContextCompat.getColor(this, it)) }
+        subtitleView.alpha = tile.subtitleAlpha ?: if (tile.subtitleColorRes != null) 1f else 0.72f
 
-        root.isClickable = tile.onClick != null
+        root.isClickable = tile.onClick != null || tile.onLongClick != null
         root.setOnClickListener { tile.onClick?.invoke() }
         root.setOnLongClickListener {
-            copyToClipboard(tile.copyValue)
-            Toast.makeText(this, getString(R.string.copied), Toast.LENGTH_SHORT).show()
-            true
+            when {
+                tile.onLongClick != null -> tile.onLongClick.invoke()
+                tile.enableLongPressCopy -> {
+                    copyToClipboard(tile.copyValue)
+                    Toast.makeText(this, getString(R.string.copied), Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
         }
 
         if (tile.showCopyButton) {

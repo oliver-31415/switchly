@@ -31,6 +31,7 @@ import at.saltyy.switchly.data.prefs.BlockedNotificationEvent
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.widget.BlockedNotificationsWidgetProvider
 
 /**
  * Hides notifications from apps that are currently blocked by the active profile.
@@ -199,6 +200,7 @@ class NotificationBlockerService : NotificationListenerService() {
                             channelId = clip(channelId, 200).orEmpty()
                         )
                     )
+                    BlockedNotificationsWidgetProvider.refreshAll(this)
                 }
             }
         }

@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.feature.usage
 
+import android.content.res.ColorStateList
 import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
@@ -27,6 +28,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
+import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
@@ -39,14 +41,12 @@ import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.dialog.Dialogs
-import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.AppBlockSafety
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import android.content.res.ColorStateList
 
 /**
  * Quick-edit dialogs for app/website limits.

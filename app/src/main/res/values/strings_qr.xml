@@ -1,11 +1,13 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- QR - Screen titles and validation -->
     <string name="qr_title">QR</string>
     <string name="qr_generate_title">Generate QR</string>
     <string name="qr_scan_title">Scan QR code</string>
     <string name="permission_camera_required">Camera permission is required to scan QR codes.</string>
     <string name="invalid_qr_code">Invalid QR code</string>
+
     <!-- QR - Action payloads -->
     <string name="qr_action">Action</string>
     <string name="qr_action_enable">Enable</string>
@@ -17,6 +19,7 @@
     <string name="qr_action_profile_disable">Disable profile</string>
     <string name="qr_action_profile_toggle">Toggle profile</string>
     <string name="qr_profile_fallback">Profile</string>
+
     <!-- QR - Temporary duration values -->
     <string name="qr_minutes">Minutes</string>
     <string name="qr_minutes_5">5</string>
@@ -28,6 +31,15 @@
     <string name="qr_minutes_custom">Custom…</string>
     <string name="qr_minutes_custom_title">Custom minutes</string>
     <string name="qr_minutes_hint">e.g. 45</string>
+
     <!-- QR - Misc -->
     <string name="qr_clipboard_label">Switchly URI</string>
+
+    <!-- QR - Temporary action limits -->
+    <string name="qr_temp_limiter_cooldown">This QR code is on cooldown. Try again in %1$d min.</string>
+    <plurals name="qr_temp_limiter_daily_limit">
+        <item quantity="one">Daily limit reached for this QR code (%1$d use/day).</item>
+        <item quantity="other">Daily limit reached for this QR code (%1$d uses/day).</item>
+    </plurals>
+
 </resources>

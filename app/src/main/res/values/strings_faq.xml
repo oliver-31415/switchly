@@ -1,10 +1,15 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- FAQ -->
     <string name="faq_screen_title">FAQ</string>
     <string name="faq_search_hint">Search questions…</string>
     <string name="faq_expand_description">Expand or collapse answer</string>
     <string name="faq_icon_description">FAQ icon</string>
+    <string name="faq_header_popular">Top questions</string>
+    <string name="faq_empty_title">No matching FAQ found</string>
+    <string name="faq_empty_body">Try a different keyword like NFC, QR, schedule, profile or emergency unlock.</string>
+    <string name="faq_clear_search">Clear search</string>
     <string name="faq_header_general">Basics</string>
     <string name="faq_header_profiles">Profiles</string>
     <string name="faq_header_modes">Protection modes</string>
@@ -72,9 +77,9 @@
     <string name="faq_q_nfc_basic">How to use Switchly with NFC</string>
     <string name="faq_a_nfc_basic">Open the NFC writer and write a Switchly trigger to an NFC tag. If NFC-required unlock is enabled, you will need to scan a valid tag to disable Switchly.</string>
     <string name="faq_q_nfc_pairing">What is “paired tags/UID-only”?</string>
-    <string name="faq_a_nfc_pairing">If enabled, Switchly will only accept NFC tags whose UID you paired. This prevents bypassing with random tags.\n\nRead-only paired tags work as a global NFC trigger only. They cannot target a specific profile, because no Switchly action can be written to the card itself.\n\nTo manage paired tags, first enable “Enable paired NFC tags” in Toggle Options. After that, “Manage paired tags” becomes available in Settings.</string>
+    <string name="faq_a_nfc_pairing">If enabled, Switchly will only accept NFC tags whose UID you paired. This prevents bypassing with random tags.\n\nRead-only paired tags work as a global NFC trigger only. They cannot target a specific profile, because no Switchly action can be written to the card itself.\n\nTo manage paired tags, open Manage → Paired NFC tags.</string>
     <string name="faq_q_nfc_paired_tags">NFC pairing/UID-only mode</string>
-    <string name="faq_a_nfc_paired_tags">UID-only mode is a security feature: when enabled, Switchly only accepts NFC tags whose UID you paired.\nIf you accidentally paired a transit card or another tag UID, other tags may be rejected with “Wrong NFC tag (paired UID required)”.\nTo remove or rename paired tags, first enable “Enable paired NFC tags” in Toggle Options, then open Manage Paired Tags in Settings.\nPairing is done by scanning a tag in the NFC writer and choosing “Pair UID”.</string>
+    <string name="faq_a_nfc_paired_tags">UID-only mode is a security feature: when enabled, Switchly only accepts NFC tags whose UID you paired.\nIf you accidentally paired a transit card or another tag UID, other tags may be rejected with “Wrong NFC tag (paired UID required)”.\nTo remove or rename paired tags, open Manage → Paired NFC tags.\nPairing is done by scanning a tag in the NFC writer and choosing “Pair UID”.</string>
     <string name="faq_q_nfc_uid_pair">What does “Pair tag (UID only)” do?</string>
     <string name="faq_a_nfc_uid_pair">“Pair tag (UID only)” does not write anything to the NFC tag.\nInstead, Switchly only reads the tag UID (hardware ID) and stores it inside the app.\n\nIf UID pairing is enabled, only that exact paired tag can be used to toggle or unlock Switchly without a written action. Unpaired blank tags are ignored.\nThis is useful for read-only tags or if you do not want the tag to contain a readable action.</string>
     <string name="faq_q_nfc_auto_pairing">Why was my NFC tag paired automatically after writing it?</string>
@@ -98,15 +103,26 @@
     <string name="faq_q_idiot_tags">Which NFC tags are recommended?</string>
     <string name="faq_a_idiot_tags">Recommended: NTAG213, NTAG215, NTAG216 (best compatibility). NTAG213 is enough for most users. Buy from a reliable seller and avoid random ultra-cheap no-name packs.</string>
     <string name="faq_q_schedules_basic">How do schedules work?</string>
-    <string name="faq_a_schedules_basic">Schedules let Switchly react automatically when a condition matches.\n\nA schedule has two parts:\n• Condition: when it should become active (time, Wi-Fi, or Bluetooth)\n• Action: what Switchly should do when that happens\n\nExamples:\n• Time schedule: every weekday from 08:00 to 16:00\n• Wi-Fi schedule: while connected to your work network\n• Bluetooth schedule: when your car device is connected\n\nSome actions only trigger once, while others stay in effect for the whole active period and revert when the schedule ends.</string>
+    <string name="faq_a_schedules_basic">Schedules let Switchly react automatically when a condition matches.\n\nA schedule has two parts:\n• Condition: when it should become active (time, Wi-Fi, Bluetooth, or location)\n• Action: what Switchly should do when that happens\n\nExamples:\n• Time schedule: every weekday from 08:00 to 16:00\n• Wi-Fi schedule: while connected to your work network\n• Bluetooth schedule: when your car device is connected\n• Location schedule: when you enter or leave a place\n\nSome actions only trigger once, while others stay in effect for the whole active period and revert when the schedule ends.</string>
     <string name="faq_q_schedules_actions">What does the schedule “Action” do?</string>
     <string name="faq_a_schedules_actions">Each schedule action controls what happens when the schedule becomes active:\n\n• Enable: Turns Switchly on when the schedule starts. It stays on until something else changes it.\n• Disable: Turns Switchly off when the schedule starts. It stays off until something else changes it.\n• Toggle: Flips the current state once when the schedule triggers.\n• Enable &amp; Disable: Turns Switchly on while the schedule is active, then turns it off again when the schedule ends.\n• Disable &amp; Enable: Turns Switchly off while the schedule is active, then turns it on again when the schedule ends.\n\nRange-style actions are best when you want a schedule to control both start and end. One-shot actions are better when the schedule should only trigger once.</string>
     <string name="faq_q_schedule_types">What schedule types can I use?</string>
-    <string name="faq_a_schedule_types">Switchly supports time schedules (single time/range/date range), Wi-Fi schedules (SSID), and Bluetooth schedules (device name). You can choose actions like Enable, Disable, Toggle, or Enable+Disable depending on your use case.</string>
+    <string name="faq_a_schedule_types">Switchly supports time schedules (single time/range/date range), Wi-Fi schedules (SSID), Bluetooth schedules (device name), and location schedules (geofence with radius). You can choose actions like Enable, Disable, Toggle, or Enable+Disable depending on your use case.</string>
     <string name="faq_q_schedules_wifi">Why do Wi-Fi schedules need Location permission?</string>
-    <string name="faq_a_schedules_wifi">Android treats the Wi-Fi name (SSID) as location-like information.\nOn newer versions, apps need Location permission to read the current SSID. On Android 13 and newer, some devices also require the Nearby Wi-Fi devices permission for reliable Wi-Fi trigger detection.\n\nWithout these permissions, Wi-Fi schedules cannot reliably detect your current network and may not trigger.</string>
+    <string name="faq_a_schedules_wifi">Android treats the Wi-Fi name (SSID) as location-related information. On newer Android versions, apps need location permission to read the current SSID. On Android 13 and newer, some devices also require Nearby Wi-Fi devices for reliable Wi-Fi trigger detection.\n\nWithout these permissions, Wi-Fi schedules cannot reliably detect your current network and may not trigger.\n\nTip: you can pre-enable the needed permissions in Switchly → Permissions before creating the schedule.</string>
     <string name="faq_q_schedules_bluetooth">Can schedules react to Bluetooth?</string>
-    <string name="faq_a_schedules_bluetooth">Yes. You can trigger actions when a specific Bluetooth device connects/disconnects (depending on schedule options).</string>
+    <string name="faq_a_schedules_bluetooth">Yes. You can trigger actions when a specific Bluetooth device connects or disconnects, depending on the schedule options. On Android 12 and newer, grant the Nearby devices permission first.\n\nTip: you can pre-enable the permission in Switchly → Permissions before creating the schedule.</string>
+    <string name="faq_q_schedules_location">How do location schedules work?</string>
+    <string name="faq_a_schedules_location">Location schedules use geofences: you choose a place, a radius, and whether the action should run on enter, on exit, or both.\n\nTo work reliably, Switchly needs precise location. If the trigger should also work while the app is not open, background location (“Allow all the time”) is needed on Android 10 and newer. Android can still delay geofence events a little to save battery, so triggers are usually not truly instant.\n\nTip: you can pre-enable the needed location permission in Switchly → Permissions before creating the schedule.</string>
+    <string name="faq_q_uninstall_friction">Can Switchly prevent uninstall?</string>
+    <string name="faq_a_uninstall_friction">On a normal personal Android device, no app can reliably hard-block its own uninstall in the same way a managed enterprise device can. Switchly therefore uses uninstall friction instead: it can make uninstall-related screens harder to access while protection is active, but it does not claim guaranteed uninstall blocking.</string>
+    <string name="faq_q_advanced_mode_open">How do I open Advanced mode?</string>
+    <string name="faq_a_advanced_mode_open">Open App Info and long press the version row. A normal tap still runs the version/update check, while a long press opens Advanced mode.</string>
+    <string name="faq_q_advanced_mode_device_admin">What does Switchly device admin do?</string>
+    <string name="faq_a_advanced_mode_device_admin">Switchly device admin is an optional admin hook for advanced testing. It can add extra friction and helps with some managed-device experiments, but on a normal personal Android device it still does not provide a real enterprise-grade uninstall lock.</string>
+    <string name="faq_q_advanced_mode_adb_requirements">Why do the ADB managed-device commands often not work?</string>
+    <string name="faq_a_advanced_mode_adb_requirements">Commands such as set-device-owner or set-profile-owner usually only work in specific provisioning scenarios. Device Owner normally requires a freshly provisioned device, and Profile Owner has its own limits, so failures on a normal already-used smartphone are expected.</string>
+
     <string name="faq_q_usage_limit_what">How do app limits work?</string>
     <string name="faq_a_usage_limit_what">If you set a daily limit, Switchly tracks usage time and blocks the app once the limit is reached.</string>
     <string name="faq_q_usage_limit_set">Where can I set a daily limit?</string>
@@ -146,7 +162,7 @@
     <string name="faq_q_tile_why_missing">Why is the Quick Settings tile missing?</string>
     <string name="faq_a_tile_why_missing">First enable “Quick Settings tile availability” in Toggle Options, then add the tile from Android’s Quick Settings edit screen.\nSome OEMs only show tiles after the app has been opened once.</string>
     <string name="faq_q_contact">How can I contact the developer?</string>
-    <string name="faq_a_contact">Join the community Discord server for feedback and support:\n\nhttps://discord.gg/PC5zn2NeCg\n\nOr contact the developer directly by email:\nsupport@saltyy.at</string>
+    <string name="faq_a_contact">Join the community Discord server for feedback and support:\n\nhttps://discord.gg/PC5zn2NeCg\n\nFor direct support, use the support contact shown in the About/Support screen.</string>
     <string name="faq_q_donate">Can I donate to support Switchly?</string>
     <string name="faq_a_donate">Premium is intentionally priced very low. If you still want to support development, you can buy Premium as a “tip” or contact me to donate.\nI plan to make Switchly open source once I have a small buffer, so I can continue development without stress and without someone immediately copying it 1:1.\n\nDonation link:\nhttps://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY</string>
     <string name="faq_a_donate_clean">Switchly is already very low-priced. If you still want to support development, you can use Premium as a tip or donate directly via PayPal: https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY</string>
@@ -170,4 +186,5 @@
     <string name="faq_a_barcode_what">Barcode actions work like QR actions, but with regular barcodes. You can map a scanned barcode value to a Switchly action and use printed or physical codes as triggers.</string>
     <string name="faq_q_barcode_setup">How do I use barcodes?</string>
     <string name="faq_a_barcode_setup">Open Manage barcodes, add a barcode by scanning it or entering it manually, then choose the Switchly action it should trigger. Later, scan the same barcode in Switchly to run that action.</string>
+
 </resources>

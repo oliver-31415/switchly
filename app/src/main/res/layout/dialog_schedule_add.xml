@@ -311,6 +311,136 @@
                 android:text="@string/schedules_bt_pick_paired" />
         </LinearLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutLocationLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"
+            android:hint="@string/schedules_location_label_hint"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxBackgroundMode="outline"
+            app:endIconMode="none">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputLocationLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="64dp"
+                android:gravity="center_vertical"
+                android:inputType="textCapSentences"
+                android:autofillHints="none" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:id="@+id/groupLocationActions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutLocationTrigger"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/schedules_location_trigger_title"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                app:boxBackgroundMode="outline"
+                app:endIconMode="dropdown_menu">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/spinnerLocationTrigger"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="64dp"
+                    android:gravity="center_vertical"
+                    android:inputType="none"
+                    android:importantForAutofill="no" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/textLocationSummary"
+                style="@style/TextAppearance.MaterialComponents.Body2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="6dp"
+                android:text="@string/schedules_location_not_set" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUseCurrentLocation"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/schedules_location_choose" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="4dp"
+                style="@style/TextAppearance.MaterialComponents.Subtitle2"
+                android:text="@string/schedules_location_radius_title" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupLocationRadius"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:chipSpacingHorizontal="4dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRadius100"
+                    style="@style/Switchly.DayChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="@string/schedules_location_radius_100" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRadius250"
+                    style="@style/Switchly.DayChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="@string/schedules_location_radius_250" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRadius500"
+                    style="@style/Switchly.DayChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="@string/schedules_location_radius_500" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutLocationCooldown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/schedules_location_cooldown_title"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                app:boxBackgroundMode="outline"
+                app:endIconMode="dropdown_menu">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/spinnerLocationCooldown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="64dp"
+                    android:gravity="center_vertical"
+                    android:inputType="none"
+                    android:importantForAutofill="no" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
         <!-- Weekly group -->
         <LinearLayout
             android:id="@+id/groupWeekly"

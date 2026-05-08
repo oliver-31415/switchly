@@ -1,5 +1,6 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- LIMITS - Quick editors and value helpers -->
     <string name="set_daily_limit">Tägliches Limit festlegen</string>
     <string name="set_daily_limit_title">Tägliches Limit: %1$s</string>
@@ -37,6 +38,7 @@
     <string name="limit_attempts_action">Öffnungen</string>
     <string name="no_profile_selected">Bitte wähle ein Profil.</string>
     <string name="profile_active_fmt">Profil: %1$s</string>
+
     <!-- LIMITS - Unavailable app cleanup -->
     <string name="unavailable_app_label">Nicht verfügbare App</string>
     <string name="unavailable_app_state">Nicht installiert</string>
@@ -46,6 +48,7 @@
         <item quantity="one">%1$d nicht verfügbarer App-Eintrag wurde zur Bereinigung geladen.</item>
         <item quantity="other">%1$d nicht verfügbare App-Einträge wurden zur Bereinigung geladen.</item>
     </plurals>
+
     <!-- USAGE - Screen title, tabs, and ranges -->
     <string name="statistics_usage_title">Nutzungsstatistiken</string>
     <string name="stats_range_today">Heute</string>
@@ -65,9 +68,11 @@
     <string name="usage_range_month">Monat</string>
     <string name="usage_range_year">Jahr</string>
     <string name="usage_range_overall">Gesamt</string>
+
     <!-- USAGE - Permission prompts -->
     <string name="usage_access_needed_desc">Bitte aktiviere für Switchly den Zugriff auf „App-Nutzungsdaten“, um deine Bildschirmzeit-Statistiken anzuzeigen.</string>
     <string name="usage_open_settings">Einstellungen öffnen</string>
+
     <!-- USAGE - Totals, attempts, and row hints -->
     <string name="usage_row_tap_hint_app">Tippe auf eine App-Zeile, um Details zu öffnen.</string>
     <string name="usage_row_tap_hint_website">Tippe auf eine Website-Zeile, um Details zu öffnen.</string>
@@ -87,6 +92,7 @@
     <string name="usage_row_tap_hint">Tippe auf eine App-Zeile, um Details zu öffnen.</string>
     <string name="usage_row_open_details_a11y">%1$s, %2$s, %3$s. Doppeltippen für Details.</string>
     <string name="usage_row_basic_a11y">%1$s, %2$s, %3$s.</string>
+
     <!-- USAGE - Website row actions -->
     <string name="website_manage_blocking">Blockierungseinstellungen</string>
     <string name="website_delete_data">Daten löschen</string>
@@ -96,6 +102,7 @@
     <string name="website_delete_remove_limit">Tageslimit entfernen</string>
     <string name="website_delete_remove_block_rule">Blockierungsregel entfernen</string>
     <string name="website_deleted_toast">Website-Daten gelöscht</string>
+
     <!-- USAGE - Empty states and placeholders -->
     <string name="usage_web_placeholder">Website-Statistiken folgen bald.</string>
     <string name="usage_apps_no_accessibility">Für die App-Nutzungsstatistik muss die Switchly-Bedienungshilfe aktiviert sein.</string>
@@ -104,6 +111,7 @@
     <string name="usage_websites_no_accessibility">Website-Tracking benötigt aktivierte Switchly-Bedienungshilfe.</string>
     <string name="usage_websites_no_data">Noch keine Website-Daten. Öffne eine Website in einem unterstützten Browser (Chrome, Brave, Edge, Firefox …), während die Switchly-Bedienungshilfe aktiviert ist.</string>
     <string name="usage_websites_no_blocked">Noch keine limitierten Websites konfiguriert.</string>
+
     <!-- USAGE - Generic formatting tokens and zero values -->
     <string name="usage_value_label">Nutzung</string>
     <string name="usage_share_of_period">Anteil am Zeitraum</string>
@@ -112,6 +120,7 @@
     <string name="usage_time_zero_short">0 Min</string>
     <string name="usage_time_zero_medium">0 Std 00 Min</string>
     <string name="usage_time_zero_long">0 Std 00 Min 00 Sek</string>
+
     <!-- STATS - Filters and sorting -->
     <string name="stats_sort_az">Name (A–Z)</string>
     <string name="stats_sort_za">Name (Z–A)</string>
@@ -126,6 +135,7 @@
     <string name="stats_sort_used_time_desc">Nutzungszeit (oben)</string>
     <string name="stats_sort_used_time_asc">Nutzungszeit (unten)</string>
     <string name="stats_sort_filter">Sortieren &amp; filtern</string>
+
     <!-- USAGE - Detail dialogs and fallback -->
     <string name="usage_point_dialog_title">%1$s - %2$s</string>
     <string name="usage_switchly_fallback_title">Noch keine Daten von Switchly</string>
@@ -134,4 +144,5 @@
     <string name="usage_details_premium_title">Detaillierte Statistiken sind Teil von Premium</string>
     <string name="usage_details_premium_message">Hol dir Premium, um detaillierte Statistiken und Einblicke zu sehen.</string>
     <string name="usage_details_premium_action">Premium ansehen</string>
+
 </resources>

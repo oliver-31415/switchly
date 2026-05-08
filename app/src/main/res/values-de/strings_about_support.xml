@@ -1,18 +1,16 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- ABOUT - Screen and section headers -->
-    <string name="about_title">Über</string>
-    <string name="about_app_info">App-Info</string>
     <string name="about_app_info_title">App-Info</string>
     <string name="about_app_info_summary">Version, Build und Links</string>
-    <string name="about_device_details">Gerätedetails</string>
     <string name="about_device_info_title">Geräteinfo</string>
     <string name="about_device_info_summary">Android-Version, Modell und Gerät</string>
-    <string name="about_developer_info">Entwicklerinfo</string>
     <string name="about_developer_info_title">Entwicklerinfo</string>
     <string name="about_developer_info_summary">Entwickler- und Build-Details</string>
     <string name="about_other_switchly_products_title">Weitere Switchly-Produkte</string>
     <string name="about_other_switchly_products_summary">Switchly Lite, Launcher und spätere Extras</string>
+
     <!-- ABOUT - Field labels and install source values -->
     <string name="about_abi_label">ABI</string>
     <string name="about_android_label">Android</string>
@@ -26,6 +24,11 @@
     <string name="about_first_install_label">Erste Installation</string>
     <string name="about_gitlab_label">GitLab-Repository</string>
     <string name="about_install_source_label">Installationsquelle</string>
+    <string name="about_install_source_unknown">Unbekannt</string>
+    <string name="about_install_source_google_play">Google Play Store</string>
+    <string name="about_install_source_galaxy_store">Samsung Galaxy Store</string>
+    <string name="about_install_source_amazon">Amazon Appstore</string>
+    <string name="about_install_source_package_installer">Paket-Installer</string>
     <string name="about_last_update_label">Letztes Update</string>
     <string name="about_locale_label">Gebietsschema</string>
     <string name="about_manufacturer_label">Hersteller</string>
@@ -37,35 +40,23 @@
     <string name="about_older_versions_label">Downloads</string>
     <string name="about_switchly_lite_play_store_label">Switchly Lite – Play Store</string>
     <string name="about_switchly_launcher_play_store_label">Switchly Launcher – Play Store</string>
-    <string name="about_install_source_unknown">Unbekannt</string>
-    <string name="about_install_source_google_play">Google Play Store</string>
-    <string name="about_install_source_galaxy_store">Samsung Galaxy Store</string>
-    <string name="about_install_source_amazon">Amazon Appstore</string>
-    <string name="about_install_source_package_installer">Paket-Installer</string>
+
     <!-- ABOUT - Row titles and display labels -->
-    <string name="about_android">Android-Version</string>
-    <string name="about_app_name">App-Name</string>
-    <string name="about_developer">Entwickler</string>
-    <string name="about_device">Gerätemodell</string>
-    <string name="about_discord">Discord</string>
-    <string name="about_gitlab_title">GitLab-Repository</string>
     <string name="about_mail">E-Mail</string>
-    <string name="about_package">Paketname</string>
-    <string name="about_version">Version</string>
     <string name="about_switchly_lite">Switchly Lite</string>
     <string name="about_switchly_lite_bonus">Eine leichtere Version für einfache Abläufe wie NFC, Tastenaktionen und zeitgesteuerte Pläne.</string>
     <string name="about_switchly_launcher">Switchly Launcher</string>
     <string name="about_switchly_launcher_bonus">Ein simpler und starker Launcher für ein minimaleres, ablenkungsärmeres Setup.</string>
+
     <!-- ABOUT - Formatting, values, contact data, and links -->
-    <string name="about_android_version_fmt">Android %1$s (SDK %2$d)</string>
-    <string name="about_version_with_update">%1$s (%2$s)</string>
     <string name="dev_name_line">Entwickler: Saltyy (Andi S.)</string>
+
     <!-- ABOUT - User feedback and availability errors -->
     <string name="about_discord_copied">Discord-Link kopiert</string>
     <string name="about_mail_copied">E-Mail kopiert</string>
     <string name="about_no_browser">Keine Browser-App gefunden</string>
-    <string name="about_no_mail_app">Keine E-Mail-App gefunden</string>
     <string name="about_play_store_link_copied">Play-Store-Link kopiert</string>
+
     <!-- SUPPORT -->
     <string name="support_title">Support</string>
     <string name="support_desc">Brauchst du Hilfe oder hast einen Fehler gefunden?\nSende eine E-Mail und füge nach Möglichkeit Debug-Infos sowie eine kurze Beschreibung hinzu.</string>
@@ -79,6 +70,7 @@
     <string name="support_include_debug">Debug-Infos anhängen</string>
     <string name="support_include_advanced_debug">Erweiterte Diagnoseinfos anhängen</string>
     <string name="support_debug_preface">Bitte beschreibe dein Problem oberhalb dieser Zeile.</string>
+
     <!-- TROUBLESHOOTING -->
     <string name="troubleshooting_title">Fehlerbehebung</string>
     <string name="troubleshooting_accessibility">Bedienungshilfedienst</string>
@@ -91,7 +83,8 @@
     <string name="troubleshooting_missing">Fehlt ❌</string>
     <string name="troubleshooting_open_permissions_overview">Berechtigungsübersicht öffnen</string>
     <string name="troubleshooting_open_settings">Einstellungen öffnen</string>
-    <string name="troubleshooting_info_accessibility">Switchly benötigt Bedienungshilfe (Accessibility), um Apps zu blockieren und Zeitpläne durchzusetzen. Wenn sie deaktiviert ist, funktioniert das Blockieren nicht.</string>
+    <string name="troubleshooting_open_app_settings">App-Einstellungen öffnen</string>
+    <string name="troubleshooting_info_accessibility">Switchly benötigt Bedienungshilfe (Accessibility), um geöffnete Apps und Websites zu erkennen, auf In-App-Navigation zu reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchzusetzen. Wenn sie deaktiviert ist, funktionieren wichtige Schutzfunktionen nicht.</string>
     <string name="troubleshooting_info_notification_access">Nur für die Funktion „Blockierte Benachrichtigungen“. Ohne Zugriff können Benachrichtigungen nicht blockiert werden.</string>
     <string name="troubleshooting_info_battery">Die Akku-Optimierung kann Hintergrundarbeit verzögern. Deaktiviere die Optimierung für Switchly, um die Zuverlässigkeit zu verbessern.</string>
     <string name="troubleshooting_info_exact_alarms">Exakte Alarme sorgen dafür, dass zeitbasierte Zeitpläne pünktlich auslösen. Manche Geräte verzögern Zeitpläne, wenn dies deaktiviert ist.</string>
@@ -101,9 +94,11 @@
     <string name="troubleshooting_pref_summary">Häufige Probleme &amp; Lösungen prüfen</string>
     <string name="troubleshooting_battery_oem_note">Manche Geräte bieten keine Akkuoption „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, ist das auf deinem Gerät möglicherweise bereits das Maximum.</string>
     <string name="troubleshooting_exact_alarms_note">Wenn exakte Alarme nicht erlaubt sind, können zeitbasierte Zeitpläne verspätet oder nicht zur richtigen Zeit ausgeführt werden.</string>
+
     <!-- TUTORIAL entry -->
     <string name="pref_tutorial_title">Tutorial</string>
     <string name="pref_tutorial_summary">Einrichtungsschritte und Funktionen noch einmal ansehen</string>
+
     <!-- CHANGELOG and release notes -->
     <string name="release_note_body_placeholder">Versionshinweise…</string>
     <string name="changelog_latest_fmt">Neueste: %1$s</string>
@@ -133,4 +128,37 @@
     <string name="changelog_tab_beta">Beta</string>
     <string name="support_include_logs">Logs anhängen</string>
     <string name="support_latest_logs_heading">Neueste Logs</string>
+
+    <!-- ADVANCED MODE -->
+    <string name="advanced_mode_title">Erweiterte Tools</string>
+    <string name="advanced_mode_unlocked_toast">Erweiterte Tools freigeschaltet</string>
+    <string name="advanced_mode_admin_label">Switchly</string>
+    <string name="advanced_mode_admin_description">Gibt Switchly die nötige Kontrolle für optionale erweiterte Geräteadmin- und Managed-Device-Funktionen.</string>
+    <string name="advanced_mode_disable_warning">Wenn du den Switchly-Geräteadmin deaktivierst, werden die erweiterten Managed-Device-Hooks entfernt. Auf normalen persönlichen Geräten ist das nur eine erweiterte Hilfe und keine echte Deinstallationssperre.</string>
+    <string name="advanced_mode_tile_status">Aktuelles Managed-Device-Setup</string>
+    <string name="advanced_mode_tile_summary">Wofür dieser Modus gedacht ist</string>
+    <string name="advanced_mode_tile_recommendation">Für die meisten Nutzer empfohlen</string>
+    <string name="advanced_mode_tile_receiver">Admin-Receiver-Komponente</string>
+    <string name="advanced_mode_tile_device_owner">ADB: Device Owner setzen</string>
+    <string name="advanced_mode_tile_profile_owner">ADB: Profile Owner setzen</string>
+    <string name="advanced_mode_tile_remove_admin">ADB: Aktiven Admin entfernen</string>
+    <string name="advanced_mode_tile_check_state">ADB: Policy-Status prüfen</string>
+    <string name="advanced_mode_tile_constraints">Wichtige Hinweise vorher</string>
+    <string name="advanced_mode_tile_docs">Offizielle Doku und Referenz</string>
+    <string name="advanced_mode_status_standard">Normaler persönlicher App-Modus.\nKeine Managed-Device-Eigentümerschaft ist aktiv.</string>
+    <string name="advanced_mode_status_device_admin">Die alte Geräteadmin-Aktivierung ist aktiv.</string>
+    <string name="advanced_mode_status_profile_owner">Profile Owner ist aktiv.</string>
+    <string name="advanced_mode_status_device_owner">Device Owner ist aktiv.</string>
+    <string name="advanced_mode_summary_body">Dieser Screen ist für fortgeschrittene Nutzer gedacht, die mit Android-Enterprise-ähnlicher Verwaltung per ADB experimentieren möchten.\nAuf normalen persönlichen Geräten kann Switchly nur Deinstallations-Reibung hinzufügen.\nEine stärkere Deinstallationssperre erfordert Managed-Device-Eigentümerschaft und ist kein normaler Consumer-Setup.</string>
+    <string name="advanced_mode_recommendation_body">Für fast alle Nutzer ist Switchlys Deinstallations-Reibung die richtige Option.\nNutze diesen Screen nur, wenn du Device-Admin-, Profile-Owner- oder Device-Owner-Flows gezielt testen willst.</string>
+    <string name="advanced_mode_constraints_body">Device-Owner-Befehle funktionieren meist nur auf einem frisch eingerichteten Gerät ohne bestehende Konten.\nProfile-Owner-Befehle haben eigene Bereitstellungsgrenzen.\nDevice Admin ist veraltet und entspricht nicht voller Managed-Device-Eigentümerschaft.\nNutze das nur, wenn du weißt, was du tust.</string>
+    <string name="advanced_mode_add_admin_explanation">Das aktiviert nur Switchlys optionalen erweiterten Admin-Receiver.\nAuf einem normalen persönlichen Gerät garantiert das keine Deinstallationssperre.</string>
+    <string name="advanced_mode_open_admin_failed">Android-Geräteadmin-Bildschirm konnte nicht geöffnet werden</string>
+    <string name="advanced_mode_command_copied">Befehl kopiert</string>
+    <string name="advanced_mode_docs_body">Öffnet die offizielle Android-Referenz zu DevicePolicyManager.</string>
+    <string name="advanced_mode_component_copied">Komponente kopiert</string>
+    <string name="advanced_mode_tile_disable_mode">Erweiterten Modus ausschalten</string>
+    <string name="advanced_mode_disable_mode_body">Blendet den zusätzlichen erweiterten Eintrag wieder aus.\nDu kannst später jederzeit durch langes Drücken auf die Versions-Zeile zurückkommen.</string>
+    <string name="advanced_mode_disabled_toast">Erweiterter Modus ausgeschaltet</string>
+    <string name="advanced_mode_status_updated_toast">Managed-Device-Status aktualisiert</string>
 </resources>

@@ -2,5 +2,5 @@
 // everything is in settings.gradle.kts
 
 tasks.register<Delete>("clean") {
-    delete(rootProject.buildDir)
+    delete(rootProject.layout.buildDirectory)
 }

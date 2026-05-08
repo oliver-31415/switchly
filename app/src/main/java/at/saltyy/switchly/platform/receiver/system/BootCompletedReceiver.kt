@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.platform.receiver.system
 
+import at.saltyy.switchly.BuildConfig
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -28,6 +29,7 @@ import at.saltyy.switchly.data.prefs.AutostartStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
+import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
 import at.saltyy.switchly.util.ProtectionStatusNotifier
@@ -46,6 +48,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
         // Restore monitors (these should NOT force-start FGS)
         runCatching { WifiTriggerMonitor.ensureStarted(ctx) }
         runCatching { BluetoothTriggerMonitor.ensureStarted(ctx) }
+        runCatching { LocationTriggerMonitor.ensureStarted(ctx) }
 
         // Ensure prefs/runtime initialized
         SwitchModeStore.ensureInit(ctx)
@@ -54,7 +57,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
         val autostart = AutostartStore.isEnabled(ctx)
         val hasA11y = BlockingRuntime.isAccessibilityActive(ctx)
 
-        Log.d(TAG, "BOOT_COMPLETED received -> enabled=$enabled autostart=$autostart accessibility=$hasA11y")
+        if (BuildConfig.DEBUG) Log.d(TAG, "BOOT_COMPLETED received -> enabled=$enabled autostart=$autostart accessibility=$hasA11y")
 
         // Restore time schedule alarms
         runCatching { SchedulePlanner.updateNextAlarm(ctx) }

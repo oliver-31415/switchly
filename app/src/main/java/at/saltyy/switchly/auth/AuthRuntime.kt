@@ -21,7 +21,9 @@ package at.saltyy.switchly.auth
 
 import android.app.Activity
 import android.content.Context
+import android.os.Bundle
 import android.os.CancellationSignal
+import android.util.Base64
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.credentials.ClearCredentialStateRequest
@@ -33,7 +35,10 @@ import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import at.saltyy.switchly.BuildConfig
+import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.FirebaseApp
@@ -45,8 +50,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
-import at.saltyy.switchly.R
-import at.saltyy.switchly.data.prefs.AppLogStore
+import java.security.SecureRandom
 
 /**
  * Authentication runtime:
@@ -72,7 +76,15 @@ object AuthRuntime {
         }.getOrNull()
     }
 
+    fun isFirebaseAuthAvailable(context: Context): Boolean {
+        return BuildConfig.SWITCHLY_FIREBASE_ENABLED && firebaseAuthOrNull(context) != null
+    }
+
     private fun firebaseAuthOrNull(context: Context): FirebaseAuth? {
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            return null
+        }
+
         val app = ensureFirebaseAppOrNull(context)
         if (app == null) {
             Log.w(TAG, "FirebaseApp not initialized.")
@@ -89,25 +101,32 @@ object AuthRuntime {
     }
 
     private fun serverClientIdOrNull(context: Context): String? {
-        val raw = runCatching { context.getString(R.string.default_web_client_id) }
-            .onFailure {
-                Log.w(TAG, "default_web_client_id unavailable", it)
-                AppLogStore.append(context, TAG, "default_web_client_id unavailable", it)
-            }
-            .getOrNull()
-            ?.trim()
+        val raw = BuildConfig.SWITCHLY_GOOGLE_WEB_CLIENT_ID.trim()
+        if (raw.isBlank() || raw.startsWith("YOUR_")) {
+            Log.w(TAG, "Google Web client ID unavailable")
+            AppLogStore.append(context, TAG, "Google Web client ID unavailable")
+            return null
+        }
 
-        return raw?.takeIf { it.isNotEmpty() && !it.startsWith("YOUR_") }
+        return raw
     }
 
     fun isGoogleSignInAvailable(context: Context): Boolean {
-        return firebaseAuthOrNull(context) != null && serverClientIdOrNull(context) != null
+        return BuildConfig.SWITCHLY_GOOGLE_SIGN_IN_ENABLED &&
+            firebaseAuthOrNull(context) != null &&
+            serverClientIdOrNull(context) != null
     }
 
     fun startSignIn(
         activity: Activity,
         onResult: (Boolean, Throwable?) -> Unit
     ) {
+        if (!BuildConfig.SWITCHLY_GOOGLE_SIGN_IN_ENABLED) {
+            AppLogStore.append(activity, TAG, "Google sign-in unavailable: disabled for this build")
+            onResult(false, IllegalStateException(activity.getString(R.string.auth_firebase_not_configured)))
+            return
+        }
+
         val auth = firebaseAuthOrNull(activity)
         if (auth == null) {
             AppLogStore.append(activity, TAG, "Google sign-in unavailable: Firebase not configured")
@@ -117,37 +136,35 @@ object AuthRuntime {
 
         val serverClientId = serverClientIdOrNull(activity)
         if (serverClientId == null) {
-            AppLogStore.append(activity, TAG, "Google sign-in unavailable: missing default_web_client_id")
+            AppLogStore.append(activity, TAG, "Google sign-in unavailable: missing Google Web client ID")
             onResult(false, IllegalStateException(activity.getString(R.string.auth_missing_google_server_client_id)))
             return
         }
 
-        // First pass: returning users (previously authorized accounts only)
-        launchGoogleFlow(
+        launchGoogleButtonFlow(
             activity = activity,
             auth = auth,
             serverClientId = serverClientId,
-            authorizedOnly = true,
             onResult = onResult
         )
     }
 
-    private fun launchGoogleFlow(
+    private val googleIdTokenCredentialClassName = GoogleIdTokenCredential::class.java.name
+
+    private fun launchGoogleButtonFlow(
         activity: Activity,
         auth: FirebaseAuth,
         serverClientId: String,
-        authorizedOnly: Boolean,
         onResult: (Boolean, Throwable?) -> Unit
     ) {
         val credentialManager = CredentialManager.create(activity)
 
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setServerClientId(serverClientId)
-            .setFilterByAuthorizedAccounts(authorizedOnly)
+        val signInWithGoogleOption = GetSignInWithGoogleOption.Builder(serverClientId)
+            .setNonce(generateSecureRandomNonce())
             .build()
 
         val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
+            .addCredentialOption(signInWithGoogleOption)
             .build()
 
         val cancellationSignal = CancellationSignal()
@@ -167,7 +184,7 @@ object AuthRuntime {
                         credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
                     ) {
                         try {
-                            val googleCred = GoogleIdTokenCredential.createFrom(credential.data)
+                            val googleCred = parseGoogleIdCredential(credential.data)
                             firebaseAuthWithGoogle(activity, auth, googleCred.idToken, onResult)
                             return
                         } catch (e: GoogleIdTokenParsingException) {
@@ -186,29 +203,33 @@ object AuthRuntime {
                     }
 
                     Log.w(TAG, "Unsupported or cancelled credential: $credential")
-                    AppLogStore.append(activity, TAG, "Unsupported or cancelled credential: ${credential::class.java.simpleName}")
+                    AppLogStore.append(
+                        activity,
+                        TAG,
+                        "Unsupported or cancelled credential: ${credential::class.java.simpleName}; expected $googleIdTokenCredentialClassName"
+                    )
                     val msg = activity.getString(R.string.auth_sign_in_cancelled)
                     onResult(false, IllegalStateException(msg))
                 }
 
                 override fun onError(e: GetCredentialException) {
-                    // Retry once with all accounts for first-time users.
-                    if (e is NoCredentialException && authorizedOnly) {
-                        Log.i(TAG, "No authorized Google account found; retrying with all accounts")
-                        AppLogStore.append(activity, TAG, "No authorized Google account found; retrying with all accounts")
-                        launchGoogleFlow(
-                            activity = activity,
-                            auth = auth,
-                            serverClientId = serverClientId,
-                            authorizedOnly = false,
-                            onResult = onResult
-                        )
-                        return
-                    }
 
                     handleCredentialError(activity, e, onResult)
                 }
             }
+        )
+    }
+
+    private fun parseGoogleIdCredential(data: Bundle): GoogleIdTokenCredential {
+        return GoogleIdTokenCredential.createFrom(data)
+    }
+
+    private fun generateSecureRandomNonce(byteLength: Int = 32): String {
+        val randomBytes = ByteArray(byteLength)
+        SecureRandom().nextBytes(randomBytes)
+        return Base64.encodeToString(
+            randomBytes,
+            Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING
         )
     }
 
@@ -242,7 +263,7 @@ object AuthRuntime {
         auth.signInWithCredential(credential)
             .addOnCompleteListener(activity) { task ->
                 if (task.isSuccessful) {
-                    Log.d(TAG, "Firebase sign-in success")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Firebase sign-in success")
                     AppLogStore.append(activity, TAG, "Firebase Google sign-in success")
                     onResult(true, null)
                 } else {
@@ -401,5 +422,16 @@ object AuthRuntime {
     /**
      * Returns current Firebase UID (or null if not signed in not configured).
      */
-    fun uid(): String? = runCatching { FirebaseAuth.getInstance().currentUser?.uid }.getOrNull()
+    fun uid(): String? {
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) return null
+        return runCatching { FirebaseAuth.getInstance().currentUser?.uid }.getOrNull()
+    }
+
+    /**
+     * Returns current Firebase email address (or null if not signed in/not configured).
+     */
+    fun email(): String? {
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) return null
+        return runCatching { FirebaseAuth.getInstance().currentUser?.email }.getOrNull()
+    }
 }

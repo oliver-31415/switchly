@@ -21,6 +21,7 @@ package at.saltyy.switchly.premium
 
 import android.content.Context
 import android.util.Log
+import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.auth.Auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -35,12 +36,14 @@ import com.google.firebase.firestore.SetOptions
  *
  * Notes:
  * - This is only a mirror for cloud-based features or remote diagnostics.
- * - The authoritative premium state always comes from local Play Billing via PremiumManager.
+ * - Play builds use local Play Billing; external-payment builds can restore a verified backend entitlement.
  */
 object PremiumCloudRuntime {
 
     private const val TAG = "PremiumCloudRuntime"
     private const val COLLECTION = "switchly_users"
+    private const val FIELD_HAS_PREMIUM = "hasPremium"
+    private const val FIELD_HAS_PREMIUM_EXTERNAL = "hasPremiumExternal"
 
     /**
      * Sends the user's current premium state to Firestore.
@@ -50,6 +53,8 @@ object PremiumCloudRuntime {
      *  - Premium state is determined locally by PremiumManager
      */
     fun syncPremiumFlag(ctx: Context) {
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) return
+
         val uid = Auth.uid() ?: return
         val isPremium = PremiumManager.isPremium(ctx)
 
@@ -57,16 +62,51 @@ object PremiumCloudRuntime {
         val doc = db.collection(COLLECTION).document(uid)
 
         val data = mapOf(
-            "hasPremium" to isPremium,
+            FIELD_HAS_PREMIUM to isPremium,
             "premiumLastSyncedAt" to System.currentTimeMillis()
         )
 
         doc.set(data, SetOptions.merge())
             .addOnSuccessListener {
-                Log.d(TAG, "syncPremiumFlag: hasPremium=$isPremium synced for $uid")
+                if (BuildConfig.DEBUG) Log.d(TAG, "syncPremiumFlag: hasPremium=$isPremium synced for $uid")
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "syncPremiumFlag failed", e)
+            }
+    }
+
+    /**
+     * Reads external entitlement mirrored by your payment backend/webhook.
+     * The webhook can set either hasPremiumExternal=true or hasPremium=true.
+     */
+    fun refreshExternalEntitlement(
+        ctx: Context,
+        onResult: (active: Boolean, error: Throwable?) -> Unit
+    ) {
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            onResult(false, IllegalStateException("Firebase disabled for this build"))
+            return
+        }
+
+        val uid = Auth.uid()
+        if (uid == null) {
+            onResult(false, IllegalStateException("User is not signed in"))
+            return
+        }
+
+        val db = FirebaseFirestore.getInstance()
+        db.collection(COLLECTION).document(uid).get()
+            .addOnSuccessListener { doc ->
+                val active = doc.getBoolean(FIELD_HAS_PREMIUM_EXTERNAL)
+                    ?: doc.getBoolean(FIELD_HAS_PREMIUM)
+                    ?: false
+
+                PremiumManager.setPremiumFromExternalVerified(ctx, active)
+                onResult(active, null)
+            }
+            .addOnFailureListener { error ->
+                Log.e(TAG, "refreshExternalEntitlement failed", error)
+                onResult(false, error)
             }
     }
 }

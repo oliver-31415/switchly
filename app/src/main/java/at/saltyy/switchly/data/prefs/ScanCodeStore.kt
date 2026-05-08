@@ -89,6 +89,11 @@ object ScanCodeStore {
             .sortedWith(compareByDescending<Entry> { it.addedAtMillis }.thenBy { it.name?.lowercase() ?: "~" }.thenBy { it.rawValue })
     }
 
+    fun hasEntries(ctx: Context, kind: Kind): Boolean {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return readIds(sp).any { id -> readEntry(sp, id)?.kind == kind }
+    }
+
     fun findEntry(ctx: Context, kind: Kind, rawValue: String): Entry? {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return readEntry(sp, buildId(kind, rawValue))

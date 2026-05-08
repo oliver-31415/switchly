@@ -25,16 +25,16 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.util.TypedValue
-import android.view.ViewConfiguration
 import android.view.View
+import android.view.ViewConfiguration
 import androidx.core.content.ContextCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
 import java.text.DateFormatSymbols
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
-import kotlin.math.max
 import kotlin.math.abs
+import kotlin.math.max
 
 class WeeklyBarChartView @JvmOverloads constructor(
     context: Context,
@@ -48,13 +48,13 @@ class WeeklyBarChartView @JvmOverloads constructor(
     private val dayPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
-        textSize = 10f * resources.displayMetrics.scaledDensity
+        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 10f, resources.displayMetrics)
     }
 
     private val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
-        textSize = 9f * resources.displayMetrics.scaledDensity
+        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 9f, resources.displayMetrics)
         color = Color.WHITE
         alpha = 235
     }
@@ -62,7 +62,7 @@ class WeeklyBarChartView @JvmOverloads constructor(
     private val valuePaintAbove = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
-        textSize = 8f * resources.displayMetrics.scaledDensity
+        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 8f, resources.displayMetrics)
         alpha = 220
     }
 

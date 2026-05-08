@@ -1,5 +1,6 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- SCHEDULES - Screen titles and overview -->
     <string name="schedules_title">Schedules</string>
     <string name="schedules_add">Add schedule</string>
@@ -11,11 +12,13 @@
     <string name="schedules_next_at">Next schedule: %1$s</string>
     <string name="schedules_next_none">No upcoming schedule</string>
     <string name="schedules_next_inactive_control_mode">Inactive — control mode blocks schedules</string>
+
     <!-- SCHEDULES - Types, actions, and basic fields -->
     <string name="schedules_type_time">Time schedule</string>
     <string name="schedules_type_wifi">Wi-Fi schedule</string>
     <string name="schedules_type_bt">Bluetooth schedule</string>
-    <string name="schedules_field_action">Action</string>
+    <string name="schedules_type_location">Location schedule</string>
+    <string name="schedules_field_action">Do this</string>
     <string name="schedules_action_enable">Enable</string>
     <string name="schedules_action_disable">Disable</string>
     <string name="schedules_action_toggle">Toggle</string>
@@ -31,6 +34,7 @@
     <string name="schedules_field_profile">Profile</string>
     <string name="schedules_field_title_hint">Title (optional)</string>
     <string name="schedules_field_note_hint">Notes (optional)</string>
+
     <!-- SCHEDULES - Time, date, and day selection -->
     <string name="schedules_time_mode">Time mode</string>
     <string name="schedules_time_mode_single">Single time</string>
@@ -54,6 +58,7 @@
     <string name="day_short_fri">Fr</string>
     <string name="day_short_sat">Sa</string>
     <string name="day_short_sun">Su</string>
+
     <!-- SCHEDULES - Connectivity conditions and subtitles -->
     <string name="schedules_conn_time_all_day">Active all day</string>
     <string name="schedules_conn_time_window">Limit by time window (optional)</string>
@@ -61,10 +66,31 @@
     <string name="schedules_conn_bt_fmt">BT: %1$s</string>
     <string name="schedules_conn_wifi_bt_fmt">Wi-Fi: %1$s - BT: %2$s</string>
     <string name="schedules_subtitle_fmt">%1$s - %2$s</string>
+    <string name="schedules_conn_location_fmt">Location: %1$s</string>
+    <string name="schedules_location_label_hint">Location name (optional)</string>
+    <string name="schedules_location_trigger_title">Location trigger</string>
+    <string name="schedules_location_trigger_enter">When entering area</string>
+    <string name="schedules_location_trigger_exit">When leaving area</string>
+    <string name="schedules_location_trigger_both">When entering and leaving</string>
+    <string name="schedules_location_pick_current">Use current location</string>
+    <string name="schedules_location_fetching">Getting current location…</string>
+    <string name="schedules_location_not_set">No location selected yet.</string>
+    <string name="schedules_location_selected_fmt">%1$s · %2$dm</string>
+    <string name="schedules_location_coords_fmt">%1$.5f, %2$.5f</string>
+    <string name="schedules_location_radius_title">Radius</string>
+    <string name="schedules_location_radius_100">100 m</string>
+    <string name="schedules_location_radius_250">250 m</string>
+    <string name="schedules_location_radius_500">500 m</string>
+    <string name="schedules_location_cooldown_title">Cooldown</string>
+    <string name="schedules_location_cooldown_none">No cooldown</string>
+    <string name="schedules_location_cooldown_5">5 minutes</string>
+    <string name="schedules_location_cooldown_15">15 minutes</string>
+    <string name="schedules_location_cooldown_30">30 minutes</string>
     <string name="schedules_label_value_fmt">%1$s: %2$s</string>
     <string name="schedules_label_value_multiline_fmt">%1$s\n%2$s</string>
     <string name="schedules_time_range_fmt">%1$s-%2$s</string>
     <string name="schedules_once_range_fmt">Once - %1$s-%2$s</string>
+
     <!-- SCHEDULES - Validation errors -->
     <string name="schedules_error_no_profile">Please select a profile.</string>
     <string name="schedules_error_no_days">Please select at least one day.</string>
@@ -73,6 +99,13 @@
     <string name="schedules_error_time_range_empty">End time must be different from start time.</string>
     <string name="schedules_error_wifi_required">Please enter a Wi-Fi SSID.</string>
     <string name="schedules_error_bt_required">Please enter a Bluetooth device name.</string>
+    <string name="schedules_location_picker_body">Search for a place or paste coordinates.</string>
+    <string name="schedules_location_picker_hint">Address or coordinates</string>
+    <string name="schedules_location_picker_helper">Example: 48.2082, 16.3738 or Vienna Stephansplatz</string>
+    <string name="schedules_location_picker_invalid">Enter an address or coordinates first.</string>
+    <string name="schedules_location_picker_not_found">Could not find that location.</string>
+    <string name="schedules_error_location_required">Please choose a location first.</string>
+
     <!-- SCHEDULES - Bluetooth picker -->
     <string name="schedules_bt_enable_bt">Please turn on Bluetooth first.</string>
     <string name="schedules_bt_name_hint">Bluetooth device name (exact)</string>
@@ -80,6 +113,7 @@
     <string name="schedules_bt_use_connected">Use connected device</string>
     <string name="schedules_bt_no_paired">No paired Bluetooth devices found.</string>
     <string name="schedules_bt_no_connected">No connected Bluetooth device found.</string>
+
     <!-- SCHEDULES - Wi-Fi picker and location guidance -->
     <string name="schedules_wifi_enable_wifi">Please turn on Wi-Fi first.</string>
     <string name="schedules_wifi_location_required">Location must be turned on to read the Wi-Fi SSID.</string>
@@ -94,6 +128,7 @@
     <string name="schedules_wifi_ssid_hint">Wi-Fi SSID (exact)</string>
     <string name="schedules_wifi_enter_manually">Enter manually</string>
     <string name="schedules_wifi_pick_action">Pick Wi-Fi</string>
+
     <!-- SCHEDULES - Health and reliability guidance -->
     <string name="schedules_health_info_title">Schedule health</string>
     <string name="schedules_health_info_body">This banner shows the most common reasons schedules don’t trigger (permissions, battery optimization, exact alarms, accessibility).</string>
@@ -106,6 +141,7 @@
     <string name="schedules_health_last_exec_never">never</string>
     <string name="schedules_health_generic_issue">There are still some schedule permissions or requirements not set correctly.</string>
     <string name="schedules_health_last_exec_compact">Last schedule execution: %1$s</string>
+
     <!-- SCHEDULES - Lock hints and read-only states -->
     <string name="schedules_dialog_nfc_lock_hint">NFC lock active: this action cannot change the Switchly state until you unlock with NFC/QR.</string>
     <string name="schedules_nfc_lock_add_dialog_hint">NFC lock is active. Only actions that do not disable Switchly are shown right now.</string>
@@ -121,8 +157,22 @@
     <string name="schedules_disabled_action_open_controls">Open Protection controls</string>
     <string name="schedules_disabled_read_only_toast">Schedules are read-only until the current control mode allows schedule automations.</string>
     <string name="schedules_locked_title">Schedules are locked while Switchly is active</string>
-    <string name="schedules_locked_body">Schedules still run normally, but adding, editing, deleting, and toggling them is locked until you disable Switchly. Emergency Bypass also temporarily unlocks schedule editing. In Mixed mode you can optionally allow schedule editing while protection is active.</string>
+    <string name="schedules_locked_body">Schedules still run normally, but adding, editing, deleting, and toggling them is locked until you disable Switchly.</string>
     <string name="schedules_locked_footer">Current control mode: %1$s - Schedule editing: locked</string>
     <string name="schedules_locked_action_open_controls">Open Protection controls</string>
-    <string name="schedules_locked_read_only_toast">Disable Switchly, use Emergency Bypass, or allow schedule editing in Mixed mode.</string>
+    <string name="schedules_locked_read_only_toast">Disable Switchly to change schedules.</string>
+    <string name="schedules_location_choose">Choose location</string>
+    <string name="schedules_location_method_title">Choose location</string>
+    <string name="schedules_location_method_picker">Location picker</string>
+    <string name="schedules_location_method_search">Search or paste location</string>
+    <string name="schedules_location_method_current">Use current location</string>
+    <string name="schedules_location_search_title">Search location</string>
+    <string name="schedules_location_map_picker_title">Location picker</string>
+    <string name="schedules_location_map_picker_body">Search for a place or tap on the map to place a pin. You can move and zoom the map first.</string>
+    <string name="schedules_location_map_picker_search_action">Search on map</string>
+    <string name="schedules_location_map_picker_no_selection">Tap on the map to choose a location.</string>
+    <string name="schedules_location_map_picker_selected">Selected: %1$s</string>
+    <string name="schedules_location_picker_premium_title">Location picker is Premium</string>
+    <string name="schedules_location_picker_premium_message">Location schedules and the visual location picker are part of Switchly Premium. You can still use regular time schedules for free.</string>
+
 </resources>

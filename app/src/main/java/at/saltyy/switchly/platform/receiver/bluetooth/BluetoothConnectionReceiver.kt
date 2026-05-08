@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.platform.receiver.bluetooth
 
+import at.saltyy.switchly.BuildConfig
 import android.Manifest
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothDevice
@@ -31,6 +32,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 
@@ -44,14 +46,7 @@ class BluetoothConnectionReceiver : BroadcastReceiver() {
         val action = intent.action
 
         // Extract BluetoothDevice extra (API-level compatible)
-        val device: BluetoothDevice? = if (Build.VERSION.SDK_INT >= 33) {
-            intent.getParcelableExtra(
-                BluetoothDevice.EXTRA_DEVICE,
-                BluetoothDevice::class.java
-            )
-        } else {
-            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-        }
+        val device: BluetoothDevice? = IntentCompat.getParcelableExtra(intent, BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
 
         // Some profile broadcasts may not always include EXTRA_DEVICE reliably.
         // We still handle them if present; otherwise ignore safely.
@@ -75,13 +70,13 @@ class BluetoothConnectionReceiver : BroadcastReceiver() {
             }
 
             else -> {
-                Log.d(TAG, "Ignoring unrelated Bluetooth action: $action")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Ignoring unrelated Bluetooth action: $action")
                 return
             }
         }
 
         if (isConnected == null) {
-            Log.d(TAG, "Bluetooth event ambiguous -> ignoring ($action)")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Bluetooth event ambiguous -> ignoring ($action)")
             return
         }
 
@@ -91,7 +86,7 @@ class BluetoothConnectionReceiver : BroadcastReceiver() {
         // IMPORTANT: use SAME PREF + SAME KEYS as ScheduleReceiver reads
         cacheBtState(context, name = name, addr = addr, connected = isConnected)
 
-        Log.d(TAG, "BT event: name='$name' addr='$addr' connected=$isConnected action=$action")
+        if (BuildConfig.DEBUG) Log.d(TAG, "BT event: name='$name' addr='$addr' connected=$isConnected action=$action")
 
         // Forward event to ScheduleReceiver
         context.sendBroadcast(

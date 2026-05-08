@@ -107,7 +107,11 @@ class ManageBarcodesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_barcodes)) return
+        if (EditingLockGuard.isLocked(this) && !AutomationModeStore.isBarcodeSetupMissing(this)) {
+            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
+            finish()
+            return
+        }
 
         if (!AutomationModeStore.shouldShowBarcodeTools(this)) {
             finish()
@@ -459,13 +463,13 @@ class ManageBarcodesActivity : AppCompatActivity() {
         val parsed = parseExisting(entry) ?: return entry.actionUri
         val label = getString(parsed.action.labelRes)
         val profileLabel = parsed.profile ?: getString(R.string.manage_barcodes_profile_universal)
-        return when {
-            parsed.action.supportsMinutes -> {
-                label + " · " + ((parsed.minutes ?: 10L).coerceAtLeast(1L)) + " " +
-                    getString(R.string.qr_minutes).lowercase(Locale.getDefault()) + " · " + profileLabel
-            }
-            else -> "$label · $profileLabel"
+        val actionLabel = if (parsed.action.supportsMinutes) {
+            label + " (" + ((parsed.minutes ?: 10L).coerceAtLeast(1L)) + " " +
+                getString(R.string.qr_minutes).lowercase(Locale.getDefault()) + ")"
+        } else {
+            label
         }
+        return getString(R.string.manage_barcodes_action_summary_fmt, profileLabel, actionLabel)
     }
 
     private fun formatIntOrEmpty(value: Int?): String =
