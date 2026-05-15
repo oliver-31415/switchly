@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- SUPPORT - contact support and troubleshooting -->
+    <!-- ====================================================== -->
+
+    <string name="support_title">Support</string>
+
+    <string name="support_desc">Need help or found a bug?\nSend an email and, if possible, include debug info and a short description.</string>
+
+    <string name="support_email_subject">Switchly Support</string>
+
+    <string name="support_email_placeholder">Email</string>
+
+    <string name="support_open_email">Open email</string>
+
+    <string name="support_copy_email">Copy email</string>
+
+    <string name="support_copied">Email copied</string>
+
+    <string name="support_copy_latest_logs">Copy latest logs</string>
+
+    <string name="support_logs_copied">Latest logs copied</string>
+
+    <string name="support_include_debug">Include debug info</string>
+
+    <string name="support_include_advanced_debug">Include extended diagnostics</string>
+
+    <string name="support_debug_preface">Please describe your issue above this line.</string>
+
+    <string name="troubleshooting_title">Troubleshooting</string>
+
+    <string name="troubleshooting_accessibility">Accessibility service</string>
+
+    <string name="troubleshooting_battery">Battery optimization disabled</string>
+
+    <string name="troubleshooting_exact_alarms">Exact alarms permission</string>
+
+    <string name="troubleshooting_location">Location permission (Wi‑Fi triggers)</string>
+
+    <string name="troubleshooting_bluetooth">Bluetooth permission (Nearby devices)</string>
+
+    <string name="troubleshooting_notification_access">Notification listener access</string>
+
+    <string name="troubleshooting_ok">OK ✅</string>
+
+    <string name="troubleshooting_missing">Missing ❌</string>
+
+    <string name="troubleshooting_open_permissions_overview">Open permissions overview</string>
+
+    <string name="troubleshooting_open_settings">Open settings</string>
+
+    <string name="troubleshooting_info_accessibility">Switchly needs Accessibility to detect opened apps and websites, react to in-app navigation, and enforce blocking, profiles, schedules, and usage limits. If it is off, major protection features will not work.</string>
+
+    <string name="troubleshooting_info_notification_access">Needed only for the “Blocked notifications” feature. Without it, notification blocking won’t work.</string>
+
+    <string name="troubleshooting_info_battery">Battery optimization can delay background work. Disable optimization for Switchly to improve reliability.</string>
+
+    <string name="troubleshooting_info_exact_alarms">Exact alarms make time-based schedules fire on time. Some devices delay schedules when this is off.</string>
+
+    <string name="troubleshooting_info_location">Android requires precise location permission to read the current Wi‑Fi name (SSID). For best reliability with Wi‑Fi triggers, background location should also be allowed. On Android 13 and newer, some devices also require Nearby Wi‑Fi devices.</string>
+
+    <string name="troubleshooting_info_bluetooth">Android 12+ requires the Nearby devices/Bluetooth permission for Bluetooth-based schedules.</string>
+
+    <string name="troubleshooting_xiaomi_note">Xiaomi / Redmi / POCO note:\n\n• Also enable Autostart for Switchly\n• Set battery mode to No restrictions if that option exists\n• Lock the app in Recents if possible\n• If available, allow background activity for Switchly\n• Toggle Accessibility off and on again if Android shows it as enabled but Switchly is not responding</string>
+
+    <string name="troubleshooting_pref_summary">Check common issues &amp; fixes</string>
+
+    <string name="troubleshooting_battery_oem_note">Some devices do not offer an “Unrestricted” battery option. If you already enabled the highest available background setting for Switchly, that may already be the maximum supported on your device.</string>
+
+    <string name="troubleshooting_exact_alarms_note">If exact alarms are not allowed, time-based schedules may be delayed or not run at the correct time.</string>
+
+    <string name="pref_tutorial_title">Tutorial</string>
+
+    <string name="pref_tutorial_summary">Review setup steps and features</string>
+
+    <string name="support_include_logs">Include the logs</string>
+
+    <string name="support_latest_logs_heading">Latest logs</string>
+
+</resources>

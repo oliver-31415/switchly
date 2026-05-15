@@ -199,8 +199,7 @@ object AutomationModeStore {
      * In that setup, keep setup/disable paths reachable until at least one barcode has been added.
      */
     fun isBarcodeSetupMissing(context: Context): Boolean {
-        return isBarcodeChannelAllowed(context) &&
-            !ScanCodeStore.hasEntries(context, ScanCodeStore.Kind.BARCODE)
+        return isBarcodeChannelAllowed(context) && !ScanCodeStore.hasEntries(context, ScanCodeStore.Kind.BARCODE)
     }
 
     fun isAnyScanFeatureEnabled(context: Context): Boolean =
@@ -213,7 +212,6 @@ object AutomationModeStore {
 
     /**
      * Manual dashboard button / Quick Settings tile full-control channel.
-     *
      * This is intentionally mode-independent: when enabled, manual controls can turn Switchly on and off regardless of the selected control mode.
      * The older key name is kept for migration compatibility.
      */

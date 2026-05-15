@@ -15,6 +15,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.SwitchModeStore
@@ -71,10 +72,10 @@ class BlockingHubActivity : AppCompatActivity() {
         syncLockedCardState()
     }
 
-    private fun card(idName: String): View = findViewById(resources.getIdentifier(idName, "id", packageName))
+    private fun card(@IdRes id: Int): View = findViewById(id)
 
     private fun setupCards() {
-        card("cardManageProfiles").setOnClickListener {
+        card(R.id.cardManageProfiles).setOnClickListener {
             if (EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_profiles)
             } else {
@@ -82,19 +83,19 @@ class BlockingHubActivity : AppCompatActivity() {
             }
         }
 
-        card("cardBlockingModes").setOnClickListener {
+        card(R.id.cardBlockingModes).setOnClickListener {
             startActivity(Intent(this, ToggleOptionsActivity::class.java).apply {
                 putExtra(ToggleOptionsActivity.EXTRA_VIEW_SECTION, ToggleOptionsActivity.SECTION_BLOCKING)
             })
         }
 
-        card("cardBlockingFeatures").setOnClickListener {
+        card(R.id.cardBlockingFeatures).setOnClickListener {
             startActivity(Intent(this, ToggleOptionsActivity::class.java).apply {
                 putExtra(ToggleOptionsActivity.EXTRA_VIEW_SECTION, ToggleOptionsActivity.SECTION_OTHER)
             })
         }
 
-        findViewById<View>(R.id.cardManageApps).setOnClickListener {
+        card(R.id.cardManageApps).setOnClickListener {
             if (SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_apps)
             } else {
@@ -102,7 +103,7 @@ class BlockingHubActivity : AppCompatActivity() {
             }
         }
 
-        findViewById<View>(R.id.cardManageWebsites).setOnClickListener {
+        card(R.id.cardManageWebsites).setOnClickListener {
             if (EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_websites)
             } else {
@@ -110,7 +111,7 @@ class BlockingHubActivity : AppCompatActivity() {
             }
         }
 
-        findViewById<View>(R.id.cardInAppBlocking).setOnClickListener {
+        card(R.id.cardInAppBlocking).setOnClickListener {
             if (SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_inapp)
             } else {
@@ -125,12 +126,12 @@ class BlockingHubActivity : AppCompatActivity() {
         val websitesLocked = EditingLockGuard.isLocked(this)
         val inAppLocked = SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)
 
-        applyLockedCardState(card("cardManageProfiles"), profilesLocked)
-        applyLockedCardState(findViewById(R.id.cardManageApps), appsLocked)
-        applyLockedCardState(findViewById(R.id.cardManageWebsites), websitesLocked)
-        applyLockedCardState(findViewById(R.id.cardInAppBlocking), inAppLocked)
-        applyLockedCardState(card("cardBlockingModes"), false)
-        applyLockedCardState(card("cardBlockingFeatures"), false)
+        applyLockedCardState(card(R.id.cardManageProfiles), profilesLocked)
+        applyLockedCardState(card(R.id.cardManageApps), appsLocked)
+        applyLockedCardState(card(R.id.cardManageWebsites), websitesLocked)
+        applyLockedCardState(card(R.id.cardInAppBlocking), inAppLocked)
+        applyLockedCardState(card(R.id.cardBlockingModes), false)
+        applyLockedCardState(card(R.id.cardBlockingFeatures), false)
     }
 
     private fun applyLockedCardState(view: View, locked: Boolean) {
@@ -152,12 +153,15 @@ class BlockingHubActivity : AppCompatActivity() {
                     finish()
                     true
                 }
+
                 R.id.nav_blocking -> true
+
                 R.id.nav_tools -> {
                     startActivity(Intent(this, ToolsHubActivity::class.java))
                     finish()
                     true
                 }
+
                 R.id.nav_settings -> {
                     if (SwitchlyAppAccessGuard.isLocked(this)) {
                         SwitchlyAppAccessGuard.showLockedToast(this)
@@ -168,6 +172,7 @@ class BlockingHubActivity : AppCompatActivity() {
                         true
                     }
                 }
+
                 else -> false
             }
         }

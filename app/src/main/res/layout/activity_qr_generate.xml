@@ -33,6 +33,7 @@
             android:orientation="vertical"
             android:padding="16dp"
             android:paddingBottom="24dp">
+            
             <!-- QR Image -->
             <ImageView
                 android:id="@+id/ivQr"

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- BLOCKING - websites -->
+    <!-- ====================================================== -->
+
+	<string name="block_websites">Websites blockieren</string>
+
+	<string name="block_websites_desc">Blockiere bestimmte Domains in unterstützten Browsern.\nDu kannst auch ein tägliches Zeitlimit festlegen.</string>
+
+	<string name="blocked_websites_title">Blockierte Websites</string>
+
+	<string name="blocked_websites_empty">Noch keine blockierten Websites. Tippe auf +, um eine hinzuzufügen.</string>
+
+	<string name="blocked_websites_add_title">Website hinzufügen</string>
+
+	<plurals name="delete_websites_confirm">
+        <item quantity="one">Diese Website-Regel löschen?</item>
+        <item quantity="other">%1$d Website-Regeln löschen?</item>
+    </plurals>
+
+	<string name="add_website_rule_title">Website-Regel hinzufügen</string>
+
+	<string name="domain_rule_hint_example">example.com</string>
+
+	<string name="domain_required">Bitte gib eine Domain ein.</string>
+
+	<string name="rule_type">Regeltyp</string>
+
+	<string name="rule_block_always">Immer blockieren</string>
+
+	<string name="rule_daily_limit">Tägliches Limit</string>
+
+	<string name="rule_blocked">Blockiert</string>
+
+	<string name="domain_limit_required">Bitte gib ein Tageslimit in Minuten ein.</string>
+
+	<string name="daily_limit_helper">Lege Minuten pro Tag fest. Leer lassen für kein Limit.</string>
+
+	<string name="set_daily_limit_desc">Lege fest, wie viele Minuten pro Tag erlaubt sind, bevor Switchly blockiert.</string>
+
+	<string name="daily_limit_value_format">%1$d Min/Tag</string>
+
+	<string name="clear_limit">Limit löschen</string>
+
+	<string name="blocking_website_blocked_title">Website ist blockiert!</string>
+
+	<string name="blocking_website_limit_reached_title">Website-Limit erreicht!</string>
+
+</resources>

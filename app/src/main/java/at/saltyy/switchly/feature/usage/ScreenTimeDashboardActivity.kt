@@ -44,6 +44,7 @@ import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.databinding.ActivityScreenTimeDashboardBinding
 import at.saltyy.switchly.feature.premium.PremiumInfoActivity
+import at.saltyy.switchly.feature.settings.AccessibilityDisclosure
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
@@ -364,7 +365,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             b.btnOpenSettings.isVisible = !hasA11y
             b.btnOpenSettings.text = getString(R.string.onb_open)
             b.btnOpenSettings.setOnClickListener {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                AccessibilityDisclosure.openSettingsWithDisclosure(this)
             }
             return
         }
@@ -427,7 +428,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.btnOpenSettings.isVisible = !hasA11y && visibleEmpty
         b.btnOpenSettings.text = getString(R.string.onb_open)
         b.btnOpenSettings.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            AccessibilityDisclosure.openSettingsWithDisclosure(this)
         }
         b.rowTapHint.isVisible = !visibleEmpty
     }

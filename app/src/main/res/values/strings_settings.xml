@@ -1,311 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- SETTINGS - Main screen entries -->
+    <!-- ====================================================== -->
+    <!-- SETTINGS - main screen entries and data/help -->
+    <!-- ====================================================== -->
+
     <string name="settings_section_controls">Controls</string>
+
     <string name="settings_section_personalization">Personalization</string>
+
     <string name="settings_section_reliability">Permissions &amp; reliability</string>
+
     <string name="settings_section_data">Account &amp; data</string>
+
     <string name="settings_section_help">Help &amp; about</string>
+
     <string name="settings_account_title">Account</string>
+
     <string name="settings_account_summary">Backup, emergency PIN &amp; sync</string>
+
     <string name="settings_theme_title">Appearance</string>
+
     <string name="settings_theme_summary">Theme, colors &amp; language</string>
+
     <string name="settings_changelog_title">What’s new</string>
+
     <string name="settings_changelog_summary">Release notes</string>
+
     <string name="settings_backup_title">Backup</string>
+
     <string name="settings_backup_summary">Sync &amp; restore your config</string>
+
     <string name="settings_contact_support_title">Contact support</string>
+
     <string name="settings_contact_support_summary">Email the developer</string>
+
     <string name="settings_permissions_reliability_title">Permissions &amp; reliability</string>
+
     <string name="settings_permissions_reliability_summary">Permissions and troubleshooting</string>
+
     <string name="settings_help_about_title">Help &amp; about</string>
+
     <string name="settings_help_about_summary">FAQ, support and app information</string>
+
     <string name="settings_info_title">Info</string>
+
     <string name="settings_info_summary">App, device and developer details</string>
 
-    <!-- SETTINGS - Theme and language -->
-    <string name="pref_theme_title">Appearance</string>
-    <string name="pref_theme_mode_title">Display mode</string>
-    <string name="pref_time_format_title">Time format</string>
-    <string name="pref_time_format_summary">Choose how times are shown in schedules</string>
-    <string name="pref_time_format_system">Automatic</string>
-    <string name="pref_time_format_24h">24-hour</string>
-    <string name="pref_time_format_12h">12-hour</string>
-    <string name="pref_theme_mode_summary">Choose how Switchly is displayed.</string>
-    <string name="pref_theme_mode_light">Light</string>
-    <string name="pref_theme_mode_dark">Dark</string>
-    <string name="pref_theme_mode_system">Follow system</string>
-    <string name="pref_theme_color_title">Theme color</string>
-    <string name="pref_theme_color_summary">Choose the accent color used across the app.</string>
-    <string name="pref_theme_color_custom_fmt">Custom: %1$s</string>
-    <string name="pref_accent_custom">Custom color…</string>
-    <string name="pref_accent_custom_title">Custom color</string>
-    <string-array name="pref_accent_entries">
-        <item>@string/accent_default</item>
-        <item>@string/accent_blue</item>
-        <item>@string/accent_orange</item>
-        <item>@string/accent_purple</item>
-        <item>@string/accent_pink</item>
-        <item>@string/accent_teal</item>
-        <item>@string/accent_red</item>
-        <item>@string/accent_amber</item>
-        <item>@string/accent_gray</item>
-    </string-array>
-    <string-array name="pref_accent_values">
-        <item>default</item>
-        <item>blue</item>
-        <item>orange</item>
-        <item>purple</item>
-        <item>pink</item>
-        <item>teal</item>
-        <item>red</item>
-        <item>amber</item>
-        <item>gray</item>
-    </string-array>
-    <string name="pref_language_title">Language</string>
-    <string name="pref_language_summary">Choose the app language.</string>
-    <string-array name="pref_language_entries">
-        <item>System</item>
-        <item>English</item>
-        <item>German</item>
-    </string-array>
-    <string-array name="pref_language_values">
-        <item>system</item>
-        <item>en</item>
-        <item>de</item>
-    </string-array>
-
-    <!-- SETTINGS - Blocking and feature preferences -->
-    <string name="pref_block_notifications_title">Hide blocked app notifications</string>
-    <string name="pref_block_notifications_summary">Keeps blocked apps quiet.</string>
-    <string name="pref_block_inapp_title">Block in-app feeds</string>
-    <string name="pref_block_inapp_summary">Master switch for in-app blocking surfaces</string>
-    <string name="pref_enable_paired_uids_title">Enable paired NFC tags</string>
-    <string name="pref_enable_paired_uids_summary">Only paired NFC tags can toggle or unlock Switchly without a written action.</string>
-    <string name="pref_auto_pair_on_write_title">Auto-pair written NFC tags</string>
-    <string name="pref_auto_pair_on_write_summary">After writing a Switchly action to a tag, also add its UID to your paired tags.</string>
-    <string name="pref_limit_temp_disable_tags_summary">When paired tags are enabled, you can manage optional limits in Paired tags.</string>
-    <string name="pref_require_nfc_unlock_title">Require NFC to disable Switchly</string>
-    <string name="pref_require_nfc_unlock_summary">When on, only a paired NFC tag (or QR fallback) can disable Switchly.</string>
-    <string name="pref_qs_tile_title">Tile availability</string>
-    <string name="pref_qs_tile_summary">Keeps the Switchly tile available in Android Quick Settings.</string>
-    <string name="pref_autostart_title">Start Switchly after reboot</string>
-    <string name="pref_autostart_summary">Start Switchly again after reboot.</string>
-    <string name="pref_open_accessibility_summary">Enable the Switchly accessibility service again so blocking works reliably.</string>
-
-    <!-- SETTINGS - Toggle options structure -->
-    <string name="toggle_options_title">Blocking controls</string>
-    <string name="toggle_info_paired_uids_title">Paired NFC tags</string>
-    <string name="toggle_info_lock_and_temp_title">Settings lock &amp; temporary tags</string>
-    <string name="toggle_info_lock_and_temp_body">Settings lock blocks opening Switchly settings and control screens while protection is active.\nTemporary disable actions give you a short time window (e.g. 10 minutes) before the previous protection state is restored.</string>
-    <string name="toggle_options_blocking_title">Blocking controls</string>
-    <string name="toggle_options_blocking_summary">Blocking modes, features, and control behavior.</string>
-    <string name="toggle_options_features_title">Additional Features</string>
-    <string name="toggle_options_safety_title">Safety controls</string>
-    <string name="toggle_options_display_title">UI &amp; Info</string>
-    <string name="toggle_section_protection">Safety &amp; restrictions</string>
-    <string name="toggle_section_ui">Home &amp; visibility</string>
-    <string name="toggle_section_additional_features">While blocking is active</string>
-    <string name="toggle_section_control_mode">Blocking modes</string>
-    <string name="toggle_section_mixed_channels">Control methods</string>
-    <string name="toggle_guided_card_title">Start simple</string>
-    <string name="toggle_guided_card_body">Most people only need one control mode, optional NFC/QR friction, and emergency unlock. Everything else is advanced fine-tuning.</string>
-    <string name="toggle_guided_card_action">Open FAQ &amp; tips</string>
-    <string name="toggle_section_control_mode_summary">Pick the active blocking mode.</string>
-    <string name="toggle_section_mixed_channels_summary">Choose which control methods can enable, disable, or fully control Switchly.</string>
-    <string name="toggle_section_additional_features_summary">Choose what can still be changed while protection is active.</string>
-    <string name="toggle_section_protection_summary">Safety, recovery, and reliability options.</string>
-    <string name="toggle_section_ui_summary">What Home shows and how helper features behave.</string>
-    <string name="toggle_locked_nfc_hint">Locked because “Require NFC to disable Switchly” is active.</string>
-    <string name="toggle_locked_nfc_action">How to unlock</string>
-    <string name="toggle_locked_nfc_howto">Scan your paired NFC tag to disable Switchly and unlock protected controls. If QR unlock is enabled, you can use your QR fallback instead. After unlocking, schedules and protected settings are editable again.</string>
-    <string name="toggle_info_paired_uids_body_enabled">Only accept NFC toggles from tags you have paired.\nPair tags in Settings → NFC tags, then use “Manage paired tags” to rename or remove them. If at least one UID is paired, only paired tags can toggle/unlock Switchly.</string>
-    <string name="toggle_info_paired_uids_body_disabled">Pairing is currently disabled.\nWhat it does: if you pair at least one NFC tag, only paired tags can toggle/unlock Switchly (prevents random tags).\nHow to enable: Settings → Blocking &amp; control toggles → Enable paired NFC tags.</string>
-    <string name="toggle_detail_auto_pair_on_write">Off by default. When enabled, writing a Switchly NFC tag will also store that tag UID as a paired tag. Use this only if you intentionally want writing and pairing to happen together.</string>
-
-    <!-- SETTINGS - Home/dashboard display options -->
-    <string name="pref_show_next_schedule_title">Show next schedule</string>
-    <string name="pref_show_next_schedule_summary">Show the next schedule on Home.</string>
-    <string name="pref_show_quick_actions_title">Quick actions</string>
-    <string name="pref_show_quick_actions_summary">Show quick action buttons on Home.</string>
-
-    <!-- SETTINGS - Control modes -->
-    <string name="pref_mode_schedule_title">Schedule mode</string>
-    <string name="pref_mode_schedule_summary">Only schedules can auto-enable/disable Switchly.</string>
-    <string name="pref_mode_nfc_title">NFC mode</string>
-    <string name="pref_mode_nfc_summary">Only NFC tags can auto-enable/disable Switchly.</string>
-    <string name="pref_mode_qr_title">QR mode</string>
-    <string name="pref_mode_qr_summary">Only QR actions can auto-enable/disable Switchly.</string>
-    <string name="pref_mode_mixed_title">Mixed mode</string>
-    <string name="pref_mode_mixed_summary">Use granular channel toggles for schedules, NFC, QR and manual controls.</string>
-    <string name="toggle_detail_mode_schedule">Focus on calendar routines. NFC and QR actions are ignored while this mode is active.</string>
-    <string name="toggle_detail_mode_nfc">Focus on physical friction. NFC actions are accepted for automation, including written tags and paired tags.</string>
-    <string name="toggle_detail_mode_qr">Focus on QR workflows. NFC and schedules are ignored while this mode is active.</string>
-    <string name="toggle_detail_mode_mixed">Flexible mode with per-channel controls. Use the channel controls below to choose which control methods and active-access exceptions are allowed.</string>
-    <string name="mode_blocked_button_disable_enable_only">Manual buttons can only enable Switchly right now. Use your allowed control method to disable it.</string>
-    <string name="mode_already_active_fmt">%1$s is already active.</string>
-    <string name="mode_one_must_stay_active">One mode must stay active.</string>
-    <string name="mode_switch_info_toast">Modes are mutually exclusive. Switching now.</string>
-    <string name="mode_switch_requires_switchly_disabled">Disable Switchly first to change control mode.</string>
-    <string name="mode_blocked_nfc_action">NFC actions are disabled by current control mode.</string>
-    <string name="mode_blocked_qr_action">QR actions are disabled by current control mode.</string>
-    <string name="mode_blocked_tile_action">Quick Settings tile is disabled because manual controls are disabled in the current control mode.</string>
-    <string name="mode_blocked_button_action">Manual buttons are disabled by the current control mode.</string>
-    <string name="pref_mode_barcode_title">Barcode mode</string>
-    <string name="pref_mode_barcode_summary">Only barcode actions can auto-enable/disable Switchly.</string>
-    <string name="toggle_detail_mode_barcode">Focus on physical barcode workflows. QR, NFC and schedules are ignored while this mode is active.</string>
-    <string name="mode_blocked_barcode_action">Barcode actions are disabled by current control mode.</string>
-
-    <!-- SETTINGS - Mixed mode permissions -->
-    <string name="pref_mixed_allow_schedule_title">Allow schedule channel</string>
-    <string name="pref_mixed_allow_schedule_summary">Lets schedules enable/disable Switchly.</string>
-    <string name="pref_mixed_allow_nfc_title">Allow NFC channel</string>
-    <string name="pref_mixed_allow_nfc_summary">Lets NFC actions control Switchly, including written tags and paired tags. In Mixed mode, other allowed channels continue to work too.</string>
-    <string name="pref_mixed_allow_qr_title">Allow QR channel</string>
-    <string name="pref_mixed_allow_qr_summary">Lets QR actions control Switchly.</string>
-    <string name="pref_mixed_allow_button_title">Allow button/tile full control</string>
-    <string name="pref_mixed_allow_button_summary">Lets the home button and Quick Settings tile turn Switchly on and off in any control mode. When this is enabled, enable-only is hidden.</string>
-    <string name="pref_mixed_allow_app_picking_title">Allow picking apps</string>
-    <string name="pref_mixed_allow_app_picking_summary">Lets you open app picker while Switchly is active.</string>
-    <string name="pref_mixed_allow_profile_switching_title">Allow managing profiles</string>
-    <string name="pref_mixed_allow_profile_switching_summary">Lets you manage or switch profiles while Switchly is active. Otherwise this stays locked for safety.</string>
-    <string name="pref_mixed_allow_schedule_editing_title">Allow schedule editing</string>
-    <string name="pref_mixed_allow_schedule_editing_summary">Lets you add, edit, delete, and toggle schedules while Switchly is active.</string>
-    <string name="pref_mixed_allow_nfc_tag_writing_title">Allow NFC tag writing</string>
-    <string name="pref_mixed_allow_nfc_tag_writing_summary">Lets you write and pair new NFC tags while Switchly is active.</string>
-    <string name="toggle_detail_mixed_allow_schedule">When enabled, schedule automations are allowed to change Switchly state while Mixed mode is active.</string>
-    <string name="toggle_detail_mixed_allow_nfc">When enabled, NFC actions are accepted while Mixed mode is active, including written tags and paired tags. Other allowed channels continue to work too.</string>
-    <string name="toggle_detail_mixed_allow_qr">When enabled, QR control is allowed in Mixed mode.</string>
-    <string name="toggle_detail_mixed_allow_button">When enabled, the home button and Quick Settings tile can fully control Switchly, including disabling it. Turn this off if buttons should only start focus mode.</string>
-    <string name="toggle_detail_mixed_allow_app_picking">Safety default is locked while Switchly is enabled. Enable this only if you intentionally want app list edits while protection is active, regardless of the selected control mode.</string>
-    <string name="toggle_detail_mixed_allow_profile_switching">Safety default is locked while Switchly is enabled. Enable this only if you intentionally want profile management or switching while protection is active.</string>
-    <string name="toggle_detail_mixed_allow_nfc_tag_writing">Safety default is locked while Switchly is enabled. Enable this only if you intentionally want writing or pairing new NFC tags while protection is active, regardless of the selected control mode.</string>
-    <string name="mixed_channels_locked_while_switchly_enabled">Disable Switchly to edit control methods and access rules.</string>
-    <string name="pref_mixed_allow_barcode_title">Allow barcode channel</string>
-    <string name="pref_mixed_allow_barcode_summary">Lets barcode actions control Switchly.</string>
-    <string name="toggle_detail_mixed_allow_barcode">When enabled, saved barcode actions are accepted in Mixed mode.</string>
-
-    <!-- SETTINGS - App access lock and allow button -->
-    <string name="pref_lock_switchly_app_access_title">Block Switchly settings access</string>
-    <string name="pref_lock_switchly_app_access_summary">Lock Switchly screens while protection is active.</string>
-    <string name="toggle_detail_lock_switchly_app_access">When enabled, Switchly settings and control screens are blocked while protection is active. Disable Switchly first (via an allowed channel) to change settings again.</string>
-    <string name="app_lock_section_uninstall">Uninstall protection</string>
-    <string name="pref_uninstall_friction_title">Uninstall protection</string>
-    <string name="pref_uninstall_friction_summary">Makes App Info, installers, and Play Store uninstall paths harder to use while Switchly is active.</string>
-    <string name="blocking_uninstall_friction_title">Uninstall friction active</string>
-    <string name="blocking_uninstall_friction_message">Switchly is making uninstall-related screens harder to access while protection is active. This is friction, not true uninstall blocking. Disable Switchly first via your allowed method if you want to continue.</string>
-    <string name="pref_allow_button_enable_title">Allow button/tile enable-only</string>
-    <string name="pref_allow_button_enable_summary">Lets the home button and Quick Settings tile turn Switchly on even when button disabling is not allowed. Disabling still requires NFC, QR, barcode, or another allowed control method.</string>
-    <string name="toggle_detail_allow_button_enable">When enabled, the home button and Quick Settings tile can turn Switchly on in any control mode. Turning it off still requires the currently allowed control methods.</string>
-    <string name="control_mode_lock_inline_hint">Control mode is locked while Switchly is on. Disable Switchly first, then choose a mode.</string>
-
-    <!-- SETTINGS - Locked editing messages and toggle details -->
-    <string name="edit_locked_while_switchly_on_title">Unavailable while Switchly is on</string>
-    <string name="edit_locked_manage_paired_tags">Turn Switchly off to manage paired tags.</string>
-    <string name="edit_locked_manage_barcodes">Turn Switchly off to manage barcodes.</string>
-    <string name="edit_locked_manage_websites">Turn Switchly off to manage blocked websites.</string>
-    <string name="edit_locked_manage_apps">Turn Switchly off to manage blocked apps.</string>
-    <string name="toast_disable_switchly_to_edit_blocked_apps">App editing is locked while Switchly is active. Disable Switchly or enable “Allow picking apps” in Blocking controls.</string>
-    <string name="toast_disable_switchly_to_switch_profiles">Profile switching is locked while Switchly is active. Disable Switchly first.</string>
-    <string name="toast_disable_switchly_to_edit_websites">Website editing is locked while Switchly is active. Disable Switchly first.</string>
-    <string name="toast_disable_switchly_to_edit_app_limits">App limit editing is locked while Switchly is active. Disable Switchly first.</string>
-    <string name="toast_switchly_settings_locked_while_enabled">Switchly settings are locked while protection is active. Disable Switchly first to edit settings.</string>
-    <string name="toggle_detail_quick_tile">Lets you use the Switchly tile from Android Quick Settings. After enabling it here, add the tile from Android’s Quick Settings edit screen.</string>
-    <string name="toggle_detail_block_notifications">Filters notifications from apps that are currently blocked by your active profile. Requires notification listener access.</string>
-    <string name="toggle_detail_autostart">After a reboot, Switchly tries to start itself again so your protection profile comes back automatically.</string>
-    <string name="toggle_detail_emergency">Allows one temporary unlock per day (15 minutes). During this window, Switchly is disabled so you can quickly access blocked apps.</string>
-    <string name="toggle_detail_quick_actions">Shows dashboard buttons for common actions (e.g. temporary disable or profile shortcuts) directly on Home.</string>
-    <string name="edit_locked_manage_profiles">Turn Switchly off to manage profiles.</string>
-    <string name="edit_locked_write_nfc_tags">Turn Switchly off to write or pair NFC tags.</string>
-    <string name="edit_locked_manage_inapp">Turn Switchly off to manage in-app blocking.</string>
-    <string name="edit_locked_manage_blocked_notifications">Turn Switchly off to open blocked notifications.</string>
-
-    <!-- SETTINGS - Emergency override -->
-    <string name="pref_emergency_title">Emergency unlock</string>
-    <string name="pref_emergency_summary">Once per day: temporarily disable Switchly for 15 minutes. Tap to start.</string>
-    <string name="pref_emergency_summary_used">You already used Emergency Unlock today.</string>
-    <string name="pref_emergency_summary_active_with_time">Emergency unlock is active (%1$d min left). Switchly is temporarily disabled.</string>
-    <string name="pref_emergency_summary_paused">Emergency unlock is paused (%1$d min left). Tap for resume/end.</string>
-    <string name="emergency_action_start_15">Start emergency unlock &amp; disable Switchly (15 min)</string>
-    <string name="emergency_paused_inline">Emergency paused (%1$d min)</string>
-    <string name="emergency_manage_title_active">Emergency unlock active (%1$d min)</string>
-    <string name="emergency_manage_title_paused">Emergency unlock paused (%1$d min saved)</string>
-    <string name="emergency_action_pause">Pause emergency</string>
-    <string name="emergency_action_resume">Resume emergency</string>
-    <string name="emergency_action_end">End emergency now</string>
-    <string name="emergency_paused_toast">Emergency mode paused.</string>
-    <string name="emergency_resumed_toast">Emergency mode resumed.</string>
-    <string name="emergency_ended_toast">Emergency mode ended.</string>
-    <string name="emergency_enabled_inline">Emergency unlock (%1$d min)</string>
-    <string name="emergency_enabled_toast">Emergency unlock active — Switchly disabled for %1$d min</string>
-    <string name="emergency_used_today">You can only use Emergency Unlock once per day.</string>
-    <string name="emergency_pin_title">Set emergency PIN</string>
-    <string name="emergency_pin_message">This PIN is required before Emergency Unlock can be activated.</string>
-    <string name="emergency_pin_enter_current_title">Enter current emergency PIN</string>
-    <string name="emergency_pin_enter_current_message">Enter your current emergency PIN to change it or use Emergency Unlock.</string>
-    <string name="emergency_pin_enter_current_hint">Enter current PIN</string>
-    <string name="emergency_pin_choose_hint">Choose PIN (min. 4 digits)</string>
-    <string name="emergency_pin_incorrect">Incorrect PIN.</string>
-    <string name="emergency_pin_too_short">PIN must be at least 4 digits.</string>
-    <string name="pref_emergency_summary_disabled">Emergency unlock is off. Turn it on in Blocking controls.</string>
-    <string name="emergency_disabled_message_controls">Emergency unlock is currently off. You can enable it in Blocking controls.</string>
-    <string name="emergency_open_controls_action">Open Blocking controls</string>
-    <string name="emergency_pin_changed">Emergency PIN updated.</string>
-
-    <!-- SETTINGS - Help, permissions, FAQ, and reset -->
     <string name="pref_permissions_title">Permissions</string>
+
     <string name="pref_permissions_summary">Check and manage the system permissions Switchly needs.</string>
+
     <string name="pref_faq_title">FAQ &amp; Tips</string>
+
     <string name="pref_faq_summary">Answers to common questions and helpful information</string>
+
     <string name="pref_reset_app_data_title">Delete all Switchly data</string>
+
     <string name="pref_reset_app_data_summary">Resets all local app data and settings</string>
+
     <string name="pref_reset_app_data_confirm_title">Delete all Switchly data?</string>
+
     <string name="pref_reset_app_data_confirm_message">This will remove all local profiles, rules, statistics, paired tags and settings on this device. Cloud backups are not deleted automatically.</string>
+
     <string name="pref_reset_app_data_done">All local data was cleared.</string>
 
-    <!-- SETTINGS - App lock -->
-    <string name="pref_app_lock_title">App lock</string>
-    <string name="pref_app_lock_summary">Protect Switchly with PIN or biometrics.</string>
-    <string name="app_lock_screen_title">App lock</string>
-    <string name="app_lock_enable_title">Protect Switchly app</string>
-    <string name="app_lock_enable_summary">Require PIN or biometrics when opening Switchly.</string>
-    <string name="app_lock_biometric_title">Allow biometric unlock</string>
-    <string name="app_lock_biometric_summary">Face or fingerprint can unlock Switchly instead of the PIN.</string>
-    <string name="app_lock_set_pin_title">Set app PIN</string>
-    <string name="app_lock_change_pin_title">Change app PIN</string>
-    <string name="app_lock_change_pin_summary">Update the PIN used to open Switchly when App Lock is enabled.</string>
-    <string name="app_lock_pin_set">App PIN saved.</string>
-    <string name="app_lock_pin_hint_new">Choose app PIN (min. 4 digits)</string>
-    <string name="app_lock_pin_hint_enter">Enter app PIN</string>
-    <string name="app_lock_pin_title">Switchly PIN</string>
-    <string name="app_lock_pin_message">This PIN unlocks Switchly when app lock is enabled.</string>
-    <string name="app_lock_pin_incorrect">Incorrect PIN.</string>
-    <string name="app_lock_pin_too_short">PIN must be at least 4 digits.</string>
-    <string name="app_lock_unlock_title">Unlock Switchly</string>
-    <string name="app_lock_unlock_message">Enter your app PIN or use biometrics to continue.</string>
-    <string name="app_lock_unlock_button">Unlock</string>
-    <string name="app_lock_biometric_button">Use biometrics</string>
-    <string name="app_lock_biometric_prompt_title">Unlock Switchly</string>
-    <string name="app_lock_biometric_prompt_subtitle">Use face or fingerprint to open the app.</string>
-    <string name="app_lock_biometric_not_available">Biometrics are not available on this device right now.</string>
-    <string name="app_lock_setup_pin_first">Set an app PIN first.</string>
-    <string name="app_lock_status_off">Off</string>
-    <string name="app_lock_status_pin_only">PIN enabled</string>
-    <string name="app_lock_status_pin_biometric">PIN + biometrics enabled</string>
-
-    <string name="toggle_group_manage_blocking_modes">Manage blocking modes</string>
-    <string name="toggle_group_manage_other_blocking_features">Manage active-state rules</string>
-    <string name="app_lock_section_lock_access">Lock app access</string>
-    <string name="app_lock_emergency_pin_title">Change emergency PIN</string>
-    <string name="app_lock_section_emergency">Emergency protection</string>
-    <string name="app_lock_emergency_pin_summary">Set the separate PIN used for Emergency Unlock when you need a safe fallback.</string>
-
-    <string name="settings_blocking_modes_summary">Choose how Switchly is enabled or disabled.</string>
-    <string name="settings_blocking_features_summary">Limits, access while active, visibility, and extra blocking behavior.</string>
     <string name="settings_backup_create_title">Backup</string>
+
     <string name="settings_backup_create_summary">Create a cloud or local file backup</string>
+
     <string name="settings_restore_title">Restore</string>
+
     <string name="settings_restore_summary">Restore from cloud or a local file</string>
 
 </resources>

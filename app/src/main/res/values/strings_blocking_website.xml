@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- BLOCKING - websites -->
+    <!-- ====================================================== -->
+
+    <string name="block_websites">Block websites</string>
+
+    <string name="block_websites_desc">Block specific domains in supported browsers.\nYou can also set a daily time limit.</string>
+
+    <string name="blocked_websites_title">Blocked websites</string>
+
+    <string name="blocked_websites_empty">No blocked websites yet. Tap + to add one.</string>
+
+    <string name="blocked_websites_add_title">Add website</string>
+
+    <plurals name="delete_websites_confirm">
+        <item quantity="one">Delete this website rule?</item>
+        <item quantity="other">Delete %1$d website rules?</item>
+    </plurals>
+
+    <string name="add_website_rule_title">Add website rule</string>
+
+    <string name="domain_rule_hint_example">example.com</string>
+
+    <string name="domain_required">Please enter a domain.</string>
+
+    <string name="rule_type">Rule type</string>
+
+    <string name="rule_block_always">Block always</string>
+
+    <string name="rule_daily_limit">Daily limit</string>
+
+    <string name="rule_blocked">Blocked</string>
+
+    <string name="domain_limit_required">Please enter a daily limit in minutes.</string>
+
+    <string name="daily_limit_helper">Set minutes per day. Leave empty for no limit.</string>
+
+    <string name="set_daily_limit_desc">Set how many minutes per day are allowed before Switchly blocks it.</string>
+
+    <string name="daily_limit_value_format">%1$d min/day</string>
+
+    <string name="clear_limit">Clear limit</string>
+
+    <string name="blocking_website_blocked_title">Website is blocked!</string>
+
+    <string name="blocking_website_limit_reached_title">Website limit reached!</string>
+
+</resources>

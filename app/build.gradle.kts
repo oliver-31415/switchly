@@ -10,8 +10,8 @@ plugins {
     id("com.google.firebase.crashlytics") apply false
 }
 
-val switchlyVersionCode = 211
-val switchlyVersionName = "2.1.1"
+val switchlyVersionCode = 212
+val switchlyVersionName = "2.1.2"
 
 val switchlySecretPropertiesFile = rootProject.file("signing.properties")
 val switchlySecretProperties = Properties().apply {
@@ -74,8 +74,7 @@ val googleWebClientId = switchlySecretProperty("GOOGLE_WEB_CLIENT_ID")
     .map { value -> value.ifBlank { googleWebClientIdFromGoogleServicesJson(googleServicesJson) } }
 
 // The Google Services and Crashlytics Gradle plugins need google-services.json.
-// They are applied only when the Firebase config is available, so public/offline
-// builds can still compile without private Firebase files.
+// They are applied only when the Firebase config is available, so public/offline builds can still compile without private Firebase files.
 if (googleServicesJsonExists) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
@@ -87,8 +86,8 @@ val externalCustomerPortalUrl = switchlySecretProperty("SWITCHLY_EXTERNAL_CUSTOM
 val externalPaymentProvider = switchlySecretProperty("SWITCHLY_EXTERNAL_PAYMENT_PROVIDER")
     .map { value -> value.ifBlank { "external" } }
 
-// Public links/contact values for official builds. Keep these configurable so forks can
-// build Switchly without official project URLs compiled into the APK.
+// Public links/contact values for official builds. 
+// Keep these configurable so forks can build Switchly without official project URLs compiled into the APK.
 val switchlyWebsiteUrl = switchlySecretProperty("SWITCHLY_WEBSITE_URL")
 val switchlyDownloadsUrl = switchlySecretProperty("SWITCHLY_DOWNLOADS_URL")
 val switchlySupportEmail = switchlySecretProperty("SWITCHLY_SUPPORT_EMAIL")

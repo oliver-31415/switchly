@@ -1,92 +1,161 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- PERMISSIONS - Section labels, banner, and status chips -->
-    <string name="permissions_section_core">Kernberechtigungen</string>
-    <string name="permissions_section_triggers">Trigger &amp; Akku</string>
-    <string name="permissions_section_notifications">Benachrichtigungen</string>
-    <string name="permissions_section_oem">OEM-Hintergrundeinstellungen</string>
-    <plurals name="permissions_banner_missing_count_short">
+    <!-- ====================================================== -->
+    <!-- PERMISSIONS -->
+    <!-- ====================================================== -->
+
+	<string name="permissions_section_core">Kernberechtigungen</string>
+
+	<string name="permissions_section_triggers">Trigger &amp; Akku</string>
+
+	<string name="permissions_section_notifications">Benachrichtigungen</string>
+
+	<string name="permissions_section_oem">OEM-Hintergrundeinstellungen</string>
+
+	<plurals name="permissions_banner_missing_count_short">
         <item quantity="one">Aktion nötig: %1$d Berechtigung fehlt noch</item>
         <item quantity="other">Aktion nötig: %1$d Berechtigungen fehlen noch</item>
     </plurals>
-    <string name="permissions_banner_mismatch_title">Status-Konflikt erkannt</string>
-    <string name="permissions_status_enabled">Aktiviert</string>
-    <string name="permissions_status_disabled">Deaktiviert</string>
-    <string name="permissions_status_location_approx">Ungefähr (Präzise erforderlich)</string>
-    <string name="permissions_status_location_background_missing">Nur während der App-Nutzung (WLAN evtl. weniger zuverlässig; standortbasierte Zeitpläne brauchen „Immer erlauben“)</string>
 
-    <!-- PERMISSIONS - Core and trigger permissions -->
-    <string name="permissions_accessibility_title">Bedienungshilfe-Dienst</string>
-    <string name="permissions_accessibility_desc">Erforderlich für zuverlässigen Schutz: damit Switchly geöffnete Apps und Websites erkennen, auf In-App-Navigation reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchsetzen kann.</string>
-    <string name="permissions_usage_access_title">App-Nutzungszugriff</string>
-    <string name="permissions_usage_access_desc">Erforderlich für Bildschirmzeit-Statistiken und tägliche App-Limits. Aktiviere den Zugriff auf „App-Nutzungsdaten“ für Switchly.</string>
-    <string name="permissions_battery_title">Akku-Optimierung</string>
-    <string name="permissions_battery_desc">Deaktiviere die Akku-Optimierung, damit Zeitpläne und Empfänger im Hintergrund zuverlässig laufen können.</string>
-    <string name="permissions_battery_allowed">Erlaubt</string>
-    <string name="permissions_battery_not_allowed">Deaktiviert</string>
-    <string name="permissions_battery_highest_available">Höchste verfügbare Stufe aktiviert</string>
-    <string name="permissions_exact_alarms_title">Exakte Alarme</string>
-    <string name="permissions_exact_alarms_summary">Erforderlich, damit zeitbasierte Zeitpläne zuverlässig zur richtigen Zeit ausgeführt werden.</string>
-    <string name="permissions_exact_alarms_allowed">Erlaubt</string>
-    <string name="permissions_exact_alarms_not_allowed">Nicht erlaubt</string>
-    <string name="permissions_location_title">Standort</string>
-    <string name="permissions_location_desc">Benötigt für WLAN-basierte und standortbasierte Zeitpläne. Du kannst das hier schon vor dem Erstellen eines Zeitplans aktivieren. WLAN-Trigger benötigen Standort, um die aktuelle SSID zu lesen, und Standort-Zeitpläne benötigen präzisen Standort. Für Geofence-Zeitpläne im Hintergrund aktiviere zusätzlich „Immer erlauben“.</string>
-    <string name="permissions_bluetooth_title">Bluetooth (Geräte in der Nähe)</string>
-    <string name="permissions_bluetooth_desc">Benötigt für Bluetooth-basierte Zeitpläne unter Android 12+. Du kannst das hier schon vor dem Erstellen eines Zeitplans aktivieren.</string>
+	<string name="permissions_banner_mismatch_title">Status-Konflikt erkannt</string>
 
-    <!-- PERMISSIONS - Notification-related permissions -->
-    <string name="permissions_notifications_title">Benachrichtigungen</string>
-    <string name="permissions_notifications_desc">Erforderlich, damit Switchly Statusmeldungen und Erinnerungen in den Benachrichtigungen anzeigen kann.</string>
-    <string name="permissions_notification_access_title">Benachrichtigungszugriff</string>
-    <string name="permissions_notification_access_desc">Erforderlich, um Benachrichtigungen von Apps auszublenden, die durch dein aktives Profil blockiert sind (Benachrichtigungs-Listener-Zugriff).</string>
-    <string name="toast_notification_listener_required">Um Benachrichtigungen blockierter Apps auszublenden, aktiviere den Benachrichtigungszugriff für Switchly.</string>
+	<string name="permissions_status_enabled">Aktiviert</string>
 
-    <!-- PERMISSIONS - OEM/autostart and helper buttons -->
-    <string name="permissions_autostart_title">Autostart (OEM)</string>
-    <string name="permissions_autostart_desc">Einige Hersteller (z. B. Samsung, Xiaomi oder Oppo) schränken Autostart und Hintergrundaktivität zusätzlich ein. Damit Switchly zuverlässig funktioniert, sollte Autostart für diese App erlaubt sein.</string>
-    <string name="permissions_btn_request">Anfordern</string>
-    <string name="permissions_btn_set_permission">Berechtigung setzen</string>
-    <string name="permissions_btn_allow">Erlauben</string>
-    <string name="permissions_btn_permissions">Berechtigungen</string>
-    <string name="permissions_btn_open">Einstellungen öffnen</string>
-    <string name="permissions_btn_enable_precise">Präzise aktivieren</string>
-    <string name="permissions_btn_enable_all_the_time">Immer aktivieren</string>
+	<string name="permissions_status_disabled">Deaktiviert</string>
 
-    <!-- PERMISSIONS - Explanations and denial texts -->
-    <string name="permissions_why_dialog_header">Darum ist das wichtig</string>
-    <string name="perm_location_why_geofence">Standortbasierte Zeitpläne verwenden Geofences. Dafür benötigt Switchly präzisen Standort. Du kannst ihn hier schon vor dem Erstellen des Zeitplans freigeben. Wenn der Zeitplan auch dann auslösen soll, wenn die App nicht geöffnet ist, ist unter Android 10 und neuer zusätzlich Standort im Hintergrund erforderlich.</string>
-    <string name="perm_location_denied_geofence_schedule">Standortberechtigung verweigert. Standortbasierte Zeitpläne funktionieren ohne diese Berechtigung möglicherweise nicht.</string>
-    <string name="perm_location_background_title">Standort im Hintergrund</string>
-    <string name="perm_location_background_why_geofence">Damit standortbasierte Zeitpläne im Hintergrund funktionieren, öffne die App-Einstellungen von Switchly und stelle den Standortzugriff auf „Immer erlauben“. Unter Android 11 und neuer wird das über die System-Einstellungsseite gewährt, nicht im ersten Berechtigungsdialog.</string>
-    <string name="accessibility_service_desc">Ermöglicht Switchly, geöffnete Apps und Websites zu erkennen, auf In-App-Navigation zu reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchzusetzen.</string>
-    <string name="perm_location_title">Standortberechtigung</string>
-    <string name="perm_location_why_wifi_ssid">Android behandelt den WLAN-Namen (SSID) als standortbezogene Information. Switchly benötigt präzisen Standort, um das aktuelle WLAN zuverlässig zu lesen. Auf manchen Geräten mit Android 13 und neuer kann zusätzlich „WLAN-Geräte in der Nähe“ nötig sein.</string>
-    <string name="perm_location_denied_wifi_schedule">Standortberechtigung verweigert. WLAN-Zeitpläne funktionieren ohne diese Berechtigung möglicherweise nicht.</string>
-    <string name="perm_bt_title">Berechtigung „Geräte in der Nähe“</string>
-    <string name="perm_bt_why_needed">Um verbundene Bluetooth-Geräte für Bluetooth-Zeitpläne zu erkennen, benötigt Android die Berechtigung „Geräte in der Nähe“. Du kannst sie hier schon vor dem Erstellen des Zeitplans freigeben.</string>
-    <string name="perm_bt_denied_schedule">Bluetooth-Berechtigung verweigert. Bluetooth-Zeitpläne funktionieren ohne diese Berechtigung möglicherweise nicht.</string>
-    <string name="protection_inactive_title">Schutz inaktiv</string>
-    <string name="protection_inactive_text">Switchly ist aktiviert, aber der Bedienungshilfe-Dienst ist deaktiviert. Tippe, um ihn zu aktivieren.</string>
+	<string name="permissions_status_location_approx">Ungefähr (Präzise erforderlich)</string>
 
-    <!-- PERMISSIONS - Health checks -->
-    <string name="permissions_health_recheck">Neu prüfen</string>
-    <string name="permissions_health_rechecked_all_good">Neuprüfung abgeschlossen: alle erforderlichen Berechtigungen sind gesetzt ✅</string>
-    <string name="permissions_health_rechecked_with_mismatch">Neuprüfung abgeschlossen: Status-Konflikt bei der Bedienungshilfe besteht weiterhin</string>
-    <plurals name="permissions_health_rechecked_missing">
+	<string name="permissions_status_location_background_missing">Nur während der App-Nutzung (WLAN evtl. weniger zuverlässig; standortbasierte Zeitpläne brauchen „Immer erlauben“)</string>
+
+	<string name="permissions_accessibility_title">Bedienungshilfe-Dienst</string>
+
+	<string name="permissions_accessibility_desc">Erforderlich für zuverlässigen Schutz: damit Switchly geöffnete Apps und Websites erkennen, auf In-App-Navigation reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchsetzen kann.</string>
+
+	<string name="permissions_usage_access_title">App-Nutzungszugriff</string>
+
+	<string name="permissions_usage_access_desc">Erforderlich für Bildschirmzeit-Statistiken und tägliche App-Limits. Aktiviere den Zugriff auf „App-Nutzungsdaten“ für Switchly.</string>
+
+	<string name="permissions_battery_title">Akku-Optimierung</string>
+
+	<string name="permissions_battery_desc">Deaktiviere die Akku-Optimierung, damit Zeitpläne und Empfänger im Hintergrund zuverlässig laufen können.</string>
+
+	<string name="permissions_battery_allowed">Erlaubt</string>
+
+	<string name="permissions_battery_not_allowed">Deaktiviert</string>
+
+	<string name="permissions_battery_highest_available">Höchste verfügbare Stufe aktiviert</string>
+
+	<string name="permissions_exact_alarms_title">Exakte Alarme</string>
+
+	<string name="permissions_exact_alarms_summary">Erforderlich, damit zeitbasierte Zeitpläne zuverlässig zur richtigen Zeit ausgeführt werden.</string>
+
+	<string name="permissions_exact_alarms_allowed">Erlaubt</string>
+
+	<string name="permissions_exact_alarms_not_allowed">Nicht erlaubt</string>
+
+	<string name="permissions_location_title">Standort</string>
+
+	<string name="permissions_location_desc">Benötigt für WLAN-basierte und standortbasierte Zeitpläne. Du kannst das hier schon vor dem Erstellen eines Zeitplans aktivieren. WLAN-Trigger benötigen Standort, um die aktuelle SSID zu lesen, und Standort-Zeitpläne benötigen präzisen Standort. Für Geofence-Zeitpläne im Hintergrund aktiviere zusätzlich „Immer erlauben“.</string>
+
+	<string name="permissions_bluetooth_title">Bluetooth (Geräte in der Nähe)</string>
+
+	<string name="permissions_bluetooth_desc">Benötigt für Bluetooth-basierte Zeitpläne unter Android 12+. Du kannst das hier schon vor dem Erstellen eines Zeitplans aktivieren.</string>
+
+	<string name="permissions_notifications_title">Benachrichtigungen</string>
+
+	<string name="permissions_notifications_desc">Erforderlich, damit Switchly Statusmeldungen und Erinnerungen in den Benachrichtigungen anzeigen kann.</string>
+
+	<string name="permissions_notification_access_title">Benachrichtigungszugriff</string>
+
+	<string name="permissions_notification_access_desc">Erforderlich, um Benachrichtigungen von Apps auszublenden, die durch dein aktives Profil blockiert sind (Benachrichtigungs-Listener-Zugriff).</string>
+
+	<string name="toast_notification_listener_required">Um Benachrichtigungen blockierter Apps auszublenden, aktiviere den Benachrichtigungszugriff für Switchly.</string>
+
+	<string name="permissions_autostart_title">Autostart (OEM)</string>
+
+	<string name="permissions_autostart_desc">Einige Hersteller (z. B. Samsung, Xiaomi oder Oppo) schränken Autostart und Hintergrundaktivität zusätzlich ein. Damit Switchly zuverlässig funktioniert, sollte Autostart für diese App erlaubt sein.</string>
+
+	<string name="permissions_btn_request">Anfordern</string>
+
+	<string name="permissions_btn_set_permission">Berechtigung setzen</string>
+
+	<string name="permissions_btn_allow">Erlauben</string>
+
+	<string name="permissions_btn_permissions">Berechtigungen</string>
+
+	<string name="permissions_btn_open">Einstellungen öffnen</string>
+
+	<string name="permissions_btn_enable_precise">Präzise aktivieren</string>
+
+	<string name="permissions_btn_enable_all_the_time">Immer aktivieren</string>
+
+	<string name="permissions_why_dialog_header">Darum ist das wichtig</string>
+
+	<string name="accessibility_service_desc">Ermöglicht Switchly, geöffnete Apps und Websites zu erkennen, auf In-App-Navigation zu reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchzusetzen.</string>
+
+	<string name="accessibility_disclosure_title">Zustimmung zum Bedienungshilfe-Dienst</string>
+
+	<string name="accessibility_disclosure_message">Switchly verwendet den Android Accessibility Service für seine zentralen Schutzfunktionen.\n\nWorauf Switchly zugreifen kann, während der Dienst aktiv ist:\n• Die aktuell geöffnete App und Fensterwechsel\n• Sichtbaren Text und URLs in unterstützten Browsern, wenn dies zum Prüfen von Website-Regeln nötig ist\n• In-App-Navigationsereignisse in unterstützten Apps, wenn dies für In-App-Regeln und Limits nötig ist\n\nWie Switchly diesen Zugriff verwendet:\n• Um blockierte Apps und Websites zu erkennen und dich davon wegzuleiten\n• Um Profile, Zeitpläne, App-Limits, Website-Limits und In-App-Blockierungen durchzusetzen\n• Um Nutzungs- und Blockierungsstatistiken lokal auf deinem Gerät zu zählen\n\nSwitchly verwendet Accessibility nicht, um Passwörter oder private Nachrichten zu lesen, ändert keine Systemeinstellungen ohne deine Aktion und teilt keine Accessibility-Daten für Werbung.\n\nDu kannst diese Berechtigung ablehnen, aber die zentralen Schutzfunktionen von Switchly benötigen Accessibility und funktionieren ohne diese Berechtigung nicht.</string>
+	
+	<string name="accessibility_disclosure_checkbox">Ich verstehe, dass Switchly Accessibility für seine zentralen Schutzfunktionen benötigt.</string>
+
+	<string name="accessibility_disclosure_accept">Ich stimme zu</string>
+
+	<string name="accessibility_disclosure_decline">Nicht jetzt</string>
+
+	<string name="perm_location_title">Standortberechtigung</string>
+
+	<string name="perm_location_why_wifi_ssid">Android behandelt den WLAN-Namen (SSID) als standortbezogene Information. Switchly benötigt präzisen Standort, um das aktuelle WLAN zuverlässig zu lesen. Auf manchen Geräten mit Android 13 und neuer kann zusätzlich „WLAN-Geräte in der Nähe“ nötig sein.</string>
+
+	<string name="perm_location_denied_wifi_schedule">Standortberechtigung verweigert. WLAN-Zeitpläne funktionieren ohne diese Berechtigung möglicherweise nicht.</string>
+
+	<string name="perm_location_why_geofence">Standortbasierte Zeitpläne verwenden Geofences. Dafür benötigt Switchly präzisen Standort. Du kannst ihn hier schon vor dem Erstellen des Zeitplans freigeben. Wenn der Zeitplan auch dann auslösen soll, wenn die App nicht geöffnet ist, ist unter Android 10 und neuer zusätzlich Standort im Hintergrund erforderlich.</string>
+
+	<string name="perm_location_denied_geofence_schedule">Standortberechtigung verweigert. Standortbasierte Zeitpläne funktionieren ohne diese Berechtigung möglicherweise nicht.</string>
+
+	<string name="perm_location_background_title">Standort im Hintergrund</string>
+
+	<string name="perm_location_background_why_geofence">Damit standortbasierte Zeitpläne im Hintergrund funktionieren, öffne die App-Einstellungen von Switchly und stelle den Standortzugriff auf „Immer erlauben“. Unter Android 11 und neuer wird das über die System-Einstellungsseite gewährt, nicht im ersten Berechtigungsdialog.</string>
+
+	<string name="perm_bt_title">Berechtigung „Geräte in der Nähe“</string>
+
+	<string name="perm_bt_why_needed">Um verbundene Bluetooth-Geräte für Bluetooth-Zeitpläne zu erkennen, benötigt Android die Berechtigung „Geräte in der Nähe“. Du kannst sie hier schon vor dem Erstellen des Zeitplans freigeben.</string>
+
+	<string name="perm_bt_denied_schedule">Bluetooth-Berechtigung verweigert. Bluetooth-Zeitpläne funktionieren ohne diese Berechtigung möglicherweise nicht.</string>
+
+	<string name="protection_inactive_title">Schutz inaktiv</string>
+
+	<string name="protection_inactive_text">Switchly ist aktiviert, aber der Bedienungshilfe-Dienst ist deaktiviert. Tippe, um ihn zu aktivieren.</string>
+
+	<string name="permissions_health_recheck">Neu prüfen</string>
+
+	<string name="permissions_health_rechecked_all_good">Neuprüfung abgeschlossen: alle erforderlichen Berechtigungen sind gesetzt ✅</string>
+
+	<string name="permissions_health_rechecked_with_mismatch">Neuprüfung abgeschlossen: Status-Konflikt bei der Bedienungshilfe besteht weiterhin</string>
+
+	<plurals name="permissions_health_rechecked_missing">
         <item quantity="one">Neuprüfung abgeschlossen: %1$d erforderliche Berechtigung fehlt noch</item>
         <item quantity="other">Neuprüfung abgeschlossen: %1$d erforderliche Berechtigungen fehlen noch</item>
     </plurals>
-    <string name="permissions_health_live_unknown">Live-Check ausstehend…</string>
-    <string name="permissions_health_live_ok">Live-Check: Bedienungshilfe ist aktiv ✅</string>
-    <string name="permissions_health_live_disabled">Live-Check: Bedienungshilfe ist derzeit deaktiviert</string>
-    <plurals name="permissions_health_live_missing_count">
+
+	<string name="permissions_health_live_unknown">Live-Check ausstehend…</string>
+
+	<string name="permissions_health_live_ok">Live-Check: Bedienungshilfe ist aktiv ✅</string>
+
+	<string name="permissions_health_live_disabled">Live-Check: Bedienungshilfe ist derzeit deaktiviert</string>
+
+	<plurals name="permissions_health_live_missing_count">
         <item quantity="one">Live-Check: %1$d erforderliche Berechtigung fehlt noch</item>
         <item quantity="other">Live-Check: %1$d erforderliche Berechtigungen fehlen noch</item>
     </plurals>
-    <string name="permissions_health_live_sched_battery_bad">Live-Check: Bedienungshilfe ist aktiv, aber die Akku-Optimierung ist noch eingeschaltet (Zeitpläne können verzögert sein)</string>
-    <string name="permissions_health_live_ok_with_schedules">Live-Check: Bedienungshilfe und Akku-Einstellungen für Zeitpläne sind in Ordnung ✅</string>
-    <string name="permissions_health_live_mismatch">Status-Konflikt erkannt. Nach dem Öffnen der Bedienungshilfe-Einstellungen bitte erneut prüfen.</string>
-    <string name="permissions_health_last_checked_fmt">Zuletzt geprüft: %1$s</string>
+
+	<string name="permissions_health_live_sched_battery_bad">Live-Check: Bedienungshilfe ist aktiv, aber die Akku-Optimierung ist noch eingeschaltet (Zeitpläne können verzögert sein)</string>
+
+	<string name="permissions_health_live_ok_with_schedules">Live-Check: Bedienungshilfe und Akku-Einstellungen für Zeitpläne sind in Ordnung ✅</string>
+
+	<string name="permissions_health_live_mismatch">Status-Konflikt erkannt. Nach dem Öffnen der Bedienungshilfe-Einstellungen bitte erneut prüfen.</string>
+
+	<string name="permissions_health_last_checked_fmt">Zuletzt geprüft: %1$s</string>
 
 </resources>

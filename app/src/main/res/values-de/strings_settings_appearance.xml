@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- SETTINGS - appearance and language -->
+    <!-- ====================================================== -->
+
+    <string name="pref_theme_title">Darstellung</string>
+
+    <string name="pref_theme_mode_title">Anzeigemodus</string>
+
+    <string name="pref_time_format_title">Zeitformat</string>
+
+    <string name="pref_time_format_summary">Lege fest, wie Zeiten in Zeitplänen angezeigt werden</string>
+
+    <string name="pref_time_format_system">Automatisch</string>
+
+    <string name="pref_time_format_24h">24-Stunden</string>
+
+    <string name="pref_time_format_12h">12-Stunden</string>
+
+    <string name="pref_theme_mode_summary">Wähle, wie Switchly angezeigt wird.</string>
+
+    <string name="pref_theme_mode_light">Hell</string>
+
+    <string name="pref_theme_mode_dark">Dunkel</string>
+
+    <string name="pref_theme_mode_system">Systemeinstellung folgen</string>
+
+    <string name="pref_theme_color_title">Designfarbe</string>
+
+    <string name="pref_theme_color_summary">Wähle die Akzentfarbe, die in der App verwendet wird.</string>
+
+    <string name="pref_theme_color_custom_fmt">Benutzerdefiniert: %1$s</string>
+
+    <string name="pref_accent_custom">Benutzerdefinierte Farbe…</string>
+
+    <string name="pref_accent_custom_title">Benutzerdefinierte Farbe</string>
+
+    <string-array name="pref_accent_entries">
+        <item>@string/accent_default</item>
+        <item>@string/accent_blue</item>
+        <item>@string/accent_orange</item>
+        <item>@string/accent_purple</item>
+        <item>@string/accent_pink</item>
+        <item>@string/accent_teal</item>
+        <item>@string/accent_red</item>
+        <item>@string/accent_amber</item>
+        <item>@string/accent_gray</item>
+    </string-array>
+    
+    <string-array name="pref_accent_values">
+        <item>default</item>
+        <item>blue</item>
+        <item>orange</item>
+        <item>purple</item>
+        <item>pink</item>
+        <item>teal</item>
+        <item>red</item>
+        <item>amber</item>
+        <item>gray</item>
+    </string-array>
+
+    <string name="pref_language_title">Sprache</string>
+
+    <string name="pref_language_summary">Wähle die App-Sprache.</string>
+
+    <string-array name="pref_language_entries">
+        <item>System</item>
+        <item>Englisch</item>
+        <item>Deutsch</item>
+    </string-array>
+
+    <string-array name="pref_language_values">
+        <item>system</item>
+        <item>en</item>
+        <item>de</item>
+    </string-array>
+
+    <string name="pref_block_notifications_title">Benachrichtigungen blockierter Apps ausblenden</string>
+
+</resources>

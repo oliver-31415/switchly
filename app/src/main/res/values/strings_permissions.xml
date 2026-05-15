@@ -1,92 +1,161 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- PERMISSIONS - Section labels, banner, and status chips -->
+    <!-- ====================================================== -->
+    <!-- PERMISSIONS -->
+    <!-- ====================================================== -->
+
     <string name="permissions_section_core">Core permissions</string>
+
     <string name="permissions_section_triggers">Triggers &amp; battery</string>
+
     <string name="permissions_section_notifications">Notifications</string>
+
     <string name="permissions_section_oem">OEM background settings</string>
+
     <plurals name="permissions_banner_missing_count_short">
         <item quantity="one">Action needed: %1$d permission remaining</item>
         <item quantity="other">Action needed: %1$d permissions remaining</item>
     </plurals>
+
     <string name="permissions_banner_mismatch_title">Status mismatch detected</string>
+
     <string name="permissions_status_enabled">Enabled</string>
+
     <string name="permissions_status_disabled">Disabled</string>
+
     <string name="permissions_status_location_approx">Approximate (Precise required)</string>
+
     <string name="permissions_status_location_background_missing">Only while app is in use (Wi-Fi may be less reliable; location schedules need “Allow all the time”)</string>
 
-    <!-- PERMISSIONS - Core and trigger permissions -->
     <string name="permissions_accessibility_title">Accessibility service</string>
+
     <string name="permissions_accessibility_desc">Required for reliable protection: lets Switchly detect opened apps and websites, react to in-app navigation, and enforce blocking, profiles, schedules, and usage limits.</string>
+
     <string name="permissions_usage_access_title">App usage access</string>
+
     <string name="permissions_usage_access_desc">Required for screen-time statistics and daily app limits. Enable “App usage data” access for Switchly.</string>
+
     <string name="permissions_battery_title">Battery optimization</string>
+
     <string name="permissions_battery_desc">Disable battery optimization so schedules and receivers can run reliably in the background.</string>
+
     <string name="permissions_battery_allowed">Allowed</string>
+
     <string name="permissions_battery_not_allowed">Disabled</string>
+
     <string name="permissions_battery_highest_available">Highest available enabled</string>
+
     <string name="permissions_exact_alarms_title">Exact alarms</string>
+
     <string name="permissions_exact_alarms_summary">Needed so time-based schedules can run reliably at the correct time.</string>
+
     <string name="permissions_exact_alarms_allowed">Allowed</string>
+
     <string name="permissions_exact_alarms_not_allowed">Not allowed</string>
+
     <string name="permissions_location_title">Location</string>
+
     <string name="permissions_location_desc">Needed for Wi-Fi-based schedules and location schedules. You can enable it here before creating a schedule. Wi-Fi triggers need location to read the current SSID, and location schedules need precise location. For geofence-based schedules in the background, also allow “Allow all the time”.</string>
+
     <string name="permissions_bluetooth_title">Bluetooth (Nearby devices)</string>
+
     <string name="permissions_bluetooth_desc">Needed for Bluetooth-based schedules on Android 12+. You can enable it here before creating a schedule.</string>
 
-    <!-- PERMISSIONS - Notification-related permissions -->
     <string name="permissions_notifications_title">Notifications</string>
+
     <string name="permissions_notifications_desc">Required so Switchly can show status updates and reminders in the notification shade.</string>
+
     <string name="permissions_notification_access_title">Notification access</string>
+
     <string name="permissions_notification_access_desc">Required to hide notifications from apps blocked by your active profile (notification listener access).</string>
+
     <string name="toast_notification_listener_required">To hide blocked-app notifications, enable notification access for Switchly.</string>
 
-    <!-- PERMISSIONS - OEM/autostart and helper buttons -->
     <string name="permissions_autostart_title">Auto-start (OEM)</string>
+
     <string name="permissions_autostart_desc">Some manufacturers (e.g., Samsung, Xiaomi, or Oppo) further restrict auto-start and background activity. For Switchly to work reliably, auto-start should be allowed for this app.</string>
+
     <string name="permissions_btn_request">Request</string>
+
     <string name="permissions_btn_set_permission">Set permission</string>
+
     <string name="permissions_btn_allow">Allow</string>
+
     <string name="permissions_btn_permissions">Permissions</string>
+
     <string name="permissions_btn_open">Open settings</string>
+
     <string name="permissions_btn_enable_precise">Enable precise</string>
+
     <string name="permissions_btn_enable_all_the_time">Enable all the time</string>
 
-    <!-- PERMISSIONS - Explanations and denial texts -->
     <string name="permissions_why_dialog_header">Why this matters</string>
+
     <string name="accessibility_service_desc">Lets Switchly detect opened apps and websites, react to in-app navigation, and enforce blocking, profiles, schedules, and usage limits.</string>
+
+    <string name="accessibility_disclosure_title">Accessibility service consent</string>
+
+    <string name="accessibility_disclosure_message">Switchly uses the Android Accessibility Service for its core protection features.\n\nWhat Switchly can access while the service is active:\n• The currently opened app and window changes\n• Visible text and URLs in supported browsers when needed to check website rules\n• In-app navigation events in supported apps when needed for in-app rules and limits\n\nHow Switchly uses this access:\n• To detect blocked apps and websites and move you away from them\n• To enforce profiles, schedules, app limits, website limits, and in-app blocking\n• To count usage and blocking statistics locally on your device\n\nSwitchly does not use Accessibility to read passwords or private messages, does not change system settings without your action, and does not share Accessibility data for advertising.\n\nYou can decline this permission, but Switchly’s core protection features require Accessibility and will not work without it.</string>
+    
+    <string name="accessibility_disclosure_checkbox">I understand that Switchly needs Accessibility for its core protection features.</string>
+
+    <string name="accessibility_disclosure_accept">I agree</string>
+
+    <string name="accessibility_disclosure_decline">Not now</string>
+
     <string name="perm_location_title">Location permission</string>
+
     <string name="perm_location_why_wifi_ssid">Android treats the Wi-Fi name (SSID) as location-related information. Switchly needs precise location to read the current Wi-Fi reliably. On some devices running Android 13 and newer, Nearby Wi-Fi devices may also be required.</string>
+
     <string name="perm_location_denied_wifi_schedule">Location permission denied. Wi-Fi schedules may not work without this permission.</string>
+
     <string name="perm_location_why_geofence">Location schedules use geofences. For that, Switchly needs precise location. You can grant it here before creating the schedule. If the schedule should still trigger while the app is not open, background location is also required on Android 10 and newer.</string>
+
     <string name="perm_location_denied_geofence_schedule">Location permission denied. Location schedules may not work without this permission.</string>
+
     <string name="perm_location_background_title">Background location</string>
+
     <string name="perm_location_background_why_geofence">To run location schedules in the background, open Switchly’s app settings and change Location access to “Allow all the time”. On Android 11 and newer, this is granted from the system settings screen, not the first permission popup.</string>
+
     <string name="perm_bt_title">Nearby devices permission</string>
+
     <string name="perm_bt_why_needed">To detect connected Bluetooth devices for Bluetooth schedules, Android requires the “Nearby devices” permission. You can grant it here before creating the schedule.</string>
+
     <string name="perm_bt_denied_schedule">Bluetooth permission denied. Bluetooth schedules may not work without this permission.</string>
+
     <string name="protection_inactive_title">Protection inactive</string>
+
     <string name="protection_inactive_text">Switchly is enabled, but the Accessibility service is disabled. Tap to enable it.</string>
 
-    <!-- PERMISSIONS - Health checks -->
     <string name="permissions_health_recheck">Re-check</string>
+
     <string name="permissions_health_rechecked_all_good">Re-check complete: all required permissions look good ✅</string>
+
     <string name="permissions_health_rechecked_with_mismatch">Re-check complete: accessibility status mismatch still detected</string>
+
     <plurals name="permissions_health_rechecked_missing">
         <item quantity="one">Re-check complete: %1$d required permission is still missing</item>
         <item quantity="other">Re-check complete: %1$d required permissions are still missing</item>
     </plurals>
+
     <string name="permissions_health_live_unknown">Check pending…</string>
+
     <string name="permissions_health_live_ok">Accessibility is active ✅</string>
+
     <string name="permissions_health_live_disabled">Accessibility is currently disabled</string>
+
     <plurals name="permissions_health_live_missing_count">
         <item quantity="one">%1$d required permission is still missing</item>
         <item quantity="other">%1$d required permissions are still missing</item>
     </plurals>
+
     <string name="permissions_health_live_sched_battery_bad">Accessibility is active, but battery optimization is still on (schedules may be delayed)</string>
+
     <string name="permissions_health_live_ok_with_schedules">Accessibility and schedule battery settings look good ✅</string>
+
     <string name="permissions_health_live_mismatch">Status mismatch detected. Re-check after opening Accessibility settings.</string>
+
     <string name="permissions_health_last_checked_fmt">Last checked: %1$s</string>
 
 </resources>

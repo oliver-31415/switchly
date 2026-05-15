@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- SUPPORT - contact support and troubleshooting -->
+    <!-- ====================================================== -->
+
+	<string name="support_title">Support</string>
+
+	<string name="support_desc">Brauchst du Hilfe oder hast einen Fehler gefunden?\nSende eine E-Mail und füge nach Möglichkeit Debug-Infos sowie eine kurze Beschreibung hinzu.</string>
+
+	<string name="support_email_subject">Switchly-Support</string>
+
+	<string name="support_email_placeholder">E-Mail</string>
+
+	<string name="support_open_email">E-Mail öffnen</string>
+
+	<string name="support_copy_email">E-Mail kopieren</string>
+
+	<string name="support_copied">E-Mail kopiert</string>
+
+	<string name="support_copy_latest_logs">Neueste Logs kopieren</string>
+
+	<string name="support_logs_copied">Neueste Logs kopiert</string>
+
+	<string name="support_include_debug">Debug-Infos anhängen</string>
+
+	<string name="support_include_advanced_debug">Erweiterte Diagnoseinfos anhängen</string>
+
+	<string name="support_debug_preface">Bitte beschreibe dein Problem oberhalb dieser Zeile.</string>
+
+	<string name="troubleshooting_title">Fehlerbehebung</string>
+
+	<string name="troubleshooting_accessibility">Bedienungshilfedienst</string>
+
+	<string name="troubleshooting_battery">Akku-Optimierung deaktiviert</string>
+
+	<string name="troubleshooting_exact_alarms">Berechtigung für exakte Alarme</string>
+
+	<string name="troubleshooting_location">Standortberechtigung (WLAN-Trigger)</string>
+
+	<string name="troubleshooting_bluetooth">Bluetooth-Berechtigung (Geräte in der Nähe)</string>
+
+	<string name="troubleshooting_notification_access">Benachrichtigungszugriff</string>
+
+	<string name="troubleshooting_ok">OK ✅</string>
+
+	<string name="troubleshooting_missing">Fehlt ❌</string>
+
+	<string name="troubleshooting_open_permissions_overview">Berechtigungsübersicht öffnen</string>
+
+	<string name="troubleshooting_open_settings">Einstellungen öffnen</string>
+
+	<string name="troubleshooting_info_accessibility">Switchly benötigt Bedienungshilfe (Accessibility), um geöffnete Apps und Websites zu erkennen, auf In-App-Navigation zu reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchzusetzen. Wenn sie deaktiviert ist, funktionieren wichtige Schutzfunktionen nicht.</string>
+
+	<string name="troubleshooting_info_notification_access">Nur für die Funktion „Blockierte Benachrichtigungen“. Ohne Zugriff können Benachrichtigungen nicht blockiert werden.</string>
+
+	<string name="troubleshooting_info_battery">Die Akku-Optimierung kann Hintergrundarbeit verzögern. Deaktiviere die Optimierung für Switchly, um die Zuverlässigkeit zu verbessern.</string>
+
+	<string name="troubleshooting_info_exact_alarms">Exakte Alarme sorgen dafür, dass zeitbasierte Zeitpläne pünktlich auslösen. Manche Geräte verzögern Zeitpläne, wenn dies deaktiviert ist.</string>
+
+	<string name="troubleshooting_info_location">Android benötigt die Berechtigung für den genauen Standort, um den aktuellen WLAN-Namen (SSID) zu lesen. Für die beste Zuverlässigkeit bei WLAN-Triggern sollte zusätzlich Hintergrundstandort erlaubt sein.</string>
+
+	<string name="troubleshooting_info_bluetooth">Android 12+ benötigt die Berechtigung „Geräte in der Nähe“ bzw. Bluetooth für Bluetooth-basierte Zeitpläne.</string>
+
+	<string name="troubleshooting_xiaomi_note">Xiaomi-/Redmi-/POCO-Hinweis:\n\n• Aktiviere zusätzlich Autostart für Switchly\n• Stelle den Akku-Modus auf Uneingeschränkt / Nicht optimieren, falls verfügbar\n• Sperre die App nach Möglichkeit in den letzten Apps\n• Wenn vorhanden, erlaube Hintergrundaktivität für Switchly\n• Schalte die Bedienungshilfe einmal aus und wieder ein, falls sie als aktiv angezeigt wird, Switchly aber nicht reagiert</string>
+
+	<string name="troubleshooting_pref_summary">Häufige Probleme &amp; Lösungen prüfen</string>
+
+	<string name="troubleshooting_battery_oem_note">Manche Geräte bieten keine Akkuoption „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, ist das auf deinem Gerät möglicherweise bereits das Maximum.</string>
+
+	<string name="troubleshooting_exact_alarms_note">Wenn exakte Alarme nicht erlaubt sind, können zeitbasierte Zeitpläne verspätet oder nicht zur richtigen Zeit ausgeführt werden.</string>
+
+	<string name="pref_tutorial_title">Tutorial</string>
+
+	<string name="pref_tutorial_summary">Einrichtungsschritte und Funktionen noch einmal ansehen</string>
+
+	<string name="support_include_logs">Logs anhängen</string>
+
+	<string name="support_latest_logs_heading">Neueste Logs</string>
+
+</resources>

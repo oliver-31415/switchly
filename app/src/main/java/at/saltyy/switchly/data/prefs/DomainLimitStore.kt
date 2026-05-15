@@ -25,8 +25,8 @@ import androidx.preference.PreferenceManager
 
 /**
  * Daily per-domain limit (minutes), scoped to the active profile.
- * Older builds stored website limits globally by domain. We still read those profileless keys
- * once so existing user data is migrated into the active profile.
+ * Older builds stored website limits globally by domain. 
+ * We still read those profileless keys once so existing user data is migrated into the active profile.
  */
 object DomainLimitStore {
 

@@ -44,17 +44,16 @@ object SchedulePlanner {
     // Broadcast action used to notify the UI about changes to the next schedule boundary
     const val ACTION_NEXT_CHANGED = "at.saltyy.switchly.schedule.NEXT_CHANGED"
 
-    // Fire at the exact boundary. Using an "early" window can cause off-by-one-minute
-    // behavior when schedules are defined in whole minutes.
+    // Fire at the exact boundary. 
+    // Using an "early" window can cause off-by-one-minute behavior when schedules are defined in whole minutes.
     private const val EARLY_WINDOW_MS = 0L
 
     // Keep a stable requestCode for the regular one-off tick PendingIntent.
     // Some refactors referenced this as PI_TICK but forgot to define it.
     private const val PI_TICK = 42
 
-    // Fallback: if exact alarms are not allowed (Android 12+ without permission), keep a
-    // lightweight inexact repeating tick. This prevents schedules from \"never\" applying
-    // on devices that heavily defer one-off inexact alarms in Doze.
+    // Fallback: if exact alarms are not allowed (Android 12+ without permission), keep a lightweight inexact repeating tick. 
+    // This prevents schedules from \"never\" applying on devices that heavily defer one-off inexact alarms in Doze.
     private const val FALLBACK_TICK_RC = 43
     private const val FALLBACK_INTERVAL_MS = 15 * 60 * 1000L
 
@@ -69,8 +68,7 @@ object SchedulePlanner {
 
         val all = ScheduleStore.getAll(ctx).filter { it.enabled }
 
-        // Location schedules are transition-driven and do not have a predictable "next" boundary,
-        // so exclude them from the next-schedule preview/alarm planner entirely.
+        // Location schedules are transition-driven and do not have a predictable "next" boundary, so exclude them from the next-schedule preview/alarm planner entirely.
         // Wi-Fi/Bluetooth schedules may still contribute a next boundary when they have an actual time window.
         val timeBased = all.filter { s ->
             !s.isLocationSchedule()

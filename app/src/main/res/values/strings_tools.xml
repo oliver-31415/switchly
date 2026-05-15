@@ -1,59 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- TOOLS - Section labels -->
+    <!-- ====================================================== -->
+    <!-- TOOLS / HUB -->
+    <!-- ====================================================== -->
+
     <string name="tools_section_automation">Control &amp; automation</string>
+
     <string name="tools_section_management">Keys &amp; codes</string>
+
     <string name="tools_section_safety">Quick override</string>
+
     <string name="tools_section_activity">Usage &amp; review</string>
 
-    <!-- TOOLS - Automation -->
     <string name="tools_schedules_title">Schedules</string>
+
     <string name="tools_schedules_summary">Create and manage automatic time, Wi-Fi, and Bluetooth actions</string>
 
-    <!-- TOOLS - Tags & codes -->
     <string name="tools_tags_codes_title">Manage keys</string>
+
     <string name="tools_tags_codes_summary">NFC tags, paired tags, QR codes, and barcodes</string>
+
     <string name="tools_tags_codes_write_nfc">Write NFC tag</string>
+
     <string name="tools_tags_codes_paired_tags">Manage paired tags</string>
+
     <string name="tools_tags_codes_generate_qr">Generate QR code</string>
+
     <string name="tools_tags_codes_manage_barcodes">Manage barcodes</string>
+
     <string name="tools_keys_title">Manage keys</string>
+
     <string name="tools_keys_section">NFC, QR, and barcode controls</string>
 
-    <!-- TOOLS - Management -->
     <string name="tools_profiles_title">Manage profiles</string>
+
     <string name="tools_profiles_summary">Create, switch, and organize blocking profiles</string>
+
     <string name="tools_paired_tags_title">Manage paired tags</string>
+
     <string name="tools_paired_tags_summary">Add, rename, and manage paired NFC tags, including cooldown or daily-use limits</string>
+
     <string name="tools_manage_barcodes_title">Manage barcodes</string>
+
     <string name="tools_manage_barcodes_summary">Map physical barcodes to Switchly actions</string>
 
-    <!-- TOOLS - Safety -->
     <string name="tools_emergency_unlock_summary">Temporarily disable protection when you really need to</string>
 
-    <!-- TOOLS - Activity -->
     <string name="tools_insights_title">Usage &amp; insights</string>
+
     <string name="tools_insights_summary">View usage, blocking, and related activity information</string>
+
     <string name="tools_blocked_notifications_summary">Review blocked notifications and related activity</string>
 
     <string name="blocking_hub_profiles_section">Profile</string>
+
     <string name="blocking_hub_blocked_content_section">Blocked content</string>
+
     <string name="blocking_hub_controls_section">Blocking controls</string>
+
     <string name="blocking_hub_modes_title">Blocking modes</string>
+
     <string name="blocking_hub_modes_summary">Choose how Switchly can be enabled or disabled</string>
+
     <string name="blocking_hub_features_title">While blocking is active</string>
+
     <string name="blocking_hub_features_summary">Control what can still be changed while protection is active</string>
+
     <string name="blocking_hub_title">Blocking</string>
-    <string name="blocking_hub_section">What gets blocked</string>
+
     <string name="blocking_hub_apps_title">Manage apps</string>
+
     <string name="blocking_hub_apps_summary">Choose apps, limits, and blocked-app rules</string>
+
     <string name="blocking_hub_websites_title">Manage websites</string>
+
     <string name="blocking_hub_websites_summary">Add domains and website rules for supported browsers</string>
+
     <string name="blocking_hub_inapp_title">In-app blocking</string>
+
     <string name="blocking_hub_inapp_summary">Block specific app surfaces such as feeds, reels, shorts, or tabs</string>
+
     <string name="tools_nfc_write_summary">Write enable, disable, temporary, and other actions to writable NFC tags</string>
+
     <string name="tools_manage_qr_title">Generate QR</string>
+
     <string name="tools_manage_qr_summary">Create a Switchly QR code</string>
 
 </resources>

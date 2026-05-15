@@ -1,10 +1,29 @@
 {
     "releases": [
         {
+            "version": "v2.1.2",
+            "date": "May 10, 2026",
+            "releaseType": "public",
+            "body": [
+                "Added a Play-compliant Accessibility Service disclosure and consent flow",
+                "Added clearer in-app explanation before opening Android Accessibility settings",
+                "Added explicit Accessibility consent with a checkbox and separate accept/decline actions",
+                "Improved Accessibility setup so declining, backing out, or leaving the disclosure is never treated as consent",
+                "Updated permission, troubleshooting, and post-update entry points to use the same Accessibility disclosure flow",
+                "Improved disclosure wording to better explain why Switchly's core protection features require Accessibility",
+                "Cleaned up Blocking Hub card handling by replacing dynamic resource lookups with compile-time resource references",
+                "Improved menu/navigation logic and internal UI consistency",
+                "Improved string quality and resource grouping",
+                "Cleaned up code comments, spacing, and release changelog entries"
+            ]
+        },
+        {
             "version": "v2.1.1",
             "date": "May 6, 2026",
             "releaseType": "public",
-            "sourceVersions": ["v2.1.0"],
+            "sourceVersions": [
+                "v2.1.0"
+            ],
             "body": [
                 "Fixed a blocking loop-protection issue where repeatedly opening a blocked app could temporarily make that app accessible",
                 "Improved repeated blocked-app handling so Switchly continues pushing users out of blocked apps after loop protection triggers",

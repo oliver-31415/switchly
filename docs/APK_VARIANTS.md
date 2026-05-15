@@ -1,44 +1,19 @@
-# APK Variants
-Switchly can be published as multiple APK variants plus a Google Play App Bundle.
+# APK variants
+Switchly can be published as three direct-download APK options plus one Play Store Android App Bundle. All variants use the same package name (`at.saltyy.switchly`), so users should install only one variant at a time.
 
-All variants use the same package name:
-```text
-at.saltyy.switchly
-```
+## Variants
+| Variant | Gradle flavor | User-facing behavior |
+| ------- | ------------- | -------------------- |
+| `full` | `fullRelease` | Google sign-in, Firebase email/password sign-in, Firebase cloud backup, local file backup/restore, and Google Play Billing only |
+| `firebase-email` | `firebaseEmailRelease` | Firebase email/password sign-in, Firebase cloud backup, local file backup/restore, no Google sign-in, external checkout URL support |
+| `offline` | `offlineRelease` | No Google sign-in, no Firebase cloud backup, no Premium purchase/restore/unlock; local JSON file backup/restore remains available |
 
-Only one variant should be installed at a time.
+The offline flavor sets `BuildConfig.SWITCHLY_FIREBASE_ENABLED=false` and disables both Play Billing and external payments. Premium is intentionally unavailable in this build, even if old local Premium flags exist from another variant. Users who want Premium should install the `firebase-email` APK or the full Play Store build.
 
----
+Note: current shared source files still reference Firebase/Google Play Services APIs, so the APK is runtime-offline but not yet dependency-free. A true FOSS/no-Play-Services flavor requires moving those implementations into flavor-specific source sets and using flavor-specific dependencies.
 
-# Variants
-| Variant          | Gradle flavor          | Description                                                                        |
-| ---------------- | ---------------------- | ---------------------------------------------------------------------------------- |
-| `full`           | `fullRelease`          | Google sign-in, Firebase auth, cloud backup, file backup, Google Play Billing      |
-| `firebase-email` | `firebaseEmailRelease` | Firebase email/password auth, cloud backup, file backup, external checkout support |
-| `offline`        | `offlineRelease`       | Local-only build without Firebase initialization or Premium purchase flows         |
-| `full-playstore` | `fullRelease` AAB      | Google Play Store release bundle                                                   |
-
----
-
-# Offline flavor behavior
-The offline flavor disables Firebase functionality at runtime using:
-```text
-BuildConfig.SWITCHLY_FIREBASE_ENABLED=false
-```
-
-This variant:
-* does not initialize Firebase
-* disables Premium purchase/restore/unlock
-* keeps local JSON backup/restore available
-
-Some shared Google/Firebase dependencies may still exist because common source files reference them.
-
-A fully dependency-free FOSS flavor would require moving implementations into flavor-specific source sets.
-
----
-
-# Build all release artifacts
-Build all APKs plus the Play Store bundle:
+## Build APK options and Play Store bundle
+Build all direct-download APKs and the full Play Store AAB with Gradle:
 ```bash
 ./gradlew :app:release-apk
 ```
@@ -48,14 +23,10 @@ Equivalent alias:
 ./gradlew :app:releaseApk
 ```
 
-Outputs are written to:
-```text
-dist/
-```
+The Gradle task creates the three APKs and the full Play Store AAB in `dist/`.
 
----
+## Individual Gradle tasks
 
-# Individual Gradle tasks
 ```bash
 ./gradlew :app:assembleFullRelease
 ./gradlew :app:assembleFirebaseEmailRelease
@@ -63,51 +34,33 @@ dist/
 ./gradlew :app:bundleFullRelease
 ```
 
----
-
-# Firebase configuration
-Firebase-enabled builds require:
-```text
-app/google-services.json
-```
-
-Or an external path via:
+## Required / optional local config
+Firebase release builds require `app/google-services.json`. You can also keep the file outside the repo and point Gradle to it from `signing.properties`; Gradle loads this file automatically when it exists:
 
 ```properties
 GOOGLE_SERVICES_JSON_PATH=/path/to/google-services.json
-```
-
-The file is copied into the app module during Gradle configuration and should not be committed.
-
----
-
-# Optional signing.properties values
-```properties
 GOOGLE_WEB_CLIENT_ID=
-MAPS_API_KEY=
-
-SWITCHLY_RELEASE_STORE_FILE=
-SWITCHLY_RELEASE_STORE_PASSWORD=
-SWITCHLY_RELEASE_KEY_ALIAS=
-SWITCHLY_RELEASE_KEY_PASSWORD=
-
+MAPS_API_KEY=your-maps-api-key
+SWITCHLY_RELEASE_STORE_FILE=/path/to/switchly-release.jks
+SWITCHLY_RELEASE_STORE_PASSWORD=...
+SWITCHLY_RELEASE_KEY_ALIAS=...
+SWITCHLY_RELEASE_KEY_PASSWORD=...
 SWITCHLY_EXTERNAL_PAYMENT_PROVIDER=stripe
-SWITCHLY_EXTERNAL_CHECKOUT_URL=https://example.com/checkout/
-SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://example.com/customer-portal/
+SWITCHLY_EXTERNAL_CHECKOUT_URL=https://your-domain.example/pages/pay/checkout/
+SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://your-domain.example/pages/pay/customer-portal/
 ```
 
-These values may also be provided through:
+For Google Sign-In, Gradle reads the Web client ID from `google-services.json` automatically. You can override it with `GOOGLE_WEB_CLIENT_ID` in `signing.properties` if needed.
 
-* environment variables
-* Gradle properties
-* `-P...` command line arguments
+The same values can also come from `~/.gradle/gradle.properties`, `-P...`, or environment variables.
 
----
+`google-services.json` is copied to `app/google-services.json` during Gradle configuration when `GOOGLE_SERVICES_JSON_PATH` is set, because the Google Services Gradle plugin expects the file inside the app module. `app/google-services.json` is git-ignored and should not be committed.
 
-# Output names
+`MAPS_API_KEY` should not live in committed `gradle.properties` or `local.properties`; keep it in `signing.properties`, user-level Gradle properties, or environment variables. External payment URLs are also loaded from `signing.properties`, user-level Gradle properties, or environment variables. See `docs/EXTERNAL_PAYMENTS_STRIPE.md` for the Stripe setup.
 
-Generated release artifacts:
+## Output names
 
+The Gradle release task creates these files in `dist/`:
 ```text
 Switchly-<version>-full.apk
 Switchly-<version>-firebase-email.apk
@@ -115,28 +68,27 @@ Switchly-<version>-offline.apk
 Switchly-<version>-full-playstore.aab
 ```
 
-Example:
+For version `2.1.0`, the expected files are:
 ```text
-Switchly-x.x.x-full.apk
-Switchly-x.x.x-firebase-email.apk
-Switchly-x.x.x-offline.apk
-Switchly-x.x.x-full-playstore.aab
+Switchly-2.1.0-full.apk
+Switchly-2.1.0-firebase-email.apk
+Switchly-2.1.0-offline.apk
+Switchly-2.1.0-full-playstore.aab
 ```
-Use the `.aab` file for the Google Play Console.
 
----
+Use `Switchly-<version>-full-playstore.aab` for the Google Play Console. Copy only the APK files into the website folder:
+```text
+pages/download/apk/
+```
 
-# External checkout support
+The download page automatically shows only variants whose APK files exist.
 
-The `firebase-email` flavor can optionally support external Premium checkout systems.
-
-Example configuration:
+## Switchly external checkout configuration
+For the `firebaseEmail` APK, configure the hosted checkout endpoints in `signing.properties` or via Gradle properties. Open-source/fork builds can leave these blank, but external Premium checkout will then be unavailable:
 ```properties
 SWITCHLY_EXTERNAL_PAYMENT_PROVIDER=stripe
-SWITCHLY_EXTERNAL_CHECKOUT_URL=https://example.com/checkout/
-SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://example.com/customer-portal/
+SWITCHLY_EXTERNAL_CHECKOUT_URL=https://your-domain.example/pages/pay/checkout/
+SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://your-domain.example/pages/pay/customer-portal/
 ```
 
-Public checkout URLs are safe to compile into release builds.
-
-Server-side secrets should remain private and must never be committed into the repository.
+These URLs are public and safe to compile into the APK. Stripe/Firebase secrets stay only on the website/server in `.env`.

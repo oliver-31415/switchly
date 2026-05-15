@@ -234,8 +234,8 @@ object ProfileStore {
     }
 
     /**
-     * Safety net for missed PACKAGE_ADDED broadcasts. If auto-block is enabled for a profile,
-     * any launchable packages that appeared after the stored baseline are added automatically.
+     * Safety net for missed PACKAGE_ADDED broadcasts. 
+     * If auto-block is enabled for a profile, any launchable packages that appeared after the stored baseline are added automatically.
      * If no baseline exists yet, create one without adding existing apps to avoid surprise bulk changes.
      */
     fun reconcileAutoBlockNewApps(context: Context): Int {

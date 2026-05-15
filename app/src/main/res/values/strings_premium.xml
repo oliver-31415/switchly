@@ -1,47 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- PREMIUM - Overview and current status -->
+    <!-- ====================================================== -->
+    <!-- PREMIUM -->
+    <!-- ====================================================== -->
+
     <string name="premium_title">Switchly Premium</string>
+
     <string name="premium_summary">Unlock premium features.</string>
+
     <string name="premium_short_desc">Unlock Wi-Fi/Bluetooth schedules, detailed statistics, and more premium controls.</string>
+
     <string name="premium_active_header">Active premium features</string>
+
     <string name="premium_status_active">Active</string>
+
     <string name="premium_status_inactive">Premium is not active yet</string>
+
     <string name="premium_already_owned">You already have Premium</string>
+
     <string name="premium_checking_purchases">Checking purchases…</string>
 
-    <!-- PREMIUM - Purchase actions -->
     <string name="premium_button_buy">Buy Premium</string>
+
     <string name="premium_button_restore">Restore purchases</string>
+
     <string name="premium_button_thanks">Thanks for your support!</string>
+
     <string name="premium_button_buy_external">Buy Premium (%1$s)</string>
+
     <string name="premium_button_manage_external">Restore/manage external purchase</string>
+
     <string name="premium_payments_unavailable">Payments are not available in this build.</string>
+
     <string name="premium_unavailable_offline_build">Premium is not available in this offline build. Install the Firebase email/password or full build to buy and restore Premium.</string>
+
     <string name="premium_button_unavailable_offline">Premium unavailable in offline build</string>
+
     <string name="premium_external_payments_disabled">External payments are disabled in this build.</string>
+
     <string name="premium_external_payments_not_configured">External checkout is not configured for this build.</string>
+
     <string name="premium_external_portal_not_configured">External purchase management is not configured for this build.</string>
+
     <string name="premium_external_invalid_url">The external payment URL is invalid.</string>
+
     <string name="premium_external_no_browser">No browser app could open the payment page.</string>
+
     <string name="premium_external_entitlement_active">Premium restored successfully.</string>
+
     <string name="premium_external_entitlement_missing">No external Premium entitlement was found for this account yet.</string>
+
     <string name="premium_external_sign_in_to_buy">Sign in with E-mail/Password first, then buy Premium.</string>
+
     <string name="premium_external_sign_in_to_restore">Sign in first, then try restoring your external purchase again.</string>
 
-    <!-- PREMIUM - Unlock cards and feature highlights -->
     <string name="premium_unlock_title">Themes &amp; colors</string>
+
     <string name="premium_unlock_desc">Unlock additional accent colors and the color picker for fully personalized themes.</string>
+
     <string name="premium_nfc_title">More NFC options</string>
+
     <string name="premium_nfc_desc">Unlock custom unlock durations beyond the presets.</string>
+
     <string name="premium_automation_title">Automations</string>
+
     <string name="premium_automation_desc">Unlock advanced automation features, including time, Wi-Fi, and Bluetooth triggers.</string>
+
     <string name="premium_stats_title">Statistics &amp; insights</string>
+
     <string name="premium_stats_desc">Unlock detailed usage insights to see how often you use Switchly and which apps distract you most.</string>
+
     <string name="premium_required_for_theme">This color is only available with Switchly Premium.</string>
 
-    <!-- PREMIUM - Support note -->
     <string name="premium_support_note">Thanks for supporting Switchly 💜</string>
 
 </resources>

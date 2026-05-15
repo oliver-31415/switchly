@@ -1,22 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- NOTIFICATION CHANNELS -->
+    <!-- ====================================================== -->
+    <!-- NOTIFICATIONS -->
+    <!-- ====================================================== -->
+
     <string name="notif_channel_wifi_triggers_name">Switchly Wi-Fi triggers</string>
+
     <string name="notif_channel_wifi_triggers_desc">Foreground service for Wi-Fi schedule triggers.</string>
+
     <string name="notif_channel_bluetooth_triggers_name">Switchly Bluetooth triggers</string>
+
     <string name="notif_channel_bluetooth_triggers_desc">Foreground service for Bluetooth schedule triggers.</string>
 
-    <!-- SCHEDULE STATUS NOTIFICATIONS -->
     <string name="notif_wifi_schedules_title">Switchly: Wi-Fi triggers active</string>
+
     <string name="notif_wifi_schedules_content">Monitoring Wi-Fi changes to update schedules.</string>
+
     <string name="notif_bluetooth_schedules_title">Switchly: Bluetooth triggers active</string>
+
     <string name="notif_bluetooth_schedules_content">Monitoring Bluetooth changes to update schedules.</string>
 
-    <!-- ENABLE TRIGGER PROMPTS -->
     <string name="notif_enable_wifi_triggers_title">Enable Wi-Fi triggers</string>
+
     <string name="notif_enable_wifi_triggers_text_fmt">Tap to allow %1$s to monitor Wi-Fi triggers.</string>
+
     <string name="notif_enable_bt_triggers_title">Enable Bluetooth triggers</string>
+
     <string name="notif_enable_bt_triggers_text_fmt">Tap to allow %1$s to monitor Bluetooth triggers.</string>
 
 </resources>
