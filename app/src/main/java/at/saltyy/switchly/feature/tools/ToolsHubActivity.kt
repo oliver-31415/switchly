@@ -232,7 +232,6 @@ class ToolsHubActivity : AppCompatActivity() {
         return SwitchModeStore.isEnabled(this) && !EmergencyBypassStore.isActive(this)
     }
 
-
     private fun showEmergencyQuickSheet() {
         if (!EmergencyBypassStore.isFeatureEnabled(this)) {
             AlertDialog.Builder(this)

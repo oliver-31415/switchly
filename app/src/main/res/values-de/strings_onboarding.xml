@@ -1,46 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- ONBOARDING - Badges and common actions -->
-    <string name="onb_badge_required">Erforderlich</string>
-    <string name="onb_badge_recommended">Empfohlen</string>
-    <string name="onb_badge_optional">Optional</string>
-    <string name="onb_granted">Erteilt</string>
-    <string name="onb_done">Fertig</string>
-    <string name="onb_next">Weiter</string>
-    <string name="onb_skip">Überspringen</string>
-    <string name="onb_open">Öffnen</string>
-    <string name="onb_required_step">Dieser Schritt ist erforderlich, um fortzufahren.</string>
+    <!-- ====================================================== -->
+    <!-- ONBOARDING -->
+    <!-- ====================================================== -->
 
-    <!-- ONBOARDING - Required setup -->
-    <string name="onb_permissions_hub_title">Berechtigungsübersicht</string>
-    <string name="onb_profile_title">Profil erstellen</string>
-    <string name="onb_profile_desc">Erstelle ein Profil mit den Apps, die du blockieren möchtest.</string>
-    <string name="onb_pick_title">Zu blockierende Apps auswählen</string>
-    <string name="onb_pick_desc">Wähle Apps für dein aktives Profil. Das kannst du jederzeit ändern.</string>
-    <string name="onb_start_title">Switchly starten</string>
-    <string name="onb_start_desc">Aktiviere die Blockierung, dann bist du bereit.</string>
-    <string name="onb_permissions_hub_streamlined_desc">Öffne eine gemeinsame Checkliste für Bedienungshilfe und Nutzungszugriff. Akku-Optimierung wird dringend empfohlen und bleibt als Warnung sichtbar, falls sie nicht erlaubt ist.</string>
-    <string name="onb_required_permissions_hub">Bitte schließe zuerst die Kernberechtigungen ab, bevor du fortfährst.</string>
+	<string name="onb_badge_required">Erforderlich</string>
 
-    <!-- ONBOARDING - Optional and advanced setup -->
-    <string name="onb_optional_features_title">Optionale Funktionen</string>
-    <string name="onb_quick_summary_title">Kurze Zusammenfassung</string>
-    <string name="onb_quick_summary_desc">Werfen wir einen kurzen Blick auf deine App-Nutzungsstatistiken der letzten 7 Tage.</string>
-    <string name="onb_top_apps_7d">Am häufigsten genutzte Apps (7 Tage)</string>
-    <string name="onb_usage_trend_title">Top-App-Trend (7 Tage)</string>
-    <string name="onb_quick_setup_title">Schnellstart in 3 Schritten</string>
-    <string name="onb_quick_setup_desc">
+	<string name="onb_badge_recommended">Empfohlen</string>
+
+	<string name="onb_badge_optional">Optional</string>
+
+	<string name="onb_granted">Erteilt</string>
+
+	<string name="onb_done">Fertig</string>
+
+	<string name="onb_next">Weiter</string>
+
+	<string name="onb_skip">Überspringen</string>
+
+	<string name="onb_open">Öffnen</string>
+
+	<string name="onb_required_step">Dieser Schritt ist erforderlich, um fortzufahren.</string>
+
+	<string name="onb_permissions_hub_title">Berechtigungsübersicht</string>
+
+	<string name="onb_profile_title">Profil erstellen</string>
+
+	<string name="onb_profile_desc">Erstelle ein Profil mit den Apps, die du blockieren möchtest.</string>
+
+	<string name="onb_pick_title">Zu blockierende Apps auswählen</string>
+
+	<string name="onb_pick_desc">Wähle Apps für dein aktives Profil. Das kannst du jederzeit ändern.</string>
+
+	<string name="onb_start_title">Switchly starten</string>
+
+	<string name="onb_start_desc">Aktiviere die Blockierung, dann bist du bereit.</string>
+
+	<string name="onb_permissions_hub_streamlined_desc">Öffne eine gemeinsame Checkliste für Bedienungshilfe und Nutzungszugriff. Akku-Optimierung wird dringend empfohlen und bleibt als Warnung sichtbar, falls sie nicht erlaubt ist.</string>
+
+	<string name="onb_required_permissions_hub">Bitte schließe zuerst die Kernberechtigungen ab, bevor du fortfährst.</string>
+
+	<string name="onb_optional_features_title">Optionale Funktionen</string>
+
+	<string name="onb_quick_summary_title">Kurze Zusammenfassung</string>
+
+	<string name="onb_quick_summary_desc">Werfen wir einen kurzen Blick auf deine App-Nutzungsstatistiken der letzten 7 Tage.</string>
+
+	<string name="onb_top_apps_7d">Am häufigsten genutzte Apps (7 Tage)</string>
+
+	<string name="onb_usage_trend_title">Top-App-Trend (7 Tage)</string>
+
+	<string name="onb_quick_setup_title">Schnellstart in 3 Schritten</string>
+
+	<string name="onb_quick_setup_desc">
         &lt;b&gt;Schritt 1&lt;/b&gt;&lt;br/&gt;Öffne die Berechtigungs-Checkliste&lt;br/&gt;&lt;br/&gt;
         &lt;b&gt;Schritt 2&lt;/b&gt;&lt;br/&gt;Profil erstellen oder auswählen&lt;br/&gt;&lt;br/&gt;
         &lt;b&gt;Schritt 3&lt;/b&gt;&lt;br/&gt;Apps zum Blockieren auswählen&lt;br/&gt;&lt;br/&gt;
         &lt;b&gt;Tipp:&lt;/b&gt;&lt;br/&gt;Erweiterte Optionen kannst du jederzeit in den Einstellungen ändern.
     </string>
-    <string name="onb_advanced_setup_title">Erweiterte Einrichtung</string>
-    <string name="onb_advanced_setup_desc">Optional: Steuerungsmodus, Notfall-Entsperrung, Schnellaktionen und weitere Schutzfunktionen konfigurieren.</string>
 
-    <!-- ONBOARDING - Placeholders -->
-    <string name="onb_page_title_placeholder">Titel</string>
-    <string name="onb_page_desc_placeholder">Beschreibung</string>
+	<string name="onb_advanced_setup_title">Erweiterte Einrichtung</string>
+
+	<string name="onb_advanced_setup_desc">Optional: Steuerungsmodus, Notfall-Entsperrung, Schnellaktionen und weitere Schutzfunktionen konfigurieren.</string>
+
+	<string name="onb_page_title_placeholder">Titel</string>
+
+	<string name="onb_page_desc_placeholder">Beschreibung</string>
 
 </resources>

@@ -33,8 +33,7 @@ import at.saltyy.switchly.widget.QuickActionReceiver
 
 /**
  * Lightweight exported trampoline for launcher shortcuts, widgets and Quick Settings tiles.
- * Keeps internal activities non-exported while still allowing the launcher and system UI
- * to trigger selected quick actions.
+ * Keeps internal activities non-exported while still allowing the launcher and system UI to trigger selected quick actions.
  */
 class ScanLauncherActivity : Activity() {
 

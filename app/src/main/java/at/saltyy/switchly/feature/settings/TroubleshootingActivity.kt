@@ -141,7 +141,7 @@ class TroubleshootingActivity : AppCompatActivity() {
         }
 
         btnAccessibility.setOnClickListener {
-            runCatching { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+            AccessibilityDisclosure.openSettingsWithDisclosure(this)
         }
 
         btnNotifAccess.setOnClickListener {

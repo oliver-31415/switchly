@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- ADVANCED MODE -->
+    <!-- ====================================================== -->
+
+    <string name="advanced_mode_title">Advanced tools</string>
+
+    <string name="advanced_mode_unlocked_toast">Advanced tools unlocked</string>
+
+    <string name="advanced_mode_admin_label">Switchly</string>
+
+    <string name="advanced_mode_admin_description">Gives Switchly the control needed for optional advanced device-admin and managed-device features.</string>
+
+    <string name="advanced_mode_disable_warning">Disabling the Switchly device admin removes its advanced managed-device hooks. On normal personal devices this is only an advanced helper and not true uninstall protection.</string>
+
+    <string name="advanced_mode_tile_status">Current managed-device setup</string>
+
+    <string name="advanced_mode_tile_summary">What this mode is for</string>
+
+    <string name="advanced_mode_tile_recommendation">Recommended for most users</string>
+
+    <string name="advanced_mode_tile_receiver">Admin receiver component</string>
+
+    <string name="advanced_mode_tile_device_owner">ADB: set device owner</string>
+
+    <string name="advanced_mode_tile_profile_owner">ADB: set profile owner</string>
+
+    <string name="advanced_mode_tile_remove_admin">ADB: remove active admin</string>
+
+    <string name="advanced_mode_tile_check_state">ADB: inspect policy state</string>
+
+    <string name="advanced_mode_tile_constraints">Things to know first</string>
+
+    <string name="advanced_mode_tile_docs">Official docs and reference</string>
+
+    <string name="advanced_mode_status_standard">Standard personal app mode.\nNo managed-device ownership is active.</string>
+
+    <string name="advanced_mode_status_device_admin">Device-admin activation is active.</string>
+
+    <string name="advanced_mode_status_profile_owner">Profile owner is active.</string>
+
+    <string name="advanced_mode_status_device_owner">Device owner is active.</string>
+
+    <string name="advanced_mode_summary_body">This screen is for advanced users who want to experiment with Android enterprise-style management via ADB.\nOn normal personal devices, Switchly can only add uninstall friction.\nStronger uninstall blocking requires managed-device ownership and is not the normal consumer setup.</string>
+
+    <string name="advanced_mode_recommendation_body">For almost everyone, Switchly’s uninstall friction is the right option.\nUse this screen only if you explicitly want to test Device Admin, profile-owner, or device-owner flows.</string>
+
+    <string name="advanced_mode_constraints_body">Device-owner commands usually only work on a freshly provisioned device with no existing accounts.\nProfile-owner commands have their own provisioning limits.\nDevice Admin is limited and does not equal full managed-device ownership.\nUse this only if you know what you are doing.</string>
+
+    <string name="advanced_mode_add_admin_explanation">This only enables Switchly’s optional advanced admin receiver.\nIt does not guarantee uninstall blocking on a normal personal device.</string>
+
+    <string name="advanced_mode_open_admin_failed">Could not open Android device admin screen</string>
+
+    <string name="advanced_mode_command_copied">Command copied</string>
+
+    <string name="advanced_mode_component_copied">Component copied</string>
+
+    <string name="advanced_mode_docs_body">Open the official Android DevicePolicyManager reference.</string>
+
+    <string name="advanced_mode_docs_url" translatable="false">https://developer.android.com/reference/android/app/admin/DevicePolicyManager</string>
+
+    <string name="advanced_mode_tile_disable_mode">Turn off advanced mode</string>
+
+    <string name="advanced_mode_disable_mode_body">Hide the extra advanced entry again.\nYou can still come back later by long pressing the version row.</string>
+
+    <string name="advanced_mode_disabled_toast">Advanced mode turned off</string>
+
+    <string name="advanced_mode_status_updated_toast">Managed-device status updated</string>
+
+</resources>

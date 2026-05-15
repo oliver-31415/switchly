@@ -1,44 +1,60 @@
 # Switchly
-[**Switchly**](https://switchly.saltyy.at) is an Android app for profile-based app and website blocking.
+[**Switchly**](https://switchly.saltyy.at) is an Android application for **profile-based app blocking**.
+A lightweight background service monitors the currently foreground app and shows a blocking overlay whenever a restricted app is opened.
 
-It is designed to help with focus, routines, and self-control by letting users define blocking profiles and control how those profiles can be enabled or disabled.
+Designed for focus, control, and flexibility — without unnecessary complexity.
 
 ---
 
 ## Project Structure
-Main source code:
+Source code root:
 ```text
 app/src/main/java/at/saltyy/switchly
-````
-
-Important docs:
-```text
-docs/APK_VARIANTS.md
-docs/ARCHITECTURE.md
-docs/EXTERNAL_PAYMENTS_STRIPE.md
-CONTRIBUTING.md
-PRIVACY.md
-SECURITY.md
 ```
 
-Icons are based on Material Symbols:
+Icons are based on **Material Symbols**:
 [https://fonts.google.com/icons](https://fonts.google.com/icons)
 
 ---
 
-## APK Variants
-Switchly supports multiple APK variants plus a Play Store bundle.
+## Localization/i18n
+All user-facing text lives in **translations**, not hard-coded in Kotlin/XML:
 
-| Variant          | Description                                                                        |
-| ---------------- | ---------------------------------------------------------------------------------- |
-| `full`           | Google sign-in, Firebase auth, cloud backup, file backup, Google Play Billing      |
-| `firebase-email` | Firebase email/password auth, cloud backup, file backup, external checkout support |
-| `offline`        | Local-only build without Firebase initialization or Premium purchase flows         |
-| `full-playstore` | Google Play Store bundle using Google Play Billing                                 |
+* Default: `app/src/main/res/values/strings.xml`
+* German: `app/src/main/res/values-de/strings.xml`
 
-Build all release artifacts: ```./gradlew :app:release-apk``` Outputs are written to: ```dist/```
+Guidelines:
 
-Example output names:
+* Use `getString(R.string.some_key)`/`@string/some_key`
+* Prefer formatted strings (`*_fmt`) over string concatenation
+* Keep EN + DE keys in sync with the same key set
+
+This includes **Toasts, dialogs, notifications, and inline UI labels**.
+
+---
+
+## APK Build Options
+Switchly supports three direct APK configurations plus one Play Store AAB.
+
+| Variant          | Gradle artifact        | Backup/sign-in/payment behavior                                                                   |
+| ---------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `full`           | `fullRelease`          | Google sign-in, Firebase email/password, Firebase cloud backup, file backup, Google Play Billing  |
+| `firebase-email` | `firebaseEmailRelease` | Firebase email/password, Firebase cloud backup, file backup, external checkout URL for Premium    |
+| `offline`        | `offlineRelease`       | File backup only; Firebase is not initialized; Premium purchase, restore, and unlock are disabled |
+| `full-playstore` | `fullRelease` AAB      | Google Play Store build using Google Play Billing                                                 |
+
+Build all APK options plus the full Play Store AAB with Gradle:
+```bash
+./gradlew :app:release-apk
+```
+
+Equivalent alias:
+```bash
+./gradlew :app:releaseApk
+```
+
+Outputs are written to `dist/` using website-friendly names:
+
 ```text
 Switchly-<version>-full.apk
 Switchly-<version>-firebase-email.apk
@@ -46,31 +62,41 @@ Switchly-<version>-offline.apk
 Switchly-<version>-full-playstore.aab
 ```
 
-See [`docs/APK_VARIANTS.md`](./docs/APK_VARIANTS.md) for full build and configuration details.
+Upload `Switchly-<version>-full-playstore.aab` to the Google Play Console. Put the APK files on the website download page.
+
+Individual release tasks:
+
+```bash
+./gradlew :app:assembleFullRelease
+./gradlew :app:assembleFirebaseEmailRelease
+./gradlew :app:assembleOfflineRelease
+./gradlew :app:bundleFullRelease
+```
+
+See [`docs/APK_VARIANTS.md`](./docs/APK_VARIANTS.md) for build details and [`docs/EXTERNAL_PAYMENTS_STRIPE.md`](./docs/EXTERNAL_PAYMENTS_STRIPE.md) for Stripe/external payment setup.
 
 ---
 
-## Firebase / Google Services
-Firebase is optional depending on the build variant.
+## Firebase/Google Services
+Firebase support is optional for local/offline builds, but the `full` and `firebaseEmail` release artifacts need a valid Firebase config.
 
-Firebase-enabled builds require a valid Firebase configuration:
+To enable Firebase release artifacts, place your Firebase config at:
 ```text
 app/google-services.json
 ```
 
-Alternatively, keep the file outside the repository and point Gradle to it:
+Or keep it outside the repo and point Gradle to it from `signing.properties`:
 ```properties
 GOOGLE_SERVICES_JSON_PATH=/path/to/google-services.json
 ```
 
-The offline flavor disables Firebase functionality at runtime and keeps local file backup/restore available.
+For Google Sign-In, Gradle reads the Web client ID from `google-services.json` automatically. You can override it if needed:
+```properties
+GOOGLE_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+```
 
----
+Google Maps and release signing are also configured through `signing.properties`:
 
-## Local Configuration
-Release signing, Google Maps, Firebase, and optional external payment URLs can be configured through `signing.properties`, user-level Gradle properties, environment variables, or `-P...` arguments.
-
-Example:
 ```properties
 MAPS_API_KEY=your-maps-api-key
 
@@ -78,14 +104,40 @@ SWITCHLY_RELEASE_STORE_FILE=/path/to/switchly-release.jks
 SWITCHLY_RELEASE_STORE_PASSWORD=...
 SWITCHLY_RELEASE_KEY_ALIAS=...
 SWITCHLY_RELEASE_KEY_PASSWORD=...
+```
 
+You can still override any of those via `-P...` or environment variables, for example:
+
+```bash
+./gradlew :app:release-apk -PGOOGLE_SERVICES_JSON_PATH=/path/to/google-services.json
+```
+
+Notes:
+* Firebase config is not required for `assembleOfflineRelease`
+* The offline flavor sets `BuildConfig.SWITCHLY_FIREBASE_ENABLED=false`, skips Firebase initialization at runtime, and disables Premium purchase, restore, and unlock completely
+* Users who want Premium should install the Firebase email/password APK or the full Play Store build
+* Current offline builds still include common Google/Firebase dependencies where shared source files reference them; a dependency-free FOSS flavor requires moving those implementations into flavor-specific source sets
+* Google sign-in is enabled only in the `full` flavor
+* Firebase email/password auth is enabled in `full` and `firebaseEmail`
+* Local file backup/restore remains available in all flavors
+
+---
+
+## Public Links and Contact Configuration
+Official builds can compile public website/contact links through `signing.properties`. Forks can leave these blank or replace them with their own URLs.
+```properties
 SWITCHLY_WEBSITE_URL=https://your-domain.example
 SWITCHLY_DOWNLOADS_URL=https://your-domain.example/pages/download
 SWITCHLY_SUPPORT_EMAIL=support@example.com
 SWITCHLY_DEV_EMAIL=dev@example.com
 ```
 
-External payment configuration for supported builds:
+These values are public and safe to compile into the APK.
+
+---
+
+## Switchly External Checkout Configuration
+For the `firebaseEmail` APK, configure hosted checkout endpoints in `signing.properties` or via Gradle properties. Open-source/fork builds can leave these blank, but external Premium checkout will then be unavailable.
 
 ```properties
 SWITCHLY_EXTERNAL_PAYMENT_PROVIDER=stripe
@@ -93,96 +145,56 @@ SWITCHLY_EXTERNAL_CHECKOUT_URL=https://your-domain.example/pages/pay/checkout/
 SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://your-domain.example/pages/pay/customer-portal/
 ```
 
-Server-side secrets must not be committed.
+These URLs are public and safe to compile into the APK. Stripe/Firebase secrets stay only on the website/server in `.env`.
 
-See [`docs/EXTERNAL_PAYMENTS_STRIPE.md`](./docs/EXTERNAL_PAYMENTS_STRIPE.md) for Stripe setup details.
-
----
-
-## Localization
-All user-facing text should live in Android string resources.
-
-Default strings:
-```text
-app/src/main/res/values/
-```
-
-German strings:
-```text
-app/src/main/res/values-de/
-```
-
-Guidelines:
-* use `getString(R.string.some_key)` or `@string/some_key`
-* avoid hard-coded UI text in Kotlin/XML
-* keep English and German keys in sync
-* prefer formatted strings over string concatenation
-
-This applies to:
-* labels
-* dialogs
-* toasts
-* notifications
-* inline help text
+Payment behavior by build:
+* `full`/Play Store AAB uses Google Play Billing
+* `firebase-email` can use the configured external checkout URL and restores Premium through Firebase entitlements
+* `offline` has no Premium purchase, restore, or unlock flow
 
 ---
 
-## Supported Android / Build Versions
-| Requirement           | Value                |
-| --------------------- | -------------------- |
-| Min SDK               | Android 8.1 / API 27 |
-| Target SDK            | 36                   |
-| JDK                   | 17                   |
-| Kotlin                | 2.2+                 |
-| Android Gradle Plugin | 8.9+                 |
+## Shrinking: Unused Code and Resources
+Release builds enable:
+* **R8/minification** (`minifyEnabled true`)
+* **Resource shrinking** (`shrinkResources true`)
 
----
+This means most unused code/resources are removed automatically at build time.
 
-## Useful Commands
-Run lint:
-```bash
-./gradlew clean lint
-```
+To verify locally:
 
-Build offline release:
 ```bash
 ./gradlew :app:assembleOfflineRelease
 ```
 
-Build all APK variants and Play Store bundle:
-```bash
-./gradlew :app:release-apk
-```
-
-Inspect dependencies:
-```bash
-./gradlew :app:dependencies --configuration releaseRuntimeClasspath
-```
-
 ---
 
-## Shrinking
-Release builds use:
-* R8 / minification
-* resource shrinking
-
-This removes most unused code and resources from release artifacts.
+## Supported Android Versions
+| Requirement | Value                    |
+| ----------- | ------------------------ |
+| **Min SDK** | **Android 8.1 (API 27)** |
+| Target SDK  | 36                       |
+| JDK         | 17                       |
+| Kotlin      | 2.2+                     |
+| AGP         | 8.9+                     |
 
 ---
 
 ## Versioning
-Switchly follows semantic versioning:
-| Type  | Example | Description                        |
-| ----- | ------- | ---------------------------------- |
-| Patch | `1.0.1` | Bug fixes and small improvements   |
-| Minor | `1.1.0` | New backward-compatible features   |
-| Major | `2.0.0` | Breaking changes or major rewrites |
+Switchly follows **MAJOR.MINOR.PATCH**.
+
+| Type  | Example | Description                       |
+| ----- | ------- | --------------------------------- |
+| Patch | `1.0.1` | Bug fixes                         |
+| Minor | `1.1.0` | New features, backward-compatible |
+| Major | `2.0.0` | Breaking changes                  |
 
 ---
 
 ## Contributing
+
 Before starting a contribution, please contact me first:
-[andi@saltyy.at](mailto:andi@saltyy.at)
+**[andi@saltyy.at](mailto:andi@saltyy.at)**
 
 Please also read:
 * [`CONTRIBUTING.md`](./CONTRIBUTING.md)
@@ -190,14 +202,22 @@ Please also read:
 
 ---
 
-## Security
-Please report security issues privately.
-See [`SECURITY.md`](./SECURITY.md).
+## Useful Commands
+### Run lint
+```bash
+./gradlew clean lint
+```
+
+### Get info about all dependencies
+```bash
+./gradlew :app:dependencies --configuration releaseRuntimeClasspath
+```
 
 ---
 
-## Privacy
-See [`PRIVACY.md`](./PRIVACY.md).
+## Contributor
+**Andi S.**
+[https://saltyy.at](https://saltyy.at)
 
 ---
 
@@ -212,9 +232,5 @@ See:
 * [`NOTICE`](./NOTICE)
 
 ---
-
-## Author
-**Andi S.**
-[https://saltyy.at](https://saltyy.at)
 
 **Made with ♥️ and 🍪 by saltyy**

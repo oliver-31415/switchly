@@ -760,7 +760,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         super.onDestroyView()
     }
 
-
     // Language
     private fun updateLanguageSummary(pref: Preference?) {
         pref ?: return

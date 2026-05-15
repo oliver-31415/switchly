@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- NAVIGATION -->
+    <!-- ====================================================== -->
+
+	<string name="app_icon">App-Symbol</string>
+
+	<string name="nav_home">Start</string>
+
+	<string name="nav_blocking">Blocking</string>
+
+	<string name="nav_tools">Verwalten</string>
+
+	<string name="nav_settings">Einstellungen</string>
+
+</resources>

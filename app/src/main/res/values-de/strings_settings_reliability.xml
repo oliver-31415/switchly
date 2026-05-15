@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- SETTINGS - reliability -->
+    <!-- ====================================================== -->
+
+	<string name="pref_autostart_title">Switchly nach Neustart starten</string>
+
+	<string name="pref_autostart_summary">Startet Switchly nach einem Neustart wieder.</string>
+
+	<string name="pref_open_accessibility_summary">Aktiviere den Switchly-Bedienungshilfe-Dienst erneut, damit die Blockierung zuverlässig funktioniert.</string>
+
+	<string name="toggle_detail_autostart">Nach einem Neustart versucht Switchly automatisch wieder zu starten, damit dein Schutzprofil direkt aktiv ist.</string>
+
+</resources>

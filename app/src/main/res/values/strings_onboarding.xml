@@ -1,46 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- ONBOARDING - Badges and common actions -->
+    <!-- ====================================================== -->
+    <!-- ONBOARDING -->
+    <!-- ====================================================== -->
+
     <string name="onb_badge_required">Required</string>
+
     <string name="onb_badge_recommended">Recommended</string>
+
     <string name="onb_badge_optional">Optional</string>
+
     <string name="onb_granted">Granted</string>
+
     <string name="onb_done">Done</string>
+
     <string name="onb_next">Next</string>
+
     <string name="onb_skip">Skip</string>
+
     <string name="onb_open">Open</string>
+
     <string name="onb_required_step">This step is required to continue.</string>
 
-    <!-- ONBOARDING - Required setup -->
     <string name="onb_permissions_hub_title">Permissions overview</string>
+
     <string name="onb_profile_title">Create profile</string>
+
     <string name="onb_profile_desc">Create a profile with the apps you want to block.</string>
+
     <string name="onb_pick_title">Pick apps to block</string>
+
     <string name="onb_pick_desc">Choose apps for your active profile. You can change this anytime.</string>
+
     <string name="onb_start_title">Start Switchly</string>
+
     <string name="onb_start_desc">Enable blocking, and you’re ready.</string>
+
     <string name="onb_permissions_hub_streamlined_desc">Open one checklist page to verify Accessibility and Usage access. Battery optimization is strongly recommended and will stay visible as a warning if it is not allowed.</string>
+
     <string name="onb_required_permissions_hub">Please complete the core permissions checklist before continuing.</string>
 
-    <!-- ONBOARDING - Optional and advanced setup -->
     <string name="onb_optional_features_title">Optional features</string>
+
     <string name="onb_quick_summary_title">Quick summary</string>
+
     <string name="onb_quick_summary_desc">Let’s take a quick look at your app usage from the last 7 days.</string>
+
     <string name="onb_top_apps_7d">Most used apps (7 days)</string>
+
     <string name="onb_usage_trend_title">Top app trend (7 days)</string>
+
     <string name="onb_quick_setup_title">Quick setup in 3 steps</string>
+
     <string name="onb_quick_setup_desc">
         &lt;b&gt;Step 1&lt;/b&gt;&lt;br/&gt;Open the permissions checklist&lt;br/&gt;&lt;br/&gt;
         &lt;b&gt;Step 2&lt;/b&gt;&lt;br/&gt;Create or choose a profile&lt;br/&gt;&lt;br/&gt;
         &lt;b&gt;Step 3&lt;/b&gt;&lt;br/&gt;Pick apps to block&lt;br/&gt;&lt;br/&gt;
         &lt;b&gt;Tip:&lt;/b&gt;&lt;br/&gt;You can change advanced controls anytime in Settings.
     </string>
+
     <string name="onb_advanced_setup_title">Advanced setup</string>
+
     <string name="onb_advanced_setup_desc">Optional: configure control mode, emergency unlock, quick actions, and extra safeguards.</string>
 
-    <!-- ONBOARDING - Placeholders -->
     <string name="onb_page_title_placeholder">Title</string>
+
     <string name="onb_page_desc_placeholder">Description</string>
 
 </resources>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- BLOCKING - blocked notification inbox -->
+    <!-- ====================================================== -->
+
+    <string name="blocked_inbox_title">Blocked notifications</string>
+
+    <string name="blocked_inbox_detail_title">Blocked notification</string>
+
+    <string name="blocked_inbox_empty">No blocked notifications yet ✅</string>
+
+    <string name="blocked_inbox_content_unknown">No preview available</string>
+
+    <string name="blocked_inbox_field_time">Time</string>
+
+    <string name="blocked_inbox_field_app">App</string>
+
+    <string name="blocked_inbox_field_profile">Profile</string>
+
+    <string name="blocked_inbox_field_reason">Reason</string>
+
+    <string name="blocked_inbox_field_title">Title</string>
+
+    <string name="blocked_inbox_field_text">Message</string>
+
+    <string name="blocked_inbox_field_sub_text">Subtext</string>
+
+    <string name="blocked_inbox_field_summary_text">Summary</string>
+
+    <string name="blocked_inbox_field_big_text">Big text</string>
+
+    <string name="blocked_inbox_filter_app">Filter by app</string>
+
+    <string name="blocked_inbox_filter">Filter</string>
+
+    <string name="blocked_inbox_filter_menu_title">Filter &amp; sort</string>
+
+    <string name="blocked_inbox_filter_all_apps">All apps</string>
+
+    <string name="blocked_inbox_filter_subtitle_fmt">Filter: %1$s</string>
+
+    <string name="blocked_inbox_sort_title">Sort blocked notifications</string>
+
+    <string name="blocked_inbox_sort_newest">Newest first</string>
+
+    <string name="blocked_inbox_sort_oldest">Oldest first</string>
+
+    <string name="blocked_inbox_delete_title">Delete blocked notifications</string>
+
+    <plurals name="blocked_inbox_delete_selected_confirm_fmt">
+        <item quantity="one">Delete %1$d selected notification?</item>
+        <item quantity="other">Delete %1$d selected notifications?</item>
+    </plurals>
+
+    <string name="blocked_inbox_select_mode_subtitle">Select notifications</string>
+
+    <plurals name="blocked_inbox_select_count_fmt">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+
+    <string name="select">Select</string>
+
+    <string name="blocked_inbox_subtitle_compact_fmt">%1$s%2$s</string>
+
+</resources>

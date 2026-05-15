@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ====================================================== -->
+    <!-- ABOUT - app, device and developer info -->
+    <!-- ====================================================== -->
+
+	<string name="about_app_info_title">App-Info</string>
+
+	<string name="about_app_info_summary">Version, Build und Links</string>
+
+	<string name="about_device_info_title">Geräteinfo</string>
+
+	<string name="about_device_info_summary">Android-Version, Modell und Gerät</string>
+
+	<string name="about_developer_info_title">Entwicklerinfo</string>
+
+	<string name="about_developer_info_summary">Entwickler- und Build-Details</string>
+
+	<string name="about_other_switchly_products_title">Weitere Switchly-Produkte</string>
+
+	<string name="about_other_switchly_products_summary">Switchly Lite, Launcher und spätere Extras</string>
+
+	<string name="about_abi_label">ABI</string>
+
+	<string name="about_android_label">Android</string>
+
+	<string name="about_app_name_label">App-Name</string>
+
+	<string name="about_brand_label">Marke</string>
+
+	<string name="about_build_type_label">Build-Typ</string>
+
+	<string name="about_dev_name_label">Entwickler</string>
+
+	<string name="about_discord_label">Discord</string>
+
+	<string name="about_email_label">E-Mail</string>
+
+	<string name="about_fingerprint_label">Build-Fingerprint</string>
+
+	<string name="about_first_install_label">Erste Installation</string>
+
+	<string name="about_gitlab_label">GitLab-Repository</string>
+
+	<string name="about_install_source_label">Installationsquelle</string>
+
+	<string name="about_install_source_unknown">Unbekannt</string>
+
+	<string name="about_install_source_google_play">Google Play Store</string>
+
+	<string name="about_install_source_galaxy_store">Samsung Galaxy Store</string>
+
+	<string name="about_install_source_amazon">Amazon Appstore</string>
+
+	<string name="about_install_source_package_installer">Paket-Installer</string>
+
+	<string name="about_last_update_label">Letztes Update</string>
+
+	<string name="about_locale_label">Gebietsschema</string>
+
+	<string name="about_manufacturer_label">Hersteller</string>
+
+	<string name="about_model_label">Modell</string>
+
+	<string name="about_package_label">Paketname</string>
+
+	<string name="about_security_patch_label">Sicherheitspatch</string>
+
+	<string name="about_version_label">Version</string>
+
+	<string name="about_website_label">Website</string>
+
+	<string name="about_older_versions_label">Downloads</string>
+
+	<string name="about_switchly_lite_play_store_label">Switchly Lite – Play Store</string>
+
+	<string name="about_switchly_launcher_play_store_label">Switchly Launcher – Play Store</string>
+
+	<string name="about_mail">E-Mail</string>
+
+	<string name="about_switchly_lite">Switchly Lite</string>
+
+	<string name="about_switchly_lite_bonus">Eine leichtere Version für einfache Abläufe wie NFC, Tastenaktionen und zeitgesteuerte Pläne.</string>
+
+	<string name="about_switchly_launcher">Switchly Launcher</string>
+
+	<string name="about_switchly_launcher_bonus">Ein simpler und starker Launcher für ein minimaleres, ablenkungsärmeres Setup.</string>
+
+	<string name="dev_name_line">Entwickler: Saltyy (Andi S.)</string>
+
+	<string name="about_discord_copied">Discord-Link kopiert</string>
+
+	<string name="about_mail_copied">E-Mail kopiert</string>
+
+	<string name="about_no_browser">Keine Browser-App gefunden</string>
+
+	<string name="about_play_store_link_copied">Play-Store-Link kopiert</string>
+
+</resources>

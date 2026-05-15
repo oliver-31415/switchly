@@ -30,8 +30,8 @@ import java.time.LocalDate
 /**
  * Limits temporary QR actions by scanned QR payload.
  *
- * NFC temporary limits can use a physical tag UID. QR codes do not have a UID,
- * so the limiter uses a stable hash of the scanned Switchly URI instead.
+ * NFC temporary limits can use a physical tag UID. 
+ * QR codes do not have a UID, so the limiter uses a stable hash of the scanned Switchly URI instead.
  */
 object QrTempActionLimiterStore {
 

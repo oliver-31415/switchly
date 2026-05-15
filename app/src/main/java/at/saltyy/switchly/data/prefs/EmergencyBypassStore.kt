@@ -40,8 +40,8 @@ object EmergencyBypassStore {
     /**
      * Reads a Long from SharedPreferences while safely migrating old Int/String/Number values.
      *
-     * Android SharedPreferences throws ClassCastException if a value was previously stored as Int
-     * and later read using getLong(). This keeps existing user data and fixes crashes after upgrades.
+     * Android SharedPreferences throws ClassCastException if a value was previously stored as Int and later read using getLong(). 
+     * This keeps existing user data and fixes crashes after upgrades.
      */
     private fun getLongCompat(
         sp: SharedPreferences,

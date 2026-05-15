@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    
     <tech-list>
         <tech>android.nfc.tech.IsoDep</tech>
         <tech>android.nfc.tech.NfcA</tech>
@@ -11,4 +12,5 @@
         <tech>android.nfc.tech.Ndef</tech>
         <tech>android.nfc.tech.NdefFormatable</tech>
     </tech-list>
+
 </resources>

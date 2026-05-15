@@ -25,17 +25,17 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.feature.settings.PermissionsActivity
 import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
 import at.saltyy.switchly.theme.AccentColor
 
 /**
  * Triggered after an app update (ACTION_PACKAGE_REPLACED).
- * If Switchly is active but missing the Accessibility service, show a friendly notification that links directly to the Accessibility settings.
+ * If Switchly is active but missing the Accessibility service, show a friendly notification that opens Switchly's permission flow.
  */
 class PostUpdateReceiver : BroadcastReceiver() {
 
@@ -61,7 +61,8 @@ class PostUpdateReceiver : BroadcastReceiver() {
         )
         nm.createNotificationChannel(channel)
 
-        val settingsIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+        val settingsIntent = Intent(ctx, PermissionsActivity::class.java)
+            .putExtra(PermissionsActivity.EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE, true)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         val pi = PendingIntent.getActivity(

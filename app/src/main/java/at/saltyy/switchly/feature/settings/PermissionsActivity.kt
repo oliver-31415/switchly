@@ -229,7 +229,7 @@ class PermissionsActivity : AppCompatActivity() {
         }
 
         btnOpenAccessibility.setOnClickListener {
-            safeStart(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            AccessibilityDisclosure.openSettingsWithDisclosure(this)
         }
 
         btnOpenUsageAccess.setOnClickListener {
@@ -336,6 +336,12 @@ class PermissionsActivity : AppCompatActivity() {
         }
 
         updateUi()
+
+        if (intent.getBooleanExtra(EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE, false)) {
+            findViewById<View>(R.id.root).post {
+                AccessibilityDisclosure.openSettingsWithDisclosure(this, forceShow = true)
+            }
+        }
     }
 
     override fun onResume() {
@@ -1007,5 +1013,6 @@ class PermissionsActivity : AppCompatActivity() {
 
         const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
         const val EXTRA_FROM_TUTORIAL = "extra_from_tutorial"
+        const val EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE = "extra_show_accessibility_disclosure"
     }
 }
