@@ -40,11 +40,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
-import at.saltyy.switchly.data.prefs.BlockingToggleKeys
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.nfc.NfcWriteWaitingActivity
@@ -168,16 +167,16 @@ class ManagePairedTagsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_paired_tags)) return
 
-        val pairedTagsEnabled = PreferenceManager.getDefaultSharedPreferences(this)
-            .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-        if (!pairedTagsEnabled) {
-            finish()
+        val locked = EditingLockGuard.isLocked(this)
+        AppLogStore.append(this, "NFC", "ManagePairedTagsActivity opened locked=$locked")
+        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_paired_tags)) {
+            AppLogStore.append(this, "NFC", "ManagePairedTagsActivity blocked by editing lock")
             return
         }
 
         setContentView(R.layout.activity_manage_paired_tags)
+        AppLogStore.append(this, "NFC", "ManagePairedTagsActivity content shown")
 
         // Ensure CUSTOM accent mode recolors checkboxes/cursor in this screen + dialogs.
         CustomAccentApplier.applyIfNeeded(this)

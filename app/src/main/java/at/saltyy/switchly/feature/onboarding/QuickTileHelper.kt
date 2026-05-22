@@ -30,7 +30,7 @@ import android.widget.Toast
 import at.saltyy.switchly.R
 import java.util.concurrent.Executors
 
-// Helper for requesting the Switchly Quick Settings tile.
+// Helper for requesting Switchly Quick Settings tiles.
 object QuickTileHelper {
 
     /**
@@ -38,17 +38,53 @@ object QuickTileHelper {
      * Uses the official system dialog to request adding a Quick Settings tile.
      * Returns true if the request could be started successfully.
      */
-    fun requestAddTileIfAvailable(activity: Activity): Boolean {
+    fun requestAddTileIfAvailable(activity: Activity, onResult: ((Int) -> Unit)? = null): Boolean {
+        return requestAddTileIfAvailable(
+            activity = activity,
+            serviceClassName = "at.saltyy.switchly.platform.tile.SwitchlyTileService",
+            label = activity.getString(R.string.app_name),
+            iconRes = R.drawable.app_blocking_black_24,
+            onResult = onResult
+        )
+    }
+
+    fun requestAddQrScanTileIfAvailable(activity: Activity, onResult: ((Int) -> Unit)? = null): Boolean {
+        return requestAddTileIfAvailable(
+            activity = activity,
+            serviceClassName = "at.saltyy.switchly.platform.tile.QrScanTileService",
+            label = activity.getString(R.string.qr_scan_title),
+            iconRes = R.drawable.qs_qr_24,
+            onResult = onResult
+        )
+    }
+
+    fun requestAddBarcodeScanTileIfAvailable(activity: Activity, onResult: ((Int) -> Unit)? = null): Boolean {
+        return requestAddTileIfAvailable(
+            activity = activity,
+            serviceClassName = "at.saltyy.switchly.platform.tile.BarcodeScanTileService",
+            label = activity.getString(R.string.barcode_scan_title),
+            iconRes = R.drawable.qs_barcode_24,
+            onResult = onResult
+        )
+    }
+
+    private fun requestAddTileIfAvailable(
+        activity: Activity,
+        serviceClassName: String,
+        label: String,
+        iconRes: Int,
+        onResult: ((Int) -> Unit)? = null
+    ): Boolean {
         if (Build.VERSION.SDK_INT < 33) return false
         val sb = activity.getSystemService(StatusBarManager::class.java) ?: return false
 
-        val component = ComponentName(activity, "at.saltyy.switchly.platform.tile.SwitchlyTileService")
-        val label = activity.getString(R.string.app_name)
-        val icon = Icon.createWithResource(activity, R.drawable.app_blocking_black_24)
+        val component = ComponentName(activity, serviceClassName)
+        val icon = Icon.createWithResource(activity, iconRes)
         val executor = Executors.newSingleThreadExecutor()
 
         sb.requestAddTileService(component, label, icon, executor) { result ->
             Handler(Looper.getMainLooper()).post {
+                onResult?.invoke(result)
                 when (result) {
                     StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
                         Toast.makeText(activity, activity.getString(R.string.qs_added_ok), Toast.LENGTH_SHORT).show()

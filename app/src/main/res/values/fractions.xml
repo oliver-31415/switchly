@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <fraction name="locked_card_alpha">72%</fraction>
+    
 </resources>

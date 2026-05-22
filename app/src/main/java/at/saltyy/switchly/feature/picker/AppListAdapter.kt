@@ -58,6 +58,8 @@ class AppListAdapter(
 
     fun getManagedPackages(): Set<String> = managed.toSet()
 
+    fun unavailableManagedCount(): Int = allApps.count { !it.isAvailable && it.packageName in managed }
+
     fun selectAllVisible(): Int {
         var skipped = 0
         currentList.forEachIndexed { index, item ->
@@ -70,6 +72,35 @@ class AppListAdapter(
             }
         }
         return skipped
+    }
+
+    fun clearUnavailable(context: Context): Int {
+        val profile = currentProfileProvider.invoke()
+        val unavailablePkgs = allApps
+            .asSequence()
+            .filter { !it.isAvailable }
+            .map { it.packageName }
+            .filter { it in managed }
+            .toList()
+
+        if (unavailablePkgs.isEmpty()) return 0
+
+        unavailablePkgs.forEach { pkg ->
+            managed.remove(pkg)
+            if (!profile.isNullOrBlank()) {
+                UsageLimitStore.setLimitMinutes(context, profile, pkg, 0)
+                SessionLimitStore.setLimitMinutes(context, profile, pkg, 0)
+                AttemptLimitStore.setLimitAttempts(context, profile, pkg, 0)
+                OpenCountStore.setToday(context, profile, pkg, 0)
+            }
+        }
+
+        unavailablePkgs.forEach { pkg ->
+            currentList.indexOfFirst { it.packageName == pkg }
+                .takeIf { it >= 0 }
+                ?.let { notifyItemChanged(it) }
+        }
+        return unavailablePkgs.size
     }
 
     fun clearAllVisible(context: Context) {

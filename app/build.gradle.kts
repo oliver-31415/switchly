@@ -10,8 +10,8 @@ plugins {
     id("com.google.firebase.crashlytics") apply false
 }
 
-val switchlyVersionCode = 212
-val switchlyVersionName = "2.1.2"
+val switchlyVersionCode = 213
+val switchlyVersionName = "2.1.3"
 
 val switchlySecretPropertiesFile = rootProject.file("signing.properties")
 val switchlySecretProperties = Properties().apply {
@@ -24,19 +24,8 @@ fun switchlySecretProperty(name: String) = providers.gradleProperty(name)
     .orElse(providers.environmentVariable(name))
     .orElse(providers.provider { switchlySecretProperties.getProperty(name) ?: "" })
 
-val googleServicesJson = layout.projectDirectory.file("google-services.json").asFile
-val googleServicesJsonPath = switchlySecretProperty("GOOGLE_SERVICES_JSON_PATH").get()
-
-if (!googleServicesJson.exists() && googleServicesJsonPath.isNotBlank()) {
-    val source = rootProject.file(googleServicesJsonPath)
-    if (!source.isFile) {
-        throw GradleException("GOOGLE_SERVICES_JSON_PATH does not exist: $googleServicesJsonPath")
-    }
-    googleServicesJson.parentFile.mkdirs()
-    source.copyTo(googleServicesJson, overwrite = true)
-}
-
-val googleServicesJsonExists = googleServicesJson.isFile
+fun buildConfigString(value: String): String =
+    "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 fun googleWebClientIdFromGoogleServicesJson(file: File): String {
     if (!file.isFile) return ""
@@ -70,6 +59,19 @@ fun googleWebClientIdFromGoogleServicesJson(file: File): String {
     return ""
 }
 
+val googleServicesJson = layout.projectDirectory.file("google-services.json").asFile
+val googleServicesJsonPath = switchlySecretProperty("GOOGLE_SERVICES_JSON_PATH").get()
+
+if (!googleServicesJson.exists() && googleServicesJsonPath.isNotBlank()) {
+    val source = rootProject.file(googleServicesJsonPath)
+    if (!source.isFile) {
+        throw GradleException("GOOGLE_SERVICES_JSON_PATH does not exist: $googleServicesJsonPath")
+    }
+    googleServicesJson.parentFile.mkdirs()
+    source.copyTo(googleServicesJson, overwrite = true)
+}
+
+val googleServicesJsonExists = googleServicesJson.isFile
 val googleWebClientId = switchlySecretProperty("GOOGLE_WEB_CLIENT_ID")
     .map { value -> value.ifBlank { googleWebClientIdFromGoogleServicesJson(googleServicesJson) } }
 
@@ -93,9 +95,6 @@ val switchlyDownloadsUrl = switchlySecretProperty("SWITCHLY_DOWNLOADS_URL")
 val switchlySupportEmail = switchlySecretProperty("SWITCHLY_SUPPORT_EMAIL")
 val switchlyDevEmail = switchlySecretProperty("SWITCHLY_DEV_EMAIL")
 
-fun buildConfigString(value: String): String =
-    "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
-
 val releaseStoreFile = switchlySecretProperty("SWITCHLY_RELEASE_STORE_FILE")
 val releaseStorePassword = switchlySecretProperty("SWITCHLY_RELEASE_STORE_PASSWORD")
 val releaseKeyAlias = switchlySecretProperty("SWITCHLY_RELEASE_KEY_ALIAS")
@@ -112,18 +111,21 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey.get()
-        resValue("string", "about_website_url", switchlyWebsiteUrl.get())
-        resValue("string", "about_downloads_url", switchlyDownloadsUrl.get())
-        resValue("string", "about_mail_address", switchlySupportEmail.get())
-        resValue("string", "dev_contact_email", switchlyDevEmail.get())
-        buildConfigField("String", "SWITCHLY_GOOGLE_WEB_CLIENT_ID", buildConfigString(googleWebClientId.get()))
         applicationId = "at.saltyy.switchly"
         minSdk = 27
         targetSdk = 36
 
         versionCode = switchlyVersionCode
         versionName = switchlyVersionName
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey.get()
+
+        resValue("string", "about_website_url", switchlyWebsiteUrl.get())
+        resValue("string", "about_downloads_url", switchlyDownloadsUrl.get())
+        resValue("string", "about_mail_address", switchlySupportEmail.get())
+        resValue("string", "dev_contact_email", switchlyDevEmail.get())
+
+        buildConfigField("String", "SWITCHLY_GOOGLE_WEB_CLIENT_ID", buildConfigString(googleWebClientId.get()))
     }
 
     flavorDimensions += "services"
@@ -195,7 +197,7 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro",
             )
         }
     }
@@ -212,181 +214,71 @@ android {
     }
 }
 
+// Values needed by gradle/switchly-release.gradle.kts.
+extra["switchlyVersionName"] = switchlyVersionName
+extra["switchlyGoogleServicesJsonFile"] = googleServicesJson
+extra["switchlyGoogleWebClientId"] = googleWebClientId
+extra["switchlyReleaseSigningConfigured"] = releaseSigningConfigured
+extra["switchlyReleaseStoreFile"] = releaseStoreFile
+extra["switchlyExternalCheckoutUrl"] = externalCheckoutUrl
+extra["switchlyDownloadsUrl"] = switchlyDownloadsUrl
+
+// Shared dependency declarations for the Android app module.
 dependencies {
     // AndroidX core, UI, and preferences
-    implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.core:core-ktx:1.18.0")
-    implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("com.google.android.material:material:1.13.0")
+    add("implementation", "androidx.preference:preference-ktx:1.2.1")
+    add("implementation", "androidx.core:core-ktx:1.18.0")
+    add("implementation", "androidx.appcompat:appcompat:1.7.1")
+    add("implementation", "com.google.android.material:material:1.13.0")
 
     // Coroutines helpers (lifecycleScope) + DataStore (for small user prefs)
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
-    implementation("androidx.datastore:datastore-preferences:1.2.1")
+    add("implementation", "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    add("implementation", "androidx.datastore:datastore-preferences:1.2.1")
 
     // Local database (Room)
     val roomVersion = "2.8.4"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
+    add("implementation", "androidx.room:room-runtime:$roomVersion")
+    add("implementation", "androidx.room:room-ktx:$roomVersion")
+    add("ksp", "androidx.room:room-compiler:$roomVersion")
 
-    // Firebase BOM + Modules.
+    // Firebase BOM + modules.
     // These remain available to all flavors because shared source files reference Firebase types.
     // Runtime behavior is controlled by per-flavor BuildConfig flags; offline does not initialize Firebase.
-    implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
-    // Auth for Google-Login
-    implementation("com.google.firebase:firebase-auth")
-    // Cloud Firestore (for Sync & Stats)
-    implementation("com.google.firebase:firebase-firestore")
-    // Crash reporting
-    implementation("com.google.firebase:firebase-crashlytics")
+    add("implementation", platform("com.google.firebase:firebase-bom:34.13.0"))
+    add("implementation", "com.google.firebase:firebase-auth")
+    add("implementation", "com.google.firebase:firebase-firestore")
+    add("implementation", "com.google.firebase:firebase-crashlytics")
 
-    // Google Sign-In/Credential Manager
-    implementation("com.google.android.gms:play-services-auth:21.5.1")
-    implementation("com.google.android.gms:play-services-location:21.3.0")
-    implementation("com.google.android.gms:play-services-maps:20.0.0")
-    implementation("androidx.credentials:credentials:1.6.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
+    // Google Sign-In, location, maps, and Credential Manager
+    add("implementation", "com.google.android.gms:play-services-auth:21.5.1")
+    add("implementation", "com.google.android.gms:play-services-location:21.3.0")
+    add("implementation", "com.google.android.gms:play-services-maps:20.0.0")
+    add("implementation", "androidx.credentials:credentials:1.6.0")
+    add("implementation", "androidx.credentials:credentials-play-services-auth:1.6.0")
+    add("implementation", "com.google.android.libraries.identity.googleid:googleid:1.2.0")
 
-    // Play Billing
-    implementation("com.android.billingclient:billing-ktx:8.3.0")
-
-    // Play Store in-app update (check for updates)
-    implementation("com.google.android.play:app-update-ktx:2.1.0")
+    // Play Billing + Play Store in-app updates
+    add("implementation", "com.android.billingclient:billing-ktx:8.3.0")
+    add("implementation", "com.google.android.play:app-update-ktx:2.1.0")
 
     // CameraX
     val camerax = "1.6.1"
-    implementation("androidx.camera:camera-core:$camerax")
-    implementation("androidx.camera:camera-camera2:$camerax")
-    implementation("androidx.camera:camera-lifecycle:$camerax")
-    implementation("androidx.camera:camera-view:$camerax")
+    add("implementation", "androidx.camera:camera-core:$camerax")
+    add("implementation", "androidx.camera:camera-camera2:$camerax")
+    add("implementation", "androidx.camera:camera-lifecycle:$camerax")
+    add("implementation", "androidx.camera:camera-view:$camerax")
 
     // Provides com.google.common.util.concurrent.ListenableFuture for CameraX
-    implementation("com.google.guava:guava:33.5.0-android")
+    add("implementation", "com.google.guava:guava:33.5.0-android")
 
-    // ML Kit barcode scanning (Play Services variant)
-    implementation("com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1")
-
-    // QR generate (ZXing core)
-    implementation("com.google.zxing:core:3.5.4")
+    // Barcode scanning and QR generation
+    add("implementation", "com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1")
+    add("implementation", "com.google.zxing:core:3.5.4")
 }
 
-// fix for duplicated classes: com.intellij:annotations vs org.jetbrains:annotations
+// Fix for duplicated classes: com.intellij:annotations vs org.jetbrains:annotations.
 configurations.configureEach {
     exclude(group = "com.intellij", module = "annotations")
 }
 
-val switchlyDistDir = rootProject.layout.projectDirectory.dir("dist")
-
-tasks.register("checkSwitchlyReleaseInputs") {
-    group = "switchly"
-    description = "Checks inputs required for Switchly Firebase release artifacts."
-
-    doLast {
-        if (!googleServicesJson.isFile) {
-            throw GradleException(
-                "Firebase release artifacts need app/google-services.json. " +
-                    "Place it there, set GOOGLE_SERVICES_JSON_PATH in signing.properties, " +
-                    "or pass -PGOOGLE_SERVICES_JSON_PATH=/path/to/google-services.json."
-            )
-        }
-
-        if (googleWebClientId.get().isBlank()) {
-            throw GradleException(
-                "Google sign-in release artifacts need a Web client ID. " +
-                    "Set GOOGLE_WEB_CLIENT_ID in signing.properties or ensure google-services.json " +
-                    "contains an OAuth client with client_type 3."
-            )
-        }
-
-        if (releaseSigningConfigured && !rootProject.file(releaseStoreFile.get()).isFile) {
-            throw GradleException("Release keystore not found: ${releaseStoreFile.get()}")
-        }
-
-        if (!releaseSigningConfigured) {
-            logger.warn(
-                "Release signing is not configured. Gradle may create unsigned release artifacts; " +
-                    "set SWITCHLY_RELEASE_STORE_FILE, SWITCHLY_RELEASE_STORE_PASSWORD, " +
-                    "SWITCHLY_RELEASE_KEY_ALIAS and SWITCHLY_RELEASE_KEY_PASSWORD for signed releases."
-            )
-        }
-
-        if (externalCheckoutUrl.get().isBlank()) {
-            logger.warn(
-                "SWITCHLY_EXTERNAL_CHECKOUT_URL is empty. The firebaseEmail APK will build, " +
-                    "but external Premium checkout will show as not configured until this is set."
-            )
-        }
-
-        if (switchlyDownloadsUrl.get().isBlank()) {
-            logger.warn("SWITCHLY_DOWNLOADS_URL is empty. Download/About links may be unavailable in this build.")
-        }
-    }
-}
-
-tasks.register("release-apk") {
-    group = "switchly"
-    description = "Builds Switchly release APK variants and the full Play Store AAB, then copies them to dist/."
-
-    dependsOn(
-        "checkSwitchlyReleaseInputs",
-        "assembleFullRelease",
-        "assembleFirebaseEmailRelease",
-        "assembleOfflineRelease",
-        "bundleFullRelease",
-    )
-
-    doLast {
-        val distDir = switchlyDistDir.asFile
-        distDir.mkdirs()
-
-        fun copyArtifact(candidates: List<String>, outputName: String) {
-            val source = candidates
-                .map { layout.buildDirectory.file(it).get().asFile }
-                .firstOrNull { it.isFile }
-                ?: throw GradleException(
-                    "Could not find build artifact for $outputName. Checked: ${candidates.joinToString()}"
-                )
-
-            source.copyTo(distDir.resolve(outputName), overwrite = true)
-            logger.lifecycle("Created: ${distDir.resolve(outputName).absolutePath}")
-        }
-
-        copyArtifact(
-            listOf(
-                "outputs/apk/full/release/app-full-release.apk",
-                "outputs/apk/full/release/app-full-release-unsigned.apk",
-            ),
-            "Switchly-$switchlyVersionName-full.apk",
-        )
-
-        copyArtifact(
-            listOf(
-                "outputs/apk/firebaseEmail/release/app-firebaseEmail-release.apk",
-                "outputs/apk/firebaseEmail/release/app-firebaseEmail-release-unsigned.apk",
-            ),
-            "Switchly-$switchlyVersionName-firebase-email.apk",
-        )
-
-        copyArtifact(
-            listOf(
-                "outputs/apk/offline/release/app-offline-release.apk",
-                "outputs/apk/offline/release/app-offline-release-unsigned.apk",
-            ),
-            "Switchly-$switchlyVersionName-offline.apk",
-        )
-
-        copyArtifact(
-            listOf("outputs/bundle/fullRelease/app-full-release.aab"),
-            "Switchly-$switchlyVersionName-full-playstore.aab",
-        )
-
-        logger.lifecycle("Done. Release files are in: ${distDir.absolutePath}")
-    }
-}
-
-tasks.register("releaseApk") {
-    group = "switchly"
-    description = "Alias for release-apk."
-    dependsOn("release-apk")
-}
+apply(from = rootProject.file("gradle/switchly-release.gradle.kts"))

@@ -41,7 +41,8 @@
 
 	<string name="qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „Switchly“ zu den aktiven Kacheln ziehen</string>
 
-	<string name="qs_tile_remove_hint">Zum Entfernen der Kachel: Schnelleinstellungen → Bearbeiten → „Switchly“ entfernen</string>
+	<string name="qr_qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „QR scannen“ zu den aktiven Kacheln ziehen</string>
+	<string name="barcode_qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „Barcode scannen“ zu den aktiven Kacheln ziehen</string>
 
 	<string name="update_available_title">Update verfügbar</string>
 
@@ -138,8 +139,8 @@
 
 	<string name="widget_next_schedule_name">Nächster Zeitplan</string>
 
-	<string name="experimental_notice_title">Experimentelle Funktionen in 2.1.1</string>
+	<string name="experimental_notice_title">Experimentelle Funktionen in 2.1.x</string>
 
-	<string name="experimental_notice_body">Einige Funktionen und UI-Bereiche in dieser Version brauchen noch extra Feedback.\n\nBitte melde dich mit Logs, wenn dir etwas auffällt bei:\n• Standortbasierten Zeitplänen\n• Advanced / ADB-Tools\n• Geräteadministrator-Funktionen\n• Dem neuen Home / Blocking / Manage / Settings Menü\n• Manage-Keys-Aktionen für NFC-Tags, gekoppelte Tags, QR-Codes und Barcodes\n• Lokalem Backup / Restore\n• App Lock und Uninstall Protection\n\nJe nach Gerät können sie sich unterschiedlich verhalten, besonders auf Xiaomi, Samsung und anderen OEM-angepassten Android-Versionen.\n\nSwitchly kann normal genutzt werden — die Kern-Blockierung ist stabil.</string>
+	<string name="experimental_notice_body">Einige erweiterte Schutzfunktionen in dieser Version brauchen noch extra Feedback.\n\nBitte melde dich mit Logs, wenn dir etwas auffällt bei:\n• Standortbasierten Zeitplänen\n• Advanced / ADB-Tools\n• Geräteadministrator-Funktionen\n• App Lock\n• Uninstall Protection\n\nJe nach Gerät können sie sich unterschiedlich verhalten, besonders auf Xiaomi, Samsung und anderen OEM-angepassten Android-Versionen.</string>
 
 </resources>

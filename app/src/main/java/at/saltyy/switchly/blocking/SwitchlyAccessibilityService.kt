@@ -53,6 +53,7 @@ import at.saltyy.switchly.data.prefs.InAppLimitStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.ProfileUsageStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
 import at.saltyy.switchly.data.prefs.SurfaceUsageStore
@@ -843,6 +844,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         UsageStore.addUsageMsToday(this, pkg, delta)
 
         if (!profile.isNullOrBlank()) {
+            // App limits are profile-specific. 
+            // Keep a separate per-profile counter so switching from a hard-blocked profile into a limited profile does not immediately inherit stale/over-counted usage from a different profile.
+            ProfileUsageStore.addUsageMsToday(this, profile, pkg, delta)
+
             // "Blocked time" should reflect how long apps are configured as blocked while Switchly is enabled (not how long the blocker UI is shown). Track it here, once per tick.
             val blockedSet = getBlockedAppsCached(profile, nowForCache)
             if (blockedSet.isNotEmpty()) {
@@ -882,12 +887,18 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val limitMin = getUsageLimitCached(safeProfile, pkg, nowForCache)
         if (limitMin <= 0) return // hard block -> handled by event driven blocker
 
-        // Use the same "today" usage source that user-facing app timers show,
-        // so enforcement and displayed app usage stay aligned.
-        val usedMs = getEffectiveUsageMsToday(pkg, now)
+        // Enforce app limits using usage accumulated while the current profile is active.
+        // The overall usage dashboard may show a different value because it is intentionally not profile-scoped.
+        val usedMs = getProfileLimitUsageMsToday(safeProfile, pkg)
         val limitMs = limitMin * 60_000L
         if (usedMs >= limitMs) {
-            LimitReachedStore.markReachedToday(this, pkg)
+            appendBlockingLog(
+                category = "app_limit_reached",
+                key = "app-limit-reached|$safeProfile|$pkg",
+                message = "profile=$safeProfile pkg=$pkg limitMin=$limitMin usageMs=$usedMs limitMs=$limitMs",
+                throttleMs = 2_000L
+            )
+            LimitReachedStore.markReachedToday(this, safeProfile, pkg)
             maybeBlockNow(pkg, force = true)
         }
     }
@@ -909,6 +920,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
      */
     private fun getEffectiveUsageMsToday(pkg: String, now: Long): Long {
         return AppUsageToday.getUsageMsToday(this, pkg, now)
+    }
+
+    /**
+     * Usage used for enforcing profile-specific app limits.
+     * The public usage dashboard can show overall daily usage, but limits configured inside a profile should be evaluated against usage accumulated while that profile is active.
+     * This avoids false early blocks after switching from a hard-blocking profile to a limited profile.
+     */
+    private fun getProfileLimitUsageMsToday(profile: String, pkg: String): Long {
+        return ProfileUsageStore.getUsageMsToday(this, profile, pkg)
     }
 
     /**
@@ -964,18 +984,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         maybeCountOpenAndEnforceAttemptLimit(top, now)
 
         // And enforce immediately in the same correction pass.
-        // Without this, hard-blocked apps reopened from Recents can slip through until the next
-        // accessibility event or periodic tick notices the corrected top package.
+        // Without this, hard-blocked apps reopened from Recents can slip through until the next accessibility event or periodic tick notices the corrected top package.
         maybeBlockNow(top, force = true)
     }
 
     /**
      * Scans UsageEvents for ACTIVITY_RESUMED to count app opens reliably.
      *
-     * Some OEMs (and some navigation flows) do not emit consistent accessibility transition
-     * events when leaving/returning to apps (especially via Recents). UsageEvents is
-     * the most reliable cross-device signal for "app became foreground".
-     *
+     * Some OEMs (and some navigation flows) do not emit consistent accessibility transition events when leaving/returning to apps (especially via Recents). 
+     * UsageEvents is the most reliable cross-device signal for "app became foreground".
      * This is only used when the user has configured at least one attempt limit.
      */
     private fun scanUsageEventsForOpens(now: Long) {
@@ -1030,8 +1047,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         lastOpenSessionAt = now
 
         if (sameForegroundSession) {
-            // Still inside the same app session. Do not count repeated ACTIVITY_RESUMED events from
-            // internal activity changes, tab switches, notification updates, or OEM foreground flaps.
+            // Still inside the same app session. 
+            // Do not count repeated ACTIVITY_RESUMED events from internal activity changes, tab switches, notification updates, or OEM foreground flaps.
             return
         }
 
@@ -1050,10 +1067,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val blocked = getBlockedAppsCached(profile, now)
         val timeLimitMin = getUsageLimitCached(profile, pkg, now)
         // Treat an app as *hard blocked* only when it has no limits configured.
-        // If the user sets a time/attempt limit for an app that is in the blocked list,
-        // the limit should take precedence (otherwise it looks "broken").
+        // If the user sets a time/attempt limit for an app that is in the blocked list, the limit should take precedence (otherwise it looks "broken").
         val hardBlocked = isManagedPackage(pkg, blocked) && timeLimitMin <= 0 && attemptLimit <= 0
-        val timeBlocked = timeLimitMin > 0 && LimitReachedStore.isReachedToday(this, pkg)
+        val timeBlocked = timeLimitMin > 0 && LimitReachedStore.isReachedToday(this, profile, pkg)
         if (hardBlocked || timeBlocked) return
 
         val last = lastOpenCountAt[pkg] ?: 0L
@@ -1118,17 +1134,29 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val attemptLimit = getAttemptLimitCached(profile, pkg, nowForCache)
 
         val opensExceeded = attemptLimit > 0 && OpenCountStore.getToday(this, profile, pkg) > attemptLimit
+        val effectiveUsageMsToday = getProfileLimitUsageMsToday(profile, pkg)
         val decision = resolveAppBlockDecision(
             pkg = pkg,
             blockedPackages = blocked,
             limitMinutes = limitMin,
             attemptLimit = attemptLimit,
             opensExceeded = opensExceeded,
-            effectiveUsageMsToday = getEffectiveUsageMsToday(pkg, System.currentTimeMillis()),
+            effectiveUsageMsToday = effectiveUsageMsToday,
             lockActive = lockActive,
             highRisk = isHighRiskBlockTarget(this, pkg),
             force = force
         )
+
+        if (limitMin > 0 || attemptLimit > 0) {
+            val limitMs = limitMin * 60_000L
+            val hardBlocked = isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0
+            appendBlockingLog(
+                category = "app_limit_decision",
+                key = "app-limit-decision|$profile|$pkg",
+                message = "profile=$profile pkg=$pkg hardBlocked=$hardBlocked limitMin=$limitMin profileUsageMs=$effectiveUsageMsToday globalUsageMs=${getEffectiveUsageMsToday(pkg, System.currentTimeMillis())} limitMs=$limitMs attemptLimit=$attemptLimit opensExceeded=$opensExceeded force=$force shouldBlock=${decision.shouldBlock}",
+                throttleMs = 2_000L
+            )
+        }
 
         if (!decision.shouldBlock) return
         blockNow(pkg, immediate = decision.immediate)

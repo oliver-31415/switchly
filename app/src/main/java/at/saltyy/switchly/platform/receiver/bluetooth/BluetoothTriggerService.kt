@@ -208,8 +208,8 @@ class BluetoothTriggerService : Service() {
             Intent(this, ScheduleReceiver::class.java).apply {
                 action = ScheduleReceiver.ACTION_TICK
                 putExtra("bt_reason", reason)
-                putExtra("eventBtName", cached.name)
-                putExtra("eventBtAddr", cached.addr)
+                cached.name?.takeIf { it.isNotBlank() }?.let { putExtra("eventBtName", it) }
+                cached.addr?.takeIf { it.isNotBlank() }?.let { putExtra("eventBtAddr", it) }
                 if (eventBtConnected != null) putExtra("eventBtConnected", eventBtConnected)
             }
         )

@@ -757,6 +757,13 @@
                             app:showText="false"/>
                     </LinearLayout>
 
+                    <View
+                        android:id="@+id/dividerAfterMixedAllowButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
                     <LinearLayout
                         android:id="@+id/rowMixedAllowAppPicking"
                         android:layout_width="match_parent"
@@ -805,6 +812,7 @@
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/dividerAfterMixedAllowAppPicking"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
@@ -913,6 +921,7 @@
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/dividerAfterMixedAllowScheduleEditing"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
@@ -968,6 +977,7 @@
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/dividerAfterAllowButtonEnable"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
@@ -1137,6 +1147,13 @@
                         </LinearLayout>
                     </LinearLayout>
 
+                    <View
+                        android:id="@+id/dividerAfterLockSwitchlyAppAccess"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
                     <!-- Require NFC to unlock -->
                     <LinearLayout
                         android:id="@+id/rowRequireNfcUnlock"
@@ -1193,62 +1210,6 @@
                         android:layout_height="1dp"
                         android:alpha="0.12"
                         android:background="?attr/colorOnSurface" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
-
-                    <!-- Quick Settings Tile -->
-                    <LinearLayout
-                        android:id="@+id/rowQuickTile"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/dashboard_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
-
-                        <Space
-                            android:layout_width="14dp"
-                            android:layout_height="1dp" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/pref_qs_tile_title" />
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body2"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/pref_qs_tile_summary" />
-                        </LinearLayout>
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchQuickTile"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textOn=""
-                            android:textOff=""
-                            app:showText="false"/>
-                    </LinearLayout>
 
                     <!-- NFC Pairing: enable paired UID enforcement + management UI -->
                     <LinearLayout
@@ -1319,6 +1280,7 @@
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/dividerAfterEnablePairedUids"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"
@@ -1374,6 +1336,178 @@
                     </LinearLayout>
 
                     <View
+                        android:id="@+id/dividerAfterAutoPairOnWrite"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
+                    <!-- Quick Settings Tile -->
+                    <LinearLayout
+                        android:id="@+id/rowQuickTile"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/dashboard_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@null" />
+
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_qs_tile_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:id="@+id/tvQuickTileSummary"
+                                android:text="@string/pref_qs_tile_summary" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/ivQuickTileChevron"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/arrow_forward_ios_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:alpha="0.55"
+                            android:contentDescription="@null" />
+                    </LinearLayout>
+
+                    <View
+                        android:id="@+id/dividerAfterQuickTile"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
+                    <LinearLayout
+                        android:id="@+id/rowQrQuickTile"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/qr_code_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@null" />
+
+                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_qr_qs_tile_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:id="@+id/tvQrQuickTileSummary"
+                                android:text="@string/pref_qr_qs_tile_summary" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/ivQrQuickTileChevron"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/arrow_forward_ios_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:alpha="0.55"
+                            android:contentDescription="@null" />
+                    </LinearLayout>
+
+                    <View
+                        android:id="@+id/dividerAfterQrQuickTile"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
+                    <LinearLayout
+                        android:id="@+id/rowBarcodeQuickTile"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/barcode_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:contentDescription="@null" />
+
+                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_barcode_qs_tile_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:id="@+id/tvBarcodeQuickTileSummary"
+                                android:text="@string/pref_barcode_qs_tile_summary" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/ivBarcodeQuickTileChevron"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/arrow_forward_ios_24"
+                            app:tint="?attr/colorOnSurface"
+                            android:alpha="0.55"
+                            android:contentDescription="@null" />
+                    </LinearLayout>
+
+                    <View
+                        android:id="@+id/dividerAfterBarcodeQuickTile"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:alpha="0.12"

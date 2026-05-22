@@ -15,7 +15,7 @@
 
     <string name="tools_schedules_title">Schedules</string>
 
-    <string name="tools_schedules_summary">Create and manage automatic time, Wi-Fi, and Bluetooth actions</string>
+    <string name="tools_schedules_summary">Create and manage automatic time, Wi-Fi, Bluetooth, and location actions</string>
 
     <string name="tools_tags_codes_title">Manage keys</string>
 
@@ -25,7 +25,7 @@
 
     <string name="tools_tags_codes_paired_tags">Manage paired tags</string>
 
-    <string name="tools_tags_codes_generate_qr">Generate QR code</string>
+    <string name="tools_tags_codes_generate_qr">Manage QR codes</string>
 
     <string name="tools_tags_codes_manage_barcodes">Manage barcodes</string>
 
@@ -59,9 +59,9 @@
 
     <string name="blocking_hub_controls_section">Blocking controls</string>
 
-    <string name="blocking_hub_modes_title">Blocking modes</string>
+    <string name="blocking_hub_modes_title">Blocking controls</string>
 
-    <string name="blocking_hub_modes_summary">Choose how Switchly can be enabled or disabled</string>
+    <string name="blocking_hub_modes_summary">Choose how Switchly can be enabled and disabled</string>
 
     <string name="blocking_hub_features_title">While blocking is active</string>
 
@@ -83,8 +83,16 @@
 
     <string name="tools_nfc_write_summary">Write enable, disable, temporary, and other actions to writable NFC tags</string>
 
-    <string name="tools_manage_qr_title">Generate QR</string>
+    <string name="tools_manage_qr_title">Manage QR codes</string>
 
     <string name="tools_manage_qr_summary">Create a Switchly QR code</string>
+
+    <string name="blocking_hub_scan_section">Scan</string>
+    <string name="blocking_hub_scan_qr_title">Scan QR code</string>
+    <string name="blocking_hub_scan_qr_summary">Open the Switchly QR scanner directly</string>
+    <string name="blocking_hub_scan_barcode_title">Scan barcode</string>
+    <string name="blocking_hub_scan_barcode_summary">Open the Switchly barcode scanner directly</string>
+
+    <string name="error_open_manage_paired_tags">Could not open Manage paired tags. Please send debug logs if this keeps happening.</string>
 
 </resources>

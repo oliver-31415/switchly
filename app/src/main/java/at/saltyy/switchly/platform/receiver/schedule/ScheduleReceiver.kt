@@ -78,12 +78,19 @@ class ScheduleReceiver : BroadcastReceiver() {
         // Bluetooth events forwarded by BluetoothConnectionReceiver
         val eventBtName = intent.getStringExtra("eventBtName")
         val eventBtAddr = intent.getStringExtra("eventBtAddr")
+        val hasBtStateEvent = intent.hasExtra("eventBtConnected")
+        val hasBtIdentityEvent = intent.hasExtra("eventBtName") || intent.hasExtra("eventBtAddr")
+        val hasBtEvent = hasBtStateEvent || hasBtIdentityEvent
         val eventBtConnected = intent.getBooleanExtra("eventBtConnected", false)
-        val hasBtEvent = intent.hasExtra("eventBtName") || intent.hasExtra("eventBtAddr") || intent.hasExtra("eventBtConnected")
 
-        if (hasBtEvent) {
+        if (hasBtStateEvent) {
+            // A real connect/disconnect event owns the connected state.
             cacheBtEvent(ctx, eventBtName, eventBtAddr, eventBtConnected)
             setBtTsNow(ctx)
+        } else if (hasBtIdentityEvent) {
+            // Service start/retry ticks may only carry the last known device identity.
+            // Do not treat those as "disconnected" just because eventBtConnected is absent.
+            cacheBtIdentity(ctx, eventBtName, eventBtAddr)
         }
 
         val schedules = ScheduleStore.getAll(ctx).filter { it.enabled }
@@ -105,18 +112,15 @@ class ScheduleReceiver : BroadcastReceiver() {
         var btConnected = cachedBtConnected(ctx)
         val btAgeMs = btAgeMs(ctx)
 
-        if (needsBtInfo && btConnected && btAgeMs > BT_FRESHNESS_MS && !hasBtEvent) {
-            Log.w(TAG, "BT cache stale (${btAgeMs}ms) -> forcing disconnected")
-            setBtConnected(ctx, false)
-            btConnected = false
-        }
-
-        if (needsBtInfo && btConnected && !hasBtEvent) {
+        if (needsBtInfo && btConnected && btAgeMs > BT_FRESHNESS_MS && !hasBtStateEvent) {
+            // Do not drop an active Bluetooth schedule only because the cache is old.
+            // Some cars/Android builds do not emit frequent profile updates while the device remains connected.
+            // Explicit disconnect events are still handled immediately below through eventBtConnected=false.
             val actuallyConnected = isAnyBtProfileConnected(ctx)
-            if (actuallyConnected == false) {
-                Log.w(TAG, "System reports no BT profile -> clearing cache")
-                setBtConnected(ctx, false)
-                btConnected = false
+            if (actuallyConnected == true) {
+                setBtTsNow(ctx)
+            } else {
+                Log.w(TAG, "BT cache stale (${btAgeMs}ms), but no explicit disconnect event; keeping cached connection")
             }
         }
 
@@ -159,7 +163,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
         val todayBit = ScheduleStore.Days.fromCalendarDay(now.get(Calendar.DAY_OF_WEEK))
 
-        dbg("tick: ssid=$ssid btName=$btName btAddr=$btAddr btConnected=$btConnected btAgeMs=$btAgeMs now=$nowMinutes today=$todayYmd wifiReason=$wifiReason hasBtEvent=$hasBtEvent/$eventBtConnected")
+        dbg("tick: ssid=$ssid btName=$btName btAddr=$btAddr btConnected=$btConnected btAgeMs=$btAgeMs now=$nowMinutes today=$todayYmd wifiReason=$wifiReason hasBtEvent=$hasBtEvent stateEvent=$hasBtStateEvent/$eventBtConnected")
 
         val lastSource = getLastActivationSource(ctx)
         val hardWifiDisconnect = (wifiReason == "lost") || !wifiConnected
@@ -295,7 +299,7 @@ class ScheduleReceiver : BroadcastReceiver() {
                     // Wi-Fi/BT schedules can also have time windows now.
                     // If we leave the active range while still connected, we still need to revert.
                     SOURCE_WIFI -> hardWifiDisconnect || isTimeBoundaryTick || alarmReason == "boot_watchdog" || alarmReason == "unlock_watchdog"
-                    SOURCE_BT -> (hasBtEvent && !eventBtConnected) || isTimeBoundaryTick || alarmReason == "boot_watchdog" || alarmReason == "unlock_watchdog"
+                    SOURCE_BT -> (hasBtStateEvent && !eventBtConnected) || isTimeBoundaryTick || alarmReason == "boot_watchdog" || alarmReason == "unlock_watchdog"
                     SOURCE_TIME -> true
                     else -> false
                 }
@@ -785,6 +789,17 @@ class ScheduleReceiver : BroadcastReceiver() {
             putString(KEY_BT_NAME, name?.trim()?.takeIf { it.isNotBlank() })
             putString(KEY_BT_ADDR, addr?.trim()?.takeIf { it.isNotBlank() })
             putBoolean(KEY_BT_CONNECTED, connected)
+        }
+    }
+
+    private fun cacheBtIdentity(ctx: Context, name: String?, addr: String?) {
+        val cleanName = name?.trim()?.takeIf { it.isNotBlank() }
+        val cleanAddr = addr?.trim()?.takeIf { it.isNotBlank() }
+        if (cleanName == null && cleanAddr == null) return
+
+        ctx.getSharedPreferences(PREFS_BT, Context.MODE_PRIVATE).edit {
+            if (cleanName != null) putString(KEY_BT_NAME, cleanName)
+            if (cleanAddr != null) putString(KEY_BT_ADDR, cleanAddr)
         }
     }
 

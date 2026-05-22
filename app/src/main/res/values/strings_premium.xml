@@ -9,7 +9,7 @@
 
     <string name="premium_summary">Unlock premium features.</string>
 
-    <string name="premium_short_desc">Unlock Wi-Fi/Bluetooth schedules, detailed statistics, and more premium controls.</string>
+    <string name="premium_short_desc">Unlock Wi-Fi, Bluetooth, and location schedules, detailed statistics, and more premium controls.</string>
 
     <string name="premium_active_header">Active premium features</string>
 
@@ -65,7 +65,7 @@
 
     <string name="premium_automation_title">Automations</string>
 
-    <string name="premium_automation_desc">Unlock advanced automation features, including time, Wi-Fi, and Bluetooth triggers.</string>
+    <string name="premium_automation_desc">Unlock advanced automation features, including time, Wi-Fi, Bluetooth, and location triggers.</string>
 
     <string name="premium_stats_title">Statistics &amp; insights</string>
 

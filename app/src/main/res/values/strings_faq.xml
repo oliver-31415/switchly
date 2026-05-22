@@ -283,7 +283,7 @@
 
     <string name="faq_q_battery">Does Switchly use a lot of battery?</string>
 
-    <string name="faq_a_battery">Switchly is event-based: the Accessibility service reacts when apps change, so there is no constant polling. Battery impact is typically low. If you use Wi-Fi/Bluetooth schedules, Android may show an ongoing notification because those features require foreground services on many devices.</string>
+    <string name="faq_a_battery">Switchly is event-based: the Accessibility service reacts when apps change, so there is no constant polling. Battery impact is typically low. If you use Wi-Fi, Bluetooth, or location schedules, Android may show an ongoing notification because those features require foreground services on many devices.</string>
 
     <string name="faq_q_battery_permission_still_needed">Battery permission still shows as needed — what should I do?</string>
 
@@ -341,7 +341,7 @@
 
     <string name="faq_q_mode_schedule">What is Schedule mode?</string>
 
-    <string name="faq_a_mode_schedule">Schedule mode focuses on automatic routines.\nOnly schedules are allowed to control Switchly automatically.\nNFC and QR actions are ignored while this mode is active.\n\nUse this when your setup should follow time, Wi-Fi, or Bluetooth conditions instead of physical tags or QR codes.</string>
+    <string name="faq_a_mode_schedule">Schedule mode focuses on automatic routines.\nOnly schedules are allowed to control Switchly automatically.\nNFC and QR actions are ignored while this mode is active.\n\nUse this when your setup should follow time, Wi-Fi, Bluetooth, or location conditions instead of physical tags or QR codes.</string>
 
     <string name="faq_q_mode_nfc">What is NFC mode?</string>
 

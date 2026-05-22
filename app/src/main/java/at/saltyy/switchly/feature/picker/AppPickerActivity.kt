@@ -21,11 +21,15 @@ package at.saltyy.switchly.feature.picker
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.view.inputmethod.EditorInfo
+import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
@@ -57,6 +61,7 @@ import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 
@@ -158,7 +163,8 @@ class AppPickerActivity : AppCompatActivity() {
         etSearch.backgroundTintList = AccentColor.getActiveColor(this)
 
         setupAutoBlockNewAppsCheckbox(cbAutoBlockNewApps)
-        setupBulkButtons(btnSelectAll, btnClearAll)
+        setupBulkButtons(btnSelectAll, btnClearAll, btnSave)
+        updateClearButtonLabel(btnClearAll)
 
         Thread {
             val load = loadPickerEntries(this, preselectedManaged)
@@ -189,27 +195,26 @@ class AppPickerActivity : AppCompatActivity() {
                 setupSaveButton(btnSave)
 
                 if (removedProtectedCount > 0) {
-                    Toast.makeText(
-                        this,
+                    showPickerNotice(
+                        btnSave,
                         resources.getQuantityString(
                             R.plurals.app_picker_removed_protected_notice,
                             removedProtectedCount,
                             removedProtectedCount
-                        ),
-                        Toast.LENGTH_LONG
-                    ).show()
+                        )
+                    )
                 }
 
                 if (load.unavailableCount > 0) {
-                    Toast.makeText(
-                        this,
+                    updateClearButtonLabel(btnClearAll)
+                    showPickerNotice(
+                        btnSave,
                         resources.getQuantityString(
                             R.plurals.unavailable_apps_loaded_notice,
                             load.unavailableCount,
                             load.unavailableCount
-                        ),
-                        Toast.LENGTH_LONG
-                    ).show()
+                        )
+                    )
                 }
             }
         }.start()
@@ -236,48 +241,102 @@ class AppPickerActivity : AppCompatActivity() {
             return PickerLoadResult(entries = installed, unavailableCount = 0)
         }
 
-        val installedPkgs = installed.asSequence().map { it.packageName }.toSet()
+        val installedByPackage = installed.associateBy { it.packageName }
+        val selectedNotInLauncher = mutableListOf<AppEntry>()
+        val unavailable = mutableListOf<AppEntry>()
+        val packageListLooksIncomplete = installed.size < 50 &&
+            preselectedManaged.size >= 50 &&
+            preselectedManaged.size > installed.size
 
-        val unavailable = preselectedManaged
+        preselectedManaged
             .asSequence()
             .filter { it.isNotBlank() }
-            .filter { it !in installedPkgs }
             .distinct()
             .sorted()
-            .map { pkg ->
-                AppEntry(
-                    packageName = pkg,
-                    label = context.getString(R.string.unavailable_app_label),
-                    isAvailable = false
-                )
-            }
-            .toList()
+            .forEach { pkg ->
+                if (pkg in installedByPackage) return@forEach
 
-        return PickerLoadResult(entries = unavailable + installed, unavailableCount = unavailable.size)
+                val installedEntry = resolveInstalledPackageEntry(context, pkg)
+                if (installedEntry != null) {
+                    selectedNotInLauncher += installedEntry
+                } else if (packageListLooksIncomplete) {
+                    // If Android/Samsung only returns a very small visible app list while the profile already contains many selected packages, avoid treating those packages as uninstalled. 
+                    // Some devices limit package visibility and would otherwise mark real installed apps as unavailable and remove them in bulk.
+                    selectedNotInLauncher += AppEntry(
+                        packageName = pkg,
+                        label = pkg,
+                        isAvailable = true,
+                        blockSafety = AppBlockSafety.resolve(context, pkg)
+                    )
+                } else {
+                    unavailable += AppEntry(
+                        packageName = pkg,
+                        label = context.getString(R.string.unavailable_app_label),
+                        isAvailable = false
+                    )
+                }
+            }
+
+        val entries = (unavailable + selectedNotInLauncher + installed)
+            .distinctBy { it.packageName }
+
+        return PickerLoadResult(entries = entries, unavailableCount = unavailable.size)
     }
 
     private fun loadLaunchableApps(context: Context): List<AppEntry> {
         val pm = context.packageManager
-        val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        val resolved = pm.queryIntentActivities(launcherIntent, 0)
+        val byPackage = linkedMapOf<String, AppEntry>()
 
-        return resolved
-            .mapNotNull { ri ->
-                val ai = ri.activityInfo?.applicationInfo ?: return@mapNotNull null
-                val pkg = ai.packageName ?: return@mapNotNull null
-                if (pkg == context.packageName) return@mapNotNull null
+        fun addEntryFromApplicationInfo(ai: ApplicationInfo?) {
+            if (ai == null) return
+            val pkg = ai.packageName?.takeIf { it.isNotBlank() } ?: return
+            if (pkg == context.packageName) return
+            if (pkg in byPackage) return
 
-                val label = runCatching { pm.getApplicationLabel(ai).toString() }.getOrNull()
-                    ?.takeIf { it.isNotBlank() } ?: pkg
+            val label = runCatching { pm.getApplicationLabel(ai).toString() }.getOrNull()
+                ?.takeIf { it.isNotBlank() } ?: pkg
 
-                AppEntry(
-                    label = label,
-                    packageName = pkg,
-                    blockSafety = AppBlockSafety.resolve(context, pkg)
-                )
-            }
-            .distinctBy { it.packageName }
-            .sortedBy { it.label.lowercase(Locale.getDefault()) }
+            byPackage[pkg] = AppEntry(
+                label = label,
+                packageName = pkg,
+                blockSafety = AppBlockSafety.resolve(context, pkg)
+            )
+        }
+
+        listOf(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+        ).forEach { launcherIntent ->
+            runCatching { pm.queryIntentActivities(launcherIntent, 0) }
+                .getOrDefault(emptyList())
+                .forEach { ri -> addEntryFromApplicationInfo(ri.activityInfo?.applicationInfo) }
+        }
+
+        // Keep the base list limited to Android's launcher query.
+        // Selected packages are resolved individually below via getApplicationInfoCompat(), so installed apps are not marked unavailable just because a Samsung/Android launcher query returned an incomplete list.
+        return byPackage.values.sortedBy { it.label.lowercase(Locale.getDefault()) }
+    }
+
+    private fun resolveInstalledPackageEntry(context: Context, packageName: String): AppEntry? {
+        val pm = context.packageManager
+        val ai = runCatching { getApplicationInfoCompat(pm, packageName) }.getOrNull() ?: return null
+        val label = runCatching { pm.getApplicationLabel(ai).toString() }.getOrNull()
+            ?.takeIf { it.isNotBlank() } ?: packageName
+
+        return AppEntry(
+            label = label,
+            packageName = packageName,
+            isAvailable = true,
+            blockSafety = AppBlockSafety.resolve(context, packageName)
+        )
+    }
+
+    private fun getApplicationInfoCompat(pm: PackageManager, packageName: String): ApplicationInfo {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
+        } else {
+            pm.getApplicationInfo(packageName, 0)
+        }
     }
 
     private fun setupSearch(etSearch: TextInputEditText) {
@@ -313,7 +372,7 @@ class AppPickerActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupBulkButtons(btnSelectAll: MaterialButton, btnClearAll: MaterialButton) {
+    private fun setupBulkButtons(btnSelectAll: MaterialButton, btnClearAll: MaterialButton, btnSave: Button) {
         btnSelectAll.setOnClickListener {
             val skipped = adapter.selectAllVisible()
             val activeProfile = currentProfile
@@ -332,8 +391,40 @@ class AppPickerActivity : AppCompatActivity() {
         }
 
         btnClearAll.setOnClickListener {
-            adapter.clearAllVisible(this)
+            val unavailableCount = adapter.unavailableManagedCount()
+            if (unavailableCount > 0) {
+                val removed = adapter.clearUnavailable(this)
+                updateClearButtonLabel(btnClearAll)
+                if (removed > 0) {
+                    showPickerNotice(
+                        btnSave,
+                        resources.getQuantityString(
+                            R.plurals.unavailable_apps_cleared_notice,
+                            removed,
+                            removed
+                        )
+                    )
+                }
+            } else {
+                adapter.clearAllVisible(this)
+            }
         }
+    }
+
+    private fun updateClearButtonLabel(btnClearAll: MaterialButton) {
+        btnClearAll.setText(
+            if (::adapter.isInitialized && adapter.unavailableManagedCount() > 0) {
+                R.string.app_picker_clear_unavailable
+            } else {
+                R.string.app_picker_clear_all
+            }
+        )
+    }
+
+    private fun showPickerNotice(anchor: View, message: CharSequence) {
+        Snackbar.make(anchor, message, Snackbar.LENGTH_LONG)
+            .setAnchorView(anchor)
+            .show()
     }
 
     private fun setupSaveButton(btnSave: Button) {

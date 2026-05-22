@@ -208,11 +208,23 @@ object ProfileStore {
     }
 
     fun getLaunchablePackages(context: Context): Set<String> {
-        val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        return context.packageManager
-            .queryIntentActivities(launcherIntent, 0)
-            .mapNotNull { it.activityInfo?.applicationInfo?.packageName }
-            .filterTo(linkedSetOf()) { it.isNotBlank() && it != context.packageName }
+        val pm = context.packageManager
+        val packages = linkedSetOf<String>()
+
+        listOf(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+        ).forEach { launcherIntent ->
+            runCatching { pm.queryIntentActivities(launcherIntent, 0) }
+                .getOrDefault(emptyList())
+                .mapNotNullTo(packages) { it.activityInfo?.applicationInfo?.packageName }
+        }
+
+        // Do not call getInstalledApplications() here. 
+        // Android package visibility can make it incomplete and lint warns about it.
+        // Saved package names are resolved individually where needed instead of treating "not in launcher query" as unavailable.
+
+        return packages.filterTo(linkedSetOf()) { it.isNotBlank() && it != context.packageName }
     }
 
     fun addBlockedAppToAutoBlockProfiles(context: Context, pkg: String): Int {

@@ -39,7 +39,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
 import android.text.SpannableStringBuilder
@@ -98,6 +97,7 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.SystemBarColorCompat
 import at.saltyy.switchly.util.TimeFormatPrefs
 import com.google.android.gms.location.LocationServices
@@ -797,13 +797,11 @@ class SchedulesActivity : AppCompatActivity() {
     }
 
     private fun isBatteryOptimizationLikelyActive(): Boolean {
-        val pm = getSystemService(PowerManager::class.java) ?: return false
-        return !pm.isIgnoringBatteryOptimizations(packageName)
+        return BatteryOptimizationCompat.isLikelyStillRestricted(this)
     }
 
     private fun isBatteryOptimizationUserConfirmedMaxAvailable(): Boolean {
-        return getSharedPreferences(PREFS_SCHEDULE_HEALTH, MODE_PRIVATE)
-            .getBoolean(KEY_BATTERY_OPTIMIZATION_CONFIRMED_MAX_AVAILABLE, false)
+        return BatteryOptimizationCompat.isUserConfirmedMaxAvailable(this)
     }
 
     private fun setBatteryOptimizationUserConfirmedMaxAvailable(value: Boolean) {
@@ -813,8 +811,7 @@ class SchedulesActivity : AppCompatActivity() {
     }
 
     private fun isBatteryOptimizationEffectivelyOk(): Boolean {
-        return !isBatteryOptimizationLikelyActive() ||
-            isBatteryOptimizationUserConfirmedMaxAvailable()
+        return BatteryOptimizationCompat.isEffectivelyOk(this)
     }
 
     private fun showBatteryOptimizationMaxAvailableDialog() {

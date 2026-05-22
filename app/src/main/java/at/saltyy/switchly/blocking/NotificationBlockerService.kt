@@ -24,6 +24,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import android.util.Log
 import android.util.LruCache
 import androidx.core.content.edit
 import at.saltyy.switchly.data.prefs.BlockedInboxStore
@@ -157,7 +158,7 @@ class NotificationBlockerService : NotificationListenerService() {
         if (blocked.any { pkg.startsWith(it) }) {
             // Remove the notification right away.
             // Note: some devices may still briefly show a heads-up before it disappears.
-            cancelNotification(sbn.key)
+            safelyCancelNotification(sbn.key, pkg)
 
             // Best-effort: keep a small audit trail (metadata only)
             val now = System.currentTimeMillis()
@@ -206,7 +207,19 @@ class NotificationBlockerService : NotificationListenerService() {
         }
     }
 
+    private fun safelyCancelNotification(key: String, pkg: String) {
+        try {
+            cancelNotification(key)
+        } catch (e: SecurityException) {
+            // Some OEM builds can still deliver onNotificationPosted after the listener token was invalidated. Do not crash the service; just skip this notification.
+            Log.w(TAG, "Could not cancel blocked notification for $pkg: listener token rejected", e)
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Could not cancel blocked notification for $pkg", e)
+        }
+    }
+
     companion object {
+        private const val TAG = "NotificationBlocker"
         private const val PREFS = "switchly_prefs"
         private const val KEY_NOTIF_ENABLED = "block_notifications_enabled"
         private const val KEY_CURRENT_PROFILE = "current_profile"

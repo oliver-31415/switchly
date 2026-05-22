@@ -40,8 +40,18 @@ object EditingLockGuard {
 
     fun blockWithDialog(activity: Activity, @StringRes messageRes: Int): Boolean {
         if (!isLocked(activity)) return false
-        showLockedDialog(activity, messageRes)
-        activity.finish()
+
+        MaterialAlertDialogBuilder(activity)
+            .setTitle(R.string.edit_locked_while_switchly_on_title)
+            .setMessage(messageRes)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                activity.finish()
+            }
+            .setOnCancelListener {
+                activity.finish()
+            }
+            .showAccented()
+
         return true
     }
 }

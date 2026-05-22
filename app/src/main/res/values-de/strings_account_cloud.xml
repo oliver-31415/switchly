@@ -53,6 +53,8 @@
 
 	<string name="cloud_restore_ok_restart">Wiederherstellung abgeschlossen — App wird neu gestartet…</string>
 
+	<string name="cloud_restore_loading">Cloud-Backups werden geladen…</string>
+
 	<string name="cloud_no_backups">Keine Backups gefunden</string>
 
 	<string name="cloud_not_logged_in">Du bist nicht angemeldet</string>

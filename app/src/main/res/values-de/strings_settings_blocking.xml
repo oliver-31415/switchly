@@ -25,9 +25,14 @@
 
 	<string name="pref_require_nfc_unlock_summary">Wenn aktiv, kann Switchly nur mit einem gekoppelten NFC-Tag (oder QR-Fallback) deaktiviert werden.</string>
 
-	<string name="pref_qs_tile_title">Kachel-Verfügbarkeit</string>
+	<string name="pref_qs_tile_title">Switchly-aktivieren-Kachel</string>
 
-	<string name="pref_qs_tile_summary">Hält die Switchly-Kachel in den Android-Schnelleinstellungen verfügbar.</string>
+	<string name="pref_qs_tile_summary">Fügt eine Schnelleinstellungskachel hinzu, mit der Switchly schnell aktiviert werden kann.</string>
+
+	<string name="pref_qr_qs_tile_title">QR-Scanner-Kachel</string>
+	<string name="pref_qr_qs_tile_summary">Hält die QR-Scanner-Kachel in den Android-Schnelleinstellungen verfügbar, wenn QR-Steuerung aktiv ist.</string>
+	<string name="pref_barcode_qs_tile_title">Barcode-Scanner-Kachel</string>
+	<string name="pref_barcode_qs_tile_summary">Hält die Barcode-Scanner-Kachel in den Android-Schnelleinstellungen verfügbar, wenn Barcode-Steuerung aktiv ist.</string>
 
 	<string name="toggle_options_title">Blockier-Steuerung</string>
 
@@ -53,7 +58,7 @@
 
 	<string name="toggle_section_additional_features">Während Blocking aktiv ist</string>
 
-	<string name="toggle_section_control_mode">Blocking-Modi</string>
+	<string name="toggle_section_control_mode">Blocking Controls</string>
 
 	<string name="toggle_section_mixed_channels">Steuerungsmethoden</string>
 
@@ -147,17 +152,17 @@
 
 	<string name="pref_mixed_allow_schedule_summary">Erlaubt Zeitplänen, Switchly zu aktivieren/deaktivieren.</string>
 
-	<string name="pref_mixed_allow_nfc_title">NFC-Kanal erlauben</string>
+	<string name="pref_mixed_allow_nfc_title">NFC-Steuerung</string>
 
-	<string name="pref_mixed_allow_nfc_summary">Erlaubt NFC-Aktionen zur Steuerung von Switchly, inklusive geschriebener Tags und gekoppelter Tags. Im gemischten Modus funktionieren andere erlaubte Kanäle weiterhin.</string>
+	<string name="pref_mixed_allow_nfc_summary">Erlaubt NFC-Aktionen zur Steuerung von Switchly.</string>
 
 	<string name="pref_mixed_allow_qr_title">QR-Kanal erlauben</string>
 
 	<string name="pref_mixed_allow_qr_summary">Erlaubt QR-Aktionen zur Steuerung.</string>
 
-	<string name="pref_mixed_allow_button_title">Button/Kachel volle Kontrolle erlauben</string>
+	<string name="pref_mixed_allow_button_title">Button/Kachel-Steuerung</string>
 
-	<string name="pref_mixed_allow_button_summary">Erlaubt Home-Button und Schnelleinstellungen-Kachel, Switchly in jedem Modus ein- und auszuschalten. Wenn das aktiv ist, wird „nur Einschalten“ ausgeblendet.</string>
+	<string name="pref_mixed_allow_button_summary">Erlaubt Home-Button und Schnelleinstellungen-Kachel, Switchly ein- und auszuschalten.</string>
 
 	<string name="pref_mixed_allow_app_picking_title">App-Auswahl erlauben</string>
 
@@ -165,7 +170,7 @@
 
 	<string name="pref_mixed_allow_profile_switching_title">Profile verwalten/wechseln erlauben</string>
 
-	<string name="pref_mixed_allow_profile_switching_summary">Erlaubt das Verwalten oder Wechseln von Profilen, während Switchly aktiv ist. Sonst ist das aus Sicherheitsgründen gesperrt.</string>
+	<string name="pref_mixed_allow_profile_switching_summary">Erlaubt das Verwalten oder Wechseln von Profilen, während Switchly aktiv ist.</string>
 
 	<string name="pref_mixed_allow_schedule_editing_title">Zeitplan-Bearbeitung erlauben</string>
 
@@ -181,7 +186,7 @@
 
 	<string name="toggle_detail_mixed_allow_qr">Wenn aktiviert, ist die QR-Steuerung im gemischten Modus erlaubt.</string>
 
-	<string name="toggle_detail_mixed_allow_button">Wenn aktiviert, können Home-Button und Schnelleinstellungen-Kachel Switchly vollständig steuern, also ein- und ausschalten. Deaktiviere das, wenn Buttons nur den Fokus starten sollen.</string>
+	<string name="toggle_detail_mixed_allow_button">Wenn aktiviert, können Home-Button und Schnelleinstellungen-Kachel Switchly vollständig steuern, also ein- und ausschalten. Deaktiviere das, wenn Buttons nur den Fokus starten sollen; dann wird die separate Nur-Einschalten-Option angezeigt.</string>
 
 	<string name="toggle_detail_mixed_allow_app_picking">Standardmäßig ist das aus Sicherheitsgründen gesperrt, solange Switchly aktiv ist. Aktiviere dies nur, wenn App-Listen-Änderungen trotz aktivem Schutz gewünscht sind.</string>
 
@@ -211,7 +216,7 @@
 
 	<string name="blocking_uninstall_friction_message">Switchly erschwert gerade den Zugriff auf deinstallationsbezogene Screens, solange der Schutz aktiv ist. Das ist nur Reibung, keine echte Deinstallationssperre. Deaktiviere Switchly zuerst über deine erlaubte Methode, wenn du fortfahren willst.</string>
 
-	<string name="pref_allow_button_enable_title">Button/Kachel nur zum Einschalten erlauben</string>
+	<string name="pref_allow_button_enable_title">Button/Kachel nur aktivieren</string>
 
 	<string name="pref_allow_button_enable_summary">Erlaubt Home-Button und Schnelleinstellungen-Kachel, Switchly einzuschalten, auch wenn Ausschalten per Button nicht erlaubt ist. Ausschalten braucht weiterhin NFC, QR, Barcode oder eine andere erlaubte Methode.</string>
 
@@ -238,8 +243,6 @@
 	<string name="toast_disable_switchly_to_edit_app_limits">App-Limit-Bearbeitung ist gesperrt, solange Switchly aktiv ist. Deaktiviere zuerst Switchly.</string>
 
 	<string name="toast_switchly_settings_locked_while_enabled">Switchly-Einstellungen sind gesperrt, solange der Schutz aktiv ist. Deaktiviere Switchly zuerst, um Einstellungen zu ändern.</string>
-
-	<string name="toggle_detail_quick_tile">Fügt die Switchly-Kachel zu den Android-Schnelleinstellungen hinzu. Im Mixed-Modus folgt sie derselben Berechtigung wie der manuelle Button-Kanal.</string>
 
 	<string name="toggle_detail_block_notifications">Filtert Benachrichtigungen von Apps, die durch dein aktives Profil gerade blockiert sind. Benötigt Benachrichtigungszugriff.</string>
 
@@ -315,12 +318,14 @@
 
 	<string name="emergency_pin_changed">Notfall-PIN aktualisiert.</string>
 
-	<string name="toggle_group_manage_blocking_modes">Blocking-Modi verwalten</string>
+	<string name="toggle_group_manage_blocking_modes">Blocking Controls</string>
 
-	<string name="toggle_group_manage_other_blocking_features">Regeln während aktivem Schutz verwalten</string>
+	<string name="toggle_group_manage_other_blocking_features">Während Blocking aktiv ist</string>
 
 	<string name="settings_blocking_modes_summary">Wähle, wie Switchly aktiviert oder deaktiviert wird.</string>
 
 	<string name="settings_blocking_features_summary">Limits, Zugriff während aktiv, Sichtbarkeit und zusätzliche Blockierfunktionen.</string>
+
+	<string name="pref_qs_tile_already_added">Bereits hinzugefügt</string>
 
 </resources>

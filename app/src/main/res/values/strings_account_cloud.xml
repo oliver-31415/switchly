@@ -53,6 +53,8 @@
 
     <string name="cloud_restore_ok_restart">Restore completed — restarting app…</string>
 
+    <string name="cloud_restore_loading">Loading cloud backups…</string>
+
     <string name="cloud_no_backups">No backups found</string>
 
     <string name="cloud_not_logged_in">You are not signed in</string>

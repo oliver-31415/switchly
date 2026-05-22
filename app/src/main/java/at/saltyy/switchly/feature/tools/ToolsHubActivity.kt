@@ -144,10 +144,17 @@ class ToolsHubActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.cardPairedTags).setOnClickListener {
-            if (EditingLockGuard.isLocked(this)) {
+            val locked = EditingLockGuard.isLocked(this)
+            AppLogStore.append(this, "NFC", "Manage Paired Tags clicked from Tools locked=$locked")
+            if (locked) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
             } else {
-                startActivity(Intent(this, ManagePairedTagsActivity::class.java))
+                runCatching {
+                    startActivity(Intent(this, ManagePairedTagsActivity::class.java))
+                }.onFailure { error ->
+                    AppLogStore.append(this, "NFC", "Failed to open Manage Paired Tags from Tools", error)
+                    Toast.makeText(this, R.string.error_open_manage_paired_tags, Toast.LENGTH_LONG).show()
+                }
             }
         }
 

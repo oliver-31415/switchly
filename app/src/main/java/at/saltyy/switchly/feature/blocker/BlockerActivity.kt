@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.feature.blocker
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -341,9 +342,19 @@ class BlockerActivity : ComponentActivity() {
         fun sendHome(context: Context) {
             val home = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_HOME)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
             }
-            context.startActivity(home)
+
+            try {
+                context.startActivity(home)
+            } catch (_: SecurityException) {
+                // Some OEMs can resolve ACTION_MAIN/CATEGORY_HOME to protected setup/update wrappers (for example Samsung FOTA setup wizard). 
+                // In that case, moving the current task back is safer than crashing the blocker UI.
+                (context as? Activity)?.moveTaskToBack(true)
+            } catch (_: RuntimeException) {
+                // Best-effort fallback for broken/locked launcher resolution paths.
+                (context as? Activity)?.moveTaskToBack(true)
+            }
         }
     }
 }

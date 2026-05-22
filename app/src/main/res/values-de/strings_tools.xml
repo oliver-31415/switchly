@@ -15,7 +15,7 @@
 
 	<string name="tools_schedules_title">Zeitpläne</string>
 
-	<string name="tools_schedules_summary">Automatische Aktionen für Zeit, WLAN und Bluetooth erstellen und verwalten</string>
+	<string name="tools_schedules_summary">Automatische Aktionen für Zeit, WLAN, Bluetooth und Standort erstellen und verwalten</string>
 
 	<string name="tools_tags_codes_title">Schlüssel verwalten</string>
 
@@ -25,7 +25,7 @@
 
 	<string name="tools_tags_codes_paired_tags">Gepaarte Tags verwalten</string>
 
-	<string name="tools_tags_codes_generate_qr">QR-Code generieren</string>
+	<string name="tools_tags_codes_generate_qr">QR-Codes verwalten</string>
 
 	<string name="tools_tags_codes_manage_barcodes">Barcodes verwalten</string>
 
@@ -59,9 +59,9 @@
 
 	<string name="blocking_hub_controls_section">Blocking-Steuerung</string>
 
-	<string name="blocking_hub_modes_title">Blocking-Modi</string>
+	<string name="blocking_hub_modes_title">Blocking-Steuerung</string>
 
-	<string name="blocking_hub_modes_summary">Wähle, wie Switchly aktiviert oder deaktiviert werden kann</string>
+	<string name="blocking_hub_modes_summary">Blocking-Modi und Steuerungsmethoden auswählen</string>
 
 	<string name="blocking_hub_features_title">Während Blocking aktiv ist</string>
 
@@ -83,8 +83,17 @@
 
 	<string name="tools_nfc_write_summary">Beschreibbare NFC-Tags für Aktivieren, Deaktivieren, Einstellungs-Entsperrung und andere Aktionen beschreiben</string>
 
-	<string name="tools_manage_qr_title">QR generieren</string>
+	<string name="tools_manage_qr_title">QR-Codes verwalten</string>
 
 	<string name="tools_manage_qr_summary">Einen Switchly-QR-Code erstellen</string>
+
+
+	<string name="blocking_hub_scan_section">Scannen</string>
+	<string name="blocking_hub_scan_qr_title">QR-Code scannen</string>
+	<string name="blocking_hub_scan_qr_summary">Öffnet den Switchly-QR-Scanner direkt</string>
+	<string name="blocking_hub_scan_barcode_title">Barcode scannen</string>
+	<string name="blocking_hub_scan_barcode_summary">Öffnet den Switchly-Barcode-Scanner direkt</string>
+
+	<string name="error_open_manage_paired_tags">Gepaarte Tags konnten nicht geöffnet werden. Bitte sende Debug-Logs, falls das weiterhin passiert.</string>
 
 </resources>

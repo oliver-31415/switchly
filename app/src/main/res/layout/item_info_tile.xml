@@ -41,7 +41,7 @@
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/copy"
+        android:contentDescription="@string/action_copy"
         android:scaleType="center"
         app:srcCompat="@drawable/content_copy_24"
         app:tint="?attr/colorOnSurface"

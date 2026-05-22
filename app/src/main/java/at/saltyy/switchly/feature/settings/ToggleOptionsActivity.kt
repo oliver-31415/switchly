@@ -228,7 +228,10 @@ open class ToggleOptionsActivity : AppCompatActivity() {
 
         val rowRequireNfcUnlock = findViewById<View>(R.id.rowRequireNfcUnlock)
         val rowQuickTile = findViewById<View>(R.id.rowQuickTile)
-        val switchQuickTile = findViewById<SwitchMaterial>(R.id.switchQuickTile)
+        val rowQrQuickTile = findViewById<View>(R.id.rowQrQuickTile)
+        val rowBarcodeQuickTile = findViewById<View>(R.id.rowBarcodeQuickTile)
+        val dividerAfterQrQuickTile = findViewById<View>(R.id.dividerAfterQrQuickTile)
+        val dividerAfterBarcodeQuickTile = findViewById<View>(R.id.dividerAfterBarcodeQuickTile)
 
         val rowBlockNotifs = findViewById<View>(R.id.rowBlockNotifications)
         val rowAutostart = findViewById<View>(R.id.rowAutostart)
@@ -351,13 +354,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             detailsRes = R.string.toggle_detail_auto_pair_on_write
         )
         addInlineDetailsAction(
-            row = rowQuickTile,
-            switchView = switchQuickTile,
-            titleRes = R.string.pref_qs_tile_title,
-            summaryRes = R.string.pref_qs_tile_summary,
-            detailsRes = R.string.toggle_detail_quick_tile
-        )
-        addInlineDetailsAction(
             row = rowBlockNotifs,
             switchView = switchBlockNotifications,
             titleRes = R.string.pref_block_notifications_title,
@@ -404,7 +400,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             switchMixedAllowScheduleEditing,
             switchMixedAllowNfcTagWriting,
             switchLockSwitchlyAppAccess,
-            switchQuickTile,
             switchBlockNotifications,
             switchAutostart,
             switchEmergency,
@@ -437,7 +432,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         switchShowQuickActions.isChecked = sp.getBoolean(KEY_SHOW_QUICK_ACTIONS, true)
         switchEnablePairedUids.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
         switchAutoPairOnWrite.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, false)
-        switchQuickTile.isChecked = sp.getBoolean(KEY_QS_TILE_REQUESTED, false)
 
         fun modeLabel(mode: AutomationModeStore.Mode): String = when (mode) {
             AutomationModeStore.Mode.SCHEDULE -> getString(R.string.pref_mode_schedule_title)
@@ -507,6 +501,13 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             // Access while active: what can still be edited while protection is on.
             rowMixedAllowAppPicking.visibility = if (showAccessWhileActive) View.VISIBLE else View.GONE
             rowMixedAllowProfileSwitching.visibility = if (showAccessWhileActive) View.VISIBLE else View.GONE
+            val qrTileVisible = showAccessWhileActive && AutomationModeStore.isQrChannelAllowed(ctx)
+            val barcodeTileVisible = showAccessWhileActive && AutomationModeStore.isBarcodeChannelAllowed(ctx)
+            dividerAfterMixedAllowProfileSwitching.visibility = if (qrTileVisible || barcodeTileVisible) View.VISIBLE else View.GONE
+            rowQrQuickTile.visibility = if (qrTileVisible) View.VISIBLE else View.GONE
+            dividerAfterQrQuickTile.visibility = if (qrTileVisible) View.VISIBLE else View.GONE
+            rowBarcodeQuickTile.visibility = if (barcodeTileVisible) View.VISIBLE else View.GONE
+            dividerAfterBarcodeQuickTile.visibility = if (barcodeTileVisible) View.VISIBLE else View.GONE
             rowAllowButtonEnable.visibility =
                 if (showControlMethods && !switchMixedAllowButton.isChecked) View.VISIBLE else View.GONE
 
@@ -602,16 +603,16 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (canEditMixedChannels()) switchMixedAllowButton.toggle()
         }
         rowMixedAllowAppPicking.setOnClickListener {
-            if (canEditMixedChannels()) switchMixedAllowAppPicking.toggle()
+            if (canEditActiveAccess()) switchMixedAllowAppPicking.toggle()
         }
         rowMixedAllowProfileSwitching.setOnClickListener {
-            if (canEditMixedChannels()) switchMixedAllowProfileSwitching.toggle()
+            if (canEditActiveAccess()) switchMixedAllowProfileSwitching.toggle()
         }
         rowMixedAllowNfcTagWriting.setOnClickListener {
-            if (canEditMixedChannels()) switchMixedAllowNfcTagWriting.toggle()
+            if (canEditActiveAccess()) switchMixedAllowNfcTagWriting.toggle()
         }
         rowLockSwitchlyAppAccess.setOnClickListener {
-            switchLockSwitchlyAppAccess.toggle()
+            if (canEditActiveAccess()) switchLockSwitchlyAppAccess.toggle()
         }
         rowEnablePairedUids.setOnClickListener {
             switchEnablePairedUids.toggle()
@@ -620,9 +621,22 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             switchAutoPairOnWrite.toggle()
         }
 
-        // Quick Tile: switch triggers add flow, disabling shows how-to-remove hint
+        fun markTileAddedIfAccepted(key: String, result: Int) {
+            if (result == android.app.StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ||
+                result == android.app.StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED
+            ) {
+                sp.edit { putBoolean(key, true) }
+                refreshQuickSettingsTileRows()
+            }
+        }
+
+        // Quick Settings tile rows: tap opens Android add-tile flow directly.
+        // Once Android reports the tile as added/already added, the row turns into a disabled
+        // "Already added" state so it does not look like a normal on/off setting.
         val addQuickTile: () -> Unit = {
-            val requested = QuickTileHelper.requestAddTileIfAvailable(this)
+            val requested = QuickTileHelper.requestAddTileIfAvailable(this) { result ->
+                markTileAddedIfAccepted(KEY_QS_TILE_REQUESTED, result)
+            }
             if (!requested) {
                 Snackbar.make(
                     findViewById(android.R.id.content),
@@ -631,26 +645,50 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 ).show()
             }
         }
-        rowQuickTile.setOnClickListener { switchQuickTile.toggle() }
-
-        // Switch behavior
-        switchQuickTile.setOnCheckedChangeListener { _, isChecked ->
-            sp.edit { putBoolean(KEY_QS_TILE_REQUESTED, isChecked) }
-
-            if (isChecked) {
-                addQuickTile()
-            } else {
+        val requestQrQuickTile: () -> Unit = {
+            val requested = QuickTileHelper.requestAddQrScanTileIfAvailable(this) { result ->
+                markTileAddedIfAccepted(KEY_QR_QS_TILE_REQUESTED, result)
+            }
+            if (!requested) {
                 Snackbar.make(
                     findViewById(android.R.id.content),
-                    getString(R.string.qs_tile_remove_hint),
+                    getString(R.string.qr_qs_tile_add_hint),
                     Snackbar.LENGTH_LONG
                 ).show()
             }
         }
 
+        val requestBarcodeQuickTile: () -> Unit = {
+            val requested = QuickTileHelper.requestAddBarcodeScanTileIfAvailable(this) { result ->
+                markTileAddedIfAccepted(KEY_BARCODE_QS_TILE_REQUESTED, result)
+            }
+            if (!requested) {
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    getString(R.string.barcode_qs_tile_add_hint),
+                    Snackbar.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        rowQuickTile.setOnClickListener {
+            if (!isQuickSettingsTileMarkedAdded(KEY_QS_TILE_REQUESTED)) addQuickTile()
+        }
+        rowQrQuickTile.setOnClickListener {
+            if (!isQuickSettingsTileMarkedAdded(KEY_QR_QS_TILE_REQUESTED)) requestQrQuickTile()
+        }
+        rowBarcodeQuickTile.setOnClickListener {
+            if (!isQuickSettingsTileMarkedAdded(KEY_BARCODE_QS_TILE_REQUESTED)) requestBarcodeQuickTile()
+        }
+        refreshQuickSettingsTileRows()
+
         rowBlockNotifs.setOnClickListener { switchBlockNotifications.toggle() }
-        rowAutostart.setOnClickListener { switchAutostart.toggle() }
-        rowEmergency.setOnClickListener { switchEmergency.toggle() }
+        rowAutostart.setOnClickListener {
+            if (canEditActiveAccess()) switchAutostart.toggle()
+        }
+        rowEmergency.setOnClickListener {
+            if (canEditActiveAccess()) switchEmergency.toggle()
+        }
         rowShowQuickActions.setOnClickListener { switchShowQuickActions.toggle() }
 
         switchAllowButtonEnable.setOnCheckedChangeListener { buttonView, isChecked ->
@@ -759,13 +797,26 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             AutomationModeStore.setMixedAllowNfcTagWriting(ctx, isChecked)
         }
 
-        switchLockSwitchlyAppAccess.setOnCheckedChangeListener { _, isChecked ->
+        switchLockSwitchlyAppAccess.setOnCheckedChangeListener { buttonView, isChecked ->
             if (updatingUi) return@setOnCheckedChangeListener
+            if (!canEditActiveAccess()) {
+                updatingUi = true
+                buttonView.isChecked = !isChecked
+                updatingUi = false
+                return@setOnCheckedChangeListener
+            }
             AutomationModeStore.setSwitchlyAppAccessLockEnabled(ctx, isChecked)
         }
 
         // Autostart
-        switchAutostart.setOnCheckedChangeListener { _, isChecked ->
+        switchAutostart.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (updatingUi) return@setOnCheckedChangeListener
+            if (!canEditActiveAccess()) {
+                updatingUi = true
+                buttonView.isChecked = !isChecked
+                updatingUi = false
+                return@setOnCheckedChangeListener
+            }
             AutostartStore.setEnabled(ctx, isChecked)
         }
 
@@ -793,7 +844,14 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         }
 
         // Emergency unlock
-        switchEmergency.setOnCheckedChangeListener { _, isChecked ->
+        switchEmergency.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (updatingUi) return@setOnCheckedChangeListener
+            if (!canEditActiveAccess()) {
+                updatingUi = true
+                buttonView.isChecked = !isChecked
+                updatingUi = false
+                return@setOnCheckedChangeListener
+            }
             EmergencyBypassStore.setFeatureEnabled(ctx, isChecked)
         }
 
@@ -1046,7 +1104,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
     }
 
     private fun isActiveAccessEditingLocked(): Boolean {
-        return false
+        return SwitchModeStore.isEnabled(this)
     }
 
     private fun canEditMixedChannels(showToast: Boolean = true): Boolean {
@@ -1059,6 +1117,64 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             ).show()
         }
         return allowed
+    }
+
+    private fun canEditActiveAccess(showToast: Boolean = true): Boolean {
+        val allowed = !isActiveAccessEditingLocked()
+        if (!allowed && showToast) {
+            Toast.makeText(
+                this,
+                getString(R.string.mixed_channels_locked_while_switchly_enabled),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        return allowed
+    }
+
+    private fun isQuickSettingsTileMarkedAdded(key: String): Boolean =
+        PreferenceManager.getDefaultSharedPreferences(this).getBoolean(key, false)
+
+    private fun refreshQuickSettingsTileRows() {
+        updateQuickSettingsTileRow(
+            rowId = R.id.rowQuickTile,
+            summaryId = R.id.tvQuickTileSummary,
+            chevronId = R.id.ivQuickTileChevron,
+            addedKey = KEY_QS_TILE_REQUESTED,
+            defaultSummary = R.string.pref_qs_tile_summary
+        )
+        updateQuickSettingsTileRow(
+            rowId = R.id.rowQrQuickTile,
+            summaryId = R.id.tvQrQuickTileSummary,
+            chevronId = R.id.ivQrQuickTileChevron,
+            addedKey = KEY_QR_QS_TILE_REQUESTED,
+            defaultSummary = R.string.pref_qr_qs_tile_summary
+        )
+        updateQuickSettingsTileRow(
+            rowId = R.id.rowBarcodeQuickTile,
+            summaryId = R.id.tvBarcodeQuickTileSummary,
+            chevronId = R.id.ivBarcodeQuickTileChevron,
+            addedKey = KEY_BARCODE_QS_TILE_REQUESTED,
+            defaultSummary = R.string.pref_barcode_qs_tile_summary
+        )
+    }
+
+    private fun updateQuickSettingsTileRow(
+        rowId: Int,
+        summaryId: Int,
+        chevronId: Int,
+        addedKey: String,
+        defaultSummary: Int
+    ) {
+        val added = isQuickSettingsTileMarkedAdded(addedKey)
+        findViewById<View>(rowId)?.apply {
+            isEnabled = !added
+            isClickable = !added
+            alpha = if (added) 0.52f else 1f
+        }
+        findViewById<TextView>(summaryId)?.setText(
+            if (added) R.string.pref_qs_tile_already_added else defaultSummary
+        )
+        findViewById<View>(chevronId)?.visibility = if (added) View.GONE else View.VISIBLE
     }
 
     private fun refreshMixedChannelInteractivity() {
@@ -1089,6 +1205,18 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (showAccessWhileActive) View.VISIBLE else View.GONE
         findViewById<View>(R.id.rowMixedAllowProfileSwitching)?.visibility =
             if (showAccessWhileActive) View.VISIBLE else View.GONE
+        val qrTileVisible = showAccessWhileActive && AutomationModeStore.isQrChannelAllowed(this)
+        val barcodeTileVisible = showAccessWhileActive && AutomationModeStore.isBarcodeChannelAllowed(this)
+        findViewById<View>(R.id.dividerAfterMixedAllowProfileSwitching)?.visibility =
+            if (qrTileVisible || barcodeTileVisible) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.rowQrQuickTile)?.visibility =
+            if (qrTileVisible) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.dividerAfterQrQuickTile)?.visibility =
+            if (qrTileVisible && barcodeTileVisible) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.rowBarcodeQuickTile)?.visibility =
+            if (barcodeTileVisible) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.dividerAfterBarcodeQuickTile)?.visibility =
+            if (barcodeTileVisible) View.VISIBLE else View.GONE
         findViewById<View>(R.id.rowMixedAllowScheduleEditing)?.visibility =
             if (scheduleEditingVisible) View.VISIBLE else View.GONE
 
@@ -1098,8 +1226,11 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         findViewById<View>(R.id.rowAllowButtonEnable)?.visibility =
             if (showControlMethods && !hideButtonEnableRow) View.VISIBLE else View.GONE
 
+        val activeAccessLocked = isActiveAccessEditingLocked()
         val mixedRowAlpha = if (mixedLocked) 0.68f else 1f
         val mixedSwitchAlpha = if (mixedLocked) 0.58f else 1f
+        val activeAccessRowAlpha = if (activeAccessLocked) 0.68f else 1f
+        val activeAccessSwitchAlpha = if (activeAccessLocked) 0.58f else 1f
 
         listOf(
             R.id.rowMixedAllowSchedule,
@@ -1126,6 +1257,43 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             }
         }
 
+        listOf(
+            R.id.rowMixedAllowAppPicking,
+            R.id.rowMixedAllowProfileSwitching,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowMixedAllowNfcTagWriting,
+            R.id.rowLockSwitchlyAppAccess,
+            R.id.rowAutostart,
+            R.id.rowEmergency
+        ).forEach {
+            findViewById<View>(it)?.alpha = activeAccessRowAlpha
+        }
+
+        listOf(
+            R.id.switchMixedAllowAppPicking,
+            R.id.switchMixedAllowProfileSwitching,
+            R.id.switchMixedAllowScheduleEditing,
+            R.id.switchMixedAllowNfcTagWriting,
+            R.id.switchLockSwitchlyAppAccess,
+            R.id.switchAutostart,
+            R.id.switchEmergency
+        ).forEach {
+            findViewById<SwitchMaterial>(it)?.apply {
+                isEnabled = !activeAccessLocked
+                alpha = activeAccessSwitchAlpha
+            }
+        }
+
+        // Quick Settings tile setup rows are safe to change while Switchly is active.
+        // They only add/remove Android tiles and do not weaken the current blocking state.
+        listOf(
+            R.id.rowQrQuickTile,
+            R.id.rowBarcodeQuickTile
+        ).forEach {
+            findViewById<View>(it)?.alpha = 1f
+        }
+        refreshQuickSettingsTileRows()
+
         if (activeSectionFilter != null && activeSectionFilter != SECTION_BLOCKING && activeSectionFilter != SECTION_OTHER) {
             findViewById<View>(R.id.cardMixedChannels)?.visibility = View.GONE
             findViewById<View>(R.id.tvMixedChannelsSection)?.visibility = View.GONE
@@ -1143,6 +1311,8 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 R.id.rowMixedAllowButton,
                 R.id.rowMixedAllowAppPicking,
                 R.id.rowMixedAllowProfileSwitching,
+                R.id.rowQrQuickTile,
+                R.id.rowBarcodeQuickTile,
                 R.id.rowAllowButtonEnable,
                 R.id.rowMixedAllowScheduleEditing,
                 R.id.rowMixedAllowNfcTagWriting
@@ -1155,6 +1325,154 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (hasVisible) View.VISIBLE else View.GONE
         findViewById<View>(R.id.tvMixedChannelsSectionSummary)?.visibility =
             if (hasVisible) View.VISIBLE else View.GONE
+
+        refreshRowDividers()
+    }
+
+    private fun isRowVisible(viewId: Int): Boolean {
+        return findViewById<View>(viewId)?.visibility == View.VISIBLE
+    }
+
+    private fun setDividerAfter(dividerId: Int, rowId: Int, vararg followingRowIds: Int) {
+        val divider = findViewById<View>(dividerId) ?: return
+        val shouldShow = isRowVisible(rowId) && followingRowIds.any { isRowVisible(it) }
+        divider.visibility = if (shouldShow) View.VISIBLE else View.GONE
+    }
+
+    private fun refreshRowDividers() {
+        // Keep section dividers tied to actually visible neighbor rows.
+        // This avoids thick/double separators and orphan separators when rows are hidden dynamically.
+        setDividerAfter(
+            R.id.dividerAfterMixedAllowSchedule,
+            R.id.rowMixedAllowSchedule,
+            R.id.rowMixedAllowNfc,
+            R.id.rowMixedAllowQr,
+            R.id.rowMixedAllowBarcode,
+            R.id.rowMixedAllowButton,
+            R.id.rowMixedAllowAppPicking,
+            R.id.rowMixedAllowProfileSwitching,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+        setDividerAfter(
+            R.id.dividerAfterMixedAllowNfc,
+            R.id.rowMixedAllowNfc,
+            R.id.rowMixedAllowQr,
+            R.id.rowMixedAllowBarcode,
+            R.id.rowMixedAllowButton,
+            R.id.rowMixedAllowAppPicking,
+            R.id.rowMixedAllowProfileSwitching,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+        setDividerAfter(
+            R.id.dividerAfterMixedAllowQr,
+            R.id.rowMixedAllowQr,
+            R.id.rowMixedAllowBarcode,
+            R.id.rowMixedAllowButton,
+            R.id.rowMixedAllowAppPicking,
+            R.id.rowMixedAllowProfileSwitching,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+        setDividerAfter(
+            R.id.dividerAfterMixedAllowBarcode,
+            R.id.rowMixedAllowBarcode,
+            R.id.rowMixedAllowButton,
+            R.id.rowMixedAllowAppPicking,
+            R.id.rowMixedAllowProfileSwitching,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+        setDividerAfter(
+            R.id.dividerAfterMixedAllowButton,
+            R.id.rowMixedAllowButton,
+            R.id.rowMixedAllowAppPicking,
+            R.id.rowMixedAllowProfileSwitching,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+        setDividerAfter(
+            R.id.dividerAfterMixedAllowAppPicking,
+            R.id.rowMixedAllowAppPicking,
+            R.id.rowMixedAllowProfileSwitching,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+        setDividerAfter(
+            R.id.dividerAfterMixedAllowProfileSwitching,
+            R.id.rowMixedAllowProfileSwitching,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+        setDividerAfter(
+            R.id.dividerAfterMixedAllowScheduleEditing,
+            R.id.rowMixedAllowScheduleEditing,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+        setDividerAfter(
+            R.id.dividerAfterAllowButtonEnable,
+            R.id.rowAllowButtonEnable,
+            R.id.rowMixedAllowNfcTagWriting
+        )
+
+        setDividerAfter(
+            R.id.dividerAfterLockSwitchlyAppAccess,
+            R.id.rowLockSwitchlyAppAccess,
+            R.id.rowRequireNfcUnlock,
+            R.id.rowEnablePairedUids,
+            R.id.rowAutoPairOnWrite,
+            R.id.rowQuickTile,
+            R.id.rowQrQuickTile,
+            R.id.rowBarcodeQuickTile
+        )
+        setDividerAfter(
+            R.id.dividerRequireNfcUnlock,
+            R.id.rowRequireNfcUnlock,
+            R.id.rowEnablePairedUids,
+            R.id.rowAutoPairOnWrite,
+            R.id.rowQuickTile,
+            R.id.rowQrQuickTile,
+            R.id.rowBarcodeQuickTile
+        )
+        setDividerAfter(
+            R.id.dividerAfterEnablePairedUids,
+            R.id.rowEnablePairedUids,
+            R.id.rowAutoPairOnWrite,
+            R.id.rowQuickTile,
+            R.id.rowQrQuickTile,
+            R.id.rowBarcodeQuickTile
+        )
+        setDividerAfter(
+            R.id.dividerAfterAutoPairOnWrite,
+            R.id.rowAutoPairOnWrite,
+            R.id.rowQuickTile,
+            R.id.rowQrQuickTile,
+            R.id.rowBarcodeQuickTile
+        )
+        setDividerAfter(
+            R.id.dividerAfterQuickTile,
+            R.id.rowQuickTile,
+            R.id.rowQrQuickTile,
+            R.id.rowBarcodeQuickTile
+        )
+        setDividerAfter(
+            R.id.dividerAfterQrQuickTile,
+            R.id.rowQrQuickTile,
+            R.id.rowBarcodeQuickTile
+        )
+        setDividerAfter(
+            R.id.dividerAfterBarcodeQuickTile,
+            R.id.rowBarcodeQuickTile
+        )
     }
 
     private fun normalizeSection(raw: String?): String? {
@@ -1323,6 +1641,8 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         const val KEY_SHOW_NEXT_SCHEDULE = "pref_show_next_schedule"
         const val KEY_SHOW_QUICK_ACTIONS = "pref_show_quick_actions"
         const val KEY_QS_TILE_REQUESTED = "pref_qs_tile_requested"
+        const val KEY_QR_QS_TILE_REQUESTED = "pref_qr_qs_tile_requested"
+        const val KEY_BARCODE_QS_TILE_REQUESTED = "pref_barcode_qs_tile_requested"
 
         fun start(context: Context) {
             context.startActivity(Intent(context, ToggleOptionsActivity::class.java))
