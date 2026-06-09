@@ -25,7 +25,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import android.telecom.TelecomManager
-import android.view.inputmethod.InputMethodManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 
@@ -72,6 +71,22 @@ object AppBlockSafety {
         val warningTitle: String? = null,
         val warningMessage: String? = null
     )
+
+    private data class ResolvedDefaults(
+        val defaultIme: String?,
+        val defaultHome: String?,
+        val defaultDialer: String?,
+        val defaultAssistant: String?,
+        val settingsPackage: String?
+    )
+
+    @Volatile
+    private var cachedResolvedDefaults: ResolvedDefaults? = null
+
+    @Volatile
+    private var cachedResolvedDefaultsAtMs: Long = 0L
+
+    private const val RESOLVED_DEFAULTS_CACHE_TTL_MS = 5 * 60 * 1000L
 
     private val walletPackagePrefixes = listOf(
         "com.samsung.android.spay",
@@ -270,25 +285,28 @@ object AppBlockSafety {
     )
 
     fun resolve(context: Context, pkg: String): Info {
-        if (pkg.isBlank()) return Info()
+        return resolve(context, pkg, collectResolvedDefaults(context))
+    }
 
-        val defaultIme = getDefaultInputMethodPackage(context)
-        if (pkg == defaultIme) {
+    private fun resolve(context: Context, pkg: String, defaults: ResolvedDefaults): Info {
+        val normalized = pkg.trim()
+        if (normalized.isBlank()) return Info()
+
+        if (normalized == defaults.defaultIme) {
             return Info(
                 level = Level.HARD_EXCLUDED,
                 hint = context.getString(R.string.app_picker_protected_keyboard_hint)
             )
         }
 
-        val defaultHome = getDefaultHomePackage(context)
-        if (pkg == defaultHome) {
+        if (normalized == defaults.defaultHome) {
             return Info(
                 level = Level.HARD_EXCLUDED,
                 hint = context.getString(R.string.app_picker_protected_launcher_hint)
             )
         }
 
-        val riskRule = matchRiskRule(context, pkg)
+        val riskRule = matchRiskRule(normalized, defaults.defaultAssistant)
         if (riskRule?.action == PolicyAction.NEVER_BLOCK) {
             val (hintRes, titleRes, messageRes) = resourcesForCategory(riskRule.category)
             return Info(
@@ -299,7 +317,7 @@ object AppBlockSafety {
             )
         }
 
-        if (isWalletPackage(pkg)) {
+        if (isWalletPackage(normalized)) {
             val messageRes = if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) {
                 R.string.app_picker_wallet_warning_message_samsung
             } else {
@@ -313,8 +331,7 @@ object AppBlockSafety {
             )
         }
 
-        val defaultDialer = getDefaultDialerPackage(context)
-        if (pkg == defaultDialer) {
+        if (normalized == defaults.defaultDialer) {
             return Info(
                 level = Level.HARD_EXCLUDED,
                 hint = context.getString(R.string.app_picker_dialer_hint),
@@ -323,7 +340,7 @@ object AppBlockSafety {
             )
         }
 
-        if (riskRule?.action == PolicyAction.STRICT_MODE_ONLY || isSettingsPackage(context, pkg)) {
+        if (riskRule?.action == PolicyAction.STRICT_MODE_ONLY || isSettingsPackage(normalized, defaults.settingsPackage)) {
             return Info(
                 level = Level.SOFT_WARNING,
                 hint = context.getString(R.string.app_picker_settings_hint),
@@ -346,21 +363,27 @@ object AppBlockSafety {
     }
 
     fun isHardExcluded(context: Context, pkg: String): Boolean =
-        resolve(context, pkg).level == Level.HARD_EXCLUDED
+        resolve(context, pkg, collectResolvedDefaults(context, includeSlowPackageManagerLookups = false)).level == Level.HARD_EXCLUDED
 
     fun sanitizeManagedPackages(context: Context, pkgs: Set<String>): Set<String> {
         if (pkgs.isEmpty()) return emptySet()
+
+        // Build the default-app snapshot once. This method is used from hot UI paths
+        // (status refresh, profile reads), so avoid PackageManager/Telecom binder calls here.
+        val defaults = collectResolvedDefaults(context, includeSlowPackageManagerLookups = false)
         return pkgs
             .asSequence()
             .filter { it.isNotBlank() }
-            .filterNot { isHardExcluded(context, it) }
+            .filterNot { resolve(context, it, defaults).level == Level.HARD_EXCLUDED }
             .toCollection(linkedSetOf())
     }
 
     fun requiresStrictModeForBlocking(context: Context, pkg: String): Boolean {
         val normalized = pkg.trim()
         if (normalized.isBlank()) return false
-        return matchRiskRule(context, normalized)?.action == PolicyAction.STRICT_MODE_ONLY || isSettingsPackage(context, normalized)
+        val defaultAssistant = getDefaultAssistantPackage(context)
+        return matchRiskRule(normalized, defaultAssistant)?.action == PolicyAction.STRICT_MODE_ONLY ||
+            isSettingsPackage(normalized, defaultSettingsPackage = null)
     }
 
     fun isStrictModeEnabled(context: Context): Boolean {
@@ -383,17 +406,9 @@ object AppBlockSafety {
         val currentId = runCatching {
             Settings.Secure.getString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
         }.getOrNull().orEmpty().trim()
-        if (currentId.isBlank()) return null
 
-        val imm = context.getSystemService(InputMethodManager::class.java)
-        val fromEnabledList = runCatching {
-            imm?.enabledInputMethodList
-                ?.firstOrNull { it.id == currentId }
-                ?.packageName
-        }.getOrNull()
-
-        if (!fromEnabledList.isNullOrBlank()) return fromEnabledList
-
+        // DEFAULT_INPUT_METHOD is already stored as a flattened component id (package/class).
+        // Avoid InputMethodManager.enabledInputMethodList here:  that binder call can block long enough to trigger ANRs on Android 16/OEM builds.
         return currentId.substringBefore('/').trim().takeIf { it.isNotBlank() && it.contains('.') }
     }
 
@@ -457,6 +472,10 @@ object AppBlockSafety {
     }
 
     fun matchRiskRule(context: Context, pkg: String): RiskRule? {
+        return matchRiskRule(pkg, getDefaultAssistantPackage(context))
+    }
+
+    private fun matchRiskRule(pkg: String, defaultAssistant: String?): RiskRule? {
         val normalized = pkg.trim()
         if (normalized.isBlank()) return null
 
@@ -464,7 +483,6 @@ object AppBlockSafety {
         prefixRiskRules.firstOrNull { (prefix, _) -> normalized == prefix || normalized.startsWith("$prefix.") }
             ?.let { return it.second }
 
-        val defaultAssistant = getDefaultAssistantPackage(context)
         if (!defaultAssistant.isNullOrBlank() && normalized == defaultAssistant) {
             return RiskRule(
                 RiskCategory.ASSISTANT,
@@ -525,13 +543,56 @@ object AppBlockSafety {
     private fun isSettingsPackage(context: Context, pkg: String): Boolean {
         val normalized = pkg.trim()
         if (normalized.isBlank()) return false
+        return isSettingsPackage(normalized, getDefaultSettingsPackage(context))
+    }
+
+    private fun isSettingsPackage(pkg: String, defaultSettingsPackage: String?): Boolean {
+        val normalized = pkg.trim()
+        if (normalized.isBlank()) return false
         if (normalized in knownSettingsPackages) return true
+        return !defaultSettingsPackage.isNullOrBlank() && normalized == defaultSettingsPackage
+    }
 
-        val resolved = runCatching {
+    private fun collectResolvedDefaults(
+        context: Context,
+        includeSlowPackageManagerLookups: Boolean = true
+    ): ResolvedDefaults {
+        val now = System.currentTimeMillis()
+        val cached = cachedResolvedDefaults
+        val cachedIsFresh = cached != null && now - cachedResolvedDefaultsAtMs <= RESOLVED_DEFAULTS_CACHE_TTL_MS
+
+        if (!includeSlowPackageManagerLookups) {
+            // Hot paths such as AccessibilityService/package sanitizing must not run launcher, dialer, settings, or PackageManager resolver calls. 
+            // Reuse the last slow snapshot  when available, while still refreshing cheap Settings.Secure values.
+            return ResolvedDefaults(
+                defaultIme = getDefaultInputMethodPackage(context) ?: cached?.defaultIme,
+                defaultHome = cached?.defaultHome.takeIf { cachedIsFresh },
+                defaultDialer = cached?.defaultDialer.takeIf { cachedIsFresh },
+                defaultAssistant = getDefaultAssistantPackage(context) ?: cached?.defaultAssistant,
+                settingsPackage = cached?.settingsPackage.takeIf { cachedIsFresh }
+            )
+        }
+
+        val resolved = ResolvedDefaults(
+            defaultIme = getDefaultInputMethodPackage(context),
+            defaultHome = getDefaultHomePackage(context),
+            defaultDialer = getDefaultDialerPackage(context),
+            defaultAssistant = getDefaultAssistantPackage(context),
+            settingsPackage = getDefaultSettingsPackage(context)
+        )
+        cachedResolvedDefaults = resolved
+        cachedResolvedDefaultsAtMs = now
+        return resolved
+    }
+
+    private fun getDefaultSettingsPackage(context: Context): String? {
+        return runCatching {
             context.packageManager.resolveActivity(Intent(Settings.ACTION_SETTINGS), 0)
-        }.getOrNull()?.activityInfo?.packageName?.trim().orEmpty()
-
-        return resolved.isNotBlank() && normalized == resolved
+        }.getOrNull()
+            ?.activityInfo
+            ?.packageName
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
     }
 
     private fun normalizeHomePackage(pkg: String?): String? {

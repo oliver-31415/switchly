@@ -325,10 +325,18 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("pref_manage_paired_tags")?.apply {
             isVisible = pairedUiEnabled
             setOnPreferenceClickListener {
-                if (EditingLockGuard.isLocked(requireContext())) {
-                    EditingLockGuard.showLockedDialog(requireContext(), R.string.edit_locked_manage_paired_tags)
+                val ctx = requireContext()
+                val locked = EditingLockGuard.isLocked(ctx)
+                AppLogStore.append(ctx, "NFC", "Manage Paired Tags clicked from Settings locked=$locked")
+                if (locked) {
+                    EditingLockGuard.showLockedDialog(ctx, R.string.edit_locked_manage_paired_tags)
                 } else {
-                    startActivity(Intent(requireContext(), ManagePairedTagsActivity::class.java))
+                    runCatching {
+                        startActivity(Intent(ctx, ManagePairedTagsActivity::class.java))
+                    }.onFailure { error ->
+                        AppLogStore.append(ctx, "NFC", "Failed to open Manage Paired Tags from Settings", error)
+                        Toast.makeText(ctx, R.string.error_open_manage_paired_tags, Toast.LENGTH_LONG).show()
+                    }
                 }
                 true
             }
@@ -1494,9 +1502,20 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun startRestoreFlowWithChoice() {
-        CloudSyncRuntime.listBackups(requireContext()) { ok, err, backups ->
+        val initialCtx = context ?: return
+        val loadingDialog = AlertDialog.Builder(initialCtx)
+            .setTitle(getString(R.string.pref_cloud_restore_title))
+            .setMessage(getString(R.string.cloud_restore_loading))
+            .setCancelable(false)
+            .create()
+
+        loadingDialog.setOnShowListener { loadingDialog.styleSwitchlyDialogButtons() }
+        loadingDialog.show()
+
+        CloudSyncRuntime.listBackups(initialCtx) { ok, err, backups ->
             val activeCtx = context ?: return@listBackups
             if (!isAdded) return@listBackups
+            if (loadingDialog.isShowing) loadingDialog.dismiss()
             if (!ok) {
                 Toast.makeText(
                     activeCtx,

@@ -7,7 +7,7 @@
 
     <string name="qr_title">QR</string>
 
-    <string name="qr_generate_title">Generate QR</string>
+    <string name="qr_generate_title">Manage QR codes</string>
 
     <string name="qr_scan_title">Scan QR code</string>
 
@@ -63,5 +63,11 @@
         <item quantity="one">Daily limit reached for this QR code (%1$d use/day).</item>
         <item quantity="other">Daily limit reached for this QR code (%1$d uses/day).</item>
     </plurals>
+
+    <string name="external_qr_confirm_title">Run Switchly QR action?</string>
+
+    <string name="external_qr_confirm_message">This link was opened from an external QR scanner. Only continue if you intentionally scanned a Switchly QR code.</string>
+
+    <string name="external_qr_confirm_action">Run action</string>
 
 </resources>

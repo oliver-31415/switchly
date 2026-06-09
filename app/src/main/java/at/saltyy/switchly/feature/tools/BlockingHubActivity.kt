@@ -19,7 +19,10 @@ import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.feature.picker.AppPickerActivity
+import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
+import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
 import at.saltyy.switchly.feature.settings.InAppBlockingActivity
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
@@ -95,6 +98,16 @@ class BlockingHubActivity : AppCompatActivity() {
             })
         }
 
+        card(R.id.cardScanQr).setOnClickListener {
+            startActivity(Intent(this, QrScanActivity::class.java)
+                .putExtra(QrScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true))
+        }
+
+        card(R.id.cardScanBarcode).setOnClickListener {
+            startActivity(Intent(this, BarcodeScanActivity::class.java)
+                .putExtra(BarcodeScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true))
+        }
+
         card(R.id.cardManageApps).setOnClickListener {
             if (SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_apps)
@@ -132,6 +145,15 @@ class BlockingHubActivity : AppCompatActivity() {
         applyLockedCardState(card(R.id.cardInAppBlocking), inAppLocked)
         applyLockedCardState(card(R.id.cardBlockingModes), false)
         applyLockedCardState(card(R.id.cardBlockingFeatures), false)
+        syncScanSectionVisibility()
+    }
+
+    private fun syncScanSectionVisibility() {
+        val qrVisible = AutomationModeStore.isQrAllowed(this)
+        val barcodeVisible = AutomationModeStore.isBarcodeAllowed(this)
+        findViewById<View>(R.id.sectionScan).visibility = if (qrVisible || barcodeVisible) View.VISIBLE else View.GONE
+        card(R.id.cardScanQr).visibility = if (qrVisible) View.VISIBLE else View.GONE
+        card(R.id.cardScanBarcode).visibility = if (barcodeVisible) View.VISIBLE else View.GONE
     }
 
     private fun applyLockedCardState(view: View, locked: Boolean) {

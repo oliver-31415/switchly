@@ -21,6 +21,8 @@
 
 	<string name="app_picker_clear_all">Auswahl löschen</string>
 
+	<string name="app_picker_clear_unavailable">Nicht verfügbare löschen</string>
+
 	<string name="app_picker_protected_chip">Geschützt</string>
 
 	<string name="app_picker_caution_chip">Achtung</string>
@@ -95,6 +97,11 @@
 	<plurals name="app_picker_removed_protected_notice">
         <item quantity="one">%d geschützte App wurde aus diesem Profil aus Sicherheitsgründen entfernt.</item>
         <item quantity="other">%d geschützte Apps wurden aus diesem Profil aus Sicherheitsgründen entfernt.</item>
+    </plurals>
+
+	<plurals name="unavailable_apps_cleared_notice">
+        <item quantity="one">%1$d nicht verfügbarer App-Eintrag wurde entfernt. Tippe auf Speichern, um die Bereinigung zu behalten.</item>
+        <item quantity="other">%1$d nicht verfügbare App-Einträge wurden entfernt. Tippe auf Speichern, um die Bereinigung zu behalten.</item>
     </plurals>
 
 	<string name="app_picker_settings_requirements_title">Notfall-Entsperrung erforderlich</string>

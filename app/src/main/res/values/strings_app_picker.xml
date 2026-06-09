@@ -21,6 +21,8 @@
 
     <string name="app_picker_clear_all">Clear all</string>
 
+    <string name="app_picker_clear_unavailable">Clear unavailable</string>
+
     <string name="app_picker_protected_chip">Protected</string>
 
     <string name="app_picker_caution_chip">Caution</string>
@@ -95,6 +97,11 @@
     <plurals name="app_picker_removed_protected_notice">
         <item quantity="one">Removed %d protected app from this profile for device safety.</item>
         <item quantity="other">Removed %d protected apps from this profile for device safety.</item>
+    </plurals>
+
+    <plurals name="unavailable_apps_cleared_notice">
+        <item quantity="one">%1$d unavailable app entry was removed. Tap Save to keep the cleanup.</item>
+        <item quantity="other">%1$d unavailable app entries were removed. Tap Save to keep the cleanup.</item>
     </plurals>
 
     <string name="app_picker_settings_requirements_title">Emergency Unlock required</string>

@@ -51,7 +51,9 @@ internal fun resolveAppBlockDecision(
         return AppBlockDecision(shouldBlock = true, immediate = true)
     }
 
-    val timeLimitReached = limitMinutes > 0 && (force || effectiveUsageMsToday >= limitMinutes * 60_000L)
+    // Force is used for immediate re-checks after foreground corrections, schedule ticks, or other reliability probes. 
+    // It must not turn a limited app into a block before the configured daily usage limit is actually reached.
+    val timeLimitReached = limitMinutes > 0 && effectiveUsageMsToday >= limitMinutes * 60_000L
     val shouldBlockNow = hardBlocked || opensExceeded || timeLimitReached
     if (!shouldBlockNow) return AppBlockDecision.Allow
 

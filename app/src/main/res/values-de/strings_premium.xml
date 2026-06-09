@@ -9,7 +9,7 @@
 
 	<string name="premium_summary">Schalte Premium-Funktionen frei.</string>
 
-	<string name="premium_short_desc">Schalte WLAN-/Bluetooth-Zeitpläne, detaillierte Statistiken und weitere Premium-Optionen frei.</string>
+	<string name="premium_short_desc">Schalte WLAN-, Bluetooth- und Standort-Zeitpläne, detaillierte Statistiken und weitere Premium-Optionen frei.</string>
 
 	<string name="premium_active_header">Aktive Premium-Funktionen</string>
 
@@ -65,7 +65,7 @@
 
 	<string name="premium_automation_title">Automatisierungen</string>
 
-	<string name="premium_automation_desc">Schalte erweiterte Automatisierungen frei, einschließlich Zeit-, WLAN- und Bluetooth-Triggern.</string>
+	<string name="premium_automation_desc">Schalte erweiterte Automatisierungen frei, einschließlich Zeit-, WLAN-, Bluetooth- und Standort-Triggern.</string>
 
 	<string name="premium_stats_title">Statistiken &amp; Einblicke</string>
 

@@ -30,7 +30,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -65,6 +64,7 @@ import at.saltyy.switchly.receiver.DPMReceiver
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.SystemBarColorCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -304,7 +304,7 @@ class SupportActivity : AppCompatActivity() {
         }
 
         line("Quick actions visible", defaultSp.getBoolean("pref_show_quick_actions", true))
-        line("Quick actions expanded", defaultSp.getBoolean("home_quick_actions_expanded", false))
+        line("Quick actions expanded", defaultSp.getBoolean("home_quick_actions_expanded", true))
         line("QR tools visible", AutomationModeStore.shouldShowQrTools(this@SupportActivity))
         line("Barcode tools visible", AutomationModeStore.shouldShowBarcodeTools(this@SupportActivity))
 
@@ -339,9 +339,14 @@ class SupportActivity : AppCompatActivity() {
             line("Nearby Wi‑Fi devices", hasPermission(Manifest.permission.NEARBY_WIFI_DEVICES))
         }
 
-        val pm = getSystemService(PowerManager::class.java)
-        val ignoringBattery = pm?.isIgnoringBatteryOptimizations(packageName) ?: false
+        val ignoringBattery = BatteryOptimizationCompat.isIgnoringBatteryOptimizations(this@SupportActivity)
+        val backgroundRestricted = BatteryOptimizationCompat.isBackgroundRestricted(this@SupportActivity)
+        val batteryEffectivelyOk = BatteryOptimizationCompat.isEffectivelyOk(this@SupportActivity)
+        val batteryMaxConfirmed = BatteryOptimizationCompat.isUserConfirmedMaxAvailable(this@SupportActivity)
         line("Ignore battery optimizations", ignoringBattery)
+        line("Background restricted", backgroundRestricted)
+        line("Battery effectively OK", batteryEffectivelyOk)
+        line("Battery max confirmed", batteryMaxConfirmed)
         line("Exact alarms allowed", canScheduleExactAlarmsCompat())
 
         section("Schedules")

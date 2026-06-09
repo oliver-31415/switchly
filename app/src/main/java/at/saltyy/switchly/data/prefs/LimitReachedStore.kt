@@ -35,10 +35,19 @@ object LimitReachedStore {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     private fun key(ymd: Int, pkg: String): String = PREFIX + ymd + "_" + pkg
+    private fun key(ymd: Int, profile: String, pkg: String): String =
+        PREFIX + ymd + "_" + profile.safeKeyPart() + "_" + pkg.safeKeyPart()
 
     fun isReachedToday(context: Context, pkg: String): Boolean {
         if (pkg.isBlank()) return false
         return prefs(context).getBoolean(key(todayYmdInt(), pkg), false)
+    }
+
+    fun isReachedToday(context: Context, profile: String, pkg: String): Boolean {
+        if (profile.isBlank() || pkg.isBlank()) return false
+        val sp = prefs(context)
+        val ymd = todayYmdInt()
+        return sp.getBoolean(key(ymd, profile, pkg), false)
     }
 
     fun markReachedToday(context: Context, pkg: String) {
@@ -55,10 +64,39 @@ object LimitReachedStore {
         }
     }
 
+    fun markReachedToday(context: Context, profile: String, pkg: String) {
+        if (profile.isBlank() || pkg.isBlank()) return
+
+        val sharedPreferences = prefs(context)
+        val key = key(todayYmdInt(), profile, pkg)
+        val alreadyReached = sharedPreferences.getBoolean(key, false)
+
+        sharedPreferences.edit { putBoolean(key, true) }
+
+        if (!alreadyReached) {
+            LimitHitCountStore.incrementToday(context)
+        }
+    }
+
     fun clearToday(context: Context, pkg: String) {
         if (pkg.isBlank()) return
-        prefs(context).edit { remove(key(todayYmdInt(), pkg)) }
+        val ymd = todayYmdInt()
+        val prefix = PREFIX + ymd + "_"
+        val suffix = "_" + pkg.safeKeyPart()
+        val sp = prefs(context)
+        val profileScopedKeys = sp.all.keys.filter { it.startsWith(prefix) && it.endsWith(suffix) }
+        sp.edit {
+            remove(key(ymd, pkg))
+            profileScopedKeys.forEach { remove(it) }
+        }
     }
+
+    fun clearToday(context: Context, profile: String, pkg: String) {
+        if (profile.isBlank() || pkg.isBlank()) return
+        prefs(context).edit { remove(key(todayYmdInt(), profile, pkg)) }
+    }
+
+    private fun String.safeKeyPart(): String = replace("_", "__")
 
     private fun todayYmdInt(): Int = ymdInt(Calendar.getInstance())
 

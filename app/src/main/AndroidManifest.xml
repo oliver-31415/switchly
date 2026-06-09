@@ -336,6 +336,22 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
+        <!-- External QR/deep-link scanner entry point. Shows confirmation, then forwards as QR action. -->
+        <activity
+            android:name=".feature.qr.ExternalQrActionActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.Switchly">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="switchly" android:host="switch" android:pathPattern=".*" />
+                <data android:scheme="switchly" android:host="profile" android:pathPattern=".*" />
+            </intent-filter>
+        </activity>
+
         <!-- QR Scanner -->
         <activity
             android:name=".feature.qr.QrScanActivity"

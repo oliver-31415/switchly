@@ -21,7 +21,7 @@
 
 	<string name="open">Öffnen</string>
 
-	<string name="copy">Kopieren</string>
+	<string name="action_copy">Kopieren</string>
 
 	<string name="copied">Kopiert</string>
 

@@ -27,14 +27,16 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.text.InputType
 import android.text.SpannableString
 import android.text.Spanned
@@ -116,6 +118,7 @@ import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
 import at.saltyy.switchly.util.ProtectionStatusNotifier
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
+import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.SystemBarColorCompat
 import at.saltyy.switchly.util.TimeFormatPrefs
 import at.saltyy.switchly.util.getIntCompat
@@ -135,10 +138,13 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -255,6 +261,8 @@ class MainActivity : AppCompatActivity() {
     // Cache the resolved blocked apps for the current profile so we can build the
     // "Blocked right now" section without hitting the PackageManager every second.
     private var cachedBlockedApps: List<AppDisplay> = emptyList()
+    private var blockedListRefreshSeq: Int = 0
+    private var blockedListRefreshJob: Job? = null
 
     // For micro-animations: avoid animating every 1s refresh
     private var lastEnabledUi: Boolean? = null
@@ -478,8 +486,16 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, InAppBlockingActivity::class.java))
             }
         }
-        tileQr.setOnClickListener { showQrChoiceDialog() }
-        tileBarcode.setOnClickListener { showBarcodeChoiceDialog() }
+        tileQr.setOnClickListener { openQrScannerDirectly() }
+        tileQr.setOnLongClickListener {
+            showQrChoiceDialog()
+            true
+        }
+        tileBarcode.setOnClickListener { openBarcodeScannerDirectly() }
+        tileBarcode.setOnLongClickListener {
+            showBarcodeChoiceDialog()
+            true
+        }
         tilePermissions.setOnClickListener {
             startActivity(ScreenTimeDashboardActivity.intent(this))
         }
@@ -1119,11 +1135,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun isIgnoringBatteryOptimizations(): Boolean {
-        val pm = getSystemService(POWER_SERVICE) as PowerManager
-        return pm.isIgnoringBatteryOptimizations(packageName)
-    }
-
     /**
      * Formats remaining milliseconds as a compact time (m:ss or h:mm:ss).
      */
@@ -1156,7 +1167,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // battery optimization (highly recommended – otherwise OEMs may kill the app/service)
-        val batteryOk = isIgnoringBatteryOptimizations()
+        val batteryOk = BatteryOptimizationCompat.isEffectivelyOk(this)
         if (!batteryOk) {
             missing.add(getString(R.string.permissions_battery_title))
         }
@@ -1292,7 +1303,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun areQuickActionsExpanded(): Boolean {
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        return sp.getBoolean(KEY_QUICK_ACTIONS_EXPANDED, false)
+        return sp.getBoolean(KEY_QUICK_ACTIONS_EXPANDED, true)
     }
 
     private fun isQuickActionTileEnabled(key: String, defaultValue: Boolean = true): Boolean {
@@ -2158,27 +2169,43 @@ class MainActivity : AppCompatActivity() {
     private fun refreshBlockedList() {
         val current = ProfileStore.getCurrent(this)
         val pkgs: List<String> = loadBlockedPkgsFor(current)
-        val items: List<AppDisplay> = pkgs
-            .map { pkg -> resolveAppDisplay(pkg) }
-            .sortedBy { app -> app.label.lowercase() }
+        val appContext = applicationContext
+        val requestSeq = ++blockedListRefreshSeq
 
-        val isEmpty = items.isEmpty()
-        if (isEmpty) {
-            layoutBlockedAppsEmpty.showFade()
-            rvBlocked.hideFade()
-        } else {
-            layoutBlockedAppsEmpty.hideFade()
-            rvBlocked.showFade()
+        blockedListRefreshJob?.cancel()
+        blockedListRefreshJob = lifecycleScope.launch {
+            val items: List<AppDisplay> = withContext(Dispatchers.IO) {
+                val ioContext = currentCoroutineContext()
+                pkgs
+                    .asSequence()
+                    .mapNotNull { pkg ->
+                        if (!ioContext.isActive) return@mapNotNull null
+                        resolveAppDisplay(appContext, pkg)
+                    }
+                    .sortedBy { app -> app.label.lowercase() }
+                    .toList()
+            }
+
+            if (requestSeq != blockedListRefreshSeq || !currentCoroutineContext().isActive) return@launch
+
+            val isEmpty = items.isEmpty()
+            if (isEmpty) {
+                layoutBlockedAppsEmpty.showFade()
+                rvBlocked.hideFade()
+            } else {
+                layoutBlockedAppsEmpty.hideFade()
+                rvBlocked.showFade()
+            }
+
+            blockedAdapter.submitList(items) {
+                // The managed-app rows include live status chips (e.g. "Limit reached") that are derived from runtime state rather than DiffUtil item content.
+                // When the list contents themselves have not changed, returning to Home after a limit is hit would otherwise keep the old chip text until some unrelated state change forced a rebind.
+                notifyBlockedChipsChanged()
+            }
+
+            cachedBlockedApps = items
+            updateBlockedNowCard()
         }
-
-        blockedAdapter.submitList(items) {
-            // The managed-app rows include live status chips (e.g. "Limit reached") that are  derived from runtime state rather than DiffUtil item content. 
-            // When the list contents themselves have not changed, returning to Home after a limit is hit would otherwise keep the old chip text until some unrelated state change forced a rebind.
-            notifyBlockedChipsChanged()
-        }
-
-        cachedBlockedApps = items
-        updateBlockedNowCard()
     }
 
     private fun loadBlockedPkgsFor(profile: String?): List<String> {
@@ -2210,21 +2237,33 @@ class MainActivity : AppCompatActivity() {
             .toList()
     }
 
-    private fun resolveAppDisplay(pkg: String): AppDisplay {
-        val pm = packageManager
+    private fun resolveAppDisplay(context: Context, pkg: String): AppDisplay {
+        val pm = context.packageManager
+        val fallbackIcon = ContextCompat.getDrawable(context, android.R.drawable.sym_def_app_icon)!!
         return try {
             val ai = pm.getApplicationInfo(pkg, 0)
             val label = runCatching { pm.getApplicationLabel(ai)?.toString() }.getOrNull() ?: pkg
-            val icon = pm.getApplicationIcon(pkg)
+            val icon = runCatching { pm.getApplicationIcon(pkg).toSafeListIcon(context) }.getOrDefault(fallbackIcon)
             AppDisplay(label, pkg, icon, isAvailable = true)
         } catch (_: PackageManager.NameNotFoundException) {
             AppDisplay(
                 label = pkg,
                 pkg = pkg,
-                icon = ContextCompat.getDrawable(this, android.R.drawable.sym_def_app_icon)!!,
+                icon = fallbackIcon,
                 isAvailable = false
             )
         }
+    }
+
+    private fun Drawable.toSafeListIcon(context: Context): Drawable {
+        val size = (48f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val oldBounds = copyBounds()
+        setBounds(0, 0, size, size)
+        draw(canvas)
+        setBounds(oldBounds)
+        return BitmapDrawable(context.resources, bitmap)
     }
 
     data class AppDisplay(
@@ -2595,13 +2634,27 @@ class MainActivity : AppCompatActivity() {
             .showAccented()
     }
 
+    private fun openQrScannerDirectly() {
+        startActivity(
+            Intent(this, QrScanActivity::class.java)
+                .putExtra(QrScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true)
+        )
+    }
+
+    private fun openBarcodeScannerDirectly() {
+        startActivity(
+            Intent(this, BarcodeScanActivity::class.java)
+                .putExtra(BarcodeScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true)
+        )
+    }
+
     private fun showBarcodeChoiceDialog() {
         val items = arrayOf(getString(R.string.barcode_scan_title), getString(R.string.manage_barcodes_title))
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.dashboard_tile_barcode))
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> startActivity(Intent(this, BarcodeScanActivity::class.java))
+                    0 -> openBarcodeScannerDirectly()
                     1 -> {
                         if (EditingLockGuard.isLocked(this)) {
                             EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
@@ -2621,7 +2674,7 @@ class MainActivity : AppCompatActivity() {
             .setTitle(getString(R.string.qr_title))
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> startActivity(Intent(this, QrScanActivity::class.java))
+                    0 -> openQrScannerDirectly()
                     1 -> startActivity(Intent(this, QrGenerateActivity::class.java))
                 }
             }

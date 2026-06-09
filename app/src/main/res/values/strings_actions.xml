@@ -41,7 +41,8 @@
 
     <string name="qs_tile_add_hint">Open Quick Settings → Edit → drag “Switchly” into your active tiles</string>
 
-    <string name="qs_tile_remove_hint">To remove the tile: Quick Settings → Edit → remove “Switchly”</string>
+    <string name="qr_qs_tile_add_hint">Open Quick Settings → Edit → drag “Scan QR” into your active tiles</string>
+    <string name="barcode_qs_tile_add_hint">Open Quick Settings → Edit → drag “Scan barcode” into your active tiles</string>
 
     <string name="update_available_title">Update available</string>
 
@@ -138,8 +139,8 @@
 
     <string name="widget_next_schedule_name">Next schedule</string>
 
-    <string name="experimental_notice_title">Experimental features in 2.1.1</string>
+    <string name="experimental_notice_title">Experimental features in 2.1.x</string>
 
-    <string name="experimental_notice_body">Some features and UI flows in this version need extra testing.\n\nPlease send feedback if something feels wrong with:\n• Location-based schedules\n• Advanced / ADB tools\n• Device admin features\n• The new Home / Blocking / Manage / Settings menu layout\n• Manage keys actions for NFC tags, paired tags, QR codes, and barcodes\n• Local backup / restore behavior\n• App lock and uninstall protection\n\nThese may behave differently depending on your device, especially on Xiaomi, Samsung, and other OEM-customized Android versions.\n\nYou can still use Switchly normally — core blocking is stable.</string>
+    <string name="experimental_notice_body">Some advanced protection features in this version still need extra testing.\n\nPlease send feedback with logs if something feels wrong with:\n• Location-based schedules\n• Advanced / ADB tools\n• Device admin features\n• App Lock\n• Uninstall protection\n\nThese features may behave differently depending on your device, especially on Xiaomi, Samsung, and other OEM-customized Android versions.</string>
 
 </resources>

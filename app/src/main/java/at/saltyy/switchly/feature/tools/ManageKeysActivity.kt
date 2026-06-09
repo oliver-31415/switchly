@@ -15,9 +15,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.feature.qr.QrGenerateActivity
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
@@ -76,10 +78,12 @@ class ManageKeysActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.cardPairedTags).setOnClickListener {
-            if (EditingLockGuard.isLocked(this)) {
+            val locked = EditingLockGuard.isLocked(this)
+            AppLogStore.append(this, "NFC", "Manage Paired Tags clicked from Manage Keys locked=$locked")
+            if (locked) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
             } else {
-                startActivity(Intent(this, ManagePairedTagsActivity::class.java))
+                openManagePairedTags()
             }
         }
 
@@ -94,6 +98,16 @@ class ManageKeysActivity : AppCompatActivity() {
             } else {
                 startActivity(Intent(this, ManageBarcodesActivity::class.java))
             }
+        }
+    }
+
+    private fun openManagePairedTags() {
+        AppLogStore.append(this, "NFC", "Opening Manage Paired Tags")
+        runCatching {
+            startActivity(Intent(this, ManagePairedTagsActivity::class.java))
+        }.onFailure { error ->
+            AppLogStore.append(this, "NFC", "Failed to open Manage Paired Tags", error)
+            Toast.makeText(this, R.string.error_open_manage_paired_tags, Toast.LENGTH_LONG).show()
         }
     }
 
