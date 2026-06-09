@@ -117,8 +117,8 @@ class WifiTriggerReceiver : BroadcastReceiver() {
                 wifiConnectionInfoCompat(wifiManager)?.ssid
             } ?: return null
 
-            if (raw == WifiManager.UNKNOWN_SSID) return null
             if (raw.equals("<unknown ssid>", ignoreCase = true)) return null
+            if (raw.equals("unknown ssid", ignoreCase = true)) return null
 
             raw.trim('"').trim().ifBlank { null }
         } catch (se: SecurityException) {

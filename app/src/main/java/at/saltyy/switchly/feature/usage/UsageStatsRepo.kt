@@ -447,6 +447,12 @@ object UsageStatsRepo {
         if (pkg in homePkgs) return true
         if (p == "android") return true
         if (p == "com.android.systemui") return true
+        if (p == "com.android.permissioncontroller") return true
+        if (p == "com.google.android.permissioncontroller") return true
+        if (p == "com.samsung.android.permissioncontroller") return true
+        if (p == "com.android.packageinstaller") return true
+        if (p == "com.google.android.packageinstaller") return true
+        if (p == "com.samsung.android.packageinstaller") return true
 
         val known = setOf(
             "com.google.android.apps.nexuslauncher",

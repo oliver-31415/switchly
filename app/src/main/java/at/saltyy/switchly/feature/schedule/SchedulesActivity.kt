@@ -800,14 +800,21 @@ class SchedulesActivity : AppCompatActivity() {
     private fun openBatteryOptimizationSettings() {
         val before = isBatteryOptimizationLikelyActive()
 
-        runCatching {
-            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+        // Play-policy safe: do not trigger the direct ignore-battery-optimization exemption popup. 
+        // Open normal settings pages and let the user manually choose Unrestricted/Not optimized.
+        val intents = listOf(
+            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+            Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS),
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 data = "package:$packageName".toUri()
-            })
-        }.onFailure {
-            runCatching {
-                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             }
+        )
+
+        intents.firstOrNull { intent ->
+            runCatching {
+                startActivity(intent)
+                true
+            }.getOrDefault(false)
         }
 
         Handler(Looper.getMainLooper()).postDelayed({
@@ -904,7 +911,7 @@ class SchedulesActivity : AppCompatActivity() {
         val accessibilityActive = BlockingRuntime.isAccessibilityActive(this)
 
         val wifiSchedulesNeedPerm = enabledSchedules.any { !it.wifiSsid.isNullOrBlank() }
-        val btSchedulesNeedPerm = enabledSchedules.any { !it.btDeviceName.isNullOrBlank() }
+        val btSchedulesNeedPerm = enabledSchedules.any { !it.btDeviceName.isNullOrBlank() || !it.btDeviceAddress.isNullOrBlank() }
         val locationSchedulesNeedPerm = enabledSchedules.any { it.isLocationSchedule() }
         val wifiPermMissing = wifiSchedulesNeedPerm && !hasWifiSsidPermission()
         val btPermMissing = btSchedulesNeedPerm && !hasBluetoothConnectPermission()
@@ -1273,7 +1280,7 @@ class SchedulesActivity : AppCompatActivity() {
             preselectedMode == NewScheduleMode.LOCATION -> Kind.LOCATION
             preselectedMode == NewScheduleMode.TIME -> Kind.TIME
             existing?.wifiSsid?.isNotBlank() == true -> Kind.WIFI
-            existing?.btDeviceName?.isNotBlank() == true -> Kind.BT
+            (existing?.btDeviceName?.isNotBlank() == true || existing?.btDeviceAddress?.isNotBlank() == true) -> Kind.BT
             existing?.isLocationSchedule() == true -> Kind.LOCATION
             else -> Kind.TIME
         }
@@ -2210,7 +2217,7 @@ class SchedulesActivity : AppCompatActivity() {
             chipSun.isChecked = dm and Days.SUN != 0
 
             if (kind == Kind.WIFI && isPremium) inputWifiSsid.setText(existing.wifiSsid.orEmpty())
-            if (kind == Kind.BT && isPremium) inputBtName.setText(existing.btDeviceName.orEmpty())
+            if (kind == Kind.BT && isPremium) inputBtName.setText(existing.btDeviceName ?: existing.btDeviceAddress.orEmpty())
             if (kind == Kind.LOCATION && isPremium) {
                 inputLocationLabel.setText(existing.locationLabel.orEmpty())
                 locationLat = existing.locationLat
@@ -3053,7 +3060,7 @@ private class ScheduleViewHolder(
         val ctx = itemView.context
 
         val hasWifi = !s.wifiSsid.isNullOrBlank()
-        val hasBt = !s.btDeviceName.isNullOrBlank()
+        val hasBt = (!s.btDeviceName.isNullOrBlank() || !s.btDeviceAddress.isNullOrBlank())
         val hasLocation = s.isLocationSchedule()
 
         val iconRes = when {
@@ -3104,10 +3111,10 @@ private class ScheduleViewHolder(
                 hasWifi && hasBt -> ctx.getString(
                     R.string.schedules_conn_wifi_bt_fmt,
                     s.wifiSsid,
-                    s.btDeviceName
+                    (s.btDeviceName ?: s.btDeviceAddress)
                 )
                 hasWifi -> ctx.getString(R.string.schedules_conn_wifi_fmt, s.wifiSsid)
-                else -> ctx.getString(R.string.schedules_conn_bt_fmt, s.btDeviceName)
+                else -> ctx.getString(R.string.schedules_conn_bt_fmt, s.btDeviceName ?: s.btDeviceAddress)
             }
             val base = ctx.getString(R.string.schedules_label_value_fmt, actionLabel, conn)
             val hasWindow = !(s.startMinutes == 0 && s.endMinutes >= 24 * 60 - 1)

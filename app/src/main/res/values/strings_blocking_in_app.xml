@@ -5,6 +5,7 @@
     <!-- In-app blocking overview -->
     <!-- ====================================================== -->
     <string name="in_app_blocking_title">In-app blocking</string>
+    <string name="in_app_blocking_limitations_note">In-app blocking is best-effort and only works while Switchly is active. Enabled sections are blocked immediately. Shorts/Reels can usually be blocked in their dedicated tabs, but recommendations inside the normal Home feed may still appear.</string>
 
     <!-- ====================================================== -->
     <!-- Supported apps -->
@@ -14,17 +15,18 @@
     <string name="in_app_blocking_x">X/Twitter</string>
     <string name="in_app_blocking_snapchat">Snapchat</string>
     <string name="in_app_blocking_block_shorts">Block Shorts</string>
+    <string name="in_app_blocking_block_subscriptions">Block Subscriptions</string>
+    <string name="in_app_blocking_block_you">Block You tab</string>
     <string name="in_app_blocking_block_reels">Block Reels</string>
     <string name="in_app_blocking_block_explore">Block Explore tab</string>
     <string name="in_app_blocking_block_search">Block Search</string>
-    <string name="in_app_blocking_block_stories">Block Stories</string>
+    <string name="in_app_blocking_block_stories">Block Stories/Discover</string>
     <string name="in_app_blocking_block_home">Block Home</string>
     <string name="in_app_blocking_block_grok">Block Grok</string>
     <string name="in_app_blocking_block_notifications">Block Notifications</string>
     <string name="in_app_blocking_block_map">Block Map</string>
     <string name="in_app_blocking_block_spotlight">Block Spotlight</string>
     <string name="in_app_blocking_block_following">Block Following</string>
-    <string name="in_app_blocking_block_video_search">Block video search</string>
     <string name="in_app_blocking_block_comments">Block comments</string>
     <string name="in_app_blocking_block_pip">Block picture-in-picture mode</string>
 
@@ -39,6 +41,8 @@
     <!-- Surface labels -->
     <!-- ====================================================== -->
     <string name="in_app_surface_shorts_label">Shorts</string>
+    <string name="in_app_surface_subscriptions_label">Subscriptions</string>
+    <string name="in_app_surface_you_label">You</string>
     <string name="in_app_surface_reels_label">Reels</string>
     <string name="in_app_surface_explore_label">Explore</string>
     <string name="in_app_surface_search_label">Search</string>
@@ -66,13 +70,7 @@
     <!-- ====================================================== -->
     <string name="blocking_in_app_limit_reached_title">In-app limit reached!</string>
     <string name="blocking_surface_blocked_title">%1$s is blocked!</string>
-    <string name="blocking_surface_limit_reached_title">%1$s limit reached!</string>
-    <string name="blocking_search_blocked_title">Search is blocked!</string>
     <string name="blocking_comments_blocked_title">Comments are blocked!</string>
-    <string name="blocking_pip_blocked_title">Picture-in-picture is blocked!</string>
-    <string name="blocking_youtube_search_blocked_message">YouTube search is blocked by Switchly.</string>
-    <string name="blocking_youtube_comments_blocked_message">YouTube comments are blocked by Switchly.</string>
-    <string name="blocking_youtube_pip_blocked_message">Picture-in-picture mode is blocked by Switchly.</string>
     <string name="blocking_instagram_comments_blocked_message">Instagram comments are blocked by Switchly.</string>
     <string name="blocking_surface_base_message">You can’t use this app’s feature while Switchly is active.</string>
     <string name="blocking_daily_limit_duration_fmt">Daily limit: %1$s</string>

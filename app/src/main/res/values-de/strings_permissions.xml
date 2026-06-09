@@ -26,10 +26,10 @@
     <string name="permissions_usage_access_title">App-Nutzungszugriff</string>
     <string name="permissions_usage_access_desc">Erforderlich für Bildschirmzeit-Statistiken und tägliche App-Limits. Aktiviere den Zugriff auf „App-Nutzungsdaten“ für Switchly.</string>
     <string name="permissions_battery_title">Akku-Optimierung</string>
-    <string name="permissions_battery_desc">Deaktiviere die Akku-Optimierung, damit Zeitpläne und Empfänger im Hintergrund zuverlässig laufen können.</string>
-    <string name="permissions_battery_allowed">Erlaubt</string>
-    <string name="permissions_battery_not_allowed">Deaktiviert</string>
-    <string name="permissions_battery_highest_available">Höchste verfügbare Stufe aktiviert</string>
+    <string name="permissions_battery_desc">Setze Switchly auf Uneingeschränkt/Nicht optimiert. Androids „Optimiert“-Modus kann Zeitpläne, Geofences, Empfänger und Hintergrundzuverlässigkeit trotzdem verzögern.</string>
+    <string name="permissions_battery_allowed">Uneingeschränkt</string>
+    <string name="permissions_battery_not_allowed">Optimiert/eingeschränkt</string>
+    <string name="permissions_battery_highest_available">Bestmögliche Einstellung bestätigt</string>
     <string name="permissions_exact_alarms_title">Exakte Alarme</string>
     <string name="permissions_exact_alarms_summary">Erforderlich, damit zeitbasierte Zeitpläne zuverlässig zur richtigen Zeit ausgeführt werden.</string>
     <string name="permissions_exact_alarms_allowed">Erlaubt</string>
@@ -113,8 +113,8 @@
             <item quantity="one">Live-Check: %1$d erforderliche Berechtigung fehlt noch</item>
             <item quantity="other">Live-Check: %1$d erforderliche Berechtigungen fehlen noch</item>
         </plurals>
-    <string name="permissions_health_live_sched_battery_bad">Live-Check: Bedienungshilfe ist aktiv, aber die Akku-Optimierung ist noch eingeschaltet (Zeitpläne können verzögert sein)</string>
-    <string name="permissions_health_live_ok_with_schedules">Live-Check: Bedienungshilfe und Akku-Einstellungen für Zeitpläne sind in Ordnung ✅</string>
+    <string name="permissions_health_live_sched_battery_bad">Accessibility ist aktiv, aber der Akku-Modus ist noch optimiert/eingeschränkt (Zeitpläne können verzögert werden)</string>
+    <string name="permissions_health_live_ok_with_schedules">Accessibility und uneingeschränkte Akku-Einstellung sehen gut aus ✅</string>
     <string name="permissions_health_live_mismatch">Status-Konflikt erkannt. Nach dem Öffnen der Bedienungshilfe-Einstellungen bitte erneut prüfen.</string>
     <string name="permissions_health_last_checked_fmt">Zuletzt geprüft: %1$s</string>
 

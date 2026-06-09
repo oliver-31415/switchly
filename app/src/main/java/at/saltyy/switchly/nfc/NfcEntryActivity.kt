@@ -127,7 +127,7 @@ class NfcEntryActivity : Activity() {
         }
 
         val data: Uri? = extractSwitchlyUri(intent)
-        if (data == null || !NfcSchema.isKnownHost(data.host)) {
+        if (data == null || !NfcSchema.isSupportedCommandUri(data)) {
             if (fromNfc) {
                 // Read-only/UID-paired tags should still be able to toggle Switchly without requiring a written switchly:// payload.
                 val sp = PreferenceManager.getDefaultSharedPreferences(this)
@@ -179,9 +179,7 @@ class NfcEntryActivity : Activity() {
     private fun extractSwitchlyUri(intent: Intent?): Uri? {
         val direct = intent?.data
         if (
-            direct != null &&
-            direct.scheme.equals("switchly", ignoreCase = true) &&
-            NfcSchema.isKnownHost(direct.host)
+            NfcSchema.isSupportedCommandUri(direct)
         ) {
             return direct
         }
@@ -205,8 +203,7 @@ class NfcEntryActivity : Activity() {
                 }
             }
             ?.firstOrNull { uri ->
-                uri.scheme.equals("switchly", ignoreCase = true) &&
-                    NfcSchema.isKnownHost(uri.host)
+                NfcSchema.isSupportedCommandUri(uri)
             }
             ?.let { return it }
 
@@ -229,8 +226,7 @@ class NfcEntryActivity : Activity() {
                     }
                 }
                 ?.firstOrNull { uri ->
-                    uri.scheme.equals("switchly", ignoreCase = true) &&
-                        NfcSchema.isKnownHost(uri.host)
+                    NfcSchema.isSupportedCommandUri(uri)
                 }
         } catch (_: Throwable) {
             null
@@ -286,13 +282,13 @@ class NfcEntryActivity : Activity() {
         val action = data.lastPathSegment?.lowercase() ?: return
 
         when {
-            action == "enable" -> {
+            action in listOf("start", "enable", "on", "activate") -> {
                 SwitchModeStore.setEnabled(this, true)
                 BlockingRuntime.ensureRunning(this)
                 toast(getString(R.string.nfc_feedback_started, getString(R.string.app_name)))
             }
 
-            action == "disable" -> {
+            action in listOf("stop", "disable", "off") -> {
                 SwitchModeStore.setEnabled(this, false, allowNfcBypass = true)
                 BlockingRuntime.stop(this)
                 toast(getString(R.string.nfc_feedback_stopped, getString(R.string.app_name)))

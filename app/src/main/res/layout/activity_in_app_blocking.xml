@@ -77,8 +77,28 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- In-app limit -->
+        <!-- In-app blocking limitations note -->
         <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="@string/in_app_blocking_limitations_note"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- In-app limit (timed rules disabled for now) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardInAppLimit"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
@@ -201,16 +221,16 @@
                         android:text="@string/in_app_blocking_block_shorts" />
 
                     <androidx.appcompat.widget.SwitchCompat
-                        android:id="@+id/swYtSearch"
+                        android:id="@+id/swYtSubscriptions"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/in_app_blocking_block_video_search" />
+                        android:text="@string/in_app_blocking_block_subscriptions" />
 
                     <androidx.appcompat.widget.SwitchCompat
-                        android:id="@+id/swYtComments"
+                        android:id="@+id/swYtYou"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/in_app_blocking_block_comments" />
+                        android:text="@string/in_app_blocking_block_you" />
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/swYtPip"
@@ -290,6 +310,7 @@
                         android:id="@+id/swIgSearch"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:visibility="gone"
                         android:text="@string/in_app_blocking_block_search" />
 
                     <androidx.appcompat.widget.SwitchCompat

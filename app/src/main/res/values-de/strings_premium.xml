@@ -9,6 +9,7 @@
     <string name="premium_short_desc">Schalte WLAN-, Bluetooth- und Standort-Zeitpläne, detaillierte Statistiken und weitere Premium-Optionen frei.</string>
     <string name="premium_active_header">Aktive Premium-Funktionen</string>
     <string name="premium_status_active">Aktiv</string>
+    <string name="premium_source_note">Premium aktiv über %1$s.</string>
     <string name="premium_status_inactive">Premium ist noch nicht aktiv</string>
     <string name="premium_already_owned">Du hast Premium bereits</string>
     <string name="premium_checking_purchases">Käufe werden geprüft…</string>
@@ -22,12 +23,13 @@
     <string name="premium_button_buy_external">Premium kaufen (%1$s)</string>
     <string name="premium_button_manage_external">Externen Kauf wiederherstellen/verwalten</string>
     <string name="premium_button_unavailable_offline">Premium im Offline-Build nicht verfügbar</string>
+    <string name="premium_button_redeem_offline">Offline-Code einlösen, um Premium freizuschalten</string>
 
     <!-- ====================================================== -->
     <!-- Payment availability and external purchases -->
     <!-- ====================================================== -->
     <string name="premium_payments_unavailable">Zahlungen sind in diesem Build nicht verfügbar.</string>
-    <string name="premium_unavailable_offline_build">Premium ist in diesem Offline-Build nicht verfügbar. Installiere den Firebase-E-Mail/Passwort-Build oder den vollständigen Build, um Premium zu kaufen und wiederherzustellen.</string>
+    <string name="premium_unavailable_offline_build">Online-Premiumkäufe sind in diesem Offline-Build nicht verfügbar.</string>
     <string name="premium_external_payments_disabled">Externe Zahlungen sind in diesem Build deaktiviert.</string>
     <string name="premium_external_payments_not_configured">Externer Checkout ist für diesen Build nicht konfiguriert.</string>
     <string name="premium_external_portal_not_configured">Externe Kaufverwaltung ist für diesen Build nicht konfiguriert.</string>
@@ -55,5 +57,37 @@
     <!-- ====================================================== -->
     <string name="premium_required_for_theme">Diese Farbe ist nur mit Switchly Premium verfügbar.</string>
     <string name="premium_support_note">Danke, dass du Switchly unterstützt 💜</string>
+
+    <!-- ====================================================== -->
+    <!-- Premium sources -->
+    <!-- ====================================================== -->
+    <string name="premium_source_none">keine</string>
+    <string name="premium_source_google_play_billing">Google Play Billing</string>
+    <string name="premium_source_stripe_direct">direkter Kauf</string>
+    <string name="premium_source_switchly_redeem_code">Switchly-Premium-Code</string>
+    <string name="premium_source_offline_code">Offline-Code</string>
+
+    <!-- ====================================================== -->
+    <!-- Premium redeem codes -->
+    <!-- ====================================================== -->
+    <string name="premium_redeem_title">Premium-Code einlösen</string>
+    <string name="premium_redeem_helper">Premium-Codes sind in ausgewählten Salt-Tag-Bundles oder direkten Käufen enthalten. Switchly-Codes werden online in unterstützten direkten Builds eingelöst. Offline-Codes funktionieren nur im Offline-Build. Google-Play-Promocodes müssen über Google Play eingelöst werden.</string>
+    <string name="premium_redeem_code_hint">Premium-Code</string>
+    <string name="premium_redeem_code_format">Beispiel: SWLY-XXXX-XXXX-XXXX</string>
+    <string name="premium_redeem_code_format_switchly">Beispiel: SWLY-XXXX-XXXX-XXXX</string>
+    <string name="premium_redeem_code_format_offline">Beispiel: SALT-OFFLINE-0001</string>
+    <string name="premium_redeem_button">Code einlösen</string>
+    <string name="premium_redeem_checking">Code wird geprüft…</string>
+    <string name="premium_redeem_success">Premium wurde erfolgreich freigeschaltet. Danke, dass du Switchly unterstützt!</string>
+    <string name="premium_redeem_current_active">Premium ist bereits über %1$s aktiv.</string>
+    <string name="premium_redeem_unsupported_build">Premium-Codes sind in diesem Build nicht verfügbar. Der Play-Store-Build nutzt Google Play Billing.</string>
+    <string name="premium_redeem_error_invalid_format_dynamic">Bitte gib einen Code wie %1$s ein.</string>
+    <string name="premium_redeem_error_invalid">Ungültiger oder bereits verwendeter Code.</string>
+    <string name="premium_redeem_error_used">Dieser Code wurde bereits eingelöst.</string>
+    <string name="premium_redeem_error_revoked">Dieser Code ist nicht mehr gültig.</string>
+    <string name="premium_redeem_error_expired">Dieser Code ist abgelaufen.</string>
+    <string name="premium_redeem_error_wrong_build">Dieser Code ist für diese App-Version nicht gültig.</string>
+    <string name="premium_redeem_error_network">Der Code konnte gerade nicht geprüft werden. Bitte versuche es später erneut.</string>
+    <string name="premium_redeem_error_sign_in_required">Melde dich zuerst an und löse dann deinen Premium-Code ein.</string>
 
 </resources>

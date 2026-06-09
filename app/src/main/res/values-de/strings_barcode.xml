@@ -7,6 +7,7 @@
     <string name="barcode_scan_title">Barcode scannen</string>
     <string name="permission_barcode_camera_required">Für das Scannen von Barcodes ist die Kameraberechtigung erforderlich.</string>
     <string name="invalid_barcode">Unbekannter Barcode</string>
+    <string name="barcode_camera_unavailable">Auf diesem Gerät ist keine Kamera zum Scannen von Barcodes verfügbar.</string>
 
     <!-- ====================================================== -->
     <!-- Barcode management overview -->

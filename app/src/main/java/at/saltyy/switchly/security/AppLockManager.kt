@@ -25,6 +25,7 @@ import android.content.Intent
 import android.os.Bundle
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.feature.settings.AppLockActivity
+import at.saltyy.switchly.feature.blocker.BlockerActivity
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import at.saltyy.switchly.util.ActivityTransitionCompat
 import java.lang.ref.WeakReference
@@ -96,6 +97,6 @@ object AppLockManager {
     }
 
     private fun shouldProtect(activity: Activity): Boolean {
-        return activity !is AppLockActivity && activity !is NfcEntryActivity
+        return activity !is AppLockActivity && activity !is NfcEntryActivity && activity !is BlockerActivity
     }
 }

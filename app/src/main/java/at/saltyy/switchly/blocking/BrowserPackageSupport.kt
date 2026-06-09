@@ -22,9 +22,14 @@ package at.saltyy.switchly.blocking
 internal fun isFirefoxFamily(pkg: String): Boolean =
     pkg.startsWith("org.mozilla.") || pkg == "net.waterfox.android.release"
 
+internal fun isBraveFamily(pkg: String): Boolean =
+    pkg == "com.brave.browser" ||
+        pkg == "com.brave.browser_beta" ||
+        pkg == "com.brave.browser_nightly"
+
 internal fun isBrowserPackage(pkg: String): Boolean {
     return pkg == "com.android.chrome" ||
-        pkg == "com.brave.browser" ||
+        isBraveFamily(pkg) ||
         pkg == "com.microsoft.emmx" ||
         pkg == "com.opera.browser" ||
         pkg == "com.opera.browser.beta" ||
@@ -40,6 +45,7 @@ internal fun isBrowserPackage(pkg: String): Boolean {
         pkg == "com.kiwibrowser.browser" ||
         pkg == "com.vivaldi.browser" ||
         pkg == "com.duckduckgo.mobile.android" ||
+        pkg == "com.ecosia.android" ||
         pkg == "com.google.android.apps.chrome" ||
         pkg == "com.chrome.beta" ||
         pkg == "com.chrome.dev"
@@ -52,8 +58,14 @@ internal fun browserUrlViewIds(pkg: String): List<String> {
                 "com.android.chrome:id/url_bar"
             )
 
-        "com.brave.browser" ->
+        "com.brave.browser", "com.brave.browser_beta", "com.brave.browser_nightly" ->
             listOf(
+                "$pkg:id/url_bar",
+                "$pkg:id/search_box_text",
+                "$pkg:id/search_box",
+                "$pkg:id/omnibox",
+                "$pkg:id/location_bar",
+                "$pkg:id/address_bar",
                 "com.brave.browser:id/url_bar",
                 "com.android.chrome:id/url_bar"
             )
@@ -131,6 +143,17 @@ internal fun browserUrlViewIds(pkg: String): List<String> {
         "com.duckduckgo.mobile.android" ->
             listOf(
                 "com.duckduckgo.mobile.android:id/omnibarTextInput"
+            )
+
+        "com.ecosia.android" ->
+            listOf(
+                "com.ecosia.android:id/url_bar",
+                "com.ecosia.android:id/search_box_text",
+                "com.ecosia.android:id/search_box",
+                "com.ecosia.android:id/omnibox",
+                "com.ecosia.android:id/location_bar",
+                "com.ecosia.android:id/address_bar",
+                "com.android.chrome:id/url_bar"
             )
 
         "com.google.android.apps.chrome" ->

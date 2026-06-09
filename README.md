@@ -19,12 +19,10 @@ Icons are based on **Material Symbols**:
 
 ## Localization/i18n
 All user-facing text lives in **translations**, not hard-coded in Kotlin/XML:
-
 * Default: `app/src/main/res/values/strings.xml`
 * German: `app/src/main/res/values-de/strings.xml`
 
 Guidelines:
-
 * Use `getString(R.string.some_key)`/`@string/some_key`
 * Prefer formatted strings (`*_fmt`) over string concatenation
 * Keep EN + DE keys in sync with the same key set
@@ -40,8 +38,8 @@ Switchly supports three direct APK configurations plus one Play Store AAB.
 | ---------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
 | `full`           | `fullRelease`          | Google sign-in, Firebase email/password, Firebase cloud backup, file backup, Google Play Billing  |
 | `firebase-email` | `firebaseEmailRelease` | Firebase email/password, Firebase cloud backup, file backup, external checkout URL for Premium    |
-| `offline`        | `offlineRelease`       | File backup only; Firebase is not initialized; Premium purchase, restore, and unlock are disabled |
-| `full-playstore` | `fullRelease` AAB      | Google Play Store build using Google Play Billing                                                 |
+| `offline`        | `offlineRelease`       | File backup only; Firebase is not initialized; Premium can be unlocked through local offline redeem codes |
+| `full-playstore` | `fullRelease` AAB      | Google Play Store build using Google Play Billing; custom redeem-code UI stays hidden              |
 
 Build all APK options plus the full Play Store AAB with Gradle:
 ```bash
@@ -54,7 +52,6 @@ Equivalent alias:
 ```
 
 Outputs are written to `dist/` using website-friendly names:
-
 ```text
 Switchly-<version>-full.apk
 Switchly-<version>-firebase-email.apk
@@ -65,7 +62,6 @@ Switchly-<version>-full-playstore.aab
 Upload `Switchly-<version>-full-playstore.aab` to the Google Play Console. Put the APK files on the website download page.
 
 Individual release tasks:
-
 ```bash
 ./gradlew :app:assembleFullRelease
 ./gradlew :app:assembleFirebaseEmailRelease
@@ -73,7 +69,7 @@ Individual release tasks:
 ./gradlew :app:bundleFullRelease
 ```
 
-See [`docs/APK_VARIANTS.md`](./docs/APK_VARIANTS.md) for build details and [`docs/EXTERNAL_PAYMENTS_STRIPE.md`](./docs/EXTERNAL_PAYMENTS_STRIPE.md) for Stripe/external payment setup.
+See [`docs/APK_VARIANTS.md`](./docs/APK_VARIANTS.md) for build details and [`docs/EXTERNAL_PAYMENTS_STRIPE.md`](./docs/EXTERNAL_PAYMENTS_STRIPE.md) for Stripe/direct payment setup.
 
 ---
 
@@ -96,7 +92,6 @@ GOOGLE_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 ```
 
 Google Maps and release signing are also configured through `signing.properties`:
-
 ```properties
 MAPS_API_KEY=your-maps-api-key
 
@@ -107,15 +102,15 @@ SWITCHLY_RELEASE_KEY_PASSWORD=...
 ```
 
 You can still override any of those via `-P...` or environment variables, for example:
-
 ```bash
 ./gradlew :app:release-apk -PGOOGLE_SERVICES_JSON_PATH=/path/to/google-services.json
 ```
 
 Notes:
 * Firebase config is not required for `assembleOfflineRelease`
-* The offline flavor sets `BuildConfig.SWITCHLY_FIREBASE_ENABLED=false`, skips Firebase initialization at runtime, and disables Premium purchase, restore, and unlock completely
-* Users who want Premium should install the Firebase email/password APK or the full Play Store build
+* The offline flavor sets `BuildConfig.SWITCHLY_FIREBASE_ENABLED=false`, skips Firebase initialization at runtime, disables online purchase/restore, and supports local offline Premium redeem codes
+* The Firebase email/password APK supports online Switchly Premium redeem codes and external/direct payment links
+* The Play Store/full build keeps custom Premium redeem hidden so Google Play Billing remains unchanged
 * Current offline builds still include common Google/Firebase dependencies where shared source files reference them; a dependency-free FOSS flavor requires moving those implementations into flavor-specific source sets
 * Google sign-in is enabled only in the `full` flavor
 * Firebase email/password auth is enabled in `full` and `firebaseEmail`
@@ -150,7 +145,7 @@ These URLs are public and safe to compile into the APK. Stripe/Firebase secrets 
 Payment behavior by build:
 * `full`/Play Store AAB uses Google Play Billing
 * `firebase-email` can use the configured external checkout URL and restores Premium through Firebase entitlements
-* `offline` has no Premium purchase, restore, or unlock flow
+* `offline` has no online Premium purchase/restore flow; Premium can be unlocked through the compiled local offline code allowlist
 
 ---
 
@@ -162,7 +157,6 @@ Release builds enable:
 This means most unused code/resources are removed automatically at build time.
 
 To verify locally:
-
 ```bash
 ./gradlew :app:assembleOfflineRelease
 ```
@@ -192,12 +186,11 @@ Switchly follows **MAJOR.MINOR.PATCH**.
 ---
 
 ## Contributing
-
 Before starting a contribution, please contact me first:
 **[andi@saltyy.at](mailto:andi@saltyy.at)**
 
 Please also read:
-* [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+* [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
 * [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 
 ---
@@ -227,9 +220,8 @@ Switchly is licensed under the **GNU General Public License v3.0**.
 You are free to use, modify, and distribute this software, but any distributed modifications must also be licensed under **GPLv3**.
 
 See:
-
-* [`LICENSE`](./LICENSE)
-* [`NOTICE`](./NOTICE)
+* [`docs/LICENSE`](./docs/LICENSE)
+* [`docs/NOTICE`](./docs/NOTICE)
 
 ---
 

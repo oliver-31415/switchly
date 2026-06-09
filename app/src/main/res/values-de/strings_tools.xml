@@ -72,4 +72,6 @@
     <!-- ====================================================== -->
     <string name="error_open_manage_paired_tags">Gepaarte Tags konnten nicht geöffnet werden. Bitte sende Debug-Logs, falls das weiterhin passiert.</string>
 
+    <string name="toast_manage_paired_tags_requires_enabled">Aktiviere zuerst gekoppelte NFC-Tags in den Blocking Controls/Erlaubt während Blocking.</string>
+    <string name="toast_manage_barcodes_requires_enabled">Aktiviere zuerst Barcode-Steuerung in den Blocking Controls.</string>
 </resources>

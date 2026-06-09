@@ -52,7 +52,7 @@
     <string name="blocking_hub_controls_section">Blocking controls</string>
     <string name="blocking_hub_modes_title">Blocking controls</string>
     <string name="blocking_hub_modes_summary">Choose how Switchly can be enabled and disabled</string>
-    <string name="blocking_hub_features_title">While blocking is active</string>
+    <string name="blocking_hub_features_title">Allowed while blocking</string>
     <string name="blocking_hub_features_summary">Control what can still be changed while protection is active</string>
     <string name="blocking_hub_title">Blocking</string>
     <string name="blocking_hub_apps_title">Manage apps</string>
@@ -72,4 +72,6 @@
     <!-- ====================================================== -->
     <string name="error_open_manage_paired_tags">Could not open Manage paired tags. Please send debug logs if this keeps happening.</string>
 
+    <string name="toast_manage_paired_tags_requires_enabled">Enable paired NFC tags first in Blocking Controls/Allowed while blocking.</string>
+    <string name="toast_manage_barcodes_requires_enabled">Enable barcode control first in Blocking Controls.</string>
 </resources>

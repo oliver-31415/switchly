@@ -10,8 +10,8 @@ plugins {
     id("com.google.firebase.crashlytics") apply false
 }
 
-val switchlyVersionCode = 214
-val switchlyVersionName = "2.1.4"
+val switchlyVersionCode = 215
+val switchlyVersionName = "2.1.5"
 
 val switchlySecretPropertiesFile = rootProject.file("signing.properties")
 val switchlySecretProperties = Properties().apply {
@@ -99,6 +99,11 @@ if (googleServicesJsonExists) {
 val mapsApiKey = switchlySecretProperty("MAPS_API_KEY").switchlyTrimmedUnquoted()
 val externalCheckoutUrl = switchlySecretProperty("SWITCHLY_EXTERNAL_CHECKOUT_URL")
 val externalCustomerPortalUrl = switchlySecretProperty("SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL")
+val switchlyRedeemApiUrl = switchlySecretProperty("SWITCHLY_REDEEM_API_URL")
+    .map { value -> value.ifBlank { "https://switchly.saltyy.at/pages/pay/redeem-code/" } }
+val offlineRedeemCodeAllowlist = (1..10).joinToString(",") { index ->
+    "SALT-OFFLINE-%04d".format(index)
+}
 val externalPaymentProvider = switchlySecretProperty("SWITCHLY_EXTERNAL_PAYMENT_PROVIDER")
     .map { value -> value.ifBlank { "external" } }
 
@@ -153,6 +158,11 @@ android {
             buildConfigField("Boolean", "SWITCHLY_GOOGLE_SIGN_IN_ENABLED", "true")
             buildConfigField("Boolean", "SWITCHLY_PLAY_BILLING_ENABLED", "true")
             buildConfigField("Boolean", "SWITCHLY_EXTERNAL_PAYMENTS_ENABLED", "false")
+            buildConfigField("Boolean", "SWITCHLY_REDEEM_CODES_ENABLED", "false")
+            buildConfigField("Boolean", "SWITCHLY_ONLINE_REDEEM_CODES_ENABLED", "false")
+            buildConfigField("Boolean", "SWITCHLY_OFFLINE_REDEEM_CODES_ENABLED", "false")
+            buildConfigField("String", "SWITCHLY_REDEEM_API_URL", buildConfigString(""))
+            buildConfigField("String", "SWITCHLY_OFFLINE_REDEEM_CODE_ALLOWLIST", buildConfigString(""))
             buildConfigField("String", "SWITCHLY_EXTERNAL_PAYMENT_PROVIDER", buildConfigString("google-play"))
             buildConfigField("String", "SWITCHLY_EXTERNAL_CHECKOUT_URL", buildConfigString(""))
             buildConfigField("String", "SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL", buildConfigString(""))
@@ -166,6 +176,11 @@ android {
             buildConfigField("Boolean", "SWITCHLY_GOOGLE_SIGN_IN_ENABLED", "false")
             buildConfigField("Boolean", "SWITCHLY_PLAY_BILLING_ENABLED", "false")
             buildConfigField("Boolean", "SWITCHLY_EXTERNAL_PAYMENTS_ENABLED", "true")
+            buildConfigField("Boolean", "SWITCHLY_REDEEM_CODES_ENABLED", "true")
+            buildConfigField("Boolean", "SWITCHLY_ONLINE_REDEEM_CODES_ENABLED", "true")
+            buildConfigField("Boolean", "SWITCHLY_OFFLINE_REDEEM_CODES_ENABLED", "false")
+            buildConfigField("String", "SWITCHLY_REDEEM_API_URL", buildConfigString(switchlyRedeemApiUrl.get()))
+            buildConfigField("String", "SWITCHLY_OFFLINE_REDEEM_CODE_ALLOWLIST", buildConfigString(""))
             buildConfigField("String", "SWITCHLY_EXTERNAL_PAYMENT_PROVIDER", buildConfigString(externalPaymentProvider.get()))
             buildConfigField("String", "SWITCHLY_EXTERNAL_CHECKOUT_URL", buildConfigString(externalCheckoutUrl.get()))
             buildConfigField("String", "SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL", buildConfigString(externalCustomerPortalUrl.get()))
@@ -178,9 +193,13 @@ android {
             buildConfigField("Boolean", "SWITCHLY_FIREBASE_ENABLED", "false")
             buildConfigField("Boolean", "SWITCHLY_GOOGLE_SIGN_IN_ENABLED", "false")
             buildConfigField("Boolean", "SWITCHLY_PLAY_BILLING_ENABLED", "false")
-            // Offline builds intentionally do not sell/restore Premium via Stripe/Adyen.
-            // There is no account identity to safely restore purchases after reinstall.
+            // Offline builds do not sell/restore Premium online. They can unlock Premium through a local offline code allowlist.
             buildConfigField("Boolean", "SWITCHLY_EXTERNAL_PAYMENTS_ENABLED", "false")
+            buildConfigField("Boolean", "SWITCHLY_REDEEM_CODES_ENABLED", "true")
+            buildConfigField("Boolean", "SWITCHLY_ONLINE_REDEEM_CODES_ENABLED", "false")
+            buildConfigField("Boolean", "SWITCHLY_OFFLINE_REDEEM_CODES_ENABLED", "true")
+            buildConfigField("String", "SWITCHLY_REDEEM_API_URL", buildConfigString(""))
+            buildConfigField("String", "SWITCHLY_OFFLINE_REDEEM_CODE_ALLOWLIST", buildConfigString(offlineRedeemCodeAllowlist))
             buildConfigField("String", "SWITCHLY_EXTERNAL_PAYMENT_PROVIDER", buildConfigString("none"))
             buildConfigField("String", "SWITCHLY_EXTERNAL_CHECKOUT_URL", buildConfigString(""))
             buildConfigField("String", "SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL", buildConfigString(""))
@@ -262,6 +281,7 @@ dependencies {
     add("implementation", platform("com.google.firebase:firebase-bom:34.13.0"))
     add("implementation", "com.google.firebase:firebase-auth")
     add("implementation", "com.google.firebase:firebase-firestore")
+    add("implementation", "com.google.firebase:firebase-functions")
     add("implementation", "com.google.firebase:firebase-crashlytics")
 
     // Google Sign-In, location, maps, and Credential Manager

@@ -21,8 +21,6 @@ package at.saltyy.switchly.premium
 
 import android.app.Activity
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.data.prefs.AppLogStore
@@ -199,23 +197,11 @@ object PremiumRuntime : PurchasesUpdatedListener {
                             .setProductDetailsParamsList(productDetailsParams)
                             .build()
 
-                        // Workaround for rare crashes where ProxyBillingActivity is started without required extras.
-                        // Keep it disabled by default and enable only during the purchase flow.
-                        BillingProxyActivityGate.enable(activity.applicationContext)
-
-                        val disableLater = Runnable {
-                            appContext?.let { BillingProxyActivityGate.disable(it) }
-                        }
-
-                        // Hard timeout as a safety net in case we never get onPurchasesUpdated.
-                        Handler(Looper.getMainLooper()).postDelayed(disableLater, 60_000L)
-
                         runCatching {
                             val res = client.launchBillingFlow(activity, flowParams)
                             if (BuildConfig.DEBUG) Log.d(TAG, "launchBillingFlow result: ${res.responseCode} ${res.debugMessage}")
                         }.onFailure { t ->
                             Log.e(TAG, "launchBillingFlow threw", t)
-                            disableLater.run()
                         }
                     }
                 }
@@ -228,9 +214,6 @@ object PremiumRuntime : PurchasesUpdatedListener {
         billingResult: BillingResult,
         purchases: MutableList<Purchase>?
     ) {
-        // Once the billing flow returns, we no longer need ProxyBillingActivity enabled.
-        appContext?.let { BillingProxyActivityGate.disable(it) }
-
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
             handlePurchases(purchases)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {

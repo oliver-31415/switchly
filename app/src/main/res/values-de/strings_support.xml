@@ -18,6 +18,9 @@
     <string name="support_debug_preface">Bitte beschreibe dein Problem oberhalb dieser Zeile.</string>
     <string name="support_include_logs">Logs anhängen</string>
     <string name="support_latest_logs_heading">Neueste Logs</string>
+    <string name="support_response_time_short">Antwortzeit: meistens so schnell wie möglich, aber bis zu 7 Tage.</string>
+    <string name="support_response_time_title">Support-Antwortzeit</string>
+    <string name="support_response_time_details">Switchly wird von einer einzelnen Person entwickelt und unterstützt. Ich lese Support-Nachrichten und Bugreports so schnell wie möglich, Antworten können je nach Auslastung aber manchmal bis zu 7 Tage dauern.\n\nBitte füge bei Problemen mit Blocking, Zeitplänen, Premium oder Berechtigungen nach Möglichkeit Debug-Infos hinzu. Das hilft mir, schneller zu verstehen, was passiert ist.</string>
 
     <!-- ====================================================== -->
     <!-- Troubleshooting overview -->

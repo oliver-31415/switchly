@@ -15,6 +15,27 @@
         <item name="android:statusBarColor">?android:attr/colorBackground</item>
         <item name="android:navigationBarColor">?android:attr/colorBackground</item>
         <item name="android:windowBackground">?android:attr/colorBackground</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowAnimationStyle">@style/Animation.Switchly.None</item>
+    </style>
+
+    <style name="Animation.Switchly.None" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/switchly_no_animation</item>
+        <item name="android:activityOpenExitAnimation">@anim/switchly_no_animation</item>
+        <item name="android:activityCloseEnterAnimation">@anim/switchly_no_animation</item>
+        <item name="android:activityCloseExitAnimation">@anim/switchly_no_animation</item>
+        <item name="android:taskOpenEnterAnimation">@anim/switchly_no_animation</item>
+        <item name="android:taskOpenExitAnimation">@anim/switchly_no_animation</item>
+        <item name="android:taskCloseEnterAnimation">@anim/switchly_no_animation</item>
+        <item name="android:taskCloseExitAnimation">@anim/switchly_no_animation</item>
+        <item name="android:taskToFrontEnterAnimation">@anim/switchly_no_animation</item>
+        <item name="android:taskToFrontExitAnimation">@anim/switchly_no_animation</item>
+        <item name="android:taskToBackEnterAnimation">@anim/switchly_no_animation</item>
+        <item name="android:taskToBackExitAnimation">@anim/switchly_no_animation</item>
     </style>
 
     <!-- =========================

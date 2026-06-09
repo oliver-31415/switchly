@@ -44,6 +44,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.nfc.NfcWriteWaitingActivity
@@ -169,7 +170,15 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val locked = EditingLockGuard.isLocked(this)
-        AppLogStore.append(this, "NFC", "ManagePairedTagsActivity opened locked=$locked")
+        val pairedTagsEnabled = getSharedPreferences("switchly_prefs", MODE_PRIVATE)
+            .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+        AppLogStore.append(this, "NFC", "ManagePairedTagsActivity opened locked=$locked pairedTagsEnabled=$pairedTagsEnabled")
+        if (!pairedTagsEnabled) {
+            AppLogStore.append(this, "NFC", "ManagePairedTagsActivity blocked because paired tags are disabled")
+            Toast.makeText(this, R.string.toast_manage_paired_tags_requires_enabled, Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
         if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_paired_tags)) {
             AppLogStore.append(this, "NFC", "ManagePairedTagsActivity blocked by editing lock")
             return
@@ -231,6 +240,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
     }
 
     private fun refresh() {
+        if (!::adapter.isInitialized || !::empty.isInitialized) return
         val tags = NfcUidPairingStore.getPairedTags(this)
         val sorted = applySort(tags, getSortMode())
         lastTags = sorted

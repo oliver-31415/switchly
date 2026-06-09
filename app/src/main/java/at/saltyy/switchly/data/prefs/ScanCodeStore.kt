@@ -23,6 +23,7 @@ import android.content.Context
 import android.util.Base64
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import at.saltyy.switchly.nfc.NfcSchema
 import at.saltyy.switchly.R
 import java.time.LocalDate
 
@@ -80,6 +81,26 @@ object ScanCodeStore {
 
     private fun readIds(sp: android.content.SharedPreferences): Set<String> {
         return runCatching { sp.getStringSet(KEY_ENTRY_IDS, emptySet())?.toSet() }.getOrNull() ?: emptySet()
+    }
+
+    private fun getIntCompat(sp: android.content.SharedPreferences, key: String, defaultValue: Int): Int {
+        return when (val raw = sp.all[key]) {
+            is Int -> raw
+            is Long -> raw.toInt()
+            is Float -> raw.toInt()
+            is String -> raw.toIntOrNull() ?: defaultValue
+            else -> defaultValue
+        }
+    }
+
+    private fun getLongCompat(sp: android.content.SharedPreferences, key: String, defaultValue: Long): Long {
+        return when (val raw = sp.all[key]) {
+            is Long -> raw
+            is Int -> raw.toLong()
+            is Float -> raw.toLong()
+            is String -> raw.toLongOrNull() ?: defaultValue
+            else -> defaultValue
+        }
     }
 
     fun getEntries(ctx: Context): List<Entry> {
@@ -170,7 +191,7 @@ object ScanCodeStore {
         val id = entry.id
         val now = System.currentTimeMillis()
         entry.cooldownMinutes?.coerceAtLeast(1)?.let { minutes ->
-            val lastUsed = sp.getLong(KEY_LAST_USED_PREFIX + id, 0L)
+            val lastUsed = getLongCompat(sp, KEY_LAST_USED_PREFIX + id, 0L)
             val cooldownMs = minutes * 60_000L
             if (lastUsed > 0L && now - lastUsed in 0 until cooldownMs) {
                 val remainingMs = cooldownMs - (now - lastUsed)
@@ -181,7 +202,7 @@ object ScanCodeStore {
 
         entry.dailyLimit?.coerceAtLeast(1)?.let { limit ->
             val day = LocalDate.now().toEpochDay()
-            val used = sp.getInt(KEY_COUNT_PREFIX + id + "_" + day, 0)
+            val used = getIntCompat(sp, KEY_COUNT_PREFIX + id + "_" + day, 0)
             if (used >= limit) {
                 return ctx.getString(R.string.manage_barcodes_limit_daily_toast, limit)
             }
@@ -195,7 +216,7 @@ object ScanCodeStore {
         val id = entry.id
         val day = LocalDate.now().toEpochDay()
         val countKey = KEY_COUNT_PREFIX + id + "_" + day
-        val current = sp.getInt(countKey, 0)
+        val current = getIntCompat(sp, countKey, 0)
         sp.edit(commit = true) {
             putLong(KEY_LAST_USED_PREFIX + id, System.currentTimeMillis())
             putInt(countKey, current + 1)
@@ -204,24 +225,7 @@ object ScanCodeStore {
 
     fun isStrictSwitchlyUri(rawValue: String): Boolean {
         val uri = runCatching { rawValue.trim().toUri() }.getOrNull() ?: return false
-        if (!uri.scheme.equals("switchly", ignoreCase = true)) return false
-        if (!uri.fragment.isNullOrBlank()) return false
-        if (!uri.query.isNullOrBlank()) return false
-
-        val host = uri.host?.lowercase() ?: return false
-        val segs = uri.pathSegments ?: emptyList()
-        return when (host) {
-            "switch" -> segs.size == 1 && isSupportedAction(segs[0])
-            "profile" -> segs.size == 2 && segs[0].trim().isNotBlank() && isSupportedAction(segs[1])
-            else -> false
-        }
-    }
-
-    private fun isSupportedAction(action: String?): Boolean {
-        val a = action?.trim()?.lowercase().orEmpty()
-        if (a.isBlank()) return false
-        if (a in setOf("enable", "disable", "toggle", "start", "stop", "on", "off", "activate", "emergency_disable")) return true
-        return a.matches(Regex("""(temp_enable|temp_disable|reentry)\d{1,4}"""))
+        return NfcSchema.isSupportedCommandUri(uri)
     }
 
     private fun clearTodayCounters(ctx: Context, id: String) {
@@ -239,9 +243,9 @@ object ScanCodeStore {
         if (rawValue.isBlank() || actionUri.isBlank()) return null
         val name = sp.getString(KEY_NAME_PREFIX + id, null)?.trim()?.takeIf { it.isNotBlank() }
         val note = sp.getString(KEY_NOTE_PREFIX + id, null)?.trim()?.takeIf { it.isNotBlank() }
-        val dailyLimit = if (sp.contains(KEY_DAILY_LIMIT_PREFIX + id)) sp.getInt(KEY_DAILY_LIMIT_PREFIX + id, 1).coerceAtLeast(1) else null
-        val cooldownMinutes = if (sp.contains(KEY_COOLDOWN_PREFIX + id)) sp.getInt(KEY_COOLDOWN_PREFIX + id, 1).coerceAtLeast(1) else null
-        val addedAt = sp.getLong(KEY_ADDED_AT_PREFIX + id, 0L)
+        val dailyLimit = if (sp.contains(KEY_DAILY_LIMIT_PREFIX + id)) getIntCompat(sp, KEY_DAILY_LIMIT_PREFIX + id, 1).coerceAtLeast(1) else null
+        val cooldownMinutes = if (sp.contains(KEY_COOLDOWN_PREFIX + id)) getIntCompat(sp, KEY_COOLDOWN_PREFIX + id, 1).coerceAtLeast(1) else null
+        val addedAt = getLongCompat(sp, KEY_ADDED_AT_PREFIX + id, 0L)
         return Entry(
             kind = kind,
             rawValue = rawValue,

@@ -97,7 +97,7 @@
     <string name="widget_blocked_notifications_name">Blocked notifications</string>
     <string name="widget_pause_blocker_name">Pause blocker</string>
     <string name="widget_next_schedule_name">Next schedule</string>
-    <string name="experimental_notice_title">Experimental features in 2.1.4</string>
-    <string name="experimental_notice_body">Some advanced protection features in this version still need extra testing.\n\nPlease send feedback with logs if something feels wrong with:\n• Location-based schedules\n• Bluetooth schedules\n• Website usage tracking/website blocking\n• QR and barcode control workflows\n\nThese features may behave differently depending on your device, especially on Xiaomi, Samsung, Honor, Fairphone, and other OEM-customized Android versions.</string>
+    <string name="experimental_notice_title">Feedback for Switchly 2.1.5</string>
+    <string name="experimental_notice_body">Some areas in this version are still experimental and need extra feedback. Please send logs if something feels wrong with split-screen/pop-up view blocking, in-app blocking for YouTube, Instagram, and Snapchat, battery warning/permission status consistency, Developer Mode logging, Support change feedback, FAQ wording and troubleshooting clarity, or German/English string quality. Multi-window and in-app blocking are best-effort and can behave differently depending on your device and app versions. A follow-up update is already planned for these areas, so reports are especially helpful.</string>
 
 </resources>

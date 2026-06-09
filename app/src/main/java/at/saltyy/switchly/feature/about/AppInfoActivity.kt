@@ -50,6 +50,7 @@ class AppInfoActivity : TilesInfoActivity() {
         val installer = formatInstallerLabel(installerPackage)
 
         val buildType = if (BuildConfig.DEBUG) "Debug" else "Release"
+        val apkVariant = BuildConfig.SWITCHLY_APK_VARIANT
 
         val website = getString(R.string.about_website_url)
         val downloads = getString(R.string.about_downloads_url)
@@ -70,6 +71,10 @@ class AppInfoActivity : TilesInfoActivity() {
                     true
                 },
                 enableLongPressCopy = false
+            ),
+            Tile(
+                getString(R.string.about_apk_variant_label),
+                apkVariant
             ),
             Tile(
                 getString(R.string.about_build_type_label),

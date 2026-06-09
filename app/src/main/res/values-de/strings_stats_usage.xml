@@ -122,7 +122,7 @@
     <string name="usage_apps_no_data">Noch keine App-Nutzungsdaten vorhanden. Switchly erfasst die App-Nutzung, solange die Bedienungshilfe aktiviert ist.</string>
     <string name="usage_apps_no_blocked">Noch keine blockierten Apps konfiguriert.</string>
     <string name="usage_websites_no_accessibility">Website-Tracking benötigt aktivierte Switchly-Bedienungshilfe.</string>
-    <string name="usage_websites_no_data">Noch keine Website-Daten. Öffne eine Website in einem unterstützten Browser (Chrome, Brave, Edge, Firefox …), während die Switchly-Bedienungshilfe aktiviert ist.</string>
+    <string name="usage_websites_no_data">Noch keine Website-Daten. Öffne eine Website in einem unterstützten Browser (Chrome, Brave, Edge, Firefox, Ecosia …), während die Switchly-Bedienungshilfe aktiviert ist.</string>
     <string name="usage_websites_no_blocked">Noch keine limitierten Websites konfiguriert.</string>
     <string name="usage_value_label">Nutzung</string>
     <string name="usage_share_of_period">Anteil am Zeitraum</string>

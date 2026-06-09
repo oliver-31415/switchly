@@ -23,14 +23,25 @@ import android.accessibilityservice.AccessibilityService
 import android.app.ActivityManager
 import android.content.Context
 import android.media.AudioManager
+import android.os.Build
 import android.os.Handler
+import android.os.SystemClock
 import android.view.KeyEvent
+import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.blocker.BlockerActivity
 
 internal class BlockLaunchController(
     private val service: AccessibilityService,
     private val handler: Handler
 ) {
+
+    private val lastVisibilityRetryAtByPkg = HashMap<String, Long>()
+
+    private val BLOCKER_VERIFY_DELAY_MS = 750L
+    private val BLOCKER_RETRY_DELAY_MS = 140L
+    private val BLOCKER_RETRY_COOLDOWN_MS = 2_500L
+    private val BLOCKER_VERIFY_TTL_MS = 2_500L
 
     fun performBackSequence(
         backCount: Int,
@@ -70,9 +81,11 @@ internal class BlockLaunchController(
 
     fun postKillBackgroundPackage(pkg: String, delayMs: Long = 0L) {
         val killAction = {
-            runCatching {
+            if (SwitchModeStore.isEnabled(service)) {
+                runCatching {
                 val activityManager = service.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
                 activityManager.killBackgroundProcesses(pkg)
+                }
             }
         }
         if (delayMs <= 0L) {
@@ -84,9 +97,87 @@ internal class BlockLaunchController(
 
     fun showAppBlocker(pkg: String, label: String, delayMs: Long) {
         handler.postDelayed({
-            runCatching { BlockerActivity.show(service, pkg, label) }
-            postKillBackgroundPackage(pkg, delayMs = 220L)
+            if (!SwitchModeStore.isEnabled(service)) {
+                BlockerActivity.clearVisibilityState("show_skipped_disabled")
+                BlockingRuntime.markBlockerVerify(service, pkg, "skipped reason=switchly_disabled")
+                AppLogStore.append(service, "Blocking", "[blocker_launch] pkg=$pkg result=skipped reason=switchly_disabled")
+                return@postDelayed
+            }
+            launchAppBlocker(pkg, label, reason = "initial")
+            handler.postDelayed({
+                verifyAppBlockerVisible(pkg, label)
+            }, BLOCKER_VERIFY_DELAY_MS)
         }, delayMs)
+    }
+
+    private fun launchAppBlocker(pkg: String, label: String, reason: String) {
+        if (!SwitchModeStore.isEnabled(service)) {
+            BlockerActivity.clearVisibilityState("launch_skipped_disabled")
+            BlockingRuntime.markBlockerVerify(service, pkg, "launch_skipped reason=$reason switchly_disabled")
+            AppLogStore.append(service, "Blocking", "[blocker_launch] pkg=$pkg result=skipped reason=switchly_disabled launchReason=$reason")
+            return
+        }
+        BlockingRuntime.markBlockerLaunchRequested(service, pkg, "reason=$reason label=$label")
+        val result = runCatching { BlockerActivity.show(service, pkg, label) }
+        if (result.isFailure) {
+            val error = result.exceptionOrNull()?.javaClass?.simpleName ?: "unknown"
+            BlockingRuntime.markBlockerVerify(service, pkg, "launch_failed reason=$reason error=$error")
+            AppLogStore.append(service, "Blocking", "[blocker_launch] pkg=$pkg result=failed reason=$reason error=$error")
+        }
+        postKillBackgroundPackage(pkg, delayMs = 220L)
+    }
+
+    private fun verifyAppBlockerVisible(pkg: String, label: String) {
+        if (!SwitchModeStore.isEnabled(service)) {
+            BlockerActivity.clearVisibilityState("verify_skipped_disabled")
+            BlockingRuntime.markBlockerVerify(service, pkg, "verify_skipped switchly_disabled")
+            AppLogStore.append(service, "Blocking", "[blocker_verify] pkg=$pkg result=skipped reason=switchly_disabled")
+            return
+        }
+        if (BlockerActivity.isRecentlyFocusedFor(pkg, BLOCKER_VERIFY_TTL_MS)) {
+            BlockingRuntime.markBlockerVerify(service, pkg, "visible ${BlockerActivity.debugVisibilityState(pkg)}")
+            return
+        }
+
+        val now = SystemClock.elapsedRealtime()
+        val lastRetry = lastVisibilityRetryAtByPkg[pkg] ?: 0L
+        val canRetry = now - lastRetry >= BLOCKER_RETRY_COOLDOWN_MS
+        val state = BlockerActivity.debugVisibilityState(pkg)
+
+        if (!canRetry) {
+            BlockingRuntime.markBlockerVerify(service, pkg, "not_visible retry=throttled $state")
+            AppLogStore.append(service, "Blocking", "[blocker_verify] pkg=$pkg result=not_visible retry=throttled $state")
+            return
+        }
+
+        lastVisibilityRetryAtByPkg[pkg] = now
+        BlockingRuntime.markBlockerVerify(service, pkg, "not_visible retry=home_bounce manufacturer=${Build.MANUFACTURER} $state")
+        AppLogStore.append(service, "Blocking", "[blocker_verify] pkg=$pkg result=not_visible retry=home_bounce manufacturer=${Build.MANUFACTURER} $state")
+
+        // Some OEMs keep the previous app or an app-filter surface in front even though the Activity launch succeeded.
+        // Bouncing to Home first makes the retry much more likely to get a real focused window.
+        postHome()
+        handler.postDelayed({
+            if (!SwitchModeStore.isEnabled(service)) {
+                BlockerActivity.clearVisibilityState("retry_skipped_disabled")
+                BlockingRuntime.markBlockerVerify(service, pkg, "retry_skipped switchly_disabled")
+                AppLogStore.append(service, "Blocking", "[blocker_verify] pkg=$pkg result=retry_skipped reason=switchly_disabled")
+                return@postDelayed
+            }
+            launchAppBlocker(pkg, label, reason = "visibility_retry")
+            handler.postDelayed({
+                val retryState = BlockerActivity.debugVisibilityState(pkg)
+                val visibleAfterRetry = BlockerActivity.isRecentlyFocusedFor(pkg, BLOCKER_VERIFY_TTL_MS)
+                BlockingRuntime.markBlockerVerify(
+                    service,
+                    pkg,
+                    if (visibleAfterRetry) "retry_visible $retryState" else "retry_failed $retryState"
+                )
+                if (!visibleAfterRetry) {
+                    AppLogStore.append(service, "Blocking", "[blocker_verify] pkg=$pkg result=retry_failed $retryState")
+                }
+            }, BLOCKER_VERIFY_DELAY_MS)
+        }, BLOCKER_RETRY_DELAY_MS)
     }
 
     fun bounceHomeAndKill(pkg: String) {

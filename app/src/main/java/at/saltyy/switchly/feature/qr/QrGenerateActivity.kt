@@ -83,6 +83,9 @@ class QrGenerateActivity : AppCompatActivity() {
         )
     }
 
+    private fun defaultAction(): Action =
+        actions.firstOrNull { it.mode == Mode.GLOBAL && it.id == "toggle" } ?: actions.first()
+
     private val minutePresets by lazy {
         listOf(
             getString(R.string.qr_minutes_5),
@@ -119,7 +122,8 @@ class QrGenerateActivity : AppCompatActivity() {
         b.actionDropdown.setAdapter(
             ArrayAdapter(this, android.R.layout.simple_list_item_1, actionLabels)
         )
-        b.actionDropdown.setText(actionLabels.first(), false)
+        val defaultAction = defaultAction()
+        b.actionDropdown.setText(getString(defaultAction.labelRes), false)
 
         // Profile dropdown
         refreshProfiles()
@@ -132,7 +136,7 @@ class QrGenerateActivity : AppCompatActivity() {
 
         // Listeners
         b.actionDropdown.setOnItemClickListener { _, _, pos, _ ->
-            val act = actions.getOrNull(pos) ?: actions.first()
+            val act = actions.getOrNull(pos) ?: defaultAction()
             applyActionUi(act)
             regenerate()
         }
@@ -162,7 +166,7 @@ class QrGenerateActivity : AppCompatActivity() {
         }
 
         // Initial render
-        applyActionUi(actions.first())
+        applyActionUi(defaultAction())
         regenerate()
     }
 
@@ -234,7 +238,7 @@ class QrGenerateActivity : AppCompatActivity() {
 
     private fun regenerate() {
         val actionLabel = b.actionDropdown.text?.toString().orEmpty()
-        val action = actions.firstOrNull { getString(it.labelRes) == actionLabel } ?: actions.first()
+        val action = actions.firstOrNull { getString(it.labelRes) == actionLabel } ?: defaultAction()
 
         val uri = buildSwitchlyUri(action)
         b.tvUri.text = uri

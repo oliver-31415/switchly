@@ -30,6 +30,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -63,6 +65,7 @@ import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.receiver.DPMReceiver
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.SystemBarColorCompat
@@ -177,6 +180,29 @@ class SupportActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_support, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_info -> {
+                showSupportResponseInfoDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showSupportResponseInfoDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.support_response_time_title)
+            .setMessage(R.string.support_response_time_details)
+            .setPositiveButton(R.string.ok, null)
+            .showAccented()
+    }
+
     private fun copyToClipboard(label: String, text: String) {
         val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText(label, text))
@@ -207,7 +233,9 @@ class SupportActivity : AppCompatActivity() {
 
         section("App")
         line("App", "${getString(R.string.app_name)} ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+        line("APK variant", BuildConfig.SWITCHLY_APK_VARIANT)
         line("Build type", BuildConfig.BUILD_TYPE)
+        line("Build variant", "${BuildConfig.SWITCHLY_APK_VARIANT}-${BuildConfig.BUILD_TYPE}")
         line("Package", packageName)
 
         runCatching {
@@ -242,6 +270,10 @@ class SupportActivity : AppCompatActivity() {
         val defaultSp = PreferenceManager.getDefaultSharedPreferences(this@SupportActivity)
 
         line("Premium", PremiumManager.isPremium(this@SupportActivity))
+        line("Premium source", PremiumManager.premiumSource(this@SupportActivity))
+        line("Premium redeem codes enabled", BuildConfig.SWITCHLY_REDEEM_CODES_ENABLED)
+        line("Premium online redeem enabled", BuildConfig.SWITCHLY_ONLINE_REDEEM_CODES_ENABLED)
+        line("Premium offline redeem enabled", BuildConfig.SWITCHLY_OFFLINE_REDEEM_CODES_ENABLED)
         line("Switchly enabled", SwitchModeStore.isEnabled(this@SupportActivity))
         line("Switchly base enabled", SwitchModeStore.isBaseEnabled(this@SupportActivity))
         line("Mode", mode.raw)
@@ -304,6 +336,8 @@ class SupportActivity : AppCompatActivity() {
         }
 
         line("Quick actions visible", defaultSp.getBoolean("pref_show_quick_actions", true))
+        line("Temporary mode visible", defaultSp.getBoolean("pref_show_temporary_mode", true))
+        line("Emergency unlock visible", defaultSp.getBoolean("pref_show_emergency_unlock", true))
         line("Quick actions expanded", defaultSp.getBoolean("home_quick_actions_expanded", true))
         line("QR tools visible", AutomationModeStore.shouldShowQrTools(this@SupportActivity))
         line("Barcode tools visible", AutomationModeStore.shouldShowBarcodeTools(this@SupportActivity))
@@ -404,6 +438,26 @@ class SupportActivity : AppCompatActivity() {
             runtimeDiagnostics.lastBlockShownWallMs,
             runtimeDiagnostics.lastBlockShownPackage,
             runtimeDiagnostics.lastBlockShownDetails
+        ))
+        line("Last blocker launch", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastBlockerLaunchWallMs,
+            runtimeDiagnostics.lastBlockerLaunchPackage,
+            runtimeDiagnostics.lastBlockerLaunchDetails
+        ))
+        line("Last blocker verify", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastBlockerVerifyWallMs,
+            runtimeDiagnostics.lastBlockerVerifyPackage,
+            runtimeDiagnostics.lastBlockerVerifyDetails
+        ))
+        line("Last blocker activity", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastBlockerActivityWallMs,
+            runtimeDiagnostics.lastBlockerActivityPackage,
+            runtimeDiagnostics.lastBlockerActivityDetails
+        ))
+        line("Last multi-window fallback", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastMultiWindowBlockWallMs,
+            runtimeDiagnostics.lastMultiWindowBlockPackage,
+            runtimeDiagnostics.lastMultiWindowBlockDetails
         ))
 
         val inboxEvents = runCatching { BlockedInboxStore.getAll(this@SupportActivity) }.getOrDefault(emptyList())

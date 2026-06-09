@@ -34,7 +34,7 @@ import android.net.Uri
  *
  * Notes:
  *  - "action" can be one of the standard actions (`enable`, `disable`, `toggle`)
- *    or a temporary-action like `temp10` (minutes).
+ *    or a temporary action like `temp_disable10`, `temp_enable10`, or `reentry10`.
  *  - All patterns are uniform, which makes parsing straightforward.
  */
 object NfcSchema {
@@ -52,8 +52,8 @@ object NfcSchema {
     // Default temporary disable duration (10 minutes)
     const val DEFAULT_TEMP_DISABLE_MS: Long = 10 * 60 * 1000L
 
-    // Regex for actions like "temp5", "temp30", "temp120", etc.
-    private val TEMP_ACTION_REGEX = Regex("""temp(\d{1,4})""")
+    // Helper for actions like "temp_disable10", "temp_enable30", "reentry120" and legacy "temp10".
+    private val TEMP_ACTION_REGEX = Regex("""(?:temp(?:_enable|_disable)?|reentry)(\d{1,4})""")
 
     /**
      * Returns true if the given host is one of the supported hosts.
@@ -62,6 +62,47 @@ object NfcSchema {
         host.equals(HOST_SWITCH, ignoreCase = true) ||
             host.equals(HOST_PROFILE, ignoreCase = true)
 
+    /**
+     * Strict parser for externally supplied Switchly command URIs.
+     * Rejects unknown hosts, query/fragment payloads, missing path segments and unsupported actions early.
+     */
+    fun parseCommandUri(uri: Uri?): NfcCommand? {
+        uri ?: return null
+        if (!uri.scheme.equals(SCHEME, ignoreCase = true)) return null
+        if (!uri.query.isNullOrBlank() || !uri.fragment.isNullOrBlank()) return null
+
+        val host = uri.host?.lowercase() ?: return null
+        val segs = uri.pathSegments ?: emptyList()
+
+        return when (host) {
+            HOST_SWITCH -> {
+                if (segs.size != 1) return null
+                val action = segs[0].trim().lowercase()
+                if (!isSupportedAction(action)) return null
+                GlobalCommand(action)
+            }
+
+            HOST_PROFILE -> {
+                if (segs.size != 2) return null
+                val profile = segs[0].trim()
+                val action = segs[1].trim().lowercase()
+                if (profile.isBlank() || !isSupportedAction(action)) return null
+                ProfileCommand(profile, action)
+            }
+
+            else -> null
+        }
+    }
+
+    fun isSupportedCommandUri(uri: Uri?): Boolean = parseCommandUri(uri) != null
+
+    fun isSupportedAction(action: String?): Boolean {
+        val a = action?.trim()?.lowercase().orEmpty()
+        if (a.isBlank()) return false
+        if (a in setOf("enable", "disable", "toggle", "start", "stop", "on", "off", "activate", "emergency_disable")) return true
+        return a.matches(Regex("""(temp_enable|temp_disable|reentry)(\d{1,4})?"""))
+    }
+
     // -------------------------------------------------------------------------
     // Public URI builders
     // -------------------------------------------------------------------------
@@ -69,7 +110,7 @@ object NfcSchema {
     /**
      * Builds a global URI such as:
      *  - switchly://switch/toggle
-     *  - switchly://switch/temp10
+     *  - switchly://switch/temp_disable10
      */
     fun uriForGlobalAction(action: String): String =
         Uri.Builder()
@@ -82,7 +123,7 @@ object NfcSchema {
     /**
      * Builds a profile-specific URI such as:
      *  - switchly://profile/Work/enable
-     *  - switchly://profile/Home/temp30
+     *  - switchly://profile/Home/temp_enable30
      */
     fun uriForProfileAction(profile: String, action: String): String =
         Uri.Builder()
@@ -104,10 +145,10 @@ object NfcSchema {
         val action: String
 
         /**
-         * Convenient helper for temp actions. Returns the "X" in tempX, or null.
+         * Convenient helper for temp actions. Returns the minutes part, or null.
          * Example:
-         *  - action = "temp10" -> 10
-         *  - action = "temp120" -> 120
+         *  - action = "temp_disable10" -> 10
+         *  - action = "temp_enable120" -> 120
          *  - action = "enable" -> null
          */
         fun tempMinutesOrNull(): Int? = parseTempMinutes(action)
@@ -123,12 +164,12 @@ object NfcSchema {
     ) : NfcCommand
 
     /**
-     * Tries to extract the number of minutes from a temp action like "temp10".
+     * Tries to extract the number of minutes from a temp action like "temp_disable10".
      *
      * Examples:
-     *  - "temp10"  -> 10
-     *  - "temp120" -> 120
-     *  - "enable"  -> null
+     *  - "temp_disable10" -> 10
+     *  - "temp_enable120" -> 120
+     *  - "enable" -> null
      */
     fun parseTempMinutes(action: String): Int? {
         val match = TEMP_ACTION_REGEX.matchEntire(action) ?: return null

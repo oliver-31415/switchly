@@ -20,6 +20,7 @@
 package at.saltyy.switchly.feature.premium
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -30,6 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import at.saltyy.switchly.R
 import at.saltyy.switchly.premium.PremiumManager
+import at.saltyy.switchly.premium.PremiumRedeemRuntime
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
@@ -44,6 +46,7 @@ class PremiumInfoActivity : AppCompatActivity() {
     private lateinit var thanksTextView: TextView
     private lateinit var purchaseButton: MaterialButton
     private lateinit var restoreButton: MaterialButton
+    private lateinit var redeemButton: MaterialButton
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -79,6 +82,7 @@ class PremiumInfoActivity : AppCompatActivity() {
         thanksTextView = findViewById(R.id.tvPremiumThanks)
         purchaseButton = findViewById(R.id.btnPurchasePremium)
         restoreButton = findViewById(R.id.btnRestorePurchases)
+        redeemButton = findViewById(R.id.btnRedeemPremiumCode)
 
         purchaseButton.backgroundTintList = AccentColor.getActiveColor(this)
         purchaseButton.setTextColor(ContextCompat.getColor(this, R.color.font_white))
@@ -86,6 +90,10 @@ class PremiumInfoActivity : AppCompatActivity() {
         restoreButton.isVisible = true
         restoreButton.strokeColor = AccentColor.getActiveColor(this)
         restoreButton.setTextColor(AccentColor.getAccentColorInt(this))
+
+        redeemButton.isVisible = PremiumRedeemRuntime.isRedeemSupportedBuild()
+        redeemButton.strokeColor = AccentColor.getActiveColor(this)
+        redeemButton.setTextColor(AccentColor.getAccentColorInt(this))
     }
 
     private fun setupButtons() {
@@ -104,6 +112,10 @@ class PremiumInfoActivity : AppCompatActivity() {
         restoreButton.setOnClickListener {
             PremiumManager.restorePurchases(this)
         }
+
+        redeemButton.setOnClickListener {
+            startActivity(Intent(this, PremiumRedeemActivity::class.java))
+        }
     }
 
     private fun renderState() {
@@ -111,9 +123,17 @@ class PremiumInfoActivity : AppCompatActivity() {
 
         if (isPremium) {
             statusTextView.text = getString(R.string.premium_status_active)
+            thanksTextView.text = getString(R.string.premium_source_note, PremiumManager.premiumSourceLabel(this))
             thanksTextView.visibility = View.VISIBLE
             purchaseButton.text = getString(R.string.premium_button_thanks)
             purchaseButton.isEnabled = false
+            restoreButton.isVisible = !BuildConfig.SWITCHLY_OFFLINE_REDEEM_CODES_ENABLED
+            restoreButton.text = if (BuildConfig.SWITCHLY_EXTERNAL_PAYMENTS_ENABLED) {
+                getString(R.string.premium_button_manage_external)
+            } else {
+                getString(R.string.premium_button_restore)
+            }
+            redeemButton.isVisible = false
         } else {
             statusTextView.text = getString(R.string.premium_status_inactive)
             thanksTextView.visibility = View.GONE
@@ -125,6 +145,7 @@ class PremiumInfoActivity : AppCompatActivity() {
                 purchaseButton.text = getString(R.string.premium_button_unavailable_offline)
                 purchaseButton.isEnabled = false
                 restoreButton.isVisible = false
+                redeemButton.isVisible = false
                 return
             }
 
@@ -133,12 +154,15 @@ class PremiumInfoActivity : AppCompatActivity() {
                     getString(R.string.premium_button_buy_external, PremiumManager.externalPaymentProviderName())
                 BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED ->
                     getString(R.string.premium_button_buy)
+                BuildConfig.SWITCHLY_OFFLINE_REDEEM_CODES_ENABLED ->
+                    getString(R.string.premium_button_redeem_offline)
                 else ->
                     getString(R.string.premium_payments_unavailable)
             }
-            purchaseButton.isEnabled = true
+            purchaseButton.isEnabled = !BuildConfig.SWITCHLY_OFFLINE_REDEEM_CODES_ENABLED
 
-            restoreButton.isVisible = true
+            restoreButton.isVisible = !BuildConfig.SWITCHLY_OFFLINE_REDEEM_CODES_ENABLED
+            redeemButton.isVisible = PremiumRedeemRuntime.isRedeemSupportedBuild()
             restoreButton.text = if (BuildConfig.SWITCHLY_EXTERNAL_PAYMENTS_ENABLED) {
                 getString(R.string.premium_button_manage_external)
             } else {

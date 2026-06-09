@@ -122,7 +122,7 @@
     <string name="usage_apps_no_data">No tracked app usage yet. Switchly records app usage while Accessibility is enabled.</string>
     <string name="usage_apps_no_blocked">No blocked apps configured yet.</string>
     <string name="usage_websites_no_accessibility">Website tracking needs Switchly Accessibility enabled.</string>
-    <string name="usage_websites_no_data">No website data yet. Open a website in a supported browser (Chrome, Brave, Edge, Firefox…) while Switchly Accessibility is enabled.</string>
+    <string name="usage_websites_no_data">No website data yet. Open a website in a supported browser (Chrome, Brave, Edge, Firefox, Ecosia…) while Switchly Accessibility is enabled.</string>
     <string name="usage_websites_no_blocked">No limited websites configured yet.</string>
     <string name="usage_value_label">Usage</string>
     <string name="usage_share_of_period">Share of period</string>

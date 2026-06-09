@@ -45,9 +45,9 @@ object BatteryOptimizationCompat {
     }
 
     fun isEffectivelyOk(context: Context): Boolean {
-        return isIgnoringBatteryOptimizations(context) ||
-            !isBackgroundRestricted(context) ||
-            isUserConfirmedMaxAvailable(context)
+        // Be strict: Android "Optimized" can still delay schedules, geofences, receivers and Accessibility-related reliability. 
+        // Treat the setup as OK only when the app is truly excluded from battery optimization, or when the user manually confirmed the best available OEM/autostart setup.
+        return isIgnoringBatteryOptimizations(context) || isUserConfirmedMaxAvailable(context)
     }
 
     fun isLikelyStillRestricted(context: Context): Boolean = !isEffectivelyOk(context)

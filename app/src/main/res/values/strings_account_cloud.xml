@@ -58,7 +58,7 @@
     <!-- Local file backup and restore -->
     <!-- ====================================================== -->
     <string name="pref_file_backup_title">Back up to file</string>
-    <string name="pref_file_backup_summary">Export a local JSON backup without signing in</string>
+    <string name="pref_file_backup_summary">Export a local JSON backup without signing in. The file may contain personal blocking data.</string>
     <string name="pref_file_restore_title">Restore from file</string>
     <string name="pref_file_restore_summary">Import a local JSON backup and overwrite local settings</string>
     <string name="file_backup_ok">File backup saved</string>
@@ -77,7 +77,7 @@
     <string name="settings_confirm_restore_title">Restore</string>
     <string name="settings_confirm_restore_message">Load a backup from the cloud and overwrite local settings?</string>
     <string name="settings_confirm_file_backup_title">Back up to file</string>
-    <string name="settings_confirm_file_backup_message">Create a local JSON backup of your Switchly settings, profiles, schedules, stats, and paired tags. Store this file somewhere safe.</string>
+    <string name="settings_confirm_file_backup_message">Create a local JSON backup of your Switchly settings, profiles, schedules, stats, paired tags, app/domain rules, and other personal blocking data. Store this file securely and do not share it publicly.</string>
     <string name="settings_confirm_file_restore_title">Restore from file</string>
     <string name="settings_confirm_file_restore_message">Restore a local JSON backup and overwrite current Switchly data? For safety, Switchly and active schedules will be disabled after restore.</string>
 

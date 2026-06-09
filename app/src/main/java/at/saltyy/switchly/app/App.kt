@@ -31,7 +31,6 @@ import at.saltyy.switchly.feature.entry.QuickShortcutRegistrar
 import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
 import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
 import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
-import at.saltyy.switchly.premium.BillingProxyActivityGate
 import at.saltyy.switchly.security.AppLockManager
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.ManagedDevicePolicyHelper
@@ -47,10 +46,6 @@ class App : Application() {
             runCatching { FirebaseApp.initializeApp(this) }
         }
 
-        // Billing workaround: keep ProxyBillingActivity disabled unless we are actively launching a purchase.
-        if (BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) {
-            BillingProxyActivityGate.disable(this)
-        }
 
         // language
         LocaleHelper.setLanguage(this, LocaleHelper.getSavedLanguage(this))

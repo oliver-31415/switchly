@@ -39,6 +39,16 @@ object ProfileUsageStore {
     private val pending = HashMap<String, Long>()
     @Volatile private var lastFlushAtMs: Long = 0L
 
+    private fun getLongCompat(sp: android.content.SharedPreferences, key: String, defaultValue: Long): Long {
+        return when (val raw = sp.all[key]) {
+            is Long -> raw
+            is Int -> raw.toLong()
+            is Float -> raw.toLong()
+            is String -> raw.toLongOrNull() ?: defaultValue
+            else -> defaultValue
+        }
+    }
+
     fun addUsageMsToday(ctx: Context, profile: String, pkg: String, deltaMs: Long) {
         if (profile.isBlank() || pkg.isBlank() || deltaMs <= 0L) return
         val key = dayKey(todayYmdInt(), profile, pkg)
@@ -56,7 +66,7 @@ object ProfileUsageStore {
     fun getUsageMsToday(ctx: Context, profile: String, pkg: String): Long {
         if (profile.isBlank() || pkg.isBlank()) return 0L
         val key = dayKey(todayYmdInt(), profile, pkg)
-        val persisted = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong(key, 0L)
+        val persisted = getLongCompat(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE), key, 0L)
         val buffered = synchronized(lock) { pending[key] ?: 0L }
         return persisted + buffered
     }
@@ -84,7 +94,7 @@ object ProfileUsageStore {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit {
             snapshot.forEach { (key, delta) ->
-                val current = sp.getLong(key, 0L).coerceAtLeast(0L)
+                val current = getLongCompat(sp, key, 0L).coerceAtLeast(0L)
                 putLong(key, current + delta.coerceAtLeast(0L))
             }
         }

@@ -29,8 +29,8 @@ object BlockingToggleKeys {
 
     // YouTube
     const val KEY_BLOCK_YT_SHORTS = "block_yt_shorts"
-    const val KEY_BLOCK_YT_SEARCH = "block_yt_search"
-    const val KEY_BLOCK_YT_COMMENTS = "block_yt_comments"
+    const val KEY_BLOCK_YT_SUBSCRIPTIONS = "block_yt_subscriptions"
+    const val KEY_BLOCK_YT_YOU = "block_yt_you"
     const val KEY_BLOCK_YT_PIP = "block_yt_pip"
 
     // Instagram
@@ -69,8 +69,8 @@ object BlockingToggleKeys {
 
     private val IN_APP_SURFACE_KEYS = setOf(
         KEY_BLOCK_YT_SHORTS,
-        KEY_BLOCK_YT_SEARCH,
-        KEY_BLOCK_YT_COMMENTS,
+        KEY_BLOCK_YT_SUBSCRIPTIONS,
+        KEY_BLOCK_YT_YOU,
         KEY_BLOCK_YT_PIP,
 
         KEY_BLOCK_IG_REELS,

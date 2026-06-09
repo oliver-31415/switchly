@@ -209,6 +209,16 @@ object AppBlockSafety {
             PolicyAction.WARN_ONLY,
             "Browsers are often used for downloads, support, and recovery steps."
         ),
+        "com.brave.browser_beta" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
+        "com.brave.browser_nightly" to RiskRule(
+            RiskCategory.BROWSER,
+            PolicyAction.WARN_ONLY,
+            "Browsers are often used for downloads, support, and recovery steps."
+        ),
         "com.microsoft.emmx" to RiskRule(
             RiskCategory.BROWSER,
             PolicyAction.WARN_ONLY,
@@ -368,8 +378,8 @@ object AppBlockSafety {
     fun sanitizeManagedPackages(context: Context, pkgs: Set<String>): Set<String> {
         if (pkgs.isEmpty()) return emptySet()
 
-        // Build the default-app snapshot once. This method is used from hot UI paths
-        // (status refresh, profile reads), so avoid PackageManager/Telecom binder calls here.
+        // Build the default-app snapshot once.
+        // This method is used from hot UI paths (status refresh, profile reads), so avoid PackageManager/Telecom binder calls here.
         val defaults = collectResolvedDefaults(context, includeSlowPackageManagerLookups = false)
         return pkgs
             .asSequence()

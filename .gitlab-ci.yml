@@ -9,17 +9,14 @@ stages:
 variables:
   GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
 
-default:
-  before_script:
-    - chmod +x ./gradlew
-  cache:
-    key: gradle
-    paths:
-      - .gradle/
-      - .gradle/wrapper/
-      - .gradle/caches/
+cache:
+  key: gradle
+  paths:
+    - .gradle/
+    - .gradle/wrapper/
+    - .gradle/caches/
 
-build_release_apk:
+build_offline_release_apk:
   image: eclipse-temurin:17-jdk-jammy
   stage: build
   rules:
@@ -41,15 +38,14 @@ build_release_apk:
     - yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses > /dev/null || true
     - sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-36" "build-tools;36.0.0"
     - cd $CI_PROJECT_DIR
-    - if [ -n "$GOOGLE_SERVICES_JSON_B64" ]; then echo "$GOOGLE_SERVICES_JSON_B64" | base64 -d > app/google-services.json; fi
+    - chmod +x ./gradlew
 
   script:
-    - chmod +x ./gradlew
-    - ./gradlew :app:assembleOfflineRelease
+    - ./gradlew --no-daemon :app:lintOfflineRelease :app:assembleOfflineRelease
 
   artifacts:
+    name: "switchly-offline-apk-$CI_COMMIT_SHORT_SHA"
     when: on_success
+    expire_in: 30 days
     paths:
       - app/build/outputs/apk/offline/release/*.apk
-      - dist/*.apk
-      - dist/*.aab

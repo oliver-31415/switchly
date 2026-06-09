@@ -18,6 +18,7 @@
     <!-- ====================================================== -->
     <string name="about_abi_label">ABI</string>
     <string name="about_android_label">Android</string>
+    <string name="about_apk_variant_label">APK-Variante</string>
     <string name="about_app_name_label">App-Name</string>
     <string name="about_brand_label">Marke</string>
     <string name="about_build_type_label">Build-Typ</string>

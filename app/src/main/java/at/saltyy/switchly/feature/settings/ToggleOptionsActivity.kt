@@ -197,6 +197,8 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         // --- Switches (UI & Info)
         val switchEmergency = findViewById<SwitchMaterial>(R.id.switchEmergency)
         val switchShowQuickActions = findViewById<SwitchMaterial>(R.id.switchShowQuickActions)
+        val switchShowTemporaryMode = findViewById<SwitchMaterial>(R.id.switchShowTemporaryMode)
+        val switchShowEmergencyUnlock = findViewById<SwitchMaterial>(R.id.switchShowEmergencyUnlock)
 
         // --- Switches (In-app)
         val switchEnablePairedUids = findViewById<SwitchMaterial>(R.id.switchEnablePairedUids)
@@ -237,7 +239,10 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val rowAutostart = findViewById<View>(R.id.rowAutostart)
 
         val rowEmergency = findViewById<View>(R.id.rowEmergency)
+        val dividerAfterEmergency = findViewById<View>(R.id.dividerAfterEmergency)
         val rowShowQuickActions = findViewById<View>(R.id.rowShowQuickActions)
+        val rowShowTemporaryMode = findViewById<View>(R.id.rowShowTemporaryMode)
+        val rowShowEmergencyUnlock = findViewById<View>(R.id.rowShowEmergencyUnlock)
         val rowEnablePairedUids = findViewById<View>(R.id.rowEnablePairedUids)
         val rowAutoPairOnWrite = findViewById<View>(R.id.rowAutoPairOnWrite)
 
@@ -381,6 +386,20 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             summaryRes = R.string.pref_show_quick_actions_summary,
             detailsRes = R.string.toggle_detail_quick_actions
         )
+        addInlineDetailsAction(
+            row = rowShowTemporaryMode,
+            switchView = switchShowTemporaryMode,
+            titleRes = R.string.pref_show_temporary_mode_title,
+            summaryRes = R.string.pref_show_temporary_mode_summary,
+            detailsRes = R.string.toggle_detail_show_temporary_mode
+        )
+        addInlineDetailsAction(
+            row = rowShowEmergencyUnlock,
+            switchView = switchShowEmergencyUnlock,
+            titleRes = R.string.pref_show_emergency_unlock_title,
+            summaryRes = R.string.pref_show_emergency_unlock_summary,
+            detailsRes = R.string.toggle_detail_show_emergency_unlock
+        )
 
         accentSwitches.clear()
         accentSwitches += listOf(
@@ -404,6 +423,8 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             switchAutostart,
             switchEmergency,
             switchShowQuickActions,
+            switchShowTemporaryMode,
+            switchShowEmergencyUnlock,
         )
         applySwitchAccentTints()
 
@@ -430,6 +451,16 @@ open class ToggleOptionsActivity : AppCompatActivity() {
 
         switchEmergency.isChecked = EmergencyBypassStore.isFeatureEnabled(ctx)
         switchShowQuickActions.isChecked = sp.getBoolean(KEY_SHOW_QUICK_ACTIONS, true)
+        switchShowTemporaryMode.isChecked = sp.getBoolean(KEY_SHOW_TEMPORARY_MODE, true)
+        switchShowEmergencyUnlock.isChecked = sp.getBoolean(KEY_SHOW_EMERGENCY_UNLOCK, true)
+
+        fun refreshEmergencyFeatureVisibility() {
+            val visible = switchShowEmergencyUnlock.isChecked
+            rowEmergency.visibility = if (visible) View.VISIBLE else View.GONE
+            dividerAfterEmergency.visibility = if (visible) View.VISIBLE else View.GONE
+        }
+        refreshEmergencyFeatureVisibility()
+
         switchEnablePairedUids.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
         switchAutoPairOnWrite.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, false)
 
@@ -690,6 +721,12 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (canEditActiveAccess()) switchEmergency.toggle()
         }
         rowShowQuickActions.setOnClickListener { switchShowQuickActions.toggle() }
+        rowShowTemporaryMode.setOnClickListener {
+            if (canEditActiveAccess()) switchShowTemporaryMode.toggle()
+        }
+        rowShowEmergencyUnlock.setOnClickListener {
+            if (canEditActiveAccess()) switchShowEmergencyUnlock.toggle()
+        }
 
         switchAllowButtonEnable.setOnCheckedChangeListener { buttonView, isChecked ->
             if (ignoreMixedChannelListener) return@setOnCheckedChangeListener
@@ -864,6 +901,22 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         }
         switchShowQuickActions.setOnCheckedChangeListener { _, isChecked ->
             sp.edit { putBoolean(KEY_SHOW_QUICK_ACTIONS, isChecked) }
+        }
+        switchShowTemporaryMode.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (!canEditActiveAccess()) {
+                buttonView.isChecked = sp.getBoolean(KEY_SHOW_TEMPORARY_MODE, true)
+                return@setOnCheckedChangeListener
+            }
+            sp.edit { putBoolean(KEY_SHOW_TEMPORARY_MODE, isChecked) }
+        }
+        switchShowEmergencyUnlock.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (!canEditActiveAccess()) {
+                buttonView.isChecked = sp.getBoolean(KEY_SHOW_EMERGENCY_UNLOCK, true)
+                refreshEmergencyFeatureVisibility()
+                return@setOnCheckedChangeListener
+            }
+            sp.edit { putBoolean(KEY_SHOW_EMERGENCY_UNLOCK, isChecked) }
+            refreshEmergencyFeatureVisibility()
         }
 
         lifecycleScope.launch {
@@ -1264,7 +1317,9 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             R.id.rowMixedAllowNfcTagWriting,
             R.id.rowLockSwitchlyAppAccess,
             R.id.rowAutostart,
-            R.id.rowEmergency
+            R.id.rowEmergency,
+            R.id.rowShowTemporaryMode,
+            R.id.rowShowEmergencyUnlock
         ).forEach {
             findViewById<View>(it)?.alpha = activeAccessRowAlpha
         }
@@ -1276,7 +1331,9 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             R.id.switchMixedAllowNfcTagWriting,
             R.id.switchLockSwitchlyAppAccess,
             R.id.switchAutostart,
-            R.id.switchEmergency
+            R.id.switchEmergency,
+            R.id.switchShowTemporaryMode,
+            R.id.switchShowEmergencyUnlock
         ).forEach {
             findViewById<SwitchMaterial>(it)?.apply {
                 isEnabled = !activeAccessLocked
@@ -1640,6 +1697,8 @@ open class ToggleOptionsActivity : AppCompatActivity() {
 
         const val KEY_SHOW_NEXT_SCHEDULE = "pref_show_next_schedule"
         const val KEY_SHOW_QUICK_ACTIONS = "pref_show_quick_actions"
+        const val KEY_SHOW_TEMPORARY_MODE = "pref_show_temporary_mode"
+        const val KEY_SHOW_EMERGENCY_UNLOCK = "pref_show_emergency_unlock"
         const val KEY_QS_TILE_REQUESTED = "pref_qs_tile_requested"
         const val KEY_QR_QS_TILE_REQUESTED = "pref_qr_qs_tile_requested"
         const val KEY_BARCODE_QS_TILE_REQUESTED = "pref_barcode_qs_tile_requested"

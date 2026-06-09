@@ -90,6 +90,7 @@ object ScheduleStore {
         val endDate: Int,
         val wifiSsid: String? = null,
         val btDeviceName: String? = null,
+        val btDeviceAddress: String? = null,
         val locationLabel: String? = null,
         val locationLat: Double? = null,
         val locationLng: Double? = null,
@@ -154,6 +155,7 @@ object ScheduleStore {
                 endDate = o.optInt("endDate"),
                 wifiSsid = o.optString("wifiSsid").ifBlank { null },
                 btDeviceName = o.optString("btDeviceName").ifBlank { null },
+                btDeviceAddress = o.optString("btDeviceAddress").ifBlank { null },
                 locationLabel = o.optString("locationLabel").ifBlank { null },
                 locationLat = if (o.has("locationLat") && !o.isNull("locationLat")) o.optDouble("locationLat") else null,
                 locationLng = if (o.has("locationLng") && !o.isNull("locationLng")) o.optDouble("locationLng") else null,
@@ -183,7 +185,7 @@ object ScheduleStore {
     fun hasEnabledBluetoothSchedules(context: Context): Boolean {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (sp.contains(KEY_HAS_BT_SCHEDULES)) return sp.getBoolean(KEY_HAS_BT_SCHEDULES, false)
-        val has = getAll(context).any { it.enabled && !it.btDeviceName.isNullOrBlank() }
+        val has = getAll(context).any { it.enabled && (!it.btDeviceName.isNullOrBlank() || !it.btDeviceAddress.isNullOrBlank()) }
         sp.edit { putBoolean(KEY_HAS_BT_SCHEDULES, has) }
         return has
     }
@@ -213,6 +215,7 @@ object ScheduleStore {
             o.put("endDate", s.endDate)
             o.put("wifiSsid", s.wifiSsid ?: "")
             o.put("btDeviceName", s.btDeviceName ?: "")
+            o.put("btDeviceAddress", s.btDeviceAddress ?: "")
             o.put("locationLabel", s.locationLabel ?: "")
             if (s.locationLat != null) o.put("locationLat", s.locationLat) else o.put("locationLat", JSONObject.NULL)
             if (s.locationLng != null) o.put("locationLng", s.locationLng) else o.put("locationLng", JSONObject.NULL)
@@ -226,7 +229,7 @@ object ScheduleStore {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val json = arr.toString()
         val hasWifi = list.any { it.enabled && !it.wifiSsid.isNullOrBlank() }
-        val hasBt = list.any { it.enabled && !it.btDeviceName.isNullOrBlank() }
+        val hasBt = list.any { it.enabled && (!it.btDeviceName.isNullOrBlank() || !it.btDeviceAddress.isNullOrBlank()) }
         val hasLocation = list.any { it.enabled && it.isLocationSchedule() }
 
         sp.edit {

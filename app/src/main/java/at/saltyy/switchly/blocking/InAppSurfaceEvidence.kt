@@ -49,7 +49,7 @@ internal class InAppSurfaceEvidence {
     }
 
     fun surfaceKeysForPackage(pkg: String): Array<String> = when (pkg) {
-        "com.google.android.youtube" -> arrayOf("yt:shorts")
+        "com.google.android.youtube" -> arrayOf("yt:shorts", "yt:you")
         "com.instagram.android" -> arrayOf("ig:reels", "ig:explore", "ig:search", "ig:stories")
         "com.twitter.android" -> arrayOf("x:foryou", "x:search", "x:grok", "x:notifications")
         "com.snapchat.android" -> arrayOf("snap:map", "snap:stories", "snap:spotlight", "snap:following")

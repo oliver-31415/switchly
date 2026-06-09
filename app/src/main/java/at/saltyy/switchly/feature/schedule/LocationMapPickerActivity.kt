@@ -16,6 +16,7 @@ import android.content.Context
 import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
+import android.location.Geocoder.GeocodeListener
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -42,7 +43,9 @@ import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 
 class LocationMapPickerActivity : AppCompatActivity() {
 
@@ -293,21 +296,72 @@ class LocationMapPickerActivity : AppCompatActivity() {
         }.getOrNull()
     }
 
-    @Suppress("DEPRECATION")
-    private fun getFromLocationNameBlockingCompat(
+    private suspend fun getFromLocationNameBlockingCompat(
         geocoder: Geocoder,
         query: String
     ): List<Address> {
-        return geocoder.getFromLocationName(query, 1).orEmpty()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return suspendCancellableCoroutine { continuation ->
+                geocoder.getFromLocationName(query, 1, object : GeocodeListener {
+                    override fun onGeocode(addresses: MutableList<Address>) {
+                        if (continuation.isActive) continuation.resume(addresses)
+                    }
+
+                    override fun onError(errorMessage: String?) {
+                        if (continuation.isActive) continuation.resume(emptyList())
+                    }
+                })
+            }
+        }
+
+        return runCatching {
+            Geocoder::class.java
+                .getMethod(
+                    "getFromLocationName",
+                    String::class.java,
+                    Int::class.javaPrimitiveType
+                )
+                .invoke(geocoder, query, 1)
+                .asAddressList()
+        }.getOrDefault(emptyList())
     }
 
-    @Suppress("DEPRECATION")
-    private fun getFromLocationBlockingCompat(
+    private suspend fun getFromLocationBlockingCompat(
         geocoder: Geocoder,
         latitude: Double,
         longitude: Double
     ): List<Address> {
-        return geocoder.getFromLocation(latitude, longitude, 1).orEmpty()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return suspendCancellableCoroutine { continuation ->
+                geocoder.getFromLocation(latitude, longitude, 1, object : GeocodeListener {
+                    override fun onGeocode(addresses: MutableList<Address>) {
+                        if (continuation.isActive) continuation.resume(addresses)
+                    }
+
+                    override fun onError(errorMessage: String?) {
+                        if (continuation.isActive) continuation.resume(emptyList())
+                    }
+                })
+            }
+        }
+
+        return runCatching {
+            Geocoder::class.java
+                .getMethod(
+                    "getFromLocation",
+                    Double::class.javaPrimitiveType,
+                    Double::class.javaPrimitiveType,
+                    Int::class.javaPrimitiveType
+                )
+                .invoke(geocoder, latitude, longitude, 1)
+                .asAddressList()
+        }.getOrDefault(emptyList())
+    }
+
+    private fun Any?.asAddressList(): List<Address> {
+        return (this as? List<*>)
+            ?.filterIsInstance<Address>()
+            .orEmpty()
     }
 
     private fun formatGeocoderLabel(address: Address): String? {

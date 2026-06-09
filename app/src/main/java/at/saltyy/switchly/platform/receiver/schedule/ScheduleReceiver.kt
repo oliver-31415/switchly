@@ -103,12 +103,9 @@ class ScheduleReceiver : BroadcastReceiver() {
             )
         }
 
-        // "Trigger" schedules (Wi-Fi/BT based) use wifiSsid/btDeviceName.
-        schedules.filter { !it.wifiSsid.isNullOrBlank() }
-        schedules.filter { !it.btDeviceName.isNullOrBlank() }
-
+        // "Trigger" schedules (Wi-Fi/BT based) use wifiSsid/btDeviceName/btDeviceAddress.
         val needsWifiSsid = schedules.any { !it.wifiSsid.isNullOrBlank() }
-        val needsBtInfo = schedules.any { !it.btDeviceName.isNullOrBlank() }
+        val needsBtInfo = schedules.any { !it.btDeviceName.isNullOrBlank() || !it.btDeviceAddress.isNullOrBlank() }
 
         var ssid = cachedSsid(ctx)
 
@@ -177,8 +174,14 @@ class ScheduleReceiver : BroadcastReceiver() {
         if (needsWifiSsid && ssid.isNullOrBlank()) {
             if (hardWifiDisconnect) {
                 dbg("SSID null and Wi-Fi hard-disconnected -> allow disconnect evaluation")
+                logWifiScheduleStateIfNeeded(ctx, "disconnected", "Wi-Fi schedule waiting for disconnect evaluation")
             } else {
                 dbg("Wi-Fi schedules exist but ssid is null while connected -> wait for SSID (reason=$wifiReason)")
+                logWifiScheduleStateIfNeeded(
+                    ctx,
+                    "waiting_for_ssid:${wifiReason ?: alarmReason ?: "tick"}",
+                    "Wi-Fi schedule waiting for SSID. Check Location permission/services if this repeats."
+                )
                 updateNextAlarmAndNotifyIfChanged(ctx)
                 return
             }
@@ -213,7 +216,7 @@ class ScheduleReceiver : BroadcastReceiver() {
                     val timeOk = (s.startMinutes == 0 && s.endMinutes >= 1439) ||
                         inTimeRange(nowMinutes, s.startMinutes, s.endMinutes)
 
-                    val active = appliesToday && timeOk && wifiConnected && ssid.equals(s.wifiSsid, true)
+                    val active = appliesToday && timeOk && wifiConnected && ssidMatches(ssid, s.wifiSsid)
                     if (active) {
                         if (isRangeAction(s.action)) true
                         else shouldFireOneShotConn(ctx, s, token = "WIFI:${s.wifiSsid}:${s.action.name}")
@@ -223,7 +226,7 @@ class ScheduleReceiver : BroadcastReceiver() {
                     }
                 }
 
-                !s.btDeviceName.isNullOrBlank() -> {
+                !s.btDeviceName.isNullOrBlank() || !s.btDeviceAddress.isNullOrBlank() -> {
                     val appliesToday = when (s.type) {
                         ScheduleStore.Type.WEEKLY -> (s.daysMask and todayBit) != 0
                         ScheduleStore.Type.ONE_TIME ->
@@ -233,10 +236,15 @@ class ScheduleReceiver : BroadcastReceiver() {
                     val timeOk = (s.startMinutes == 0 && s.endMinutes >= 1439) ||
                         inTimeRange(nowMinutes, s.startMinutes, s.endMinutes)
 
-                    val active = appliesToday && timeOk && btConnected && btName.equals(s.btDeviceName, true)
+                    val active = appliesToday && timeOk && btConnected && bluetoothScheduleMatches(
+                        scheduleName = s.btDeviceName,
+                        scheduleAddress = s.btDeviceAddress,
+                        currentName = btName,
+                        currentAddress = btAddr
+                    )
                     if (active) {
                         if (isRangeAction(s.action)) true
-                        else shouldFireOneShotConn(ctx, s, token = "BT:${s.btDeviceName}:${s.action.name}")
+                        else shouldFireOneShotConn(ctx, s, token = "BT:${s.btDeviceAddress ?: s.btDeviceName}:${s.action.name}")
                     } else {
                         ScheduleRuntimeStore.clearLastFiredToken(ctx, s.id)
                         false
@@ -294,7 +302,7 @@ class ScheduleReceiver : BroadcastReceiver() {
 
             val effectiveLastSource = when {
                 previousActiveRange?.wifiSsid?.isNotBlank() == true -> SOURCE_WIFI
-                previousActiveRange?.btDeviceName?.isNotBlank() == true -> SOURCE_BT
+                (previousActiveRange?.btDeviceName?.isNotBlank() == true || previousActiveRange?.btDeviceAddress?.isNotBlank() == true) -> SOURCE_BT
                 previousActiveRange != null -> SOURCE_TIME
                 else -> lastSource
             }
@@ -311,8 +319,7 @@ class ScheduleReceiver : BroadcastReceiver() {
 
             if (shouldExitOnce) {
                 // ENABLE_AND_DISABLE => disable on exit if we owned enable
-                // If a manual override happened during an active range and ownership got
-                // cleared by older builds, still revert once on exit.
+                // If a manual override happened during an active range and ownership got cleared by older builds, still revert once on exit.
                 if (
                     hadEnableAndDisable &&
                         (ScheduleRuntimeStore.wasEnabledBySchedule(ctx) || manualOverrideWasActive)
@@ -355,7 +362,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         dbg("matches=${matches.size} -> winner id=${target.id} profile=${target.profile} start=${target.startMinutes} end=${target.endMinutes} action=${target.action}")
         val source = when {
             !target.wifiSsid.isNullOrBlank() -> SOURCE_WIFI
-            !target.btDeviceName.isNullOrBlank() -> SOURCE_BT
+            !target.btDeviceName.isNullOrBlank() || !target.btDeviceAddress.isNullOrBlank() -> SOURCE_BT
             else -> SOURCE_TIME
         }
 
@@ -397,7 +404,7 @@ class ScheduleReceiver : BroadcastReceiver() {
             // Build a stable token so we count the range schedule only once per active period.
             // (Token is cleared when schedule becomes inactive.)
             val wifi = target.wifiSsid ?: ""
-            val bt = target.btDeviceName ?: ""
+            val bt = target.btDeviceAddress ?: target.btDeviceName ?: ""
             val token = "RANGE_${ymd}_${target.startMinutes}_${target.endMinutes}_${target.action}" + "_${target.profile}_${wifi}_${bt}"
             // Choose the appropriate token gate (time/conn doesn't really matter here)
             shouldFireOneShotTime(ctx, target, token)
@@ -706,6 +713,34 @@ class ScheduleReceiver : BroadcastReceiver() {
         ScheduleStore.Action.DISABLE_AND_ENABLE -> 0
     }
 
+
+    private fun bluetoothScheduleMatches(
+        scheduleName: String?,
+        scheduleAddress: String?,
+        currentName: String?,
+        currentAddress: String?
+    ): Boolean {
+        val configuredAddress = normalizeBtAddress(scheduleAddress)
+        val configuredName = scheduleName?.trim().orEmpty()
+        val configuredNameAsAddress = normalizeBtAddress(configuredName)
+        val activeAddress = normalizeBtAddress(currentAddress)
+        val activeName = currentName?.trim().orEmpty()
+
+        return when {
+            configuredAddress.isNotEmpty() && activeAddress.isNotEmpty() -> configuredAddress == activeAddress
+            configuredNameAsAddress.isNotEmpty() && activeAddress.isNotEmpty() -> configuredNameAsAddress == activeAddress
+            configuredName.isNotEmpty() && activeName.isNotEmpty() -> configuredName.equals(activeName, ignoreCase = true)
+            else -> false
+        }
+    }
+
+    private fun normalizeBtAddress(value: String?): String =
+        value
+            ?.trim()
+            ?.takeIf { it.matches(Regex("""(?i)([0-9a-f]{2}:){5}[0-9a-f]{2}""")) }
+            ?.uppercase()
+            .orEmpty()
+
     private fun inTimeRange(nowMin: Int, startMin: Int, endMin: Int): Boolean {
         if (endMin == startMin) return false
 
@@ -808,15 +843,47 @@ class ScheduleReceiver : BroadcastReceiver() {
                 wifiConnectionInfoCompat(wifiManager)?.ssid
             } ?: return null
 
-            if (raw == WifiManager.UNKNOWN_SSID) return null
-            if (raw.equals("<unknown ssid>", ignoreCase = true)) return null
-
-            raw.trim('"').trim().ifBlank { null }
+            normalizeSsid(raw)
         } catch (_: SecurityException) {
             null
         } catch (_: Throwable) {
             null
         }
+    }
+
+    private fun ssidMatches(current: String?, expected: String?): Boolean {
+        val cleanCurrent = normalizeSsid(current) ?: return false
+        val cleanExpected = normalizeSsid(expected) ?: return false
+        return cleanCurrent.equals(cleanExpected, ignoreCase = true)
+    }
+
+    private fun normalizeSsid(raw: String?): String? {
+        val value = raw
+            ?.trim()
+            ?.removePrefix(""")
+            ?.removeSuffix(""")
+            ?.trim()
+            ?: return null
+
+        return value.takeIf {
+            it.isNotBlank() &&
+                !it.equals("<unknown ssid>", ignoreCase = true) &&
+                !it.equals("unknown ssid", ignoreCase = true)
+        }
+    }
+
+    private fun logWifiScheduleStateIfNeeded(ctx: Context, key: String, message: String) {
+        val now = System.currentTimeMillis()
+        val prefs = ctx.getSharedPreferences(PREFS_WIFI, Context.MODE_PRIVATE)
+        val lastKey = prefs.getString(KEY_WIFI_LOG_STATE, null)
+        val lastAt = prefs.getLong(KEY_WIFI_LOG_AT, 0L)
+        if (lastKey == key && now - lastAt < WIFI_LOG_THROTTLE_MS) return
+
+        prefs.edit {
+            putString(KEY_WIFI_LOG_STATE, key)
+            putLong(KEY_WIFI_LOG_AT, now)
+        }
+        AppLogStore.append(ctx, "Schedule", message)
     }
 
     private fun cacheBtEvent(ctx: Context, name: String?, addr: String?, connected: Boolean) {
@@ -878,6 +945,9 @@ class ScheduleReceiver : BroadcastReceiver() {
         private const val TAG = "ScheduleReceiver"
         private const val PREFS_WIFI = "switchly_wifi_cache"
         private const val KEY_LAST_SSID = "last_ssid"
+        private const val KEY_WIFI_LOG_STATE = "wifi_log_state"
+        private const val KEY_WIFI_LOG_AT = "wifi_log_at"
+        private const val WIFI_LOG_THROTTLE_MS = 5 * 60 * 1000L
         private const val PREFS_BT = "switchly_bt_cache"
         private const val KEY_BT_NAME = "last_bt_name"
         private const val KEY_BT_ADDR = "last_bt_addr"

@@ -150,8 +150,20 @@ class InAppBlockingActivity : AppCompatActivity() {
             surfaceLabel = getString(R.string.in_app_surface_shorts_label),
             tvLimit = tvLimit
         )
-        setupSwitch(R.id.swYtSearch, BlockingToggleKeys.KEY_BLOCK_YT_SEARCH)
-        setupSwitch(R.id.swYtComments, BlockingToggleKeys.KEY_BLOCK_YT_COMMENTS)
+        setupTimedSwitch(
+            R.id.swYtSubscriptions,
+            BlockingToggleKeys.KEY_BLOCK_YT_SUBSCRIPTIONS,
+            surfaceKey = "yt:subscriptions",
+            surfaceLabel = getString(R.string.in_app_surface_subscriptions_label),
+            tvLimit = tvLimit
+        )
+        setupTimedSwitch(
+            R.id.swYtYou,
+            BlockingToggleKeys.KEY_BLOCK_YT_YOU,
+            surfaceKey = "yt:you",
+            surfaceLabel = getString(R.string.in_app_surface_you_label),
+            tvLimit = tvLimit
+        )
         setupSwitch(R.id.swYtPip, BlockingToggleKeys.KEY_BLOCK_YT_PIP)
 
         // Instagram
@@ -279,12 +291,7 @@ class InAppBlockingActivity : AppCompatActivity() {
     }
 
     /**
-     * Like [setupSwitch], but for a specific in-app surface (Shorts/Reels/Stories/etc).
-     * When toggled ON for the first time, we ask what blocking mode to use:
-     *  - Always block (immediate)
-     *  - Daily limit for that specific surface
-     *  - Use global in-app limit (if set)
-     * Rules are stored per profile.
+     * Like [setupSwitch], but for a specific in-app surface.
      */
     private fun setupTimedSwitch(
         switchId: Int,
@@ -295,37 +302,20 @@ class InAppBlockingActivity : AppCompatActivity() {
     ) {
         val sw = findViewById<SwitchCompat>(switchId)
         sw.isChecked = readProfileBool(prefKey, false)
-
-        // Long-press to change the surface rule without toggling.
-        sw.setOnLongClickListener {
-            showSurfaceRuleDialog(surfaceKey, surfaceLabel, tvLimit, onCancel = null)
-            true
+        if (sw.isChecked) {
+            setSurfaceRule(surfaceKey, -1)
         }
 
-        var internalChange = false
+        sw.setOnLongClickListener(null)
         sw.setOnCheckedChangeListener { _, checked ->
-            if (internalChange) return@setOnCheckedChangeListener
-
             writeProfileBool(prefKey, checked)
+            if (checked) {
+                setSurfaceRule(surfaceKey, -1)
+            } else {
+                SurfaceLimitStore.clear(this, currentProfile(), surfaceKey)
+            }
             BlockingRuntime.ensureRunning(this)
-
-            if (!checked) return@setOnCheckedChangeListener
-
-            // Only prompt if the user hasn't chosen a mode for this surface yet.
-            if (SurfaceLimitStore.hasRule(this, currentProfile(), surfaceKey)) return@setOnCheckedChangeListener
-
-            showSurfaceRuleDialog(
-                surfaceKey = surfaceKey,
-                surfaceLabel = surfaceLabel,
-                tvLimit = tvLimit,
-                onCancel = {
-                    internalChange = true
-                    sw.isChecked = false
-                    internalChange = false
-                    writeProfileBool(prefKey, false)
-                    BlockingRuntime.ensureRunning(this)
-                }
-            )
+            refreshInAppLimit(tvLimit)
         }
     }
 

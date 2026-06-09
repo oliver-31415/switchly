@@ -56,11 +56,6 @@
     <!-- Notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Battery optimization exemption request (shows a system popup on supported devices) -->
-    <uses-permission
-        android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
-        tools:ignore="BatteryLife" />
-
     <!-- Foreground services -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
@@ -103,8 +98,7 @@
         android:supportsRtl="true"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        tools:replace="android:allowBackup">
+        android:fullBackupContent="@xml/backup_rules">
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -113,6 +107,12 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <!-- Required by some Google Maps/Play Services dynamite modules on Android 9+.
+             Keep optional so installs are not blocked on devices where the legacy library is absent. -->
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
 
         <receiver
             android:name=".receiver.DPMReceiver"
@@ -155,18 +155,6 @@
             </intent-filter>
         </activity>
 
-        <!--
-            Play Billing (manifest-merged from the billing library).
-            Prevent external/accidental launches of ProxyBillingActivity without required extras, which can crash with a null PendingIntent on some devices/OS versions.
-        -->
-        <activity
-            android:name="com.android.billingclient.api.ProxyBillingActivity"
-            android:exported="false"
-            android:enabled="false"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:taskAffinity=""
-            android:launchMode="singleTask" />
 
         <!-- Settings -->
         <activity
@@ -272,7 +260,10 @@
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:launchMode="singleTask"
-            android:theme="@style/Theme.Switchly.Blocker" />
+            android:resizeableActivity="false"
+            android:supportsPictureInPicture="false"
+            android:theme="@style/Theme.Switchly.Blocker"
+            tools:ignore="DiscouragedApi,NonResizeableActivity" />
 
         <!-- About/developer tools -->
         <activity
@@ -301,6 +292,16 @@
             android:name=".feature.premium.PremiumInfoActivity"
             android:exported="false"
             android:label="@string/premium_title" />
+
+        <activity
+            android:name=".feature.premium.PremiumRedeemActivity"
+            android:exported="false"
+            android:label="@string/premium_redeem_title"
+            android:parentActivityName=".feature.premium.PremiumInfoActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".feature.premium.PremiumInfoActivity" />
+        </activity>
 
         <!-- Permissions screen -->
         <activity

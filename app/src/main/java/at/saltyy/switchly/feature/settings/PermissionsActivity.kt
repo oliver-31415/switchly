@@ -807,18 +807,9 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun requestIgnoreBatteryOptimizationsSystemPopup() {
-        if (isBatteryOptimizationEffectivelyOk()) {
-            openBatteryOptimizationSettingsPages()
-            return
-        }
-
-        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = "package:$packageName".toUri()
-        }
-
-        if (!safeStart(intent)) {
-            openBatteryOptimizationSettingsPages()
-        }
+        // Play-policy safe: do not trigger the direct battery-optimization exemption popup. 
+        // Open normal settings screens and let the user choose Unrestricted/Not optimized manually.
+        openBatteryOptimizationSettingsPages()
     }
 
     // EXACT ALARMS

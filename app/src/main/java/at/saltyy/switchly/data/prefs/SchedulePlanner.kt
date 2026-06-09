@@ -73,7 +73,7 @@ object SchedulePlanner {
         val timeBased = all.filter { s ->
             !s.isLocationSchedule()
         }.filterNot { s ->
-            val isConn = !s.wifiSsid.isNullOrBlank() || !s.btDeviceName.isNullOrBlank()
+            val isConn = !s.wifiSsid.isNullOrBlank() || !s.btDeviceName.isNullOrBlank() || !s.btDeviceAddress.isNullOrBlank()
             isConn && s.startMinutes == 0 && s.endMinutes >= 1439
         }
 

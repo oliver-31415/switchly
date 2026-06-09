@@ -97,7 +97,7 @@
     <string name="widget_blocked_notifications_name">Blockierte Benachrichtigungen</string>
     <string name="widget_pause_blocker_name">Blocker pausieren</string>
     <string name="widget_next_schedule_name">Nächster Zeitplan</string>
-    <string name="experimental_notice_title">Experimentelle Funktionen in 2.1.4</string>
-    <string name="experimental_notice_body">Einige erweiterte Schutzfunktionen in dieser Version brauchen noch extra Feedback.\n\nBitte melde dich mit Logs, wenn dir etwas auffällt bei:\n• Standortbasierten Zeitplänen\n• Advanced/ADB-Tools\n• Geräteadministrator-Funktionen\n• App Lock\n• Uninstall Protection\n\nJe nach Gerät können sie sich unterschiedlich verhalten, besonders auf Xiaomi, Samsung und anderen OEM-angepassten Android-Versionen.</string>
+    <string name="experimental_notice_title">Feedback zu Switchly 2.1.5</string>
+    <string name="experimental_notice_body">Einige Bereiche in dieser Version sind noch experimentell und brauchen extra Feedback. Bitte sende Logs, wenn dir etwas auffällt bei Split-Screen-/Pop-up-Blocking, In-App-Blocking für YouTube, Instagram und Snapchat, Akkuwarnungen/Berechtigungsstatus-Konsistenz, Developer-Mode-Logging, Feedback zur Support-Änderung, FAQ-Formulierungen und Troubleshooting-Klarheit oder deutscher/englischer Textqualität. Multi-Window und In-App-Blocking sind Best-Effort und können je nach Gerät und App-Version unterschiedlich reagieren. Für diese Bereiche ist bereits ein Folge-Update geplant, daher sind Reports besonders hilfreich.</string>
 
 </resources>

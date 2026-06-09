@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_browser_support"
+        android:icon="@drawable/info_24"
+        android:title="@string/website_supported_browsers_title"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_select"
         android:icon="@drawable/delete_24"
         android:title="@string/delete"

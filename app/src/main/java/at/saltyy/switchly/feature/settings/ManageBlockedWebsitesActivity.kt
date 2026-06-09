@@ -188,6 +188,7 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val hasItems = adapter.itemCount > 0
+        menu.findItem(R.id.action_browser_support)?.isVisible = !isSelectionMode
         menu.findItem(R.id.action_select)?.isVisible = !isSelectionMode && hasItems
         menu.findItem(R.id.action_cancel_selection)?.isVisible = isSelectionMode
         menu.findItem(R.id.action_delete_selected)?.isVisible = isSelectionMode
@@ -200,6 +201,10 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_browser_support -> {
+                showSupportedBrowsersInfo()
+                true
+            }
             R.id.action_select -> {
                 enterSelectionMode()
                 true
@@ -220,6 +225,15 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
         invalidateOptionsMenu()
         findViewById<FloatingActionButton>(R.id.fabAdd)?.visibility = if (isSelectionMode) View.GONE else View.VISIBLE
         syncEditingLockUi()
+    }
+
+    private fun showSupportedBrowsersInfo() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.website_supported_browsers_title)
+            .setMessage(R.string.website_supported_browsers_message)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+            .styleSwitchlyDialogButtons()
     }
 
     private fun enterSelectionMode(preselect: String? = null) {

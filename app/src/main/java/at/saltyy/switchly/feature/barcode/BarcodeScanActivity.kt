@@ -115,9 +115,29 @@ class BarcodeScanActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+            Toast.makeText(this, R.string.barcode_camera_unavailable, Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
         val providerFuture = ProcessCameraProvider.getInstance(this)
         providerFuture.addListener({
-            val provider = providerFuture.get()
+            val provider = runCatching { providerFuture.get() }.getOrElse {
+                Toast.makeText(this, R.string.barcode_camera_unavailable, Toast.LENGTH_LONG).show()
+                finish()
+                return@addListener
+            }
+
+            val selector = when {
+                runCatching { provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA) }.getOrDefault(false) -> CameraSelector.DEFAULT_BACK_CAMERA
+                runCatching { provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) }.getOrDefault(false) -> CameraSelector.DEFAULT_FRONT_CAMERA
+                else -> {
+                    Toast.makeText(this, R.string.barcode_camera_unavailable, Toast.LENGTH_LONG).show()
+                    finish()
+                    return@addListener
+                }
+            }
 
             val preview = Preview.Builder().build().also {
                 it.surfaceProvider = previewView.surfaceProvider
@@ -131,13 +151,18 @@ class BarcodeScanActivity : AppCompatActivity() {
                 analyze(imageProxy)
             }
 
-            provider.unbindAll()
-            provider.bindToLifecycle(
-                this,
-                CameraSelector.DEFAULT_BACK_CAMERA,
-                preview,
-                analysis
-            )
+            runCatching {
+                provider.unbindAll()
+                provider.bindToLifecycle(
+                    this,
+                    selector,
+                    preview,
+                    analysis
+                )
+            }.onFailure {
+                Toast.makeText(this, R.string.barcode_camera_unavailable, Toast.LENGTH_LONG).show()
+                finish()
+            }
         }, ContextCompat.getMainExecutor(this))
     }
 

@@ -9,6 +9,8 @@
     <string name="blocked_websites_title">Blockierte Websites</string>
     <string name="blocked_websites_empty">Noch keine blockierten Websites. Tippe auf +, um eine hinzuzufügen.</string>
     <string name="blocked_websites_add_title">Website hinzufügen</string>
+    <string name="website_supported_browsers_title">Unterstützte Browser</string>
+    <string name="website_supported_browsers_message">Website-Blockierung funktioniert, indem Switchly die sichtbare URL in unterstützten Browsern über die Bedienungshilfe ausliest.\nAktuell unterstützte/getestete Browser sind Chrome, Brave (Stable, Beta, Nightly), Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo und Ecosia.\nDie Unterstützung kann trotzdem je nach Browser-Version und Gerät variieren. Wenn Website-Blockierung in einem Browser nicht funktioniert, teste Chrome oder Firefox oder blockiere die Browser-App selbst.</string>
 
     <!-- ====================================================== -->
     <!-- Rule editor -->

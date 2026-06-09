@@ -9,6 +9,8 @@
     <string name="blocked_websites_title">Blocked websites</string>
     <string name="blocked_websites_empty">No blocked websites yet. Tap + to add one.</string>
     <string name="blocked_websites_add_title">Add website</string>
+    <string name="website_supported_browsers_title">Supported browsers</string>
+    <string name="website_supported_browsers_message">Website blocking works by reading the visible URL from supported browsers through Accessibility.\nCurrently supported/tested browsers include Chrome, Brave (stable, beta, nightly), Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo, and Ecosia.\nSupport can still vary by browser version and device. If website blocking does not work in one browser, try Chrome or Firefox, or block the browser app itself.</string>
 
     <!-- ====================================================== -->
     <!-- Rule editor -->

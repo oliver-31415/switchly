@@ -85,6 +85,9 @@ class ManageBarcodesActivity : AppCompatActivity() {
         )
     }
 
+    private fun defaultAction(): ActionSpec =
+        actions.firstOrNull { it.id == "toggle" } ?: actions.first()
+
     private data class ActionForm(
         val rawValue: String,
         val name: String?,
@@ -114,6 +117,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         }
 
         if (!AutomationModeStore.shouldShowBarcodeTools(this)) {
+            Toast.makeText(this, R.string.toast_manage_barcodes_requires_enabled, Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -347,7 +351,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         etDailyLimit.setText(formatIntOrEmpty(existing?.dailyLimit))
         etCooldown.setText(formatIntOrEmpty(existing?.cooldownMinutes))
 
-        val initialAction = initial?.action ?: actions.first()
+        val initialAction = initial?.action ?: defaultAction()
         acProfile.setText(initial?.profile ?: getString(R.string.manage_barcodes_profile_universal), false)
         acAction.setText(getString(initialAction.labelRes), false)
         acMinutes.setText(formatLong(initial?.minutes ?: 10L), false)
@@ -355,7 +359,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         fun updateVisibility() {
             val action = actions.firstOrNull {
                 getString(it.labelRes) == acAction.text?.toString().orEmpty()
-            } ?: actions.first()
+            } ?: defaultAction()
             tilMinutes.visibility = if (action.supportsMinutes) View.VISIBLE else View.GONE
         }
         updateVisibility()

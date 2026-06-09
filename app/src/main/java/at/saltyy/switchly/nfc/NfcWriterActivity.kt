@@ -175,6 +175,8 @@ class NfcWriterActivity : AppCompatActivity() {
     private val actionLabels: List<String>
         get() = buildActionLabels()
 
+    private fun defaultActionLabel(): String = getString(R.string.nfc_action_toggle)
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
     }
@@ -386,7 +388,8 @@ class NfcWriterActivity : AppCompatActivity() {
         val selectedToApply = if (keepCurrentSelection && availableActions.contains(selectedNow)) {
             selectedNow
         } else {
-            availableActions.firstOrNull().orEmpty()
+            defaultActionLabel().takeIf { availableActions.contains(it) }
+                ?: availableActions.firstOrNull().orEmpty()
         }
 
         ddAction.setText(selectedToApply, false)

@@ -59,6 +59,9 @@ internal fun resolveAppBlockDecision(
 
     return AppBlockDecision(
         shouldBlock = true,
-        immediate = hardBlocked || opensExceeded || force
+        // Once a daily time limit is reached, treat it like an immediate block too.
+        // This keeps the time-limit path aligned with direct/attempt blocking and improves
+        // blocker Activity launch reliability on OEM devices that are sensitive to delayed launches.
+        immediate = hardBlocked || opensExceeded || timeLimitReached || force
     )
 }

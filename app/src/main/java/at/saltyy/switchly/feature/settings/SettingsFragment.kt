@@ -691,12 +691,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val list = listView ?: return
-        // Match the statistics card spacing (cards have breathing room)
-        val d = resources.displayMetrics.density
-        val padH = (16f * d).toInt()
-        val padTop = (12f * d).toInt()
+        // The nested SettingsActivity container already provides the same horizontal padding as the root cards.
+        // Do not add a second 16dp inset here, otherwise nested pages such as Appearance and Help/About look zoomed out/narrower than the main Settings screen.
         val padBottom = list.paddingBottom
-        list.setPadding(padH, padTop, padH, padBottom)
+        list.setPadding(0, 0, 0, padBottom)
         list.clipToPadding = false
         tintCategoryViewsInList()
         CustomAccentApplier.applyIfNeeded(requireActivity())
@@ -1217,8 +1215,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (!loggedIn) {
             val items = listOf(
                 IconActionItem(getString(R.string.settings_account_action_sign_in), R.drawable.login_24),
-                IconActionItem(getString(R.string.settings_account_action_create), R.drawable.account_box_24),
-                IconActionItem(getString(R.string.settings_account_action_reset_password), R.drawable.lock_24)
+                IconActionItem(getString(R.string.settings_account_action_create), R.drawable.account_box_24)
             )
 
             val dialog = AlertDialog.Builder(ctx)
@@ -1227,7 +1224,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     when (which) {
                         0 -> showAccountSignInDialog()
                         1 -> showAccountCreateDialog()
-                        2 -> showPasswordResetDialog()
                     }
                 }
                 .setNegativeButton(getString(R.string.cancel), null)
@@ -1384,15 +1380,26 @@ class SettingsFragment : PreferenceFragmentCompat() {
             R.string.settings_account_sign_in_email
         }
 
-        val dialog = AlertDialog.Builder(ctx)
+        val builder = AlertDialog.Builder(ctx)
             .setTitle(getString(titleRes))
             .setView(container)
             .setNegativeButton(getString(R.string.cancel), null)
             .setPositiveButton(getString(positiveRes), null)
-            .create()
+
+        if (!createAccount) {
+            builder.setNeutralButton(getString(R.string.settings_account_action_reset_password), null)
+        }
+
+        val dialog = builder.create()
 
         dialog.setOnShowListener {
             dialog.styleSwitchlyDialogButtons()
+            if (!createAccount) {
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setOnClickListener {
+                    dialog.dismiss()
+                    showPasswordResetDialog()
+                }
+            }
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
                 val email = emailInput.text?.toString()?.trim().orEmpty()
                 val password = passwordInput.text?.toString().orEmpty()

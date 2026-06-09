@@ -26,10 +26,10 @@
     <string name="permissions_usage_access_title">App usage access</string>
     <string name="permissions_usage_access_desc">Required for screen-time statistics and daily app limits. Enable “App usage data” access for Switchly.</string>
     <string name="permissions_battery_title">Battery optimization</string>
-    <string name="permissions_battery_desc">Disable battery optimization so schedules and receivers can run reliably in the background.</string>
-    <string name="permissions_battery_allowed">Allowed</string>
-    <string name="permissions_battery_not_allowed">Disabled</string>
-    <string name="permissions_battery_highest_available">Highest available enabled</string>
+    <string name="permissions_battery_desc">Set Switchly to Unrestricted/Not optimized. Android “Optimized” mode can still delay schedules, geofences, receivers, and background reliability.</string>
+    <string name="permissions_battery_allowed">Unrestricted</string>
+    <string name="permissions_battery_not_allowed">Optimized/restricted</string>
+    <string name="permissions_battery_highest_available">Best available confirmed</string>
     <string name="permissions_exact_alarms_title">Exact alarms</string>
     <string name="permissions_exact_alarms_summary">Needed so time-based schedules can run reliably at the correct time.</string>
     <string name="permissions_exact_alarms_allowed">Allowed</string>
@@ -113,8 +113,8 @@
         <item quantity="one">%1$d required permission is still missing</item>
         <item quantity="other">%1$d required permissions are still missing</item>
     </plurals>
-    <string name="permissions_health_live_sched_battery_bad">Accessibility is active, but battery optimization is still on (schedules may be delayed)</string>
-    <string name="permissions_health_live_ok_with_schedules">Accessibility and schedule battery settings look good ✅</string>
+    <string name="permissions_health_live_sched_battery_bad">Accessibility is active, but battery mode is still optimized/restricted (schedules may be delayed)</string>
+    <string name="permissions_health_live_ok_with_schedules">Accessibility and unrestricted battery setup look good ✅</string>
     <string name="permissions_health_live_mismatch">Status mismatch detected. Re-check after opening Accessibility settings.</string>
     <string name="permissions_health_last_checked_fmt">Last checked: %1$s</string>
 

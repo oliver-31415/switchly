@@ -163,7 +163,7 @@ object SwitchModeStore {
         if (enabled) {
             BlockingRuntime.ensureRunning(ctx)
         } else {
-            // Service can remain running but becomes idle by isEnabled() checks
+            BlockingRuntime.stop(ctx)
         }
         ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
 
@@ -204,6 +204,8 @@ object SwitchModeStore {
 
         if (enabled) {
             BlockingRuntime.ensureRunning(ctx)
+        } else {
+            BlockingRuntime.stop(ctx)
         }
         ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
@@ -237,8 +239,8 @@ object SwitchModeStore {
         _enabledFlow.value = isEnabled(ctx)
         AppLogStore.append(ctx, "Profiles", "Temp disable started duration=${durationMs}ms")
 
-        // Keep runtime alive so our services can continue ticking and enforce schedules/limits.
-        BlockingRuntime.ensureRunning(ctx)
+        // Clear any currently visible blocker UI/state while the temporary disable window is active.
+        BlockingRuntime.stop(ctx)
         ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 
@@ -260,10 +262,14 @@ object SwitchModeStore {
 
         val now = System.currentTimeMillis()
         val activeTempUntil = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L)
+        val effectivelyEnabledNow = isEnabled(ctx)
 
-        // Important when user adjusts an already running temp-enable timer: keep the ORIGINAL base state so expiry restores correctly.
-        // Otherwise KEY_ENABLED is already forced to true and we would "learn" the wrong base.
-        val baseBefore = if (activeTempUntil > now && sp.contains(KEY_BASE_BEFORE_TEMP_ENABLE)) {
+        // Safety rule:
+        // If the user starts Temporary Enable while Switchly is already effectively enabled, expiry must not turn Switchly off.
+        // Older behavior could preserve a previous base=false from an earlier temp-enable and later restore that disabled state, which made Temporary Enable feel like it disabled Switchly.
+        val baseBefore = if (effectivelyEnabledNow) {
+            true
+        } else if (activeTempUntil > now && sp.contains(KEY_BASE_BEFORE_TEMP_ENABLE)) {
             sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, sp.getBoolean(KEY_ENABLED, true))
         } else {
             sp.getBoolean(KEY_ENABLED, true)
@@ -294,7 +300,7 @@ object SwitchModeStore {
         }
         _enabledFlow.value = true
         val loggedTargetProfile = targetProfileForLog ?: ProfileStore.getCurrent(ctx) ?: "-"
-        AppLogStore.append(ctx, "Profiles", "Temp enable started profile=$loggedTargetProfile duration=${durationMs}ms")
+        AppLogStore.append(ctx, "Profiles", "Temp enable started profile=$loggedTargetProfile duration=${durationMs}ms restoreEnabled=$baseBefore")
         AppLogStore.append(ctx, "Profiles", "Stored previous profile id=${profileBefore ?: "-"}")
         BlockingRuntime.ensureRunning(ctx)
         ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
@@ -348,6 +354,8 @@ object SwitchModeStore {
         _enabledFlow.value = isEnabled(ctx)
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
+        } else {
+            BlockingRuntime.stop(ctx)
         }
         ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }

@@ -45,8 +45,8 @@
     <string name="toggle_options_safety_title">Safety controls</string>
     <string name="toggle_options_display_title">UI &amp; Info</string>
     <string name="toggle_section_protection">Safety &amp; restrictions</string>
-    <string name="toggle_section_ui">Home &amp; visibility</string>
-    <string name="toggle_section_additional_features">While blocking is active</string>
+    <string name="toggle_section_ui">Home actions &amp; visibility</string>
+    <string name="toggle_section_additional_features">Allowed while blocking</string>
     <string name="toggle_section_control_mode">Blocking Controls</string>
     <string name="toggle_section_mixed_channels">Control methods</string>
     <string name="toggle_guided_card_title">Start simple</string>
@@ -54,11 +54,14 @@
     <string name="toggle_guided_card_action">Open FAQ &amp; tips</string>
     <string name="toggle_section_control_mode_summary">Pick the active blocking mode.</string>
     <string name="toggle_section_mixed_channels_summary">Choose which control methods can enable, disable, or fully control Switchly.</string>
-    <string name="toggle_section_additional_features_summary">Choose what can still be changed while protection is active.</string>
+    <string name="toggle_section_additional_features_summary">Choose which app areas and edits remain available while Switchly is active.</string>
     <string name="toggle_section_protection_summary">Safety, recovery, and reliability options.</string>
-    <string name="toggle_section_ui_summary">What Home shows and how helper features behave.</string>
+    <string name="toggle_section_ui_summary">Choose which Home shortcuts are visible.</string>
 
     <!-- ====================================================== -->
+    <string name="toggle_subsection_helper_features">Helper features</string>
+    <string name="toggle_subsection_home_shortcuts">Home shortcuts</string>
+
     <!-- Home visibility options -->
     <!-- ====================================================== -->
     <string name="pref_show_next_schedule_title">Show next schedule</string>
@@ -136,9 +139,11 @@
     <string name="pref_lock_switchly_app_access_summary">Lock Switchly screens while protection is active.</string>
     <string name="toggle_detail_lock_switchly_app_access">When enabled, Switchly settings and control screens are blocked while protection is active. Disable Switchly first (via an allowed channel) to change settings again.</string>
     <string name="pref_uninstall_friction_title">Uninstall protection</string>
-    <string name="pref_uninstall_friction_summary">Makes App Info, installers, and Play Store uninstall paths harder to use while Switchly is active.</string>
+    <string name="pref_uninstall_friction_summary">Makes App Info, uninstall paths, and Switchly-related system settings harder to use while Switchly is active.</string>
     <string name="blocking_uninstall_friction_title">Uninstall friction active</string>
     <string name="blocking_uninstall_friction_message">Switchly is making uninstall-related screens harder to access while protection is active. This is friction, not true uninstall blocking. Disable Switchly first via your allowed method if you want to continue.</string>
+    <string name="blocking_settings_bypass_title">Switchly settings protected</string>
+    <string name="blocking_settings_bypass_message">This system settings page could disable or weaken Switchly while protection is active. Disable Switchly first via your allowed method if you want to change these settings.</string>
     <string name="pref_allow_button_enable_title">Button/tile enable-only</string>
     <string name="pref_allow_button_enable_summary">Lets the home button and Quick Settings tile turn Switchly on even when button disabling is not allowed. Disabling still requires NFC, QR, barcode, or another allowed control method.</string>
     <string name="toggle_detail_allow_button_enable">When enabled, the home button and Quick Settings tile can turn Switchly on in any control mode. Turning it off still requires the currently allowed control methods.</string>
@@ -167,8 +172,8 @@
     <!-- Emergency unlock -->
     <!-- ====================================================== -->
     <string name="toggle_detail_emergency">Allows one temporary unlock per day (15 minutes). During this window, Switchly is disabled so you can quickly access blocked apps.</string>
-    <string name="pref_emergency_title">Emergency unlock</string>
-    <string name="pref_emergency_summary">Once per day: temporarily disable Switchly for 15 minutes. Tap to start.</string>
+    <string name="pref_emergency_title">Emergency unlock feature</string>
+    <string name="pref_emergency_summary">Enable or disable Emergency unlock itself. This is separate from showing the Emergency shortcut on Home.</string>
     <string name="pref_emergency_summary_used">You already used Emergency Unlock today.</string>
     <string name="pref_emergency_summary_active_with_time">Emergency unlock is active (%1$d min left). Switchly is temporarily disabled.</string>
     <string name="pref_emergency_summary_paused">Emergency unlock is paused (%1$d min left). Tap for resume/end.</string>
@@ -201,7 +206,13 @@
     <!-- ====================================================== -->
     <!-- Feature group summaries -->
     <!-- ====================================================== -->
-    <string name="toggle_group_manage_other_blocking_features">While Blocking is Active</string>
+    <string name="toggle_group_manage_other_blocking_features">Allowed while blocking</string>
     <string name="settings_blocking_features_summary">Limits, access while active, visibility, and extra blocking behavior.</string>
 
+    <string name="pref_show_temporary_mode_title">Temporary shortcut</string>
+    <string name="pref_show_temporary_mode_summary">Show this shortcut on Home.</string>
+    <string name="pref_show_emergency_unlock_title">Emergency shortcut</string>
+    <string name="pref_show_emergency_unlock_summary">Show this shortcut on Home.</string>
+    <string name="toggle_detail_show_temporary_mode">Controls only the Home shortcut. Active temporary timers are still shown so they can be checked or cancelled.</string>
+    <string name="toggle_detail_show_emergency_unlock">Controls only the Home shortcut. Active or paused emergency unlock sessions are still shown so they can be managed.</string>
 </resources>

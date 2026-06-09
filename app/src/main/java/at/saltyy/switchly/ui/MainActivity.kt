@@ -154,7 +154,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TEMP_MODE_DISCOVERED = "temp_mode_discovered"
         private const val KEY_PRIMARY_TOGGLE_TAP_COUNT = "primary_toggle_tap_count"
         private const val KEY_QUICK_ACTIONS_EXPANDED = "home_quick_actions_expanded"
-        private const val KEY_EXPERIMENTAL_NOTICE_214 = "experimental_notice_2_1_4_shown"
+        private const val KEY_EXPERIMENTAL_NOTICE_215 = "experimental_notice_2_1_5_shown"
         private const val KEY_QA_APPS = "home_quick_tile_apps"
         private const val KEY_QA_PROFILES = "home_quick_tile_profiles"
         private const val KEY_QA_WEBSITES = "home_quick_tile_websites"
@@ -268,9 +268,9 @@ class MainActivity : AppCompatActivity() {
     // For micro-animations: avoid animating every 1s refresh
     private var lastEnabledUi: Boolean? = null
 
-    // The blocked list rows show a "Blocked now" chip. That chip depends on runtime state
-    // (enabled/emergency). Keep a small key so we can refresh row bindings when these
-    // states change without re-binding every 1s tick.
+    // The blocked list rows show a "Blocked now" chip. 
+    // That chip depends on runtime state (enabled/emergency). 
+    // Keep a small key so we can refresh row bindings when these states change without re-binding every 1s tick.
     private var lastBlockedChipKey: String? = null
     private var lastBlockedEditEnabled: Boolean? = null
 
@@ -279,16 +279,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun showExperimentalFeaturesNoticeIfNeeded() {
         val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE_214, false)) return
+        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE_215, false)) return
 
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.experimental_notice_title)
             .setMessage(R.string.experimental_notice_body)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_214, true) }
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_215, true) }
             }
             .setOnCancelListener {
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_214, true) }
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_215, true) }
             }
             .showAccented()
     }
@@ -637,7 +637,7 @@ class MainActivity : AppCompatActivity() {
 
         // Live next schedule updates (optional)
         if (nextChangedReceiver == null) {
-            nextChangedReceiver = object : BroadcastReceiver() {
+            val receiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context, intent: Intent) {
                     if (intent.action == SchedulePlanner.ACTION_NEXT_CHANGED) {
                         updateNextScheduleCard()
@@ -645,12 +645,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val filter = IntentFilter(SchedulePlanner.ACTION_NEXT_CHANGED)
-            ContextCompat.registerReceiver(
-                this,
-                nextChangedReceiver!!,
-                filter,
-                ContextCompat.RECEIVER_NOT_EXPORTED
-            )
+            val registered = runCatching {
+                ContextCompat.registerReceiver(
+                    this,
+                    receiver,
+                    filter,
+                    ContextCompat.RECEIVER_NOT_EXPORTED
+                )
+            }.isSuccess
+            nextChangedReceiver = if (registered) receiver else null
         }
 
         // Listen for limit reached/open-count changes so "Blocked now" chips update immediately
@@ -1701,8 +1704,7 @@ class MainActivity : AppCompatActivity() {
         // Live section
         updateBlockedNowCard()
 
-        // Refresh "Blocked now" chip visibility in the blocked-apps list immediately when
-        // state changes (previously it only updated after re-opening the app).
+        // Refresh "Blocked now" chip visibility in the blocked-apps list immediately when state changes (previously it only updated after re-opening the app).
         val chipKey = "$enabled|$emergencyActive"
         if (lastBlockedChipKey != chipKey) {
             lastBlockedChipKey = chipKey
@@ -1732,11 +1734,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateTempHintVisibility() {
-        tvTempHint.isVisible = true
-
         val lockedByNfc = isNfcLocked()
         val tempDisableRemaining = SwitchModeStore.getTemporaryRemainingMillis(this)
         val tempEnableRemaining = SwitchModeStore.getTemporaryEnableRemainingMillis(this)
+        val hasActiveTemp = tempDisableRemaining > 0L || tempEnableRemaining > 0L
+        val showTemporaryMode = PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(ToggleOptionsActivity.KEY_SHOW_TEMPORARY_MODE, true)
+
+        tvTempHint.isVisible = showTemporaryMode || hasActiveTemp
 
         tvTempHint.text = when {
             tempDisableRemaining > 0L -> getString(
@@ -1759,13 +1764,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateEmergencyHintVisibility() {
-        tvEmergencyHint.isVisible = true
-
         val featureEnabled = EmergencyBypassStore.isFeatureEnabled(this)
         val active = EmergencyBypassStore.isActive(this)
         val paused = EmergencyBypassStore.isPaused(this)
         val usedToday = EmergencyBypassStore.hasUsedToday(this)
         val rem = EmergencyBypassStore.minutesRemaining(this)
+        val showEmergencyUnlock = PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(ToggleOptionsActivity.KEY_SHOW_EMERGENCY_UNLOCK, true)
+
+        tvEmergencyHint.isVisible = (showEmergencyUnlock && featureEnabled) || active || paused
 
         tvEmergencyHint.text = when {
             active -> getString(R.string.dashboard_emergency_hint_active, rem)
@@ -2666,10 +2673,12 @@ class MainActivity : AppCompatActivity() {
                 when (which) {
                     0 -> openBarcodeScannerDirectly()
                     1 -> {
-                        if (EditingLockGuard.isLocked(this)) {
-                            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
-                        } else {
-                            startActivity(Intent(this, ManageBarcodesActivity::class.java))
+                        when {
+                            !AutomationModeStore.shouldShowBarcodeTools(this) ->
+                                Toast.makeText(this, R.string.toast_manage_barcodes_requires_enabled, Toast.LENGTH_LONG).show()
+                            EditingLockGuard.isLocked(this) ->
+                                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
+                            else -> startActivity(Intent(this, ManageBarcodesActivity::class.java))
                         }
                     }
                 }

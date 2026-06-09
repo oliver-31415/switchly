@@ -1,34 +1,23 @@
-# Switchly Architecture Notes
+# Switchly architecture notes
+Switchly is an Android app for profile-based blocking. The app is intentionally split into feature, runtime, platform receiver, data/prefs, premium, security and UI areas.
 
-## Core idea
-Switchly is an Android app for profile-based app blocking.
-The long-term direction is to keep these concerns separate:
+## Important packages
+- `at.saltyy.switchly.blocking` — Accessibility and blocking runtime logic
+- `at.saltyy.switchly.data.prefs` — local stores and schedule/profile settings
+- `at.saltyy.switchly.data.sync` — cloud and local backup/restore runtime
+- `at.saltyy.switchly.feature.*` — screens and feature-specific UI
+- `at.saltyy.switchly.nfc` — NFC/deep-link command schema and tag entry handling
+- `at.saltyy.switchly.platform.receiver.*` — Android receivers/services for schedule, Wi-Fi, Bluetooth, location and system events
+- `at.saltyy.switchly.premium` — Play Billing, external/direct payment and redeem-code handling
+- `at.saltyy.switchly.security` — app lock and related safety helpers
 
-- **UI**: Activities, Fragments, adapters, widgets
-- **Feature/domain logic**: rules, validation, mapping, orchestration
-- **Persistence/data**: preferences, local database, sync
-- **Platform/runtime**: accessibility, receivers, tiles, NFC, Android system integration
+## Flavor boundaries
+Runtime behavior is controlled by flavor BuildConfig flags:
+- `full` — Firebase + Google Sign-In + Google Play Billing
+- `firebaseEmail` — Firebase email/password + external/direct Premium + online redeem codes
+- `offline` — no Firebase initialization, no online purchase/restore, local offline redeem codes
 
-## Practical layering
-```text
-UI -> Feature/domain -> Data/Store -> Runtime/Platform
-```
+Do not enable external/direct payment UI in the Google Play build.
 
-A screen class should not become the place where all feature logic accumulates.
-
-## Preferred package direction
-```text
-feature/<name>/ui
-feature/<name>/domain
-feature/<name>/data
-feature/<name>/model
-```
-
-Shared UI/system helpers should live outside feature screens in dedicated shared packages.
-
-## Design rules
-1. Activities and Fragments are entry points, not business-logic containers.
-2. Stores are for persistence, not UI orchestration.
-3. Runtime classes handle active system behavior.
-4. Shared UI patterns should be centralized.
-5. New feature code should follow existing naming and placement rules.
+## Release-sensitive checks
+Before release, validate all flavors, run lint, verify Premium source labels, test backup/restore, and test exported NFC/QR/barcode action paths with malformed inputs.

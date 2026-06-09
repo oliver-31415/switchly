@@ -24,6 +24,7 @@ import android.os.SystemClock
 import androidx.core.content.edit
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.feature.blocker.BlockerActivity
 import at.saltyy.switchly.util.PermissionUtils
 
 /**
@@ -52,6 +53,18 @@ object BlockingRuntime {
     private const val KEY_BLOCK_SHOWN_LAST_WALL_MS = "block_shown_last_wall_ms"
     private const val KEY_BLOCK_SHOWN_LAST_PKG = "block_shown_last_pkg"
     private const val KEY_BLOCK_SHOWN_LAST_DETAILS = "block_shown_last_details"
+    private const val KEY_BLOCKER_LAUNCH_LAST_WALL_MS = "blocker_launch_last_wall_ms"
+    private const val KEY_BLOCKER_LAUNCH_LAST_PKG = "blocker_launch_last_pkg"
+    private const val KEY_BLOCKER_LAUNCH_LAST_DETAILS = "blocker_launch_last_details"
+    private const val KEY_BLOCKER_VERIFY_LAST_WALL_MS = "blocker_verify_last_wall_ms"
+    private const val KEY_BLOCKER_VERIFY_LAST_PKG = "blocker_verify_last_pkg"
+    private const val KEY_BLOCKER_VERIFY_LAST_DETAILS = "blocker_verify_last_details"
+    private const val KEY_BLOCKER_ACTIVITY_LAST_WALL_MS = "blocker_activity_last_wall_ms"
+    private const val KEY_BLOCKER_ACTIVITY_LAST_PKG = "blocker_activity_last_pkg"
+    private const val KEY_BLOCKER_ACTIVITY_LAST_DETAILS = "blocker_activity_last_details"
+    private const val KEY_MULTIWINDOW_BLOCK_LAST_WALL_MS = "multiwindow_block_last_wall_ms"
+    private const val KEY_MULTIWINDOW_BLOCK_LAST_PKG = "multiwindow_block_last_pkg"
+    private const val KEY_MULTIWINDOW_BLOCK_LAST_DETAILS = "multiwindow_block_last_details"
     private const val A11Y_HEARTBEAT_STALE_MS = 8_000L
 
     private fun prefs(ctx: Context) =
@@ -76,7 +89,19 @@ object BlockingRuntime {
         val lastBlockCheckDetails: String,
         val lastBlockShownWallMs: Long,
         val lastBlockShownPackage: String,
-        val lastBlockShownDetails: String
+        val lastBlockShownDetails: String,
+        val lastBlockerLaunchWallMs: Long,
+        val lastBlockerLaunchPackage: String,
+        val lastBlockerLaunchDetails: String,
+        val lastBlockerVerifyWallMs: Long,
+        val lastBlockerVerifyPackage: String,
+        val lastBlockerVerifyDetails: String,
+        val lastBlockerActivityWallMs: Long,
+        val lastBlockerActivityPackage: String,
+        val lastBlockerActivityDetails: String,
+        val lastMultiWindowBlockWallMs: Long,
+        val lastMultiWindowBlockPackage: String,
+        val lastMultiWindowBlockDetails: String
     )
 
     // Called by [SwitchlyAccessibilityService] while it is connected and alive.
@@ -130,6 +155,41 @@ object BlockingRuntime {
             putLong(KEY_BLOCK_SHOWN_LAST_WALL_MS, System.currentTimeMillis())
             putString(KEY_BLOCK_SHOWN_LAST_PKG, pkg)
             putString(KEY_BLOCK_SHOWN_LAST_DETAILS, details.take(500))
+        }
+    }
+
+    fun markBlockerLaunchRequested(ctx: Context, pkg: String, details: String = "") {
+        if (pkg.isBlank()) return
+        prefs(ctx).edit {
+            putLong(KEY_BLOCKER_LAUNCH_LAST_WALL_MS, System.currentTimeMillis())
+            putString(KEY_BLOCKER_LAUNCH_LAST_PKG, pkg)
+            putString(KEY_BLOCKER_LAUNCH_LAST_DETAILS, details.take(500))
+        }
+    }
+
+    fun markBlockerVerify(ctx: Context, pkg: String, details: String = "") {
+        if (pkg.isBlank()) return
+        prefs(ctx).edit {
+            putLong(KEY_BLOCKER_VERIFY_LAST_WALL_MS, System.currentTimeMillis())
+            putString(KEY_BLOCKER_VERIFY_LAST_PKG, pkg)
+            putString(KEY_BLOCKER_VERIFY_LAST_DETAILS, details.take(500))
+        }
+    }
+
+    fun markBlockerActivityState(ctx: Context, pkg: String, state: String, details: String = "") {
+        prefs(ctx).edit {
+            putLong(KEY_BLOCKER_ACTIVITY_LAST_WALL_MS, System.currentTimeMillis())
+            putString(KEY_BLOCKER_ACTIVITY_LAST_PKG, pkg.takeIf { it.isNotBlank() } ?: "-")
+            putString(KEY_BLOCKER_ACTIVITY_LAST_DETAILS, listOf(state, details).filter { it.isNotBlank() }.joinToString(" | ").take(500))
+        }
+    }
+
+    fun markMultiWindowBlock(ctx: Context, pkg: String, details: String = "") {
+        if (pkg.isBlank()) return
+        prefs(ctx).edit {
+            putLong(KEY_MULTIWINDOW_BLOCK_LAST_WALL_MS, System.currentTimeMillis())
+            putString(KEY_MULTIWINDOW_BLOCK_LAST_PKG, pkg)
+            putString(KEY_MULTIWINDOW_BLOCK_LAST_DETAILS, details.take(500))
         }
     }
 
@@ -190,7 +250,19 @@ object BlockingRuntime {
             lastBlockCheckDetails = p.getString(KEY_BLOCK_CHECK_LAST_DETAILS, null).orEmpty(),
             lastBlockShownWallMs = p.getLong(KEY_BLOCK_SHOWN_LAST_WALL_MS, 0L),
             lastBlockShownPackage = p.getString(KEY_BLOCK_SHOWN_LAST_PKG, null).orEmpty(),
-            lastBlockShownDetails = p.getString(KEY_BLOCK_SHOWN_LAST_DETAILS, null).orEmpty()
+            lastBlockShownDetails = p.getString(KEY_BLOCK_SHOWN_LAST_DETAILS, null).orEmpty(),
+            lastBlockerLaunchWallMs = p.getLong(KEY_BLOCKER_LAUNCH_LAST_WALL_MS, 0L),
+            lastBlockerLaunchPackage = p.getString(KEY_BLOCKER_LAUNCH_LAST_PKG, null).orEmpty(),
+            lastBlockerLaunchDetails = p.getString(KEY_BLOCKER_LAUNCH_LAST_DETAILS, null).orEmpty(),
+            lastBlockerVerifyWallMs = p.getLong(KEY_BLOCKER_VERIFY_LAST_WALL_MS, 0L),
+            lastBlockerVerifyPackage = p.getString(KEY_BLOCKER_VERIFY_LAST_PKG, null).orEmpty(),
+            lastBlockerVerifyDetails = p.getString(KEY_BLOCKER_VERIFY_LAST_DETAILS, null).orEmpty(),
+            lastBlockerActivityWallMs = p.getLong(KEY_BLOCKER_ACTIVITY_LAST_WALL_MS, 0L),
+            lastBlockerActivityPackage = p.getString(KEY_BLOCKER_ACTIVITY_LAST_PKG, null).orEmpty(),
+            lastBlockerActivityDetails = p.getString(KEY_BLOCKER_ACTIVITY_LAST_DETAILS, null).orEmpty(),
+            lastMultiWindowBlockWallMs = p.getLong(KEY_MULTIWINDOW_BLOCK_LAST_WALL_MS, 0L),
+            lastMultiWindowBlockPackage = p.getString(KEY_MULTIWINDOW_BLOCK_LAST_PKG, null).orEmpty(),
+            lastMultiWindowBlockDetails = p.getString(KEY_MULTIWINDOW_BLOCK_LAST_DETAILS, null).orEmpty()
         )
     }
 
@@ -212,7 +284,9 @@ object BlockingRuntime {
      * Callers may still call this when the user disables Switchly.
      */
     fun stop(ctx: Context) {
-        // When Switchly is turned off, ensure we clear any warning notification.
+        // When Switchly is turned off or temporarily disabled, clear stale blocker UI/state.
+        runCatching { BlockerActivity.clearVisibilityState("runtime_stop") }
+        runCatching { AppLogStore.append(ctx, "Blocking", "Runtime stopped and blocker state cleared") }
         runCatching { at.saltyy.switchly.util.ProtectionStatusNotifier.refresh(ctx) }
     }
 }

@@ -20,7 +20,6 @@
 package at.saltyy.switchly.feature.qr
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -44,7 +43,7 @@ class ExternalQrActionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val uri = intent?.data
-        if (!isSupportedSwitchlyUri(uri)) {
+        if (!NfcSchema.isSupportedCommandUri(uri)) {
             Toast.makeText(this, R.string.invalid_qr_code, Toast.LENGTH_SHORT).show()
             finish()
             return
@@ -72,9 +71,4 @@ class ExternalQrActionActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun isSupportedSwitchlyUri(uri: Uri?): Boolean {
-        return uri != null &&
-            uri.scheme.equals("switchly", ignoreCase = true) &&
-            NfcSchema.isKnownHost(uri.host)
-    }
 }

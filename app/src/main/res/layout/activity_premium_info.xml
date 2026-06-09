@@ -146,6 +146,15 @@
                         android:layout_marginTop="10dp"
                         android:text="@string/premium_button_restore" />
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRedeemPremiumCode"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/premium_redeem_title"
+                        android:visibility="gone" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

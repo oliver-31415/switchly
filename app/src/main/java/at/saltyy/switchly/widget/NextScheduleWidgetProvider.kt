@@ -132,7 +132,7 @@ class NextScheduleWidgetProvider : AppWidgetProvider() {
             val schedules = ScheduleStore.getAll(context)
                 .filter { it.enabled }
                 .filterNot { schedule ->
-                    val isConnectionOnly = !schedule.wifiSsid.isNullOrBlank() || !schedule.btDeviceName.isNullOrBlank()
+                    val isConnectionOnly = !schedule.wifiSsid.isNullOrBlank() || (!schedule.btDeviceName.isNullOrBlank() || !schedule.btDeviceAddress.isNullOrBlank())
                     isConnectionOnly && schedule.startMinutes == 0 && schedule.endMinutes >= 1439
                 }
             if (schedules.isEmpty()) return null

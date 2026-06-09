@@ -69,18 +69,17 @@ class WifiTriggerService : Service() {
                 FLAG_INCLUDE_LOCATION_INFO
             ) {
                 override fun onAvailable(network: Network) {
-                    cacheWifiFromActiveNetwork("available")
-                    sendTick("available")
-                    scheduleWifiRetryIfNeeded("available")
+                    handleWifiAvailable("available")
                 }
 
                 override fun onLost(network: Network) {
-                    clearCachedWifi("lost")
-                    sendTick("lost")
+                    handleWifiLost("lost")
                 }
 
                 override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
-                    cacheWifiFromCaps(caps, "capabilitiesChanged")
+                    if (!cacheWifiFromCaps(caps, "capabilitiesChanged")) {
+                        cacheWifiFromActiveNetwork("capabilitiesChangedFallback")
+                    }
                     sendTick("capabilitiesChanged")
                     scheduleWifiRetryIfNeeded("capabilitiesChanged")
                 }
@@ -88,18 +87,17 @@ class WifiTriggerService : Service() {
         } else {
             object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    cacheWifiFromActiveNetwork("available")
-                    sendTick("available")
-                    scheduleWifiRetryIfNeeded("available")
+                    handleWifiAvailable("available")
                 }
 
                 override fun onLost(network: Network) {
-                    clearCachedWifi("lost")
-                    sendTick("lost")
+                    handleWifiLost("lost")
                 }
 
                 override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
-                    cacheWifiFromCaps(caps, "capabilitiesChanged")
+                    if (!cacheWifiFromCaps(caps, "capabilitiesChanged")) {
+                        cacheWifiFromActiveNetwork("capabilitiesChangedFallback")
+                    }
                     sendTick("capabilitiesChanged")
                     scheduleWifiRetryIfNeeded("capabilitiesChanged")
                 }
@@ -111,9 +109,7 @@ class WifiTriggerService : Service() {
             .build()
 
         cm.registerNetworkCallback(req, cb!!)
-        cacheWifiFromActiveNetwork("serviceStart")
-        sendTick("serviceStart")
-        scheduleWifiRetryIfNeeded("serviceStart")
+        refreshWifiStateAndTick("serviceStart")
     }
 
     override fun onDestroy() {
@@ -128,7 +124,11 @@ class WifiTriggerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return if (ensureForegroundOrStop()) START_STICKY else START_NOT_STICKY
+        val ok = ensureForegroundOrStop()
+        if (ok && this::cm.isInitialized && this::wifi.isInitialized) {
+            refreshWifiStateAndTick("serviceCommand")
+        }
+        return if (ok) START_STICKY else START_NOT_STICKY
     }
 
     /**
@@ -211,24 +211,56 @@ class WifiTriggerService : Service() {
         )
     }
 
-    private fun cacheWifiFromActiveNetwork(reason: String) {
+    private fun refreshWifiStateAndTick(reason: String) {
+        val hasWifi = cacheWifiFromActiveNetwork(reason)
+        if (!hasWifi) {
+            clearCachedWifi("$reason(noWifi)")
+        }
+        sendTick(reason)
+        scheduleWifiRetryIfNeeded(reason)
+    }
+
+    private fun handleWifiAvailable(reason: String) {
+        cacheWifiFromActiveNetwork(reason)
+        sendTick(reason)
+        scheduleWifiRetryIfNeeded(reason)
+    }
+
+    private fun handleWifiLost(reason: String) {
+        // Do not clear immediately.
+        // During Wi‑Fi roaming/reconnect Android can deliver onLost for the previous Wi‑Fi network after a new Wi‑Fi network is already available.
+        // Clearing the SSID too early can make Wi‑Fi schedules wait forever for a new SSID event.
+        handler.postDelayed({
+            val stillOnWifi = cacheWifiFromAnyWifiNetwork("${reason}Verify")
+            if (stillOnWifi) {
+                sendTick("${reason}_still_connected")
+                scheduleWifiRetryIfNeeded("${reason}Verify")
+            } else {
+                clearCachedWifi(reason)
+                sendTick(reason)
+            }
+        }, WIFI_LOST_VERIFY_DELAY_MS)
+    }
+
+    private fun cacheWifiFromActiveNetwork(reason: String): Boolean {
         // "activeNetwork" is not guaranteed to be Wi-Fi (VPN/cellular can be active while Wi-Fi is connected).
         // Therefore we try active first, then fall back to scanning all networks for a Wi-Fi transport.
         val net = cm.activeNetwork
         if (net != null) {
             val caps = cm.getNetworkCapabilities(net)
-            if (caps != null && cacheWifiFromCaps(caps, reason)) return
+            if (caps != null && cacheWifiFromCaps(caps, reason)) return true
         }
-        cacheWifiFromAnyWifiNetwork(reason)
+        return cacheWifiFromAnyWifiNetwork(reason)
     }
 
-    private fun cacheWifiFromAnyWifiNetwork(reason: String) {
+    private fun cacheWifiFromAnyWifiNetwork(reason: String): Boolean {
         val nets = allNetworksCompat(cm)
         for (n in nets) {
             val caps = cm.getNetworkCapabilities(n) ?: continue
             if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) continue
-            if (cacheWifiFromCaps(caps, "$reason(allNetworks)")) return
+            if (cacheWifiFromCaps(caps, "$reason(allNetworks)")) return true
         }
+        return false
     }
 
     private fun allNetworksCompat(cm: ConnectivityManager): Array<Network> {
@@ -359,5 +391,6 @@ class WifiTriggerService : Service() {
         private const val KEY_LAST_SSID = "last_ssid"
         private const val KEY_LAST_BSSID = "last_bssid"
         private const val KEY_NEEDS_LOCATION_HINT = "wifi_needs_location_hint"
+        private const val WIFI_LOST_VERIFY_DELAY_MS = 900L
     }
 }

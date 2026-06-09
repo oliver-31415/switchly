@@ -37,8 +37,8 @@ object UsageHistoryBackfill {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (readImportVersion(sp) >= CURRENT_VERSION) return false
         if (!UsageStatsRepo.hasUsageAccess(ctx)) return false
-        // Accessibility-backed local history is the source of truth. Only do a one-time import
-        // on fresh installs/fresh data stores to seed older history conservatively.
+        // Accessibility-backed local history is the source of truth.
+        // Only do a one-time import on fresh installs/fresh data stores to seed older history conservatively.
         if (UsageStore.hasAnyUsageData(ctx)) {
             sp.edit { putInt(KEY_IMPORT_VERSION, CURRENT_VERSION) }
             return false

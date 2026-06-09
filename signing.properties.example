@@ -43,3 +43,9 @@ SWITCHLY_DEV_EMAIL=developer@example.com
 SWITCHLY_EXTERNAL_PAYMENT_PROVIDER=stripe
 SWITCHLY_EXTERNAL_CHECKOUT_URL=https://your-domain.example/pages/pay/checkout/
 SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://your-domain.example/pages/pay/customer-portal/
+
+# Premium redeem-code API for direct/Firebase builds.
+# Production:
+SWITCHLY_REDEEM_API_URL=https://switchly.saltyy.at/pages/pay/redeem-code/
+# Local testing example:
+# SWITCHLY_REDEEM_API_URL=http://localhost/saltyy-at/switchly-saltyy-at/pages/pay/redeem-code/

@@ -21,6 +21,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.feature.qr.QrGenerateActivity
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
@@ -79,11 +80,16 @@ class ManageKeysActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.cardPairedTags).setOnClickListener {
             val locked = EditingLockGuard.isLocked(this)
-            AppLogStore.append(this, "NFC", "Manage Paired Tags clicked from Manage Keys locked=$locked")
-            if (locked) {
-                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
-            } else {
-                openManagePairedTags()
+            val pairedTagsEnabled = arePairedTagsEnabled()
+            AppLogStore.append(
+                this,
+                "NFC",
+                "Manage Paired Tags clicked from Manage Keys locked=$locked pairedTagsEnabled=$pairedTagsEnabled"
+            )
+            when {
+                !pairedTagsEnabled -> showFeatureDisabledToast(R.string.toast_manage_paired_tags_requires_enabled)
+                locked -> EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
+                else -> openManagePairedTags()
             }
         }
 
@@ -92,13 +98,29 @@ class ManageKeysActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.cardManageBarcodes).setOnClickListener {
+            val barcodeEnabled = AutomationModeStore.shouldShowBarcodeTools(this)
             val allowBarcodeSetupFallback = AutomationModeStore.isBarcodeSetupMissing(this)
-            if (EditingLockGuard.isLocked(this) && !allowBarcodeSetupFallback) {
-                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
-            } else {
-                startActivity(Intent(this, ManageBarcodesActivity::class.java))
+            AppLogStore.append(
+                this,
+                "Barcode",
+                "Manage Barcodes clicked from Manage Keys barcodeEnabled=$barcodeEnabled locked=${EditingLockGuard.isLocked(this)} setupMissing=$allowBarcodeSetupFallback"
+            )
+            when {
+                !barcodeEnabled -> showFeatureDisabledToast(R.string.toast_manage_barcodes_requires_enabled)
+                EditingLockGuard.isLocked(this) && !allowBarcodeSetupFallback ->
+                    EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
+                else -> startActivity(Intent(this, ManageBarcodesActivity::class.java))
             }
         }
+    }
+
+    private fun arePairedTagsEnabled(): Boolean {
+        return getSharedPreferences("switchly_prefs", MODE_PRIVATE)
+            .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+    }
+
+    private fun showFeatureDisabledToast(messageRes: Int) {
+        Toast.makeText(this, messageRes, Toast.LENGTH_LONG).show()
     }
 
     private fun openManagePairedTags() {
@@ -115,8 +137,11 @@ class ManageKeysActivity : AppCompatActivity() {
         val editLocked = EditingLockGuard.isLocked(this)
         val barcodeSetupFallback = AutomationModeStore.isBarcodeSetupMissing(this)
         applyLockedCardState(findViewById(R.id.cardWriteNfc), isNfcTagWritingLocked())
-        applyLockedCardState(findViewById(R.id.cardPairedTags), editLocked)
-        applyLockedCardState(findViewById(R.id.cardManageBarcodes), editLocked && !barcodeSetupFallback)
+        applyLockedCardState(findViewById(R.id.cardPairedTags), editLocked || !arePairedTagsEnabled())
+        applyLockedCardState(
+            findViewById(R.id.cardManageBarcodes),
+            !AutomationModeStore.shouldShowBarcodeTools(this) || (editLocked && !barcodeSetupFallback)
+        )
     }
 
     private fun applyLockedCardState(view: View, locked: Boolean) {
