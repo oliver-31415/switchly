@@ -63,6 +63,16 @@ internal class BrowserWebsiteState {
         return host
     }
 
+    fun hasRecentDomainSignal(pkg: String, now: Long): Boolean {
+        if (currentPkg == pkg && !currentDomain.isNullOrBlank() && now - currentDomainAt <= STICKY_DOMAIN_SIGNAL_TTL_MS) {
+            return true
+        }
+        if (!candidateDomain.isNullOrBlank() && now - candidateSince <= STICKY_DOMAIN_SIGNAL_TTL_MS) {
+            return true
+        }
+        return false
+    }
+
     fun updateCurrentDomain(pkg: String, host: String, now: Long) {
         currentPkg = pkg
         currentDomain = host
@@ -135,5 +145,6 @@ internal class BrowserWebsiteState {
         private const val ADDRESS_EDIT_GRACE_MS = 1_400L
         private const val FIREFOX_LAST_DOMAIN_TTL_MS = 12_000L
         private const val FIREFOX_PENDING_DOMAIN_TTL_MS = 8_000L
+        private const val STICKY_DOMAIN_SIGNAL_TTL_MS = 6_000L
     }
 }

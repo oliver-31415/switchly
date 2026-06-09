@@ -38,7 +38,7 @@ object UsageHistoryBackfill {
         if (readImportVersion(sp) >= CURRENT_VERSION) return false
         if (!UsageStatsRepo.hasUsageAccess(ctx)) return false
         // Accessibility-backed local history is the source of truth. Only do a one-time import
-        // on fresh installs / fresh data stores to seed older history conservatively.
+        // on fresh installs/fresh data stores to seed older history conservatively.
         if (UsageStore.hasAnyUsageData(ctx)) {
             sp.edit { putInt(KEY_IMPORT_VERSION, CURRENT_VERSION) }
             return false

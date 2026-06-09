@@ -9,7 +9,7 @@ import java.util.Locale
 object AppLogStore {
     private const val PREFS_NAME = "switchly_app_logs"
     private const val KEY_LINES = "lines"
-    private const val MAX_LINES = 240
+    private const val MAX_LINES = 250
     private val SEP = '\u001E'
 
     fun append(context: Context, tag: String, message: String, error: Throwable? = null) {
@@ -41,13 +41,29 @@ object AppLogStore {
         }
     }
 
-    fun export(context: Context): String {
+    fun latestLines(context: Context, limit: Int = MAX_LINES): List<String> {
         val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val lines = prefs.getString(KEY_LINES, null)
             ?.split(SEP)
             ?.filter { it.isNotBlank() }
             .orEmpty()
 
+        return lines.takeLast(limit.coerceAtLeast(1))
+    }
+
+    fun latestPlainText(context: Context, limit: Int = MAX_LINES): String {
+        val lines = latestLines(context, limit)
+        if (lines.isEmpty()) return "No recent app logs."
+        return lines.joinToString(separator = "\n")
+    }
+
+    fun clear(context: Context) {
+        val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit { remove(KEY_LINES) }
+    }
+
+    fun export(context: Context): String {
+        val lines = latestLines(context)
         if (lines.isEmpty()) return "No recent app logs."
 
         return buildString {

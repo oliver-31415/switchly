@@ -2,7 +2,7 @@
 <resources>
 
     <!-- =========================
-         APP / BRAND
+         APP/BRAND
          ========================= -->
     <color name="ic_launcher_background">#2E8B57</color>
     <color name="switchly_bg">#FFF3F4F6</color>
@@ -35,7 +35,7 @@
     <color name="status_border">#3390A4AE</color>
 
     <!-- =========================
-         COMMON SURFACES / STROKES / DIVIDERS
+         COMMON SURFACES/STROKES/DIVIDERS
          ========================= -->
     <color name="switchly_card_bg">#F7FFFFFF</color>
     <color name="switchly_card_stroke">#14000000</color>
@@ -59,7 +59,7 @@
     <color name="onb_summary_text_on_dark">#FFF5F7FA</color>
 
     <!-- =========================
-         APP PICKER / UNAVAILABLE ROW
+         APP PICKER/UNAVAILABLE ROW
          ========================= -->
     <color name="unavailable_row_bg">#FFF2F4F7</color>
     <color name="unavailable_row_stroke">#1A000000</color>

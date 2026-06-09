@@ -96,7 +96,6 @@ object PremiumRuntime : PurchasesUpdatedListener {
                 isConnecting = false
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     if (BuildConfig.DEBUG) Log.d(TAG, "Billing service connected")
-                    appContext?.let { AppLogStore.append(it, "Billing", "Billing connected") }
                     val req = pendingLaunchRequest
                     pendingLaunchRequest = null
                     if (req != null) {
@@ -236,7 +235,6 @@ object PremiumRuntime : PurchasesUpdatedListener {
             handlePurchases(purchases)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
             if (BuildConfig.DEBUG) Log.d(TAG, "Purchase canceled by user")
-            appContext?.let { AppLogStore.append(it, "Billing", "Restore failed reason=user_canceled") }
         } else {
             Log.e(TAG, "onPurchasesUpdated error: ${billingResult.responseCode} ${billingResult.debugMessage}")
         }

@@ -34,7 +34,7 @@ The Gradle task creates the three APKs and the full Play Store AAB in `dist/`.
 ./gradlew :app:bundleFullRelease
 ```
 
-## Required / optional local config
+## Required/optional local config
 Firebase release builds require `app/google-services.json`. You can also keep the file outside the repo and point Gradle to it from `signing.properties`; Gradle loads this file automatically when it exists:
 
 ```properties

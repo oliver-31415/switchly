@@ -2,72 +2,61 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- QR -->
+    <!-- QR scanner and generator -->
     <!-- ====================================================== -->
-
     <string name="qr_title">QR</string>
-
     <string name="qr_generate_title">Manage QR codes</string>
-
     <string name="qr_scan_title">Scan QR code</string>
-
     <string name="permission_camera_required">Camera permission is required to scan QR codes.</string>
-
     <string name="invalid_qr_code">Invalid QR code</string>
 
+    <!-- ====================================================== -->
+    <!-- QR actions -->
+    <!-- ====================================================== -->
     <string name="qr_action">Action</string>
-
     <string name="qr_action_enable">Enable</string>
-
     <string name="qr_action_disable">Disable</string>
-
     <string name="qr_action_toggle">Toggle</string>
-
     <string name="qr_action_temp_enable">Temporary enable</string>
-
     <string name="qr_action_temp_disable">Temporary disable</string>
-
     <string name="qr_action_profile_enable">Enable profile</string>
-
     <string name="qr_action_profile_disable">Disable profile</string>
-
     <string name="qr_action_profile_toggle">Toggle profile</string>
 
-    <string name="qr_profile_fallback">Profile</string>
-
+    <!-- ====================================================== -->
+    <!-- Temporary QR duration -->
+    <!-- ====================================================== -->
     <string name="qr_minutes">Minutes</string>
-
     <string name="qr_minutes_5">5</string>
-
     <string name="qr_minutes_10">10</string>
-
     <string name="qr_minutes_30">30</string>
-
     <string name="qr_minutes_60">60</string>
-
     <string name="qr_minutes_120">120</string>
-
     <string name="qr_minutes_default">10</string>
-
     <string name="qr_minutes_custom">Custom…</string>
-
     <string name="qr_minutes_custom_title">Custom minutes</string>
-
     <string name="qr_minutes_hint">e.g. 45</string>
 
+    <!-- ====================================================== -->
+    <!-- Clipboard and limiter messages -->
+    <!-- ====================================================== -->
     <string name="qr_clipboard_label">Switchly URI</string>
-
     <string name="qr_temp_limiter_cooldown">This QR code is on cooldown. Try again in %1$d min.</string>
-
     <plurals name="qr_temp_limiter_daily_limit">
         <item quantity="one">Daily limit reached for this QR code (%1$d use/day).</item>
         <item quantity="other">Daily limit reached for this QR code (%1$d uses/day).</item>
     </plurals>
 
+    <!-- ====================================================== -->
+    <!-- External QR confirmation -->
+    <!-- ====================================================== -->
     <string name="external_qr_confirm_title">Run Switchly QR action?</string>
-
     <string name="external_qr_confirm_message">This link was opened from an external QR scanner. Only continue if you intentionally scanned a Switchly QR code.</string>
-
     <string name="external_qr_confirm_action">Run action</string>
+
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="qr_profile_fallback">Profile</string>
 
 </resources>

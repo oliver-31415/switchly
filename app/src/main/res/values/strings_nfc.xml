@@ -2,271 +2,168 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- NFC -->
+    <!-- NFC write flow -->
     <!-- ====================================================== -->
-
-    <string name="write_nfc_tag">Write NFC tag</string>
-
     <string name="nfc_write_intro_title">Write a Switchly action tag</string>
-
     <string name="nfc_write_onboarding_message">Choose a profile and action, then tap a writable tag to save it. Pair read-only tags in Manage paired tags.</string>
+    <string name="nfc_write_ok">Tag written successfully!</string>
+    <string name="nfc_write_error_generic">Could not write to NFC tag.</string>
+    <string name="nfc_write_error_too_small">NFC tag is too small for this action. Use a larger-capacity tag.</string>
+    <string name="nfc_write_locked_while_enabled">NFC tag writing is locked while Switchly is active.</string>
+    <string name="nfc_write_locked_status">Disable Switchly to write or pair a new NFC tag, or allow NFC tag writing in Mixed mode.</string>
+    <string name="nfc_write_locked_button">NFC tag writing locked</string>
 
+    <!-- ====================================================== -->
+    <!-- NFC actions -->
+    <!-- ====================================================== -->
     <string name="nfc_action_hint">Action</string>
-
     <string name="nfc_action_hint_default">Select an action to see what it does.</string>
-
-    <string name="nfc_profile_hint">Profile</string>
-
-    <string name="nfc_profile_none">Universal</string>
-
     <string name="nfc_action_enable">Enable</string>
-
     <string name="nfc_action_disable">Disable</string>
-
     <string name="nfc_action_toggle">Toggle</string>
-
     <string name="nfc_action_temp_enable">Temporary enable</string>
-
     <string name="nfc_action_temp_disable">Temporary disable</string>
-
     <string name="nfc_action_reentry">Temporary settings unlock</string>
-
     <string name="nfc_action_pair_uid">Pair tag by UID</string>
-
     <string name="nfc_action_hint_with_profile">%1$s\n%2$s</string>
-
     <string name="nfc_action_info_title">NFC actions explained</string>
-
     <string name="nfc_action_desc_enable">Writes a tag that enables Switchly.</string>
-
     <string name="nfc_action_desc_disable">Writes a tag that disables Switchly.</string>
-
     <string name="nfc_action_desc_toggle">Writes a tag that toggles Switchly ON/OFF.</string>
-
     <plurals name="nfc_action_desc_temp_disable">
         <item quantity="one">Writes a tag that disables Switchly for %1$d minute, then restores the previous state.</item>
         <item quantity="other">Writes a tag that disables Switchly for %1$d minutes, then restores the previous state.</item>
     </plurals>
-
     <plurals name="nfc_action_desc_temp_enable">
         <item quantity="one">Writes a tag that enables Switchly for %1$d minute, then restores the previous state.</item>
         <item quantity="other">Writes a tag that enables Switchly for %1$d minutes, then restores the previous state.</item>
     </plurals>
-
     <plurals name="nfc_action_desc_reentry">
         <item quantity="one">Writes a Temporary settings unlock tag that unlocks Switchly settings for %1$d minute, then restores the previous state.</item>
         <item quantity="other">Writes a Temporary settings unlock tag that unlocks Switchly settings for %1$d minutes, then restores the previous state.</item>
     </plurals>
-
     <string name="nfc_action_desc_pair_uid">Use this NFC tag as a toggle without writing anything to it.</string>
-
     <string name="nfc_action_desc_profile_selected">Selected profile: %1$s</string>
-
     <string name="nfc_action_desc_profile_none">Profile: Universal (global action)</string>
-
     <string name="nfc_action_error_fmt">Action failed: %1$s</string>
-
     <string name="nfc_action_emergency_tag_removed">Emergency disable tag action is no longer supported. Please use the in-app Emergency unlock.</string>
-
-    <string name="nfc_duration_hint">Temporary duration</string>
-
-    <string name="nfc_temp_hint_timer_behavior">Temporary mode runs for the selected time, then returns to your previous state automatically.</string>
-
-    <string name="nfc_temp_hint_profile_disable_toast">Heads-up: Profile temporary disable only applies if that profile is currently active.</string>
-
-    <string name="nfc_temp_hint_profile_enable_toast">Heads-up: Profile temporary enable temporarily activates this profile.</string>
-
-    <string name="nfc_ready_to_write">Ready to write</string>
-
-    <string name="nfc_hold_still">Hold your phone still…</string>
-
-    <string name="nfc_close">Close</string>
-
     <string name="nfc_action_desc_pair_uid_disabled">Pair tag is disabled. Enable paired NFC tags in Blocking &amp; control toggles, then scan a tag to add its UID.</string>
 
-    <string name="nfc_arm_write">Start tag writer</string>
+    <!-- ====================================================== -->
+    <!-- Paired tag management -->
+    <!-- ====================================================== -->
+    <string name="paired_tags_setup_title">Add and manage NFC tags</string>
+    <string name="paired_tags_setup_body">Use the + button to add a new NFC tag.\n\n• Add writable tag: first scan pairs the tag UID. If you scan the same tag again, Switchly opens the action writer so you can write an action to it.\n• Add read-only tag: pairs the tag UID without writing anything to the card. You can set each read-only tag to toggle, unlock only, or lock only.</string>
+    <string name="paired_tags_add_title">Add NFC tag</string>
+    <string name="paired_tags_add_writable_title">Add writable tag</string>
+    <string name="paired_tags_add_readonly_title">Add read-only tag</string>
+    <string name="paired_tags_add_fab_desc">Add paired NFC tag</string>
+    <string name="paired_tags_title">Paired tags</string>
+    <string name="paired_tags_empty">No paired tags yet.</string>
+    <string name="paired_tags_remove_confirm">Remove this paired tag?</string>
+    <string name="paired_tag_delete_selected_title">Delete paired tags</string>
+    <plurals name="paired_tag_delete_selected_confirm_fmt">
+        <item quantity="one">Delete %1$d selected paired tag?</item>
+        <item quantity="other">Delete %1$d selected paired tags?</item>
+    </plurals>
+    <string name="paired_tag_default_name">Unnamed tag</string>
+    <string name="paired_tag_edit_title">Edit paired tag</string>
+    <string name="paired_tag_name_hint">Name (e.g., Home keychain)</string>
+    <string name="paired_tag_note_hint">Note (optional)</string>
+    <string name="paired_tag_note_placeholder">Note</string>
+    <string name="paired_tag_uid_placeholder">04AABBCCDD</string>
+    <string name="paired_tag_pair_prompt_title">Name this tag</string>
+    <string name="paired_tag_pair_prompt_message">Optional, but helps you recognize it later. Read-only cards can be paired by UID, but they do not store a Switchly action on the card itself. Only paired tags added here can be used that way.</string>
+    <string name="paired_tag_pair_prompt_save">Save</string>
+    <string name="paired_tag_pair_prompt_skip">Skip</string>
+    <string name="paired_tag_limits_section_title">Temporary disable limits (optional)</string>
+    <string name="paired_tag_limits_section_hint">Applied automatically when a daily limit or cooldown is set for this tag.</string>
+    <string name="paired_tag_daily_limit_label">Daily uses</string>
+    <string name="paired_tag_daily_limit_helper">1–50, empty = default</string>
+    <string name="paired_tag_cooldown_label">Cooldown (min)</string>
+    <string name="paired_tag_cooldown_helper">1–1440, empty = default</string>
+    <string name="paired_tag_daily_limit_invalid">Please enter a valid daily limit or leave empty.</string>
+    <string name="paired_tag_cooldown_invalid">Please enter a valid cooldown in minutes or leave empty.</string>
+    <string name="paired_tag_readonly_action_section_title">Read-only tag action</string>
+    <string name="paired_tag_readonly_action_section_hint">Choose what this paired UID-only tag should do when it has no written Switchly action.</string>
+    <string name="paired_tag_readonly_action_label">Action for read-only scans</string>
+    <string name="paired_tag_readonly_action_toggle">Toggle</string>
+    <string name="paired_tag_readonly_action_unlock_only">Unlock only</string>
+    <string name="paired_tag_readonly_action_lock_only">Lock only</string>
+    <string name="paired_tag_type_writable">Writable tag</string>
+    <string name="paired_tag_type_readonly">Read-only tag</string>
+    <string name="paired_tag_type_legacy">Legacy paired tag</string>
+    <string name="paired_tag_readonly_action_summary_fmt">Read-only Tag - Action: %1$s</string>
 
-    <string name="nfc_waiting_tag">Hold the tag to the phone…</string>
-
-    <string name="nfc_writing">Writing tag…</string>
-
-    <string name="nfc_write_ok">Tag written successfully!</string>
-
-    <string name="nfc_write_error_generic">Could not write to NFC tag.</string>
-
-    <string name="nfc_write_error_too_small">NFC tag is too small for this action. Use a larger-capacity tag.</string>
-
-    <string name="nfc_not_available">NFC is not available on this device</string>
-
-    <string name="nfc_required_confirm_title">NFC required</string>
-
-    <string name="nfc_required_confirm_enable_msg">When enabled, Switchly can only be disabled with a paired NFC tag (or QR fallback). Schedules and quick toggles can no longer turn it off.</string>
-
-    <string name="nfc_feedback_started">%1$s enabled</string>
-
-    <string name="nfc_feedback_stopped">%1$s disabled</string>
-
-    <string name="nfc_error_invalid_or_missing_uri">Invalid or missing URI</string>
-
-    <string name="nfc_error_unknown_host">Unknown host</string>
-
-    <string name="nfc_error_unknown_action">Unknown action</string>
-
-    <string name="nfc_error_missing_profile">Missing profile</string>
-
-    <string name="nfc_error_unknown_profile_fmt">Unknown profile: %1$s</string>
-
-    <string name="nfc_error_profile_not_active_nothing_to_disable_fmt">Profile “%1$s” is not active — nothing to disable.</string>
-
-    <string name="nfc_tag_error">Error: NFC tag could not be read.</string>
-
-    <string name="nfc_write_locked_while_enabled">NFC tag writing is locked while Switchly is active.</string>
-
-    <string name="nfc_write_locked_status">Disable Switchly to write or pair a new NFC tag, or allow NFC tag writing in Mixed mode.</string>
-
-    <string name="nfc_write_locked_button">NFC tag writing locked</string>
-
+    <!-- ====================================================== -->
+    <!-- Temporary tag limits -->
+    <!-- ====================================================== -->
     <string name="nfc_temp_disable_limiter_cooldown">This tag is on cooldown. Try again in %1$d min.</string>
-
     <plurals name="nfc_temp_disable_limiter_daily_limit">
         <item quantity="one">Daily limit reached for this tag (%1$d use/day).</item>
         <item quantity="other">Daily limit reached for this tag (%1$d uses/day).</item>
     </plurals>
 
+    <!-- ====================================================== -->
+    <!-- NFC errors and toasts -->
+    <!-- ====================================================== -->
+    <string name="nfc_temp_hint_profile_disable_toast">Heads-up: Profile temporary disable only applies if that profile is currently active.</string>
+    <string name="nfc_temp_hint_profile_enable_toast">Heads-up: Profile temporary enable temporarily activates this profile.</string>
+    <string name="nfc_error_invalid_or_missing_uri">Invalid or missing URI</string>
+    <string name="nfc_error_unknown_host">Unknown host</string>
+    <string name="nfc_error_unknown_action">Unknown action</string>
+    <string name="nfc_error_missing_profile">Missing profile</string>
+    <string name="nfc_error_unknown_profile_fmt">Unknown profile: %1$s</string>
+    <string name="nfc_error_profile_not_active_nothing_to_disable_fmt">Profile “%1$s” is not active — nothing to disable.</string>
+    <string name="nfc_tag_error">Error: NFC tag could not be read.</string>
+    <string name="nfc_pair_error">Could not read tag UID</string>
+    <string name="toast_disable_requires_nfc">Switchly can currently only be disabled via NFC tag.</string>
+    <string name="toast_cannot_disable_while_locked">Switchly is locked. Use your NFC tag to disable it.</string>
+    <string name="toast_cannot_change_profile_while_locked">Profiles are locked. Use your NFC tag to switch Switchly or disable it.</string>
+
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="write_nfc_tag">Write NFC tag</string>
+    <string name="nfc_profile_hint">Profile</string>
+    <string name="nfc_profile_none">Universal</string>
+    <string name="nfc_duration_hint">Temporary duration</string>
+    <string name="nfc_temp_hint_timer_behavior">Temporary mode runs for the selected time, then returns to your previous state automatically.</string>
+    <string name="nfc_ready_to_write">Ready to write</string>
+    <string name="nfc_hold_still">Hold your phone still…</string>
+    <string name="nfc_close">Close</string>
+    <string name="nfc_arm_write">Start tag writer</string>
+    <string name="nfc_waiting_tag">Hold the tag to the phone…</string>
+    <string name="nfc_writing">Writing tag…</string>
+    <string name="nfc_not_available">NFC is not available on this device</string>
+    <string name="nfc_required_confirm_title">NFC required</string>
+    <string name="nfc_required_confirm_enable_msg">When enabled, Switchly can only be disabled with a paired NFC tag (or QR fallback). Schedules and quick toggles can no longer turn it off.</string>
+    <string name="nfc_feedback_started">%1$s enabled</string>
+    <string name="nfc_feedback_stopped">%1$s disabled</string>
     <string name="nfc_time_5_min">5 minutes</string>
-
     <string name="nfc_time_10_min">10 minutes</string>
-
     <string name="nfc_time_15_min">15 minutes</string>
-
     <string name="nfc_time_20_min">20 minutes</string>
-
     <string name="nfc_time_25_min">25 minutes</string>
-
     <string name="nfc_time_30_min">30 minutes</string>
-
     <string name="nfc_time_custom">Custom time…</string>
-
     <string name="nfc_time_custom_title">Custom temporary duration</string>
-
     <string name="nfc_time_custom_placeholder">Enter Time</string>
-
     <string name="nfc_time_custom_invalid">Please enter a number between 1 and 120 minutes.</string>
-
     <plurals name="nfc_time_custom_label">
         <item quantity="one">%1$d minute</item>
         <item quantity="other">%1$d minutes</item>
     </plurals>
-
     <string name="nfc_pair_waiting_readonly">Tap an NFC tag to pair its UID for toggle/unlock use</string>
-
     <string name="nfc_pair_waiting_writable">Tap a writable NFC tag to pair its UID</string>
-
     <string name="nfc_pair_ok">Tag paired</string>
-
     <string name="nfc_pair_ok_with_uid">Tag paired: %1$s</string>
-
     <string name="nfc_pair_ok_with_uid_explained">Tag paired: %1$s. UID pairing authorizes this tag, but does not write a disable action to the card.</string>
-
-    <string name="nfc_pair_error">Could not read tag UID</string>
-
     <string name="nfc_pair_already_added">Tag already added</string>
-
     <string name="nfc_pair_already_added_open_writer">Tag already added. Opening action writer…</string>
-
     <string name="nfc_pair_writable_requires_writable_tag">This tag is read-only. Add it as a read-only tag instead.</string>
-
     <string name="nfc_wrong_tag_paired_uid_required">Wrong NFC tag (paired UID required).</string>
-
-    <string name="paired_tags_setup_title">Add and manage NFC tags</string>
-
-    <string name="paired_tags_setup_body">Use the + button to add a new NFC tag.\n\n• Add writable tag: first scan pairs the tag UID. If you scan the same tag again, Switchly opens the action writer so you can write an action to it.\n• Add read-only tag: pairs the tag UID without writing anything to the card. You can set each read-only tag to toggle, unlock only, or lock only.</string>
-
-    <string name="paired_tags_add_title">Add NFC tag</string>
-
-    <string name="paired_tags_add_writable_title">Add writable tag</string>
-
-    <string name="paired_tags_add_readonly_title">Add read-only tag</string>
-
-    <string name="paired_tags_add_fab_desc">Add paired NFC tag</string>
-
-    <string name="paired_tags_title">Paired tags</string>
-
-    <string name="paired_tags_empty">No paired tags yet.</string>
-
-    <string name="paired_tags_remove_confirm">Remove this paired tag?</string>
-
-    <string name="paired_tag_delete_selected_title">Delete paired tags</string>
-
-    <plurals name="paired_tag_delete_selected_confirm_fmt">
-        <item quantity="one">Delete %1$d selected paired tag?</item>
-        <item quantity="other">Delete %1$d selected paired tags?</item>
-    </plurals>
-
-    <string name="paired_tag_default_name">Unnamed tag</string>
-
-    <string name="paired_tag_edit_title">Edit paired tag</string>
-
-    <string name="paired_tag_name_hint">Name (e.g., Home keychain)</string>
-
-    <string name="paired_tag_note_hint">Note (optional)</string>
-
-    <string name="paired_tag_note_placeholder">Note</string>
-
-    <string name="paired_tag_uid_placeholder">04AABBCCDD</string>
-
-    <string name="paired_tag_pair_prompt_title">Name this tag</string>
-
-    <string name="paired_tag_pair_prompt_message">Optional, but helps you recognize it later. Read-only cards can be paired by UID, but they do not store a Switchly action on the card itself. Only paired tags added here can be used that way.</string>
-
-    <string name="paired_tag_pair_prompt_save">Save</string>
-
-    <string name="paired_tag_pair_prompt_skip">Skip</string>
-
-    <string name="paired_tag_limits_section_title">Temporary disable limits (optional)</string>
-
-    <string name="paired_tag_limits_section_hint">Applied automatically when a daily limit or cooldown is set for this tag.</string>
-
-    <string name="paired_tag_daily_limit_label">Daily uses</string>
-
-    <string name="paired_tag_daily_limit_helper">1–50, empty = default</string>
-
-    <string name="paired_tag_cooldown_label">Cooldown (min)</string>
-
-    <string name="paired_tag_cooldown_helper">1–1440, empty = default</string>
-
-    <string name="paired_tag_daily_limit_invalid">Please enter a valid daily limit or leave empty.</string>
-
-    <string name="paired_tag_cooldown_invalid">Please enter a valid cooldown in minutes or leave empty.</string>
-
-    <string name="paired_tag_readonly_action_section_title">Read-only tag action</string>
-
-    <string name="paired_tag_readonly_action_section_hint">Choose what this paired UID-only tag should do when it has no written Switchly action.</string>
-
-    <string name="paired_tag_readonly_action_label">Action for read-only scans</string>
-
-    <string name="paired_tag_readonly_action_toggle">Toggle</string>
-
-    <string name="paired_tag_readonly_action_unlock_only">Unlock only</string>
-
-    <string name="paired_tag_readonly_action_lock_only">Lock only</string>
-
-    <string name="paired_tag_type_writable">Writable tag</string>
-
-    <string name="paired_tag_type_readonly">Read-only tag</string>
-
-    <string name="paired_tag_type_legacy">Legacy paired tag</string>
-
-    <string name="paired_tag_readonly_action_summary_fmt">Read-only Tag - Action: %1$s</string>
-
     <string name="nfc_feedback_already_started">%1$s is already enabled</string>
-
     <string name="nfc_feedback_already_stopped">%1$s is already disabled</string>
-
-    <string name="toast_disable_requires_nfc">Switchly can currently only be disabled via NFC tag.</string>
-
-    <string name="toast_cannot_disable_while_locked">Switchly is locked. Use your NFC tag to disable it.</string>
-
-    <string name="toast_cannot_change_profile_while_locked">Profiles are locked. Use your NFC tag to switch Switchly or disable it.</string>
 
 </resources>

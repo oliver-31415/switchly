@@ -65,6 +65,7 @@ import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import at.saltyy.switchly.auth.AccountDeletion
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
@@ -75,6 +76,7 @@ import at.saltyy.switchly.data.sync.CloudSyncRuntime
 import at.saltyy.switchly.data.sync.FileBackupRuntime
 import at.saltyy.switchly.feature.about.AppInfoActivity
 import at.saltyy.switchly.feature.about.DeveloperInfoActivity
+import at.saltyy.switchly.feature.about.DeveloperModeActivity
 import at.saltyy.switchly.feature.about.DeviceInfoActivity
 import at.saltyy.switchly.feature.about.OtherSwitchlyProductsActivity
 import at.saltyy.switchly.feature.about.WhatsNewActivity
@@ -102,6 +104,7 @@ import com.google.firebase.auth.FirebaseAuth
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Calendar
 import java.util.Locale
 import kotlinx.coroutines.launch
 
@@ -132,6 +135,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private var devVisible: Boolean = false
     private fun refreshBlockedInboxPreferenceState() {
         findPreference<Preference>("pref_blocked_inbox")?.isVisible = true
+    }
+
+    private fun refreshDeveloperModePreference() {
+        findPreference<Preference>("pref_developer_mode")?.isVisible = AdvancedModeStore.isEnabled(requireContext())
     }
     private var authListener: FirebaseAuth.AuthStateListener? = null
     private var nextChangedReceiver: BroadcastReceiver? = null
@@ -428,6 +435,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
             startActivity(Intent(requireContext(), DeveloperInfoActivity::class.java))
             true
         }
+        refreshDeveloperModePreference()
+        findPreference<Preference>("pref_developer_mode")?.setOnPreferenceClickListener {
+            startActivity(Intent(requireContext(), DeveloperModeActivity::class.java))
+            true
+        }
         findPreference<Preference>("pref_about_other_switchly_products")?.setOnPreferenceClickListener {
             startActivity(Intent(requireContext(), OtherSwitchlyProductsActivity::class.java))
             true
@@ -709,9 +721,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (nextMillis <= 0L) {
             pref.summary = getString(R.string.schedules_next_none)
         } else {
-            val text = TimeFormatPrefs.formatMinutesOfDay(ctx, ((nextMillis / 60000L) % (24 * 60)).toInt())
+            val text = formatLocalScheduleBoundaryTime(ctx, nextMillis)
             pref.summary = getString(R.string.schedules_next_at, text)
         }
+    }
+
+    private fun formatLocalScheduleBoundaryTime(context: Context, timeMillis: Long): String {
+        val cal = Calendar.getInstance().apply { this.timeInMillis = timeMillis }
+        val minutesOfDay = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+        return TimeFormatPrefs.formatMinutesOfDay(context, minutesOfDay)
     }
 
     override fun onResume() {
@@ -724,6 +742,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         updateGooglePrefSummary()
         updateCloudPrefVisibility()
         refreshBlockedInboxPreferenceState()
+        refreshDeveloperModePreference()
         CustomAccentApplier.applyIfNeeded(requireActivity())
         tintCategories()
         ensureDeveloperInfoIconAccent()

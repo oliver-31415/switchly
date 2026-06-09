@@ -2,73 +2,60 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- APP LOCK -->
+    <!-- App Lock settings -->
     <!-- ====================================================== -->
-
     <string name="app_lock_section_uninstall">Uninstall protection</string>
-
     <string name="pref_app_lock_title">App lock</string>
-
     <string name="pref_app_lock_summary">Protect Switchly with PIN or biometrics.</string>
-
-    <string name="app_lock_screen_title">App lock</string>
-
-    <string name="app_lock_enable_title">Protect Switchly app</string>
-
-    <string name="app_lock_enable_summary">Require PIN or biometrics when opening Switchly.</string>
-
-    <string name="app_lock_biometric_title">Allow biometric unlock</string>
-
-    <string name="app_lock_biometric_summary">Face or fingerprint can unlock Switchly instead of the PIN.</string>
-
-    <string name="app_lock_set_pin_title">Set app PIN</string>
-
-    <string name="app_lock_change_pin_title">Change app PIN</string>
-
-    <string name="app_lock_change_pin_summary">Update the PIN used to open Switchly when App Lock is enabled.</string>
-
-    <string name="app_lock_pin_set">App PIN saved.</string>
-
-    <string name="app_lock_pin_hint_new">Choose app PIN (min. 4 digits)</string>
-
-    <string name="app_lock_pin_hint_enter">Enter app PIN</string>
-
-    <string name="app_lock_pin_title">Switchly PIN</string>
-
-    <string name="app_lock_pin_message">This PIN unlocks Switchly when app lock is enabled.</string>
-
-    <string name="app_lock_pin_incorrect">Incorrect PIN.</string>
-
-    <string name="app_lock_pin_too_short">PIN must be at least 4 digits.</string>
-
-    <string name="app_lock_unlock_title">Unlock Switchly</string>
-
-    <string name="app_lock_unlock_message">Enter your app PIN or use biometrics to continue.</string>
-
-    <string name="app_lock_unlock_button">Unlock</string>
-
-    <string name="app_lock_biometric_button">Use biometrics</string>
-
-    <string name="app_lock_biometric_prompt_title">Unlock Switchly</string>
-
-    <string name="app_lock_biometric_prompt_subtitle">Use face or fingerprint to open the app.</string>
-
-    <string name="app_lock_biometric_not_available">Biometrics are not available on this device right now.</string>
-
-    <string name="app_lock_setup_pin_first">Set an app PIN first.</string>
-
-    <string name="app_lock_status_off">Off</string>
-
-    <string name="app_lock_status_pin_only">PIN enabled</string>
-
-    <string name="app_lock_status_pin_biometric">PIN + biometrics enabled</string>
-
     <string name="app_lock_section_lock_access">Lock app access</string>
-
-    <string name="app_lock_emergency_pin_title">Change emergency PIN</string>
-
     <string name="app_lock_section_emergency">Emergency protection</string>
 
+    <!-- ====================================================== -->
+    <!-- PIN setup and validation -->
+    <!-- ====================================================== -->
+    <string name="app_lock_set_pin_title">Set app PIN</string>
+    <string name="app_lock_change_pin_title">Change app PIN</string>
+    <string name="app_lock_change_pin_summary">Update the PIN used to open Switchly when App Lock is enabled.</string>
+    <string name="app_lock_pin_set">App PIN saved.</string>
+    <string name="app_lock_pin_hint_new">Choose app PIN (min. 4 digits)</string>
+    <string name="app_lock_pin_hint_enter">Enter app PIN</string>
+    <string name="app_lock_pin_title">Switchly PIN</string>
+    <string name="app_lock_pin_message">This PIN unlocks Switchly when app lock is enabled.</string>
+    <string name="app_lock_pin_incorrect">Incorrect PIN.</string>
+    <string name="app_lock_pin_too_short">PIN must be at least 4 digits.</string>
+
+    <!-- ====================================================== -->
+    <!-- Unlock screen and biometric prompt -->
+    <!-- ====================================================== -->
+    <string name="app_lock_biometric_title">Allow biometric unlock</string>
+    <string name="app_lock_biometric_summary">Face or fingerprint can unlock Switchly instead of the PIN.</string>
+    <string name="app_lock_unlock_title">Unlock Switchly</string>
+    <string name="app_lock_unlock_message">Enter your app PIN or use biometrics to continue.</string>
+    <string name="app_lock_unlock_button">Unlock</string>
+    <string name="app_lock_biometric_button">Use biometrics</string>
+    <string name="app_lock_biometric_prompt_title">Unlock Switchly</string>
+    <string name="app_lock_biometric_prompt_subtitle">Use face or fingerprint to open the app.</string>
+    <string name="app_lock_biometric_not_available">Biometrics are not available on this device right now.</string>
+
+    <!-- ====================================================== -->
+    <!-- Current status labels -->
+    <!-- ====================================================== -->
+    <string name="app_lock_status_off">Off</string>
+    <string name="app_lock_status_pin_only">PIN enabled</string>
+    <string name="app_lock_status_pin_biometric">PIN + biometrics enabled</string>
+
+    <!-- ====================================================== -->
+    <!-- Emergency PIN -->
+    <!-- ====================================================== -->
+    <string name="app_lock_emergency_pin_title">Change emergency PIN</string>
     <string name="app_lock_emergency_pin_summary">Set the separate PIN used for Emergency Unlock when you need a safe fallback.</string>
+
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="app_lock_screen_title">App lock</string>
+    <string name="app_lock_enable_title">Protect Switchly app</string>
+    <string name="app_lock_enable_summary">Require PIN or biometrics when opening Switchly.</string>
+    <string name="app_lock_setup_pin_first">Set an app PIN first.</string>
 
 </resources>

@@ -2,73 +2,60 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- APP LOCK -->
+    <!-- App Lock settings -->
     <!-- ====================================================== -->
+    <string name="app_lock_section_uninstall">Uninstall Protection</string>
+    <string name="pref_app_lock_title">App-Sperre</string>
+    <string name="pref_app_lock_summary">Schütze Switchly mit PIN oder Biometrie.</string>
+    <string name="app_lock_section_lock_access">App-Zugriff sperren</string>
+    <string name="app_lock_section_emergency">Notfall-Schutz</string>
 
-	<string name="app_lock_section_uninstall">Uninstall Protection</string>
+    <!-- ====================================================== -->
+    <!-- PIN setup and validation -->
+    <!-- ====================================================== -->
+    <string name="app_lock_set_pin_title">App-PIN festlegen</string>
+    <string name="app_lock_change_pin_title">App-PIN ändern</string>
+    <string name="app_lock_change_pin_summary">Ändere die PIN, mit der Switchly bei aktivem App Lock geöffnet wird.</string>
+    <string name="app_lock_pin_set">App-PIN gespeichert.</string>
+    <string name="app_lock_pin_hint_new">App-PIN wählen (mind. 4 Ziffern)</string>
+    <string name="app_lock_pin_hint_enter">App-PIN eingeben</string>
+    <string name="app_lock_pin_title">Switchly-PIN</string>
+    <string name="app_lock_pin_message">Diese PIN entsperrt Switchly, wenn die App-Sperre aktiv ist.</string>
+    <string name="app_lock_pin_incorrect">Falsche PIN.</string>
+    <string name="app_lock_pin_too_short">Die PIN muss mindestens 4 Ziffern haben.</string>
 
-	<string name="pref_app_lock_title">App-Sperre</string>
+    <!-- ====================================================== -->
+    <!-- Unlock screen and biometric prompt -->
+    <!-- ====================================================== -->
+    <string name="app_lock_biometric_title">Biometrisches Entsperren erlauben</string>
+    <string name="app_lock_biometric_summary">Gesicht oder Fingerabdruck kann Switchly statt der PIN entsperren.</string>
+    <string name="app_lock_unlock_title">Switchly entsperren</string>
+    <string name="app_lock_unlock_message">Gib deine App-PIN ein oder nutze Biometrie, um fortzufahren.</string>
+    <string name="app_lock_unlock_button">Entsperren</string>
+    <string name="app_lock_biometric_button">Biometrie verwenden</string>
+    <string name="app_lock_biometric_prompt_title">Switchly entsperren</string>
+    <string name="app_lock_biometric_prompt_subtitle">Nutze Gesicht oder Fingerabdruck, um die App zu öffnen.</string>
+    <string name="app_lock_biometric_not_available">Biometrie ist auf diesem Gerät gerade nicht verfügbar.</string>
 
-	<string name="pref_app_lock_summary">Schütze Switchly mit PIN oder Biometrie.</string>
+    <!-- ====================================================== -->
+    <!-- Current status labels -->
+    <!-- ====================================================== -->
+    <string name="app_lock_status_off">Aus</string>
+    <string name="app_lock_status_pin_only">PIN aktiviert</string>
+    <string name="app_lock_status_pin_biometric">PIN + Biometrie aktiviert</string>
 
-	<string name="app_lock_screen_title">App-Sperre</string>
+    <!-- ====================================================== -->
+    <!-- Emergency PIN -->
+    <!-- ====================================================== -->
+    <string name="app_lock_emergency_pin_title">Notfall-PIN ändern</string>
+    <string name="app_lock_emergency_pin_summary">Separate PIN für Emergency Unlock festlegen, falls du einen sicheren Ausweg brauchst.</string>
 
-	<string name="app_lock_enable_title">Switchly-App schützen</string>
-
-	<string name="app_lock_enable_summary">Beim Öffnen von Switchly PIN oder Biometrie verlangen.</string>
-
-	<string name="app_lock_biometric_title">Biometrisches Entsperren erlauben</string>
-
-	<string name="app_lock_biometric_summary">Gesicht oder Fingerabdruck kann Switchly statt der PIN entsperren.</string>
-
-	<string name="app_lock_set_pin_title">App-PIN festlegen</string>
-
-	<string name="app_lock_change_pin_title">App-PIN ändern</string>
-
-	<string name="app_lock_change_pin_summary">Ändere die PIN, mit der Switchly bei aktivem App Lock geöffnet wird.</string>
-
-	<string name="app_lock_pin_set">App-PIN gespeichert.</string>
-
-	<string name="app_lock_pin_hint_new">App-PIN wählen (mind. 4 Ziffern)</string>
-
-	<string name="app_lock_pin_hint_enter">App-PIN eingeben</string>
-
-	<string name="app_lock_pin_title">Switchly-PIN</string>
-
-	<string name="app_lock_pin_message">Diese PIN entsperrt Switchly, wenn die App-Sperre aktiv ist.</string>
-
-	<string name="app_lock_pin_incorrect">Falsche PIN.</string>
-
-	<string name="app_lock_pin_too_short">Die PIN muss mindestens 4 Ziffern haben.</string>
-
-	<string name="app_lock_unlock_title">Switchly entsperren</string>
-
-	<string name="app_lock_unlock_message">Gib deine App-PIN ein oder nutze Biometrie, um fortzufahren.</string>
-
-	<string name="app_lock_unlock_button">Entsperren</string>
-
-	<string name="app_lock_biometric_button">Biometrie verwenden</string>
-
-	<string name="app_lock_biometric_prompt_title">Switchly entsperren</string>
-
-	<string name="app_lock_biometric_prompt_subtitle">Nutze Gesicht oder Fingerabdruck, um die App zu öffnen.</string>
-
-	<string name="app_lock_biometric_not_available">Biometrie ist auf diesem Gerät gerade nicht verfügbar.</string>
-
-	<string name="app_lock_setup_pin_first">Lege zuerst eine App-PIN fest.</string>
-
-	<string name="app_lock_status_off">Aus</string>
-
-	<string name="app_lock_status_pin_only">PIN aktiviert</string>
-
-	<string name="app_lock_status_pin_biometric">PIN + Biometrie aktiviert</string>
-
-	<string name="app_lock_section_lock_access">App-Zugriff sperren</string>
-
-	<string name="app_lock_emergency_pin_title">Notfall-PIN ändern</string>
-
-	<string name="app_lock_section_emergency">Notfall-Schutz</string>
-
-	<string name="app_lock_emergency_pin_summary">Separate PIN für Emergency Unlock festlegen, falls du einen sicheren Ausweg brauchst.</string>
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="app_lock_screen_title">App-Sperre</string>
+    <string name="app_lock_enable_title">Switchly-App schützen</string>
+    <string name="app_lock_enable_summary">Beim Öffnen von Switchly PIN oder Biometrie verlangen.</string>
+    <string name="app_lock_setup_pin_first">Lege zuerst eine App-PIN fest.</string>
 
 </resources>

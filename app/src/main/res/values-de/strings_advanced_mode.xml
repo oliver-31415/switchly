@@ -2,69 +2,69 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- ADVANCED MODE -->
+    <!-- Advanced mode entry and overview -->
     <!-- ====================================================== -->
+    <string name="advanced_mode_title">ADB-Tools</string>
+    <string name="advanced_mode_admin_label">Switchly</string>
+    <string name="advanced_mode_admin_description">Gibt Switchly die nötige Kontrolle für optionale erweiterte Geräteadmin- und Managed-Device-Funktionen.</string>
+    <string name="advanced_mode_disable_warning">Wenn du den Switchly-Geräteadmin deaktivierst, werden die erweiterten Managed-Device-Hooks entfernt. Auf normalen persönlichen Geräten ist das nur eine erweiterte Hilfe und keine echte Deinstallationssperre.</string>
+    <string name="advanced_mode_summary_body">Dieser Screen ist für fortgeschrittene Nutzer gedacht, die mit Android-Enterprise-ähnlicher Verwaltung per ADB experimentieren möchten.\nAuf normalen persönlichen Geräten kann Switchly nur Deinstallations-Reibung hinzufügen.\nEine stärkere Deinstallationssperre erfordert Managed-Device-Eigentümerschaft und ist kein normaler Consumer-Setup.</string>
+    <string name="advanced_mode_recommendation_body">Für fast alle Nutzer ist Switchlys Deinstallations-Reibung die richtige Option.\nNutze diesen Screen nur, wenn du Device-Admin-, Profile-Owner- oder Device-Owner-Flows gezielt testen willst.</string>
+    <string name="advanced_mode_constraints_body">Device-Owner-Befehle funktionieren meist nur auf einem frisch eingerichteten Gerät ohne bestehende Konten.\nProfile-Owner-Befehle haben eigene Bereitstellungsgrenzen.\nDevice Admin ist veraltet und entspricht nicht voller Managed-Device-Eigentümerschaft.\nNutze das nur, wenn du weißt, was du tust.</string>
 
-	<string name="advanced_mode_title">Erweiterte Tools</string>
+    <!-- ====================================================== -->
+    <!-- Advanced mode tiles -->
+    <!-- ====================================================== -->
+    <string name="advanced_mode_tile_status">Aktuelles Managed-Device-Setup</string>
+    <string name="advanced_mode_tile_summary">Wofür dieser Modus gedacht ist</string>
+    <string name="advanced_mode_tile_recommendation">Für die meisten Nutzer empfohlen</string>
+    <string name="advanced_mode_tile_receiver">Admin-Receiver-Komponente</string>
+    <string name="advanced_mode_tile_device_owner">ADB: Device Owner setzen</string>
+    <string name="advanced_mode_tile_profile_owner">ADB: Profile Owner setzen</string>
+    <string name="advanced_mode_tile_remove_admin">ADB: Aktiven Admin entfernen</string>
+    <string name="advanced_mode_tile_check_state">ADB: Policy-Status prüfen</string>
+    <string name="advanced_mode_tile_constraints">Wichtige Hinweise vorher</string>
+    <string name="advanced_mode_tile_docs">Offizielle Doku und Referenz</string>
 
-	<string name="advanced_mode_unlocked_toast">Erweiterte Tools freigeschaltet</string>
+    <!-- ====================================================== -->
+    <!-- Device owner/admin states -->
+    <!-- ====================================================== -->
+    <string name="advanced_mode_status_standard">Normaler persönlicher App-Modus.\nKeine Managed-Device-Eigentümerschaft ist aktiv.</string>
+    <string name="advanced_mode_status_device_admin">Die alte Geräteadmin-Aktivierung ist aktiv.</string>
+    <string name="advanced_mode_status_profile_owner">Profile Owner ist aktiv.</string>
+    <string name="advanced_mode_status_device_owner">Device Owner ist aktiv.</string>
+    <string name="advanced_mode_status_updated_toast">Managed-Device-Status aktualisiert</string>
 
-	<string name="advanced_mode_admin_label">Switchly</string>
+    <!-- ====================================================== -->
+    <!-- Admin setup, commands and docs -->
+    <!-- ====================================================== -->
+    <string name="advanced_mode_add_admin_explanation">Das aktiviert nur Switchlys optionalen erweiterten Admin-Receiver.\nAuf einem normalen persönlichen Gerät garantiert das keine Deinstallationssperre.</string>
+    <string name="advanced_mode_open_admin_failed">Android-Geräteadmin-Bildschirm konnte nicht geöffnet werden</string>
+    <string name="advanced_mode_command_copied">Befehl kopiert</string>
+    <string name="advanced_mode_component_copied">Komponente kopiert</string>
+    <string name="advanced_mode_docs_body">Öffnet die offizielle Android-Referenz zu DevicePolicyManager.</string>
 
-	<string name="advanced_mode_admin_description">Gibt Switchly die nötige Kontrolle für optionale erweiterte Geräteadmin- und Managed-Device-Funktionen.</string>
+    <!-- ====================================================== -->
+    <!-- Developer mode -->
+    <!-- ====================================================== -->
+    <string name="developer_mode_title">Developer-Modus</string>
+    <string name="developer_mode_unlocked_toast">Developer-Modus freigeschaltet</string>
+    <string name="developer_mode_settings_summary">Öffnet ADB- und Logging-Tools, solange der Developer-Modus aktiviert ist.</string>
+    <string name="developer_mode_tile_adb">ADB</string>
+    <string name="developer_mode_tile_adb_body">Öffnet ADB- und Managed-Device-Tools für Device Admin, Profile Owner und Device Owner Experimente.</string>
+    <string name="developer_mode_tile_logging">Logging</string>
+    <string name="developer_mode_tile_logging_body">Zeigt die letzten 250 internen App-Log-Zeilen live an und erlaubt das Kopieren zur Fehlersuche.</string>
+    <string name="developer_mode_tile_disable">Developer-Modus ausschalten</string>
+    <string name="developer_mode_disable_body">Blendet die Developer-Einträge wieder aus. Du kannst sie später durch langes Drücken auf die Versions-Zeile erneut freischalten.</string>
+    <string name="developer_mode_disabled_toast">Developer-Modus ausgeschaltet</string>
 
-	<string name="advanced_mode_disable_warning">Wenn du den Switchly-Geräteadmin deaktivierst, werden die erweiterten Managed-Device-Hooks entfernt. Auf normalen persönlichen Geräten ist das nur eine erweiterte Hilfe und keine echte Deinstallationssperre.</string>
-
-	<string name="advanced_mode_tile_status">Aktuelles Managed-Device-Setup</string>
-
-	<string name="advanced_mode_tile_summary">Wofür dieser Modus gedacht ist</string>
-
-	<string name="advanced_mode_tile_recommendation">Für die meisten Nutzer empfohlen</string>
-
-	<string name="advanced_mode_tile_receiver">Admin-Receiver-Komponente</string>
-
-	<string name="advanced_mode_tile_device_owner">ADB: Device Owner setzen</string>
-
-	<string name="advanced_mode_tile_profile_owner">ADB: Profile Owner setzen</string>
-
-	<string name="advanced_mode_tile_remove_admin">ADB: Aktiven Admin entfernen</string>
-
-	<string name="advanced_mode_tile_check_state">ADB: Policy-Status prüfen</string>
-
-	<string name="advanced_mode_tile_constraints">Wichtige Hinweise vorher</string>
-
-	<string name="advanced_mode_tile_docs">Offizielle Doku und Referenz</string>
-
-	<string name="advanced_mode_status_standard">Normaler persönlicher App-Modus.\nKeine Managed-Device-Eigentümerschaft ist aktiv.</string>
-
-	<string name="advanced_mode_status_device_admin">Die alte Geräteadmin-Aktivierung ist aktiv.</string>
-
-	<string name="advanced_mode_status_profile_owner">Profile Owner ist aktiv.</string>
-
-	<string name="advanced_mode_status_device_owner">Device Owner ist aktiv.</string>
-
-	<string name="advanced_mode_summary_body">Dieser Screen ist für fortgeschrittene Nutzer gedacht, die mit Android-Enterprise-ähnlicher Verwaltung per ADB experimentieren möchten.\nAuf normalen persönlichen Geräten kann Switchly nur Deinstallations-Reibung hinzufügen.\nEine stärkere Deinstallationssperre erfordert Managed-Device-Eigentümerschaft und ist kein normaler Consumer-Setup.</string>
-
-	<string name="advanced_mode_recommendation_body">Für fast alle Nutzer ist Switchlys Deinstallations-Reibung die richtige Option.\nNutze diesen Screen nur, wenn du Device-Admin-, Profile-Owner- oder Device-Owner-Flows gezielt testen willst.</string>
-
-	<string name="advanced_mode_constraints_body">Device-Owner-Befehle funktionieren meist nur auf einem frisch eingerichteten Gerät ohne bestehende Konten.\nProfile-Owner-Befehle haben eigene Bereitstellungsgrenzen.\nDevice Admin ist veraltet und entspricht nicht voller Managed-Device-Eigentümerschaft.\nNutze das nur, wenn du weißt, was du tust.</string>
-
-	<string name="advanced_mode_add_admin_explanation">Das aktiviert nur Switchlys optionalen erweiterten Admin-Receiver.\nAuf einem normalen persönlichen Gerät garantiert das keine Deinstallationssperre.</string>
-
-	<string name="advanced_mode_open_admin_failed">Android-Geräteadmin-Bildschirm konnte nicht geöffnet werden</string>
-
-	<string name="advanced_mode_command_copied">Befehl kopiert</string>
-
-	<string name="advanced_mode_component_copied">Komponente kopiert</string>
-
-	<string name="advanced_mode_docs_body">Öffnet die offizielle Android-Referenz zu DevicePolicyManager.</string>
-
-	<string name="advanced_mode_tile_disable_mode">Erweiterten Modus ausschalten</string>
-
-	<string name="advanced_mode_disable_mode_body">Blendet den zusätzlichen erweiterten Eintrag wieder aus.\nDu kannst später jederzeit durch langes Drücken auf die Versions-Zeile zurückkommen.</string>
-
-	<string name="advanced_mode_disabled_toast">Erweiterter Modus ausgeschaltet</string>
-
-	<string name="advanced_mode_status_updated_toast">Managed-Device-Status aktualisiert</string>
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="developer_logging_title">Logging</string>
+    <string name="developer_logging_body">Live-Ansicht der letzten internen Switchly-Logs. Das hilft beim Debugging, ohne jedes Mal eine Support-Mail erstellen zu müssen.</string>
+    <string name="developer_logging_refresh">Aktualisieren</string>
+    <string name="developer_logging_copy">Logs kopieren</string>
+    <string name="developer_logging_no_logs">Keine aktuellen App-Logs.</string>
 
 </resources>

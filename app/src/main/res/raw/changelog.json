@@ -1,6 +1,31 @@
 {
     "releases": [
         {
+            "version": "v2.1.4",
+            "date": "May 24, 2026",
+            "releaseType": "public",
+            "sourceVersions": [
+                "v2.1.3-beta"
+            ],
+            "body": [
+                "Fixed manual disable safety fallback being too permissive when barcode control was enabled without configured barcodes",
+                "Improved website usage tracking so dynamic sites like Instagram are counted more consistently during detection",
+                "Added sticky website host handling so short browser detection gaps do not reset website tracking too aggressively",
+                "Fixed Next schedule display using the wrong timezone or daylight-saving offset in some cases",
+                "Fixed location schedule geofence registration failing on newer Android versions because of PendingIntent mutability requirements",
+                "Improved location schedule reliability by reducing duplicate geofence registration and duplicate location-trigger applies",
+                "Improved Google Maps location picker handling when Google Maps services cannot be reached from the current device or network",
+                "Added fallback guidance for map loading issues caused by Private DNS, VPNs, ad blockers, or router DNS settings",
+                "Improved setup status consistency for battery optimization checks",
+                "Added improved blocking runtime diagnostics for cases where Android reports Accessibility as enabled but blocking does not trigger",
+                "Added Developer Mode with live internal logs, copyable logs, and clearer troubleshooting tools",
+                "Updated Developer Mode / ADB wording and clarified uninstall friction versus managed device-owner protection",
+                "Reduced noisy schedule evaluation and billing logs in internal app logs",
+                "Expanded the FAQ with clearer troubleshooting help for QR scanning, Quick Actions, widgets, tiles, shortcuts, maps, schedules, support reports, and Developer Mode",
+                "Improved diagnostics for barcode fallback handling, website tracking, schedule timing, geofence registration, map setup, battery checks, and blocking runtime decisions"
+            ]
+        },
+        {
             "version": "v2.1.3-beta",
             "date": "May 17, 2026",
             "releaseType": "beta",
@@ -278,7 +303,7 @@
                 "Improved blocking controls so schedule editing and NFC tag writing are only shown when relevant",
                 "Changed QR code sharing to share the QR as an image instead of plain text",
                 "Improved Wi-Fi trigger reliability, reboot recovery, and permission guidance",
-                "Expanded Xiaomi / Redmi / POCO troubleshooting guidance"
+                "Expanded Xiaomi/Redmi/POCO troubleshooting guidance"
             ]
         },
         {

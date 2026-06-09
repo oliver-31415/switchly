@@ -2,41 +2,28 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- SETTINGS - appearance and language -->
+    <!-- Theme mode -->
     <!-- ====================================================== -->
-
     <string name="pref_theme_title">Appearance</string>
-
     <string name="pref_theme_mode_title">Display mode</string>
-
     <string name="pref_time_format_title">Time format</string>
-
     <string name="pref_time_format_summary">Choose how times are shown in schedules</string>
-
     <string name="pref_time_format_system">Automatic</string>
-
     <string name="pref_time_format_24h">24-hour</string>
-
     <string name="pref_time_format_12h">12-hour</string>
-
     <string name="pref_theme_mode_summary">Choose how Switchly is displayed.</string>
-
     <string name="pref_theme_mode_light">Light</string>
-
     <string name="pref_theme_mode_dark">Dark</string>
-
     <string name="pref_theme_mode_system">Follow system</string>
-
     <string name="pref_theme_color_title">Theme color</string>
-
     <string name="pref_theme_color_summary">Choose the accent color used across the app.</string>
-
     <string name="pref_theme_color_custom_fmt">Custom: %1$s</string>
 
+    <!-- ====================================================== -->
+    <!-- Accent color -->
+    <!-- ====================================================== -->
     <string name="pref_accent_custom">Custom color…</string>
-
     <string name="pref_accent_custom_title">Custom color</string>
-
     <string-array name="pref_accent_entries">
         <item>@string/accent_default</item>
         <item>@string/accent_blue</item>
@@ -48,7 +35,7 @@
         <item>@string/accent_amber</item>
         <item>@string/accent_gray</item>
     </string-array>
-
+    
     <string-array name="pref_accent_values">
         <item>default</item>
         <item>blue</item>
@@ -60,11 +47,13 @@
         <item>amber</item>
         <item>gray</item>
     </string-array>
-
+    
     <string name="pref_language_title">Language</string>
 
+    <!-- ====================================================== -->
+    <!-- Language -->
+    <!-- ====================================================== -->
     <string name="pref_language_summary">Choose the app language.</string>
-
     <string-array name="pref_language_entries">
         <item>System</item>
         <item>English</item>
@@ -76,7 +65,7 @@
         <item>en</item>
         <item>de</item>
     </string-array>
-
+    
     <!-- SETTINGS - Blocking and feature preferences -->
     <string name="pref_block_notifications_title">Hide blocked app notifications</string>
 

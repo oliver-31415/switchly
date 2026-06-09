@@ -314,6 +314,7 @@ class AppPickerActivity : AppCompatActivity() {
 
         // Keep the base list limited to Android's launcher query.
         // Selected packages are resolved individually below via getApplicationInfoCompat(), so installed apps are not marked unavailable just because a Samsung/Android launcher query returned an incomplete list.
+
         return byPackage.values.sortedBy { it.label.lowercase(Locale.getDefault()) }
     }
 

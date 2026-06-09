@@ -42,8 +42,14 @@ object LocationTriggerMonitor {
     private const val KEY_SCHEDULES = "items"
     private const val TAG = "LocationTriggerMonitor"
     private const val REQUEST_PREFIX = "switchly_loc_"
+    private const val REGISTRATION_REFRESH_MS = 10 * 60 * 1000L
+    private const val REGISTRATION_IN_FLIGHT_DEBOUNCE_MS = 5_000L
 
     @Volatile private var listening = false
+    @Volatile private var lastRegistrationSignature: String? = null
+    @Volatile private var lastRegistrationSuccessMs: Long = 0L
+    @Volatile private var inFlightRegistrationSignature: String? = null
+    @Volatile private var lastRegistrationAttemptMs: Long = 0L
     private var schedulesListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     fun ensureStarted(context: Context) {
@@ -65,17 +71,40 @@ object LocationTriggerMonitor {
         val client = LocationServices.getGeofencingClient(ctx)
         val pendingIntent = geofencePendingIntent(ctx)
 
-        runCatching { client.removeGeofences(pendingIntent) }
-            .onFailure { Log.w(TAG, "removeGeofences failed: ${it.message}") }
-
-        if (!hasForegroundLocationPermission(ctx)) return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasBackgroundLocationPermission(ctx)) return
+        if (!hasForegroundLocationPermission(ctx) ||
+            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasBackgroundLocationPermission(ctx))
+        ) {
+            clearRegistrationCache()
+            runCatching { client.removeGeofences(pendingIntent) }
+                .onFailure { Log.w(TAG, "removeGeofences failed: ${it.message}") }
+            return
+        }
 
         val schedules = ScheduleStore.getAll(ctx)
             .filter { it.enabled && it.isLocationSchedule() }
             .take(100)
 
-        if (schedules.isEmpty()) return
+        if (schedules.isEmpty()) {
+            clearRegistrationCache()
+            runCatching { client.removeGeofences(pendingIntent) }
+                .onFailure { Log.w(TAG, "removeGeofences failed: ${it.message}") }
+            return
+        }
+
+        val signature = schedules.registrationSignature()
+        val nowMs = System.currentTimeMillis()
+        if (signature == lastRegistrationSignature && nowMs - lastRegistrationSuccessMs < REGISTRATION_REFRESH_MS) {
+            return
+        }
+        if (signature == inFlightRegistrationSignature && nowMs - lastRegistrationAttemptMs < REGISTRATION_IN_FLIGHT_DEBOUNCE_MS) {
+            return
+        }
+
+        inFlightRegistrationSignature = signature
+        lastRegistrationAttemptMs = nowMs
+
+        runCatching { client.removeGeofences(pendingIntent) }
+            .onFailure { Log.w(TAG, "removeGeofences failed: ${it.message}") }
 
         val geofences = schedules.mapNotNull { s ->
             val lat = s.locationLat ?: return@mapNotNull null
@@ -96,7 +125,11 @@ object LocationTriggerMonitor {
                 .build()
         }
 
-        if (geofences.isEmpty()) return
+        if (geofences.isEmpty()) {
+            clearRegistrationCache()
+            inFlightRegistrationSignature = null
+            return
+        }
 
         val request = GeofencingRequest.Builder()
             // Important: fire ENTER immediately when a schedule is created while the user is already inside the radius. 
@@ -110,32 +143,70 @@ object LocationTriggerMonitor {
                 ctx,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
-        ) return
+        ) {
+            if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
+            return
+        }
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
             ContextCompat.checkSelfPermission(
                 ctx,
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
-        ) return
+        ) {
+            if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
+            return
+        }
 
         try {
             client.addGeofences(request, pendingIntent)
                 .addOnSuccessListener {
+                    lastRegistrationSignature = signature
+                    lastRegistrationSuccessMs = System.currentTimeMillis()
+                    if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
                     AppLogStore.append(ctx, "Location", "Geofences registered count=${geofences.size}")
                     checkCurrentLocationForInitialEnter(ctx, schedules)
                 }
                 .addOnFailureListener { t ->
+                    if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
                     AppLogStore.append(ctx, "Location", "Geofence registration failed: ${t.message ?: t.javaClass.simpleName}")
                     Log.w(TAG, "addGeofences failed async: ${t.message}")
                 }
         } catch (se: SecurityException) {
+            if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
             AppLogStore.append(ctx, "Location", "Geofence registration failed: missing permission")
             Log.w(TAG, "addGeofences failed: missing permission (${se.message})")
         } catch (t: Throwable) {
+            if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
             AppLogStore.append(ctx, "Location", "Geofence registration failed: ${t.message ?: t.javaClass.simpleName}")
             Log.w(TAG, "addGeofences failed: ${t.message}")
         }
+    }
+
+    private fun List<ScheduleStore.Schedule>.registrationSignature(): String =
+        sortedBy { it.id }.joinToString("|") { s ->
+            listOf(
+                s.id,
+                s.profile,
+                s.daysMask,
+                s.startMinutes,
+                s.endMinutes,
+                s.startDate,
+                s.endDate,
+                s.locationLat,
+                s.locationLng,
+                s.locationRadiusMeters,
+                s.locationTrigger,
+                s.locationCooldownMinutes,
+                s.action
+            ).joinToString(":")
+        }
+
+    private fun clearRegistrationCache() {
+        lastRegistrationSignature = null
+        lastRegistrationSuccessMs = 0L
+        inFlightRegistrationSignature = null
+        lastRegistrationAttemptMs = 0L
     }
 
     private fun checkCurrentLocationForInitialEnter(
@@ -210,7 +281,14 @@ object LocationTriggerMonitor {
 
     private fun geofencePendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, LocationGeofenceReceiver::class.java)
-        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        val mutabilityFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Google Play services fills geofence transition/result extras into this PendingIntent.
+            // On Android 12+ that requires a mutable PendingIntent; immutable fails registration on some devices.
+            PendingIntent.FLAG_MUTABLE
+        } else {
+            0
+        }
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or mutabilityFlag
         return PendingIntent.getBroadcast(context, 23006, intent, flags)
     }
 

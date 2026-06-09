@@ -4,7 +4,7 @@ Switchly supports an external checkout entry point for APKs that are not distrib
 ## Build behavior
 | Build | Billing behavior |
 | ----- | ---------------- |
-| `fullRelease` / Play Store AAB | Google Play Billing only |
+| `fullRelease`/Play Store AAB | Google Play Billing only |
 | `firebaseEmailRelease` APK | external checkout URL, e.g. Stripe/Adyen |
 | `offlineRelease` APK | no Premium purchase, restore, or unlock; use file backup only |
 

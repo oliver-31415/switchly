@@ -2,47 +2,39 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- CORE - common app strings -->
+    <!-- App identity -->
     <!-- ====================================================== -->
+    <string name="app_name">Switchly</string>
 
-	<string name="app_name">Switchly</string>
+    <!-- ====================================================== -->
+    <!-- Primary actions -->
+    <!-- ====================================================== -->
+    <string name="ok">OK</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="not_now">Jetzt nicht</string>
+    <string name="create">Erstellen</string>
+    <string name="save">Speichern</string>
+    <string name="delete">Löschen</string>
+    <string name="open">Öffnen</string>
+    <string name="action_copy">Kopieren</string>
+    <string name="share">Teilen</string>
+    <string name="sign_out">Abmelden</string>
 
-	<string name="ok">OK</string>
+    <!-- ====================================================== -->
+    <!-- Generic states and labels -->
+    <!-- ====================================================== -->
+    <string name="copied">Kopiert</string>
+    <string name="info">Info</string>
+    <string name="settings">Einstellungen</string>
+    <string name="required">Erforderlich</string>
+    <string name="invalid_value">Ungültiger Wert</string>
+    <string name="state_enabled">Aktiviert</string>
+    <string name="state_disabled">Deaktiviert</string>
 
-	<string name="cancel">Abbrechen</string>
-
-	<string name="not_now">Jetzt nicht</string>
-
-	<string name="create">Erstellen</string>
-
-	<string name="save">Speichern</string>
-
-	<string name="delete">Löschen</string>
-
-	<string name="open">Öffnen</string>
-
-	<string name="action_copy">Kopieren</string>
-
-	<string name="copied">Kopiert</string>
-
-	<string name="share">Teilen</string>
-
-	<string name="info">Info</string>
-
-	<string name="settings">Einstellungen</string>
-
-	<string name="required">Erforderlich</string>
-
-	<string name="invalid_value">Ungültiger Wert</string>
-
-	<string name="state_enabled">Aktiviert</string>
-
-	<string name="state_disabled">Deaktiviert</string>
-
-	<string name="sign_out">Abmelden</string>
-
-	<string name="common_dash">—</string>
-
-	<string name="common_bullet">•</string>
+    <!-- ====================================================== -->
+    <!-- Formatting helpers -->
+    <!-- ====================================================== -->
+    <string name="common_dash">—</string>
+    <string name="common_bullet">•</string>
 
 </resources>

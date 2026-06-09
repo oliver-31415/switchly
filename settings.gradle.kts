@@ -17,7 +17,7 @@ pluginManagement {
         // KSP
         id("com.google.devtools.ksp") version "2.2.21-2.0.4"
 
-        // Firebase / Google Services (available, but optionally applied in :app)
+        // Firebase/Google Services (available, but optionally applied in :app)
         id("com.google.gms.google-services") version "4.4.4"
         id("com.google.firebase.crashlytics") version "3.0.6"
     }

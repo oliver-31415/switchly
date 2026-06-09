@@ -195,11 +195,30 @@ object AutomationModeStore {
     fun shouldShowBarcodeTools(context: Context): Boolean = isBarcodeChannelAllowed(context)
 
     /**
-     * Safety fallback: barcode control can lock users out if it is the only practical disable method but no managed barcode exists yet. 
-     * In that setup, keep setup/disable paths reachable until at least one barcode has been added.
+     * Setup helper: barcode control is enabled, but no managed barcode exists yet.
+     * This is used to keep the barcode setup screen reachable while editing is locked.
+     * Do not use this directly as a manual-disable bypass: users may still have other valid disable channels such as NFC, QR, or schedules.
      */
     fun isBarcodeSetupMissing(context: Context): Boolean {
         return isBarcodeChannelAllowed(context) && !ScanCodeStore.hasEntries(context, ScanCodeStore.Kind.BARCODE)
+    }
+
+    /**
+     * Lockout safety fallback for manual disabling.
+     *
+     * Only allow the manual button to disable Switchly when barcode is the only configured disable channel, the manual button itself is disabled, and no barcode has been added yet.
+     * If NFC, QR, schedules, or the manual button are available, there is no need to relax the disable restriction just because barcode setup is incomplete.
+     */
+    fun shouldAllowManualDisableForMissingBarcodeSetup(context: Context): Boolean {
+        if (!isBarcodeSetupMissing(context)) return false
+        if (isButtonAllowed(context)) return false
+
+        val hasOtherDisableChannel =
+            isScheduleAllowed(context) ||
+                isNfcAllowed(context) ||
+                isQrAllowed(context)
+
+        return !hasOtherDisableChannel
     }
 
     fun isAnyScanFeatureEnabled(context: Context): Boolean =
@@ -211,7 +230,7 @@ object AutomationModeStore {
     fun isTileAllowed(context: Context): Boolean = isButtonAllowed(context)
 
     /**
-     * Manual dashboard button / Quick Settings tile full-control channel.
+     * Manual dashboard button/Quick Settings tile full-control channel.
      * This is intentionally mode-independent: when enabled, manual controls can turn Switchly on and off regardless of the selected control mode.
      * The older key name is kept for migration compatibility.
      */

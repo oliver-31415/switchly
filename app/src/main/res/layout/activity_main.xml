@@ -641,7 +641,7 @@
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
 
-                <!-- QR / Barcode quick actions -->
+                <!-- QR/Barcode quick actions -->
                 <LinearLayout
                     android:id="@+id/rowScanShortcuts"
                     android:layout_width="match_parent"

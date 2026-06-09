@@ -2,11 +2,9 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- BLOCKING - core -->
+    <!-- Automatic blocking -->
     <!-- ====================================================== -->
-
-	<string name="app_picker_auto_block_new_apps_title">Neu installierte Apps automatisch blockieren</string>
-
-	<string name="app_picker_auto_block_new_apps_summary">Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt. „Alle auswählen“ aktiviert das auch für zukünftige Installationen.</string>
+    <string name="app_picker_auto_block_new_apps_title">Neu installierte Apps automatisch blockieren</string>
+    <string name="app_picker_auto_block_new_apps_summary">Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt. „Alle auswählen“ aktiviert das auch für zukünftige Installationen.</string>
 
 </resources>

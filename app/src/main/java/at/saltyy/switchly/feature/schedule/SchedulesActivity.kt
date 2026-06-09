@@ -20,6 +20,7 @@
 package at.saltyy.switchly.feature.schedule
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlarmManager
 import android.app.DatePickerDialog
 import android.bluetooth.BluetoothAdapter
@@ -74,6 +75,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AutomationModeStore
@@ -102,11 +104,6 @@ import at.saltyy.switchly.util.SystemBarColorCompat
 import at.saltyy.switchly.util.TimeFormatPrefs
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -120,10 +117,12 @@ import com.google.android.material.timepicker.TimeFormat
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
+import java.net.InetAddress
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 class SchedulesActivity : AppCompatActivity() {
 
@@ -135,6 +134,8 @@ class SchedulesActivity : AppCompatActivity() {
         const val PREFS_SCHEDULE_HEALTH = "switchly_schedule_health"
         const val KEY_BATTERY_OPTIMIZATION_CONFIRMED_MAX_AVAILABLE =
             "battery_optimization_confirmed_max_available"
+        const val GOOGLE_MAPS_DNS_HOST = "clients4.google.com"
+        const val GOOGLE_MAPS_REACHABILITY_TIMEOUT_MS = 2_500L
     }
 
     private data class ResolvedLocation(
@@ -164,6 +165,29 @@ class SchedulesActivity : AppCompatActivity() {
     private var pendingAfterLocationGrant: (() -> Unit)? = null
     private var pendingAfterFineLocationGrant: (() -> Unit)? = null
     private var pendingAfterBluetoothGrant: (() -> Unit)? = null
+
+    private var pendingMapPickerCallback: ((ResolvedLocation) -> Unit)? = null
+
+    private val locationMapPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val callback = pendingMapPickerCallback
+            pendingMapPickerCallback = null
+
+            if (result.resultCode != Activity.RESULT_OK || callback == null) return@registerForActivityResult
+
+            val data = result.data ?: return@registerForActivityResult
+            val latitude = data.getDoubleExtra(LocationMapPickerActivity.EXTRA_LATITUDE, Double.NaN)
+            val longitude = data.getDoubleExtra(LocationMapPickerActivity.EXTRA_LONGITUDE, Double.NaN)
+            if (latitude.isNaN() || longitude.isNaN()) return@registerForActivityResult
+
+            callback(
+                ResolvedLocation(
+                    latitude = latitude,
+                    longitude = longitude,
+                    label = data.getStringExtra(LocationMapPickerActivity.EXTRA_LABEL)
+                )
+            )
+        }
 
     private val nfcLockedActions = setOf(
         ScheduleStore.Action.DISABLE,
@@ -1764,12 +1788,33 @@ class SchedulesActivity : AppCompatActivity() {
         }
 
         fun openVisualLocationPickerDialog() {
-            showLocationMapPickerDialog(
-                initialLatitude = locationLat,
-                initialLongitude = locationLng,
-                initialLabel = inputLocationLabel.text?.toString()?.trim().orEmpty().takeIf { it.isNotBlank() }
-            ) { picked ->
-                applyPickedLocation(picked.latitude, picked.longitude, picked.label)
+            if (!BuildConfig.SWITCHLY_HAS_MAPS_API_KEY) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.schedules_location_map_picker_unavailable),
+                    Toast.LENGTH_LONG
+                ).show()
+                openLocationSearchDialog()
+                return
+            }
+
+            lifecycleScope.launch {
+                val mapsReachable = canResolveGoogleMapsHost()
+                if (!mapsReachable) {
+                    showGoogleMapsUnavailableDialog(
+                        onUseSearch = { openLocationSearchDialog() },
+                        onUseCurrentLocation = { useCurrentLocation() }
+                    )
+                    return@launch
+                }
+
+                showLocationMapPickerDialog(
+                    initialLatitude = locationLat,
+                    initialLongitude = locationLng,
+                    initialLabel = inputLocationLabel.text?.toString()?.trim().orEmpty().takeIf { it.isNotBlank() }
+                ) { picked ->
+                    applyPickedLocation(picked.latitude, picked.longitude, picked.label)
+                }
             }
         }
 
@@ -1787,18 +1832,33 @@ class SchedulesActivity : AppCompatActivity() {
                 return
             }
 
-            val options = arrayOf(
-                getString(R.string.schedules_location_method_picker),
-                getString(R.string.schedules_location_method_search),
-                getString(R.string.schedules_location_method_current)
-            )
+            val mapPickerAvailable = BuildConfig.SWITCHLY_HAS_MAPS_API_KEY
+            val options = if (mapPickerAvailable) {
+                arrayOf(
+                    getString(R.string.schedules_location_method_picker),
+                    getString(R.string.schedules_location_method_search),
+                    getString(R.string.schedules_location_method_current)
+                )
+            } else {
+                arrayOf(
+                    getString(R.string.schedules_location_method_search),
+                    getString(R.string.schedules_location_method_current)
+                )
+            }
             MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.schedules_location_method_title)
                 .setItems(options) { dialog, which ->
-                    when (which) {
-                        0 -> openVisualLocationPickerDialog()
-                        1 -> openLocationSearchDialog()
-                        else -> useCurrentLocation()
+                    if (mapPickerAvailable) {
+                        when (which) {
+                            0 -> openVisualLocationPickerDialog()
+                            1 -> openLocationSearchDialog()
+                            else -> useCurrentLocation()
+                        }
+                    } else {
+                        when (which) {
+                            0 -> openLocationSearchDialog()
+                            else -> useCurrentLocation()
+                        }
                     }
                     dialog.dismiss()
                 }
@@ -2745,172 +2805,44 @@ class SchedulesActivity : AppCompatActivity() {
         }
     }
 
+    private suspend fun canResolveGoogleMapsHost(): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            withTimeout(GOOGLE_MAPS_REACHABILITY_TIMEOUT_MS) {
+                InetAddress.getByName(GOOGLE_MAPS_DNS_HOST)
+            }
+            true
+        }.getOrDefault(false)
+    }
+
+    private fun showGoogleMapsUnavailableDialog(
+        onUseSearch: () -> Unit,
+        onUseCurrentLocation: () -> Unit
+    ) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.schedules_location_map_unavailable_title)
+            .setMessage(R.string.schedules_location_map_unavailable_message)
+            .setPositiveButton(R.string.schedules_location_use_search) { _, _ -> onUseSearch() }
+            .setNegativeButton(R.string.schedules_location_use_current) { _, _ -> onUseCurrentLocation() }
+            .setNeutralButton(android.R.string.cancel, null)
+            .show()
+            .styleSwitchlyDialogButtons()
+    }
+
     private fun showLocationMapPickerDialog(
         initialLatitude: Double?,
         initialLongitude: Double?,
         initialLabel: String?,
         onPicked: (ResolvedLocation) -> Unit
     ) {
-
-        val dialogContext = androidx.appcompat.view.ContextThemeWrapper(
-            this,
-            R.style.ThemeOverlay_Switchly_Dialog
+        pendingMapPickerCallback = onPicked
+        locationMapPickerLauncher.launch(
+            LocationMapPickerActivity.createIntent(
+                context = this,
+                initialLatitude = initialLatitude,
+                initialLongitude = initialLongitude,
+                initialLabel = initialLabel
+            )
         )
-        val dialogView = LayoutInflater.from(dialogContext)
-            .inflate(R.layout.dialog_location_picker_map, null, false)
-        val mapView = dialogView.findViewById<MapView>(R.id.mapLocationPicker)
-        val selectionView = dialogView.findViewById<TextView>(R.id.tvMapPickerSelection)
-        val layoutQuery = dialogView.findViewById<TextInputLayout>(R.id.layoutMapLocationQuery)
-        val inputQuery = dialogView.findViewById<EditText>(R.id.inputMapLocationQuery)
-        val btnSearch = dialogView.findViewById<MaterialButton>(R.id.btnMapPickerSearch)
-
-        val mapBundle = Bundle()
-        mapView.onCreate(mapBundle)
-        mapView.onResume()
-
-        val startLatLng = when {
-            initialLatitude != null && initialLongitude != null -> LatLng(initialLatitude, initialLongitude)
-            else -> LatLng(48.2082, 16.3738)
-        }
-
-        if (!initialLabel.isNullOrBlank()) {
-            inputQuery.setText(initialLabel)
-        }
-
-        var pickedLatLng: LatLng? = if (initialLatitude != null && initialLongitude != null) {
-            LatLng(initialLatitude, initialLongitude)
-        } else {
-            null
-        }
-        var pickedLabel: String? = initialLabel
-        var googleMapRef: GoogleMap? = null
-
-        if (pickedLatLng != null) {
-            val label = pickedLabel ?: getString(
-                R.string.schedules_location_coords_fmt,
-                pickedLatLng!!.latitude,
-                pickedLatLng!!.longitude
-            )
-            selectionView.text = getString(R.string.schedules_location_map_picker_selected, label)
-        } else {
-            selectionView.text = getString(R.string.schedules_location_map_picker_no_selection)
-        }
-
-        fun updateSelectionLabel(point: LatLng, label: String? = null) {
-            val displayLabel = label ?: getString(
-                R.string.schedules_location_coords_fmt,
-                point.latitude,
-                point.longitude
-            )
-            pickedLabel = displayLabel
-            selectionView.text = getString(R.string.schedules_location_map_picker_selected, displayLabel)
-        }
-
-        fun renderMarker(point: LatLng, label: String? = null, moveCamera: Boolean = false) {
-            googleMapRef?.let { googleMap ->
-                googleMap.clear()
-                googleMap.addMarker(MarkerOptions().position(point))
-                if (moveCamera) {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, 17f))
-                }
-            }
-            updateSelectionLabel(point, label)
-        }
-
-        fun runSearch() {
-            val query = inputQuery.text?.toString()?.trim().orEmpty()
-            if (query.isBlank()) {
-                layoutQuery.error = getString(R.string.schedules_location_picker_invalid)
-                return
-            }
-            layoutQuery.error = null
-            btnSearch.isEnabled = false
-            resolveLocationQuery(query) { resolved ->
-                btnSearch.isEnabled = true
-                if (resolved == null) {
-                    layoutQuery.error = getString(R.string.schedules_location_picker_not_found)
-                    return@resolveLocationQuery
-                }
-                val point = LatLng(resolved.latitude, resolved.longitude)
-                pickedLatLng = point
-                renderMarker(point, resolved.label, moveCamera = true)
-            }
-        }
-
-        inputQuery.addTextChangedListener { layoutQuery.error = null }
-        inputQuery.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
-                runSearch()
-                true
-            } else {
-                false
-            }
-        }
-        btnSearch.setOnClickListener { runSearch() }
-
-        mapView.getMapAsync { googleMap ->
-            googleMapRef = googleMap
-            googleMap.mapType = GoogleMap.MAP_TYPE_NORMAL
-            googleMap.setMinZoomPreference(6f)
-
-            with(googleMap.uiSettings) {
-                isZoomControlsEnabled = true
-                isZoomGesturesEnabled = true
-                isScrollGesturesEnabled = true
-                isTiltGesturesEnabled = false
-                isRotateGesturesEnabled = false
-                isCompassEnabled = true
-                isMapToolbarEnabled = false
-                isMyLocationButtonEnabled = false
-            }
-
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLatLng, 16f))
-
-            pickedLatLng?.let { point ->
-                renderMarker(point, pickedLabel)
-            }
-
-            googleMap.setOnMapClickListener { latLng ->
-                pickedLatLng = latLng
-                renderMarker(latLng)
-            }
-        }
-
-        val dialog = MaterialAlertDialogBuilder(dialogContext)
-            .setTitle(R.string.schedules_location_map_picker_title)
-            .setView(dialogView)
-            .setPositiveButton(R.string.ok, null)
-            .setNegativeButton(R.string.cancel, null)
-            .create()
-
-        dialog.setOnDismissListener {
-            googleMapRef?.setOnMapClickListener(null)
-            mapView.onPause()
-            mapView.onDestroy()
-        }
-
-        dialog.setOnShowListener {
-            dialog.styleSwitchlyDialogButtons()
-            val btnApply = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            btnApply.setOnClickListener {
-                val point = pickedLatLng
-                if (point == null) {
-                    selectionView.text = getString(R.string.schedules_location_map_picker_no_selection)
-                    return@setOnClickListener
-                }
-                val fallbackLabel = getString(
-                    R.string.schedules_location_coords_fmt,
-                    point.latitude,
-                    point.longitude
-                )
-                reverseGeocodeLabel(point.latitude, point.longitude, fallbackLabel) { label ->
-                    onPicked(ResolvedLocation(point.latitude, point.longitude, label ?: fallbackLabel))
-                    dialog.dismiss()
-                }
-            }
-        }
-
-        dialog.show()
     }
 
     private fun showLocationPickerDialog(

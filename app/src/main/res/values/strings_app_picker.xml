@@ -2,118 +2,83 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- APP PICKER AND BLOCKED APPS -->
+    <!-- Picker basics -->
     <!-- ====================================================== -->
-
     <string name="blocked_list_title">Blocked apps</string>
-
     <string name="blocked_app_default">App blocked</string>
-
     <string name="blocked_message">You can’t use this app while Switchly is active.</string>
-
     <string name="no_blocked_apps">No blocked apps</string>
-
     <string name="pick_apps">Pick apps</string>
-
     <string name="search_apps">Search apps</string>
 
+    <!-- ====================================================== -->
+    <!-- Selection actions -->
+    <!-- ====================================================== -->
     <string name="app_picker_select_all">Select all</string>
-
     <string name="app_picker_clear_all">Clear all</string>
-
     <string name="app_picker_clear_unavailable">Clear unavailable</string>
-
-    <string name="app_picker_protected_chip">Protected</string>
-
-    <string name="app_picker_caution_chip">Caution</string>
-
-    <string name="app_picker_protected_generic_hint">This app is protected for device safety.</string>
-
-    <string name="app_picker_protected_keyboard_hint">Your current keyboard is excluded from blocking so you don’t lock yourself out of typing.</string>
-
-    <string name="app_picker_protected_launcher_hint">Your current launcher is excluded from blocking so you don’t lock yourself out of Home.</string>
-
-    <string name="app_picker_wallet_hint">Wallet apps can interfere with gestures or quick access on some devices.</string>
-
-    <string name="app_picker_dialer_hint">Blocking your current phone app can make calls and emergency access harder.</string>
-
-    <string name="app_picker_protected_caution_title">This app is safety-sensitive</string>
-
-    <string name="app_picker_wallet_warning_title">Block this wallet app anyway?</string>
-
-    <string name="app_picker_wallet_warning_message">Wallet apps can interfere with gestures or quick access on some devices. Only block this app if you’re sure you can still use your phone normally.</string>
-
-    <string name="app_picker_wallet_warning_message_samsung">Samsung Wallet can be opened from the bottom-edge Quick access gesture on Galaxy devices. Blocking it can interfere with normal Home screen use. Only block it if you’re sure you still want that behavior.</string>
-
-    <string name="app_picker_dialer_warning_title">Block this phone app anyway?</string>
-
-    <string name="app_picker_dialer_warning_message">Blocking your current phone app can make regular calls and emergency access harder.</string>
-
-    <string name="app_picker_settings_hint">Blocking Settings can make troubleshooting and permission changes harder.</string>
-
-    <string name="app_picker_settings_warning_title">Block Settings anyway?</string>
-
-    <string name="app_picker_settings_warning_message">Blocking Settings can make troubleshooting and permission changes harder.</string>
-
-    <string name="app_picker_play_store_hint">Play Store is safety-sensitive because it can install or update apps.</string>
-
-    <string name="app_picker_play_store_warning_title">Block Play Store anyway?</string>
-
-    <string name="app_picker_play_store_warning_message">Blocking Play Store can make app installs, updates, and recovery harder.</string>
-
-    <string name="app_picker_installer_hint">Package installer is safety-sensitive because it installs or updates apps.</string>
-
-    <string name="app_picker_installer_warning_title">Block package installer anyway?</string>
-
-    <string name="app_picker_installer_warning_message">Blocking the package installer can make app installs, updates, and recovery harder.</string>
-
-    <string name="app_picker_permissions_hint">Permission controller is safety-sensitive because it manages important Android permissions.</string>
-
-    <string name="app_picker_permissions_warning_title">Block permission controller anyway?</string>
-
-    <string name="app_picker_permissions_warning_message">Blocking the permission controller can make permissions and troubleshooting harder.</string>
-
-    <string name="app_picker_files_hint">Files and document picker apps can be important for backups, restores, exports, and recovery.</string>
-
-    <string name="app_picker_files_warning_title">Block files app anyway?</string>
-
-    <string name="app_picker_files_warning_message">Blocking files or document picker apps can make backups, restores, exports, and recovery harder.</string>
-
-    <string name="app_picker_browser_hint">Browsers are often used for downloads, support, sign-in, and recovery steps.</string>
-
-    <string name="app_picker_browser_warning_title">Block browser app anyway?</string>
-
-    <string name="app_picker_browser_warning_message">Blocking a browser can make downloads, support, and recovery steps harder.</string>
-
-    <string name="continue_label">Continue</string>
-
-    <string name="close">Close</string>
-
     <plurals name="app_picker_select_all_skipped_notice">
         <item quantity="one">Skipped %d safety-sensitive app.</item>
         <item quantity="other">Skipped %d safety-sensitive apps.</item>
     </plurals>
 
+    <!-- ====================================================== -->
+    <!-- Protected app chips and hints -->
+    <!-- ====================================================== -->
+    <string name="app_picker_protected_chip">Protected</string>
+    <string name="app_picker_caution_chip">Caution</string>
+    <string name="app_picker_protected_generic_hint">This app is protected for device safety.</string>
+    <string name="app_picker_protected_keyboard_hint">Your current keyboard is excluded from blocking so you don’t lock yourself out of typing.</string>
+    <string name="app_picker_protected_launcher_hint">Your current launcher is excluded from blocking so you don’t lock yourself out of Home.</string>
+    <string name="app_picker_protected_caution_title">This app is safety-sensitive</string>
+
+    <!-- ====================================================== -->
+    <!-- Sensitive app warnings -->
+    <!-- ====================================================== -->
+    <string name="app_picker_wallet_hint">Wallet apps can interfere with gestures or quick access on some devices.</string>
+    <string name="app_picker_dialer_hint">Blocking your current phone app can make calls and emergency access harder.</string>
+    <string name="app_picker_wallet_warning_title">Block this wallet app anyway?</string>
+    <string name="app_picker_wallet_warning_message">Wallet apps can interfere with gestures or quick access on some devices. Only block this app if you’re sure you can still use your phone normally.</string>
+    <string name="app_picker_wallet_warning_message_samsung">Samsung Wallet can be opened from the bottom-edge Quick access gesture on Galaxy devices. Blocking it can interfere with normal Home screen use. Only block it if you’re sure you still want that behavior.</string>
+    <string name="app_picker_dialer_warning_title">Block this phone app anyway?</string>
+    <string name="app_picker_dialer_warning_message">Blocking your current phone app can make regular calls and emergency access harder.</string>
+    <string name="app_picker_settings_hint">Blocking Settings can make troubleshooting and permission changes harder.</string>
+    <string name="app_picker_settings_warning_title">Block Settings anyway?</string>
+    <string name="app_picker_settings_warning_message">Blocking Settings can make troubleshooting and permission changes harder.</string>
+    <string name="app_picker_play_store_hint">Play Store is safety-sensitive because it can install or update apps.</string>
+    <string name="app_picker_play_store_warning_title">Block Play Store anyway?</string>
+    <string name="app_picker_play_store_warning_message">Blocking Play Store can make app installs, updates, and recovery harder.</string>
+    <string name="app_picker_installer_hint">Package installer is safety-sensitive because it installs or updates apps.</string>
+    <string name="app_picker_installer_warning_title">Block package installer anyway?</string>
+    <string name="app_picker_installer_warning_message">Blocking the package installer can make app installs, updates, and recovery harder.</string>
+    <string name="app_picker_permissions_hint">Permission controller is safety-sensitive because it manages important Android permissions.</string>
+    <string name="app_picker_permissions_warning_title">Block permission controller anyway?</string>
+    <string name="app_picker_permissions_warning_message">Blocking the permission controller can make permissions and troubleshooting harder.</string>
+    <string name="app_picker_files_hint">Files and document picker apps can be important for backups, restores, exports, and recovery.</string>
+    <string name="app_picker_files_warning_title">Block files app anyway?</string>
+    <string name="app_picker_files_warning_message">Blocking files or document picker apps can make backups, restores, exports, and recovery harder.</string>
+    <string name="app_picker_browser_hint">Browsers are often used for downloads, support, sign-in, and recovery steps.</string>
+    <string name="app_picker_browser_warning_title">Block browser app anyway?</string>
+    <string name="app_picker_browser_warning_message">Blocking a browser can make downloads, support, and recovery steps harder.</string>
+    <string name="app_picker_settings_requirements_title">Emergency Unlock required</string>
+    <string name="app_picker_settings_requirements_message">To block Settings, advanced protection must be enabled and Emergency Unlock with an Emergency PIN must already be configured.</string>
+    <string name="app_picker_settings_second_warning_title">Are you absolutely sure?</string>
+    <string name="app_picker_settings_second_warning_message">Blocking Settings can make your phone harder to recover if another issue occurs. This option is intended for advanced users only.</string>
+    <string name="app_picker_settings_temporarily_allowed">Settings temporarily allowed to prevent a lockout.</string>
+
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="continue_label">Continue</string>
+    <string name="close">Close</string>
     <plurals name="app_picker_removed_protected_notice">
         <item quantity="one">Removed %d protected app from this profile for device safety.</item>
         <item quantity="other">Removed %d protected apps from this profile for device safety.</item>
     </plurals>
-
     <plurals name="unavailable_apps_cleared_notice">
         <item quantity="one">%1$d unavailable app entry was removed. Tap Save to keep the cleanup.</item>
         <item quantity="other">%1$d unavailable app entries were removed. Tap Save to keep the cleanup.</item>
     </plurals>
-
-    <string name="app_picker_settings_requirements_title">Emergency Unlock required</string>
-
-    <string name="app_picker_settings_requirements_message">To block Settings, advanced protection must be enabled and Emergency Unlock with an Emergency PIN must already be configured.</string>
-
-    <string name="app_picker_settings_second_warning_title">Are you absolutely sure?</string>
-
-    <string name="app_picker_settings_second_warning_message">Blocking Settings can make your phone harder to recover if another issue occurs. This option is intended for advanced users only.</string>
-
     <string name="app_picker_block_settings_confirm">Block Settings</string>
-
-    <string name="app_picker_settings_temporarily_allowed">Settings temporarily allowed to prevent a lockout.</string>
 
 </resources>

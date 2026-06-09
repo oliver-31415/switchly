@@ -2,75 +2,57 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- SETTINGS - main screen entries and data/help -->
+    <!-- Settings sections -->
     <!-- ====================================================== -->
-
     <string name="settings_section_controls">Controls</string>
-
     <string name="settings_section_personalization">Personalization</string>
-
     <string name="settings_section_reliability">Permissions &amp; reliability</string>
-
     <string name="settings_section_data">Account &amp; data</string>
-
     <string name="settings_section_help">Help &amp; about</string>
 
+    <!-- ====================================================== -->
+    <!-- Account and appearance -->
+    <!-- ====================================================== -->
     <string name="settings_account_title">Account</string>
-
     <string name="settings_account_summary">Backup, emergency PIN &amp; sync</string>
-
     <string name="settings_theme_title">Appearance</string>
-
     <string name="settings_theme_summary">Theme, colors &amp; language</string>
 
+    <!-- ====================================================== -->
+    <!-- Data and changelog -->
+    <!-- ====================================================== -->
     <string name="settings_changelog_title">What’s new</string>
-
     <string name="settings_changelog_summary">Release notes</string>
-
     <string name="settings_backup_title">Backup</string>
-
     <string name="settings_backup_summary">Sync &amp; restore your config</string>
+    <string name="settings_backup_create_title">Backup</string>
+    <string name="settings_backup_create_summary">Create a cloud or local file backup</string>
+    <string name="settings_restore_title">Restore</string>
+    <string name="settings_restore_summary">Restore from cloud or a local file</string>
 
+    <!-- ====================================================== -->
+    <!-- Help, about and permissions -->
+    <!-- ====================================================== -->
     <string name="settings_contact_support_title">Contact support</string>
-
     <string name="settings_contact_support_summary">Email the developer</string>
-
     <string name="settings_permissions_reliability_title">Permissions &amp; reliability</string>
-
     <string name="settings_permissions_reliability_summary">Permissions and troubleshooting</string>
-
     <string name="settings_help_about_title">Help &amp; about</string>
-
     <string name="settings_help_about_summary">FAQ, support and app information</string>
-
     <string name="settings_info_title">Info</string>
-
     <string name="settings_info_summary">App, device and developer details</string>
-
     <string name="pref_permissions_title">Permissions</string>
-
     <string name="pref_permissions_summary">Check and manage the system permissions Switchly needs.</string>
-
     <string name="pref_faq_title">FAQ &amp; Tips</string>
-
     <string name="pref_faq_summary">Answers to common questions and helpful information</string>
 
+    <!-- ====================================================== -->
+    <!-- Reset app data -->
+    <!-- ====================================================== -->
     <string name="pref_reset_app_data_title">Delete all Switchly data</string>
-
     <string name="pref_reset_app_data_summary">Resets all local app data and settings</string>
-
     <string name="pref_reset_app_data_confirm_title">Delete all Switchly data?</string>
-
     <string name="pref_reset_app_data_confirm_message">This will remove all local profiles, rules, statistics, paired tags and settings on this device. Cloud backups are not deleted automatically.</string>
-
     <string name="pref_reset_app_data_done">All local data was cleared.</string>
-
-    <string name="settings_backup_create_title">Backup</string>
-
-    <string name="settings_backup_create_summary">Create a cloud or local file backup</string>
-
-    <string name="settings_restore_title">Restore</string>
-
-    <string name="settings_restore_summary">Restore from cloud or a local file</string>
 
 </resources>

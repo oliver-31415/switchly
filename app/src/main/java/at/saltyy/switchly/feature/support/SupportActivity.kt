@@ -283,7 +283,7 @@ class SupportActivity : AppCompatActivity() {
         line("Allowed while enabled: NFC tag writing", AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this@SupportActivity))
         line("Lock Switchly app access", AutomationModeStore.isSwitchlyAppAccessLockEnabled(this@SupportActivity))
         line("Uninstall friction", AutomationModeStore.isUninstallFrictionEnabled(this@SupportActivity))
-        line("Advanced mode", AdvancedModeStore.isEnabled(this@SupportActivity))
+        line("Developer mode", AdvancedModeStore.isEnabled(this@SupportActivity))
         val dpm = getSystemService(DevicePolicyManager::class.java)
         val adminComponent = ComponentName(this@SupportActivity, DPMReceiver::class.java)
         line("Device admin active", dpm?.isAdminActive(adminComponent) == true)
@@ -348,6 +348,7 @@ class SupportActivity : AppCompatActivity() {
         line("Battery effectively OK", batteryEffectivelyOk)
         line("Battery max confirmed", batteryMaxConfirmed)
         line("Exact alarms allowed", canScheduleExactAlarmsCompat())
+        line("Maps API key configured", BuildConfig.SWITCHLY_HAS_MAPS_API_KEY)
 
         section("Schedules")
         val schedules = runCatching { ScheduleStore.getAll(this@SupportActivity) }.getOrDefault(emptyList())
@@ -372,6 +373,38 @@ class SupportActivity : AppCompatActivity() {
         section("Runtime")
         line("Watcher runtime today ms", runCatching { SwitchlyRuntimeStore.getRuntimeMsToday(this@SupportActivity) }.getOrDefault(0L))
         line("Watcher runtime last 7d ms", runCatching { SwitchlyRuntimeStore.getRuntimeMsForLastNDays(this@SupportActivity, 7) }.getOrDefault(0L))
+
+        val runtimeDiagnostics = BlockingRuntime.getRuntimeDiagnostics(this@SupportActivity)
+        line("Accessibility enabled in settings", runtimeDiagnostics.accessibilityEnabledInSettings)
+        line("Accessibility active heartbeat", runtimeDiagnostics.accessibilityActive)
+        line("Accessibility heartbeat age ms", runtimeDiagnostics.heartbeatAgeMs)
+        line("Last accessibility event", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastEventWallMs,
+            runtimeDiagnostics.lastEventPackage,
+            "type=${runtimeDiagnostics.lastEventType}"
+        ))
+        line("Last foreground package", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastForegroundWallMs,
+            runtimeDiagnostics.lastForegroundPackage,
+            runtimeDiagnostics.lastForegroundSource
+        ))
+        line("Last usage-events foreground", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastUsageResolveWallMs,
+            runtimeDiagnostics.lastUsageResolvePackage,
+            runtimeDiagnostics.lastUsageResolveSource
+        ))
+        line("Last blocking check", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastBlockCheckWallMs,
+            runtimeDiagnostics.lastBlockCheckPackage,
+            listOf(runtimeDiagnostics.lastBlockCheckReason, runtimeDiagnostics.lastBlockCheckDetails)
+                .filter { it.isNotBlank() }
+                .joinToString(" | ")
+        ))
+        line("Last block shown", formatRuntimeDiagnostic(
+            runtimeDiagnostics.lastBlockShownWallMs,
+            runtimeDiagnostics.lastBlockShownPackage,
+            runtimeDiagnostics.lastBlockShownDetails
+        ))
 
         val inboxEvents = runCatching { BlockedInboxStore.getAll(this@SupportActivity) }.getOrDefault(emptyList())
         line("Blocked inbox events stored", inboxEvents.size)
@@ -410,6 +443,19 @@ class SupportActivity : AppCompatActivity() {
             lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
                 lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
         }.getOrDefault(false)
+    }
+
+    private fun formatRuntimeDiagnostic(timeMs: Long, value: String, details: String = ""): String {
+        if (timeMs <= 0L && value.isBlank() && details.isBlank()) return "-"
+        return buildString {
+            append(formatDateTime(timeMs))
+            if (value.isNotBlank()) {
+                append(" | ").append(value)
+            }
+            if (details.isNotBlank()) {
+                append(" | ").append(details)
+            }
+        }
     }
 
     private fun canScheduleExactAlarmsCompat(): Boolean {

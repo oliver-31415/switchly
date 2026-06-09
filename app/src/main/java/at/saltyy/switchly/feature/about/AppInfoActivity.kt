@@ -66,7 +66,7 @@ class AppInfoActivity : TilesInfoActivity() {
                 "$versionName ($versionCode)",
                 onClick = { PlayStoreUpdatePrompt.promptNow(this) },
                 onLongClick = {
-                    unlockAndOpenAdvancedMode()
+                    unlockAndOpenDeveloperMode()
                     true
                 },
                 enableLongPressCopy = false
@@ -131,17 +131,17 @@ class AppInfoActivity : TilesInfoActivity() {
         )
     }
 
-    private fun unlockAndOpenAdvancedMode() {
+    private fun unlockAndOpenDeveloperMode() {
         val wasEnabled = AdvancedModeStore.isEnabled(this)
         if (!wasEnabled) {
             AdvancedModeStore.setEnabled(this, true)
-            Toast.makeText(this, getString(R.string.advanced_mode_unlocked_toast), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.developer_mode_unlocked_toast), Toast.LENGTH_SHORT).show()
         }
-        openAdvancedMode()
+        openDeveloperMode()
     }
 
-    private fun openAdvancedMode() {
-        startActivity(Intent(this, AdvancedModeActivity::class.java))
+    private fun openDeveloperMode() {
+        startActivity(Intent(this, DeveloperModeActivity::class.java))
     }
 
     private fun resolveInstallerPackageName(): String? {

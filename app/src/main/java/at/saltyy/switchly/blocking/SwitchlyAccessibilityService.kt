@@ -593,6 +593,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val pkg = event?.packageName?.toString()?.trim().orEmpty()
         if (pkg.isBlank()) return
         if (pkg == packageName) return // avoid loops
+        BlockingRuntime.markAccessibilityEvent(this, pkg, event?.eventType ?: 0)
 
         if (maybeBlockUninstallFrictionSurface(pkg, event)) return
 
@@ -736,6 +737,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         if (isTransition) {
             lastTransitionAt = now
+            BlockingRuntime.markForegroundPackage(this, pkg, "accessibility_transition")
             if (prevTopPkg != pkg) {
                 appEnteredAtByPkg[pkg] = now
 
@@ -799,6 +801,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val rootPkg = runCatching { rootInActiveWindow?.packageName?.toString() }.getOrNull()
         if (!rootPkg.isNullOrBlank() && rootPkg != packageName && rootPkg != currentTopPkg) {
             currentTopPkg = rootPkg
+            BlockingRuntime.markForegroundPackage(this, rootPkg, "active_window_root")
             appEnteredAtByPkg[rootPkg] = now
 
             // Snapshot usage at entry so limits can be enforced while the app stays open.
@@ -925,7 +928,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     /**
      * Usage used for enforcing profile-specific app limits.
      * The public usage dashboard can show overall daily usage, but limits configured inside a profile should be evaluated against usage accumulated while that profile is active.
-     * This avoids false early blocks after switching from a hard-blocking profile to a limited profile.
+     * Thisavoids false early blocks after switching from a hard-blocking profile to a limited profile.
      */
     private fun getProfileLimitUsageMsToday(profile: String, pkg: String): Long {
         return ProfileUsageStore.getUsageMsToday(this, profile, pkg)
@@ -946,13 +949,17 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         lastTopRefreshAt = now
         topRefreshInFlight = true
 
-        val start = (now - 10_000L).coerceAtLeast(0L)
+        val start = (now - 60_000L).coerceAtLeast(0L)
         usageWorker?.post {
             val top = runCatching { usageEventsForegroundResolver.resolveTopPackage(start, now) }.getOrNull()
             topRefreshInFlight = false
-            if (top.isNullOrBlank()) return@post
+            if (top.isNullOrBlank()) {
+                BlockingRuntime.markUsageTopResolution(this, null, "usage_events_empty_60s")
+                return@post
+            }
 
             handler.post {
+                BlockingRuntime.markUsageTopResolution(this, top, "usage_events_60s")
                 applyResolvedTopPackage(top, now)
             }
         } ?: run {
@@ -962,6 +969,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     private fun applyResolvedTopPackage(top: String, now: Long) {
         if (top.isBlank()) return
+        BlockingRuntime.markForegroundPackage(this, top, "usage_events")
         if (top == currentTopPkg) return
 
         currentTopPkg = top
@@ -1092,12 +1100,19 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     private fun maybeBlockNow(pkg: String, event: AccessibilityEvent? = null, force: Boolean = false) {
         perf.maybeBlockCalls++
-        if (AppBlockSafety.isHardExcluded(this, pkg)) return
+        fun markRuntimeBlockCheck(reason: String, details: String = "") {
+            BlockingRuntime.markBlockingCheck(this, pkg, reason, details)
+        }
+        if (AppBlockSafety.isHardExcluded(this, pkg)) {
+            markRuntimeBlockCheck("hard_excluded")
+            return
+        }
         val now = System.currentTimeMillis()
 
         // Strict-mode lockout fallback: when Settings or another strict recovery surface is temporarily allowed, do not let loop-protection suppression immediately bounce it back home again. 
         // This keeps the short recovery window real instead of only showing a toast while the activity is still closed.
         if (AppBlockSafety.requiresStrictModeForBlocking(this, pkg) && TempAllowStore.isAllowed(this, pkg)) {
+            markRuntimeBlockCheck("strict_lockout_recovery_allowed")
             appendBlockingLog(
                 category = "temp_allow",
                 key = "temp-allow|$pkg",
@@ -1108,15 +1123,31 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
 
         if (isBlockSuppressed(pkg, now)) {
+            markRuntimeBlockCheck("loop_suppressed")
             enforceSuppressedBlock(pkg, now)
             return
         }
 
-        if (!pm.isInteractive) return
-        if (km?.isKeyguardLocked == true) return
-        if (EmergencyBypassStore.isActive(this)) return
-        if (!SwitchModeStore.isEnabled(this)) return
-        if (!shouldRunEnforcement(pkg, event, force)) return
+        if (!pm.isInteractive) {
+            markRuntimeBlockCheck("device_not_interactive")
+            return
+        }
+        if (km?.isKeyguardLocked == true) {
+            markRuntimeBlockCheck("keyguard_locked")
+            return
+        }
+        if (EmergencyBypassStore.isActive(this)) {
+            markRuntimeBlockCheck("emergency_active")
+            return
+        }
+        if (!SwitchModeStore.isEnabled(this)) {
+            markRuntimeBlockCheck("switchly_disabled")
+            return
+        }
+        if (!shouldRunEnforcement(pkg, event, force)) {
+            markRuntimeBlockCheck("enforcement_throttled", "force=$force event=${eventTypeLabel(event)}")
+            return
+        }
         val tempAllowed = TempAllowStore.isAllowed(this, pkg)
 
         // Website/domain blocking + in-app blocks (even if app itself isn't blocked)
@@ -1124,10 +1155,17 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         maybeBlockWebsite(pkg, event)
         maybeInAppBlock(pkg, event)
 
-        if (tempAllowed) return
+        if (tempAllowed) {
+            markRuntimeBlockCheck("temp_allowed")
+            return
+        }
 
         val nowForCache = System.currentTimeMillis()
-        val profile = getCurrentProfileCached(nowForCache) ?: return
+        val profile = getCurrentProfileCached(nowForCache)
+        if (profile == null) {
+            markRuntimeBlockCheck("no_active_profile")
+            return
+        }
         val blocked = getBlockedAppsCached(profile, nowForCache)
         val lockActive = SwitchModeStore.isNfcRequiredForDisable(this)
         val limitMin = getUsageLimitCached(profile, pkg, nowForCache)
@@ -1158,7 +1196,19 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             )
         }
 
-        if (!decision.shouldBlock) return
+        if (!decision.shouldBlock) {
+            val managed = isManagedPackage(pkg, blocked) || limitMin > 0 || attemptLimit > 0
+            val hardBlocked = isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0
+            markRuntimeBlockCheck(
+                reason = if (managed) "decision_allow" else "not_managed_for_profile",
+                details = "profile=$profile blockedCount=${blocked.size} hardBlocked=$hardBlocked limitMin=$limitMin attemptLimit=$attemptLimit opensExceeded=$opensExceeded profileUsageMs=$effectiveUsageMsToday force=$force event=${eventTypeLabel(event)}"
+            )
+            return
+        }
+        markRuntimeBlockCheck(
+            reason = "decision_block",
+            details = "profile=$profile limitMin=$limitMin attemptLimit=$attemptLimit opensExceeded=$opensExceeded immediate=${decision.immediate} force=$force event=${eventTypeLabel(event)}"
+        )
         blockNow(pkg, immediate = decision.immediate)
     }
 
@@ -1538,6 +1588,11 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 key = "app-block|$pkg",
                 message = "pkg=$pkg immediate=$immediate label=${sanitizeWebsiteSignal(label, 80)} countAttempt=$countAttempt countAsBlock=$countAsBlock",
                 throttleMs = 1_500L
+            )
+            BlockingRuntime.markBlockShown(
+                this,
+                pkg,
+                "immediate=$immediate label=${sanitizeWebsiteSignal(label, 80)} countAttempt=$countAttempt countAsBlock=$countAsBlock"
             )
         }
 
@@ -2312,6 +2367,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 } else null
             }
             ?: run {
+                if (!isFirefoxFamily(pkg) && browserWebsiteState.hasRecentDomainSignal(pkg, now)) {
+                    appendBlockingLog(
+                        category = "website_detect",
+                        key = "web-sticky-no-host|$pkg|${eventTypeLabel(event)}",
+                        message = "pkg=$pkg result=no_host_keep_recent event=${eventTypeLabel(event)}",
+                        throttleMs = 2_000L
+                    )
+                    return
+                }
                 if (isFirefoxFamily(pkg)) {
                     appendBlockingLog(
                         category = "website_detect",
@@ -2338,10 +2402,21 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     if (isFirefoxFamily(pkg)) " ${firefoxSignalSummary(root, event)}" else "",
                 throttleMs = 1_500L
             )
-            if (needStability) return
+            if (needStability) {
+                // For Chromium-based browsers, blocking still waits for a short stable signal to avoid
+                // reacting to autocomplete/address-bar noise. Usage statistics can already keep the
+                // visible host as the best current signal, otherwise dynamic pages such as Instagram
+                // may be under-counted while every event stays in candidate/waiting state.
+                browserWebsiteState.updateCurrentDomain(pkg, host, now)
+                return
+            }
         }
         val candidateAgeMs = browserWebsiteState.candidateAgeMs(now)
         if (needStability && candidateAgeMs < BrowserWebsiteState.DOMAIN_CONFIRM_MS) {
+            // Keep website usage stats moving while the host is still waiting for block confirmation.
+            // This does not weaken website blocking, because enforcement below still returns until the
+            // confirmation window has passed.
+            browserWebsiteState.updateCurrentDomain(pkg, host, now)
             appendBlockingLog(
                 category = "website_detect",
                 key = "web-wait-stable|$pkg|$host",

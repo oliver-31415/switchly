@@ -2,243 +2,171 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- STATS / USAGE -->
+    <!-- Limit dialogs and quick edit -->
     <!-- ====================================================== -->
-
     <string name="set_daily_limit">Set daily limit</string>
-
     <string name="set_daily_limit_title">Daily limit: %1$s</string>
-
     <string name="daily_limit_label">Daily limit: %1$d min/day</string>
-
     <string name="daily_limit_10">Daily limit: 10 min</string>
-
     <string name="set_daily_attempt_limit_title">Daily open limit: %1$s</string>
-
     <string name="attempt_limit_label">Open limit: %1$d/day</string>
-
     <plurals name="daily_attempt_limit_value_format">
         <item quantity="one">%1$d open/day</item>
         <item quantity="other">%1$d opens/day</item>
     </plurals>
-
     <string name="opens_hint">Enter number of opens (0–200)</string>
-
     <string name="minutes_hint_day">Enter Time</string>
-
     <string name="limit_type_hint">Limit Types</string>
-
     <plurals name="opens_format">
         <item quantity="one">%1$d open</item>
         <item quantity="other">%1$d opens</item>
     </plurals>
-
     <string name="set_session_limit_title">Set session limit for %1$s</string>
-
     <string name="session_limit_label">Session limit: %1$d min</string>
-
     <string name="custom_minutes">Custom time…</string>
-
     <string name="custom_value">Custom…</string>
-
     <string name="custom_minutes_title">Custom minutes</string>
-
     <string name="minutes_hint">Enter Time</string>
-
     <plurals name="minutes_format">
         <item quantity="one">%1$d minute</item>
         <item quantity="other">%1$d minutes</item>
     </plurals>
-
     <string name="no_limit">No limit</string>
-
     <string name="limit_set">Limit set</string>
-
     <string name="select_profile_first">Please select a profile first.</string>
-
     <string name="edit_limits">Edit limits</string>
-
     <string name="limits_quick_edit_hint">Tap the tune icon to edit limits.</string>
-
     <string name="limit_time_action">Time</string>
-
     <string name="limit_attempts_action">Attempts</string>
-
     <string name="no_profile_selected">Please select a profile.</string>
-
     <string name="profile_active_fmt">Profile: %1$s</string>
 
+    <!-- ====================================================== -->
+    <!-- Unavailable apps -->
+    <!-- ====================================================== -->
     <string name="unavailable_app_label">Unavailable app</string>
-
     <string name="unavailable_app_state">Not installed</string>
-
     <string name="unavailable_app_remove_hint">Uncheck and save to remove it.</string>
-
-    <string name="cannot_set_limit_unavailable">Can’t set a limit for an unavailable app.</string>
-
     <plurals name="unavailable_apps_loaded_notice">
         <item quantity="one">%1$d unavailable app entry was loaded for cleanup.</item>
         <item quantity="other">%1$d unavailable app entries were loaded for cleanup.</item>
     </plurals>
 
+    <!-- ====================================================== -->
+    <!-- Stats screen and range tabs -->
+    <!-- ====================================================== -->
     <string name="statistics_usage_title">Usage statistics</string>
-
     <string name="stats_range_today">Today</string>
-
     <string name="stats_range_week">Week</string>
-
     <string name="stats_range_month">Month</string>
-
     <string name="stats_range_year">Year</string>
-
     <string name="stats_range_overall">Overall</string>
-
     <string name="usage_apps_tab">Apps</string>
-
     <string name="usage_websites_tab">Websites</string>
-
     <string name="usage_today">Today</string>
-
     <string name="usage_week_total">7-day total</string>
-
     <string name="usage_month_total">This month total</string>
-
     <string name="usage_year_total">This year total</string>
-
     <string name="usage_overall_total">All time total</string>
-
     <string name="usage_range_today">Today</string>
-
     <string name="usage_range_week">Week</string>
-
     <string name="usage_range_month">Month</string>
-
     <string name="usage_range_year">Year</string>
-
     <string name="usage_range_overall">Overall</string>
 
+    <!-- ====================================================== -->
+    <!-- Usage access and row actions -->
+    <!-- ====================================================== -->
     <string name="usage_access_needed_desc">Please enable "App usage data" access for Switchly to show your screen time stats.</string>
-
     <string name="usage_open_settings">Open settings</string>
-
     <string name="usage_row_tap_hint_app">Tap an app row to open details.</string>
-
     <string name="usage_row_tap_hint_website">Tap a website row to open details.</string>
-
-    <string name="usage_total_screen_time">Total Screen Time</string>
-
-    <string name="usage_sessions_today">Opens today</string>
-
-    <string name="usage_sessions_week">Opens this week</string>
-
-    <string name="usage_sessions_month">Opens this month</string>
-
-    <string name="usage_sessions_year">Opens this year</string>
-
-    <string name="usage_sessions_overall">Opens overall</string>
-
-    <string name="usage_attempts_today">Attempts today</string>
-
-    <string name="usage_attempts_week">Attempts this week</string>
-
-    <string name="usage_attempts_month">Attempts this month</string>
-
-    <string name="usage_attempts_year">Attempts this year</string>
-
-    <string name="usage_attempts_overall">Attempts overall</string>
-
-    <string name="usage_app_placeholder">App</string>
-
     <string name="usage_open_details">Details ›</string>
-
     <string name="usage_row_tap_hint">Tap an app row to open details.</string>
-
     <string name="usage_row_open_details_a11y">%1$s, %2$s, %3$s. Double tap for details.</string>
-
     <string name="usage_row_basic_a11y">%1$s, %2$s, %3$s.</string>
 
+    <!-- ====================================================== -->
+    <!-- Usage metrics -->
+    <!-- ====================================================== -->
+    <string name="usage_total_screen_time">Total Screen Time</string>
+    <string name="usage_sessions_today">Opens today</string>
+    <string name="usage_sessions_week">Opens this week</string>
+    <string name="usage_sessions_month">Opens this month</string>
+    <string name="usage_sessions_year">Opens this year</string>
+    <string name="usage_sessions_overall">Opens overall</string>
+    <string name="usage_attempts_today">Attempts today</string>
+    <string name="usage_attempts_week">Attempts this week</string>
+    <string name="usage_attempts_month">Attempts this month</string>
+    <string name="usage_attempts_year">Attempts this year</string>
+    <string name="usage_attempts_overall">Attempts overall</string>
+    <string name="usage_app_placeholder">App</string>
+
+    <!-- ====================================================== -->
+    <!-- Website usage management -->
+    <!-- ====================================================== -->
     <string name="website_manage_blocking">Blocking settings</string>
-
     <string name="website_delete_data">Delete data</string>
-
     <string name="website_delete_title">Delete: %1$s</string>
-
     <string name="website_delete_message">Choose what you want to remove. This can’t be undone.</string>
-
     <string name="website_delete_clear_usage">Clear usage history</string>
-
     <string name="website_delete_remove_limit">Remove daily limit</string>
-
     <string name="website_delete_remove_block_rule">Remove block rule</string>
-
     <string name="website_deleted_toast">Website data deleted</string>
 
+    <!-- ====================================================== -->
+    <!-- Empty states and values -->
+    <!-- ====================================================== -->
     <string name="usage_web_placeholder">Website stats coming soon.</string>
-
     <string name="usage_apps_no_accessibility">App usage tracking needs Switchly Accessibility enabled.</string>
-
     <string name="usage_apps_no_data">No tracked app usage yet. Switchly records app usage while Accessibility is enabled.</string>
-
     <string name="usage_apps_no_blocked">No blocked apps configured yet.</string>
-
     <string name="usage_websites_no_accessibility">Website tracking needs Switchly Accessibility enabled.</string>
-
     <string name="usage_websites_no_data">No website data yet. Open a website in a supported browser (Chrome, Brave, Edge, Firefox…) while Switchly Accessibility is enabled.</string>
-
     <string name="usage_websites_no_blocked">No limited websites configured yet.</string>
-
     <string name="usage_value_label">Usage</string>
-
     <string name="usage_share_of_period">Share of period</string>
-
     <string name="usage_kv_fmt">%1$s: %2$s</string>
-
     <string name="usage_percent_zero" formatted="false">0.0%</string>
-
     <string name="usage_time_zero_short">0m</string>
-
     <string name="usage_time_zero_medium">0h 00m</string>
-
     <string name="usage_time_zero_long">0h 00m 00s</string>
 
+    <!-- ====================================================== -->
+    <!-- Sorting and filters -->
+    <!-- ====================================================== -->
     <string name="stats_sort_az">Name (A–Z)</string>
-
     <string name="stats_sort_za">Name (Z–A)</string>
-
     <string name="stats_filter_all_apps">All apps</string>
-
     <string name="stats_filter_blocked_only">Only blocked apps</string>
-
     <string name="stats_filter_all_websites">All websites</string>
-
     <string name="stats_filter_blocked_only_websites">Only limited websites</string>
-
     <string name="stats_sort_filter_title">Sort &amp; filter</string>
-
     <string name="stats_section_filter">Filter</string>
-
     <string name="stats_section_sort">Sort</string>
-
     <string name="stats_apply">Apply</string>
-
     <string name="stats_sort_used_time_desc">Used time (top)</string>
-
     <string name="stats_sort_used_time_asc">Used time (bottom)</string>
-
     <string name="stats_sort_filter">Sort &amp; filter</string>
 
+    <!-- ====================================================== -->
+    <!-- Usage point dialog -->
+    <!-- ====================================================== -->
     <string name="usage_point_dialog_title">%1$s - %2$s</string>
 
+    <!-- ====================================================== -->
+    <!-- Switchly fallback and premium details -->
+    <!-- ====================================================== -->
     <string name="usage_switchly_fallback_title">No tracked data from Switchly yet</string>
-
     <string name="usage_switchly_fallback_message">Switchly doesn’t have usage data for this time range yet. Show your phone’s current usage statistics instead?</string>
-
     <string name="usage_switchly_fallback_positive">Show phone stats</string>
-
     <string name="usage_details_premium_title">Detailed statistics are part of Premium</string>
-
     <string name="usage_details_premium_message">Get Premium to view detailed statistics and insights.</string>
-
     <string name="usage_details_premium_action">View Premium</string>
+
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="cannot_set_limit_unavailable">Can’t set a limit for an unavailable app.</string>
 
 </resources>

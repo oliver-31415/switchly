@@ -2,54 +2,43 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- CHANGELOG - release note labels -->
+    <!-- Release note placeholders -->
     <!-- ====================================================== -->
-
     <string name="release_note_version_placeholder" translatable="false">v1.5.3</string>
-
     <string name="release_note_date_placeholder" translatable="false">Feb 15, 2026</string>
-
     <string name="release_note_body_placeholder">Release notes…</string>
 
-    <string name="changelog_latest_fmt">Latest: %1$s</string>
-
+    <!-- ====================================================== -->
+    <!-- Changelog display controls -->
+    <!-- ====================================================== -->
     <string name="changelog_show_more">Show more</string>
-
     <string name="changelog_show_less">Show less</string>
-
     <string name="changelog_show_full_fmt">Show full list (%1$d)</string>
 
+    <!-- ====================================================== -->
+    <!-- Changelog labels and sections -->
+    <!-- ====================================================== -->
+    <string name="changelog_latest_fmt">Latest: %1$s</string>
     <string name="changelog_highlights">Highlights</string>
-
     <plurals name="changelog_more_changes_fmt">
         <item quantity="one">+%1$d more change</item>
         <item quantity="other">+%1$d more changes</item>
     </plurals>
-
     <plurals name="changelog_date_count_fmt">
         <item quantity="one">%1$s • %2$d change</item>
         <item quantity="other">%1$s • %2$d changes</item>
     </plurals>
-
     <plurals name="changelog_count_only_fmt">
         <item quantity="one">%1$d change</item>
         <item quantity="other">%1$d changes</item>
     </plurals>
-
     <string name="changelog_section_added">Added</string>
-
     <string name="changelog_section_changed">Changed</string>
-
     <string name="changelog_section_improved">Improved</string>
-
     <string name="changelog_section_fixed">Fixed</string>
-
     <string name="changelog_section_removed">Removed</string>
-
     <string name="changelog_section_other">Other</string>
-
     <string name="changelog_tab_public">Public</string>
-
     <string name="changelog_tab_beta">Beta</string>
 
 </resources>

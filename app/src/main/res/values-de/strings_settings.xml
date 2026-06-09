@@ -2,75 +2,57 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- SETTINGS - main screen entries and data/help -->
+    <!-- Settings sections -->
     <!-- ====================================================== -->
+    <string name="settings_section_controls">Steuerung</string>
+    <string name="settings_section_personalization">Darstellung</string>
+    <string name="settings_section_reliability">Berechtigungen &amp; Zuverlässigkeit</string>
+    <string name="settings_section_data">Konto &amp; Daten</string>
+    <string name="settings_section_help">Hilfe &amp; Info</string>
 
-	<string name="settings_section_controls">Steuerung</string>
+    <!-- ====================================================== -->
+    <!-- Account and appearance -->
+    <!-- ====================================================== -->
+    <string name="settings_account_title">Konto</string>
+    <string name="settings_account_summary">Backup, Notfall-PIN &amp; Sync</string>
+    <string name="settings_theme_title">Darstellung</string>
+    <string name="settings_theme_summary">Design, Farben &amp; Sprache</string>
 
-	<string name="settings_section_personalization">Darstellung</string>
+    <!-- ====================================================== -->
+    <!-- Data and changelog -->
+    <!-- ====================================================== -->
+    <string name="settings_changelog_title">Was ist neu</string>
+    <string name="settings_changelog_summary">Versionshinweise</string>
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_summary">Deine Konfiguration synchronisieren &amp; wiederherstellen</string>
+    <string name="settings_backup_create_title">Backup</string>
+    <string name="settings_backup_create_summary">Cloud- oder Datei-Backup erstellen</string>
+    <string name="settings_restore_title">Wiederherstellen</string>
+    <string name="settings_restore_summary">Aus der Cloud oder einer lokalen Datei wiederherstellen</string>
 
-	<string name="settings_section_reliability">Berechtigungen &amp; Zuverlässigkeit</string>
+    <!-- ====================================================== -->
+    <!-- Help, about and permissions -->
+    <!-- ====================================================== -->
+    <string name="settings_contact_support_title">Support kontaktieren</string>
+    <string name="settings_contact_support_summary">Entwickler per E-Mail kontaktieren</string>
+    <string name="settings_permissions_reliability_title">Berechtigungen &amp; Zuverlässigkeit</string>
+    <string name="settings_permissions_reliability_summary">Berechtigungen und Fehlerbehebung</string>
+    <string name="settings_help_about_title">Hilfe &amp; Über</string>
+    <string name="settings_help_about_summary">FAQ, Support und App-Informationen</string>
+    <string name="settings_info_title">Info</string>
+    <string name="settings_info_summary">App-, Geräte- und Entwicklerdetails</string>
+    <string name="pref_permissions_title">Berechtigungen</string>
+    <string name="pref_permissions_summary">Prüfe und verwalte die Systemberechtigungen, die Switchly benötigt.</string>
+    <string name="pref_faq_title">FAQ &amp; Tipps</string>
+    <string name="pref_faq_summary">Antworten auf häufige Fragen und hilfreiche Informationen</string>
 
-	<string name="settings_section_data">Konto &amp; Daten</string>
-
-	<string name="settings_section_help">Hilfe &amp; Info</string>
-
-	<string name="settings_account_title">Konto</string>
-
-	<string name="settings_account_summary">Backup, Notfall-PIN &amp; Sync</string>
-
-	<string name="settings_theme_title">Darstellung</string>
-
-	<string name="settings_theme_summary">Design, Farben &amp; Sprache</string>
-
-	<string name="settings_changelog_title">Was ist neu</string>
-
-	<string name="settings_changelog_summary">Versionshinweise</string>
-
-	<string name="settings_backup_title">Backup</string>
-
-	<string name="settings_backup_summary">Deine Konfiguration synchronisieren &amp; wiederherstellen</string>
-
-	<string name="settings_contact_support_title">Support kontaktieren</string>
-
-	<string name="settings_contact_support_summary">Entwickler per E-Mail kontaktieren</string>
-
-	<string name="settings_permissions_reliability_title">Berechtigungen &amp; Zuverlässigkeit</string>
-
-	<string name="settings_permissions_reliability_summary">Berechtigungen und Fehlerbehebung</string>
-
-	<string name="settings_help_about_title">Hilfe &amp; Über</string>
-
-	<string name="settings_help_about_summary">FAQ, Support und App-Informationen</string>
-
-	<string name="settings_info_title">Info</string>
-
-	<string name="settings_info_summary">App-, Geräte- und Entwicklerdetails</string>
-
-	<string name="pref_permissions_title">Berechtigungen</string>
-
-	<string name="pref_permissions_summary">Prüfe und verwalte die Systemberechtigungen, die Switchly benötigt.</string>
-
-	<string name="pref_faq_title">FAQ &amp; Tipps</string>
-
-	<string name="pref_faq_summary">Antworten auf häufige Fragen und hilfreiche Informationen</string>
-
-	<string name="pref_reset_app_data_title">Alle Switchly-Daten löschen</string>
-
-	<string name="pref_reset_app_data_summary">Setzt alle lokalen App-Daten und Einstellungen zurück</string>
-
-	<string name="pref_reset_app_data_confirm_title">Alle Switchly-Daten löschen?</string>
-
-	<string name="pref_reset_app_data_confirm_message">Dadurch werden alle lokalen Profile, Regeln, Statistiken, gekoppelten Tags und Einstellungen auf diesem Gerät entfernt. Cloud-Backups werden nicht automatisch gelöscht.</string>
-
-	<string name="pref_reset_app_data_done">Alle lokalen Daten wurden gelöscht.</string>
-
-	<string name="settings_backup_create_title">Backup</string>
-
-	<string name="settings_backup_create_summary">Cloud- oder Datei-Backup erstellen</string>
-
-	<string name="settings_restore_title">Wiederherstellen</string>
-
-	<string name="settings_restore_summary">Aus der Cloud oder einer lokalen Datei wiederherstellen</string>
+    <!-- ====================================================== -->
+    <!-- Reset app data -->
+    <!-- ====================================================== -->
+    <string name="pref_reset_app_data_title">Alle Switchly-Daten löschen</string>
+    <string name="pref_reset_app_data_summary">Setzt alle lokalen App-Daten und Einstellungen zurück</string>
+    <string name="pref_reset_app_data_confirm_title">Alle Switchly-Daten löschen?</string>
+    <string name="pref_reset_app_data_confirm_message">Dadurch werden alle lokalen Profile, Regeln, Statistiken, gekoppelten Tags und Einstellungen auf diesem Gerät entfernt. Cloud-Backups werden nicht automatisch gelöscht.</string>
+    <string name="pref_reset_app_data_done">Alle lokalen Daten wurden gelöscht.</string>
 
 </resources>

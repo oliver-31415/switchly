@@ -185,7 +185,7 @@ class InAppBlockingActivity : AppCompatActivity() {
             tvLimit = tvLimit
         )
 
-        // X / Twitter
+        // X/Twitter
         setupTimedSwitch(
             R.id.swXForYou,
             BlockingToggleKeys.KEY_BLOCK_X_HOME,

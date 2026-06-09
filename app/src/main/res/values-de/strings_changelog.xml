@@ -2,50 +2,41 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- CHANGELOG - release note labels -->
+    <!-- Release note placeholders -->
     <!-- ====================================================== -->
+    <string name="release_note_body_placeholder">Versionshinweise…</string>
 
-<string name="release_note_body_placeholder">Versionshinweise…</string>
+    <!-- ====================================================== -->
+    <!-- Changelog display controls -->
+    <!-- ====================================================== -->
+    <string name="changelog_show_more">Mehr anzeigen</string>
+    <string name="changelog_show_less">Weniger anzeigen</string>
+    <string name="changelog_show_full_fmt">Vollständige Liste anzeigen (%1$d)</string>
 
-	<string name="changelog_latest_fmt">Neueste: %1$s</string>
-
-	<string name="changelog_show_more">Mehr anzeigen</string>
-
-	<string name="changelog_show_less">Weniger anzeigen</string>
-
-	<string name="changelog_show_full_fmt">Vollständige Liste anzeigen (%1$d)</string>
-
-	<string name="changelog_highlights">Highlights</string>
-
-	<plurals name="changelog_more_changes_fmt">
-        <item quantity="one">+%1$d weitere Änderung</item>
-        <item quantity="other">+%1$d weitere Änderungen</item>
-    </plurals>
-
-	<plurals name="changelog_date_count_fmt">
-        <item quantity="one">%1$s • %2$d Änderung</item>
-        <item quantity="other">%1$s • %2$d Änderungen</item>
-    </plurals>
-
-	<plurals name="changelog_count_only_fmt">
-        <item quantity="one">%1$d Änderung</item>
-        <item quantity="other">%1$d Änderungen</item>
-    </plurals>
-
-	<string name="changelog_section_added">Neu</string>
-
-	<string name="changelog_section_changed">Geändert</string>
-
-	<string name="changelog_section_improved">Verbessert</string>
-
-	<string name="changelog_section_fixed">Behoben</string>
-
-	<string name="changelog_section_removed">Entfernt</string>
-
-	<string name="changelog_section_other">Sonstiges</string>
-
-	<string name="changelog_tab_public">Öffentlich</string>
-
-	<string name="changelog_tab_beta">Beta</string>
+    <!-- ====================================================== -->
+    <!-- Changelog labels and sections -->
+    <!-- ====================================================== -->
+    <string name="changelog_latest_fmt">Neueste: %1$s</string>
+    <string name="changelog_highlights">Highlights</string>
+    <plurals name="changelog_more_changes_fmt">
+            <item quantity="one">+%1$d weitere Änderung</item>
+            <item quantity="other">+%1$d weitere Änderungen</item>
+        </plurals>
+    <plurals name="changelog_date_count_fmt">
+            <item quantity="one">%1$s • %2$d Änderung</item>
+            <item quantity="other">%1$s • %2$d Änderungen</item>
+        </plurals>
+    <plurals name="changelog_count_only_fmt">
+            <item quantity="one">%1$d Änderung</item>
+            <item quantity="other">%1$d Änderungen</item>
+        </plurals>
+    <string name="changelog_section_added">Neu</string>
+    <string name="changelog_section_changed">Geändert</string>
+    <string name="changelog_section_improved">Verbessert</string>
+    <string name="changelog_section_fixed">Behoben</string>
+    <string name="changelog_section_removed">Entfernt</string>
+    <string name="changelog_section_other">Sonstiges</string>
+    <string name="changelog_tab_public">Öffentlich</string>
+    <string name="changelog_tab_beta">Beta</string>
 
 </resources>

@@ -2,145 +2,102 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- CORE - actions, shortcuts, widgets, update and shared labels -->
+    <!-- Control mode labels -->
     <!-- ====================================================== -->
-
-	<string name="switch_mode_label">Switch-Modus: %1$s</string>
-
-	<string name="control_manual">Manuell</string>
-
-	<string name="control_nfc">NFC</string>
-
-	<string name="control_schedules">Zeitpläne</string>
-
-	<string name="control_qr">QR</string>
-
-	<string name="control_barcode">Barcode</string>
-
-	<string name="switch_mode_status_placeholder">Switch-Modus: …</string>
-
-	<string name="paired_tags_sort_title">Gepaarte Tags sortieren</string>
-
-	<string name="paired_tags_sort_new_old">Neu → alt</string>
-
-	<string name="paired_tags_sort_old_new">Alt → neu</string>
-
-	<string name="paired_tags_sort_name_az">Name A → Z</string>
-
-	<string name="paired_tags_sort_name_za">Name Z → A</string>
-
-	<string name="qs_label_on">Switchly EIN</string>
-
-	<string name="qs_label_off">Switchly AUS</string>
-
-	<string name="qs_added_ok">Kachel hinzugefügt</string>
-
-	<string name="qs_added_already">Kachel ist bereits hinzugefügt</string>
-
-	<string name="qs_added_cancel">Abgebrochen</string>
-
-	<string name="qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „Switchly“ zu den aktiven Kacheln ziehen</string>
-
-	<string name="qr_qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „QR scannen“ zu den aktiven Kacheln ziehen</string>
-	<string name="barcode_qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „Barcode scannen“ zu den aktiven Kacheln ziehen</string>
-
-	<string name="update_available_title">Update verfügbar</string>
-
-	<string name="update_available_message">Eine neue Switchly-Version ist im Google Play Store verfügbar.</string>
-
-	<string name="update_available_cta">Aktualisieren</string>
-
-	<string name="switchly_update_up_to_date">Du bist bereits auf dem neuesten Stand</string>
-
-	<string name="accent_default">Standard (Grün)</string>
-
-	<string name="accent_blue">Blau</string>
-
-	<string name="accent_teal">Türkis</string>
-
-	<string name="accent_purple">Lila</string>
-
-	<string name="accent_pink">Pink</string>
-
-	<string name="accent_red">Rot</string>
-
-	<string name="accent_orange">Orange</string>
-
-	<string name="accent_amber">Bernstein</string>
-
-	<string name="accent_gray">Grau</string>
-
-	<string name="color_channel_r">R</string>
-
-	<string name="color_channel_g">G</string>
-
-	<string name="color_channel_b">B</string>
-
-	<string name="qr_share_failed">QR-Code konnte nicht geteilt werden.</string>
-
-	<string name="shortcut_qr_short">QR scannen</string>
-
-	<string name="shortcut_qr_long">QR-Scan starten</string>
-
-	<string name="shortcut_barcode_short">Barcode scannen</string>
-
-	<string name="shortcut_barcode_long">Barcode-Scan starten</string>
-
-	<string name="shortcut_nfc_short">NFC schreiben</string>
-
-	<string name="shortcut_focus_now_short">Fokus jetzt</string>
-
-	<string name="shortcut_focus_now_long">Switchly jetzt aktivieren</string>
-
-	<string name="widget_scanner_name">Switchly Hub</string>
-
-	<string name="widget_scanner_title">Switchly Hub</string>
-
-	<string name="widget_scanner_open_app">App öffnen</string>
-
-	<string name="widget_hub_nfc">NFC</string>
-
-	<string name="widget_hub_blocked_notifications">Blockiert</string>
-
-	<string name="widget_hub_focus_now">Fokus</string>
-
-	<string name="widget_focus_now_name">Fokus jetzt</string>
-
-	<string name="widget_focus_now_applied">Switchly aktiviert.</string>
-
-	<string name="widget_focus_already_active">Switchly ist bereits aktiv.</string>
-
-	<string name="widget_action_requires_permissions">Schließe zuerst die Berechtigungen ab.</string>
-
-	<string name="widget_pause_15">15 Min</string>
-
-	<string name="widget_pause_30">30 Min</string>
-
-	<string name="widget_pause_60">1 Stunde</string>
-
-	<plurals name="widget_pause_applied_fmt">
-        <item quantity="one">Switchly für %1$d Minute pausiert.</item>
-        <item quantity="other">Switchly für %1$d Minuten pausiert.</item>
-    </plurals>
-
-	<string name="widget_pause_already_disabled">Switchly ist bereits deaktiviert.</string>
-
-	<string name="widget_next_schedule_open">Zeitpläne öffnen</string>
-
-	<string name="widget_qr_name">QR-Scanner</string>
-
-	<string name="widget_barcode_name">Barcode-Scanner</string>
-
-	<string name="widget_nfc_name">NFC-Schreiber</string>
-
-	<string name="widget_blocked_notifications_name">Blockierte Benachrichtigungen</string>
-
-	<string name="widget_pause_blocker_name">Blocker pausieren</string>
-
-	<string name="widget_next_schedule_name">Nächster Zeitplan</string>
-
-	<string name="experimental_notice_title">Experimentelle Funktionen in 2.1.x</string>
-
-	<string name="experimental_notice_body">Einige erweiterte Schutzfunktionen in dieser Version brauchen noch extra Feedback.\n\nBitte melde dich mit Logs, wenn dir etwas auffällt bei:\n• Standortbasierten Zeitplänen\n• Advanced / ADB-Tools\n• Geräteadministrator-Funktionen\n• App Lock\n• Uninstall Protection\n\nJe nach Gerät können sie sich unterschiedlich verhalten, besonders auf Xiaomi, Samsung und anderen OEM-angepassten Android-Versionen.</string>
+    <string name="switch_mode_label">Switch-Modus: %1$s</string>
+    <string name="control_manual">Manuell</string>
+    <string name="control_nfc">NFC</string>
+    <string name="control_schedules">Zeitpläne</string>
+    <string name="control_qr">QR</string>
+    <string name="control_barcode">Barcode</string>
+    <string name="switch_mode_status_placeholder">Switch-Modus: …</string>
+
+    <!-- ====================================================== -->
+    <!-- Paired tag sorting -->
+    <!-- ====================================================== -->
+    <string name="paired_tags_sort_title">Gepaarte Tags sortieren</string>
+    <string name="paired_tags_sort_new_old">Neu → alt</string>
+    <string name="paired_tags_sort_old_new">Alt → neu</string>
+    <string name="paired_tags_sort_name_az">Name A → Z</string>
+    <string name="paired_tags_sort_name_za">Name Z → A</string>
+
+    <!-- ====================================================== -->
+    <!-- Quick Settings tile setup -->
+    <!-- ====================================================== -->
+    <string name="qs_label_on">Switchly EIN</string>
+    <string name="qs_label_off">Switchly AUS</string>
+    <string name="qs_added_ok">Kachel hinzugefügt</string>
+    <string name="qs_added_already">Kachel ist bereits hinzugefügt</string>
+    <string name="qs_added_cancel">Abgebrochen</string>
+    <string name="qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „Switchly“ zu den aktiven Kacheln ziehen</string>
+    <string name="qr_qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „QR scannen“ zu den aktiven Kacheln ziehen</string>
+    <string name="barcode_qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „Barcode scannen“ zu den aktiven Kacheln ziehen</string>
+
+    <!-- ====================================================== -->
+    <!-- App update prompt -->
+    <!-- ====================================================== -->
+    <string name="update_available_title">Update verfügbar</string>
+    <string name="update_available_message">Eine neue Switchly-Version ist im Google Play Store verfügbar.</string>
+    <string name="update_available_cta">Aktualisieren</string>
+    <string name="switchly_update_up_to_date">Du bist bereits auf dem neuesten Stand</string>
+
+    <!-- ====================================================== -->
+    <!-- Accent names and channels -->
+    <!-- ====================================================== -->
+    <string name="accent_default">Standard (Grün)</string>
+    <string name="accent_blue">Blau</string>
+    <string name="accent_teal">Türkis</string>
+    <string name="accent_purple">Lila</string>
+    <string name="accent_pink">Pink</string>
+    <string name="accent_red">Rot</string>
+    <string name="accent_orange">Orange</string>
+    <string name="accent_amber">Bernstein</string>
+    <string name="accent_gray">Grau</string>
+    <string name="color_channel_r">R</string>
+    <string name="color_channel_g">G</string>
+    <string name="color_channel_b">B</string>
+
+    <!-- ====================================================== -->
+    <!-- QR/barcode sharing and shortcuts -->
+    <!-- ====================================================== -->
+    <string name="qr_share_failed">QR-Code konnte nicht geteilt werden.</string>
+    <string name="shortcut_qr_short">QR scannen</string>
+    <string name="shortcut_qr_long">QR-Scan starten</string>
+    <string name="shortcut_barcode_short">Barcode scannen</string>
+    <string name="shortcut_barcode_long">Barcode-Scan starten</string>
+
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="shortcut_nfc_short">NFC schreiben</string>
+    <string name="shortcut_focus_now_short">Fokus jetzt</string>
+    <string name="shortcut_focus_now_long">Switchly jetzt aktivieren</string>
+    <string name="widget_scanner_name">Switchly Hub</string>
+    <string name="widget_scanner_title">Switchly Hub</string>
+    <string name="widget_scanner_open_app">App öffnen</string>
+    <string name="widget_hub_nfc">NFC</string>
+    <string name="widget_hub_blocked_notifications">Blockiert</string>
+    <string name="widget_hub_focus_now">Fokus</string>
+    <string name="widget_focus_now_name">Fokus jetzt</string>
+    <string name="widget_focus_now_applied">Switchly aktiviert.</string>
+    <string name="widget_focus_already_active">Switchly ist bereits aktiv.</string>
+    <string name="widget_action_requires_permissions">Schließe zuerst die Berechtigungen ab.</string>
+    <string name="widget_pause_15">15 Min</string>
+    <string name="widget_pause_30">30 Min</string>
+    <string name="widget_pause_60">1 Stunde</string>
+    <plurals name="widget_pause_applied_fmt">
+            <item quantity="one">Switchly für %1$d Minute pausiert.</item>
+            <item quantity="other">Switchly für %1$d Minuten pausiert.</item>
+        </plurals>
+    <string name="widget_pause_already_disabled">Switchly ist bereits deaktiviert.</string>
+    <string name="widget_next_schedule_open">Zeitpläne öffnen</string>
+    <string name="widget_qr_name">QR-Scanner</string>
+    <string name="widget_barcode_name">Barcode-Scanner</string>
+    <string name="widget_nfc_name">NFC-Schreiber</string>
+    <string name="widget_blocked_notifications_name">Blockierte Benachrichtigungen</string>
+    <string name="widget_pause_blocker_name">Blocker pausieren</string>
+    <string name="widget_next_schedule_name">Nächster Zeitplan</string>
+    <string name="experimental_notice_title">Experimentelle Funktionen in 2.1.4</string>
+    <string name="experimental_notice_body">Einige erweiterte Schutzfunktionen in dieser Version brauchen noch extra Feedback.\n\nBitte melde dich mit Logs, wenn dir etwas auffällt bei:\n• Standortbasierten Zeitplänen\n• Advanced/ADB-Tools\n• Geräteadministrator-Funktionen\n• App Lock\n• Uninstall Protection\n\nJe nach Gerät können sie sich unterschiedlich verhalten, besonders auf Xiaomi, Samsung und anderen OEM-angepassten Android-Versionen.</string>
 
 </resources>

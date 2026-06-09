@@ -2,72 +2,61 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- QR -->
+    <!-- QR scanner and generator -->
     <!-- ====================================================== -->
+    <string name="qr_title">QR</string>
+    <string name="qr_generate_title">QR-Codes verwalten</string>
+    <string name="qr_scan_title">QR-Code scannen</string>
+    <string name="permission_camera_required">Für das Scannen von QR-Codes ist die Kameraberechtigung erforderlich.</string>
+    <string name="invalid_qr_code">Ungültiger QR-Code</string>
 
-	<string name="qr_title">QR</string>
+    <!-- ====================================================== -->
+    <!-- QR actions -->
+    <!-- ====================================================== -->
+    <string name="qr_action">Aktion</string>
+    <string name="qr_action_enable">Aktivieren</string>
+    <string name="qr_action_disable">Deaktivieren</string>
+    <string name="qr_action_toggle">Umschalten</string>
+    <string name="qr_action_temp_enable">Temporär aktivieren</string>
+    <string name="qr_action_temp_disable">Temporär deaktivieren</string>
+    <string name="qr_action_profile_enable">Profil aktivieren</string>
+    <string name="qr_action_profile_disable">Profil deaktivieren</string>
+    <string name="qr_action_profile_toggle">Profil umschalten</string>
 
-	<string name="qr_generate_title">QR-Codes verwalten</string>
+    <!-- ====================================================== -->
+    <!-- Temporary QR duration -->
+    <!-- ====================================================== -->
+    <string name="qr_minutes">Minuten</string>
+    <string name="qr_minutes_5">5</string>
+    <string name="qr_minutes_10">10</string>
+    <string name="qr_minutes_30">30</string>
+    <string name="qr_minutes_60">60</string>
+    <string name="qr_minutes_120">120</string>
+    <string name="qr_minutes_default">10</string>
+    <string name="qr_minutes_custom">Benutzerdefiniert…</string>
+    <string name="qr_minutes_custom_title">Benutzerdefinierte Minuten</string>
+    <string name="qr_minutes_hint">z. B. 45</string>
 
-	<string name="qr_scan_title">QR-Code scannen</string>
+    <!-- ====================================================== -->
+    <!-- Clipboard and limiter messages -->
+    <!-- ====================================================== -->
+    <string name="qr_clipboard_label">Switchly-URI</string>
+    <string name="qr_temp_limiter_cooldown">Dieser QR-Code ist im Cooldown. Bitte in %1$d Min erneut versuchen.</string>
+    <plurals name="qr_temp_limiter_daily_limit">
+            <item quantity="one">Tageslimit für diesen QR-Code erreicht (%1$d Nutzung/Tag).</item>
+            <item quantity="other">Tageslimit für diesen QR-Code erreicht (%1$d Nutzungen/Tag).</item>
+        </plurals>
 
-	<string name="permission_camera_required">Für das Scannen von QR-Codes ist die Kameraberechtigung erforderlich.</string>
+    <!-- ====================================================== -->
+    <!-- External QR confirmation -->
+    <!-- ====================================================== -->
+    <string name="external_qr_confirm_title">Switchly-QR-Aktion ausführen?</string>
+    <string name="external_qr_confirm_message">Dieser Link wurde von einem externen QR-Scanner geöffnet. Fahre nur fort, wenn du bewusst einen Switchly-QR-Code gescannt hast.</string>
+    <string name="external_qr_confirm_action">Aktion ausführen</string>
 
-	<string name="invalid_qr_code">Ungültiger QR-Code</string>
-
-	<string name="qr_action">Aktion</string>
-
-	<string name="qr_action_enable">Aktivieren</string>
-
-	<string name="qr_action_disable">Deaktivieren</string>
-
-	<string name="qr_action_toggle">Umschalten</string>
-
-	<string name="qr_action_temp_enable">Temporär aktivieren</string>
-
-	<string name="qr_action_temp_disable">Temporär deaktivieren</string>
-
-	<string name="qr_action_profile_enable">Profil aktivieren</string>
-
-	<string name="qr_action_profile_disable">Profil deaktivieren</string>
-
-	<string name="qr_action_profile_toggle">Profil umschalten</string>
-
-	<string name="qr_profile_fallback">Profil</string>
-
-	<string name="qr_minutes">Minuten</string>
-
-	<string name="qr_minutes_5">5</string>
-
-	<string name="qr_minutes_10">10</string>
-
-	<string name="qr_minutes_30">30</string>
-
-	<string name="qr_minutes_60">60</string>
-
-	<string name="qr_minutes_120">120</string>
-
-	<string name="qr_minutes_default">10</string>
-
-	<string name="qr_minutes_custom">Benutzerdefiniert…</string>
-
-	<string name="qr_minutes_custom_title">Benutzerdefinierte Minuten</string>
-
-	<string name="qr_minutes_hint">z. B. 45</string>
-
-	<string name="qr_clipboard_label">Switchly-URI</string>
-
-	<string name="qr_temp_limiter_cooldown">Dieser QR-Code ist im Cooldown. Bitte in %1$d Min erneut versuchen.</string>
-
-	<plurals name="qr_temp_limiter_daily_limit">
-        <item quantity="one">Tageslimit für diesen QR-Code erreicht (%1$d Nutzung/Tag).</item>
-        <item quantity="other">Tageslimit für diesen QR-Code erreicht (%1$d Nutzungen/Tag).</item>
-    </plurals>
-
-	<string name="external_qr_confirm_title">Switchly-QR-Aktion ausführen?</string>
-
-	<string name="external_qr_confirm_message">Dieser Link wurde von einem externen QR-Scanner geöffnet. Fahre nur fort, wenn du bewusst einen Switchly-QR-Code gescannt hast.</string>
-
-	<string name="external_qr_confirm_action">Aktion ausführen</string>
+    <!-- ====================================================== -->
+    <!-- Other/fallback resources -->
+    <!-- ====================================================== -->
+    <string name="qr_profile_fallback">Profil</string>
 
 </resources>

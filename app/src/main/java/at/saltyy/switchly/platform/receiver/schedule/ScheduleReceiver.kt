@@ -95,7 +95,12 @@ class ScheduleReceiver : BroadcastReceiver() {
 
         val schedules = ScheduleStore.getAll(ctx).filter { it.enabled }
         if (schedules.isNotEmpty()) {
-            AppLogStore.append(ctx, "Schedule", "Evaluating schedules profile=${ProfileStore.getCurrent(ctx) ?: "-"}")
+            logScheduleEvaluationIfNeeded(
+                ctx = ctx,
+                scheduleCount = schedules.size,
+                profile = ProfileStore.getCurrent(ctx),
+                reason = alarmReason ?: wifiReason ?: if (hasBtEvent) "bluetooth_event" else "tick"
+            )
         }
 
         // "Trigger" schedules (Wi-Fi/BT based) use wifiSsid/btDeviceName.
@@ -455,14 +460,6 @@ class ScheduleReceiver : BroadcastReceiver() {
         if (isEnter && !withinDayAndTime) return
         if (isExit && !withinDayAndTime && !pairedMode) return
 
-        val lastMs = ScheduleRuntimeStore.getLastLocationTransitionMs(ctx, schedule.id, transitionKey)
-        val cooldownMs = schedule.locationCooldownMinutes.coerceAtLeast(0) * 60_000L
-        val nowMs = System.currentTimeMillis()
-        if (cooldownMs > 0L && lastMs > 0L && nowMs - lastMs < cooldownMs) {
-            return
-        }
-        ScheduleRuntimeStore.setLastLocationTransitionMs(ctx, schedule.id, transitionKey, nowMs)
-
         val effectiveAction = when (schedule.locationTrigger) {
             ScheduleStore.LocationTrigger.ENTER -> if (isEnter) schedule.action else null
             ScheduleStore.LocationTrigger.EXIT -> if (isExit) schedule.action else null
@@ -475,6 +472,15 @@ class ScheduleReceiver : BroadcastReceiver() {
             }
             null -> null
         } ?: return
+
+        val lastMs = ScheduleRuntimeStore.getLastLocationTransitionMs(ctx, schedule.id, transitionKey)
+        val cooldownMs = schedule.locationCooldownMinutes.coerceAtLeast(0) * 60_000L
+        val repeatGuardMs = maxOf(cooldownMs, LOCATION_DUPLICATE_TRANSITION_WINDOW_MS)
+        val nowMs = System.currentTimeMillis()
+        if (lastMs > 0L && nowMs - lastMs < repeatGuardMs) {
+            return
+        }
+        ScheduleRuntimeStore.setLastLocationTransitionMs(ctx, schedule.id, transitionKey, nowMs)
 
         applySchedule(ctx, schedule.copy(action = effectiveAction), SOURCE_LOCATION)
         ScheduleRuntimeStore.markExecutedNow(ctx)
@@ -497,6 +503,35 @@ class ScheduleReceiver : BroadcastReceiver() {
 
     private fun dbg(msg: String) {
         if (BuildConfig.DEBUG) Log.d(TAG, msg)
+    }
+
+    private fun logScheduleEvaluationIfNeeded(
+        ctx: Context,
+        scheduleCount: Int,
+        profile: String?,
+        reason: String
+    ) {
+        val nowMs = System.currentTimeMillis()
+        val cleanProfile = profile ?: "-"
+        val cleanReason = reason.ifBlank { "tick" }
+        val signature = "$cleanProfile|$scheduleCount|$cleanReason"
+        val prefs = ctx.getSharedPreferences(PREFS_RUNTIME, Context.MODE_PRIVATE)
+        val lastTs = prefs.getLong(KEY_LAST_EVAL_LOG_TS, 0L)
+        val lastSignature = prefs.getString(KEY_LAST_EVAL_LOG_SIGNATURE, null)
+
+        if (lastSignature == signature && nowMs - lastTs < SCHEDULE_EVAL_LOG_THROTTLE_MS) {
+            return
+        }
+
+        prefs.edit {
+            putLong(KEY_LAST_EVAL_LOG_TS, nowMs)
+            putString(KEY_LAST_EVAL_LOG_SIGNATURE, signature)
+        }
+        AppLogStore.append(
+            ctx,
+            "Schedule",
+            "Evaluating schedules profile=$cleanProfile count=$scheduleCount reason=$cleanReason"
+        )
     }
 
     private fun applySchedule(ctx: Context, s: ScheduleStore.Schedule, source: String) {
@@ -851,12 +886,16 @@ class ScheduleReceiver : BroadcastReceiver() {
         private const val BT_FRESHNESS_MS = 90_000L
         private const val PREFS_RUNTIME = "switchly_runtime"
         private const val KEY_LAST_SOURCE = "last_activation_source"
+        private const val KEY_LAST_EVAL_LOG_TS = "schedule_eval_log_ts"
+        private const val KEY_LAST_EVAL_LOG_SIGNATURE = "schedule_eval_log_signature"
+        private const val SCHEDULE_EVAL_LOG_THROTTLE_MS = 15 * 60 * 1000L
         const val EXTRA_LOCATION_SCHEDULE_ID = "locationScheduleId"
         const val EXTRA_LOCATION_TRANSITION = "locationTransition"
         private const val SOURCE_WIFI = "wifi"
         private const val SOURCE_BT = "bt"
         private const val SOURCE_TIME = "time"
         private const val SOURCE_LOCATION = "location"
+        private const val LOCATION_DUPLICATE_TRANSITION_WINDOW_MS = 60_000L
         private const val SINGLE_FIRE_WINDOW_MS = 90_000L
     }
 }

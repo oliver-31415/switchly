@@ -27,10 +27,8 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
@@ -59,6 +57,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
@@ -137,6 +137,7 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Date
+import java.util.Calendar
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -153,7 +154,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TEMP_MODE_DISCOVERED = "temp_mode_discovered"
         private const val KEY_PRIMARY_TOGGLE_TAP_COUNT = "primary_toggle_tap_count"
         private const val KEY_QUICK_ACTIONS_EXPANDED = "home_quick_actions_expanded"
-        private const val KEY_EXPERIMENTAL_NOTICE_211 = "experimental_notice_2_1_1_shown"
+        private const val KEY_EXPERIMENTAL_NOTICE_214 = "experimental_notice_2_1_4_shown"
         private const val KEY_QA_APPS = "home_quick_tile_apps"
         private const val KEY_QA_PROFILES = "home_quick_tile_profiles"
         private const val KEY_QA_WEBSITES = "home_quick_tile_websites"
@@ -278,16 +279,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun showExperimentalFeaturesNoticeIfNeeded() {
         val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE_211, false)) return
+        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE_214, false)) return
 
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.experimental_notice_title)
             .setMessage(R.string.experimental_notice_body)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_211, true) }
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_214, true) }
             }
             .setOnCancelListener {
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_211, true) }
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_214, true) }
             }
             .showAccented()
     }
@@ -877,8 +878,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun toggleSwitchIfAllowed() {
         val enabled = SwitchModeStore.isEnabled(this)
+        val allowMissingBarcodeSafetyDisable =
+            enabled && AutomationModeStore.shouldAllowManualDisableForMissingBarcodeSetup(this)
+
         val canChange = if (enabled) {
-            AutomationModeStore.isButtonAllowed(this) || AutomationModeStore.isBarcodeSetupMissing(this)
+            AutomationModeStore.isButtonAllowed(this) || allowMissingBarcodeSafetyDisable
         } else {
             AutomationModeStore.canButtonEnable(this)
         }
@@ -892,8 +896,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (enabled && AutomationModeStore.isBarcodeSetupMissing(this)) {
-            AppLogStore.append(this, "Safety", "Allowing manual disable because barcode control is enabled but no managed barcodes exist")
+        if (allowMissingBarcodeSafetyDisable) {
+            AppLogStore.append(this, "Safety", "Allowing manual disable because only barcode control is enabled but no managed barcodes exist")
         }
 
         if (enabled && isNfcLocked()) {
@@ -1240,9 +1244,15 @@ class MainActivity : AppCompatActivity() {
         if (nextMillis <= 0L) {
             tvNextScheduleValue.text = getString(R.string.schedules_next_none)
         } else {
-            val text = TimeFormatPrefs.formatMinutesOfDay(this, ((nextMillis / 60000L) % (24 * 60)).toInt())
+            val text = formatLocalScheduleBoundaryTime(nextMillis)
             tvNextScheduleValue.text = getString(R.string.schedules_next_at, text)
         }
+    }
+
+    private fun formatLocalScheduleBoundaryTime(timeMillis: Long): String {
+        val cal = Calendar.getInstance().apply { this.timeInMillis = timeMillis }
+        val minutesOfDay = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+        return TimeFormatPrefs.formatMinutesOfDay(this, minutesOfDay)
     }
 
     private fun updateQuickActionsVisibility() {
@@ -2257,13 +2267,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun Drawable.toSafeListIcon(context: Context): Drawable {
         val size = (48f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(size, size)
         val canvas = Canvas(bitmap)
         val oldBounds = copyBounds()
         setBounds(0, 0, size, size)
         draw(canvas)
         setBounds(oldBounds)
-        return BitmapDrawable(context.resources, bitmap)
+        return bitmap.toDrawable(context.resources)
     }
 
     data class AppDisplay(

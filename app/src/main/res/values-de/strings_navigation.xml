@@ -2,17 +2,12 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- NAVIGATION -->
+    <!-- App icon and main navigation -->
     <!-- ====================================================== -->
-
-	<string name="app_icon">App-Symbol</string>
-
-	<string name="nav_home">Start</string>
-
-	<string name="nav_blocking">Blocking</string>
-
-	<string name="nav_tools">Verwalten</string>
-
-	<string name="nav_settings">Einstellungen</string>
+    <string name="app_icon">App-Symbol</string>
+    <string name="nav_home">Start</string>
+    <string name="nav_blocking">Blocking</string>
+    <string name="nav_tools">Verwalten</string>
+    <string name="nav_settings">Einstellungen</string>
 
 </resources>

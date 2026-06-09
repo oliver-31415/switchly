@@ -48,6 +48,7 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         val enableLongPressCopy: Boolean = true,
         val copyValue: String = subtitle,
         val showCopyButton: Boolean = false,
+        val showOpenButton: Boolean = false,
         val copiedToast: String? = null,
         @param:ColorRes @field:ColorRes val subtitleColorRes: Int? = null,
         val subtitleAlpha: Float? = null
@@ -114,14 +115,15 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         val titleView = row.findViewById<TextView>(R.id.tvTitle)
         val subtitleView = row.findViewById<TextView>(R.id.tvSubtitle)
         val copyButton = row.findViewById<ImageButton>(R.id.btnCopy)
+        val clickAction = tile.onClick
 
         titleView.text = tile.title
         subtitleView.text = tile.subtitle
         tile.subtitleColorRes?.let { subtitleView.setTextColor(ContextCompat.getColor(this, it)) }
         subtitleView.alpha = tile.subtitleAlpha ?: if (tile.subtitleColorRes != null) 1f else 0.72f
 
-        root.isClickable = tile.onClick != null || tile.onLongClick != null
-        root.setOnClickListener { tile.onClick?.invoke() }
+        root.isClickable = clickAction != null || tile.onLongClick != null
+        root.setOnClickListener { clickAction?.invoke() }
         root.setOnLongClickListener {
             when {
                 tile.onLongClick != null -> tile.onLongClick.invoke()
@@ -134,18 +136,32 @@ abstract class TilesInfoActivity : AppCompatActivity() {
             }
         }
 
-        if (tile.showCopyButton) {
-            copyButton.visibility = View.VISIBLE
-            copyButton.setOnClickListener {
-                copyToClipboard(tile.copyValue)
-                Toast.makeText(
-                    this,
-                    tile.copiedToast ?: getString(R.string.copied),
-                    Toast.LENGTH_SHORT
-                ).show()
+        when {
+            tile.showCopyButton -> {
+                copyButton.visibility = View.VISIBLE
+                copyButton.setImageResource(R.drawable.content_copy_24)
+                copyButton.contentDescription = getString(R.string.action_copy)
+                copyButton.alpha = 0.72f
+                copyButton.setOnClickListener {
+                    copyToClipboard(tile.copyValue)
+                    Toast.makeText(
+                        this,
+                        tile.copiedToast ?: getString(R.string.copied),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
-        } else {
-            copyButton.visibility = View.GONE
+            tile.showOpenButton && clickAction != null -> {
+                copyButton.visibility = View.VISIBLE
+                copyButton.setImageResource(R.drawable.arrow_forward_ios_24)
+                copyButton.contentDescription = tile.title
+                copyButton.alpha = 0.7f
+                copyButton.setOnClickListener { clickAction.invoke() }
+            }
+            else -> {
+                copyButton.visibility = View.GONE
+                copyButton.setOnClickListener(null)
+            }
         }
 
         return row

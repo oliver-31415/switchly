@@ -10,8 +10,8 @@ plugins {
     id("com.google.firebase.crashlytics") apply false
 }
 
-val switchlyVersionCode = 213
-val switchlyVersionName = "2.1.3"
+val switchlyVersionCode = 214
+val switchlyVersionName = "2.1.4"
 
 val switchlySecretPropertiesFile = rootProject.file("signing.properties")
 val switchlySecretProperties = Properties().apply {
@@ -26,6 +26,20 @@ fun switchlySecretProperty(name: String) = providers.gradleProperty(name)
 
 fun buildConfigString(value: String): String =
     "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+fun String.switchlyTrimUnquoted(): String {
+    val trimmed = trim()
+    if (trimmed.length >= 2) {
+        val first = trimmed.first()
+        val last = trimmed.last()
+        if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+            return trimmed.substring(1, trimmed.length - 1).trim()
+        }
+    }
+    return trimmed
+}
+
+fun Provider<String>.switchlyTrimmedUnquoted(): Provider<String> = map { it.switchlyTrimUnquoted() }
 
 fun googleWebClientIdFromGoogleServicesJson(file: File): String {
     if (!file.isFile) return ""
@@ -82,13 +96,13 @@ if (googleServicesJsonExists) {
     apply(plugin = "com.google.firebase.crashlytics")
 }
 
-val mapsApiKey = switchlySecretProperty("MAPS_API_KEY")
+val mapsApiKey = switchlySecretProperty("MAPS_API_KEY").switchlyTrimmedUnquoted()
 val externalCheckoutUrl = switchlySecretProperty("SWITCHLY_EXTERNAL_CHECKOUT_URL")
 val externalCustomerPortalUrl = switchlySecretProperty("SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL")
 val externalPaymentProvider = switchlySecretProperty("SWITCHLY_EXTERNAL_PAYMENT_PROVIDER")
     .map { value -> value.ifBlank { "external" } }
 
-// Public links/contact values for official builds. 
+// Public links/contact values for official builds.
 // Keep these configurable so forks can build Switchly without official project URLs compiled into the APK.
 val switchlyWebsiteUrl = switchlySecretProperty("SWITCHLY_WEBSITE_URL")
 val switchlyDownloadsUrl = switchlySecretProperty("SWITCHLY_DOWNLOADS_URL")
@@ -126,6 +140,7 @@ android {
         resValue("string", "dev_contact_email", switchlyDevEmail.get())
 
         buildConfigField("String", "SWITCHLY_GOOGLE_WEB_CLIENT_ID", buildConfigString(googleWebClientId.get()))
+        buildConfigField("boolean", "SWITCHLY_HAS_MAPS_API_KEY", mapsApiKey.get().isNotBlank().toString())
     }
 
     flavorDimensions += "services"

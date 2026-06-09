@@ -110,6 +110,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
         <receiver
             android:name=".receiver.DPMReceiver"
             android:exported="true"
@@ -193,6 +197,13 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
+        <activity
+            android:name=".feature.schedule.LocationMapPickerActivity"
+            android:exported="false"
+            android:hardwareAccelerated="true"
+            android:label="@string/schedules_location_map_picker_title"
+            android:parentActivityName=".feature.schedule.SchedulesActivity" />
+
         <!-- Onboarding -->
         <activity
             android:name=".feature.onboarding.OnboardingActivity"
@@ -263,7 +274,17 @@
             android:launchMode="singleTask"
             android:theme="@style/Theme.Switchly.Blocker" />
 
-        <!-- About / advanced -->
+        <!-- About/developer tools -->
+        <activity
+            android:name=".feature.about.DeveloperModeActivity"
+            android:exported="false"
+            android:label="@string/developer_mode_title" />
+
+        <activity
+            android:name=".feature.about.DeveloperLogActivity"
+            android:exported="false"
+            android:label="@string/developer_logging_title" />
+
         <activity
             android:name=".feature.about.AdvancedModeActivity"
             android:exported="false"

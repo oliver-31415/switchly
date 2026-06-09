@@ -2,67 +2,56 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- BLOCKING - blocked notification inbox -->
+    <!-- Inbox list and detail -->
     <!-- ====================================================== -->
+    <string name="blocked_inbox_title">Blockierte Benachrichtigungen</string>
+    <string name="blocked_inbox_detail_title">Blockierte Benachrichtigung</string>
+    <string name="blocked_inbox_empty">Noch keine blockierten Benachrichtigungen ✅</string>
+    <string name="blocked_inbox_content_unknown">Keine Vorschau verfügbar</string>
 
-	<string name="blocked_inbox_title">Blockierte Benachrichtigungen</string>
+    <!-- ====================================================== -->
+    <!-- Notification fields -->
+    <!-- ====================================================== -->
+    <string name="blocked_inbox_field_time">Zeit</string>
+    <string name="blocked_inbox_field_app">App</string>
+    <string name="blocked_inbox_field_profile">Profil</string>
+    <string name="blocked_inbox_field_reason">Grund</string>
+    <string name="blocked_inbox_field_title">Titel</string>
+    <string name="blocked_inbox_field_text">Nachricht</string>
+    <string name="blocked_inbox_field_sub_text">Untertext</string>
+    <string name="blocked_inbox_field_summary_text">Zusammenfassung</string>
+    <string name="blocked_inbox_field_big_text">Langer Text</string>
 
-	<string name="blocked_inbox_detail_title">Blockierte Benachrichtigung</string>
+    <!-- ====================================================== -->
+    <!-- Filter and sort -->
+    <!-- ====================================================== -->
+    <string name="blocked_inbox_filter_app">Nach App filtern</string>
+    <string name="blocked_inbox_filter">Filter</string>
+    <string name="blocked_inbox_filter_menu_title">Filtern &amp; sortieren</string>
+    <string name="blocked_inbox_filter_all_apps">Alle Apps</string>
+    <string name="blocked_inbox_filter_subtitle_fmt">Filter: %1$s</string>
+    <string name="blocked_inbox_sort_title">Blockierte Benachrichtigungen sortieren</string>
+    <string name="blocked_inbox_sort_newest">Neueste zuerst</string>
+    <string name="blocked_inbox_sort_oldest">Älteste zuerst</string>
 
-	<string name="blocked_inbox_empty">Noch keine blockierten Benachrichtigungen ✅</string>
+    <!-- ====================================================== -->
+    <!-- Selection and delete flow -->
+    <!-- ====================================================== -->
+    <string name="blocked_inbox_delete_title">Blockierte Benachrichtigungen löschen</string>
+    <plurals name="blocked_inbox_delete_selected_confirm_fmt">
+            <item quantity="one">%1$d ausgewählte Benachrichtigung löschen?</item>
+            <item quantity="other">%1$d ausgewählte Benachrichtigungen löschen?</item>
+        </plurals>
+    <string name="blocked_inbox_select_mode_subtitle">Benachrichtigungen auswählen</string>
+    <plurals name="blocked_inbox_select_count_fmt">
+            <item quantity="one">%1$d ausgewählt</item>
+            <item quantity="other">%1$d ausgewählt</item>
+        </plurals>
+    <string name="select">Auswählen</string>
 
-	<string name="blocked_inbox_content_unknown">Keine Vorschau verfügbar</string>
-
-	<string name="blocked_inbox_field_time">Zeit</string>
-
-	<string name="blocked_inbox_field_app">App</string>
-
-	<string name="blocked_inbox_field_profile">Profil</string>
-
-	<string name="blocked_inbox_field_reason">Grund</string>
-
-	<string name="blocked_inbox_field_title">Titel</string>
-
-	<string name="blocked_inbox_field_text">Nachricht</string>
-
-	<string name="blocked_inbox_field_sub_text">Untertext</string>
-
-	<string name="blocked_inbox_field_summary_text">Zusammenfassung</string>
-
-	<string name="blocked_inbox_field_big_text">Langer Text</string>
-
-	<string name="blocked_inbox_filter_app">Nach App filtern</string>
-
-	<string name="blocked_inbox_filter">Filter</string>
-
-	<string name="blocked_inbox_filter_menu_title">Filtern &amp; sortieren</string>
-
-	<string name="blocked_inbox_filter_all_apps">Alle Apps</string>
-
-	<string name="blocked_inbox_filter_subtitle_fmt">Filter: %1$s</string>
-
-	<string name="blocked_inbox_sort_title">Blockierte Benachrichtigungen sortieren</string>
-
-	<string name="blocked_inbox_sort_newest">Neueste zuerst</string>
-
-	<string name="blocked_inbox_sort_oldest">Älteste zuerst</string>
-
-	<string name="blocked_inbox_delete_title">Blockierte Benachrichtigungen löschen</string>
-
-	<plurals name="blocked_inbox_delete_selected_confirm_fmt">
-        <item quantity="one">%1$d ausgewählte Benachrichtigung löschen?</item>
-        <item quantity="other">%1$d ausgewählte Benachrichtigungen löschen?</item>
-    </plurals>
-
-	<string name="blocked_inbox_select_mode_subtitle">Benachrichtigungen auswählen</string>
-
-	<plurals name="blocked_inbox_select_count_fmt">
-        <item quantity="one">%1$d ausgewählt</item>
-        <item quantity="other">%1$d ausgewählt</item>
-    </plurals>
-
-	<string name="select">Auswählen</string>
-
-	<string name="blocked_inbox_subtitle_compact_fmt">%1$s%2$s</string>
+    <!-- ====================================================== -->
+    <!-- Compact subtitles -->
+    <!-- ====================================================== -->
+    <string name="blocked_inbox_subtitle_compact_fmt">%1$s%2$s</string>
 
 </resources>

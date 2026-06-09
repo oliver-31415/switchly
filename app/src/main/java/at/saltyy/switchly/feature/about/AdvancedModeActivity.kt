@@ -18,7 +18,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.core.net.toUri
 import at.saltyy.switchly.R
-import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.receiver.DPMReceiver
 
 class AdvancedModeActivity : TilesInfoActivity() {
@@ -137,16 +136,6 @@ class AdvancedModeActivity : TilesInfoActivity() {
                 copyValue = dumpsysCmd,
                 showCopyButton = true,
                 copiedToast = getString(R.string.advanced_mode_command_copied)
-            ),
-            Tile(
-                title = getString(R.string.advanced_mode_tile_disable_mode),
-                subtitle = getString(R.string.advanced_mode_disable_mode_body),
-                onClick = {
-                    AdvancedModeStore.setEnabled(this, false)
-                    Toast.makeText(this, getString(R.string.advanced_mode_disabled_toast), Toast.LENGTH_SHORT).show()
-                    finish()
-                },
-                enableLongPressCopy = false
             ),
             Tile(
                 title = getString(R.string.advanced_mode_tile_docs),
