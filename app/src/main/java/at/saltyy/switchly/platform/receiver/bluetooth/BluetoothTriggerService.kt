@@ -141,6 +141,9 @@ class BluetoothTriggerService : Service() {
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
                     description = getString(R.string.notif_channel_bluetooth_triggers_desc)
+                    setSound(null, null)
+                    enableVibration(false)
+                    setShowBadge(false)
                 }
             )
         }
@@ -193,6 +196,9 @@ class BluetoothTriggerService : Service() {
             .setContentTitle(getString(R.string.notif_bluetooth_schedules_title))
             .setContentText(getString(R.string.notif_bluetooth_schedules_content))
             .setContentIntent(contentPi)
+            .setSilent(true)
+            .setDefaults(0)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 
@@ -285,7 +291,7 @@ class BluetoothTriggerService : Service() {
 
     companion object {
         private const val TAG = "BluetoothTriggerService"
-        private const val NOTIF_CHANNEL_ID = "switchly_bt_triggers"
+        private const val NOTIF_CHANNEL_ID = "switchly_bt_triggers_silent"
         private const val NOTIF_ID = 23001
     }
 }

@@ -45,6 +45,7 @@ import androidx.lifecycle.lifecycleScope
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppPreferences
+import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
 import at.saltyy.switchly.data.prefs.NotificationBlockStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
@@ -57,6 +58,7 @@ import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.NfcLaunchAccessCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -105,6 +107,7 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var tvBluetoothStatus: TextView
     private lateinit var tvBatteryStatus: TextView
     private lateinit var tvExactAlarmsStatus: TextView
+    private lateinit var tvNfcStatus: TextView
 
     private lateinit var btnWhyNotifications: View
     private lateinit var btnWhyNotificationAccess: View
@@ -115,6 +118,7 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var btnWhyBattery: View
     private lateinit var btnWhyAutostart: View
     private lateinit var btnWhyExactAlarms: View
+    private lateinit var btnWhyNfc: View
 
     private lateinit var btnOpenNotifications: MaterialButton
     private lateinit var btnOpenNotificationAccess: MaterialButton
@@ -128,6 +132,7 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var btnOpenBattery: MaterialButton
     private lateinit var btnOpenAutostart: MaterialButton
     private lateinit var btnOpenExactAlarms: MaterialButton
+    private lateinit var btnOpenNfc: MaterialButton
 
     private lateinit var groupAutostart: View
     private lateinit var tvAutostartHint: TextView
@@ -180,6 +185,7 @@ class PermissionsActivity : AppCompatActivity() {
         tvBluetoothStatus = findViewById(R.id.tvBluetoothStatus)
         tvBatteryStatus = findViewById(R.id.tvBatteryStatus)
         tvExactAlarmsStatus = findViewById(R.id.tvExactAlarmsStatus)
+        tvNfcStatus = findViewById(R.id.tvNfcStatus)
 
         btnWhyNotifications = findViewById(R.id.btnWhyNotifications)
         btnWhyNotificationAccess = findViewById(R.id.btnWhyNotificationAccess)
@@ -190,6 +196,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnWhyBattery = findViewById(R.id.btnWhyBattery)
         btnWhyAutostart = findViewById(R.id.btnWhyAutostart)
         btnWhyExactAlarms = findViewById(R.id.btnWhyExactAlarms)
+        btnWhyNfc = findViewById(R.id.btnWhyNfc)
 
         btnOpenNotifications = findViewById(R.id.btnOpenNotifications)
         btnOpenNotificationAccess = findViewById(R.id.btnOpenNotificationAccess)
@@ -203,6 +210,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnOpenBattery = findViewById(R.id.btnOpenBattery)
         btnOpenAutostart = findViewById(R.id.btnOpenAutostart)
         btnOpenExactAlarms = findViewById(R.id.btnOpenExactAlarms)
+        btnOpenNfc = findViewById(R.id.btnOpenNfc)
 
         groupAutostart = findViewById(R.id.groupAutostart)
         tvAutostartHint = findViewById(R.id.tvAutostartHint)
@@ -263,6 +271,10 @@ class PermissionsActivity : AppCompatActivity() {
 
         btnOpenExactAlarms.setOnClickListener {
             openExactAlarmSettings()
+        }
+
+        btnOpenNfc.setOnClickListener {
+            openNfcSettings()
         }
 
         btnReqLocation.setOnClickListener {
@@ -340,6 +352,13 @@ class PermissionsActivity : AppCompatActivity() {
             )
         }
 
+        btnWhyNfc.setOnClickListener {
+            showWhyDialog(
+                getString(R.string.permissions_nfc_title),
+                getString(R.string.permissions_nfc_desc)
+            )
+        }
+
         updateUi()
 
         if (intent.getBooleanExtra(EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE, false)) {
@@ -404,6 +423,7 @@ class PermissionsActivity : AppCompatActivity() {
 
         applyBatteryStatus(tvBatteryStatus, batteryOk)
         applyExactAlarmsStatus(tvExactAlarmsStatus, exactAlarmsOk)
+        applyNfcStatus(tvNfcStatus)
 
         // Location request button
         btnReqLocation.visibility = if (locationOk) View.GONE else View.VISIBLE
@@ -430,6 +450,10 @@ class PermissionsActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) View.VISIBLE else View.GONE
         btnOpenExactAlarms.isEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         btnOpenExactAlarms.alpha = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 1f else 0.55f
+        val nfcSupported = AutomationModeStore.isNfcSupported(this)
+        btnOpenNfc.visibility = View.VISIBLE
+        btnOpenNfc.isEnabled = nfcSupported
+        btnOpenNfc.alpha = if (nfcSupported) 1f else 0.55f
 
         // OEM autostart
         val showOem = isLikelyAggressiveOem()
@@ -632,6 +656,22 @@ class PermissionsActivity : AppCompatActivity() {
         view.setTextColor(if (enabled) green else red)
     }
 
+    private fun applyNfcStatus(view: TextView) {
+        if (!AutomationModeStore.isNfcSupported(this)) {
+            view.text = getString(R.string.mode_not_supported_on_device)
+            view.setTextColor(ContextCompat.getColor(this, R.color.status_neutral))
+            return
+        }
+        when (NfcLaunchAccessCompat.state(this)) {
+            NfcLaunchAccessCompat.State.ALLOWED -> applyStatus(view, true)
+            NfcLaunchAccessCompat.State.NOT_ALLOWED -> applyStatus(view, false)
+            NfcLaunchAccessCompat.State.UNKNOWN -> {
+                view.text = getString(R.string.permissions_nfc_status_manual)
+                view.setTextColor(AccentColor.getAccentColorInt(this))
+            }
+        }
+    }
+
     private fun applyLocationStatus(state: LocationState) {
         when (state) {
             LocationState.OK -> applyStatus(tvLocationStatus, true)
@@ -812,20 +852,14 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun requestIgnoreBatteryOptimizationsSystemPopup() {
-        // Best-effort Android system popup, similar to the “Allow in background” flow in other blocker apps.
+        // Open the Android battery optimization settings. The direct ignore-battery-optimization popup is Play-policy sensitive.
         // Some OEMs still require their own Unrestricted/Autostart/Background activity settings afterwards.
         val alreadyAllowed = runCatching {
             getSystemService(PowerManager::class.java)
                 ?.isIgnoringBatteryOptimizations(packageName) == true
         }.getOrDefault(false)
 
-        if (!alreadyAllowed) {
-            val directRequest = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = "package:$packageName".toUri()
-            }
-            if (safeStart(directRequest)) return
-        }
-
+        if (!alreadyAllowed && safeStart(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) return
         openBatteryOptimizationSettingsPages()
     }
 
@@ -840,6 +874,19 @@ class PermissionsActivity : AppCompatActivity() {
             startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                 data = "package:$packageName".toUri()
             })
+        }
+    }
+
+    private fun openNfcSettings() {
+        val intents = listOf(
+            Intent("android.settings.MANAGE_SPECIAL_APP_ACCESSES"),
+            Intent(Settings.ACTION_NFC_SETTINGS),
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = "package:$packageName".toUri()
+            }
+        )
+        for (intent in intents) {
+            if (safeStart(intent)) return
         }
     }
 

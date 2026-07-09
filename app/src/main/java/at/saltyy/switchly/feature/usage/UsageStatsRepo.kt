@@ -26,6 +26,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Looper
+import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -66,6 +68,22 @@ object UsageStatsRepo {
             add(Calendar.DAY_OF_YEAR, 1)
         }.timeInMillis
         return to <= nextDay
+    }
+
+    private fun isMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
+
+    private fun buildTodayHourlyFallback(
+        ctx: Context,
+        packageName: String,
+        now: Long = System.currentTimeMillis()
+    ): List<Long> {
+        val total = UsageStore.getUsageMsToday(ctx, packageName).coerceAtLeast(0L)
+        if (total <= 0L) return List(24) { 0L }
+        val buckets = LongArray(24)
+        val dayStart = startOfDayLocal(now)
+        val hourIndex = (((now - dayStart) / TimeUnit.HOURS.toMillis(1)).toInt()).coerceIn(0, 23)
+        buckets[hourIndex] = total
+        return buckets.map { it.coerceAtLeast(0L) }
     }
 
     fun hasUsageAccess(ctx: Context): Boolean {
@@ -166,6 +184,7 @@ object UsageStatsRepo {
         now: Long = System.currentTimeMillis()
     ): List<Long> {
         if (packageName.isBlank()) return List(24) { 0L }
+        if (isMainThread()) return buildTodayHourlyFallback(ctx, packageName, now)
 
         val safeNow = now.coerceAtMost(System.currentTimeMillis())
         val dayStart = startOfTodayLocal()
@@ -219,6 +238,7 @@ object UsageStatsRepo {
     }
 
     fun getSessionsToday(ctx: Context, packageName: String): Int {
+        if (isMainThread()) return OpenCountStore.getTodayAllProfiles(ctx, packageName)
         val now = System.currentTimeMillis()
         val start = startOfTodayLocal()
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -394,6 +414,7 @@ object UsageStatsRepo {
     }
 
     fun getSessionCountMapForWindow(ctx: Context, from: Long, to: Long): Map<String, Int> {
+        if (isMainThread()) return emptyMap()
         val safeTo = to.coerceAtMost(System.currentTimeMillis())
         if (safeTo <= from) return emptyMap()
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -420,8 +441,15 @@ object UsageStatsRepo {
     }
 
     fun getEarliestAvailableUsageMs(ctx: Context, from: Long, to: Long): Long? {
+        if (isMainThread()) return null
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
+        val stats = try {
+            usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
+        } catch (_: SecurityException) {
+            emptyList()
+        } catch (_: Throwable) {
+            emptyList()
+        }
         if (stats.isNullOrEmpty()) return null
         return stats.minOfOrNull { it.firstTimeStamp }
     }
@@ -578,6 +606,7 @@ object UsageStatsRepo {
         to: Long,
         onlyPackage: String?
     ): Map<String, Long> {
+        if (isMainThread()) return emptyMap()
         val out = HashMap<String, Long>()
         val aggregated = try {
             usm.queryAndAggregateUsageStats(from, to)
@@ -600,6 +629,7 @@ object UsageStatsRepo {
         to: Long,
         onlyPackage: String?
     ): Map<String, Long> {
+        if (isMainThread()) return emptyMap()
         val out = HashMap<String, Long>()
         val stats = try {
             usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
@@ -625,6 +655,7 @@ object UsageStatsRepo {
         to: Long,
         onlyPackage: String?
     ): Map<String, Long> {
+        if (isMainThread()) return emptyMap()
         val events = try {
             usm.queryEvents(from, to)
         } catch (_: SecurityException) {
@@ -694,6 +725,7 @@ object UsageStatsRepo {
         to: Long,
         onlyPackage: String?
     ): HashMap<String, Long> {
+        if (isMainThread()) return HashMap()
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val stats = try {
             usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)

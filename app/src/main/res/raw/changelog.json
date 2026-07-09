@@ -1,5 +1,62 @@
 {
-    "releases": [
+    "releases": [{
+            "version": "v2.2.1-beta",
+            "date": "July 9, 2026",
+            "releaseType": "beta",
+            "sourceVersions": [
+                "v2.2.0-beta"
+            ],
+            "body": [
+                "Reorganized bottom navigation to use Activity instead of Insights, with direct entries for active time, usage statistics, app launches, screen unlocks, activity history, and blocked notifications.",
+                "Renamed the NFC, QR, barcode, and paired-tag management area to Keys & codes for clearer wording and consistent screen titles.",
+                "Kept QR and barcode quick scanners reachable from Keys & codes after removing them from the Rules hub.",
+                "Kept Rules focused on profile rules such as apps, websites, in-app rules, and schedules.",
+                "Moved Emergency unlock into the Permissions & reliability area of Settings as a dedicated safety action after the Activity navigation cleanup.",
+                "Improved profile handling so newly created profiles update their active state immediately.",
+                "Made In-app and Website rules profile-aware, including safer migration of older global rule settings.",
+                "Added Block selected and Allow selected modes to In-app and Website rules.",
+                "Cleaned up In-app rule controls and wording so Block/Allow behavior is easier to understand.",
+                "Removed YouTube Home from selectable In-app rules while keeping Shorts, Subscriptions, You, mini-player, and picture-in-picture rules.",
+                "Updated In-app rule availability labels for YouTube, Instagram, X, and Snapchat.",
+                "Improved YouTube Shorts blocking when Shorts are opened from the Home feed.",
+                "Reduced YouTube false positives by separating Shorts, mini-player, and picture-in-picture cleanup paths.",
+                "Prevented retry probes, stale Shorts hints, and mini-player cleanup from creating false Shorts blocks.",
+                "Reduced Shorts/Home redirect loops with safer YouTube Home navigation during cleanup.",
+                "Updated Premium wording to focus on unlocked features such as custom ranges, statistics insights, Wi-Fi, Bluetooth, and location schedules.",
+                "Expanded FAQ content for profile-scoped rules, Block selected/Allow selected behavior, supported In-app apps, and Website rule modes.",
+                "Kept extended statistics ranges, custom ranges, and detailed drill-downs behind Premium.",
+                "Added live Activity History refresh with clearer action, profile, source, duration, filter, sort, and custom range details.",
+                "Improved Activity History layout with inline time ranges, full-width custom ranges, and shared Statistics filter styling.",
+                "Expanded Usage & Insights with Active time, Activity History, App usage, Website usage, blocked-notification insights, app launches, screen unlocks, and timeline-style detail views.",
+                "Added shared date-range controls, profile-scoped filters, custom date ranges, and clearer statistics filter popups across Usage & Insights screens.",
+                "Improved App usage and Website usage detail headers with clearer screen titles and prominent app/domain names.",
+                "Added per-domain Website Rule toggles so individual domains can be enabled or disabled directly from the list.",
+                "Polished Website rule entries with the same card background, border, ripple, and spacing used across Switchly lists.",
+                "Defaulted new Website rules to Always instead of Daily limit.",
+                "Removed the inline edit icon from Website rule rows while keeping row tap and swipe edit available.",
+                "Added enable/disable switches for individual paired NFC tags so tags can be paused without removing them.",
+                "Added an empty state for In-app rules when no supported apps are installed.",
+                "Changed Website and In-app rules to work without separate master toggles; configured rules now apply directly.",
+                "Added backup and restore coverage for Activity History, Website rules, 2.2 settings, profile rules, usage statistics, limits, and Wi-Fi preferences.",
+                "Added restore category selection, restore previews, backup metadata, progress dialogs, and a local Privacy & Data screen with export and deletion actions.",
+                "Added Switchly Store links and improved official tag setup flows for NFC, QR, barcode, and paired tags.",
+                "Improved NFC, QR, barcode, and paired-tag setup with launch guidance, setup status handling, and hardware-aware permission controls.",
+                "Added schedule overlap warnings, conflict detection, compact active schedule details, and detailed schedule event logs.",
+                "Fixed NFC/manual disables being immediately overwritten by the same active schedule while still allowing other matching schedules to take over.",
+                "Improved Customize Home and Quick Actions with ordering controls, long-press drag reorder, restore-default actions, and clearer card-style rows.",
+                "Added an optional onboarding usage report that can summarize distracting apps and add them to the current profile.",
+                "Added blocker explanation popups, pause-until shortcuts, schedule priority guidance, and richer support-report context.",
+                "Improved shared screen styling across schedules, blocked notifications, editable lists, dialogs, paired tags, barcodes, profiles, websites, in-app rules, and statistics.",
+                "Improved Home and Usage & Insights navigation so active timers only appear while Switchly is active and App usage stays in Usage & Insights.",
+                "Fixed Premium purchase launch handling for disconnected billing states, duplicate attempts, and already-owned purchases.",
+                "Fixed trusted NFC, QR, and barcode action dispatch hardening and kept runtime/security-only state out of backups.",
+                "Fixed website edit/detail lock handling, Android 11/OEM install-check crashes, quick limit dialog compatibility, and selected-count dialog title issues.",
+                "Fixed Wi-Fi/Bluetooth trigger foreground-service startup races, missing-permission handling, and silent trigger/protection notification behavior.",
+                "Fixed startup ANR risk by deferring shortcut, trigger, policy, Play Integrity, and usage-stat binder work away from the main thread.",
+                "Fixed onboarding permission return behavior, support email visibility, editor actions, swipe actions, popup Cancel behavior, obsolete resource cleanup, and Material date picker theme handling.",
+                "Fixed custom temporary duration input so manual minute values support the same 24-hour maximum as NFC/QR temporary actions."
+            ]
+        },
         {
             "version": "v2.2.0-beta",
             "date": "June 21, 2026",
@@ -7,48 +64,38 @@
             "sourceVersions": [],
             "body": [
                 "Major 2.2.0 update with a reworked setup experience, cleaner controls, improved usage insights, and many UX fixes",
-
                 "Added the reworked onboarding with app picking, control mode selection first, mode-based permissions, and a cleaner Ready to start review",
                 "Changed onboarding versioning so it only reruns when intentionally bumped; for 2.2.0 the setup version is 220",
                 "Added a grouped Help Center with Background access guidance, battery reliability tips, and a dontkillmyapp.com reference",
                 "Added direct Android battery/background permission request support with settings fallback",
-
                 "Added universal Temporary Enable and Temporary Disable actions for NFC, QR, and barcodes with custom duration input",
                 "Added a shorter readable Switchly action URI format for NFC, QR, and barcode actions, while keeping switchly://action, compact aliases, and legacy switchly://switch/switchly://profile tags supported",
                 "Improved temporary action restore handling for overlapping Temporary Enable and Temporary Disable actions",
-
                 "Added Active Timer tracking with Home display, widget support, and Active time statistics",
                 "Added app session limits as a separate limit type from daily limits, with clearer session usage display",
                 "Added per active-session time-limit reset mode, current-session usage display, and improved usage timer/usage insights screens",
-
                 "Added Home display options with Simple, Advanced, Custom, and Customize Home, plus a visual Custom Home builder",
                 "Added a Default Home mode for new users with a cleaner first-time Home screen",
                 "Changed the Default Home mode to also show the selected app list, so first-time users can review their rules directly from Home",
-
                 "Added per-profile Block selected/Allow selected app and website rule modes with separate saved lists",
                 "Made website/domain rules profile-specific and migrated existing global rules into the active profile",
                 "Made website/domain and in-app blocking rules clearly profile-based in the picker flow",
                 "Changed In-app Blocking settings to only show supported apps that are currently installed",
-
                 "Reworked Blocking Controls into clearer control modes, feature access, channels, and mode-based setup guidance",
                 "Improved App Picker, profile creation/editing, app-list editing, active-profile highlighting, and selected-app review flows",
                 "Kept the app picker focused on app selection while keeping website/domain and in-app rules profile-aware in their dedicated screens",
-
                 "Improved website blocking display and website/domain detection feedback",
                 "Improved Manage Barcodes, Paired Tags, Schedules, Limits, Manage Keys, and related add/edit dialogs with consistent styling",
                 "Improved Blocked notifications with equal filter chips, app icons, clearer filter/sort behavior, better details, and empty states",
                 "Improved NFC detection, tag behavior, and compatibility, including clearer UID-only pairing guidance and broader Switchly URI dispatch for written tags",
-
                 "Improved foreground/blocking reliability by hardening blocking flows and moving shortcut refresh work off the main thread",
                 "Improved legacy schedule preference handling during upgrades",
                 "Improved backup/restore with selectable categories, presets, remembered custom selections, and safer partial restores",
                 "Improved Premium purchase, Google Play Billing, direct checkout, redeem-code feedback paths, and localized price display",
                 "Improved widget previews, sizing, and display consistency",
                 "Improved FAQ screen grouping and Help/Support readability",
-
                 "Fixed Manage paired NFC tags staying unavailable after enabling paired tags and improved disabled-state feedback",
                 "Changed fresh-install defaults so Switchly starts disabled until the user enables it",
-
                 "Unified option dialogs and popup menus with clearer selected states, destructive actions, disabled-state dialogs, and consistent add/edit flows",
                 "Updated the feedback notice for Switchly 2.2.0 to request reports for onboarding, usage timer, Help Center, Home display options, Customize Home, setup flows, dialogs, and blocking controls",
                 "Cleaned strings, translations, changelog entries, stale onboarding resources, and lint warnings around setup and UX polish"

@@ -22,44 +22,33 @@ package at.saltyy.switchly.feature.tools
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
-import android.text.InputType
 import android.view.View
-import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import at.saltyy.switchly.R
-import at.saltyy.switchly.blocking.BlockingRuntime
-import at.saltyy.switchly.data.prefs.AppLogStore
-import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
-import at.saltyy.switchly.data.prefs.EmergencyPinStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
-import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
-import at.saltyy.switchly.feature.schedule.SchedulesActivity
-import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
-import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
+import at.saltyy.switchly.feature.usage.ActiveTimeStatsActivity
+import at.saltyy.switchly.feature.usage.ActivityHistoryActivity
+import at.saltyy.switchly.feature.usage.AppLaunchesActivity
+import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
+import at.saltyy.switchly.feature.usage.ScreenUnlocksActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
-import at.saltyy.switchly.ui.LockedUi
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
-import at.saltyy.switchly.ui.dialog.showAccented
-import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
-import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
-import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
+/**
+ * Bottom-tab activity hub.
+ * Class name stays ToolsHubActivity for compatibility with existing intents/manifest entries, but the user-facing tab is Activity and contains direct activity/statistics entries.
+ */
 class ToolsHubActivity : AppCompatActivity() {
 
     private lateinit var toolbar: MaterialToolbar
@@ -72,15 +61,9 @@ class ToolsHubActivity : AppCompatActivity() {
 
         setupViews()
         setupToolbar()
-        tintToolIcons()
-        setupToolCardActions()
+        tintActivityIcons()
+        setupActivityCardActions()
         setupBottomNav()
-        syncOptionalFeatureVisibility()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        syncOptionalFeatureVisibility()
     }
 
     private fun setupViews() {
@@ -98,89 +81,52 @@ class ToolsHubActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
         toolbar.navigationIcon = null
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        toolbar.title = getString(R.string.nav_tools)
+        supportActionBar?.title = getString(R.string.nav_tools)
     }
 
-    private fun tintToolIcons() {
+    private fun tintActivityIcons() {
         val iconTint = ColorStateList.valueOf(AccentColor.getAccentColorInt(this))
 
         listOf(
-            R.id.ivSchedulesIcon,
-            R.id.ivProfilesIcon,
-            R.id.ivPairedTagsIcon,
-            R.id.ivWriteNfcIcon,
-            R.id.ivManageQrIcon,
-            R.id.ivManageBarcodesIcon,
+            R.id.ivActiveTimeIcon,
+            R.id.ivUsageStatsIcon,
+            R.id.ivAppLaunchesIcon,
+            R.id.ivScreenUnlocksIcon,
+            R.id.ivActivityHistoryIcon,
             R.id.ivBlockedNotificationsIcon,
-            R.id.ivEmergencyIcon,
-            R.id.ivInsightsIcon,
         ).forEach { iconId ->
-            findViewById<ImageView>(iconId).imageTintList = iconTint
+            findViewById<ImageView>(iconId)?.let { icon ->
+                icon.imageTintList = iconTint
+                icon.setColorFilter(iconTint.defaultColor)
+                icon.isEnabled = true
+                icon.alpha = 1f
+            }
         }
     }
 
-    private fun setupToolCardActions() {
-        findViewById<View>(R.id.cardSchedules).setOnClickListener {
-            if (!AutomationModeStore.isScheduleAllowed(this)) {
-                Toast.makeText(this, R.string.toast_manage_schedules_requires_enabled, Toast.LENGTH_LONG).show()
-            } else {
-                startActivity(Intent(this, SchedulesActivity::class.java))
-            }
+    private fun setupActivityCardActions() {
+        findViewById<View>(R.id.cardActiveTime).setOnClickListener {
+            startActivity(ActiveTimeStatsActivity.intent(this))
         }
-
-        findViewById<View>(R.id.cardProfiles).setOnClickListener {
-            if (isProfileManagementLocked()) {
-                val messageRes = if (isNfcLockedForProtectedEdits()) {
-                    R.string.toast_cannot_change_profile_while_locked
-                } else {
-                    R.string.edit_locked_manage_profiles
-                }
-                EditingLockGuard.showLockedDialog(this, messageRes)
-            } else {
-                startActivity(Intent(this, ManageProfilesActivity::class.java))
-            }
+        findViewById<View>(R.id.cardUsageStats).setOnClickListener {
+            startActivity(ScreenTimeDashboardActivity.intent(this))
         }
-
+        findViewById<View>(R.id.cardAppLaunches).setOnClickListener {
+            startActivity(AppLaunchesActivity.intent(this))
+        }
+        findViewById<View>(R.id.cardScreenUnlocks).setOnClickListener {
+            startActivity(ScreenUnlocksActivity.intent(this))
+        }
+        findViewById<View>(R.id.cardActivityHistory).setOnClickListener {
+            startActivity(ActivityHistoryActivity.intent(this))
+        }
         findViewById<View>(R.id.cardBlockedNotifications).setOnClickListener {
             if (isProtectionActivelyEnforced()) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_blocked_notifications)
             } else {
                 startActivity(Intent(this, BlockedInboxActivity::class.java))
             }
-        }
-
-        findViewById<View>(R.id.cardEmergency).setOnClickListener {
-            showEmergencyQuickSheet()
-        }
-
-        findViewById<View>(R.id.cardPairedTags).setOnClickListener {
-            val locked = EditingLockGuard.isLocked(this)
-            AppLogStore.append(this, "NFC", "Manage Paired Tags clicked from Tools locked=$locked nfcAllowed=${AutomationModeStore.isNfcAllowed(this)}")
-            when {
-                !AutomationModeStore.isNfcAllowed(this) -> Toast.makeText(this, R.string.toast_write_nfc_requires_enabled, Toast.LENGTH_LONG).show()
-                locked -> EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
-                else -> runCatching {
-                    startActivity(Intent(this, ManagePairedTagsActivity::class.java))
-                }.onFailure { error ->
-                    AppLogStore.append(this, "NFC", "Failed to open Manage Paired Tags from Tools", error)
-                    Toast.makeText(this, R.string.error_open_manage_paired_tags, Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-
-        findViewById<View>(R.id.cardWriteNfc).setOnClickListener {
-            startActivity(Intent(this, ManageKeysActivity::class.java))
-        }
-
-        findViewById<View>(R.id.cardManageQr).setOnClickListener {
-            startActivity(Intent(this, ManageKeysActivity::class.java))
-        }
-
-        findViewById<View>(R.id.cardManageBarcodes).setOnClickListener {
-            startActivity(Intent(this, ManageKeysActivity::class.java))
-        }
-
-        findViewById<View>(R.id.cardInsights).setOnClickListener {
-            startActivity(Intent(this, ManageInsightsActivity::class.java))
         }
     }
 
@@ -216,248 +162,7 @@ class ToolsHubActivity : AppCompatActivity() {
         }
     }
 
-    private fun syncOptionalFeatureVisibility() {
-        val cardPairedTags = findViewById<View>(R.id.cardPairedTags)
-        val cardManageQr = findViewById<View>(R.id.cardManageQr)
-        val cardManageBarcodes = findViewById<View>(R.id.cardManageBarcodes)
-        val cardBlockedNotifications = findViewById<View>(R.id.cardBlockedNotifications)
-        val cardProfiles = findViewById<View>(R.id.cardProfiles)
-        val cardManageKeys = findViewById<View>(R.id.cardWriteNfc)
-
-        // NFC, paired tags, QR, and barcode management live behind one normal
-        // "Manage keys" subpage instead of separate cards or a popup.
-        cardProfiles.visibility = View.GONE
-        cardPairedTags.visibility = View.GONE
-        cardManageQr.visibility = View.GONE
-        cardManageBarcodes.visibility = View.GONE
-        cardBlockedNotifications.visibility = View.VISIBLE
-
-        applyLockedCardState(findViewById(R.id.cardSchedules), !AutomationModeStore.isScheduleAllowed(this))
-        applyLockedCardState(cardProfiles, false)
-        applyLockedCardState(cardManageKeys, false)
-        applyLockedCardState(cardBlockedNotifications, isProtectionActivelyEnforced())
-    }
-
-    private fun applyLockedCardState(view: View, locked: Boolean) {
-        view.alpha = if (locked) lockedCardAlpha() else 1f
-        view.isEnabled = true
-    }
-
-    private fun lockedCardAlpha(): Float = LockedUi.cardAlpha(this)
-
     private fun isProtectionActivelyEnforced(): Boolean {
         return SwitchModeStore.isEnabled(this) && !EmergencyBypassStore.isActive(this)
-    }
-
-    private fun requestEmergencyPinBeforeStart() {
-        val storedPin = EmergencyPinStore.getPin(this)
-        if (storedPin.isNullOrBlank()) {
-            showSetEmergencyPinDialog { showEmergencyUnlockStartDialog() }
-        } else {
-            showEnterEmergencyPinDialog { showEmergencyUnlockStartDialog() }
-        }
-    }
-
-    private fun showSetEmergencyPinDialog(onSuccess: () -> Unit) {
-        val input = emergencyPinInput(getString(R.string.emergency_pin_choose_hint))
-        val dialog = AlertDialog.Builder(this)
-            .setTitle(getString(R.string.emergency_pin_title))
-            .setMessage(getString(R.string.emergency_pin_message))
-            .setView(emergencyPinContainer(input))
-            .setPositiveButton(getString(R.string.ok), null)
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        dialog.setOnShowListener {
-            dialog.styleSwitchlyDialogButtons()
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val pin = input.text?.toString()?.trim().orEmpty()
-                if (pin.length < 4) {
-                    Toast.makeText(this, R.string.emergency_pin_too_short, Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                EmergencyPinStore.setPin(this, pin)
-                Toast.makeText(this, R.string.emergency_pin_changed, Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-                onSuccess()
-            }
-        }
-        dialog.show()
-    }
-
-    private fun showEnterEmergencyPinDialog(onSuccess: () -> Unit) {
-        val input = emergencyPinInput(getString(R.string.emergency_pin_enter_current_hint))
-        val dialog = AlertDialog.Builder(this)
-            .setTitle(getString(R.string.emergency_pin_enter_current_title))
-            .setMessage(getString(R.string.emergency_pin_enter_current_message))
-            .setView(emergencyPinContainer(input))
-            .setPositiveButton(getString(R.string.ok), null)
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        dialog.setOnShowListener {
-            dialog.styleSwitchlyDialogButtons()
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val pin = input.text?.toString()?.trim().orEmpty()
-                if (!EmergencyPinStore.matchesPin(this, pin)) {
-                    Toast.makeText(this, R.string.emergency_pin_incorrect, Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                dialog.dismiss()
-                onSuccess()
-            }
-        }
-        dialog.show()
-    }
-
-    private fun emergencyPinInput(hintText: String): EditText {
-        return EditText(this).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-            hint = hintText
-            backgroundTintList = AccentColor.getActiveColor(this@ToolsHubActivity)
-        }
-    }
-
-    private fun emergencyPinContainer(input: EditText): FrameLayout {
-        return FrameLayout(this).apply {
-            val margin = (24 * resources.displayMetrics.density).toInt()
-            setPadding(margin, 0, margin, 0)
-            addView(
-                input,
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            )
-        }
-    }
-
-    private fun showEmergencyUnlockStartDialog() {
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.pref_emergency_title))
-            .setMessage(getString(R.string.emergency_action_start_15))
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                if (EmergencyBypassStore.enableIfAllowed(this, 15)) {
-                    AppLogStore.append(this, "Emergency", "Emergency mode started from Tools for 15m")
-                    SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
-                    Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
-                    BlockingRuntime.ensureRunning(this)
-                } else {
-                    Toast.makeText(this, getString(R.string.emergency_used_today), Toast.LENGTH_SHORT).show()
-                }
-            }
-            .showAccented()
-    }
-
-    private fun showEmergencyQuickSheet() {
-        if (!EmergencyBypassStore.isFeatureEnabled(this)) {
-            AlertDialog.Builder(this)
-                .setTitle(R.string.pref_emergency_title)
-                .setMessage(R.string.emergency_disabled_message_controls)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.emergency_open_controls_action) { _, _ ->
-                    startActivity(Intent(this, ToggleOptionsActivity::class.java))
-                }
-                .showAccented()
-            return
-        }
-
-        val isActive = EmergencyBypassStore.isActive(this)
-        val isPaused = EmergencyBypassStore.isPaused(this)
-        val hasUsedToday = EmergencyBypassStore.hasUsedToday(this)
-        val remainingMinutes = EmergencyBypassStore.minutesRemaining(this)
-
-        val labels = mutableListOf<String>()
-        val actions = mutableListOf<() -> Unit>()
-
-        fun addAction(label: String, action: () -> Unit) {
-            labels += label
-            actions += action
-        }
-
-        if (isActive) {
-            addAction(getString(R.string.emergency_action_pause)) {
-                if (EmergencyBypassStore.pause(this)) {
-                    SwitchModeStore.clearTemporary(this)
-                    AppLogStore.append(this, "Emergency", "Emergency mode paused from Tools")
-                    Toast.makeText(this, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
-                    BlockingRuntime.ensureRunning(this)
-                }
-            }
-            addAction(getString(R.string.emergency_action_end)) {
-                AppLogStore.append(this, "Emergency", "Emergency mode ended from Tools")
-                EmergencyBypassStore.cancel(this)
-                SwitchModeStore.clearTemporary(this)
-                Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
-                BlockingRuntime.ensureRunning(this)
-            }
-        } else if (isPaused) {
-            addAction(getString(R.string.emergency_action_resume)) {
-                if (EmergencyBypassStore.resume(this)) {
-                    val minutes = EmergencyBypassStore.minutesRemaining(this).coerceAtLeast(1)
-                    SwitchModeStore.setTemporarilyDisabled(this, minutes * 60_000L)
-                    AppLogStore.append(this, "Emergency", "Emergency mode resumed from Tools with ${minutes}m remaining")
-                    Toast.makeText(this, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
-                    BlockingRuntime.ensureRunning(this)
-                }
-            }
-            addAction(getString(R.string.emergency_action_end)) {
-                EmergencyBypassStore.cancel(this)
-                SwitchModeStore.clearTemporary(this)
-                Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
-                BlockingRuntime.ensureRunning(this)
-            }
-        } else if (!hasUsedToday) {
-            requestEmergencyPinBeforeStart()
-            return
-        }
-
-        val title = when {
-            isActive -> getString(R.string.emergency_manage_title_active, remainingMinutes)
-            isPaused -> getString(R.string.emergency_manage_title_paused, remainingMinutes)
-            else -> getString(R.string.pref_emergency_title)
-        }
-
-        if (labels.isNotEmpty()) {
-            showSwitchlyOptionDialog(
-                title = title,
-                options = labels.mapIndexed { index, label ->
-                    SwitchlyDialogOption(
-                        title = label,
-                        destructive = label == getString(R.string.emergency_action_end)
-                    )
-                }
-            ) { which ->
-                runCatching { actions[which].invoke() }
-            }
-        } else {
-            AlertDialog.Builder(this)
-                .setTitle(title)
-                .setMessage(R.string.emergency_used_today)
-                .setNegativeButton(R.string.cancel, null)
-                .showAccented()
-        }
-    }
-
-    private fun isNfcLockedForProtectedEdits(): Boolean {
-        return SwitchModeStore.isEnabled(this) && SwitchModeStore.isNfcRequiredForDisable(this)
-    }
-
-    private fun isProfileManagementLocked(): Boolean {
-        val enabled = SwitchModeStore.isEnabled(this)
-        val emergencyActive = EmergencyBypassStore.isActive(this)
-        val emergencyPaused = EmergencyBypassStore.isPaused(this)
-        if (!enabled && !emergencyActive) return false
-
-        val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        if (requireNfc || emergencyActive || (enabled && emergencyPaused)) return true
-
-        return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
-    }
-
-    private fun isNfcTagWritingLocked(): Boolean {
-        return SwitchModeStore.isEnabled(this) &&
-            !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this)
     }
 }

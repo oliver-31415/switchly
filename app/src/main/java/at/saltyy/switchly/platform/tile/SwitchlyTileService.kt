@@ -24,8 +24,10 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 
 class SwitchlyTileService : TileService() {
@@ -84,7 +86,14 @@ class SwitchlyTileService : TileService() {
             return
         }
 
-        SwitchModeStore.setEnabled(ctx, !currentlyEnabled)
+        val target = !currentlyEnabled
+        if (SwitchModeStore.setEnabled(ctx, target, allowNfcBypass = false)) {
+            AppLogStore.append(
+                ctx,
+                "Profiles",
+                "Manual toggle action=${if (target) "enable" else "disable"} profile=${ProfileStore.getCurrent(ctx)}"
+            )
+        }
         refreshTile()
     }
 

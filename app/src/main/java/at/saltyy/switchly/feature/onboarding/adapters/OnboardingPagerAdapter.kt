@@ -58,6 +58,7 @@ import at.saltyy.switchly.feature.settings.AccessibilityDisclosure
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.util.PermissionUtils
+import at.saltyy.switchly.util.NfcLaunchAccessCompat
 import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
@@ -132,6 +133,13 @@ class OnboardingPagerAdapter(
             renderDetails(activity, page, accent)
             applyPageSpacing(page)
 
+            if (page.type == OnboardingPage.Type.PERMISSION_OVERVIEW) {
+                btn.isVisible = false
+                btn.isEnabled = false
+                btn.setOnClickListener(null)
+                return
+            }
+
             val hasAction = page.action != null && !page.actionLabel.isNullOrBlank()
             val completedButStillEditable = completed && hasAction && page.keepActionEnabledWhenCompleted
             btn.isVisible = hasAction || completed
@@ -204,6 +212,7 @@ class OnboardingPagerAdapter(
                 detailsContainer.isVisible = true
 
                 val scheduleSelected = AutomationModeStore.isScheduleAllowed(activity)
+                val nfcSelected = AutomationModeStore.isNfcAllowed(activity)
                 val scanSelected = AutomationModeStore.isQrChannelAllowed(activity) ||
                     AutomationModeStore.isBarcodeChannelAllowed(activity)
                 val notificationBlockingSelected = NotificationBlockStore.isEnabled(activity)
@@ -263,6 +272,24 @@ class OnboardingPagerAdapter(
                         required = false,
                         accent = accent,
                         onClick = { openTriggerPermissionSetup(activity) }
+                    )
+                }
+
+                if (nfcSelected) {
+                    val nfcLaunchReady = NfcLaunchAccessCompat.isLikelyAllowed(activity)
+                    addPermissionOptionRow(
+                        activity = activity,
+                        title = activity.getString(R.string.onb_perm_nfc_title),
+                        iconRes = R.drawable.nfc_24,
+                        info = activity.getString(R.string.onb_perm_nfc_desc),
+                        status = if (nfcLaunchReady) {
+                            activity.getString(R.string.onb_permission_status_ready)
+                        } else {
+                            activity.getString(R.string.onb_permission_status_manual)
+                        },
+                        checked = nfcLaunchReady,
+                        accent = accent,
+                        onClick = { openNfcLaunchSetup(activity) }
                     )
                 }
 
@@ -375,7 +402,6 @@ class OnboardingPagerAdapter(
                 val ai = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
                 } else {
-                    @Suppress("DEPRECATION")
                     pm.getApplicationInfo(packageName, 0)
                 }
                 pm.getApplicationLabel(ai).toString()
@@ -668,14 +694,11 @@ class OnboardingPagerAdapter(
                     ?.isIgnoringBatteryOptimizations(activity.packageName) == true
             }.getOrDefault(false)
 
-            if (!alreadyAllowed) {
-                val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = "package:${activity.packageName}".toUri()
-                }
-                if (safeStart(activity, direct)) return
+            val settingsIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            if (!alreadyAllowed && safeStart(activity, settingsIntent)) {
+                return
             }
-
-            if (!safeStart(activity, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) {
+            if (!safeStart(activity, settingsIntent)) {
                 openAppDetails(activity)
             }
         }
@@ -704,6 +727,19 @@ class OnboardingPagerAdapter(
                 if (safeStart(activity, intent)) return
             }
             openAppDetails(activity)
+        }
+
+        private fun openNfcLaunchSetup(activity: Activity) {
+            val intents = listOf(
+                Intent("android.settings.MANAGE_SPECIAL_APP_ACCESSES"),
+                Intent(Settings.ACTION_NFC_SETTINGS),
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = "package:${activity.packageName}".toUri()
+                }
+            )
+            for (intent in intents) {
+                if (safeStart(activity, intent)) return
+            }
         }
 
         private fun openTriggerPermissionSetup(activity: Activity) {

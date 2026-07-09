@@ -21,6 +21,12 @@
         <item quantity="one">%1$d open</item>
         <item quantity="other">%1$d opens</item>
     </plurals>
+    <plurals name="attempts_format">
+        <item quantity="one">%1$d attempt</item>
+        <item quantity="other">%1$d attempts</item>
+    </plurals>
+    <string name="usage_opens_zero">0 opens</string>
+    <string name="usage_attempts_zero">0 attempts</string>
     <string name="custom_minutes">Custom time…</string>
     <string name="custom_value">Custom…</string>
     <string name="custom_minutes_title">Custom minutes</string>
@@ -57,6 +63,10 @@
     <!-- Usage detail info -->
     <!-- ====================================================== -->
     <string name="usage_details_info_title">Usage details</string>
+    <string name="app_usage_detail_title">App usage details</string>
+    <string name="app_usage_detail_subtitle">Usage, limits, and activity</string>
+    <string name="website_usage_detail_title">Website usage details</string>
+    <string name="website_usage_detail_subtitle">Usage, limit, and rule state</string>
     <string name="usage_details_info_body">Tap the tune icon to edit limits.\n\nDaily limits count against today\'s allowance. Session limits reset when Switchly or the active profile starts a new active session.\n\nThe session bar below shows how much of the current session limit has already been used.</string>
 
     <!-- ====================================================== -->
@@ -71,38 +81,47 @@
     </plurals>
 
     <!-- ====================================================== -->
-    <!-- Usage and insights menu -->
+    <!-- Activity hub -->
     <!-- ====================================================== -->
-    <string name="insights_menu_title">Usage &amp; insights</string>
-    <string name="insights_menu_summary">Review usage statistics, active time, app limits, and blocking activity.</string>
-    <string name="insights_usage_statistics">Usage statistics</string>
-    <string name="insights_usage_statistics_summary">App, website, limit, and blocking activity.</string>
-    <string name="insights_active_time">Active time</string>
-    <string name="insights_active_time_summary">Track how long Switchly stays active over time.</string>
+    <string name="activity_hub_section_stats">Usage and activity</string>
+    <string name="activity_hub_section_review">Review</string>
+
+    <!-- ====================================================== -->
+    <!-- Activity entry points -->
+    <!-- ====================================================== -->
+    <string name="insights_menu_title">Usage &amp; Insights</string>
+    <string name="insights_menu_summary">Review active time, app and website usage, launches, unlocks, and Switchly activity.</string>
+    <string name="insights_usage_statistics">App &amp; website usage</string>
+    <string name="insights_usage_statistics_summary">Tracked app and website time, limits, and profile context.</string>
+    <string name="insights_app_launches">App launches</string>
+    <string name="insights_app_launches_summary">Launch counts and per-app launch timelines from Android Usage Access.</string>
+    <string name="insights_screen_unlocks">Screen unlocks</string>
+    <string name="insights_screen_unlocks_summary">Phone unlock sessions and the apps used during each session.</string>
+    <string name="insights_active_time">Active time &amp; history</string>
+    <string name="insights_active_time_summary">Total active time, sessions, and Switchly profile activity.</string>
+    <string name="insights_activity_history">Activity history</string>
+    <string name="insights_activity_history_summary">Review recent Switchly profile, schedule, location, NFC, QR, barcode, temporary, and manual events.</string>
 
     <!-- ====================================================== -->
     <!-- Usage statistics -->
     <!-- ====================================================== -->
-    <string name="statistics_usage_title">Usage statistics</string>
-    <string name="statistics_usage_info_title">Usage statistics</string>
+    <string name="statistics_usage_title">App &amp; website usage</string>
+    <string name="statistics_usage_info_title">App &amp; website usage</string>
     <string name="statistics_usage_info_body">Tap the tune icon next to an app to edit limits.\n\nSwitchly statistics focus on blocking activity, attempts, scans, schedules, and limit-related usage. Allowed or temporarily unlocked usage may not always be included, so this is not a full Digital Wellbeing replacement.\n\nDaily limits count against today\'s allowance. Session limits reset when Switchly or the active profile starts a new active session.</string>
     <string name="stats_range_today">Today</string>
     <string name="stats_range_week">Week</string>
     <string name="stats_range_month">Month</string>
     <string name="stats_range_year">Year</string>
-    <string name="stats_range_overall">Overall</string>
     <string name="usage_apps_tab">Apps</string>
     <string name="usage_websites_tab">Websites</string>
     <string name="usage_today">Today</string>
     <string name="usage_week_total">7-day total</string>
     <string name="usage_month_total">This month total</string>
     <string name="usage_year_total">This year total</string>
-    <string name="usage_overall_total">All time total</string>
     <string name="usage_range_today">Today</string>
     <string name="usage_range_week">Week</string>
     <string name="usage_range_month">Month</string>
     <string name="usage_range_year">Year</string>
-    <string name="usage_range_overall">Overall</string>
     <string name="usage_access_needed_desc">Please enable "App usage data" access for Switchly to show your screen time stats.</string>
     <string name="usage_open_settings">Open settings</string>
     <string name="usage_row_tap_hint_app">Tap an app row to open details.</string>
@@ -113,18 +132,53 @@
     <string name="usage_row_basic_a11y">%1$s, %2$s, %3$s.</string>
     <string name="usage_total_screen_time">Total Screen Time</string>
     <string name="usage_sessions_today">Opens today</string>
-    <string name="usage_sessions_week">Opens this week</string>
-    <string name="usage_sessions_month">Opens this month</string>
-    <string name="usage_sessions_year">Opens this year</string>
-    <string name="usage_sessions_overall">Opens overall</string>
     <string name="usage_attempts_today">Attempts today</string>
-    <string name="usage_attempts_week">Attempts this week</string>
-    <string name="usage_attempts_month">Attempts this month</string>
-    <string name="usage_attempts_year">Attempts this year</string>
-    <string name="usage_attempts_overall">Attempts overall</string>
     <string name="usage_app_placeholder">App</string>
-    <string name="statistics_usage_subtitle_apps">%1$s</string>
     <string name="statistics_usage_subtitle_web">Websites</string>
+    <string name="usage_launch_stats_title">Launches</string>
+    <string name="usage_launch_stats_loading">Loading launch stats…</string>
+    <string name="usage_timeline_title">Usage timeline</string>
+    <string name="usage_timeline_loading">Loading timeline…</string>
+    <string name="usage_timeline_empty">No app launches found for this range.</string>
+    <string name="usage_timeline_permission_needed">Usage Access is needed for the launch timeline.</string>
+    <string name="usage_timeline_row">%1$s · %2$s–%3$s · %4$s</string>
+    <string name="app_launches_total_title">Total launches</string>
+    <string name="app_launches_overview_title">Launch overview</string>
+    <string name="app_launches_empty">No app launches found for this range.</string>
+    <string name="app_launches_sort_filter_title">Sort &amp; filter launches</string>
+    <string name="app_launches_sort_launches">Most launches</string>
+    <string name="app_launches_sort_time">Most time</string>
+    <string name="app_launches_sort_name">Name</string>
+    <string name="app_launches_filter_single">Hide single-launch apps</string>
+    <string name="app_launch_detail_summary">%1$s · %2$s total</string>
+    <plurals name="app_launches_count">
+        <item quantity="one">%1$d launch</item>
+        <item quantity="other">%1$d launches</item>
+    </plurals>
+    <string name="screen_unlocks_permission_needed">Usage Access is needed for screen unlock insights.</string>
+    <string name="screen_unlocks_empty">No screen unlocks found for this range.</string>
+    <string name="screen_unlocks_sort_filter_title">Sort &amp; filter unlocks</string>
+    <string name="screen_unlocks_sort_newest">Newest first</string>
+    <string name="screen_unlocks_sort_oldest">Oldest first</string>
+    <string name="screen_unlocks_sort_longest">Longest first</string>
+    <string name="screen_unlocks_sort_shortest">Shortest first</string>
+    <string name="screen_unlocks_filter_short">Hide very short unlocks</string>
+    <string name="screen_unlocks_row_summary">%1$s · Tap for usage timeline</string>
+    <string name="screen_unlocks_no_apps">No app or website usage was found during this unlock session.</string>
+    <string name="screen_unlocks_detail_title">Unlock details</string>
+    <string name="screen_unlocks_detail_summary_title">Unlock sessions</string>
+    <string name="screen_unlocks_detail_summary">%1$s · %2$s</string>
+    <plurals name="screen_unlocks_count">
+        <item quantity="one">%1$d unlock</item>
+        <item quantity="other">%1$d unlocks</item>
+    </plurals>
+    <plurals name="screen_unlocks_apps_used">
+        <item quantity="one">%1$d item used</item>
+        <item quantity="other">%1$d items used</item>
+    </plurals>
+    <string name="website_timeline_title">Website timeline</string>
+    <string name="website_timeline_empty">No website usage found for this range.</string>
+    <string name="website_timeline_row">%1$s · %2$s</string>
 
     <!-- ====================================================== -->
     <!-- Active time -->
@@ -140,12 +194,89 @@
     <string name="active_time_week">Week</string>
     <string name="active_time_month">Month</string>
     <string name="active_time_year">Year</string>
-    <string name="active_time_overall">Overall</string>
     <string name="active_time_no_sessions">No sessions recorded for this day.</string>
     <string name="active_time_session_title">Active %1$d</string>
     <string name="active_time_details_total_label">Total active time</string>
+    <string name="active_time_sessions_title">Sessions</string>
     <string name="active_time_day_sessions_hint">Tap the day from the overview to see sessions</string>
     <string name="active_time_graph_days">Daily graph</string>
+    <string name="active_time_activity_history_title">Activity history</string>
+    <string name="active_time_activity_history_empty">No Switchly activity events found for this day yet.</string>
+
+    <!-- ====================================================== -->
+    <!-- Activity history -->
+    <!-- ====================================================== -->
+    <string name="activity_history_recent_empty">No recent Switchly activity events found yet.</string>
+    <string name="activity_history_filter_action">Action</string>
+    <string name="activity_history_range_custom">Custom</string>
+    <string name="activity_history_range_custom_title">Select date range</string>
+    <string name="activity_history_range_custom_value">%1$s - %2$s</string>
+    <string name="stats_range_clear">Clear</string>
+    <string name="activity_history_info_title">Activity history</string>
+    <string name="activity_history_info_message">Activity history shows recent Switchly events, including profile changes, schedules, location, Wi-Fi/Bluetooth, NFC, QR, barcode, temporary actions, manual controls, and emergency unlocks. Use the date range chips and Sort &amp; filter to narrow the timeline.</string>
+    <string name="activity_history_type_all">All</string>
+    <string name="activity_history_type_profiles">Profiles</string>
+    <string name="activity_history_type_schedules">Schedules</string>
+    <string name="activity_history_type_location">Location</string>
+    <string name="activity_history_type_wifi_bluetooth">Wi-Fi/Bluetooth</string>
+    <string name="activity_history_type_scans">NFC/QR/Barcode</string>
+    <string name="activity_history_type_temporary">Temporary</string>
+    <string name="activity_history_type_manual">Manual</string>
+    <string name="activity_history_type_emergency">Emergency</string>
+    <string name="activity_history_sort_newest">Newest first</string>
+    <string name="activity_history_sort_oldest">Oldest first</string>
+    <plurals name="activity_history_result_count">
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d events</item>
+    </plurals>
+
+    <!-- ====================================================== -->
+    <!-- Activity history blocked events and details -->
+    <!-- ====================================================== -->
+    <string name="activity_history_type_blocked">Blocked</string>
+    <string name="activity_history_blocked_app_title">Blocked app</string>
+    <string name="activity_history_blocked_website_title">Blocked website</string>
+    <string name="activity_history_blocked_surface_title">Blocked in-app surface</string>
+    <string name="activity_history_package_line">Package: %1$s</string>
+    <string name="activity_history_matched_line">Matched: %1$s</string>
+    <string name="activity_history_detail_time_line">Time: %1$s</string>
+    <string name="activity_history_detail_source_line">Source: %1$s</string>
+    <string name="activity_history_detail_action_line">Action: %1$s</string>
+    <string name="activity_history_detail_raw_line">Raw: %1$s</string>
+
+    <!-- ====================================================== -->
+    <!-- Activity history events -->
+    <!-- ====================================================== -->
+    <string name="activity_history_schedule_title">Schedule changed Switchly</string>
+    <string name="activity_history_location_schedule_title">Location schedule changed Switchly</string>
+    <string name="activity_history_wifi_schedule_title">Wi-Fi schedule changed Switchly</string>
+    <string name="activity_history_bluetooth_schedule_title">Bluetooth schedule changed Switchly</string>
+    <string name="activity_history_schedule_blocked_title">Schedule blocked</string>
+    <string name="activity_history_schedule_blocked_by_nfc">A schedule tried to disable Switchly, but NFC unlock is required.</string>
+    <string name="activity_history_location_title">Location event</string>
+    <string name="activity_history_wifi_title">Wi-Fi event</string>
+    <string name="activity_history_bluetooth_title">Bluetooth event</string>
+    <string name="activity_history_nfc_title">NFC</string>
+    <string name="activity_history_qr_title">QR</string>
+    <string name="activity_history_barcode_title">Barcode</string>
+    <string name="activity_history_temp_expired_title">Temporary action ended</string>
+    <string name="activity_history_profile_restored_title">Profile restored</string>
+    <string name="activity_history_source_input_changed_title">%1$s input changed Switchly</string>
+    <string name="activity_history_manual_changed_title">Manual input changed Switchly</string>
+    <string name="activity_history_temporary_changed_title">Temporary mode changed Switchly</string>
+    <string name="activity_history_emergency_changed_title">Emergency unlock changed Switchly</string>
+    <string name="activity_history_action_line">Action: %1$s</string>
+    <string name="activity_history_profile_line">Profile: %1$s</string>
+    <string name="activity_history_duration_line">Duration: %1$s</string>
+    <string name="activity_history_action_enable">Enable</string>
+    <string name="activity_history_action_disable">Disable</string>
+    <string name="activity_history_action_toggle">Toggle</string>
+    <string name="activity_history_action_temp_enable">Temporary enable</string>
+    <string name="activity_history_action_temp_disable">Temporary disable</string>
+    <string name="activity_history_action_emergency">Emergency unlock</string>
+    <string name="activity_history_action_restore">Restore</string>
+    <string name="activity_history_action_blocked">Blocked</string>
+    <string name="activity_history_action_unknown">Unknown</string>
 
     <!-- ====================================================== -->
     <!-- Website usage details -->
@@ -164,10 +295,10 @@
     <string name="usage_web_placeholder">Website stats coming soon.</string>
     <string name="usage_apps_no_accessibility">App usage tracking needs Switchly Accessibility enabled.</string>
     <string name="usage_apps_no_data">No tracked app usage yet. Switchly records app usage while Accessibility is enabled.</string>
-    <string name="usage_apps_no_blocked">No blocked apps configured yet.</string>
+    <string name="usage_apps_no_blocked">No apps are configured in the active profile yet.</string>
     <string name="usage_websites_no_accessibility">Website tracking needs Switchly Accessibility enabled.</string>
     <string name="usage_websites_no_data">No website data yet. Open a website in a supported browser (Chrome, Brave, Edge, Firefox, Ecosia…) while Switchly Accessibility is enabled.</string>
-    <string name="usage_websites_no_blocked">No limited websites configured yet.</string>
+    <string name="usage_websites_no_blocked">No website rules are configured in the active profile yet.</string>
 
     <!-- ====================================================== -->
     <!-- Usage labels and filters -->
@@ -181,12 +312,15 @@
     <string name="stats_sort_az">Name (A–Z)</string>
     <string name="stats_sort_za">Name (Z–A)</string>
     <string name="stats_filter_all_apps">All apps</string>
-    <string name="stats_filter_blocked_only">Only blocked apps</string>
+    <string name="stats_filter_blocked_only">Only in profile</string>
     <string name="stats_filter_all_websites">All websites</string>
-    <string name="stats_filter_blocked_only_websites">Only limited websites</string>
+    <string name="stats_filter_blocked_only_websites">Only in profile</string>
     <string name="stats_sort_filter_title">Sort &amp; filter</string>
+    <string name="stats_scope_title">Scope</string>
+    <string name="stats_scope_all">All activity</string>
+    <string name="stats_scope_current_profile">Current profile</string>
+    <string name="stats_sort_title">Sort</string>
     <string name="stats_section_filter">Filter</string>
-    <string name="stats_section_sort">Sort</string>
     <string name="stats_apply">Apply</string>
     <string name="stats_sort_used_time_desc">Used time (top)</string>
     <string name="stats_sort_used_time_asc">Used time (bottom)</string>
@@ -199,9 +333,8 @@
     <string name="usage_switchly_fallback_title">No tracked data from Switchly yet</string>
     <string name="usage_switchly_fallback_message">Switchly doesn’t have usage data for this time range yet. Show your phone’s current usage statistics instead?</string>
     <string name="usage_switchly_fallback_positive">Show phone stats</string>
-    <string name="usage_details_premium_title">Detailed statistics are part of Premium</string>
-    <string name="usage_details_premium_message">Get Premium to view detailed statistics and insights.</string>
+    <string name="usage_details_premium_title">More statistics are part of Premium</string>
+    <string name="usage_details_premium_message">Unlock custom ranges, longer statistics ranges, and detailed drill-down insights with Switchly Premium.</string>
     <string name="usage_details_premium_action">View Premium</string>
     <string name="cannot_set_limit_unavailable">Can’t set a limit for an unavailable app.</string>
-
 </resources>

@@ -31,6 +31,18 @@ object AppUsageRepo {
         return UsageStatsRepo.getTodaySummary(ctx, topN)
     }
 
+    fun getDaySummary(ctx: Context, timeMillis: Long, topN: Int = 8): UsageSummary {
+        val ymd = java.util.Calendar.getInstance().apply {
+            timeInMillis = timeMillis
+        }.let { cal ->
+            cal.get(java.util.Calendar.YEAR) * 10000 +
+                (cal.get(java.util.Calendar.MONTH) + 1) * 100 +
+                cal.get(java.util.Calendar.DAY_OF_MONTH)
+        }
+        val local = UsageStore.getUsageMsMapForDay(ctx, ymd)
+        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.OVERALL) else UsageSummary(0L, emptyList())
+    }
+
     fun getLastNDaysSummary(ctx: Context, days: Int, topN: Int = 20): UsageSummary {
         val local = UsageStore.getUsageMsMapForLastNDays(ctx, days)
         return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.WEEK) else UsageSummary(0L, emptyList())
@@ -46,6 +58,11 @@ object AppUsageRepo {
         val year = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
         val local = UsageStore.getUsageMsMapForYear(ctx, year)
         return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.YEAR) else UsageSummary(0L, emptyList())
+    }
+
+    fun getDateRangeSummary(ctx: Context, startMs: Long, endMs: Long, topN: Int = 20): UsageSummary {
+        val local = UsageStore.getUsageMsMapForDateRange(ctx, startMs, endMs)
+        return if (local.isNotEmpty()) buildSummary(ctx, local, topN, UsageSanity.RangeCap.OVERALL) else UsageSummary(0L, emptyList())
     }
 
     fun getOverallSummary(ctx: Context, topN: Int = 20): UsageSummary {

@@ -7,8 +7,15 @@
     <string name="in_app_blocking_title">In-app rules</string>
 
     <string name="in_app_rules_info_title">In-app rules</string>
-    <string name="in_app_rules_info_body">In-app rules are profile-specific and apply only while this profile is active.\n\nUse the master switch to temporarily disable all in-app rules for this profile without removing individual section rules.\n\nSupported sections include YouTube Shorts, Instagram Reels/Explore/Search, X tabs, and Snapchat sections. Detection uses Accessibility, so third-party app UI changes can affect reliability.</string>
-    <string name="in_app_rules_profile_subtitle">Rules for the active profile.</string>
+    <string name="in_app_rules_info_body">In-app rules are profile-specific and apply only while this profile is active.\n\nRules are active as soon as selected sections exist for this profile. Use Block selected to block only selected sections, or Allow selected to allow selected sections and block the other supported sections for that app. Switchly uses Accessibility to detect supported in-app sections, so app UI changes can affect reliability.\n\nAvailable means the section is supported for the installed app version. Experimental means it works best-effort and may vary by app version, entry point, language, or device. Disabled means the app is not installed or the rule cannot be used right now. Coming soon means the section is listed as a planned rule but is not enforceable yet.</string>
+    <string name="in_app_rule_mode_title">In-app rule mode</string>
+    <string name="in_app_rule_mode_block">Block selected</string>
+    <string name="in_app_rule_mode_allow">Allow selected</string>
+    <string name="in_app_rule_mode_block_summary">Switches mark sections that Switchly should block.</string>
+    <string name="in_app_rule_mode_allow_summary">Switches mark sections that stay allowed. Other supported sections for that app are blocked once at least one section is selected.</string>
+    <string name="in_app_rule_block_surface_fmt">Block %1$s</string>
+    <string name="in_app_rule_allow_surface_fmt">Allow %1$s</string>
+    <string name="in_app_rules_profile_subtitle">Rules for: %1$s</string>
     <string name="in_app_blocking_youtube">YouTube</string>
     <string name="in_app_blocking_instagram">Instagram</string>
     <string name="in_app_blocking_x">X/Twitter</string>
@@ -27,6 +34,7 @@
     <string name="in_app_blocking_block_spotlight">Block Spotlight</string>
     <string name="in_app_blocking_block_following">Block Following</string>
     <string name="in_app_blocking_block_comments">Block comments</string>
+    <string name="in_app_blocking_block_mini_player">Block YouTube mini player</string>
     <string name="in_app_blocking_block_pip">Block picture-in-picture mode</string>
     <string name="in_app_blocking_limit_title">In-app blocking limit</string>
     <string name="in_app_limit_label">In-app limit</string>
@@ -38,6 +46,9 @@
     <string name="in_app_surface_explore_label">Explore</string>
     <string name="in_app_surface_search_label">Search</string>
     <string name="in_app_surface_stories_label">Stories</string>
+    <string name="in_app_surface_comments_label">Comments</string>
+    <string name="in_app_surface_mini_player_label">Mini player</string>
+    <string name="in_app_surface_pip_label">Picture-in-picture</string>
     <string name="in_app_surface_home_label">Home</string>
     <string name="in_app_surface_grok_label">Grok</string>
     <string name="in_app_surface_notifications_label">Notifications</string>
@@ -50,6 +61,16 @@
     <string name="in_app_surface_custom">Custom…</string>
     <string name="in_app_surface_rule_dialog_title">%1$s</string>
     <string name="in_app_surface_daily_limit_title">%1$s: daily limit</string>
+    <string name="reels_shorts_subtitle">Manage Shorts, Reels, feeds, tabs, and other supported in-app sections.</string>
+    <string name="reels_shorts_status_installed">Installed</string>
+    <string name="reels_shorts_status_supported">Available</string>
+    <string name="reels_shorts_status_experimental">Experimental</string>
+    <string name="reels_shorts_status_planned">Coming soon</string>
+    <string name="reels_shorts_facebook">Facebook</string>
+    <string name="reels_shorts_tiktok">TikTok</string>
+    <string name="reels_shorts_for_you">For You feed</string>
+    <string name="in_app_rules_empty_installed">No supported apps are installed right now.</string>
+    <string name="in_app_rules_empty_installed_summary">Only installed supported apps are shown here. Install a supported app and reopen this screen to manage its in-app sections.</string>
 
     <!-- ====================================================== -->
     <!-- Shared actions and blocking messages -->

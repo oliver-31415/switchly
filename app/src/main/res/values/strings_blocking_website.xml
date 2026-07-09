@@ -5,10 +5,12 @@
     <!-- Website blocking overview -->
     <!-- ====================================================== -->
     <string name="website_rules_title">Website rules</string>
-    <string name="block_websites">Website rules</string>
     <string name="blocked_websites_empty">No blocked websites yet.\n\nTap + to add a website this profile should block.</string>
     <string name="website_rules_info_title">Website rules</string>
-    <string name="website_rules_info_body">Website rules are profile-specific and apply only while this profile is active.\n\nUse the master switch to temporarily disable website rules without removing your domains. In Block selected mode, selected domains are blocked. In Allow selected mode, selected domains are allowed.\n\nWebsite blocking reads the visible URL from supported browsers through Accessibility. Supported/tested browsers include Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo, and Ecosia. Support can still vary by browser version and device.</string>
+    <string name="website_rules_info_body">Website rules are profile-specific and apply only while this profile is active.\n\nRules are active as soon as they exist. Use the switch on each domain to temporarily disable only that rule without deleting it. In Block selected mode, selected enabled domains are blocked. In Allow selected mode, selected enabled domains are allowed.\n\nWebsite blocking reads the visible URL from supported browsers through Accessibility. Supported/tested browsers include Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo, and Ecosia. Support can still vary by browser version and device.</string>
+    <string name="website_rule_mode_title">Website rule mode</string>
+    <string name="website_rule_mode_block_summary">Selected enabled websites are blocked while this profile is active.</string>
+    <string name="website_rule_mode_allow_summary">Selected enabled websites are allowed. Other websites are blocked while this profile is active.</string>
     <string name="blocked_websites_add_title">Add website</string>
 
     <!-- ====================================================== -->
@@ -20,6 +22,8 @@
     <string name="rule_type">Rule type</string>
     <string name="rule_block_always">Block always</string>
     <string name="rule_daily_limit">Daily limit</string>
+    <string name="website_rule_disabled">Rule disabled</string>
+    <string name="website_rule_toggle">Enable website rule</string>
     <string name="rule_blocked">Blocked</string>
     <string name="domain_limit_required">Please enter a daily limit in minutes.</string>
 
@@ -47,7 +51,7 @@
 
     <string name="session_reset_limit_value_format">%1$d min/session</string>
     <string name="allowed_websites_empty">No allowed websites yet.\n\nAdd websites that should stay available while this profile is in Allow selected mode.</string>
-    <string name="blocked_websites_profile_subtitle">Rules for the active profile.</string>
+    <string name="blocked_websites_profile_subtitle">Rules for: %1$s</string>
     <string name="rule_allowed">Allowed</string>
     <string name="rule_allowed_always">Allowed always</string>
 </resources>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="privacy_report_title">Datenschutz &amp; Daten</string>
+    <string name="privacy_report_settings_summary">Lokale Speicherung, Datenweitergabe und Kontrollen</string>
+    <string name="privacy_report_section_privacy">Datenschutz &amp; Weitergabe</string>
+    <string name="privacy_report_section_actions">Deine Datenkontrollen</string>
+
+    <string name="privacy_report_local_title">Lokale Switchly-Daten</string>
+    <string name="privacy_report_profiles_schedules_title">Profile &amp; Zeitpläne</string>
+    <string name="privacy_report_profiles_schedules_summary">Profile: %1$d · Zeitpläne: %2$d</string>
+    <string name="privacy_report_rules_title">Blocking-Regeln</string>
+    <string name="privacy_report_rules_summary">Website-Regeln: %1$d · In-App-Apps: %2$d</string>
+    <string name="privacy_report_diagnostics_title">Lokale Diagnose</string>
+    <string name="privacy_report_diagnostics_summary">Blockierte Benachrichtigungen: %1$d · Logs: %2$d</string>
+    <string name="privacy_report_local_compact">Profile: %1$d · Zeitpläne: %2$d\nWebsite-Regeln: %3$d · In-App-Apps: %4$d\nBenachrichtigungen: %5$d · Logs: %6$d</string>
+    <string name="privacy_report_not_stored_title">Nicht von Switchly gespeichert</string>
+    <string name="privacy_report_not_stored_compact">Passwörter, Nachrichten und Bildschirminhalte werden nicht gespeichert</string>
+    <string name="privacy_report_not_stored_summary">Switchly speichert keine Passwörter, privaten Nachrichten, vollständigen Browserverläufe oder sichtbaren Bildschirminhalte, die über Accessibility verarbeitet werden. Accessibility-Ereignisse werden lokal für das Blocking ausgewertet.</string>
+
+    <string name="privacy_report_sharing_title">Datenweitergabe</string>
+    <string name="privacy_report_sharing_compact">Standardmäßig lokal; Online-Dienste hängen von der APK-Variante ab</string>
+    <string name="privacy_report_sharing_summary">Switchlys Blocking-Engine lädt Profilnamen, App-/Website-Regeln, Inhalte blockierter Benachrichtigungen oder detaillierte Nutzungsverläufe nicht automatisch hoch. Diese Daten können das Gerät verlassen, wenn du bewusst Cloud-Backup, Supportbericht oder Datenexport/-freigabe verwendest.\n\nAbhängig von der APK-Variante können Google-Play- oder Firebase-Dienste technische Crash-, Integritäts-, Anmelde-, Kauf- sowie grundlegende App-/Gerätemetadaten verarbeiten.</string>
+
+    <string name="privacy_report_backup_title">Backup</string>
+    <string name="privacy_report_backup_compact">Aktuelle Auswahl: %1$s</string>
+    <string name="privacy_report_backup_summary">Auswahl: %1$s\n\nEnthaltene Kategorien:\n%2$s</string>
+
+    <string name="privacy_report_export_report_title">Datenschutzübersicht teilen</string>
+    <string name="privacy_report_export_report_summary">Diese Übersicht teilen, ohne tatsächliche Regeln oder Nutzungsverläufe zu exportieren.</string>
+    <string name="privacy_report_export_data_title">Ausgewählte Switchly-Daten exportieren</string>
+    <string name="privacy_report_export_data_summary">Ein lokales JSON-Backup mit der aktuellen Auswahl erstellen: %1$s</string>
+    <string name="privacy_report_export_select_title">Daten für Export auswählen</string>
+    <string name="privacy_report_export_select_action">Exportieren</string>
+    <string name="privacy_report_export_select_empty">Wähle mindestens eine Datenkategorie aus.</string>
+    <string name="privacy_report_export_progress">Datenexport wird vorbereitet…</string>
+    <string name="privacy_report_export_done">Switchly-Daten exportiert.</string>
+    <string name="privacy_report_export_failed">Switchly-Daten konnten nicht exportiert werden.</string>
+    <string name="privacy_report_export_body">Switchly-Datenschutzbericht\n\nLokal gespeichert:\n%1$s\n\nNicht gespeichert:\n%2$s\n\nDatenweitergabe:\n%3$s\n\nBackup-Auswahl: %4$s\n%5$s</string>
+
+    <string name="privacy_report_delete_title">Alle lokalen Switchly-Daten löschen</string>
+    <string name="privacy_report_delete_summary">Profile, Regeln, Zeitpläne, Statistiken, gekoppelte Tags und Einstellungen von diesem Gerät entfernen.</string>
+</resources>

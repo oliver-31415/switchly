@@ -22,19 +22,35 @@ package at.saltyy.switchly.feature.settings
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import at.saltyy.switchly.R
+import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.EmergencyPinStore
+import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.premium.PremiumInfoActivity
 import at.saltyy.switchly.feature.tools.BlockingHubActivity
+import at.saltyy.switchly.feature.tools.ManageKeysActivity
 import at.saltyy.switchly.feature.tools.ToolsHubActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
@@ -162,6 +178,9 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<View>(R.id.cardSettingsBlockingFeatures).setOnClickListener {
             startActivity(Intent(this, BlockingFeaturesActivity::class.java))
         }
+        findViewById<View>(R.id.cardSettingsToolsAutomation).setOnClickListener {
+            startActivity(Intent(this, ManageKeysActivity::class.java))
+        }
         findViewById<View>(R.id.cardSettingsAppearance).setOnClickListener {
             showNestedSettingsScreen("screen_appearance")
         }
@@ -175,6 +194,9 @@ class SettingsActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.cardSettingsAppLock).setOnClickListener {
             startActivity(Intent(this, AppLockSettingsActivity::class.java))
+        }
+        findViewById<View>(R.id.cardSettingsEmergencyUnlock).setOnClickListener {
+            showEmergencyQuickSheet()
         }
         findViewById<View>(R.id.cardSettingsAccountData).setOnClickListener {
             showNestedSettingsScreen("screen_account")
@@ -235,6 +257,198 @@ class SettingsActivity : AppCompatActivity() {
             getString(R.string.settings)
         }
         setToolbarTitle(title)
+    }
+
+    private fun showEmergencyQuickSheet() {
+        if (!EmergencyBypassStore.isFeatureEnabled(this)) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.pref_emergency_title)
+                .setMessage(R.string.emergency_disabled_message_controls)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.emergency_open_controls_action) { _, _ ->
+                    startActivity(Intent(this, ToggleOptionsActivity::class.java))
+                }
+                .showAccented()
+            return
+        }
+
+        val active = EmergencyBypassStore.isActive(this)
+        val paused = EmergencyBypassStore.isPaused(this)
+        val usedToday = EmergencyBypassStore.hasUsedToday(this)
+        val remaining = EmergencyBypassStore.minutesRemaining(this)
+
+        val labels = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        fun addAction(label: String, action: () -> Unit) {
+            labels += label
+            actions += action
+        }
+
+        if (active) {
+            addAction(getString(R.string.emergency_action_pause)) {
+                if (EmergencyBypassStore.pause(this)) {
+                    AppLogStore.append(this, "Emergency", "Emergency mode paused from Settings")
+                    SwitchModeStore.clearTemporary(this)
+                    Toast.makeText(this, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
+                    BlockingRuntime.ensureRunning(this)
+                }
+            }
+            addAction(getString(R.string.emergency_action_end)) {
+                AppLogStore.append(this, "Emergency", "Emergency mode ended from Settings")
+                EmergencyBypassStore.cancel(this)
+                SwitchModeStore.clearTemporary(this)
+                Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
+                BlockingRuntime.ensureRunning(this)
+            }
+        } else if (paused) {
+            addAction(getString(R.string.emergency_action_resume)) {
+                if (EmergencyBypassStore.resume(this)) {
+                    val remainingMinutes = EmergencyBypassStore.minutesRemaining(this).coerceAtLeast(1)
+                    AppLogStore.append(this, "Emergency", "Emergency mode resumed from Settings with ${remainingMinutes}m remaining")
+                    SwitchModeStore.setTemporarilyDisabled(this, remainingMinutes * 60_000L)
+                    Toast.makeText(this, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
+                    BlockingRuntime.ensureRunning(this)
+                }
+            }
+            addAction(getString(R.string.emergency_action_end)) {
+                AppLogStore.append(this, "Emergency", "Emergency mode ended from Settings")
+                EmergencyBypassStore.cancel(this)
+                SwitchModeStore.clearTemporary(this)
+                Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
+                BlockingRuntime.ensureRunning(this)
+            }
+        } else if (!usedToday) {
+            requestEmergencyPinBeforeStart()
+            return
+        }
+
+        val title = when {
+            active -> getString(R.string.emergency_manage_title_active, remaining)
+            paused -> getString(R.string.emergency_manage_title_paused, remaining)
+            else -> getString(R.string.pref_emergency_title)
+        }
+
+        if (labels.isNotEmpty()) {
+            showSwitchlyOptionDialog(
+                title = title,
+                options = labels.map { label ->
+                    SwitchlyDialogOption(
+                        title = label,
+                        destructive = label == getString(R.string.emergency_action_end)
+                    )
+                }
+            ) { which ->
+                runCatching { actions[which].invoke() }
+            }
+        } else {
+            AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(R.string.emergency_used_today)
+                .setNegativeButton(R.string.cancel, null)
+                .showAccented()
+        }
+    }
+
+    private fun requestEmergencyPinBeforeStart() {
+        val storedPin = EmergencyPinStore.getPin(this)
+        if (storedPin.isNullOrBlank()) {
+            showSetEmergencyPinDialog { showEmergencyUnlockStartDialog() }
+        } else {
+            showEnterEmergencyPinDialog { showEmergencyUnlockStartDialog() }
+        }
+    }
+
+    private fun showSetEmergencyPinDialog(onSuccess: () -> Unit) {
+        val input = emergencyPinInput(getString(R.string.emergency_pin_choose_hint))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.emergency_pin_title))
+            .setMessage(getString(R.string.emergency_pin_message))
+            .setView(emergencyPinContainer(input))
+            .setPositiveButton(getString(R.string.ok), null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (pin.length < 4) {
+                    Toast.makeText(this, R.string.emergency_pin_too_short, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                EmergencyPinStore.setPin(this, pin)
+                Toast.makeText(this, R.string.emergency_pin_changed, Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                onSuccess()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showEnterEmergencyPinDialog(onSuccess: () -> Unit) {
+        val input = emergencyPinInput(getString(R.string.emergency_pin_enter_current_hint))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.emergency_pin_enter_current_title))
+            .setMessage(getString(R.string.emergency_pin_enter_current_message))
+            .setView(emergencyPinContainer(input))
+            .setPositiveButton(getString(R.string.ok), null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (!EmergencyPinStore.matchesPin(this, pin)) {
+                    Toast.makeText(this, R.string.emergency_pin_incorrect, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                dialog.dismiss()
+                onSuccess()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun emergencyPinInput(hintText: String): EditText {
+        return EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            hint = hintText
+            backgroundTintList = AccentColor.getActiveColor(this@SettingsActivity)
+        }
+    }
+
+    private fun emergencyPinContainer(input: EditText): FrameLayout {
+        return FrameLayout(this).apply {
+            val margin = (24 * resources.displayMetrics.density).toInt()
+            setPadding(margin, 0, margin, 0)
+            addView(
+                input,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+    }
+
+    private fun showEmergencyUnlockStartDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.pref_emergency_title))
+            .setMessage(getString(R.string.emergency_action_start_15))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                if (EmergencyBypassStore.enableIfAllowed(this, 15)) {
+                    AppLogStore.append(this, "Emergency", "Emergency mode started from Settings for 15m")
+                    SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
+                    Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
+                    BlockingRuntime.ensureRunning(this)
+                } else {
+                    Toast.makeText(this, getString(R.string.emergency_used_today), Toast.LENGTH_SHORT).show()
+                }
+            }
+            .showAccented()
     }
 
     private fun resetSettingsToTop() {

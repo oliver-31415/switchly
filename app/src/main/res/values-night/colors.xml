@@ -3,6 +3,7 @@
 
     <!-- App -->
     <color name="switchly_bg">#FF121212</color>
+    <color name="contact_text">#FFF5F7FA</color>
 
     <!-- Cards -->
     <color name="switchly_card_bg">#FF24272D</color>

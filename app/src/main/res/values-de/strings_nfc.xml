@@ -60,7 +60,7 @@
         <item quantity="one">Schreibt ein Tag, das die Switchly-Einstellungen %1$d Minute lang temporär entsperrt und danach den vorherigen Zustand wiederherstellt.</item>
         <item quantity="other">Schreibt ein Tag, das die Switchly-Einstellungen %1$d Minuten lang temporär entsperrt und danach den vorherigen Zustand wiederherstellt.</item>
     </plurals>
-    <string name="nfc_action_desc_pair_uid">Keine Schreibaktion. Das ist nur UID-Kopplung, auch für schreibgeschützte Karten. Beim Scannen wird die UID als erlaubt gespeichert, aber es wird keine Deaktivieren/Profil-Aktion auf die Karte geschrieben. Sobald mindestens eine UID gekoppelt ist, können nur gekoppelte Tags Switchly umschalten oder entsperren.</string>
+    <string name="nfc_action_desc_pair_uid">Keine Schreibaktion. Das ist nur UID-Kopplung, auch für schreibgeschützte Karten. Beim Scannen wird die UID als erlaubt gespeichert, aber es wird keine Deaktivieren/Profil-Aktion auf die Karte geschrieben. Sobald mindestens eine UID gekoppelt ist, können nur gekoppelte Tags Switchly umschalten oder deaktivieren.</string>
     <string name="nfc_action_desc_pair_uid_disabled">„Tag koppeln“ ist deaktiviert. Aktiviere es in Einstellungen → Blocking &amp; Control Toggles → Gepaarte NFC-Tags aktivieren und scanne dann einen Tag, um seine UID zu speichern.</string>
     <string name="nfc_action_desc_profile_selected">Ausgewähltes Profil: %1$s</string>
     <string name="nfc_action_desc_profile_none">Profil: Universell (globale Aktion)</string>
@@ -74,7 +74,7 @@
     <string name="temp_enable_duration_message">Wie lange soll %1$s temporär aktiviert werden?</string>
     <string name="temp_enable_duration_custom_title">Benutzerdefinierte Dauer</string>
     <string name="temp_enable_duration_custom_hint">Minuten eingeben</string>
-    <string name="temp_enable_duration_invalid">Bitte gib eine Zahl zwischen 1 und 1440 Minuten ein.</string>
+    <string name="temp_enable_duration_invalid">Minuten eingeben, max. 24 Std.</string>
     <string name="temp_duration_quick_presets">Schnellauswahl</string>
     <string name="temp_duration_preset_minutes">%1$dm</string>
     <string name="nfc_time_5_min">5 Minuten</string>
@@ -87,7 +87,7 @@
     <string name="nfc_time_custom">Benutzerdefinierte Zeit…</string>
     <string name="nfc_time_custom_title">Benutzerdefinierte temporäre Dauer</string>
     <string name="nfc_time_custom_message">Gib die feste Dauer ein, die auf diesen Tag geschrieben werden soll. Nutze „Beim Scannen fragen“, wenn die Dauer später gewählt werden soll.</string>
-    <string name="nfc_time_custom_invalid">Bitte gib eine Zahl zwischen 1 und 1440 Minuten ein.</string>
+    <string name="nfc_time_custom_invalid">Minuten eingeben, max. 24 Std.</string>
     <plurals name="nfc_time_custom_label">
         <item quantity="one">%1$d Minute</item>
         <item quantity="other">%1$d Minuten</item>
@@ -136,36 +136,43 @@
     <string name="paired_tag_readonly_action_section_title">Aktion für schreibgeschützte Tags</string>
     <string name="paired_tag_readonly_action_label">Aktion bei schreibgeschütztem Scan</string>
     <string name="paired_tag_readonly_action_toggle">Umschalten</string>
-    <string name="paired_tag_readonly_action_unlock_only">Nur entsperren</string>
-    <string name="paired_tag_readonly_action_lock_only">Nur sperren</string>
+    <string name="paired_tag_readonly_action_disable">Deaktivieren</string>
+    <string name="paired_tag_readonly_action_enable">Aktivieren</string>
+    <string name="paired_tag_readonly_action_temp_disable">Temporär deaktivieren</string>
+    <string name="paired_tag_readonly_action_temp_enable">Temporär aktivieren</string>
 
     <!-- ====================================================== -->
-    <!-- Paired tag limits -->
+    <!-- Paired tag usage settings -->
     <!-- ====================================================== -->
-    <string name="paired_tag_limits_section_title">Limits für temporäres Deaktivieren</string>
+    <string name="paired_tag_usage_settings_section_title">Tag-Nutzungseinstellungen</string>
+    <string name="paired_tag_duration_label">Dauer (Min)</string>
+    <string name="paired_tag_duration_helper">Minuten eingeben. Max. 24 Std. Standard ist 1 Min für schreibgeschützte temporäre Aktionen.</string>
+    <string name="paired_tag_duration_invalid">Minuten eingeben, max. 24 Std.</string>
     <string name="paired_tag_daily_limit_label">Tägliche Nutzungen</string>
-    <string name="paired_tag_daily_limit_helper">Leer lassen, um das Standardlimit zu verwenden.</string>
+    <string name="paired_tag_daily_limit_helper">Optional. Begrenzt, wie oft dieses Tag pro Tag genutzt werden kann.</string>
     <string name="paired_tag_cooldown_label">Cooldown (Min)</string>
-    <string name="paired_tag_cooldown_helper">Leer lassen, um den Standard-Cooldown zu verwenden.</string>
-    <string name="paired_tag_daily_limit_invalid">Bitte ein gültiges Tageslimit eingeben oder leer lassen.</string>
-    <string name="paired_tag_cooldown_invalid">Bitte einen gültigen Cooldown in Minuten eingeben oder leer lassen.</string>
-    <string name="nfc_temp_disable_limiter_cooldown">Dieses Tag ist im Cooldown. Bitte in %1$d Min erneut versuchen.</string>
+    <string name="paired_tag_cooldown_helper">Optional. Wartezeit, bevor dasselbe Tag erneut genutzt werden kann.</string>
+    <string name="paired_tag_daily_limit_invalid">1–50 Nutzungen eingeben oder leer lassen.</string>
+    <string name="paired_tag_cooldown_invalid">Minuten eingeben, max. 24 Std., oder leer lassen.</string>
+    <string name="nfc_temp_disable_limiter_cooldown">Dieses Tag in %1$d Min erneut versuchen.</string>
     <plurals name="nfc_temp_disable_limiter_daily_limit">
-        <item quantity="one">Tageslimit für diesen Tag erreicht (%1$d Nutzung/Tag).</item>
-        <item quantity="other">Tageslimit für diesen Tag erreicht (%1$d Nutzungen/Tag).</item>
+        <item quantity="one">Tageslimit erreicht (%1$d/Tag).</item>
+        <item quantity="other">Tageslimit erreicht (%1$d/Tag).</item>
     </plurals>
+    <string name="paired_tag_enabled_toggle">Gekoppeltes Tag aktivieren</string>
+    <string name="paired_tag_disabled">Deaktiviert</string>
 
     <!-- ====================================================== -->
     <!-- Pairing runtime feedback -->
     <!-- ====================================================== -->
-    <string name="nfc_pair_waiting_readonly">Halte ein NFC-Tag an, um seine UID für Umschalten/Entsperren zu koppeln</string>
+    <string name="nfc_pair_waiting_readonly">Halte ein NFC-Tag an, um seine UID für Umschalten/Deaktivieren zu koppeln</string>
     <string name="nfc_pair_waiting_writable">Halte ein beschreibbares NFC-Tag an, um seine UID zu koppeln</string>
     <string name="nfc_pair_ok">Tag gekoppelt</string>
     <string name="nfc_pair_ok_with_uid">Tag gekoppelt: %1$s</string>
     <string name="nfc_pair_ok_with_uid_explained">Tag gekoppelt: %1$s. Die UID-Kopplung autorisiert dieses Tag, schreibt aber keine Deaktivieren-Aktion auf die Karte.</string>
     <string name="nfc_pair_already_added">Tag bereits hinzugefügt</string>
     <string name="nfc_pair_already_added_open_writer">Tag bereits hinzugefügt. Aktions-Writer wird geöffnet…</string>
-    <string name="nfc_pair_writable_requires_writable_tag">Dieses Tag ist schreibgeschützt. Füge es stattdessen als schreibgeschütztes Tag hinzu.</string>
+    <string name="nfc_pair_writable_requires_writable_tag">Schreibgeschützt. Als Read-only hinzufügen.</string>
     <string name="nfc_pair_error">Tag-UID konnte nicht gelesen werden</string>
 
     <!-- ====================================================== -->
@@ -175,8 +182,8 @@
     <string name="nfc_feedback_stopped">%1$s deaktiviert</string>
     <string name="nfc_feedback_already_started">%1$s ist bereits aktiviert</string>
     <string name="nfc_feedback_already_stopped">%1$s ist bereits deaktiviert</string>
-    <string name="nfc_temp_hint_profile_disable_toast">Hinweis: Temporäres Deaktivieren eines Profils gilt nur, wenn dieses Profil aktuell aktiv ist.</string>
-    <string name="nfc_temp_hint_profile_enable_toast">Hinweis: Temporäres Aktivieren eines Profils aktiviert dieses Profil vorübergehend.</string>
+    <string name="nfc_temp_hint_profile_disable_toast">Profil muss für Temp-Deaktivieren aktiv sein.</string>
+    <string name="nfc_temp_hint_profile_enable_toast">Temp-Aktivieren wechselt zu diesem Profil.</string>
     <string name="toast_disable_requires_nfc">Switchly kann derzeit nur per NFC-Tag deaktiviert werden.</string>
     <string name="toast_cannot_disable_while_locked">Switchly ist gesperrt. Nutze dein NFC-Tag, um es zu deaktivieren.</string>
     <string name="toast_cannot_change_profile_while_locked">Profile sind gesperrt. Nutze dein NFC-Tag, um Switchly umzuschalten oder zu deaktivieren.</string>

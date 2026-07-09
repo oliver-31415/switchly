@@ -25,13 +25,10 @@ import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
-import android.view.ContextThemeWrapper
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.LinearLayout
@@ -43,7 +40,6 @@ import androidx.core.content.edit
 import androidx.core.content.withStyledAttributes
 import androidx.core.graphics.ColorUtils
 import androidx.core.widget.ImageViewCompat
-import androidx.core.widget.CompoundButtonCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -54,7 +50,6 @@ import at.saltyy.switchly.widget.NextScheduleWidgetProvider
 import at.saltyy.switchly.widget.BlockedNotificationsWidgetProvider
 import at.saltyy.switchly.widget.BarcodeScanWidgetProvider
 import at.saltyy.switchly.feature.widget.ActiveTimerWidgetProvider
-import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.AutostartStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
@@ -68,8 +63,6 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
-import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
-import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
@@ -88,7 +81,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
     private lateinit var btnNfcLockedHowTo: ImageButton
     private lateinit var btnInfoEnablePairedUids: ImageButton
     private lateinit var btnInfoLockSwitchlyAppAccess: ImageButton
-    private lateinit var tvControlModeLockHint: TextView
     private val accentSwitches = mutableListOf<SwitchMaterial>()
     private val detailButtons = mutableListOf<ImageButton>()
     private var ignoreControlModeListener = false
@@ -125,7 +117,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
 
         cardNfcLockedHint = findViewById(R.id.cardNfcLockedHint)
         btnNfcLockedHowTo = findViewById(R.id.btnNfcLockedHowTo)
-        tvControlModeLockHint = findViewById(R.id.tvControlModeLockHint)
 
         btnInfoEnablePairedUids = findViewById(R.id.btnInfoEnablePairedUids)
         btnInfoLockSwitchlyAppAccess = findViewById(R.id.btnInfoLockSwitchlyAppAccess)
@@ -529,27 +520,11 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         switchShowEmergencyUnlock.isChecked = sp.getBoolean(KEY_SHOW_EMERGENCY_UNLOCK, true)
 
         fun currentHomeLayoutMode(): String {
-            return when (sp.getString(KEY_HOME_LAYOUT_MODE, null)) {
-                HOME_MODE_DEFAULT -> HOME_MODE_DEFAULT
-                HOME_MODE_SIMPLE -> HOME_MODE_SIMPLE
-                HOME_MODE_ADVANCED -> HOME_MODE_ADVANCED
-                HOME_MODE_FOCUS -> HOME_MODE_SIMPLE
-                HOME_MODE_CUSTOM -> HOME_MODE_CUSTOM
-                else -> if (sp.contains(KEY_HOME_LAYOUT_DETAILED)) {
-                    if (sp.getBoolean(KEY_HOME_LAYOUT_DETAILED, true)) HOME_MODE_ADVANCED else HOME_MODE_SIMPLE
-                } else {
-                    HOME_MODE_DEFAULT
-                }
-            }
+            return HomeModeDialogHelper.currentHomeLayoutMode(this)
         }
 
-        fun homeLayoutModeLabel(mode: String): String = when (mode) {
-            HOME_MODE_DEFAULT -> getString(R.string.home_layout_default)
-            HOME_MODE_SIMPLE -> getString(R.string.home_layout_minimal)
-            HOME_MODE_ADVANCED -> getString(R.string.home_layout_detailed)
-            HOME_MODE_CUSTOM -> getString(R.string.home_layout_custom)
-            else -> getString(R.string.home_layout_detailed)
-        }
+        fun homeLayoutModeLabel(mode: String): String =
+            HomeModeDialogHelper.homeLayoutModeLabel(this, mode)
 
         fun refreshHomeLayoutModeValue() {
             val mode = currentHomeLayoutMode()
@@ -563,204 +538,13 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         refreshHomeLayoutModeValue()
 
         fun showCustomizeHomeDialog() {
-            data class CustomHomeOption(
-                val key: String,
-                val titleRes: Int,
-                val summaryRes: Int,
-                val iconRes: Int,
-                val defaultValue: Boolean
-            )
-
-            val options = listOf(
-                CustomHomeOption(KEY_HOME_CUSTOM_ACTIVE_TIMER, R.string.home_custom_active_timer, R.string.home_custom_active_timer_summary, R.drawable.schedule_24, true),
-                CustomHomeOption(KEY_HOME_CUSTOM_MAIN_BUTTON, R.string.home_custom_main_button, R.string.home_custom_main_button_summary, R.drawable.toggle_on_24, true),
-                CustomHomeOption(KEY_HOME_CUSTOM_ACTIVE_PROFILE, R.string.home_custom_active_profile, R.string.home_custom_active_profile_summary, R.drawable.account_box_24, true),
-                CustomHomeOption(KEY_HOME_CUSTOM_CONTROL_MODE, R.string.home_custom_control_mode, R.string.home_custom_control_mode_summary, R.drawable.tune_24, true),
-                CustomHomeOption(KEY_HOME_CUSTOM_PICK_APPS, R.string.home_custom_pick_apps, R.string.home_custom_pick_apps_summary, R.drawable.apps_24, true),
-                CustomHomeOption(KEY_HOME_CUSTOM_TEMPORARY, R.string.home_custom_temporary, R.string.home_custom_temporary_summary, R.drawable.alarm_24, false),
-                CustomHomeOption(KEY_HOME_CUSTOM_EMERGENCY, R.string.home_custom_emergency, R.string.home_custom_emergency_summary, R.drawable.lock_open_24, false),
-                CustomHomeOption(KEY_HOME_CUSTOM_QUICK_ACTIONS, R.string.home_custom_quick_actions, R.string.home_custom_quick_actions_summary, R.drawable.dashboard_24, false),
-                CustomHomeOption(KEY_HOME_CUSTOM_NEXT_SCHEDULE, R.string.home_custom_next_schedule, R.string.home_custom_next_schedule_summary, R.drawable.schedule_24, false),
-                CustomHomeOption(KEY_HOME_CUSTOM_BLOCKED_NOW, R.string.home_custom_blocked_now, R.string.home_custom_blocked_now_summary, R.drawable.info_24, false),
-                CustomHomeOption(KEY_HOME_CUSTOM_BLOCKED_APPS, R.string.home_custom_blocked_apps, R.string.home_custom_blocked_apps_summary, R.drawable.apps_24, false),
-                CustomHomeOption(KEY_HOME_CUSTOM_PROFILE_DROPDOWN, R.string.home_custom_profile_dropdown, R.string.home_custom_profile_dropdown_summary, R.drawable.switch_account_24, false)
-            )
-
-            val accent = AccentColor.getAccentColorInt(this)
-            val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.TRANSPARENT)
-            val surfaceVariant = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant, surface)
-            val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
-            val outline = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, ColorUtils.setAlphaComponent(onSurface, 0x44))
-            fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
-
-            val checked = BooleanArray(options.size) { index ->
-                sp.getBoolean(options[index].key, options[index].defaultValue)
+            HomeModeDialogHelper.showCustomizeHomeDialog(this) {
+                refreshHomeLayoutModeValue()
             }
-
-            lateinit var countText: TextView
-            val cards = mutableListOf<MaterialCardView>()
-
-            fun updateRowState(index: Int) {
-                val card = cards.getOrNull(index) ?: return
-                val isChecked = checked[index]
-                card.strokeWidth = dp(if (isChecked) 2 else 1)
-                card.strokeColor = if (isChecked) accent else outline
-                card.setCardBackgroundColor(if (isChecked) ColorUtils.setAlphaComponent(accent, 0x14) else surfaceVariant)
-                countText.text = resources.getQuantityString(R.plurals.pref_home_layout_custom_selected_count, options.size, checked.count { it }, options.size)
-            }
-
-            val content = ScrollView(this).apply {
-                isFillViewport = false
-                setPadding(dp(8), dp(10), dp(8), dp(2))
-            }
-
-            val list = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-            }
-            content.addView(
-                list,
-                ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            )
-
-            val intro = TextView(this).apply {
-                text = getString(R.string.pref_home_layout_custom_builder_intro)
-                setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xCC))
-                textSize = 14f
-                gravity = android.view.Gravity.CENTER_HORIZONTAL
-                setPadding(dp(8), 0, dp(8), dp(10))
-            }
-            list.addView(intro)
-
-            countText = TextView(this).apply {
-                setTextColor(accent)
-                textSize = 13f
-                gravity = android.view.Gravity.CENTER_HORIZONTAL
-                setPadding(dp(8), 0, dp(8), dp(10))
-            }
-            list.addView(countText)
-
-            options.forEachIndexed { index, option ->
-                val card = MaterialCardView(this).apply {
-                    radius = dp(18).toFloat()
-                    cardElevation = 0f
-                    useCompatPadding = true
-                    isClickable = true
-                    isFocusable = true
-                }
-
-                val row = LinearLayout(this).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    gravity = android.view.Gravity.CENTER_VERTICAL
-                    setPadding(dp(14), dp(12), dp(10), dp(12))
-                }
-
-                val icon = ImageView(this).apply {
-                    setImageResource(option.iconRes)
-                    ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(accent))
-                }
-                row.addView(icon, LinearLayout.LayoutParams(dp(24), dp(24)))
-
-                val textColumn = LinearLayout(this).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(dp(14), 0, dp(8), 0)
-                }
-
-                val title = TextView(this).apply {
-                    text = getString(option.titleRes)
-                    setTextColor(onSurface)
-                    textSize = 15f
-                }
-                val summary = TextView(this).apply {
-                    text = getString(option.summaryRes)
-                    setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xB0))
-                    textSize = 13f
-                    setPadding(0, dp(3), 0, 0)
-                }
-                textColumn.addView(title)
-                textColumn.addView(summary)
-                row.addView(textColumn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-
-                val check = CheckBox(this).apply {
-                    isChecked = checked[index]
-                    CompoundButtonCompat.setButtonTintList(this, ColorStateList.valueOf(accent))
-                    contentDescription = getString(option.titleRes)
-                }
-                row.addView(check)
-
-                card.setOnClickListener {
-                    checked[index] = !checked[index]
-                    check.isChecked = checked[index]
-                    updateRowState(index)
-                }
-                check.setOnClickListener {
-                    checked[index] = check.isChecked
-                    updateRowState(index)
-                }
-
-                card.addView(row)
-                cards += card
-                list.addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-                updateRowState(index)
-            }
-
-            val dialog = MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.pref_home_layout_custom_title)
-                .setView(content)
-                .setPositiveButton(R.string.save) { _, _ ->
-                    sp.edit {
-                        options.forEachIndexed { index, option -> putBoolean(option.key, checked[index]) }
-                        putString(KEY_HOME_LAYOUT_MODE, HOME_MODE_CUSTOM)
-                        putBoolean(KEY_HOME_LAYOUT_DETAILED, false)
-                    }
-                    refreshHomeLayoutModeValue()
-                }
-                .setNegativeButton(R.string.cancel, null)
-                .show()
-            dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)?.setTextColor(accent)
-            dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE)?.setTextColor(accent)
-            dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.98f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         }
 
         fun showHomeLayoutModeDialog() {
-            val modes = arrayOf(HOME_MODE_DEFAULT, HOME_MODE_SIMPLE, HOME_MODE_ADVANCED, HOME_MODE_CUSTOM)
-            val currentMode = currentHomeLayoutMode()
-            val options = modes.map { mode ->
-                val summaryRes = when (mode) {
-                    HOME_MODE_DEFAULT -> R.string.home_mode_default_card_summary
-                    HOME_MODE_SIMPLE -> R.string.home_mode_simple_card_summary
-                    HOME_MODE_ADVANCED -> R.string.home_mode_advanced_card_summary
-                    HOME_MODE_CUSTOM -> R.string.home_mode_custom_card_summary
-                    else -> R.string.pref_home_layout_mode_summary
-                }
-                SwitchlyDialogOption(
-                    title = homeLayoutModeLabel(mode),
-                    summary = getString(summaryRes),
-                    iconRes = when (mode) {
-                        HOME_MODE_DEFAULT -> R.drawable.dashboard_24
-                        HOME_MODE_SIMPLE -> R.drawable.toggle_on_24
-                        HOME_MODE_ADVANCED -> R.drawable.tune_24
-                        HOME_MODE_CUSTOM -> R.drawable.palette_24
-                        else -> R.drawable.dashboard_24
-                    },
-                    selected = mode == currentMode
-                )
-            }
-
-            showSwitchlyOptionDialog(
-                title = getString(R.string.pref_home_layout_mode_title),
-                options = options
-            ) { which ->
-                val mode = modes[which]
-                if (mode == HOME_MODE_CUSTOM) {
-                    sp.edit { putString(KEY_HOME_LAYOUT_MODE, HOME_MODE_CUSTOM) }
-                    refreshHomeLayoutModeValue()
-                    showCustomizeHomeDialog()
-                    return@showSwitchlyOptionDialog
-                }
-                sp.edit {
-                    putString(KEY_HOME_LAYOUT_MODE, mode)
-                    putBoolean(KEY_HOME_LAYOUT_DETAILED, mode == HOME_MODE_ADVANCED)
-                }
+            HomeModeDialogHelper.showHomeLayoutModeDialog(this) {
                 refreshHomeLayoutModeValue()
             }
         }
@@ -773,8 +557,11 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         }
         refreshEmergencyFeatureVisibility()
 
-        switchEnablePairedUids.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-        switchAutoPairOnWrite.isChecked = sp.getBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, false)
+        val nfcSupported = AutomationModeStore.isNfcSupported(ctx)
+        switchEnablePairedUids.isChecked =
+            nfcSupported && sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+        switchAutoPairOnWrite.isChecked =
+            nfcSupported && sp.getBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, false)
 
         fun modeLabel(mode: AutomationModeStore.Mode): String = when (mode) {
             AutomationModeStore.Mode.SCHEDULE -> getString(R.string.pref_mode_schedule_title)
@@ -798,17 +585,18 @@ open class ToggleOptionsActivity : AppCompatActivity() {
 
         fun applyControlModeSelection(mode: AutomationModeStore.Mode, userInitiated: Boolean) {
             AutomationModeStore.setMode(ctx, mode)
+            val appliedMode = AutomationModeStore.getMode(ctx)
 
             ignoreControlModeListener = true
-            switchModeSchedule.isChecked = mode == AutomationModeStore.Mode.SCHEDULE
-            switchModeNfc.isChecked = mode == AutomationModeStore.Mode.NFC
-            switchModeQr.isChecked = mode == AutomationModeStore.Mode.QR
-            switchModeBarcode.isChecked = mode == AutomationModeStore.Mode.BARCODE
-            switchModeMixed.isChecked = mode == AutomationModeStore.Mode.MIXED
+            switchModeSchedule.isChecked = appliedMode == AutomationModeStore.Mode.SCHEDULE
+            switchModeNfc.isChecked = appliedMode == AutomationModeStore.Mode.NFC
+            switchModeQr.isChecked = appliedMode == AutomationModeStore.Mode.QR
+            switchModeBarcode.isChecked = appliedMode == AutomationModeStore.Mode.BARCODE
+            switchModeMixed.isChecked = appliedMode == AutomationModeStore.Mode.MIXED
             ignoreControlModeListener = false
 
-            val showMixedOnly = mode == AutomationModeStore.Mode.MIXED
-            val isNfc = mode == AutomationModeStore.Mode.NFC
+            val showMixedOnly = appliedMode == AutomationModeStore.Mode.MIXED
+            val isNfc = appliedMode == AutomationModeStore.Mode.NFC
             val showControlMethods = activeSectionFilter == null || activeSectionFilter == SECTION_BLOCKING
             val showAccessWhileActive = activeSectionFilter == null || activeSectionFilter == SECTION_OTHER
 
@@ -858,6 +646,15 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         }
 
         fun onControlModeRowClicked(target: AutomationModeStore.Mode) {
+            if (!AutomationModeStore.isModeSupported(ctx, target)) {
+                Toast.makeText(
+                    ctx,
+                    getString(R.string.mode_not_supported_on_device),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+
             val active = AutomationModeStore.getMode(ctx)
             if (target == active) {
                 Toast.makeText(
@@ -900,6 +697,17 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 }
 
                 if (checked && active != mode) {
+                    if (!AutomationModeStore.isModeSupported(ctx, mode)) {
+                        ignoreControlModeListener = true
+                        sw.isChecked = false
+                        ignoreControlModeListener = false
+                        Toast.makeText(
+                            ctx,
+                            getString(R.string.mode_not_supported_on_device),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@setOnCheckedChangeListener
+                    }
                     if (!canChangeControlMode()) {
                         ignoreControlModeListener = true
                         applyControlModeSelection(active, userInitiated = false)
@@ -928,13 +736,19 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (canEditMixedChannels()) switchMixedAllowSchedule.toggle()
         }
         rowMixedAllowNfc.setOnClickListener {
-            if (canEditMixedChannels()) switchMixedAllowNfc.toggle()
+            if (AutomationModeStore.isNfcSupported(ctx) && canEditMixedChannels()) {
+                switchMixedAllowNfc.toggle()
+            }
         }
         rowMixedAllowQr.setOnClickListener {
-            if (canEditMixedChannels()) switchMixedAllowQr.toggle()
+            if (AutomationModeStore.isCameraSupported(ctx) && canEditMixedChannels()) {
+                switchMixedAllowQr.toggle()
+            }
         }
         rowMixedAllowBarcode.setOnClickListener {
-            if (canEditMixedChannels()) switchMixedAllowBarcode.toggle()
+            if (AutomationModeStore.isCameraSupported(ctx) && canEditMixedChannels()) {
+                switchMixedAllowBarcode.toggle()
+            }
         }
         rowMixedAllowButton.setOnClickListener {
             if (canEditMixedChannels()) switchMixedAllowButton.toggle()
@@ -946,7 +760,9 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (canEditActiveAccess()) switchMixedAllowProfileSwitching.toggle()
         }
         rowMixedAllowNfcTagWriting.setOnClickListener {
-            if (canEditActiveAccess()) switchMixedAllowNfcTagWriting.toggle()
+            if (AutomationModeStore.isNfcSupported(ctx) && canEditActiveAccess()) {
+                switchMixedAllowNfcTagWriting.toggle()
+            }
         }
         rowLockSwitchlyAppAccess.setOnClickListener {
             if (canEditActiveAccess()) switchLockSwitchlyAppAccess.toggle()
@@ -1237,11 +1053,21 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         }
 
         // Blocking master toggles
-        switchEnablePairedUids.setOnCheckedChangeListener { _, isChecked ->
-            sp.edit { putBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, isChecked) }
+        switchEnablePairedUids.setOnCheckedChangeListener { buttonView, isChecked ->
+            val supported = AutomationModeStore.isNfcSupported(ctx)
+            if (isChecked && !supported) {
+                buttonView.isChecked = false
+                return@setOnCheckedChangeListener
+            }
+            sp.edit { putBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, isChecked && supported) }
         }
-        switchAutoPairOnWrite.setOnCheckedChangeListener { _, isChecked ->
-            sp.edit { putBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, isChecked) }
+        switchAutoPairOnWrite.setOnCheckedChangeListener { buttonView, isChecked ->
+            val supported = AutomationModeStore.isNfcSupported(ctx)
+            if (isChecked && !supported) {
+                buttonView.isChecked = false
+                return@setOnCheckedChangeListener
+            }
+            sp.edit { putBoolean(BlockingToggleKeys.KEY_AUTO_PAIR_ON_WRITE, isChecked && supported) }
         }
         switchShowQuickActions.setOnCheckedChangeListener { _, isChecked ->
             sp.edit { putBoolean(KEY_SHOW_QUICK_ACTIONS, isChecked) }
@@ -1332,13 +1158,22 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             val modeSwitchingAllowed = !SwitchModeStore.isEnabled(this)
             rowMap.forEach { (key, row) ->
                 val selected = key == mode
+                val supported = AutomationModeStore.isModeSupported(this, key)
                 val baseAlpha = if (selected) 1f else 0.82f
-                row.alpha = if (modeSwitchingAllowed) baseAlpha else (baseAlpha * 0.86f)
+                row.isEnabled = modeSwitchingAllowed && supported
+                row.isClickable = modeSwitchingAllowed && supported
+                row.alpha = when {
+                    !supported -> 0.45f
+                    modeSwitchingAllowed -> baseAlpha
+                    else -> baseAlpha * 0.86f
+                }
             }
             switchMap.forEach { (key, sw) ->
                 val selected = key == mode
-                sw.isEnabled = modeSwitchingAllowed
+                val supported = AutomationModeStore.isModeSupported(this, key)
+                sw.isEnabled = modeSwitchingAllowed && supported
                 sw.alpha = when {
+                    !supported -> 0.45f
                     selected && modeSwitchingAllowed -> 1f
                     !selected && modeSwitchingAllowed -> 0.8f
                     selected -> 0.58f
@@ -1346,7 +1181,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 }
             }
         }
-        refreshControlModeLockHint()
         refreshMixedChannelInteractivity()
         invalidateOptionsMenu()
         applySwitchAccentTints()
@@ -1495,14 +1329,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         cardNfcLockedHint.visibility = if (locked) View.VISIBLE else View.GONE
     }
 
-    private fun refreshControlModeLockHint() {
-        val locked = SwitchModeStore.isEnabled(this)
-        tvControlModeLockHint.visibility = if (locked) View.VISIBLE else View.GONE
-        if (locked) {
-            tvControlModeLockHint.text = getString(R.string.control_mode_lock_inline_hint)
-        }
-    }
-
     private fun isMixedChannelEditingLocked(): Boolean {
         return SwitchModeStore.isEnabled(this)
     }
@@ -1544,21 +1370,24 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             summaryId = R.id.tvQuickTileSummary,
             chevronId = R.id.ivQuickTileChevron,
             addedKey = KEY_QS_TILE_REQUESTED,
-            defaultSummary = R.string.pref_qs_tile_summary
+            defaultSummary = R.string.pref_qs_tile_summary,
+            supported = true
         )
         updateQuickSettingsTileRow(
             rowId = R.id.rowQrQuickTile,
             summaryId = R.id.tvQrQuickTileSummary,
             chevronId = R.id.ivQrQuickTileChevron,
             addedKey = KEY_QR_QS_TILE_REQUESTED,
-            defaultSummary = R.string.pref_qr_qs_tile_summary
+            defaultSummary = R.string.pref_qr_qs_tile_summary,
+            supported = AutomationModeStore.isCameraSupported(this)
         )
         updateQuickSettingsTileRow(
             rowId = R.id.rowBarcodeQuickTile,
             summaryId = R.id.tvBarcodeQuickTileSummary,
             chevronId = R.id.ivBarcodeQuickTileChevron,
             addedKey = KEY_BARCODE_QS_TILE_REQUESTED,
-            defaultSummary = R.string.pref_barcode_qs_tile_summary
+            defaultSummary = R.string.pref_barcode_qs_tile_summary,
+            supported = AutomationModeStore.isCameraSupported(this)
         )
     }
 
@@ -1567,18 +1396,24 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         summaryId: Int,
         chevronId: Int,
         addedKey: String,
-        defaultSummary: Int
+        defaultSummary: Int,
+        supported: Boolean
     ) {
         val added = isQuickSettingsTileMarkedAdded(addedKey)
         findViewById<View>(rowId)?.apply {
-            isEnabled = !added
-            isClickable = !added
-            alpha = if (added) 0.52f else 1f
+            isEnabled = supported && !added
+            isClickable = supported && !added
+            alpha = if (!supported || added) 0.52f else 1f
         }
         findViewById<TextView>(summaryId)?.setText(
-            if (added) R.string.pref_qs_tile_already_added else defaultSummary
+            when {
+                !supported -> R.string.mode_not_supported_on_device
+                added -> R.string.pref_qs_tile_already_added
+                else -> defaultSummary
+            }
         )
-        findViewById<View>(chevronId)?.visibility = if (added) View.GONE else View.VISIBLE
+        findViewById<View>(chevronId)?.visibility =
+            if (!supported || added) View.GONE else View.VISIBLE
     }
 
     private fun refreshMixedChannelInteractivity() {
@@ -1684,6 +1519,37 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             }
         }
 
+        applyHardwareCapability(
+            rowId = R.id.rowMixedAllowNfc,
+            switchId = R.id.switchMixedAllowNfc,
+            supported = AutomationModeStore.isNfcSupported(this)
+        )
+        applyHardwareCapability(
+            rowId = R.id.rowMixedAllowQr,
+            switchId = R.id.switchMixedAllowQr,
+            supported = AutomationModeStore.isCameraSupported(this)
+        )
+        applyHardwareCapability(
+            rowId = R.id.rowMixedAllowBarcode,
+            switchId = R.id.switchMixedAllowBarcode,
+            supported = AutomationModeStore.isCameraSupported(this)
+        )
+        applyHardwareCapability(
+            rowId = R.id.rowMixedAllowNfcTagWriting,
+            switchId = R.id.switchMixedAllowNfcTagWriting,
+            supported = AutomationModeStore.isNfcSupported(this)
+        )
+        applyHardwareCapability(
+            rowId = R.id.rowEnablePairedUids,
+            switchId = R.id.switchEnablePairedUids,
+            supported = AutomationModeStore.isNfcSupported(this)
+        )
+        applyHardwareCapability(
+            rowId = R.id.rowAutoPairOnWrite,
+            switchId = R.id.switchAutoPairOnWrite,
+            supported = AutomationModeStore.isNfcSupported(this)
+        )
+
         // Quick Settings tile setup rows are safe to change while Switchly is active.
         // They only add/remove Android tiles and do not weaken the current blocking state.
         listOf(
@@ -1727,6 +1593,24 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (hasVisible) View.VISIBLE else View.GONE
 
         refreshRowDividers()
+    }
+
+    private fun applyHardwareCapability(rowId: Int, switchId: Int, supported: Boolean) {
+        if (supported) return
+
+        findViewById<View>(rowId)?.apply {
+            isEnabled = false
+            isClickable = false
+            alpha = 0.45f
+        }
+        val wasIgnoring = ignoreMixedChannelListener
+        ignoreMixedChannelListener = true
+        findViewById<SwitchMaterial>(switchId)?.apply {
+            isChecked = false
+            isEnabled = false
+            alpha = 0.45f
+        }
+        ignoreMixedChannelListener = wasIgnoring
     }
 
     private fun isRowVisible(viewId: Int): Boolean {
@@ -1903,7 +1787,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             R.id.tvManageOtherBlockingFeaturesTitle,
             R.id.tvControlModeSection,
             R.id.tvControlModeSectionSummary,
-            R.id.tvControlModeLockHint,
             R.id.cardControlMode,
             R.id.tvMixedChannelsSection,
             R.id.tvMixedChannelsSectionSummary,
@@ -1932,7 +1815,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 add(R.id.cardNfcLockedHint)
                 add(R.id.tvControlModeSection)
                 add(R.id.tvControlModeSectionSummary)
-                add(R.id.tvControlModeLockHint)
                 add(R.id.cardControlMode)
                 add(R.id.tvMixedChannelsSection)
                 add(R.id.tvMixedChannelsSectionSummary)
@@ -1949,9 +1831,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 R.id.cardSafetyControls
             )
             SECTION_DISPLAY -> setOf(
-                R.id.tvDisplayHomeSection,
-                R.id.tvDisplayHomeSectionSummary,
-                R.id.cardDisplayHomeControls,
                 R.id.tvDisplayTilesSection,
                 R.id.tvDisplayTilesSectionSummary,
                 R.id.cardDisplayTileControls,
@@ -1982,7 +1861,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             SECTION_BLOCKING -> R.id.tvControlModeSection
             SECTION_FEATURES -> R.id.tvAdditionalFeaturesSection
             SECTION_SAFETY -> R.id.tvSafetyControlsSection
-            SECTION_DISPLAY -> R.id.tvDisplayHomeSection
+            SECTION_DISPLAY -> R.id.tvDisplayTilesSection
             SECTION_OTHER -> R.id.tvMixedChannelsSection
             else -> null
         }
@@ -2005,7 +1884,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val anchorId = when (section) {
             SECTION_FEATURES -> R.id.tvAdditionalFeaturesSection
             SECTION_SAFETY -> R.id.tvSafetyControlsSection
-            SECTION_DISPLAY -> R.id.tvDisplayHomeSection
+            SECTION_DISPLAY -> R.id.tvDisplayTilesSection
             SECTION_BLOCKING -> R.id.tvControlModeSection
             SECTION_OTHER -> R.id.tvMixedChannelsSection
             else -> null
@@ -2086,6 +1965,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         const val KEY_HOME_CUSTOM_BLOCKED_NOW = "home_custom_blocked_now"
         const val KEY_HOME_CUSTOM_BLOCKED_APPS = "home_custom_blocked_apps"
         const val KEY_HOME_CUSTOM_PROFILE_DROPDOWN = "home_custom_profile_dropdown"
+        const val KEY_HOME_CUSTOM_ORDER = "home_custom_order"
         const val KEY_QS_TILE_REQUESTED = "pref_qs_tile_requested"
         const val KEY_QR_QS_TILE_REQUESTED = "pref_qr_qs_tile_requested"
         const val KEY_BARCODE_QS_TILE_REQUESTED = "pref_barcode_qs_tile_requested"

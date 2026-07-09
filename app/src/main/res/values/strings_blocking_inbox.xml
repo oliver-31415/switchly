@@ -17,13 +17,20 @@
     <string name="blocked_inbox_field_big_text">Big text</string>
 
     <!-- ====================================================== -->
+    <!-- Activity hub shortcut -->
+    <!-- ====================================================== -->
+    <string name="tools_blocked_notifications_summary">Review notifications that Switchly blocked</string>
+
+    <!-- ====================================================== -->
     <!-- Filter and sort -->
     <!-- ====================================================== -->
     <string name="blocked_inbox_filter_app">Filter by app</string>
     <string name="blocked_inbox_filter">Filter</string>
     <string name="blocked_inbox_filter_menu_title">Filter &amp; sort</string>
     <string name="blocked_inbox_filter_all_apps">All apps</string>
-    <string name="blocked_inbox_filter_subtitle_fmt">Filter: %1$s</string>
+    <string name="blocked_inbox_filter_tag_fmt">App: %1$s</string>
+    <string name="blocked_inbox_apply_filters">Apply</string>
+    <string name="blocked_inbox_clear_filters">Clear</string>
     <string name="blocked_inbox_sort_title">Sort blocked notifications</string>
     <string name="blocked_inbox_sort_newest">Newest first</string>
     <string name="blocked_inbox_sort_oldest">Oldest first</string>
@@ -35,11 +42,6 @@
     <plurals name="blocked_inbox_delete_selected_confirm_fmt">
         <item quantity="one">Delete %1$d selected notification?</item>
         <item quantity="other">Delete %1$d selected notifications?</item>
-    </plurals>
-    <string name="blocked_inbox_select_mode_subtitle">Select notifications</string>
-    <plurals name="blocked_inbox_select_count_fmt">
-        <item quantity="one">%1$d selected</item>
-        <item quantity="other">%1$d selected</item>
     </plurals>
     <string name="select">Select</string>
 
@@ -53,6 +55,5 @@
     <!-- ====================================================== -->
     <string name="blocked_inbox_empty_title">No blocked notifications yet</string>
     <string name="blocked_inbox_empty_body">Blocked notifications will appear here while notification blocking is active.</string>
-    <string name="blocked_inbox_chip_all_apps">All apps</string>
 
 </resources>

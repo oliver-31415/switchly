@@ -58,6 +58,28 @@ object WebUsageRepo {
         return getSummary(ctx, days = days, topN = topN)
     }
 
+    fun getDateRangeSummary(ctx: Context, startMs: Long, endMs: Long, topN: Int = 20): UsageSummary {
+        val totalsByDomain = WebUsageStore.getUsageMsMapForDateRange(ctx, startMs, endMs)
+        if (totalsByDomain.isEmpty()) return UsageSummary(0L, emptyList())
+
+        val totalAll = totalsByDomain.values.sum().coerceAtLeast(1L)
+        val icon = ContextCompat.getDrawable(ctx, R.drawable.language_24)
+        val top = totalsByDomain.entries
+            .sortedByDescending { it.value }
+            .take(topN)
+            .map { (domain, ms) ->
+                AppUsage(
+                    packageName = domain,
+                    label = domain,
+                    icon = icon,
+                    timeMs = ms,
+                    percent = (ms.toFloat() / totalAll.toFloat()).coerceIn(0f, 1f)
+                )
+            }
+
+        return UsageSummary(totalTimeMs = totalsByDomain.values.sum(), topApps = top)
+    }
+
     fun getOverallSummary(ctx: Context, topN: Int = 20): UsageSummary {
         WebUsageStore.flush(ctx)
         val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx)

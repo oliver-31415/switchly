@@ -14,6 +14,13 @@
     <string name="empty_action_add_first_schedule">Add first schedule</string>
 
     <!-- ====================================================== -->
+    <!-- Rules hub shortcut -->
+    <!-- ====================================================== -->
+    <string name="tools_schedules_title">Schedules</string>
+    <string name="tools_schedules_summary">Create and manage automatic time, Wi-Fi, Bluetooth, and location actions</string>
+    <string name="toast_manage_schedules_requires_enabled">Enable schedule control first.</string>
+
+    <!-- ====================================================== -->
     <!-- Schedule editor -->
     <!-- ====================================================== -->
     <string name="schedules_add">Add schedule</string>
@@ -79,6 +86,15 @@
     <string name="schedules_health_last_exec_never">never</string>
     <string name="schedules_health_generic_issue">There are still some schedule permissions or requirements not set correctly.</string>
     <string name="schedules_health_last_exec_compact">Last schedule execution: %1$s</string>
+    <string name="schedules_insights_title">Schedule insights</string>
+    <string name="schedules_insights_overlap_title">Schedule overlap warning</string>
+    <string name="schedules_insights_overlap_body_fmt">This overlaps with “%1$s”. The later matching schedule may override the active profile.</string>
+    <string name="schedules_insight_active_tag_fmt">Active range: %1$s · %2$s · %3$s-%4$s</string>
+    <string name="schedules_insight_timeline_item_fmt">%1$s - %2$s “%3$s” (%4$s)</string>
+    <string name="schedules_overlap_warning_title">Overlapping schedule</string>
+    <string name="schedules_overlap_warning_message_fmt">This overlaps with “%1$s”. The later schedule may override the active profile.\n\nSave anyway?</string>
+    <string name="schedules_overlap_enabled_message_fmt">This overlaps with “%1$s”. If both schedules match, Switchly uses schedule priority and logs the decision.</string>
+    <string name="schedules_overlap_warning_save">Save anyway</string>
     <string name="schedules_dialog_nfc_lock_hint">NFC lock active: this action cannot change the Switchly state until you unlock with NFC/QR.</string>
     <string name="schedules_nfc_lock_add_dialog_hint">NFC lock is active. Only actions that do not disable Switchly are shown right now.</string>
     <string name="schedules_dialog_nfc_lock_filtered_hint">NFC lock is active. Conflicting disable/toggle actions are hidden.</string>
@@ -120,7 +136,7 @@
     <string name="schedules_action_info_toggle_body">Flips the current state. If Switchly is enabled it disables it, and if it is disabled it enables it.</string>
     <string name="schedules_action_info_enable_disable_body">Enables Switchly for the selected time range, then disables it again at the end.</string>
     <string name="schedules_action_info_disable_enable_body">Disables Switchly for the selected time range, then enables it again at the end.</string>
-    <string name="schedules_action_info_tip">Tip: If schedules overlap, the latest action that runs takes priority. Make sure battery/background permissions are allowed so schedule checks can run reliably.</string>
+    <string name="schedules_action_info_tip">Tip: If schedules overlap, Switchly uses the priority below and logs the decision. Make sure battery/background permissions are allowed so schedule checks can run reliably.</string>
 
     <!-- ====================================================== -->
     <!-- Schedule days and groups -->
@@ -183,7 +199,7 @@
     <string name="schedules_location_map_picker_no_selection">Tap on the map to choose a location.</string>
     <string name="schedules_location_map_picker_selected">Selected: %1$s</string>
     <string name="schedules_location_picker_premium_title">Location picker is Premium</string>
-    <string name="schedules_location_picker_premium_message">Location schedules and the visual location picker are part of Switchly Premium. You can still use regular time schedules for free.</string>
+    <string name="schedules_location_picker_premium_message">Unlock location schedules and the visual location picker with Switchly Premium.</string>
     <string name="schedules_location_map_picker_load_failed">The map is taking longer than expected to load. Please check your internet connection, Private DNS, VPN, or ad blocker settings. You can still use search/current location.</string>
 
     <!-- ====================================================== -->
@@ -198,4 +214,5 @@
     <string name="schedules_error_bt_required">Please enter a Bluetooth device name.</string>
     <string name="schedules_error_location_required">Please choose a location first.</string>
 
+    <string name="schedules_priority_info_body">Priority when actions overlap:\n1. Manual/NFC override\n2. Emergency unlock\n3. Temporary actions\n4. Location schedules\n5. Wi-Fi/Bluetooth schedules\n6. Time schedules\n\nIf multiple schedules match, Switchly logs the conflict and applies the winning schedule instead of silently hiding it.</string>
 </resources>

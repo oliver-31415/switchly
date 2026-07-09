@@ -19,18 +19,23 @@
 
 package at.saltyy.switchly.platform.receiver.bluetooth
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.platform.receiver.logic.BluetoothTriggerReceiverLogic
 import at.saltyy.switchly.ui.MainActivity
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 object BluetoothTriggerMonitor {
 
@@ -41,6 +46,10 @@ object BluetoothTriggerMonitor {
     private var listener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     @Volatile private var cachedServiceIntent: Intent? = null
+    private val initialSyncScheduled = AtomicBoolean(false)
+    private val syncExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "SwitchlyBluetoothMonitor").apply { isDaemon = true }
+    }
 
     private fun serviceIntent(context: Context): Intent {
         return cachedServiceIntent ?: synchronized(this) {
@@ -56,12 +65,34 @@ object BluetoothTriggerMonitor {
             listening = true
             val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val l = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-                if (key == KEY_SCHEDULES) sync(ctx)
+                if (key == KEY_SCHEDULES) scheduleSync(ctx)
             }
             listener = l
             sp.registerOnSharedPreferenceChangeListener(l)
         }
-        sync(ctx)
+
+        scheduleSync(ctx)
+    }
+
+    /**
+     * Starting a foreground service directly from Application.onCreate() or a receiver delays service creation until that callback returns, while Android's foreground deadline is already running.
+     * Defer and coalesce the initial sync so the service can be created immediately after the start request.
+     */
+    private fun scheduleSync(context: Context) {
+        val ctx = context.applicationContext
+        if (!initialSyncScheduled.compareAndSet(false, true)) return
+
+        try {
+            syncExecutor.execute {
+                try {
+                    sync(ctx)
+                } finally {
+                    initialSyncScheduled.set(false)
+                }
+            }
+        } catch (_: Throwable) {
+            initialSyncScheduled.set(false)
+        }
     }
 
     private fun sync(context: Context) {
@@ -74,6 +105,12 @@ object BluetoothTriggerMonitor {
 
     private fun startService(context: Context) {
         val ctx = context.applicationContext
+        if (!hasForegroundServicePrerequisites(ctx)) {
+            stopService(ctx)
+            postEnableNotification(ctx)
+            return
+        }
+
         val intent = serviceIntent(ctx)
 
         val started = runCatching {
@@ -83,6 +120,26 @@ object BluetoothTriggerMonitor {
         if (!started) {
             postEnableNotification(ctx)
         }
+    }
+
+    private fun hasForegroundServicePrerequisites(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val hasBluetooth = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!hasBluetooth) return false
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val hasFgsConnectedDevice = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!hasFgsConnectedDevice) return false
+        }
+
+        return true
     }
 
     private fun stopService(context: Context) {
@@ -101,7 +158,11 @@ object BluetoothTriggerMonitor {
                     FALLBACK_CHANNEL_ID,
                     context.getString(R.string.app_name),
                     NotificationManager.IMPORTANCE_LOW
-                )
+                ).apply {
+                    setSound(null, null)
+                    enableVibration(false)
+                    setShowBadge(false)
+                }
             )
         }
 
@@ -119,11 +180,14 @@ object BluetoothTriggerMonitor {
             .setContentIntent(pi)
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setDefaults(0)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
         runCatching { nm.notify(FALLBACK_NOTIF_ID, notif) }
     }
 
-    private const val FALLBACK_CHANNEL_ID = "switchly_fallback_bt"
+    private const val FALLBACK_CHANNEL_ID = "switchly_fallback_bt_silent"
     private const val FALLBACK_NOTIF_ID = 23002
 }

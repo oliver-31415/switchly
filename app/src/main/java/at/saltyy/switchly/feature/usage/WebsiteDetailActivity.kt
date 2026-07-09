@@ -24,6 +24,8 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -38,7 +40,7 @@ import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.WebUsageStore
-import at.saltyy.switchly.databinding.ActivityWebsiteDetailBinding
+import at.saltyy.switchly.databinding.ActivityStatisticsWebsiteUsageDetailBinding
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.theme.AccentColor
@@ -51,11 +53,15 @@ import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.EditingLockGuard
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.text.DateFormat
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
 
@@ -85,17 +91,20 @@ class WebsiteDetailActivity : AppCompatActivity() {
         return locked
     }
 
-    private lateinit var b: ActivityWebsiteDetailBinding
+    private lateinit var b: ActivityStatisticsWebsiteUsageDetailBinding
 
     private var currentRange: Range = Range.TODAY
     private var currentSeries: List<Long> = emptyList()
+    private var customRangeStartMillis: Long? = null
+    private var customRangeEndMillis: Long? = null
+    private var customRangePickerShowing = false
 
-    private enum class Range { TODAY, WEEK, MONTH, YEAR, OVERALL }
+    private enum class Range { TODAY, WEEK, MONTH, YEAR, CUSTOM }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        b = ActivityWebsiteDetailBinding.inflate(layoutInflater)
+        b = ActivityStatisticsWebsiteUsageDetailBinding.inflate(layoutInflater)
         setContentView(b.root)
 
         b.toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
@@ -108,7 +117,10 @@ class WebsiteDetailActivity : AppCompatActivity() {
 
         val domain = intent.getStringExtra(EXTRA_DOMAIN) ?: return
         val label = intent.getStringExtra(EXTRA_LABEL) ?: domain
-        b.toolbar.title = label
+        b.toolbar.title = getString(R.string.website_usage_detail_title)
+        b.detailTitle.text = label
+        b.detailSubtitle.text = getString(R.string.website_usage_detail_subtitle)
+        updateProfileSubtitle()
 
         b.toolbar.setOnMenuItemClickListener { item ->
             if (item.itemId == R.id.action_delete) {
@@ -158,36 +170,62 @@ class WebsiteDetailActivity : AppCompatActivity() {
             }
         }
 
+        val initialCustomStart = intent.getLongExtra(EXTRA_INITIAL_START_MS, -1L)
+        val initialCustomEnd = intent.getLongExtra(EXTRA_INITIAL_END_MS, -1L)
+        if (initialCustomStart > 0L && initialCustomEnd >= initialCustomStart) {
+            customRangeStartMillis = initialCustomStart
+            customRangeEndMillis = initialCustomEnd
+        }
+
         // If opened from a specific Stats range, default the chart to the most relevant view.
-        val initialRange = when (intent.getStringExtra(EXTRA_INITIAL_RANGE)) {
+        val requestedInitialRange = when (intent.getStringExtra(EXTRA_INITIAL_RANGE)) {
             RANGE_TODAY -> Range.TODAY
             RANGE_MONTH -> Range.MONTH
             RANGE_YEAR -> Range.YEAR
-            RANGE_OVERALL -> Range.OVERALL
+            RANGE_CUSTOM -> Range.CUSTOM
             else -> Range.WEEK
+        }
+        val initialRange = if (ensureRangeAllowed(requestedInitialRange, showGate = false)) {
+            requestedInitialRange
+        } else {
+            Range.TODAY
         }
 
         setWeekdayLabels()
+        configureRangeFilterButtons()
 
         b.toggleRange.check(when (initialRange) {
             Range.TODAY -> b.btnRangeToday.id
             Range.MONTH -> b.btnRangeMonth.id
             Range.YEAR -> b.btnRangeYear.id
-            Range.OVERALL -> b.btnRangeOverall.id
+            Range.CUSTOM -> b.btnRangeCustom.id
             else -> b.btnRangeWeek.id
         })
         setupChartInteractions(label)
 
         b.toggleRange.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
+            if (checkedId == b.btnRangeCustom.id) {
+                showCustomRangePicker(domain)
+                return@addOnButtonCheckedListener
+            }
             val range = when (checkedId) {
                 b.btnRangeToday.id -> Range.TODAY
                 b.btnRangeMonth.id -> Range.MONTH
                 b.btnRangeYear.id -> Range.YEAR
-                b.btnRangeOverall.id -> Range.OVERALL
                 else -> Range.WEEK
             }
+            if (!ensureRangeAllowed(range)) {
+                b.toggleRange.check(chipIdForRange(currentRange))
+                return@addOnButtonCheckedListener
+            }
             applyRange(domain, range)
+        }
+        b.btnClearCustomRange.setOnClickListener {
+            customRangeStartMillis = null
+            customRangeEndMillis = null
+            b.toggleRange.check(b.btnRangeToday.id)
+            applyRange(domain, Range.TODAY)
         }
 
         applyRange(domain, initialRange)
@@ -198,6 +236,7 @@ class WebsiteDetailActivity : AppCompatActivity() {
         val domain = intent.getStringExtra(EXTRA_DOMAIN) ?: return
         WebUsageStore.flush(this)
         refreshDailyLimit(domain)
+        updateProfileSubtitle()
         applyRange(domain, currentRange())
         syncWebsiteEditingUi()
     }
@@ -207,13 +246,14 @@ class WebsiteDetailActivity : AppCompatActivity() {
             b.btnRangeToday.id -> Range.TODAY
             b.btnRangeMonth.id -> Range.MONTH
             b.btnRangeYear.id -> Range.YEAR
-            b.btnRangeOverall.id -> Range.OVERALL
+            b.btnRangeCustom.id -> Range.CUSTOM
             else -> Range.WEEK
         }
     }
 
     private fun applyRange(domain: String, range: Range) {
         currentRange = range
+        updateCustomRangeSummary()
         when (range) {
             Range.TODAY -> {
                 WebUsageStore.flush(this)
@@ -281,26 +321,192 @@ class WebsiteDetailActivity : AppCompatActivity() {
                 )
             }
 
-            Range.OVERALL -> {
-                val perMonth = getOverallMonthsTotals(domain, maxMonths = 36)
-                currentSeries = perMonth
+            Range.CUSTOM -> {
+                val start = customRangeStartMillis ?: startOfTodayMillis()
+                val end = customRangeEndMillis ?: System.currentTimeMillis()
+                val perDay = WebUsageStore.getUsageMsForDateRange(this, domain, start, end)
+                currentSeries = perDay
                 b.chart.visibility = View.GONE
                 b.weekdayRow.visibility = View.GONE
                 b.lineChart.visibility = View.VISIBLE
-                b.lineChart.setValues(perMonth)
-                b.lineChart.setXAxisLabels(buildLastNMonthLabels(perMonth.size))
+                b.lineChart.setValues(perDay)
+                b.lineChart.setXAxisLabels(buildCustomDateLabels(start, perDay.size))
 
-                val totalRaw = WebUsageStore.getUsageMsAllTime(this, domain)
-                val seriesSum = perMonth.sum()
-                val total = if (totalRaw == 0L && seriesSum > 0L) seriesSum else totalRaw
                 b.rangeTotal.text = getString(
                     R.string.usage_kv_fmt,
-                    getString(R.string.usage_overall_total),
-                    StatsFormat.prettyMsWithSeconds(total)
+                    getString(R.string.activity_history_range_custom),
+                    StatsFormat.prettyMsWithSeconds(perDay.sum())
                 )
             }
         }
+        renderWebsiteTimeline(domain, range)
     }
+
+    private fun configureRangeFilterButtons() {
+        listOf(b.btnRangeToday, b.btnRangeWeek, b.btnRangeMonth, b.btnRangeYear).forEach { button ->
+            configureRangeButton(button, custom = false)
+        }
+        configureRangeButton(b.btnRangeCustom, custom = true)
+    }
+
+    private fun configureRangeButton(button: MaterialButton, custom: Boolean) {
+        button.minWidth = 0
+        button.minimumWidth = 0
+        button.minHeight = dp(40)
+        button.minimumHeight = dp(40)
+        button.insetTop = 0
+        button.insetBottom = 0
+        button.cornerRadius = dp(4)
+        button.iconPadding = 0
+        button.gravity = android.view.Gravity.CENTER
+        button.setAllCaps(false)
+        button.setPadding(if (custom) dp(8) else dp(4), 0, if (custom) dp(8) else dp(4), 0)
+        button.layoutParams = (button.layoutParams as LinearLayout.LayoutParams).apply {
+            width = if (custom) dp(44) else 0
+            height = dp(40)
+            weight = if (custom) 0f else 1f
+        }
+    }
+
+    private fun updateProfileSubtitle() {
+        b.toolbar.subtitle = ProfileStore.getCurrent(this)?.let {
+            getString(R.string.profile_active_fmt, it)
+        }
+    }
+
+    private fun updateCustomRangeSummary() {
+        val start = customRangeStartMillis
+        val end = customRangeEndMillis
+        if (currentRange != Range.CUSTOM || start == null || end == null) {
+            b.customRangeSummary.visibility = View.GONE
+            return
+        }
+        b.customRangeSummary.visibility = View.VISIBLE
+        val fmt = DateFormat.getDateInstance(DateFormat.SHORT)
+        b.customRangeValue.text = getString(
+            R.string.activity_history_range_custom_value,
+            fmt.format(Date(start)),
+            fmt.format(Date(end))
+        )
+    }
+
+    private fun ensureRangeAllowed(range: Range, showGate: Boolean = true): Boolean {
+        if (range == Range.TODAY || StatsPremiumGate.canUseExtendedStats(this)) return true
+        if (showGate) StatsPremiumGate.show(this)
+        return false
+    }
+
+    private fun chipIdForRange(range: Range): Int {
+        return when (range) {
+            Range.TODAY -> b.btnRangeToday.id
+            Range.WEEK -> b.btnRangeWeek.id
+            Range.MONTH -> b.btnRangeMonth.id
+            Range.YEAR -> b.btnRangeYear.id
+            Range.CUSTOM -> b.btnRangeCustom.id
+        }
+    }
+
+    private fun showCustomRangePicker(domain: String) {
+        if (!ensureRangeAllowed(Range.CUSTOM)) {
+            b.toggleRange.check(chipIdForRange(currentRange))
+            return
+        }
+        if (customRangePickerShowing || supportFragmentManager.isStateSaved) return
+        customRangePickerShowing = true
+        val now = System.currentTimeMillis()
+        val currentStart = customRangeStartMillis ?: startOfTodayMillis()
+        val currentEnd = customRangeEndMillis ?: now
+        val picker = MaterialDatePicker.Builder.dateRangePicker()
+            .setTheme(com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialCalendar)
+            .setTitleText(R.string.activity_history_range_custom)
+            .setSelection(androidx.core.util.Pair(localDayToDatePickerUtcMillis(currentStart), localDayToDatePickerUtcMillis(currentEnd)))
+            .build()
+        picker.addOnPositiveButtonClickListener { selection ->
+            val startUtc = selection.first ?: return@addOnPositiveButtonClickListener
+            val endUtc = selection.second ?: startUtc
+            customRangeStartMillis = datePickerUtcMillisToLocalDayStart(minOf(startUtc, endUtc))
+            customRangeEndMillis = datePickerUtcMillisToLocalDayEnd(maxOf(startUtc, endUtc))
+            b.toggleRange.check(b.btnRangeCustom.id)
+            applyRange(domain, Range.CUSTOM)
+        }
+        picker.addOnDismissListener { customRangePickerShowing = false }
+        runCatching { picker.show(supportFragmentManager, "website_usage_detail_custom_range") }
+            .onSuccess { UsageDatePickerAccentTint.apply(this, picker) }
+            .onFailure { customRangePickerShowing = false }
+    }
+
+    private fun renderWebsiteTimeline(domain: String, range: Range) {
+        clearWebsiteTimelineRows()
+        val entries = when (range) {
+            Range.TODAY -> listOf(getString(R.string.usage_today) to WebUsageStore.getUsageMsToday(this, domain))
+            Range.WEEK -> dailyWebsiteTimeline(domain, 7)
+            Range.MONTH -> dailyWebsiteTimeline(domain, daysSinceStartOfMonth()).takeLast(14)
+            Range.YEAR -> monthlyWebsiteTimeline(domain).takeLast(12)
+            Range.CUSTOM -> customWebsiteTimeline(domain).takeLast(14)
+        }.filter { it.second > 0L }
+
+        b.websiteTimelineEmpty.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
+        if (entries.isEmpty()) {
+            b.websiteTimelineEmpty.text = getString(R.string.website_timeline_empty)
+            return
+        }
+
+        entries.asReversed().forEach { (label, value) ->
+            b.websiteTimelineContainer.addView(TextView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp(8) }
+                text = getString(R.string.website_timeline_row, label, StatsFormat.prettyMsWithSeconds(value))
+                setTextColor(MaterialColors.getColor(this@WebsiteDetailActivity, com.google.android.material.R.attr.colorOnSurface, Color.WHITE))
+                textSize = 13f
+                alpha = 0.86f
+            })
+        }
+    }
+
+    private fun dailyWebsiteTimeline(domain: String, days: Int): List<Pair<String, Long>> {
+        val values = WebUsageStore.getUsageMsForLastNDays(this, domain, days.coerceAtLeast(1))
+        val fmt = SimpleDateFormat("EEE, d MMM", Locale.getDefault())
+        val cal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -(values.size - 1)) }
+        return values.map { value ->
+            val label = fmt.format(cal.time)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+            label to value
+        }
+    }
+
+    private fun monthlyWebsiteTimeline(domain: String): List<Pair<String, Long>> {
+        val values = getThisYearMonthsTotals(domain)
+        val months = DateFormatSymbols.getInstance().shortMonths
+        return values.mapIndexed { index, value ->
+            months.getOrNull(index).orEmpty().trim().ifBlank { (index + 1).toString() } to value
+        }
+    }
+
+    private fun customWebsiteTimeline(domain: String): List<Pair<String, Long>> {
+        val start = customRangeStartMillis ?: startOfTodayMillis()
+        val end = customRangeEndMillis ?: System.currentTimeMillis()
+        val values = WebUsageStore.getUsageMsForDateRange(this, domain, start, end)
+        val labels = buildCustomDateLabels(start, values.size)
+        return labels.zip(values)
+    }
+
+    private fun formatMonthKey(monthKey: Int): String {
+        val year = monthKey / 100
+        val month = (monthKey % 100).coerceIn(1, 12)
+        val label = DateFormatSymbols.getInstance().shortMonths.getOrNull(month - 1).orEmpty().trim().ifBlank { month.toString() }
+        return "$label $year"
+    }
+
+    private fun clearWebsiteTimelineRows() {
+        val childCount = b.websiteTimelineContainer.childCount
+        if (childCount > 2) {
+            b.websiteTimelineContainer.removeViews(2, childCount - 2)
+        }
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private fun buildDayIndexLabels(count: Int): List<String> {
         return (1..count.coerceAtLeast(0)).map { it.toString() }
@@ -431,7 +637,9 @@ class WebsiteDetailActivity : AppCompatActivity() {
         val pct = if (total > 0L) (valueMs.toDouble() * 100.0/total.toDouble()) else 0.0
 
         val whenLabel = when (range) {
-            Range.YEAR, Range.OVERALL -> formatMonthLabel(index, series.size)
+            Range.YEAR -> formatMonthLabel(index, series.size)
+            Range.CUSTOM -> buildCustomDateLabels(customRangeStartMillis ?: startOfTodayMillis(), series.size).getOrNull(index)
+                ?: formatDayLabel(index, series.size)
             else -> formatDayLabel(index, series.size)
         }
 
@@ -466,6 +674,47 @@ class WebsiteDetailActivity : AppCompatActivity() {
         return fmt.format(cal.time)
     }
 
+    private fun buildCustomDateLabels(startMs: Long, count: Int): List<String> {
+        val fmt = SimpleDateFormat("d MMM", Locale.getDefault())
+        val cal = Calendar.getInstance().apply { timeInMillis = startMs }
+        return (0 until count.coerceAtLeast(0)).map {
+            fmt.format(cal.time).also { cal.add(Calendar.DAY_OF_YEAR, 1) }
+        }
+    }
+
+    private fun startOfTodayMillis(): Long = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
+    private fun localDayToDatePickerUtcMillis(localMillis: Long): Long {
+        val local = Calendar.getInstance().apply { timeInMillis = localMillis }
+        return Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH))
+        }.timeInMillis
+    }
+
+    private fun datePickerUtcMillisToLocalDayStart(utcMillis: Long): Long {
+        val utc = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMillis }
+        return Calendar.getInstance().apply {
+            clear()
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun datePickerUtcMillisToLocalDayEnd(utcMillis: Long): Long {
+        val utc = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMillis }
+        return Calendar.getInstance().apply {
+            clear()
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH), 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.timeInMillis
+    }
+
     private fun refreshDailyLimit(domain: String) {
         val normalized = DomainBlockStore.normalize(domain) ?: domain
         val isAlways = DomainBlockStore.getDomains(this).contains(normalized)
@@ -493,9 +742,14 @@ class WebsiteDetailActivity : AppCompatActivity() {
                 SwitchlyDialogOption(
                     title = item,
                     iconRes = if (index == items.lastIndex) R.drawable.edit_24 else R.drawable.alarm_24,
-                    selected = index < presets.size && presets[index] == current
+                    selected = if (index < presets.size) {
+                        presets[index] == current
+                    } else {
+                        current !in presets
+                    }
                 )
-            }
+            },
+            confirmSelection = true
         ) { which ->
             if (which == items.lastIndex) {
                 showCustomMinutesInput(domain, label)
@@ -596,6 +850,8 @@ class WebsiteDetailActivity : AppCompatActivity() {
         const val RANGE_WEEK = "week"
         const val RANGE_MONTH = "month"
         const val RANGE_YEAR = "year"
-        const val RANGE_OVERALL = "overall"
+        const val RANGE_CUSTOM = "custom"
+        const val EXTRA_INITIAL_START_MS = "initial_start_ms"
+        const val EXTRA_INITIAL_END_MS = "initial_end_ms"
     }
 }

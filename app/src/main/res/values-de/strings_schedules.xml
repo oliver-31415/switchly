@@ -14,6 +14,13 @@
     <string name="empty_action_add_first_schedule">Ersten Zeitplan hinzufügen</string>
 
     <!-- ====================================================== -->
+    <!-- Rules hub shortcut -->
+    <!-- ====================================================== -->
+    <string name="tools_schedules_title">Zeitpläne</string>
+    <string name="tools_schedules_summary">Automatische Aktionen für Zeit, WLAN, Bluetooth und Standort erstellen und verwalten</string>
+    <string name="toast_manage_schedules_requires_enabled">Zeitplan-Steuerung zuerst aktivieren.</string>
+
+    <!-- ====================================================== -->
     <!-- Schedule editor -->
     <!-- ====================================================== -->
     <string name="schedules_add">Zeitplan hinzufügen</string>
@@ -79,6 +86,15 @@
     <string name="schedules_health_last_exec_never">nie</string>
     <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
     <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>
+    <string name="schedules_insights_title">Zeitplan-Übersicht</string>
+    <string name="schedules_insights_overlap_title">Zeitplan-Überschneidung</string>
+    <string name="schedules_insights_overlap_body_fmt">Überschneidet sich mit „%1$s“. Der später passende Zeitplan kann das aktive Profil überschreiben.</string>
+    <string name="schedules_insight_active_tag_fmt">Aktive Range: %1$s · %2$s · %3$s-%4$s</string>
+    <string name="schedules_insight_timeline_item_fmt">%1$s - %2$s „%3$s“ (%4$s)</string>
+    <string name="schedules_overlap_warning_title">Zeitplan überschneidet sich</string>
+    <string name="schedules_overlap_warning_message_fmt">Das überschneidet sich mit „%1$s“. Der spätere Zeitplan kann das aktive Profil überschreiben.\n\nTrotzdem speichern?</string>
+    <string name="schedules_overlap_enabled_message_fmt">Überschneidet sich mit „%1$s“. Wenn beide Zeitpläne passen, nutzt Switchly die Zeitplan-Priorität und protokolliert die Entscheidung.</string>
+    <string name="schedules_overlap_warning_save">Trotzdem speichern</string>
     <string name="schedules_dialog_nfc_lock_hint">NFC-Sperre aktiv: Diese Aktion kann den Switchly-Status erst nach dem Entsperren per NFC/QR ändern.</string>
     <string name="schedules_nfc_lock_add_dialog_hint">NFC-Sperre ist aktiv. Derzeit werden nur Aktionen angezeigt, die Switchly nicht deaktivieren.</string>
     <string name="schedules_dialog_nfc_lock_filtered_hint">NFC-Sperre ist aktiv. Konfliktierende Deaktivierungs-/Umschaltaktionen sind ausgeblendet.</string>
@@ -120,7 +136,7 @@
     <string name="schedules_action_info_toggle_body">Wechselt Switchly je nach aktuellem Zustand zwischen ein und aus.</string>
     <string name="schedules_action_info_enable_disable_body">Schaltet Switchly zur Startzeit ein und zur Endzeit wieder aus.</string>
     <string name="schedules_action_info_disable_enable_body">Schaltet Switchly zur Startzeit aus und zur Endzeit wieder ein.</string>
-    <string name="schedules_action_info_tip">Tipp: Wenn sich Zeitpläne überschneiden, hat die zuletzt ausgeführte Aktion Vorrang.</string>
+    <string name="schedules_action_info_tip">Tipp: Wenn sich Zeitpläne überschneiden, nutzt Switchly die folgende Priorität und protokolliert die Entscheidung.</string>
 
     <!-- ====================================================== -->
     <!-- Schedule days and groups -->
@@ -183,7 +199,7 @@
     <string name="schedules_location_map_picker_no_selection">Tippe auf die Karte, um einen Standort auszuwählen.</string>
     <string name="schedules_location_map_picker_selected">Ausgewählt: %1$s</string>
     <string name="schedules_location_picker_premium_title">Standortauswahl ist Premium</string>
-    <string name="schedules_location_picker_premium_message">Standortbasierte Zeitpläne und die visuelle Standortauswahl sind Teil von Switchly Premium. Normale Zeitpläne kannst du weiterhin kostenlos nutzen.</string>
+    <string name="schedules_location_picker_premium_message">Schalte standortbasierte Zeitpläne und die visuelle Standortauswahl mit Switchly Premium frei.</string>
     <string name="schedules_location_map_picker_load_failed">Die Karte braucht länger als erwartet zum Laden. Bitte prüfe deine Internetverbindung, Private DNS, VPN- oder Adblocker-Einstellungen. Du kannst weiterhin Suche oder aktuellen Standort verwenden.</string>
 
     <!-- ====================================================== -->
@@ -198,4 +214,5 @@
     <string name="schedules_error_bt_required">Bitte gib einen Bluetooth-Gerätenamen ein.</string>
     <string name="schedules_error_location_required">Bitte wähle zuerst einen Standort aus.</string>
 
+    <string name="schedules_priority_info_body">Priorität bei Überschneidungen:\n1. Manuelle/NFC-Übersteuerung\n2. Notfall-Entsperrung\n3. Temporäre Aktionen\n4. Standort-Zeitpläne\n5. WLAN-/Bluetooth-Zeitpläne\n6. Zeit-Zeitpläne\n\nWenn mehrere Zeitpläne passen, protokolliert Switchly den Konflikt und wendet den Gewinner an, statt ihn still zu verstecken.</string>
 </resources>

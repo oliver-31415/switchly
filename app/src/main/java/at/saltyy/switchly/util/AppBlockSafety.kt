@@ -580,21 +580,23 @@ object AppBlockSafety {
     ): ResolvedDefaults {
         val now = System.currentTimeMillis()
         val cached = cachedResolvedDefaults
-        val cachedIsFresh = cached != null && now - cachedResolvedDefaultsAtMs <= RESOLVED_DEFAULTS_CACHE_TTL_MS
+        val freshCached = cached?.takeIf {
+            now - cachedResolvedDefaultsAtMs <= RESOLVED_DEFAULTS_CACHE_TTL_MS
+        }
 
-        if (includeSlowPackageManagerLookups && cachedIsFresh && cached != null) {
-            return cached
+        if (includeSlowPackageManagerLookups && freshCached != null) {
+            return freshCached
         }
 
         if (!includeSlowPackageManagerLookups) {
             // Hot paths such as AccessibilityService/package sanitizing must not run launcher, dialer, settings, or PackageManager resolver calls. 
-            // Reuse the last slow snapshot  when available, while still refreshing cheap Settings.Secure values.
+            // Reuse fresh resolved values where available, while still refreshing cheap Settings.Secure values.
             return ResolvedDefaults(
                 defaultIme = getDefaultInputMethodPackage(context) ?: cached?.defaultIme,
-                defaultHome = cached?.defaultHome.takeIf { cachedIsFresh },
-                defaultDialer = cached?.defaultDialer.takeIf { cachedIsFresh },
+                defaultHome = freshCached?.defaultHome,
+                defaultDialer = freshCached?.defaultDialer,
                 defaultAssistant = getDefaultAssistantPackage(context) ?: cached?.defaultAssistant,
-                settingsPackage = cached?.settingsPackage.takeIf { cachedIsFresh }
+                settingsPackage = freshCached?.settingsPackage
             )
         }
 

@@ -109,7 +109,7 @@ enum class BackupCategory(
     STATISTICS(
         id = "statistics",
         displayName = "Statistics/counters",
-        description = "Usage, block, runtime and scan counters",
+        description = "Usage, block, runtime, scan counters and activity history",
         sensitive = true
     ),
     APP_PREFERENCES(
@@ -204,6 +204,16 @@ object BackupSelectionStore {
 object BackupCategoryFilter {
     const val FIELD_INCLUDED_CATEGORIES = "included_categories"
     const val FIELD_IS_PARTIAL_BACKUP = "partial_backup"
+    private const val FIELD_BACKUP_SCHEMA_VERSION = "backup_schema_version"
+    private const val FIELD_CREATED_WITH_VERSION = "created_with_version"
+    private const val FIELD_CREATED_WITH_VERSION_CODE = "created_with_version_code"
+    private const val FIELD_CREATED_AT = "created_at"
+    private const val FIELD_PREFS = "prefs"
+    private const val FIELD_SWITCHLY_PREFS = "switchly_prefs"
+    private const val FIELD_STATS = "stats"
+    private const val FIELD_SCHEDULES_PREFS = "schedules_prefs"
+    private const val FIELD_UI_HINTS_PREFS = "ui_hints_prefs"
+    private const val FIELD_WIFI_RULES_PREFS = "wifi_rules_prefs"
 
     fun includedCategoryIdsFromPayload(payload: Map<*, *>): Set<String>? {
         val raw = payload[FIELD_INCLUDED_CATEGORIES] ?: return null
@@ -219,11 +229,41 @@ object BackupCategoryFilter {
         else -> includedCategoryIdsFromPayload(payload)?.let { !BackupSelection.fromIds(it).isFull } ?: false
     }
 
+    fun filterPayloadForRestore(payload: Map<*, *>, selection: BackupSelection): Map<String, Any?> {
+        val prefsMap = filterDefaultPrefs(stringKeyMap(payload[FIELD_PREFS]), selection)
+        val internalMap = filterInternalPrefs(stringKeyMap(payload[FIELD_SWITCHLY_PREFS]), selection)
+        val schedulesMap = filterSchedulesPrefs(stringKeyMap(payload[FIELD_SCHEDULES_PREFS]), selection)
+        val uiHintsMap = filterUiHintsPrefs(stringKeyMap(payload[FIELD_UI_HINTS_PREFS]), selection)
+        val wifiRulesMap = filterWifiRulesPrefs(stringKeyMap(payload[FIELD_WIFI_RULES_PREFS]), selection)
+        val statsMap = filterStats(stringKeyMap(payload[FIELD_STATS]), selection)
+
+        return mapOf(
+            FIELD_BACKUP_SCHEMA_VERSION to payload[FIELD_BACKUP_SCHEMA_VERSION],
+            FIELD_CREATED_WITH_VERSION to payload[FIELD_CREATED_WITH_VERSION],
+            FIELD_CREATED_WITH_VERSION_CODE to payload[FIELD_CREATED_WITH_VERSION_CODE],
+            FIELD_CREATED_AT to payload[FIELD_CREATED_AT],
+            FIELD_PREFS to prefsMap,
+            FIELD_SWITCHLY_PREFS to internalMap,
+            FIELD_STATS to statsMap,
+            FIELD_SCHEDULES_PREFS to schedulesMap,
+            FIELD_UI_HINTS_PREFS to uiHintsMap,
+            FIELD_WIFI_RULES_PREFS to wifiRulesMap,
+            FIELD_INCLUDED_CATEGORIES to selection.categoryIds.toList().sorted(),
+            FIELD_IS_PARTIAL_BACKUP to !selection.isFull,
+        )
+    }
+
     fun filterDefaultPrefs(src: Map<String, Any?>, selection: BackupSelection): Map<String, Any?> =
         src.filterKeys { key -> selection.matchesAny(categoriesForDefaultPrefsKey(key)) }
 
     fun filterInternalPrefs(src: Map<String, Any?>, selection: BackupSelection): Map<String, Any?> =
         src.filterKeys { key -> selection.matchesAny(categoriesForInternalPrefsKey(key)) }
+
+    fun filterUiHintsPrefs(src: Map<String, Any?>, selection: BackupSelection): Map<String, Any?> =
+        src.filterKeys { key -> selection.matchesAny(categoriesForUiHintsPrefsKey(key)) }
+
+    fun filterWifiRulesPrefs(src: Map<String, Any?>, selection: BackupSelection): Map<String, Any?> =
+        if (selection.includes(BackupCategory.WIFI_SCHEDULES)) src else emptyMap()
 
     fun filterStats(src: Map<String, Any?>, selection: BackupSelection): Map<String, Any?> =
         if (selection.includes(BackupCategory.STATISTICS)) src else emptyMap()
@@ -316,29 +356,80 @@ object BackupCategoryFilter {
             key.startsWith("uninstall_friction")
 
     private fun categoriesForDefaultPrefsKey(key: String): Set<BackupCategory> = when {
-        key.startsWith("usage_limit_reset__") -> setOf(BackupCategory.BLOCKED_APPS)
+        key.startsWith("usage_limit_reset__") ||
+            key.startsWith("usage_limit_min__") ||
+            key.startsWith("usage_limit_ever__") ||
+            key.startsWith("session_limit_min__") ||
+            key.startsWith("session_limit_ever__") ||
+            key.startsWith("attempt_limit__") ||
+            key.startsWith("attempt_limit_ever__") -> setOf(BackupCategory.BLOCKED_APPS)
 
         isNotificationBlockingPrefsKey(key) -> setOf(BackupCategory.NOTIFICATION_BLOCKING)
 
-        isInAppBlockingPrefsKey(key) -> setOf(BackupCategory.IN_APP_BLOCKING)
+        isInAppBlockingPrefsKey(key) ||
+            key.startsWith("inapp_limit_min__") ||
+            key.startsWith("surf_rule__") ||
+            key.startsWith("surface_limit_") -> setOf(BackupCategory.IN_APP_BLOCKING)
 
         isWebsiteBrowserSettingsKey(key) -> setOf(BackupCategory.WEBSITE_BROWSER_SETTINGS)
 
         isStrictProtectionPrefsKey(key) -> setOf(BackupCategory.STRICT_PROTECTION)
 
-        key.startsWith("usage_") ||
+        key.startsWith("usage_limit_session_runtime__") ||
+            key.startsWith("usage_") ||
             key.startsWith("blocked_") ||
             key.startsWith("runtime_") ||
             key.startsWith("profile_usage_") ||
-            key.startsWith("web_usage_") -> setOf(BackupCategory.STATISTICS)
+            key.startsWith("web_usage_") ||
+            key.startsWith("surf_usage_day_") ||
+            key.startsWith("surface_usage_") ||
+            key.startsWith("open_count_") ||
+            key.startsWith("limit_hit_") ||
+            key.startsWith("switchly_runtime_ms_") ||
+            key.startsWith("switchly_active_") ||
+            key == "switch_mode_active_since_ms" ||
+            key == "switch_mode_limit_session_generation" ||
+            key.startsWith("emergency_unlock_count_") ||
+            key.startsWith("nfc_scan_count_") ||
+            key.startsWith("qr_scan_count_") ||
+            key.startsWith("barcode_scan_count_") ||
+            key.startsWith("temp_enable_count_") ||
+            key.startsWith("scan_code_last_used_") ||
+            key.startsWith("scan_code_count_") ||
+            key.startsWith("qr_temp_last_") ||
+            key.startsWith("qr_temp_count_") ||
+            key.startsWith("nfc_td_last_") ||
+            key.startsWith("nfc_td_count_") -> setOf(BackupCategory.STATISTICS)
 
         key.startsWith("domain_block_") ||
             key.startsWith("domain_allowed_") ||
+            key.startsWith("domain_rule_") ||
             key.startsWith("domain_limit_") ||
             key.startsWith("website_rule_") ||
             key.startsWith("website_limit_") ||
             key.startsWith("website_block_") ||
             key.startsWith("web_rule_") -> setOf(BackupCategory.WEBSITE_RULES)
+
+        key.startsWith("nfc_td_cfg_daily_") ||
+            key.startsWith("nfc_td_cfg_cooldown_") ||
+            key.startsWith("nfc_") ||
+            key.startsWith("qr_") ||
+            key.startsWith("barcode_") ||
+            key.startsWith("scan_code_") ||
+            key == "enable_paired_uids" ||
+            key == "auto_pair_on_write" ||
+            key == "enable_reentry_in_write" ||
+            key == "enable_emergency_in_write" ||
+            key == "limit_temp_disable_tags" ||
+            key == "limit_temp_qr_codes" -> setOf(BackupCategory.KEYS)
+
+        key == "home_layout_mode" ||
+            key == "home_layout_detailed" ||
+            key.startsWith("home_custom_") ||
+            key.startsWith("home_quick_tile_") ||
+            key == "home_quick_actions_expanded" ||
+            key.startsWith("pref_home_") ||
+            key.startsWith("pref_show_") -> setOf(BackupCategory.CONTROL_SETTINGS)
 
         key.startsWith("pref_show_") ||
             key.startsWith("pref_qs_tile_") ||
@@ -372,21 +463,32 @@ object BackupCategoryFilter {
             key.startsWith("auto_block_known_apps_") ||
             key.startsWith("usage_limit_min__") ||
             key.startsWith("usage_limit_reset__") ||
-            key.startsWith("usage_limit_ever__") -> setOf(BackupCategory.BLOCKED_APPS)
+            key.startsWith("usage_limit_ever__") ||
+            key.startsWith("session_limit_min__") ||
+            key.startsWith("session_limit_ever__") ||
+            key.startsWith("attempt_limit__") ||
+            key.startsWith("attempt_limit_ever__") -> setOf(BackupCategory.BLOCKED_APPS)
 
-        key.startsWith("usage_day_") ||
+        key.startsWith("usage_limit_session_runtime__") ||
+            key.startsWith("usage_day_") ||
             key.startsWith("blocked_ms_") ||
             key.startsWith("blocked_count_") ||
             key.startsWith("blocked_attempt_") ||
             key.startsWith("switchly_runtime_ms_") ||
+            key.startsWith("switchly_active_") ||
             key.startsWith("profile_usage_day_") ||
+            key.startsWith("surf_usage_day_") ||
             key.startsWith("surface_usage_") ||
+            key.startsWith("open_count_") ||
             key.startsWith("limit_hit_") ||
             key.startsWith("schedule_exec_count_") ||
+            key == "switch_mode_active_since_ms" ||
+            key == "switch_mode_limit_session_generation" ||
             key.startsWith("emergency_unlock_count_") ||
             key.startsWith("nfc_scan_count_") ||
             key.startsWith("qr_scan_count_") ||
             key.startsWith("barcode_scan_count_") ||
+            key.startsWith("temp_enable_count_") ||
             key.startsWith("scan_code_last_used_") ||
             key.startsWith("scan_code_count_") ||
             key == "blocked_inbox_events" ||
@@ -394,6 +496,7 @@ object BackupCategoryFilter {
 
         key.startsWith("domain_block_") ||
             key.startsWith("domain_allowed_") ||
+            key.startsWith("domain_rule_") ||
             key.startsWith("domain_limit_") ||
             key.startsWith("website_rule_") ||
             key.startsWith("website_limit_") ||
@@ -405,6 +508,13 @@ object BackupCategoryFilter {
             key.startsWith("barcode_") ||
             key.startsWith("scan_code_") -> setOf(BackupCategory.KEYS)
 
+        key == "home_layout_mode" ||
+            key == "home_layout_detailed" ||
+            key.startsWith("home_custom_") ||
+            key.startsWith("home_quick_tile_") ||
+            key == "home_quick_actions_expanded" ||
+            key.startsWith("pref_home_") -> setOf(BackupCategory.CONTROL_SETTINGS)
+
         key.startsWith("automation_") ||
             key.startsWith("switch_mode_") ||
             key.startsWith("pref_show_") ||
@@ -414,11 +524,29 @@ object BackupCategoryFilter {
         else -> setOf(BackupCategory.APP_PREFERENCES)
     }
 
+    private fun categoriesForUiHintsPrefsKey(key: String): Set<BackupCategory> = when {
+        key == "home_quick_actions_expanded" ||
+            key.startsWith("home_quick_tile_") ||
+            key == "temp_mode_discovered" -> setOf(BackupCategory.CONTROL_SETTINGS)
+
+        key == "primary_toggle_tap_count" -> setOf(BackupCategory.STATISTICS)
+
+        else -> setOf(BackupCategory.APP_PREFERENCES)
+    }
+
     private fun BackupSelection.matchesAny(categories: Set<BackupCategory>): Boolean =
         categories.any { includes(it) }
 
     private fun BackupSelection.includesAny(vararg categories: BackupCategory): Boolean =
         categories.any { includes(it) }
+
+    private fun stringKeyMap(raw: Any?): Map<String, Any?> {
+        val map = raw as? Map<*, *> ?: return emptyMap()
+        return map.mapNotNull { (key, value) ->
+            val stringKey = key as? String ?: return@mapNotNull null
+            stringKey to value
+        }.toMap()
+    }
 
     private fun org.json.JSONObject.hasNonBlank(key: String): Boolean =
         optString(key, "").isNotBlank()

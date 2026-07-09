@@ -20,18 +20,20 @@
 package at.saltyy.switchly.feature.tools
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.ViewGroup
+import android.view.LayoutInflater
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.Space
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
 import at.saltyy.switchly.feature.usage.ActiveTimeStatsActivity
+import at.saltyy.switchly.feature.usage.ActivityHistoryActivity
+import at.saltyy.switchly.feature.usage.AppLaunchesActivity
+import at.saltyy.switchly.feature.usage.ScreenUnlocksActivity
 import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
@@ -108,6 +110,16 @@ class ManageInsightsActivity : AppCompatActivity() {
 
         content.addView(
             menuCard(
+                title = getString(R.string.insights_active_time),
+                summary = getString(R.string.insights_active_time_summary),
+                iconRes = R.drawable.schedule_24
+            ) {
+                startActivity(ActiveTimeStatsActivity.intent(this))
+            }
+        )
+
+        content.addView(
+            menuCard(
                 title = getString(R.string.insights_usage_statistics),
                 summary = getString(R.string.insights_usage_statistics_summary),
                 iconRes = R.drawable.bar_chart_24
@@ -118,11 +130,31 @@ class ManageInsightsActivity : AppCompatActivity() {
 
         content.addView(
             menuCard(
-                title = getString(R.string.insights_active_time),
-                summary = getString(R.string.insights_active_time_summary),
-                iconRes = R.drawable.schedule_24
+                title = getString(R.string.insights_app_launches),
+                summary = getString(R.string.insights_app_launches_summary),
+                iconRes = R.drawable.apps_24
             ) {
-                startActivity(ActiveTimeStatsActivity.intent(this))
+                startActivity(AppLaunchesActivity.intent(this))
+            }
+        )
+
+        content.addView(
+            menuCard(
+                title = getString(R.string.insights_screen_unlocks),
+                summary = getString(R.string.insights_screen_unlocks_summary),
+                iconRes = R.drawable.lock_open_24
+            ) {
+                startActivity(ScreenUnlocksActivity.intent(this))
+            }
+        )
+
+        content.addView(
+            menuCard(
+                title = getString(R.string.insights_activity_history),
+                summary = getString(R.string.insights_activity_history_summary),
+                iconRes = R.drawable.layers_24
+            ) {
+                startActivity(ActivityHistoryActivity.intent(this))
             }
         )
 
@@ -136,61 +168,25 @@ class ManageInsightsActivity : AppCompatActivity() {
         iconRes: Int,
         onClick: () -> Unit
     ): MaterialCardView {
-        val card = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
-            cardElevation = dp(2).toFloat()
-            useCompatPadding = true
-            isClickable = true
-            isFocusable = true
-            foreground = selectableItemBackground()
-            setOnClickListener { onClick() }
+        val parent = LinearLayout(this)
+        val card = LayoutInflater.from(this)
+            .inflate(R.layout.item_pref_card, parent, false) as MaterialCardView
+        card.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            topMargin = dp(12)
         }
 
-        val row = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
-            setPadding(dp(16), dp(16), dp(16), dp(16))
-            minimumHeight = dp(78)
-        }
-
-        row.addView(ImageView(this).apply {
+        card.findViewById<TextView>(android.R.id.title).text = title
+        card.findViewById<TextView>(android.R.id.summary).text = summary
+        card.findViewById<ImageView>(android.R.id.icon).apply {
             setImageResource(iconRes)
-            contentDescription = title
-            imageTintList = android.content.res.ColorStateList.valueOf(AccentColor.getAccentColorInt(this@ManageInsightsActivity))
-        }, LinearLayout.LayoutParams(dp(26), dp(26)))
-
-        row.addView(Space(this), LinearLayout.LayoutParams(dp(14), 1))
-
-        val texts = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-        }
-        texts.addView(TextView(this).apply {
-            text = title
-            textSize = 16f
-            typeface = Typeface.DEFAULT_BOLD
-        })
-        texts.addView(TextView(this).apply {
-            text = summary
-            textSize = 13f
-            alpha = 0.76f
-        })
-        row.addView(texts, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-
-        row.addView(ImageView(this).apply {
-            setImageResource(R.drawable.arrow_forward_ios_24)
-            alpha = 0.6f
             contentDescription = null
-            imageTintList = android.content.res.ColorStateList.valueOf(resolveAttrColor(com.google.android.material.R.attr.colorOnSurface))
-        }, LinearLayout.LayoutParams(dp(18), dp(18)))
-
-        card.addView(row)
+            imageTintList = android.content.res.ColorStateList.valueOf(AccentColor.getAccentColorInt(this@ManageInsightsActivity))
+        }
+        card.setOnClickListener { onClick() }
         return card
-    }
-
-    private fun selectableItemBackground(): android.graphics.drawable.Drawable? {
-        val typedValue = android.util.TypedValue()
-        theme.resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true)
-        return androidx.core.content.ContextCompat.getDrawable(this, typedValue.resourceId)
     }
 
     private fun resolveAttrColor(attr: Int): Int {

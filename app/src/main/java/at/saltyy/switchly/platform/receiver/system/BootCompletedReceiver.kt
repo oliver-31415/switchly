@@ -45,7 +45,8 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
         val ctx = context.applicationContext
 
-        // Restore monitors (these should NOT force-start FGS)
+        // Restore trigger monitors.
+        // Wi-Fi/Bluetooth defer and coalesce their FGS sync until this receiver callback has returned, so Android can create the service immediately.
         runCatching { WifiTriggerMonitor.ensureStarted(ctx) }
         runCatching { BluetoothTriggerMonitor.ensureStarted(ctx) }
         runCatching { LocationTriggerMonitor.ensureStarted(ctx) }

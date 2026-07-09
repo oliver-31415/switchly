@@ -160,16 +160,6 @@
                 android:alpha="0.82"
                 android:text="@string/toggle_section_control_mode_summary" />
 
-            <TextView
-                android:id="@+id/tvControlModeLockHint"
-                style="@style/TextAppearance.MaterialComponents.Body2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:text="@string/control_mode_lock_inline_hint"
-                android:alpha="0.84"
-                android:visibility="gone" />
-
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardControlMode"
                 android:layout_width="match_parent"

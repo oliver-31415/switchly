@@ -22,21 +22,18 @@ package at.saltyy.switchly.feature.profiles
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.InputType
+import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.ListView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
@@ -51,7 +48,8 @@ import at.saltyy.switchly.feature.picker.AppPickerActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
-import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.attachEditDeleteSwipe
+import at.saltyy.switchly.ui.showSwitchlyStatus
 import at.saltyy.switchly.ui.dialog.showDestructiveAccented
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
@@ -60,11 +58,9 @@ import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
@@ -113,8 +109,8 @@ class ManageProfilesActivity : AppCompatActivity() {
         list.alpha = if (locked) 0.92f else 1f
     }
 
-    private lateinit var list: ListView
-    private lateinit var adapter: ArrayAdapter<String>
+    private lateinit var list: RecyclerView
+    private lateinit var adapter: ProfileAdapter
     private val data = mutableListOf<String>()
 
     override fun attachBaseContext(newBase: Context) {
@@ -138,39 +134,16 @@ class ManageProfilesActivity : AppCompatActivity() {
         fabAdd.backgroundTintList = AccentColor.getActiveColor(this)
 
         list = findViewById(R.id.listProfiles)
-        adapter = object : ArrayAdapter<String>(this, R.layout.row_profile_item, data) {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val v = convertView ?: layoutInflater.inflate(R.layout.row_profile_item, parent, false)
-                val tv = v.findViewById<TextView>(R.id.tvName)
-                val subtitle = v.findViewById<TextView>(R.id.tvSubtitle)
-                val badge = v.findViewById<TextView>(R.id.tvActiveBadge)
-                val card = v.findViewById<MaterialCardView>(R.id.cardProfile)
-                val activeBar = v.findViewById<View>(R.id.viewActiveBar)
-                val name = getItem(position) ?: ""
-                val modeLabel = if (ProfileRuleModeStore.isAllowMode(this@ManageProfilesActivity, name)) {
-                    getString(R.string.profile_rule_mode_allow)
-                } else {
-                    getString(R.string.profile_rule_mode_block)
-                }
-                tv.text = getString(R.string.profile_name_mode_format, name, modeLabel)
-                val description = ProfileStore.getDescription(this@ManageProfilesActivity, name)
-                subtitle.text = description.ifBlank { getString(R.string.profile_row_subtitle) }
-                val current = ProfileStore.getCurrent(this@ManageProfilesActivity)
-                val isActive = name == current
-                badge.visibility = if (isActive) View.VISIBLE else View.GONE
-                activeBar.visibility = if (isActive) View.VISIBLE else View.GONE
-                val accent = AccentColor.getAccentColorInt(this@ManageProfilesActivity)
-                card.strokeWidth = if (isActive) (2 * this@ManageProfilesActivity.resources.displayMetrics.density).toInt().coerceAtLeast(1) else (1 * this@ManageProfilesActivity.resources.displayMetrics.density).toInt().coerceAtLeast(1)
-                card.strokeColor = if (isActive) accent else android.graphics.Color.TRANSPARENT
-                badge.setTextColor(android.graphics.Color.WHITE)
-                badge.backgroundTintList = android.content.res.ColorStateList.valueOf(accent)
-                return v
-            }
-        }
+        list.layoutManager = LinearLayoutManager(this)
+        adapter = ProfileAdapter()
         list.adapter = adapter
+        list.attachEditDeleteSwipe(
+            canSwipe = { !isProfileLockActive() },
+            onEdit = { position -> adapter.itemAt(position)?.let(::showRenameProfileSheet) },
+            onDelete = { position -> adapter.itemAt(position)?.let(::deleteProfile) }
+        )
 
         findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener { showAddProfileSheet() }
-        list.setOnItemClickListener { _, _, position, _ -> showActions(position) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -206,7 +179,7 @@ class ManageProfilesActivity : AppCompatActivity() {
 
         data.clear()
         data.addAll(sorted)
-        adapter.notifyDataSetChanged()
+        adapter.submit(sorted)
     }
 
     // Shows one flat, grouped context menu for a profile.
@@ -308,11 +281,7 @@ class ManageProfilesActivity : AppCompatActivity() {
                 ProfileStore.setDescription(this, name, description)
                 ProfileStore.setCurrent(this, name)
                 refresh()
-                Snackbar.make(
-                    snackRoot(),
-                    getString(R.string.profile_created_open_apps, name),
-                    Snackbar.LENGTH_SHORT
-                ).show()
+                snackRoot().showSwitchlyStatus(getString(R.string.profile_created_open_apps, name))
                 snackRoot().post { openAppListForProfile(name) }
                 null
             } else {
@@ -342,21 +311,13 @@ class ManageProfilesActivity : AppCompatActivity() {
                 newName == oldName -> {
                     ProfileStore.setDescription(this, oldName, description)
                     refresh()
-                    Snackbar.make(
-                        snackRoot(),
-                        getString(R.string.profile_saved, oldName),
-                        Snackbar.LENGTH_SHORT
-                    ).show()
+                    snackRoot().showSwitchlyStatus(getString(R.string.profile_saved, oldName))
                     null
                 }
                 ProfileStore.renameProfile(this, oldName, newName) -> {
                     ProfileStore.setDescription(this, newName, description)
                     refresh()
-                    Snackbar.make(
-                        snackRoot(),
-                        getString(R.string.profile_saved, newName),
-                        Snackbar.LENGTH_SHORT
-                    ).show()
+                    snackRoot().showSwitchlyStatus(getString(R.string.profile_saved, newName))
                     null
                 }
                 else -> getString(R.string.error_unknown)
@@ -372,7 +333,7 @@ class ManageProfilesActivity : AppCompatActivity() {
         helperText: String = getString(R.string.profile_name_helper),
         onSubmit: (String, String) -> String?
     ) {
-        val content = layoutInflater.inflate(R.layout.dialog_profile_name, null)
+        val content = layoutInflater.inflate(R.layout.dialog_profile_name, FrameLayout(this), false)
         val tilProfile = content.findViewById<TextInputLayout>(R.id.tilProfile)
         val input = content.findViewById<TextInputEditText>(R.id.etProfile)
         val descriptionInput = content.findViewById<TextInputEditText>(R.id.etProfileDescription)
@@ -465,18 +426,10 @@ class ManageProfilesActivity : AppCompatActivity() {
             InAppLimitStore.copyProfile(this, name, newName)
             SurfaceLimitStore.copyProfile(this, name, newName)
             InAppRuleStore.copyProfile(this, name, newName)
-            Toast.makeText(
-                this,
-                getString(R.string.profile_duplicated, newName),
-                Toast.LENGTH_SHORT
-            ).show()
+            snackRoot().showSwitchlyStatus(getString(R.string.profile_duplicated, newName))
             refresh()
         } else {
-            Toast.makeText(
-                this,
-                getString(R.string.profile_name_exists, newName),
-                Toast.LENGTH_SHORT
-            ).show()
+            snackRoot().showSwitchlyStatus(getString(R.string.profile_name_exists, newName))
         }
     }
 
@@ -487,11 +440,77 @@ class ManageProfilesActivity : AppCompatActivity() {
         }
 
         ProfileStore.setCurrent(this, name)
-        Toast.makeText(
-            this,
-            getString(R.string.profile_set_active_toast, name),
-            Toast.LENGTH_SHORT
-        ).show()
+        snackRoot().showSwitchlyStatus(getString(R.string.profile_set_active_toast, name))
         refresh()
     }
+
+    private inner class ProfileAdapter : RecyclerView.Adapter<ProfileAdapter.VH>() {
+        private val items = mutableListOf<String>()
+
+        fun submit(profiles: List<String>) {
+            // The active badge, stroke and active bar depend on ProfileStore.getCurrent(), not only on the profile name.
+            // Rebind visible rows with specific adapter events so profile changes update immediately without invalidating the full RecyclerView.
+            val oldSize = items.size
+            val newItems = profiles.toList()
+            items.clear()
+            items.addAll(newItems)
+
+            val commonSize = minOf(oldSize, newItems.size)
+            if (commonSize > 0) {
+                notifyItemRangeChanged(0, commonSize)
+            }
+            if (newItems.size > oldSize) {
+                notifyItemRangeInserted(oldSize, newItems.size - oldSize)
+            } else if (oldSize > newItems.size) {
+                notifyItemRangeRemoved(newItems.size, oldSize - newItems.size)
+            }
+        }
+
+        fun itemAt(position: Int): String? = items.getOrNull(position)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            return VH(layoutInflater.inflate(R.layout.row_profile_item, parent, false))
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            holder.bind(items[position])
+        }
+
+        override fun getItemCount(): Int = items.size
+
+        inner class VH(view: View) : RecyclerView.ViewHolder(view) {
+            private val tv: TextView = view.findViewById(R.id.tvName)
+            private val subtitle: TextView = view.findViewById(R.id.tvSubtitle)
+            private val badge: TextView = view.findViewById(R.id.tvActiveBadge)
+            private val card: MaterialCardView = view.findViewById(R.id.cardProfile)
+            private val activeBar: View = view.findViewById(R.id.viewActiveBar)
+
+            fun bind(name: String) {
+                val modeLabel = if (ProfileRuleModeStore.isAllowMode(this@ManageProfilesActivity, name)) {
+                    getString(R.string.profile_rule_mode_allow)
+                } else {
+                    getString(R.string.profile_rule_mode_block)
+                }
+                tv.text = getString(R.string.profile_name_mode_format, name, modeLabel)
+                subtitle.text = ProfileStore.getDescription(this@ManageProfilesActivity, name)
+                    .ifBlank { getString(R.string.profile_row_subtitle) }
+
+                val isActive = name == ProfileStore.getCurrent(this@ManageProfilesActivity)
+                badge.visibility = if (isActive) View.VISIBLE else View.GONE
+                activeBar.visibility = if (isActive) View.VISIBLE else View.GONE
+                val accent = AccentColor.getAccentColorInt(this@ManageProfilesActivity)
+                card.strokeWidth = if (isActive) dp(2) else dp(1)
+                card.strokeColor = if (isActive) accent else Color.TRANSPARENT
+                badge.setTextColor(Color.WHITE)
+                badge.backgroundTintList = android.content.res.ColorStateList.valueOf(accent)
+                itemView.setOnClickListener {
+                    val currentPosition = bindingAdapterPosition
+                    if (currentPosition != RecyclerView.NO_POSITION) showActions(currentPosition)
+                }
+            }
+        }
+    }
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density + 0.5f).toInt().coerceAtLeast(1)
 }

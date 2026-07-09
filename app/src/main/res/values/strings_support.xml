@@ -7,18 +7,25 @@
     <string name="support_title">Support</string>
     <string name="support_desc">Need help or found a bug?\nSend an email and, if possible, include debug info and a short description.</string>
     <string name="support_email_subject">Switchly Support</string>
-    <string name="support_email_placeholder">Email</string>
     <string name="support_open_email">Open email</string>
     <string name="support_copy_email">Copy email</string>
     <string name="support_copied">Email copied</string>
-    <string name="support_copy_latest_logs">Copy latest logs</string>
+    <string name="support_copy_latest_logs">Copy logs</string>
     <string name="support_logs_copied">Latest logs copied</string>
+    <string name="support_choose_report_data">Choose report data</string>
     <string name="support_include_debug">Include debug info</string>
+    <string name="support_include_debug_summary">App, device, permissions, Switchly state, schedules, and runtime status</string>
     <string name="support_include_advanced_debug">Include extended diagnostics</string>
+    <string name="support_include_advanced_debug_summary">Adds internal preference and feature-state counters to the debug report</string>
+    <string name="support_include_setup_details">Include setup details for modes, profiles and schedules</string>
+    <string name="support_include_setup_details_summary">Adds profile names, rule counts, schedule configuration, triggers, and overlaps</string>
+    <string name="support_include_active_profile_apps">Include apps from the active profile</string>
+    <string name="support_include_active_profile_apps_summary">Adds app names and package IDs selected by the active profile rule mode</string>
     <string name="support_debug_preface">Please describe your issue above this line.</string>
     <string name="support_include_logs">Include the logs</string>
+    <string name="support_include_logs_summary">Adds recent Switchly events and diagnostic log entries</string>
     <string name="support_latest_logs_heading">Latest logs</string>
-    <string name="support_response_time_short">Response time: usually as soon as possible, but up to 7 days.</string>
+    <string name="support_response_time_short">Response time: up to 7 days</string>
     <string name="support_response_time_title">Support response time</string>
     <string name="support_response_time_details">Switchly is developed and supported by one person. I read support messages and bug reports as soon as possible, but replies can sometimes take up to 7 days depending on workload.\n\nPlease include debug info when reporting blocking, schedule, premium, or permission issues. This helps me understand what happened much faster.</string>
 
@@ -51,9 +58,9 @@
     <string name="troubleshooting_xiaomi_note">Xiaomi/Redmi/POCO note:\n\n• Also enable Autostart for Switchly\n• Set battery mode to No restrictions if that option exists\n• Lock the app in Recents if possible\n• If available, allow background activity for Switchly\n• Toggle Accessibility off and on again if Android shows it as enabled but Switchly is not responding</string>
 
     <!-- ====================================================== -->
-    <!-- Tutorial link -->
+    <!-- Onboarding link -->
     <!-- ====================================================== -->
-    <string name="pref_tutorial_title">Tutorial</string>
-    <string name="pref_tutorial_summary">Review setup steps and features</string>
+    <string name="pref_tutorial_title">Onboarding</string>
+    <string name="pref_tutorial_summary">Review setup steps, permissions, and features</string>
 
 </resources>

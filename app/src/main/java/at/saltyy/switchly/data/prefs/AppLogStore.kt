@@ -20,15 +20,16 @@
 package at.saltyy.switchly.data.prefs
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 object AppLogStore {
-    private const val PREFS_NAME = "switchly_app_logs"
-    private const val KEY_LINES = "lines"
-    private const val MAX_LINES = 250
+    const val PREFS_NAME = "switchly_app_logs"
+    const val KEY_LINES = "lines"
+    private const val MAX_LINES = 1000
     private val SEP = '\u001E'
 
     fun append(context: Context, tag: String, message: String, error: Throwable? = null) {
@@ -74,6 +75,33 @@ object AppLogStore {
         val lines = latestLines(context, limit)
         if (lines.isEmpty()) return "No recent app logs."
         return lines.joinToString(separator = "\n")
+    }
+
+    fun replaceLines(context: Context, lines: List<String>) {
+        val clean = lines
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .takeLast(MAX_LINES)
+        val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit {
+            if (clean.isEmpty()) {
+                remove(KEY_LINES)
+            } else {
+                putString(KEY_LINES, clean.joinToString(separator = SEP.toString()))
+            }
+        }
+    }
+
+    fun registerChangeListener(context: Context, listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        context.applicationContext
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterChangeListener(context: Context, listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        context.applicationContext
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .unregisterOnSharedPreferenceChangeListener(listener)
     }
 
     fun clear(context: Context) {

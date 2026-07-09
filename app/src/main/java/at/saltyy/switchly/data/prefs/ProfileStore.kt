@@ -190,8 +190,7 @@ object ProfileStore {
         }
     }
 
-    // Returns all blocked package names for a specific profile.
-    fun getBlockedForProfile(context: Context, profile: String): Set<String> {
+    private fun getRawBlockedForProfile(context: Context, profile: String): Set<String> {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val raw = try {
             sp.getStringSet(keyBlocked(profile), emptySet()) ?: emptySet()
@@ -206,6 +205,24 @@ object ProfileStore {
         return raw
             .filterTo(linkedSetOf()) { it.isNotBlank() }
             .let { AppBlockSafety.sanitizeManagedPackages(context, it) }
+    }
+
+    // Returns all whole-app blocked package names for a specific profile.
+    fun getBlockedForProfile(context: Context, profile: String): Set<String> {
+        val blocked = getRawBlockedForProfile(context, profile)
+        if (blocked.isEmpty()) return emptySet()
+
+        // In-app rules pin supported apps into the picker/list so the user can see why they are involved, but they must not turn the entire app into a whole-app block.
+        return blocked.filterTo(linkedSetOf()) { pkg ->
+            !isInAppOnlySelection(context, profile, pkg)
+        }
+    }
+
+    private fun isInAppOnlySelection(context: Context, profile: String, pkg: String): Boolean {
+        if (!InAppRuleStore.hasEnabledRulesForPackage(context, profile, pkg)) return false
+        return UsageLimitStore.getLimitMinutes(context, profile, pkg) <= 0 &&
+            SessionLimitStore.getLimitMinutes(context, profile, pkg) <= 0 &&
+            AttemptLimitStore.getLimitAttempts(context, profile, pkg) <= 0
     }
 
     // Updates the blocked-app list for the given profile.

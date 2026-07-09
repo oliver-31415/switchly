@@ -19,7 +19,9 @@
 
 package at.saltyy.switchly.ui.dialog
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.Drawable
@@ -58,7 +60,7 @@ object Dialogs {
 data class SwitchlyDialogOption(
     val title: CharSequence,
     val summary: CharSequence? = null,
-    @DrawableRes val iconRes: Int? = null,
+    @param:DrawableRes val iconRes: Int? = null,
     val iconDrawable: Drawable? = null,
     val selected: Boolean = false,
     val destructive: Boolean = false,
@@ -113,7 +115,8 @@ fun AlertDialog.Builder.showAccented(): AlertDialog {
 /**
  * One shared Switchly option-dialog style.
  * Used for action menus, mode pickers, sort/filter pickers, profile actions, QR/barcode choices, etc.
- * No OEM green radios/checkmarks; selection is communicated by accent border/background only.
+ * Existing-value choices wait for the filled confirmation action; command menus still runimmediately. 
+ * No OEM green radios/checkmarks; selection uses accent border/background only.
  */
 private fun Context.showSwitchlyOptionDialogInternal(
     title: CharSequence,
@@ -123,13 +126,13 @@ private fun Context.showSwitchlyOptionDialogInternal(
     compact: Boolean = false,
     showCancelButton: Boolean = true,
     widthFraction: Float = 0.94f,
+    confirmSelection: Boolean = options.any { it.selected },
     onSelected: (index: Int) -> Unit
 ): AlertDialog {
     val accent = AccentColor.getAccentColorInt(this)
     val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.TRANSPARENT)
     val surfaceVariant = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant, surface)
     val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
-    val outline = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, ColorUtils.setAlphaComponent(onSurface, 0x44))
     val error = Color.rgb(186, 26, 26)
     fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
     val outerPad = 2
@@ -178,9 +181,25 @@ private fun Context.showSwitchlyOptionDialogInternal(
     }
 
     lateinit var dialog: AlertDialog
+    var selectedIndex = options.indexOfFirst { it.selected }
+    val optionCards = mutableListOf<MaterialCardView>()
+    val optionTitles = mutableListOf<TextView>()
+
+    fun updateSelection(index: Int) {
+        val option = options[index]
+        val optionAccent = if (option.destructive) error else accent
+        val selected = index == selectedIndex
+        optionCards[index].strokeWidth = dp(if (selected) 2 else 0)
+        optionCards[index].strokeColor = if (selected) optionAccent else Color.TRANSPARENT
+        optionCards[index].setCardBackgroundColor(
+            if (selected) ColorUtils.setAlphaComponent(optionAccent, 0x14) else surfaceVariant
+        )
+        optionTitles[index].typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+    }
+
     options.forEachIndexed { index, option ->
         val optionAccent = if (option.destructive) error else accent
-        val selected = option.selected
+        val selected = index == selectedIndex
         val card = MaterialCardView(this).apply {
             radius = dp(rowRadius).toFloat()
             cardElevation = 0f
@@ -225,6 +244,8 @@ private fun Context.showSwitchlyOptionDialogInternal(
             textSize = titleSp
             if (selected) typeface = Typeface.DEFAULT_BOLD
         }
+        optionCards += card
+        optionTitles += titleView
         textColumn.addView(titleView)
 
         option.summary?.takeIf { it.isNotBlank() }?.let { summaryText ->
@@ -241,8 +262,14 @@ private fun Context.showSwitchlyOptionDialogInternal(
         card.addView(row)
         card.setOnClickListener {
             if (!option.enabled) return@setOnClickListener
-            dialog.dismiss()
-            onSelected(index)
+            if (confirmSelection) {
+                selectedIndex = index
+                options.indices.forEach(::updateSelection)
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = true
+            } else {
+                dialog.dismiss()
+                onSelected(index)
+            }
         }
         list.addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(if (compact) 5 else 6) })
     }
@@ -250,13 +277,21 @@ private fun Context.showSwitchlyOptionDialogInternal(
     val builder = MaterialAlertDialogBuilder(this)
         .setView(content)
         .setOnCancelListener { onCancelled?.invoke() }
-    if (showCancelButton) {
+    if (confirmSelection) {
+        builder.setPositiveButton(R.string.ok) { _, _ ->
+            if (selectedIndex in options.indices) onSelected(selectedIndex)
+        }
+    }
+    if (showCancelButton || confirmSelection) {
         builder.setNegativeButton(R.string.cancel) { _, _ -> onCancelled?.invoke() }
     }
     dialog = builder.create()
 
     dialog.setOnShowListener {
         dialog.styleSwitchlyDialogButtons()
+        if (confirmSelection) {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = selectedIndex in options.indices
+        }
         dialog.window?.setLayout((resources.displayMetrics.widthPixels * widthFraction).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
     }
     dialog.show()
@@ -270,8 +305,19 @@ fun Context.showSwitchlyOptionDialog(
     compact: Boolean = false,
     showCancelButton: Boolean = true,
     widthFraction: Float = 0.94f,
+    confirmSelection: Boolean = options.any { it.selected },
     onSelected: (index: Int) -> Unit
-): AlertDialog = showSwitchlyOptionDialogInternal(title, null, options, onCancelled, compact, showCancelButton, widthFraction, onSelected)
+): AlertDialog = showSwitchlyOptionDialogInternal(
+    title,
+    null,
+    options,
+    onCancelled,
+    compact,
+    showCancelButton,
+    widthFraction,
+    confirmSelection,
+    onSelected
+)
 
 fun Context.showSwitchlyOptionDialog(
     title: CharSequence,
@@ -281,8 +327,19 @@ fun Context.showSwitchlyOptionDialog(
     compact: Boolean = false,
     showCancelButton: Boolean = true,
     widthFraction: Float = 0.94f,
+    confirmSelection: Boolean = options.any { it.selected },
     onSelected: (index: Int) -> Unit
-): AlertDialog = showSwitchlyOptionDialogInternal(title, subtitle, options, onCancelled, compact, showCancelButton, widthFraction, onSelected)
+): AlertDialog = showSwitchlyOptionDialogInternal(
+    title,
+    subtitle,
+    options,
+    onCancelled,
+    compact,
+    showCancelButton,
+    widthFraction,
+    confirmSelection,
+    onSelected
+)
 
 
 fun Context.showSwitchlyMultiChoiceDialog(
@@ -298,7 +355,6 @@ fun Context.showSwitchlyMultiChoiceDialog(
     val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.TRANSPARENT)
     val surfaceVariant = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant, surface)
     val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
-    val outline = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, ColorUtils.setAlphaComponent(onSurface, 0x44))
     val error = Color.rgb(186, 26, 26)
     fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
     val outerPad = 2
@@ -322,11 +378,17 @@ fun Context.showSwitchlyMultiChoiceDialog(
     val cards = mutableListOf<MaterialCardView>()
     val boxes = mutableListOf<CheckBox>()
     lateinit var dialog: AlertDialog
-    lateinit var titleView: TextView
+    lateinit var headerTitleView: TextView
 
     fun selectedCountLabel(): CharSequence {
         val count = rowStates.count { it }
-        return if (count > 0) "$title · $count selected" else title
+        if (count <= 0) return title
+        val countLabel = resources.getQuantityString(
+            R.plurals.dialog_selected_count,
+            count,
+            count
+        )
+        return "$title · $countLabel"
     }
 
     fun updateRow(index: Int) {
@@ -373,12 +435,12 @@ fun Context.showSwitchlyMultiChoiceDialog(
             }
         }
         val textColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val titleView = TextView(this).apply {
+        val rowTitleView = TextView(this).apply {
             text = option.title
             setTextColor(if (option.destructive) error else onSurface)
             textSize = titleSp
         }
-        textColumn.addView(titleView)
+        textColumn.addView(rowTitleView)
         option.summary?.takeIf { it.isNotBlank() }?.let { summaryText ->
             val summaryView = TextView(this).apply {
                 text = summaryText
@@ -402,13 +464,13 @@ fun Context.showSwitchlyMultiChoiceDialog(
             if (!option.enabled) return@setOnClickListener
             rowStates[index] = !rowStates[index]
             updateRow(index)
-            titleView.text = selectedCountLabel()
+            headerTitleView.text = selectedCountLabel()
         }
         list.addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(if (compact) 5 else 6) })
         updateRow(index)
     }
 
-    titleView = TextView(this).apply {
+    headerTitleView = TextView(this).apply {
         text = selectedCountLabel()
         setTextColor(onSurface)
         textSize = 20f
@@ -419,7 +481,7 @@ fun Context.showSwitchlyMultiChoiceDialog(
         orientation = LinearLayout.VERTICAL
         clipToPadding = false
         setPadding(dp(16), dp(20), dp(16), dp(0))
-        addView(titleView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        addView(headerTitleView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
 
@@ -443,8 +505,18 @@ fun Context.showSwitchlyOptionDialog(
     compact: Boolean = false,
     showCancelButton: Boolean = true,
     widthFraction: Float = 0.94f,
+    confirmSelection: Boolean = options.any { it.selected },
     onSelected: (index: Int) -> Unit
-): AlertDialog = showSwitchlyOptionDialog(getString(titleRes), options, onCancelled, compact, showCancelButton, widthFraction, onSelected)
+): AlertDialog = showSwitchlyOptionDialog(
+    getString(titleRes),
+    options,
+    onCancelled,
+    compact,
+    showCancelButton,
+    widthFraction,
+    confirmSelection,
+    onSelected
+)
 
 /**
  * Apply Switchly's *one* consistent dialog button style everywhere.
@@ -556,10 +628,61 @@ fun Context.styleSwitchlyFormButtons(
     }
 }
 
+fun Context.showSwitchlyFormDialog(
+    title: CharSequence,
+    content: View,
+    cancelButton: MaterialButton,
+    saveButton: MaterialButton,
+    saveIsAdd: Boolean = false,
+    widthFraction: Float = 0.94f
+): AlertDialog {
+    val hostActivity = findActivity()
+    hostActivity?.let { activity ->
+        runCatching { CustomAccentApplier.applyToView(content, activity) }
+    }
+
+    val dialog = MaterialAlertDialogBuilder(this)
+        .setTitle(title)
+        .setView(content)
+        .create()
+    dialog.setOnShowListener {
+        dialog.applySwitchlyDialogWidth(widthFraction)
+        runCatching { CustomAccentApplier.applyToDialog(dialog) }
+        styleSwitchlyFormButtons(
+            deleteButton = null,
+            cancelButton = cancelButton,
+            saveButton = saveButton,
+            destructiveButtonVisible = false,
+            saveIsAdd = saveIsAdd
+        )
+        longArrayOf(0L, 120L, 360L, 720L).forEach { delay ->
+            content.postDelayed(
+                {
+                    hostActivity?.let { activity ->
+                        runCatching { CustomAccentApplier.applyToView(content, activity) }
+                    }
+                },
+                delay
+            )
+        }
+    }
+    dialog.show()
+    cancelButton.setOnClickListener { dialog.dismiss() }
+    return dialog
+}
+
 fun Context.showInfoDialog(@StringRes titleRes: Int, @StringRes messageRes: Int) {
     Dialogs.builder(this)
         .setTitle(titleRes)
         .setMessage(messageRes)
         .setPositiveButton(android.R.string.ok, null)
         .showAccented()
+}
+
+private tailrec fun Context.findActivity(): Activity? {
+    return when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
 }

@@ -37,12 +37,14 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.content.getSystemService
 import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
@@ -58,15 +60,21 @@ import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.feature.settings.AccessibilityDisclosure
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
 import at.saltyy.switchly.feature.tools.ManageKeysActivity
+import at.saltyy.switchly.feature.stats.StatsFormat
+import at.saltyy.switchly.feature.usage.AppUsageRepo
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.PermissionUtils
+import at.saltyy.switchly.util.NfcLaunchAccessCompat
 import at.saltyy.switchly.util.getIntCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class OnboardingActivity : ComponentActivity() {
 
@@ -86,9 +94,10 @@ class OnboardingActivity : ComponentActivity() {
          * v4: previously made battery optimization required + improved permission completion states.
          * v5: hide quick summary until Usage Access is granted + add second opt-in confirm for NFC-required optional toggle.
          * v6: onboarding optional-features NFC toggle now shows the same immediate confirm popup as Settings.
-         * v220: rework oneboardinhg flow to multiple pages + add new required steps for notification blocking and schedule permissions.
+         * v220: rework onboarding flow to multiple pages + add new required steps for notification blocking and schedule permissions.
+         * v221: refresh setup for Launch via NFC guidance and 2.2.1 beta permission/backup polish.
          */
-        const val ONBOARDING_VERSION = 220
+        const val ONBOARDING_VERSION = 221
     }
 
     private var forced: Boolean = false
@@ -98,6 +107,14 @@ class OnboardingActivity : ComponentActivity() {
     private lateinit var pagerAdapter: OnboardingPagerAdapter
     private lateinit var btnNext: MaterialButton
     private lateinit var btnSkip: MaterialButton
+
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        if (::pager.isInitialized && ::pagerAdapter.isInitialized) {
+            pagerAdapter.notifyItemChanged(pager.currentItem)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
@@ -187,17 +204,6 @@ class OnboardingActivity : ComponentActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (::pager.isInitialized && ::pagerAdapter.isInitialized) {
-            pagerAdapter.notifyItemChanged(pager.currentItem)
-        }
-    }
-
     override fun onResume() {
         super.onResume()
         findViewById<MaterialButton>(R.id.btn_skip)?.let { skip ->
@@ -223,13 +229,39 @@ class OnboardingActivity : ComponentActivity() {
         updateButtons(pos)
         pagerAdapter.notifyItemChanged(pos)
 
-        // If the current page was a required setup step and it is now complete, auto-advance once.
         val page = pages.getOrNull(pos) ?: return
         if (page.level == OnboardingPage.Level.REQUIRED && page.completionCheck?.invoke(this) == true) {
-            if (pos < pages.lastIndex) {
+            if (pos < pages.lastIndex && shouldAutoAdvanceAfterReturn(page)) {
                 pager.post { pager.currentItem = pos + 1 }
             }
         }
+    }
+
+    private fun shouldAutoAdvanceAfterReturn(page: OnboardingPage): Boolean {
+        if (page.type == OnboardingPage.Type.PERMISSION_OVERVIEW) {
+            // The permission overview is technically allowed to continue once Accessibility is ready, but it should only auto-advance when every visible permission/setup row is already done.
+            // Otherwise users can miss the remaining optional/recommended rows after granting just one setting.
+            return areVisiblePermissionRowsReady(this)
+        }
+        return true
+    }
+
+    private fun areVisiblePermissionRowsReady(ctx: Context): Boolean {
+        if (!isCorePermissionsReady(ctx)) return false
+
+        if (NotificationBlockStore.isEnabled(ctx) && !isNotificationBlockingSetupReady(ctx)) return false
+
+        if (isSchedulePermissionRelevant(ctx)) {
+            if (!isBatteryOptimizationIgnored(ctx)) return false
+            if (!ExactAlarmPermissionSync.canScheduleExactAlarms(ctx)) return false
+            if (!areTriggerPermissionsReady(ctx)) return false
+        }
+
+        if (AutomationModeStore.isNfcAllowed(ctx) && !NfcLaunchAccessCompat.isLikelyAllowed(ctx)) return false
+
+        if (isScanPermissionRelevant(ctx) && !isCameraPermissionReady(ctx)) return false
+
+        return UsageStatsRepo.hasUsageAccess(ctx)
     }
 
     private fun updateButtons(pos: Int) {
@@ -380,7 +412,7 @@ class OnboardingActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9201)
+            permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
             return
         }
 
@@ -398,11 +430,6 @@ class OnboardingActivity : ComponentActivity() {
     }
 
     private fun requestIgnoreBatteryOptimizationFromOnboarding() {
-        val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = "package:$packageName".toUri()
-        }
-        if (safeStart(direct)) return
-
         if (!safeStart(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) {
             safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 data = "package:$packageName".toUri()
@@ -468,7 +495,7 @@ class OnboardingActivity : ComponentActivity() {
     }
 
     private fun requestCameraPermissionFromOnboarding() {
-        requestPermissions(arrayOf(Manifest.permission.CAMERA), 9202)
+        permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
     }
 
     private fun areTriggerPermissionsReady(ctx: Context): Boolean {
@@ -487,9 +514,8 @@ class OnboardingActivity : ComponentActivity() {
         val needsLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
         if (needsLocation) {
-            requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                9203
+            permissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
             )
             return
         }
@@ -497,7 +523,7 @@ class OnboardingActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), 9204)
+            permissionLauncher.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT))
             return
         }
 
@@ -541,6 +567,21 @@ class OnboardingActivity : ComponentActivity() {
                 getString(R.string.onb_core_point_controls)
             ),
             level = OnboardingPage.Level.INFO
+        )
+
+        result += OnboardingPage(
+            iconRes = R.drawable.bar_chart_24,
+            title = getString(R.string.onb_usage_report_title),
+            desc = getString(R.string.onb_usage_report_desc),
+            detailRows = listOf(
+                getString(R.string.onb_usage_report_point_average),
+                getString(R.string.onb_usage_report_point_top_apps),
+                getString(R.string.onb_usage_report_point_optional)
+            ),
+            level = OnboardingPage.Level.OPTIONAL,
+            actionLabel = getString(R.string.onb_usage_report_action),
+            action = { act -> (act as? OnboardingActivity)?.openUsageReportSetup() },
+            keepActionEnabledWhenCompleted = true
         )
 
         result += OnboardingPage(
@@ -658,6 +699,61 @@ class OnboardingActivity : ComponentActivity() {
         )
 
         return result
+    }
+
+    private fun openUsageReportSetup() {
+        if (!UsageStatsRepo.hasUsageAccess(this)) {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            return
+        }
+
+        lifecycleScope.launch {
+            val summary = withContext(Dispatchers.IO) {
+                AppUsageRepo.getDeviceSummary(this@OnboardingActivity, 7, topN = 5)
+            }
+            val avg = summary.totalTimeMs / 7L
+            val topApps = summary.topApps.take(5)
+            val topText = if (topApps.isEmpty()) {
+                getString(R.string.onb_usage_report_no_apps)
+            } else {
+                topApps.joinToString("\n") { app ->
+                    getString(
+                        R.string.onb_usage_report_app_row,
+                        app.label,
+                        StatsFormat.prettyMsWithSeconds(app.timeMs)
+                    )
+                }
+            }
+
+            MaterialAlertDialogBuilder(this@OnboardingActivity)
+                .setTitle(R.string.onb_usage_report_result_title)
+                .setMessage(
+                    getString(
+                        R.string.onb_usage_report_result_body,
+                        StatsFormat.prettyMsWithSeconds(avg),
+                        StatsFormat.prettyMsWithSeconds(summary.totalTimeMs),
+                        topText
+                    )
+                )
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.onb_usage_report_add_top_apps) { _, _ ->
+                    addTopDistractionsToProfile(topApps.map { it.packageName })
+                }
+                .showAccented()
+        }
+    }
+
+    private fun addTopDistractionsToProfile(packages: List<String>) {
+        val cleaned = packages.filter { it.isNotBlank() }.toSet()
+        if (cleaned.isEmpty()) {
+            Toast.makeText(this, R.string.onb_usage_report_no_apps, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val profile = ensureOnboardingProfile(this)
+        val current = ProfileStore.getSelectedForProfileMode(this, profile)
+        ProfileStore.setSelectedForProfileMode(this, profile, current + cleaned)
+        Toast.makeText(this, R.string.onb_usage_report_added_to_profile, Toast.LENGTH_SHORT).show()
+        if (::pagerAdapter.isInitialized) pagerAdapter.notifyItemChanged(pager.currentItem)
     }
 
     private fun markDone() {

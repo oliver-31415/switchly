@@ -61,6 +61,12 @@ object FileBackupRuntime {
 
     fun restoreBackupFromUri(ctx: Context, uri: Uri): Result<Unit> {
         return runCatching {
+            CloudSyncRuntime.applyBackupPayload(ctx, readBackupPayloadFromUri(ctx, uri).getOrThrow())
+        }.onFailure { AppLogStore.append(ctx, TAG, "File restore failed", it) }
+    }
+
+    fun readBackupPayloadFromUri(ctx: Context, uri: Uri): Result<Map<*, *>> {
+        return runCatching {
             val raw = ctx.contentResolver.openInputStream(uri)?.use { stream ->
                 BufferedReader(InputStreamReader(stream, Charsets.UTF_8)).use { reader ->
                     reader.readText()
@@ -68,11 +74,15 @@ object FileBackupRuntime {
             } ?: error("Could not open backup file")
 
             val root = JSONObject(raw)
-            val payload = when {
+            when {
                 root.has(FIELD_PAYLOAD) -> fromJsonValue(root.get(FIELD_PAYLOAD)) as? Map<*, *>
                 else -> fromJsonValue(root) as? Map<*, *>
             } ?: error("Invalid backup file")
+        }.onFailure { AppLogStore.append(ctx, TAG, "Reading file backup preview failed", it) }
+    }
 
+    fun restoreBackupPayload(ctx: Context, payload: Map<*, *>): Result<Unit> {
+        return runCatching {
             CloudSyncRuntime.applyBackupPayload(ctx, payload)
         }.onFailure { AppLogStore.append(ctx, TAG, "File restore failed", it) }
     }

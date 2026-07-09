@@ -25,9 +25,7 @@ import androidx.core.content.edit
 
 /**
  * Stores a per-app, per-profile "open/attempt" limit.
- *
- * If a limit is set to N, the app will be blocked once it has been opened more than N times
- * on the current day (local device timezone).
+ * If a limit is set to N, the app will be blocked once it has been opened more than N times on the current day (local device timezone).
  */
 object AttemptLimitStore {
     private const val PREFS = "switchly_prefs"

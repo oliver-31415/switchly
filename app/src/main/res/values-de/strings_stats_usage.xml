@@ -21,6 +21,12 @@
         <item quantity="one">%1$d Öffnung</item>
         <item quantity="other">%1$d Öffnungen</item>
     </plurals>
+    <plurals name="attempts_format">
+        <item quantity="one">%1$d Versuch</item>
+        <item quantity="other">%1$d Versuche</item>
+    </plurals>
+    <string name="usage_opens_zero">0 Öffnungen</string>
+    <string name="usage_attempts_zero">0 Versuche</string>
     <string name="custom_minutes">Benutzerdefinierte Zeit…</string>
     <string name="custom_value">Benutzerdefiniert…</string>
     <string name="custom_minutes_title">Benutzerdefinierte Minuten</string>
@@ -58,6 +64,10 @@
     <!-- ====================================================== -->
     <string name="usage_details_info_title">Nutzungsdetails</string>
     <string name="usage_details_info_body">Tippe auf das Tune-Icon, um Limits zu bearbeiten.\n\nTageslimits zählen gegen das heutige Limit. Sitzungs-Limits werden zurückgesetzt, wenn Switchly oder das aktive Profil eine neue aktive Sitzung startet.\n\nDer Sitzungsbalken darunter zeigt, wie viel vom aktuellen Sitzungs-Limit bereits verwendet wurde.</string>
+    <string name="app_usage_detail_title">App-Nutzungsdetails</string>
+    <string name="app_usage_detail_subtitle">Nutzung, Limits und Aktivität</string>
+    <string name="website_usage_detail_title">Website-Nutzungsdetails</string>
+    <string name="website_usage_detail_subtitle">Nutzung, Limit und Regelstatus</string>
 
     <!-- ====================================================== -->
     <!-- Unavailable apps -->
@@ -71,38 +81,47 @@
     </plurals>
 
     <!-- ====================================================== -->
-    <!-- Usage and insights menu -->
+    <!-- Activity hub -->
+    <!-- ====================================================== -->
+    <string name="activity_hub_section_stats">Nutzung und Aktivität</string>
+    <string name="activity_hub_section_review">Überblick</string>
+
+    <!-- ====================================================== -->
+    <!-- Activity entry points -->
     <!-- ====================================================== -->
     <string name="insights_menu_title">Nutzung &amp; Einblicke</string>
-    <string name="insights_menu_summary">Nutzungsstatistiken, aktive Zeit, App-Limits und Blocking-Aktivität ansehen.</string>
-    <string name="insights_usage_statistics">Nutzungsstatistiken</string>
-    <string name="insights_usage_statistics_summary">App-, Website-, Limit- und Blockieraktivität.</string>
-    <string name="insights_active_time">Aktive Zeit</string>
-    <string name="insights_active_time_summary">Verfolge, wie lange Switchly über Zeit aktiv bleibt.</string>
+    <string name="insights_menu_summary">Aktive Zeit, App- und Website-Nutzung, Starts, Entsperrungen und Switchly-Aktivität ansehen.</string>
+    <string name="insights_usage_statistics">App- &amp; Website-Nutzung</string>
+    <string name="insights_usage_statistics_summary">Getrackte App- und Website-Zeit, Limits und Profilkontext.</string>
+    <string name="insights_app_launches">App-Starts</string>
+    <string name="insights_app_launches_summary">Start-Zähler und App-Timelines aus Android-Nutzungszugriff.</string>
+    <string name="insights_screen_unlocks">Entsperrungen</string>
+    <string name="insights_screen_unlocks_summary">Entsperr-Sessions und die dabei genutzten Apps.</string>
+    <string name="insights_active_time">Aktive Zeit &amp; Verlauf</string>
+    <string name="insights_active_time_summary">Gesamte Aktivzeit, Sessions und Switchly-Profilaktivität.</string>
+    <string name="insights_activity_history">Aktivitätsverlauf</string>
+    <string name="insights_activity_history_summary">Aktuelle Switchly-Profil-, Zeitplan-, Standort-, NFC-, QR-, Barcode-, temporäre und manuelle Ereignisse ansehen.</string>
 
     <!-- ====================================================== -->
     <!-- Usage statistics -->
     <!-- ====================================================== -->
-    <string name="statistics_usage_title">Nutzungsstatistiken</string>
-    <string name="statistics_usage_info_title">Nutzungsstatistiken</string>
+    <string name="statistics_usage_title">App- &amp; Website-Nutzung</string>
+    <string name="statistics_usage_info_title">App- &amp; Website-Nutzung</string>
     <string name="statistics_usage_info_body">Tippe auf das Tune-Icon neben einer App, um Limits zu bearbeiten.\n\nSwitchly-Statistiken konzentrieren sich auf Blockieraktivität, Versuche, Scans, Zeitpläne und limitbezogene Nutzung. Erlaubte oder temporär freigegebene Nutzung wird ggf. nicht immer vollständig erfasst; es ist kein vollständiger Digital-Wellbeing-Ersatz.\n\nTageslimits zählen gegen das heutige Limit. Sitzungs-Limits werden zurückgesetzt, wenn Switchly oder das aktive Profil eine neue aktive Sitzung startet.</string>
     <string name="stats_range_today">Heute</string>
     <string name="stats_range_week">Woche</string>
     <string name="stats_range_month">Monat</string>
     <string name="stats_range_year">Jahr</string>
-    <string name="stats_range_overall">Insgesamt</string>
     <string name="usage_apps_tab">Apps</string>
     <string name="usage_websites_tab">Websites</string>
     <string name="usage_today">Heute</string>
     <string name="usage_week_total">7-Tage-Gesamt</string>
     <string name="usage_month_total">Diesen Monat gesamt</string>
     <string name="usage_year_total">Dieses Jahr gesamt</string>
-    <string name="usage_overall_total">Gesamt (alle Zeit)</string>
     <string name="usage_range_today">Heute</string>
     <string name="usage_range_week">Woche</string>
     <string name="usage_range_month">Monat</string>
     <string name="usage_range_year">Jahr</string>
-    <string name="usage_range_overall">Gesamt</string>
     <string name="usage_access_needed_desc">Bitte aktiviere für Switchly den Zugriff auf „App-Nutzungsdaten“, um deine Bildschirmzeit-Statistiken anzuzeigen.</string>
     <string name="usage_open_settings">Einstellungen öffnen</string>
     <string name="usage_row_tap_hint_app">Tippe auf eine App-Zeile, um Details zu öffnen.</string>
@@ -113,18 +132,53 @@
     <string name="usage_row_basic_a11y">%1$s, %2$s, %3$s.</string>
     <string name="usage_total_screen_time">Gesamte Bildschirmzeit</string>
     <string name="usage_sessions_today">Öffnungen heute</string>
-    <string name="usage_sessions_week">Öffnungen diese Woche</string>
-    <string name="usage_sessions_month">Öffnungen diesen Monat</string>
-    <string name="usage_sessions_year">Öffnungen dieses Jahr</string>
-    <string name="usage_sessions_overall">Öffnungen gesamt</string>
     <string name="usage_attempts_today">Versuche heute</string>
-    <string name="usage_attempts_week">Versuche diese Woche</string>
-    <string name="usage_attempts_month">Versuche diesen Monat</string>
-    <string name="usage_attempts_year">Versuche dieses Jahr</string>
-    <string name="usage_attempts_overall">Versuche gesamt</string>
     <string name="usage_app_placeholder">App</string>
-    <string name="statistics_usage_subtitle_apps">%1$s</string>
     <string name="statistics_usage_subtitle_web">Webseiten</string>
+    <string name="usage_launch_stats_title">Starts</string>
+    <string name="usage_launch_stats_loading">Start-Statistik wird geladen…</string>
+    <string name="usage_timeline_title">Nutzungs-Timeline</string>
+    <string name="usage_timeline_loading">Timeline wird geladen…</string>
+    <string name="usage_timeline_empty">Keine App-Starts für diesen Zeitraum gefunden.</string>
+    <string name="usage_timeline_permission_needed">Nutzungszugriff wird für die Start-Timeline benötigt.</string>
+    <string name="usage_timeline_row">%1$s · %2$s–%3$s · %4$s</string>
+    <string name="app_launches_total_title">Starts gesamt</string>
+    <string name="app_launches_overview_title">Start-Übersicht</string>
+    <string name="app_launches_empty">Keine App-Starts für diesen Zeitraum gefunden.</string>
+    <string name="app_launches_sort_filter_title">Starts sortieren &amp; filtern</string>
+    <string name="app_launches_sort_launches">Meiste Starts</string>
+    <string name="app_launches_sort_time">Meiste Zeit</string>
+    <string name="app_launches_sort_name">Name</string>
+    <string name="app_launches_filter_single">Apps mit nur einem Start ausblenden</string>
+    <string name="app_launch_detail_summary">%1$s · %2$s gesamt</string>
+    <plurals name="app_launches_count">
+        <item quantity="one">%1$d Start</item>
+        <item quantity="other">%1$d Starts</item>
+    </plurals>
+    <string name="screen_unlocks_permission_needed">Nutzungszugriff wird für Entsperr-Einblicke benötigt.</string>
+    <string name="screen_unlocks_empty">Keine Entsperrungen für diesen Zeitraum gefunden.</string>
+    <string name="screen_unlocks_sort_filter_title">Entsperrungen sortieren &amp; filtern</string>
+    <string name="screen_unlocks_sort_newest">Neueste zuerst</string>
+    <string name="screen_unlocks_sort_oldest">Älteste zuerst</string>
+    <string name="screen_unlocks_sort_longest">Längste zuerst</string>
+    <string name="screen_unlocks_sort_shortest">Kürzeste zuerst</string>
+    <string name="screen_unlocks_filter_short">Sehr kurze Entsperrungen ausblenden</string>
+    <string name="screen_unlocks_row_summary">%1$s · Tippen für Nutzungs-Timeline</string>
+    <string name="screen_unlocks_no_apps">Während dieser Entsperrung wurde keine App- oder Website-Nutzung gefunden.</string>
+    <string name="screen_unlocks_detail_title">Entsperr-Details</string>
+    <string name="screen_unlocks_detail_summary_title">Entsperr-Sessions</string>
+    <string name="screen_unlocks_detail_summary">%1$s · %2$s</string>
+    <plurals name="screen_unlocks_count">
+        <item quantity="one">%1$d Entsperrung</item>
+        <item quantity="other">%1$d Entsperrungen</item>
+    </plurals>
+    <plurals name="screen_unlocks_apps_used">
+        <item quantity="one">%1$d Eintrag genutzt</item>
+        <item quantity="other">%1$d Einträge genutzt</item>
+    </plurals>
+    <string name="website_timeline_title">Website-Timeline</string>
+    <string name="website_timeline_empty">Keine Website-Nutzung für diesen Zeitraum gefunden.</string>
+    <string name="website_timeline_row">%1$s · %2$s</string>
 
     <!-- ====================================================== -->
     <!-- Active time -->
@@ -140,12 +194,89 @@
     <string name="active_time_week">Woche</string>
     <string name="active_time_month">Monat</string>
     <string name="active_time_year">Jahr</string>
-    <string name="active_time_overall">Gesamt</string>
     <string name="active_time_no_sessions">Für diesen Tag sind keine Sessions gespeichert.</string>
     <string name="active_time_session_title">Aktiv %1$d</string>
     <string name="active_time_details_total_label">Aktive Zeit gesamt</string>
+    <string name="active_time_sessions_title">Sessions</string>
     <string name="active_time_day_sessions_hint">Tippe den Tag in der Übersicht an, um Sessions zu sehen</string>
     <string name="active_time_graph_days">Tages-Graph</string>
+    <string name="active_time_activity_history_title">Aktivitätsverlauf</string>
+    <string name="active_time_activity_history_empty">Für diesen Tag wurden noch keine Switchly-Aktivitäten gefunden.</string>
+
+    <!-- ====================================================== -->
+    <!-- Activity history -->
+    <!-- ====================================================== -->
+    <string name="activity_history_recent_empty">Noch keine aktuellen Switchly-Aktivitäten gefunden.</string>
+    <string name="activity_history_filter_action">Aktion</string>
+    <string name="activity_history_range_custom">Benutzerdefiniert</string>
+    <string name="activity_history_range_custom_title">Zeitraum auswählen</string>
+    <string name="activity_history_range_custom_value">%1$s - %2$s</string>
+    <string name="stats_range_clear">Zurücksetzen</string>
+    <string name="activity_history_info_title">Aktivitätsverlauf</string>
+    <string name="activity_history_info_message">Der Aktivitätsverlauf zeigt aktuelle Switchly-Ereignisse, darunter Profilwechsel, Zeitpläne, Standort, WLAN/Bluetooth, NFC, QR, Barcode, temporäre Aktionen, manuelle Steuerung und Notfall-Entsperrungen. Nutze die Zeitraum-Chips und Sortieren &amp; Filtern, um die Timeline einzugrenzen.</string>
+    <string name="activity_history_type_all">Alle</string>
+    <string name="activity_history_type_profiles">Profile</string>
+    <string name="activity_history_type_schedules">Zeitpläne</string>
+    <string name="activity_history_type_location">Standort</string>
+    <string name="activity_history_type_wifi_bluetooth">WLAN/Bluetooth</string>
+    <string name="activity_history_type_scans">NFC/QR/Barcode</string>
+    <string name="activity_history_type_temporary">Temporär</string>
+    <string name="activity_history_type_manual">Manuell</string>
+    <string name="activity_history_type_emergency">Notfall</string>
+    <string name="activity_history_sort_newest">Neueste zuerst</string>
+    <string name="activity_history_sort_oldest">Älteste zuerst</string>
+    <plurals name="activity_history_result_count">
+        <item quantity="one">%1$d Ereignis</item>
+        <item quantity="other">%1$d Ereignisse</item>
+    </plurals>
+
+    <!-- ====================================================== -->
+    <!-- Activity history blocked events and details -->
+    <!-- ====================================================== -->
+    <string name="activity_history_type_blocked">Blockiert</string>
+    <string name="activity_history_blocked_app_title">App blockiert</string>
+    <string name="activity_history_blocked_website_title">Website blockiert</string>
+    <string name="activity_history_blocked_surface_title">In-App-Bereich blockiert</string>
+    <string name="activity_history_package_line">Paket: %1$s</string>
+    <string name="activity_history_matched_line">Treffer: %1$s</string>
+    <string name="activity_history_detail_time_line">Zeit: %1$s</string>
+    <string name="activity_history_detail_source_line">Quelle: %1$s</string>
+    <string name="activity_history_detail_action_line">Aktion: %1$s</string>
+    <string name="activity_history_detail_raw_line">Rohdaten: %1$s</string>
+
+    <!-- ====================================================== -->
+    <!-- Activity history events -->
+    <!-- ====================================================== -->
+    <string name="activity_history_schedule_title">Zeitplan hat Switchly geändert</string>
+    <string name="activity_history_location_schedule_title">Standort-Zeitplan hat Switchly geändert</string>
+    <string name="activity_history_wifi_schedule_title">WLAN-Zeitplan hat Switchly geändert</string>
+    <string name="activity_history_bluetooth_schedule_title">Bluetooth-Zeitplan hat Switchly geändert</string>
+    <string name="activity_history_schedule_blocked_title">Zeitplan blockiert</string>
+    <string name="activity_history_schedule_blocked_by_nfc">Ein Zeitplan wollte Switchly deaktivieren, aber NFC ist dafür erforderlich.</string>
+    <string name="activity_history_location_title">Standort-Ereignis</string>
+    <string name="activity_history_wifi_title">WLAN-Ereignis</string>
+    <string name="activity_history_bluetooth_title">Bluetooth-Ereignis</string>
+    <string name="activity_history_nfc_title">NFC</string>
+    <string name="activity_history_qr_title">QR</string>
+    <string name="activity_history_barcode_title">Barcode</string>
+    <string name="activity_history_temp_expired_title">Temporäre Aktion beendet</string>
+    <string name="activity_history_profile_restored_title">Profil wiederhergestellt</string>
+    <string name="activity_history_source_input_changed_title">%1$s-Eingabe hat Switchly geändert</string>
+    <string name="activity_history_manual_changed_title">Manuelle Eingabe hat Switchly geändert</string>
+    <string name="activity_history_temporary_changed_title">Temporärer Modus hat Switchly geändert</string>
+    <string name="activity_history_emergency_changed_title">Notfall-Entsperrung hat Switchly geändert</string>
+    <string name="activity_history_action_line">Aktion: %1$s</string>
+    <string name="activity_history_profile_line">Profil: %1$s</string>
+    <string name="activity_history_duration_line">Dauer: %1$s</string>
+    <string name="activity_history_action_enable">Aktivieren</string>
+    <string name="activity_history_action_disable">Deaktivieren</string>
+    <string name="activity_history_action_toggle">Umschalten</string>
+    <string name="activity_history_action_temp_enable">Temporär aktivieren</string>
+    <string name="activity_history_action_temp_disable">Temporär deaktivieren</string>
+    <string name="activity_history_action_emergency">Notfall-Entsperrung</string>
+    <string name="activity_history_action_restore">Wiederherstellen</string>
+    <string name="activity_history_action_blocked">Blockiert</string>
+    <string name="activity_history_action_unknown">Unbekannt</string>
 
     <!-- ====================================================== -->
     <!-- Website usage details -->
@@ -164,10 +295,10 @@
     <string name="usage_web_placeholder">Website-Statistiken folgen bald.</string>
     <string name="usage_apps_no_accessibility">Für die App-Nutzungsstatistik muss die Switchly-Bedienungshilfe aktiviert sein.</string>
     <string name="usage_apps_no_data">Noch keine App-Nutzungsdaten vorhanden. Switchly erfasst die App-Nutzung, solange die Bedienungshilfe aktiviert ist.</string>
-    <string name="usage_apps_no_blocked">Noch keine blockierten Apps konfiguriert.</string>
+    <string name="usage_apps_no_blocked">Im aktiven Profil sind noch keine Apps konfiguriert.</string>
     <string name="usage_websites_no_accessibility">Website-Tracking benötigt aktivierte Switchly-Bedienungshilfe.</string>
     <string name="usage_websites_no_data">Noch keine Website-Daten. Öffne eine Website in einem unterstützten Browser (Chrome, Brave, Edge, Firefox, Ecosia …), während die Switchly-Bedienungshilfe aktiviert ist.</string>
-    <string name="usage_websites_no_blocked">Noch keine limitierten Websites konfiguriert.</string>
+    <string name="usage_websites_no_blocked">Im aktiven Profil sind noch keine Website-Regeln konfiguriert.</string>
 
     <!-- ====================================================== -->
     <!-- Usage labels and filters -->
@@ -181,12 +312,15 @@
     <string name="stats_sort_az">Name (A–Z)</string>
     <string name="stats_sort_za">Name (Z–A)</string>
     <string name="stats_filter_all_apps">Alle Apps</string>
-    <string name="stats_filter_blocked_only">Nur blockierte Apps</string>
+    <string name="stats_filter_blocked_only">Nur im Profil</string>
     <string name="stats_filter_all_websites">Alle Websites</string>
-    <string name="stats_filter_blocked_only_websites">Nur limitierte Websites</string>
+    <string name="stats_filter_blocked_only_websites">Nur im Profil</string>
     <string name="stats_sort_filter_title">Sortieren &amp; Filtern</string>
+    <string name="stats_scope_title">Umfang</string>
+    <string name="stats_scope_all">Alle Aktivität</string>
+    <string name="stats_scope_current_profile">Aktuelles Profil</string>
+    <string name="stats_sort_title">Sortierung</string>
     <string name="stats_section_filter">Filter</string>
-    <string name="stats_section_sort">Sortieren</string>
     <string name="stats_apply">Anwenden</string>
     <string name="stats_sort_used_time_desc">Nutzungszeit (oben)</string>
     <string name="stats_sort_used_time_asc">Nutzungszeit (unten)</string>
@@ -199,9 +333,8 @@
     <string name="usage_switchly_fallback_title">Noch keine Daten von Switchly</string>
     <string name="usage_switchly_fallback_message">Für diesen Zeitraum hat Switchly noch keine Nutzungsdaten erfasst. Möchtest du stattdessen die aktuellen Statistiken deines Smartphones anzeigen?</string>
     <string name="usage_switchly_fallback_positive">Handy-Statistiken anzeigen</string>
-    <string name="usage_details_premium_title">Detaillierte Statistiken sind Teil von Premium</string>
-    <string name="usage_details_premium_message">Hol dir Premium, um detaillierte Statistiken und Einblicke zu sehen.</string>
+    <string name="usage_details_premium_title">Mehr Statistiken sind Teil von Premium</string>
+    <string name="usage_details_premium_message">Schalte benutzerdefinierte Zeiträume, längere Statistikzeiträume und detaillierte Drilldown-Einblicke mit Switchly Premium frei.</string>
     <string name="usage_details_premium_action">Premium ansehen</string>
     <string name="cannot_set_limit_unavailable">Für eine nicht verfügbare App kann kein Limit gesetzt werden.</string>
-
 </resources>

@@ -66,28 +66,32 @@ class App : Application() {
             else    -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
 
-        // start/stop trigger monitors based on active rules
-        WifiTriggerMonitor.ensureStarted(this)
-        BluetoothTriggerMonitor.ensureStarted(this)
-        LocationTriggerMonitor.ensureStarted(this)
-
         AppLockManager.register(this)
-        // ShortcutManagerCompat uses binder calls and can block on Android 16/OEM builds.
-        // Refresh shortcuts off the main thread to avoid app-start ANRs.
+
+        // ShortcutManagerCompat uses ShortcutService binder calls.
+        // Keep it off the main startup path and only refresh when the app/shortcut spec changed.
         QuickShortcutRegistrar.refreshAsync(this)
 
-        // One-time sanity cleanup for old inflated usage imports.
-        runCatching { UsageStore.sanitizeImpossibleDailyTotals(this) }
-
-        ManagedDevicePolicyHelper.syncSelfUninstallBlock(this)
-
-        // Diagnostic-only Play Integrity probe. Never blocks users.
-        PlayIntegrityRuntime.requestSoftCheck(this, "app_start")
-
-        // Accessibility checks may call system services via binder.
-        // Keep them off the main Application startup path to avoid cold-start/background ANRs.
         val appContext = applicationContext
+
+        // Startup work below can touch system services, Google Play services or disk.
+        // Do it after Application.onCreate() returns so Android/Samsung cold starts do not get stuck in finishAttachApplication or slow binder calls.
         startupExecutor.execute {
+            // One-time sanity cleanup for old inflated usage imports.
+            runCatching { UsageStore.sanitizeImpossibleDailyTotals(appContext) }
+
+            // Start/stop trigger monitors based on active rules.
+            // These may register receivers/services/geofences and should not run on the main thread.
+            runCatching { WifiTriggerMonitor.ensureStarted(appContext) }
+            runCatching { BluetoothTriggerMonitor.ensureStarted(appContext) }
+            runCatching { LocationTriggerMonitor.ensureStarted(appContext) }
+
+            runCatching { ManagedDevicePolicyHelper.syncSelfUninstallBlock(appContext) }
+
+            // Diagnostic-only Play Integrity probe. Never blocks users.
+            runCatching { PlayIntegrityRuntime.requestSoftCheck(appContext, "app_start") }
+
+            // Accessibility checks may call system services via binder.
             val enabled = SwitchModeStore.isEnabled(appContext)
             val canRun = BlockingRuntime.isAccessibilityActive(appContext)
             if (enabled && canRun) {

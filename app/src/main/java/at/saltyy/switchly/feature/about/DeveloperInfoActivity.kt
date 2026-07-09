@@ -40,6 +40,18 @@ class DeveloperInfoActivity : TilesInfoActivity() {
                 iconRes = R.drawable.account_box_24
             ),
             Tile(
+                getString(R.string.about_email_label),
+                email,
+                sectionTitle = getString(R.string.about_section_contact),
+                onClick = { openMail(email) },
+                copyValue = email,
+                showCopyButton = true,
+                iconRes = R.drawable.mail_24,
+                copiedToast = getString(R.string.about_mail_copied),
+                subtitleColorRes = R.color.contact_text,
+                subtitleAlpha = 1f
+            ),
+            Tile(
                 getString(R.string.about_website_label),
                 displayUrl(website),
                 sectionTitle = getString(R.string.about_section_contact),
@@ -47,15 +59,6 @@ class DeveloperInfoActivity : TilesInfoActivity() {
                 copyValue = website,
                 showOpenButton = true,
                 iconRes = R.drawable.language_24
-            ),
-            Tile(
-                getString(R.string.about_email_label),
-                email,
-                sectionTitle = getString(R.string.about_section_contact),
-                onClick = { openMail(email) },
-                showCopyButton = true,
-                iconRes = R.drawable.mail_24,
-                copiedToast = getString(R.string.about_mail_copied)
             ),
         )
     }

@@ -47,12 +47,20 @@ object CloudSyncRuntime {
     private const val FIELD_PREFS = "prefs"
     private const val FIELD_SWITCHLY_PREFS = "switchly_prefs"
     private const val FIELD_SCHEDULES_PREFS = "schedules_prefs"
+    private const val FIELD_UI_HINTS_PREFS = "ui_hints_prefs"
+    private const val FIELD_WIFI_RULES_PREFS = "wifi_rules_prefs"
     private const val FIELD_CREATED_AT = "created_at"
     private const val FIELD_STATS = "stats"
+    private const val FIELD_BACKUP_SCHEMA_VERSION = "backup_schema_version"
+    private const val FIELD_CREATED_WITH_VERSION = "created_with_version"
+    private const val FIELD_CREATED_WITH_VERSION_CODE = "created_with_version_code"
+    private const val BACKUP_SCHEMA_VERSION = 221
 
     // ScheduleStore prefs name in the project
     private const val SCHEDULES_PREFS_NAME = "switchly_prefs_schedules"
     private const val SCHEDULES_KEY_ITEMS = "items" // JSON list stored by ScheduleStore
+    private const val UI_HINTS_PREFS_NAME = "switchly_ui_hints"
+    private const val WIFI_RULES_PREFS_NAME = "switchly_wifi_rules"
 
     private val backupExcludedKeyMarkers = listOf(
         "access_token",
@@ -89,6 +97,8 @@ object CloudSyncRuntime {
             snapshot.contains(FIELD_PREFS) ||
                 snapshot.contains(FIELD_SWITCHLY_PREFS) ||
                 snapshot.contains(FIELD_SCHEDULES_PREFS) ||
+                snapshot.contains(FIELD_UI_HINTS_PREFS) ||
+                snapshot.contains(FIELD_WIFI_RULES_PREFS) ||
                 snapshot.contains(FIELD_STATS)
             )
     }
@@ -143,27 +153,6 @@ object CloudSyncRuntime {
             }
         }
 
-        fun takeBoolRegex(
-            listKey: String,
-            regex: Regex,
-            buildItem: (MatchResult) -> Map<String, Any?>
-        ) {
-            val items = mutableListOf<Map<String, Any?>>()
-            val toRemove = mutableListOf<String>()
-
-            for ((k, v) in prefsOut) {
-                val m = regex.matchEntire(k) ?: continue
-                val b = v as? Boolean ?: continue
-                items += buildItem(m) + mapOf("v" to b)
-                toRemove += k
-            }
-
-            if (items.isNotEmpty()) {
-                statsOut[listKey] = items
-                toRemove.forEach { prefsOut.remove(it) }
-            }
-        }
-
         // Per-app per-day
         takeRegex(
             listKey = "usage_day",
@@ -206,22 +195,18 @@ object CloudSyncRuntime {
             regex = Regex("schedule_exec_count_(\\d{8})")
         ) { m -> mapOf("d" to m.groupValues[1]) }
 
-        // Usage limit bookkeeping
-        takeBoolRegex(
-            listKey = "usage_limit_ever",
-            regex = Regex("usage_limit_ever__(.+)")
-        ) { m -> mapOf("p" to m.groupValues[1]) }
-
-        takeRegex(
-            listKey = "usage_limit_min",
-            regex = Regex("usage_limit_min__(.+?)__(.+)")
-        ) { m -> mapOf("pr" to m.groupValues[1], "p" to m.groupValues[2]) }
-
         return prefsOut to statsOut
     }
 
     private fun applyStatsToInternalPrefs(ctx: Context, stats: Any?) {
         val map = stats as? Map<*, *> ?: return
+        if (map.containsKey("activity_history_logs")) {
+            val restoredActivityLogs = (map["activity_history_logs"] as? List<*>)
+                ?.filterIsInstance<String>()
+                .orEmpty()
+            AppLogStore.replaceLines(ctx, restoredActivityLogs)
+        }
+
         val sp = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
 
         fun buildKeyWithPkg(prefix: String, item: Map<*, *>): String? {
@@ -299,19 +284,31 @@ object CloudSyncRuntime {
         val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx).all
         val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE).all
         val schedulesPrefs = ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE).all
+        val uiHintsPrefs = ctx.getSharedPreferences(UI_HINTS_PREFS_NAME, Context.MODE_PRIVATE).all
+        val wifiRulesPrefs = ctx.getSharedPreferences(WIFI_RULES_PREFS_NAME, Context.MODE_PRIVATE).all
 
         val all = BackupCategoryFilter.filterDefaultPrefs(normalizePrefsMap(defaultPrefs), selection)
         val internalAllRaw = BackupCategoryFilter.filterInternalPrefs(normalizePrefsMap(internalPrefs), selection)
         val schedulesAll = BackupCategoryFilter.filterSchedulesPrefs(normalizePrefsMap(schedulesPrefs), selection)
+        val uiHintsAll = BackupCategoryFilter.filterUiHintsPrefs(normalizePrefsMap(uiHintsPrefs), selection)
+        val wifiRulesAll = BackupCategoryFilter.filterWifiRulesPrefs(normalizePrefsMap(wifiRulesPrefs), selection)
 
         val (internalAll, statsMapRaw) = extractStatsFromInternalPrefs(internalAllRaw)
-        val statsMap = BackupCategoryFilter.filterStats(statsMapRaw, selection)
+        val statsMapWithLogs = statsMapRaw.toMutableMap()
+        val activityHistoryLogs = AppLogStore.latestLines(ctx, 1000)
+        statsMapWithLogs["activity_history_logs"] = activityHistoryLogs
+        val statsMap = BackupCategoryFilter.filterStats(statsMapWithLogs, selection)
 
         return mapOf(
+            FIELD_BACKUP_SCHEMA_VERSION to BACKUP_SCHEMA_VERSION,
+            FIELD_CREATED_WITH_VERSION to BuildConfig.VERSION_NAME,
+            FIELD_CREATED_WITH_VERSION_CODE to BuildConfig.VERSION_CODE,
             FIELD_PREFS to all,
             FIELD_SWITCHLY_PREFS to internalAll,
             FIELD_STATS to statsMap,
             FIELD_SCHEDULES_PREFS to schedulesAll,
+            FIELD_UI_HINTS_PREFS to uiHintsAll,
+            FIELD_WIFI_RULES_PREFS to wifiRulesAll,
             BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES to selection.categoryIds.toList().sorted(),
             BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP to !selection.isFull,
             FIELD_CREATED_AT to now
@@ -444,7 +441,7 @@ object CloudSyncRuntime {
                 }
 
                 try {
-                    applyBackupSnapshot(ctx, snapshot)
+                    applyBackupPayload(ctx, payloadFromSnapshot(snapshot))
                     onDone(true, null)
                 } catch (e: Exception) {
                     Log.e(TAG, "pullBackup failed", e)
@@ -467,12 +464,16 @@ object CloudSyncRuntime {
         val prefsMap = payload[FIELD_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
         val internalMap = payload[FIELD_SWITCHLY_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
         val schedulesMap = payload[FIELD_SCHEDULES_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
+        val uiHintsMap = payload[FIELD_UI_HINTS_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
+        val wifiRulesMap = payload[FIELD_WIFI_RULES_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
         val stats = payload[FIELD_STATS]
         val partialBackup = BackupCategoryFilter.isPartialBackup(payload)
 
         applyPrefsMapToLocal(ctx, prefsMap, isInternal = false, isSchedules = false, clearBeforeApply = !partialBackup)
         applyPrefsMapToLocal(ctx, internalMap, isInternal = true, isSchedules = false, clearBeforeApply = !partialBackup)
         applyPrefsMapToLocal(ctx, schedulesMap, isInternal = false, isSchedules = true, clearBeforeApply = !partialBackup)
+        applyPrefsMapToLocal(ctx, uiHintsMap, prefsName = UI_HINTS_PREFS_NAME, clearBeforeApply = !partialBackup)
+        applyPrefsMapToLocal(ctx, wifiRulesMap, prefsName = WIFI_RULES_PREFS_NAME, clearBeforeApply = !partialBackup)
 
         // Expand compact stats payload back into internal prefs keys
         applyStatsToInternalPrefs(ctx, stats)
@@ -484,24 +485,69 @@ object CloudSyncRuntime {
         forceDisableSwitchlyAfterRestore(ctx)
     }
 
+    fun loadBackupPayload(
+        ctx: Context,
+        backupId: String,
+        onDone: (Boolean, String?, Map<*, *>?) -> Unit
+    ) {
+        val uid = Auth.uid()
+        if (uid == null) {
+            onDone(false, ctx.getString(R.string.cloud_error_not_logged_in), null)
+            return
+        }
+
+        val userRef = FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
+        val snapshotTask = if (backupId == ROOT_DOCUMENT_BACKUP_ID) {
+            userRef.get()
+        } else {
+            userRef.collection(SUB_BACKUPS)
+                .document(backupId)
+                .get()
+        }
+
+        snapshotTask
+            .addOnSuccessListener { snapshot ->
+                if (!hasBackupPayload(snapshot)) {
+                    onDone(false, ctx.getString(R.string.cloud_error_backup_not_found), null)
+                    return@addOnSuccessListener
+                }
+
+                runCatching { payloadFromSnapshot(snapshot) }
+                    .onSuccess { onDone(true, null, it) }
+                    .onFailure { e ->
+                        AppLogStore.append(ctx, TAG, "Loading cloud backup preview failed", e)
+                        onDone(false, e.localizedMessage, null)
+                    }
+            }
+            .addOnFailureListener { e ->
+                AppLogStore.append(ctx, TAG, "Loading cloud backup preview failed", e)
+                onDone(false, e.localizedMessage, null)
+            }
+    }
+
     private fun hasBackupPayload(payload: Map<*, *>): Boolean {
         return payload.containsKey(FIELD_PREFS) ||
             payload.containsKey(FIELD_SWITCHLY_PREFS) ||
             payload.containsKey(FIELD_SCHEDULES_PREFS) ||
+            payload.containsKey(FIELD_UI_HINTS_PREFS) ||
+            payload.containsKey(FIELD_WIFI_RULES_PREFS) ||
             payload.containsKey(FIELD_STATS)
     }
 
-    // Applies a backup document (a versioned backup document) to local storage.
-    private fun applyBackupSnapshot(ctx: Context, snapshot: DocumentSnapshot) {
-        val payload = mapOf(
+    private fun payloadFromSnapshot(snapshot: DocumentSnapshot): Map<String, Any?> {
+        return mapOf(
+            FIELD_BACKUP_SCHEMA_VERSION to snapshot.get(FIELD_BACKUP_SCHEMA_VERSION),
+            FIELD_CREATED_WITH_VERSION to snapshot.get(FIELD_CREATED_WITH_VERSION),
+            FIELD_CREATED_WITH_VERSION_CODE to snapshot.get(FIELD_CREATED_WITH_VERSION_CODE),
             FIELD_PREFS to snapshot.get(FIELD_PREFS),
             FIELD_SWITCHLY_PREFS to snapshot.get(FIELD_SWITCHLY_PREFS),
             FIELD_SCHEDULES_PREFS to snapshot.get(FIELD_SCHEDULES_PREFS),
+            FIELD_UI_HINTS_PREFS to snapshot.get(FIELD_UI_HINTS_PREFS),
+            FIELD_WIFI_RULES_PREFS to snapshot.get(FIELD_WIFI_RULES_PREFS),
             FIELD_STATS to snapshot.get(FIELD_STATS),
             BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES to snapshot.get(BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES),
             BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP to snapshot.get(BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP)
         )
-        applyBackupPayload(ctx, payload)
     }
 
     // Applies a Firestore-loaded map to local SharedPreferences.
@@ -510,9 +556,11 @@ object CloudSyncRuntime {
         map: Map<*, *>,
         isInternal: Boolean = false,
         isSchedules: Boolean = false,
+        prefsName: String? = null,
         clearBeforeApply: Boolean = true
     ) {
         val prefs = when {
+            prefsName != null -> ctx.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
             isSchedules -> ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE)
             isInternal -> ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
             else -> PreferenceManager.getDefaultSharedPreferences(ctx)
@@ -522,7 +570,23 @@ object CloudSyncRuntime {
         // Firestore returns integral numbers as Long. Some of our prefs are truly Int-based.
         // If we store them as Long, SharedPreferences.getInt(...) will crash with ClassCastException.
         fun shouldStoreAsInt(key: String): Boolean {
-            return key == "onboarding_version" || key.startsWith("usage_limit_min__")
+            return key == "onboarding_version" ||
+                key == "primary_toggle_tap_count" ||
+                key.startsWith("usage_limit_min__") ||
+                key.startsWith("session_limit_min__") ||
+                key.startsWith("attempt_limit__") ||
+                key.startsWith("inapp_limit_min__") ||
+                key.startsWith("surf_rule__") ||
+                key.startsWith("domain_limit_min_") ||
+                key.startsWith("scan_code_daily_limit_") ||
+                key.startsWith("scan_code_cooldown_") ||
+                key.startsWith("scan_code_count_") ||
+                key.startsWith("qr_temp_count_") ||
+                key.startsWith("nfc_td_count_") ||
+                key.startsWith("nfc_td_cfg_daily_") ||
+                key.startsWith("nfc_td_cfg_cooldown_") ||
+                key.startsWith("nfc_tag_read_only_duration_") ||
+                key.startsWith("open_count_")
         }
 
         prefs.edit(commit = true) {

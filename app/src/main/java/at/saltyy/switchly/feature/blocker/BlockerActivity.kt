@@ -23,6 +23,7 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Typeface
 import android.graphics.Color
 import android.media.AudioManager
 import android.os.Build
@@ -35,18 +36,25 @@ import android.view.View
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.data.prefs.LastBlockReasonStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.PackageLaunchIntentCompat
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.lang.ref.WeakReference
 
 class BlockerActivity : ComponentActivity() {
@@ -54,7 +62,9 @@ class BlockerActivity : ComponentActivity() {
     private lateinit var titleView: TextView
     private lateinit var appNameView: TextView
     private lateinit var messageView: TextView
+    private lateinit var debugInfoButton: View
     private lateinit var btnClose: Button
+    private var blockReasonSnapshot: LastBlockReasonStore.Snapshot? = null
 
     private val handler = Handler(Looper.getMainLooper())
     private var tickRunning = false
@@ -121,6 +131,7 @@ class BlockerActivity : ComponentActivity() {
         titleView = findViewById(R.id.blocker_title)
         appNameView = findViewById(R.id.blocker_app_name)
         messageView = findViewById(R.id.blocker_message)
+        debugInfoButton = findViewById(R.id.blocker_debug_info)
         btnClose = findViewById(R.id.btn_close)
 
         btnClose.backgroundTintList = AccentColor.getActiveColor(this)
@@ -131,6 +142,7 @@ class BlockerActivity : ComponentActivity() {
         btnClose.setOnClickListener {
             handleCloseAction()
         }
+        debugInfoButton.setOnClickListener { showBlockReasonInfo() }
 
         applyFromIntent(intent)
     }
@@ -237,6 +249,76 @@ class BlockerActivity : ComponentActivity() {
                 appNameView.visibility = View.GONE
             }
         }
+
+        val snapshot = LastBlockReasonStore.snapshot(this)
+            ?.takeIf { it.isFresh(maxAgeMs = 10L * 60L * 1000L) }
+            ?.takeIf { pkg.isBlank() || it.pkg == pkg }
+        if (snapshot == null) {
+            blockReasonSnapshot = null
+            debugInfoButton.visibility = View.GONE
+        } else {
+            blockReasonSnapshot = snapshot
+            debugInfoButton.visibility = View.VISIBLE
+        }
+    }
+
+    private fun showBlockReasonInfo() {
+        val snapshot = blockReasonSnapshot
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.block_reason_info_title)
+            .setPositiveButton(android.R.string.ok, null)
+        if (snapshot == null) {
+            dialog.setMessage(R.string.block_reason_info_empty)
+        } else {
+            dialog.setView(buildBlockReasonInfoView(snapshot))
+        }
+        dialog.showAccented()
+    }
+
+    private fun buildBlockReasonInfoView(snapshot: LastBlockReasonStore.Snapshot): View {
+        val padH = (20 * resources.displayMetrics.density).toInt()
+        val padTop = (8 * resources.displayMetrics.density).toInt()
+        val padBottom = (2 * resources.displayMetrics.density).toInt()
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(padH, padTop, padH, padBottom)
+            val primaryText = MaterialColors.getColor(
+                this@BlockerActivity,
+                com.google.android.material.R.attr.colorOnSurface,
+                Color.BLACK,
+            )
+            val secondaryText = ColorUtils.setAlphaComponent(primaryText, 0xB3)
+
+            fun addRow(label: String, value: String) {
+                if (value.isBlank()) return
+                val title = TextView(this@BlockerActivity).apply {
+                    text = label
+                    setTypeface(typeface, Typeface.BOLD)
+                    setTextColor(primaryText)
+                    textSize = 13f
+                }
+                val body = TextView(this@BlockerActivity).apply {
+                    text = value
+                    setTextColor(secondaryText)
+                    textSize = 14f
+                    val bottom = (10 * resources.displayMetrics.density).toInt()
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                    ).apply { bottomMargin = bottom }
+                }
+                addView(title)
+                addView(body)
+            }
+
+            addRow("Profile", snapshot.profile)
+            addRow("Rule", snapshot.rule)
+            addRow("Mode", snapshot.mode)
+            addRow("Source", snapshot.source)
+            addRow("Matched", snapshot.matched.ifBlank { snapshot.label.ifBlank { snapshot.pkg } })
+            addRow("Result", snapshot.result)
+            addRow("Details", snapshot.details)
+        }
     }
 
     private fun handleCloseAction() {
@@ -244,15 +326,18 @@ class BlockerActivity : ComponentActivity() {
         val postAckBackCount = intent?.getIntExtra(EXTRA_POST_ACK_BACK_COUNT, 0) ?: 0
         val postAckYoutubeHome = intent?.getBooleanExtra(EXTRA_POST_ACK_YOUTUBE_HOME, false) ?: false
         val postAckYoutubeClose = intent?.getBooleanExtra(EXTRA_POST_ACK_YOUTUBE_CLOSE, false) ?: false
+        val postAckYoutubeCleanupShorts = intent?.getBooleanExtra(EXTRA_POST_ACK_YOUTUBE_CLEANUP_SHORTS, false) ?: false
+        val postAckYoutubeCleanupMini = intent?.getBooleanExtra(EXTRA_POST_ACK_YOUTUBE_CLEANUP_MINI, true) ?: true
         val returnToPackageOnClose = intent?.getBooleanExtra(EXTRA_RETURN_TO_PACKAGE_ON_CLOSE, false) ?: false
 
         // YouTube surfaces should keep the popup visible first, then return only the YouTube task to its Home tab.
         // Do not send the user to the phone launcher here; that feels like YouTube was closed instead of blocked.
-        if (pkg == "com.google.android.youtube" && (postAckYoutubeHome || postAckYoutubeClose)) {
+        if (pkg == "com.google.android.youtube" && (postAckYoutubeHome || postAckYoutubeClose || postAckYoutubeCleanupShorts)) {
             pauseActiveMediaPlayback()
-            queuePendingYouTubeHomeRedirect(pkg)
+            queuePendingYouTubeHomeRedirect(pkg, postAckYoutubeCleanupShorts, postAckYoutubeCleanupMini)
             if (postAckYoutubeHome) {
-                launchYouTubeHome(this)
+                // Let the AccessibilityService redirect the currently visible YouTube task.
+                // Launching YouTube from here can restore the last Shorts task on some builds.
             } else {
                 bringPackageToFront(this, pkg)
             }
@@ -366,6 +451,8 @@ class BlockerActivity : ComponentActivity() {
         private const val EXTRA_POST_ACK_BACK_COUNT = "post_ack_back_count"
         private const val EXTRA_POST_ACK_YOUTUBE_HOME = "post_ack_youtube_home"
         private const val EXTRA_POST_ACK_YOUTUBE_CLOSE = "post_ack_youtube_close"
+        private const val EXTRA_POST_ACK_YOUTUBE_CLEANUP_SHORTS = "post_ack_youtube_cleanup_shorts"
+        private const val EXTRA_POST_ACK_YOUTUBE_CLEANUP_MINI = "post_ack_youtube_cleanup_mini"
         private const val EXTRA_RETURN_TO_PACKAGE_ON_CLOSE = "return_to_package_on_close"
 
         //Used by [AppWatcherService] to re-show the blocker if the user swipes it away from recents.
@@ -450,7 +537,9 @@ class BlockerActivity : ComponentActivity() {
             postAcknowledgeBackCount: Int = 0,
             returnToPackageOnClose: Boolean = false,
             postAcknowledgeYouTubeHome: Boolean = false,
-            postAcknowledgeYouTubeClose: Boolean = false
+            postAcknowledgeYouTubeClose: Boolean = false,
+            postAcknowledgeYouTubeCleanupShorts: Boolean = false,
+            postAcknowledgeYouTubeCleanupMini: Boolean = true
         ) {
             if (!SwitchModeStore.isEnabled(context)) {
                 clearVisibilityState("show_detailed_skipped_disabled")
@@ -480,6 +569,12 @@ class BlockerActivity : ComponentActivity() {
                 if (postAcknowledgeYouTubeClose) {
                     putExtra(EXTRA_POST_ACK_YOUTUBE_CLOSE, true)
                 }
+                if (postAcknowledgeYouTubeCleanupShorts) {
+                    putExtra(EXTRA_POST_ACK_YOUTUBE_CLEANUP_SHORTS, true)
+                }
+                if (!postAcknowledgeYouTubeCleanupMini) {
+                    putExtra(EXTRA_POST_ACK_YOUTUBE_CLEANUP_MINI, false)
+                }
             }
             context.startActivity(i)
         }
@@ -505,7 +600,7 @@ class BlockerActivity : ComponentActivity() {
 
         private fun bringPackageToFront(context: Context, pkg: String) {
             runCatching {
-                context.packageManager.getLaunchIntentForPackage(pkg)?.apply {
+                PackageLaunchIntentCompat.getLaunchIntent(context, pkg)?.apply {
                     addFlags(
                         Intent.FLAG_ACTIVITY_NEW_TASK or
                             Intent.FLAG_ACTIVITY_SINGLE_TOP or
@@ -533,7 +628,7 @@ class BlockerActivity : ComponentActivity() {
                     setPackage("com.google.android.youtube")
                     addFlags(flags)
                 },
-                context.packageManager.getLaunchIntentForPackage("com.google.android.youtube")?.apply {
+                PackageLaunchIntentCompat.getLaunchIntent(context, "com.google.android.youtube")?.apply {
                     addFlags(flags)
                 }
             ).filterNotNull()
@@ -555,6 +650,8 @@ class BlockerActivity : ComponentActivity() {
 
         private data class PendingYouTubeHomeRedirect(
             val pkg: String,
+            val cleanupShorts: Boolean,
+            val cleanupMiniPlayer: Boolean,
             val createdAt: Long
         )
 
@@ -586,23 +683,38 @@ class BlockerActivity : ComponentActivity() {
         }
 
         @Synchronized
-        fun queuePendingYouTubeHomeRedirect(pkg: String) {
+        fun queuePendingYouTubeHomeRedirect(
+            pkg: String,
+            cleanupShorts: Boolean = false,
+            cleanupMiniPlayer: Boolean = true
+        ) {
             if (pkg != "com.google.android.youtube") return
-            pendingYouTubeHomeRedirect = PendingYouTubeHomeRedirect(pkg = pkg, createdAt = System.currentTimeMillis())
+            pendingYouTubeHomeRedirect = PendingYouTubeHomeRedirect(
+                pkg = pkg,
+                cleanupShorts = cleanupShorts,
+                cleanupMiniPlayer = cleanupMiniPlayer,
+                createdAt = System.currentTimeMillis()
+            )
         }
 
         @Synchronized
-        fun consumePendingYouTubeHomeRedirectFor(pkg: String): Boolean {
-            val pending = pendingYouTubeHomeRedirect ?: return false
+        fun consumePendingYouTubeHomeRedirectFlagsFor(pkg: String): Int {
+            val pending = pendingYouTubeHomeRedirect ?: return 0
             val now = System.currentTimeMillis()
             if ((now - pending.createdAt) > PENDING_NAV_TTL_MS) {
                 pendingYouTubeHomeRedirect = null
-                return false
+                return 0
             }
-            if (pending.pkg != pkg) return false
+            if (pending.pkg != pkg) return 0
             pendingYouTubeHomeRedirect = null
-            return true
+            return FLAG_YOUTUBE_HOME_REDIRECT or
+                (if (pending.cleanupShorts) FLAG_YOUTUBE_CLEANUP_SHORTS else 0) or
+                (if (pending.cleanupMiniPlayer) FLAG_YOUTUBE_CLEANUP_MINI else 0)
         }
+
+        const val FLAG_YOUTUBE_HOME_REDIRECT = 1
+        const val FLAG_YOUTUBE_CLEANUP_SHORTS = 2
+        const val FLAG_YOUTUBE_CLEANUP_MINI = 4
 
         fun sendHome(context: Context) {
             val home = Intent(Intent.ACTION_MAIN).apply {

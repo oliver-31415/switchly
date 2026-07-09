@@ -2,12 +2,16 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Dashboard state and app actions -->
+    <!-- Dashboard profile state -->
     <!-- ====================================================== -->
     <string name="dashboard_active_profile_fmt">Aktives Profil: %1$s</string>
     <string name="dashboard_active_profile_unknown">Aktives Profil: —</string>
     <string name="dashboard_unavailable_hint_short">Auf diesem Gerät nicht installiert.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Nicht auf diesem Gerät installiert.\nÖffne „App rules“, um den Eintrag zu entfernen.</string>
+
+    <!-- ====================================================== -->
+    <!-- Blocked app list actions -->
+    <!-- ====================================================== -->
     <string name="dashboard_blocked_app_action_edit_limits">Limits bearbeiten</string>
     <string name="dashboard_blocked_app_action_edit_limits_summary">Zeit- oder Öffnungslimits für %1$s setzen.</string>
     <string name="dashboard_blocked_app_limits_title">Limits bearbeiten</string>
@@ -20,6 +24,10 @@
     <string name="dashboard_blocked_app_remove_title">App entfernen</string>
     <string name="dashboard_blocked_app_remove_message">%1$s aus dem aktuellen Profil entfernen?</string>
     <string name="dashboard_blocked_app_removed">%1$s entfernt</string>
+
+    <!-- ====================================================== -->
+    <!-- Emergency and active timer hints -->
+    <!-- ====================================================== -->
     <string name="dashboard_emergency_hint_ready">Notfall-Entsperrung - 1x pro Tag</string>
     <string name="dashboard_emergency_hint_active">Notfall aktiv (%1$d Min) — tippe für Pause oder Ende</string>
     <string name="dashboard_emergency_hint_paused">Notfall pausiert (%1$d Min) — tippe für Fortsetzen oder Ende</string>
@@ -28,6 +36,10 @@
     <string name="widget_active_timer_title">Aktivzeit</string>
     <string name="widget_active_timer_inactive">Nicht aktiv</string>
     <string name="widget_active_timer_desc">Zeigt die aktuelle Aktivzeit.</string>
+
+    <!-- ====================================================== -->
+    <!-- Control mode labels -->
+    <!-- ====================================================== -->
     <string name="dashboard_control_mode_hint_placeholder">Kontrollmodus: —</string>
     <string name="dashboard_control_mode_hint_fmt">Kontrollmodus: %1$s</string>
     <string name="dashboard_control_method_schedule">Zeitplänen</string>
@@ -99,10 +111,10 @@
     <!-- ====================================================== -->
     <string name="dashboard_toggle_enable">Aktivieren</string>
     <string name="dashboard_toggle_disable">Deaktivieren</string>
-    <string name="dashboard_quick_actions">Blocking Controls</string>
+    <string name="dashboard_quick_actions">Schnellaktionen</string>
     <plurals name="dashboard_quick_actions_count">
-        <item quantity="one">Blocking Controls • %1$d ausgewählt</item>
-        <item quantity="other">Blocking Controls • %1$d ausgewählt</item>
+        <item quantity="one">Schnellaktionen • %1$d ausgewählt</item>
+        <item quantity="other">Schnellaktionen • %1$d ausgewählt</item>
     </plurals>
     <string name="dashboard_tile_apps">Apps verwalten</string>
     <string name="dashboard_tile_apps_sub">App-Liste bearbeiten</string>
@@ -110,23 +122,23 @@
     <string name="dashboard_tile_profiles_sub">Erstellen &amp; bearbeiten</string>
     <string name="dashboard_tile_blocked_websites">Website-Regeln</string>
     <string name="dashboard_tile_blocked_websites_sub">Domains für dieses Profil</string>
-    <string name="dashboard_tile_usage">Nutzung &amp; Einblicke</string>
-    <string name="dashboard_tile_usage_sub">Nutzungsstatistiken und aktive Zeit</string>
+    <string name="dashboard_tile_usage">Aktivität</string>
+    <string name="dashboard_tile_usage_sub">Nutzung, Starts, Entsperrungen und Verlauf</string>
     <string name="dashboard_tile_in_app">In-App-Blocking</string>
     <string name="dashboard_tile_in_app_sub">Feeds &amp; Oberflächen</string>
-    <string name="dashboard_quick_actions_edit">Blocking Controls bearbeiten</string>
-    <string name="dashboard_quick_actions_customize">Blocking Controls anpassen</string>
+    <string name="dashboard_quick_actions_edit">Schnellaktionen bearbeiten</string>
+    <string name="dashboard_quick_actions_customize">Schnellaktionen anpassen</string>
     <string name="dashboard_tile_qr">QR-Scanner</string>
-    <string name="dashboard_tile_qr_sub">Tippen scannt · halten für Optionen</string>
+    <string name="dashboard_tile_qr_sub">Tippen scannt\nHalten für Optionen</string>
     <string name="dashboard_tile_barcode">Barcode-Scanner</string>
-    <string name="dashboard_tile_barcode_sub">Tippen scannt · halten für Optionen</string>
+    <string name="dashboard_tile_barcode_sub">Tippen scannt\nHalten für Optionen</string>
     <string name="dashboard_tile_write_nfc">NFC-Tag schreiben</string>
     <string name="dashboard_tile_write_nfc_sub">Schreiben oder gepaarte Tags verwalten</string>
     <string name="dashboard_tile_blocked_notifications">Blockierte Benachrichtigungen</string>
     <string name="dashboard_tile_blocked_notifications_sub">Postfach &amp; Aktivität</string>
-    <string name="dashboard_quick_actions_toggle">Blocking Controls umschalten</string>
-    <string name="dashboard_quick_actions_expand">Blocking Controls ausklappen</string>
-    <string name="dashboard_quick_actions_collapse">Blocking Controls einklappen</string>
+    <string name="dashboard_quick_actions_toggle">Schnellaktionen umschalten</string>
+    <string name="dashboard_quick_actions_expand">Schnellaktionen ausklappen</string>
+    <string name="dashboard_quick_actions_collapse">Schnellaktionen einklappen</string>
 
     <!-- ====================================================== -->
     <!-- Development notice and Home modes -->
@@ -140,4 +152,36 @@
     <string name="home_layout_detailed">Advanced</string>
     <string name="home_layout_custom">Custom</string>
 
+    <!-- ====================================================== -->
+    <!-- Block reason info -->
+    <!-- ====================================================== -->
+    <string name="block_reason_info_title">Warum wurde das blockiert?</string>
+    <string name="block_reason_info_button_desc">Anzeigen, warum das blockiert wurde</string>
+    <string name="block_reason_info_empty">Kein aktueller Blockiergrund verfügbar.</string>
+    <string name="block_reason_rule_allow_selected">Nur ausgewählte erlauben</string>
+    <string name="block_reason_rule_daily_time_limit">Tages-Zeitlimit</string>
+    <string name="block_reason_rule_open_limit">Tägliches Öffnungslimit</string>
+    <string name="block_reason_rule_strict_lock">Strict-/NFC-Schutz</string>
+    <string name="block_reason_rule_blocked_apps">Blockierte App-Liste</string>
+    <string name="block_reason_rule_website_rule">Website-Regel</string>
+    <string name="block_reason_rule_website_limit">Website-Zeitlimit</string>
+    <string name="block_reason_rule_settings_bypass">Einstellungen-Schutz</string>
+    <string name="block_reason_mode_block_selected">Block selected: Eintrag ist ausgewählt</string>
+    <string name="block_reason_mode_allow_not_allowed">Allow selected: Eintrag ist nicht erlaubt</string>
+    <string name="block_reason_mode_website_block_selected">Block selected: Domain ist ausgewählt</string>
+    <string name="block_reason_mode_website_allow_not_allowed">Allow selected: Domain ist nicht erlaubt</string>
+    <string name="block_reason_source_app_blocking">App-Blocking</string>
+    <string name="block_reason_source_website">Website-Regel</string>
+    <string name="block_reason_source_in_app">In-App-Regel</string>
+    <string name="block_reason_source_strict_mode">Strict Mode</string>
+    <string name="block_reason_result_blocked">Blockiert</string>
+    <string name="block_reason_result_surface_blocked">Bereich blockiert</string>
+
+    <!-- ====================================================== -->
+    <!-- Pause until actions -->
+    <!-- ====================================================== -->
+    <string name="dashboard_pause_until_title">Pausieren bis…</string>
+    <string name="dashboard_pause_until_next_schedule">Bis zum nächsten Zeitplanwechsel pausieren</string>
+    <string name="dashboard_pause_until_leave_location">Pausieren bis ich den Ort verlasse</string>
+    <string name="dashboard_pause_until_tomorrow">Bis morgen pausieren</string>
 </resources>

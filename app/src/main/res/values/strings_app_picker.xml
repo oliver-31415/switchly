@@ -133,7 +133,7 @@
     <string name="app_picker_open_in_app_rules">In-app rules</string>
     <string name="app_picker_open_in_app_rules_for">In-app rules for %1$s</string>
     <string name="app_picker_in_app_rules_chip">In-app</string>
-    <string name="app_picker_in_app_rules_pinned_hint">Selected because in-app rules are enabled. Remove the in-app rules first to turn this app off.</string>
+    <string name="app_picker_in_app_rules_pinned_hint">Selected because in-app rules are enabled.\nRemove the in-app rules first to turn this app off.</string>
     <string name="app_picker_in_app_rules_pinned_toast">Remove the in-app rules first to turn this app off.</string>
 
     <!-- ====================================================== -->

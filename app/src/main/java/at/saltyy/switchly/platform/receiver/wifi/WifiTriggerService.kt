@@ -149,7 +149,12 @@ class WifiTriggerService : Service() {
                     NOTIF_CHANNEL_ID,
                     getString(R.string.notif_channel_wifi_triggers_name),
                     NotificationManager.IMPORTANCE_LOW
-                ).apply { description = getString(R.string.notif_channel_wifi_triggers_desc) }
+                ).apply {
+                    description = getString(R.string.notif_channel_wifi_triggers_desc)
+                    setSound(null, null)
+                    enableVibration(false)
+                    setShowBadge(false)
+                }
             )
         }
 
@@ -198,6 +203,9 @@ class WifiTriggerService : Service() {
             .setContentTitle(getString(R.string.notif_wifi_schedules_title))
             .setContentText(getString(R.string.notif_wifi_schedules_content))
             .setContentIntent(contentPi)
+            .setSilent(true)
+            .setDefaults(0)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 
@@ -385,7 +393,7 @@ class WifiTriggerService : Service() {
 
     companion object {
         private const val TAG = "WifiTriggerService"
-        private const val NOTIF_CHANNEL_ID = "switchly_wifi_triggers"
+        private const val NOTIF_CHANNEL_ID = "switchly_wifi_triggers_silent"
         private const val NOTIF_ID = 23003
         private const val PREFS_WIFI = "switchly_wifi_cache"
         private const val KEY_LAST_SSID = "last_ssid"

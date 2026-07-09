@@ -74,7 +74,7 @@
     <string name="temp_enable_duration_message">How long should %1$s be temporarily enabled?</string>
     <string name="temp_enable_duration_custom_title">Custom duration</string>
     <string name="temp_enable_duration_custom_hint">Enter minutes</string>
-    <string name="temp_enable_duration_invalid">Please enter a number between 1 and 1440 minutes.</string>
+    <string name="temp_enable_duration_invalid">Enter minutes, max 24h.</string>
     <string name="temp_duration_quick_presets">Quick presets</string>
     <string name="temp_duration_preset_minutes">%1$dm</string>
     <string name="nfc_time_5_min">5 minutes</string>
@@ -87,7 +87,7 @@
     <string name="nfc_time_custom">Custom time…</string>
     <string name="nfc_time_custom_title">Custom temporary duration</string>
     <string name="nfc_time_custom_message">Enter the fixed duration that should be written to this tag. Use “Ask when scanned” if the duration should be chosen later.</string>
-    <string name="nfc_time_custom_invalid">Please enter a number between 1 and 1440 minutes.</string>
+    <string name="nfc_time_custom_invalid">Enter minutes, max 24h.</string>
     <plurals name="nfc_time_custom_label">
         <item quantity="one">%1$d minute</item>
         <item quantity="other">%1$d minutes</item>
@@ -136,36 +136,43 @@
     <string name="paired_tag_readonly_action_section_title">Read-only tag action</string>
     <string name="paired_tag_readonly_action_label">Action for read-only scans</string>
     <string name="paired_tag_readonly_action_toggle">Toggle</string>
-    <string name="paired_tag_readonly_action_unlock_only">Unlock only</string>
-    <string name="paired_tag_readonly_action_lock_only">Lock only</string>
+    <string name="paired_tag_readonly_action_disable">Disable</string>
+    <string name="paired_tag_readonly_action_enable">Enable</string>
+    <string name="paired_tag_readonly_action_temp_disable">Temporary disable</string>
+    <string name="paired_tag_readonly_action_temp_enable">Temporary enable</string>
 
     <!-- ====================================================== -->
-    <!-- Paired tag limits -->
+    <!-- Paired tag usage settings -->
     <!-- ====================================================== -->
-    <string name="paired_tag_limits_section_title">Temporary disable limits</string>
+    <string name="paired_tag_usage_settings_section_title">Tag usage settings</string>
+    <string name="paired_tag_duration_label">Duration (min)</string>
+    <string name="paired_tag_duration_helper">Enter minutes. Max 24h. Default is 1 min for read-only temporary actions.</string>
+    <string name="paired_tag_duration_invalid">Enter minutes, max 24h.</string>
     <string name="paired_tag_daily_limit_label">Daily uses</string>
-    <string name="paired_tag_daily_limit_helper">Leave empty to use the default limit.</string>
+    <string name="paired_tag_daily_limit_helper">Optional. Limits how often this tag can be used per day.</string>
     <string name="paired_tag_cooldown_label">Cooldown (min)</string>
-    <string name="paired_tag_cooldown_helper">Leave empty to use the default cooldown.</string>
-    <string name="paired_tag_daily_limit_invalid">Please enter a valid daily limit or leave empty.</string>
-    <string name="paired_tag_cooldown_invalid">Please enter a valid cooldown in minutes or leave empty.</string>
-    <string name="nfc_temp_disable_limiter_cooldown">This tag is on cooldown. Try again in %1$d min.</string>
+    <string name="paired_tag_cooldown_helper">Optional. Wait time before this same tag can be used again.</string>
+    <string name="paired_tag_daily_limit_invalid">Enter 1–50 uses, or leave empty.</string>
+    <string name="paired_tag_cooldown_invalid">Enter minutes, max 24h, or leave empty.</string>
+    <string name="nfc_temp_disable_limiter_cooldown">Try this tag again in %1$d min.</string>
     <plurals name="nfc_temp_disable_limiter_daily_limit">
-        <item quantity="one">Daily limit reached for this tag (%1$d use/day).</item>
-        <item quantity="other">Daily limit reached for this tag (%1$d uses/day).</item>
+        <item quantity="one">Daily tag limit reached (%1$d/day).</item>
+        <item quantity="other">Daily tag limit reached (%1$d/day).</item>
     </plurals>
+    <string name="paired_tag_enabled_toggle">Enable paired tag</string>
+    <string name="paired_tag_disabled">Disabled</string>
 
     <!-- ====================================================== -->
     <!-- Pairing runtime feedback -->
     <!-- ====================================================== -->
-    <string name="nfc_pair_waiting_readonly">Tap an NFC tag to pair its UID for toggle/unlock use</string>
+    <string name="nfc_pair_waiting_readonly">Tap an NFC tag to pair its UID for toggle/disable use</string>
     <string name="nfc_pair_waiting_writable">Tap a writable NFC tag to pair its UID</string>
     <string name="nfc_pair_ok">Tag paired</string>
     <string name="nfc_pair_ok_with_uid">Tag paired: %1$s</string>
     <string name="nfc_pair_ok_with_uid_explained">Tag paired: %1$s. UID pairing authorizes this tag, but does not write a disable action to the card.</string>
     <string name="nfc_pair_already_added">Tag already added</string>
     <string name="nfc_pair_already_added_open_writer">Tag already added. Opening action writer…</string>
-    <string name="nfc_pair_writable_requires_writable_tag">This tag is read-only. Add it as a read-only tag instead.</string>
+    <string name="nfc_pair_writable_requires_writable_tag">Read-only tag. Add it as read-only.</string>
     <string name="nfc_pair_error">Could not read tag UID</string>
 
     <!-- ====================================================== -->
@@ -175,8 +182,8 @@
     <string name="nfc_feedback_stopped">%1$s disabled</string>
     <string name="nfc_feedback_already_started">%1$s is already enabled</string>
     <string name="nfc_feedback_already_stopped">%1$s is already disabled</string>
-    <string name="nfc_temp_hint_profile_disable_toast">Heads-up: Profile temporary disable only applies if that profile is currently active.</string>
-    <string name="nfc_temp_hint_profile_enable_toast">Heads-up: Profile temporary enable temporarily activates this profile.</string>
+    <string name="nfc_temp_hint_profile_disable_toast">Profile must be active for temp disable.</string>
+    <string name="nfc_temp_hint_profile_enable_toast">Temporary enable switches to this profile.</string>
     <string name="toast_disable_requires_nfc">Switchly can currently only be disabled via NFC tag.</string>
     <string name="toast_cannot_disable_while_locked">Switchly is locked. Use your NFC tag to disable it.</string>
     <string name="toast_cannot_change_profile_while_locked">Profiles are locked. Use your NFC tag to switch Switchly or disable it.</string>

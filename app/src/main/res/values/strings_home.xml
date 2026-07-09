@@ -2,12 +2,16 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Dashboard state and app actions -->
+    <!-- Dashboard profile state -->
     <!-- ====================================================== -->
     <string name="dashboard_active_profile_fmt">Active profile: %1$s</string>
     <string name="dashboard_active_profile_unknown">Active profile: —</string>
     <string name="dashboard_unavailable_hint_short">Not installed on this device.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Not installed on this device.\nOpen “App rules” to remove.</string>
+
+    <!-- ====================================================== -->
+    <!-- Blocked app list actions -->
+    <!-- ====================================================== -->
     <string name="dashboard_blocked_app_action_edit_limits">Edit limits</string>
     <string name="dashboard_blocked_app_action_edit_limits_summary">Set time or open limits for %1$s.</string>
     <string name="dashboard_blocked_app_limits_title">Edit limits</string>
@@ -20,14 +24,22 @@
     <string name="dashboard_blocked_app_remove_title">Remove app</string>
     <string name="dashboard_blocked_app_remove_message">Remove %1$s from the current profile?</string>
     <string name="dashboard_blocked_app_removed">%1$s removed</string>
+
+    <!-- ====================================================== -->
+    <!-- Emergency and active timer hints -->
+    <!-- ====================================================== -->
     <string name="dashboard_emergency_hint_ready">Emergency unlock - use once a day</string>
     <string name="dashboard_emergency_hint_active">Emergency active (%1$d min) — tap to pause or end</string>
     <string name="dashboard_emergency_hint_paused">Emergency paused (%1$d min) — tap to resume or end</string>
     <string name="dashboard_emergency_hint_used_today">Emergency unlock already used today</string>
-    <string name="dashboard_emergency_hint_disabled">Emergency unlock is off — open Blocking controls</string>
+    <string name="dashboard_emergency_hint_disabled">Emergency unlock is off — open Switchly controls</string>
     <string name="widget_active_timer_title">Active timer</string>
     <string name="widget_active_timer_inactive">Not active</string>
     <string name="widget_active_timer_desc">Shows the current active timer.</string>
+
+    <!-- ====================================================== -->
+    <!-- Control mode labels -->
+    <!-- ====================================================== -->
     <string name="dashboard_control_mode_hint_placeholder">Control mode: —</string>
     <string name="dashboard_control_mode_hint_fmt">Control mode: %1$s</string>
     <string name="dashboard_control_method_schedule">schedules</string>
@@ -102,25 +114,25 @@
     <string name="dashboard_toggle_disable">Disable</string>
     <string name="dashboard_quick_actions">Quick actions</string>
     <plurals name="dashboard_quick_actions_count">
-        <item quantity="one">Blocking controls • %1$d selected</item>
-        <item quantity="other">Blocking controls • %1$d selected</item>
+        <item quantity="one">Quick actions • %1$d selected</item>
+        <item quantity="other">Quick actions • %1$d selected</item>
     </plurals>
-    <string name="dashboard_tile_apps">Manage apps</string>
+    <string name="dashboard_tile_apps">App rules</string>
     <string name="dashboard_tile_apps_sub">Choose blocked apps</string>
     <string name="dashboard_tile_profiles">Profiles</string>
     <string name="dashboard_tile_profiles_sub">Create &amp; edit</string>
     <string name="dashboard_tile_blocked_websites">Website rules</string>
     <string name="dashboard_tile_blocked_websites_sub">Domains for this profile</string>
-    <string name="dashboard_tile_usage">Usage &amp; insights</string>
-    <string name="dashboard_tile_usage_sub">Usage statistics and active time</string>
+    <string name="dashboard_tile_usage">Activity</string>
+    <string name="dashboard_tile_usage_sub">Usage, launches, unlocks, and history</string>
     <string name="dashboard_tile_in_app">In-app blocking</string>
     <string name="dashboard_tile_in_app_sub">Feeds &amp; surfaces</string>
     <string name="dashboard_quick_actions_edit">Edit quick actions</string>
     <string name="dashboard_quick_actions_customize">Customize quick actions</string>
     <string name="dashboard_tile_qr">QR scanner</string>
-    <string name="dashboard_tile_qr_sub">Tap to scan · hold for options</string>
+    <string name="dashboard_tile_qr_sub">Tap to scan\nHold for options</string>
     <string name="dashboard_tile_barcode">Barcode scanner</string>
-    <string name="dashboard_tile_barcode_sub">Tap to scan · hold for options</string>
+    <string name="dashboard_tile_barcode_sub">Tap to scan\nHold for options</string>
     <string name="dashboard_tile_write_nfc">Write NFC tag</string>
     <string name="dashboard_tile_write_nfc_sub">Write or manage paired tags</string>
     <string name="dashboard_tile_blocked_notifications">Blocked notifications</string>
@@ -141,4 +153,36 @@
     <string name="home_layout_detailed">Advanced</string>
     <string name="home_layout_custom">Custom</string>
 
+    <!-- ====================================================== -->
+    <!-- Block reason info -->
+    <!-- ====================================================== -->
+    <string name="block_reason_info_title">Why was this blocked?</string>
+    <string name="block_reason_info_button_desc">Show why this was blocked</string>
+    <string name="block_reason_info_empty">No recent block reason is available.</string>
+    <string name="block_reason_rule_allow_selected">Allow selected mode</string>
+    <string name="block_reason_rule_daily_time_limit">Daily time limit</string>
+    <string name="block_reason_rule_open_limit">Daily open limit</string>
+    <string name="block_reason_rule_strict_lock">Strict/NFC lock protection</string>
+    <string name="block_reason_rule_blocked_apps">Blocked app list</string>
+    <string name="block_reason_rule_website_rule">Website rule</string>
+    <string name="block_reason_rule_website_limit">Website time limit</string>
+    <string name="block_reason_rule_settings_bypass">Settings bypass protection</string>
+    <string name="block_reason_mode_block_selected">Block selected: item is selected</string>
+    <string name="block_reason_mode_allow_not_allowed">Allow selected: item is not allowed</string>
+    <string name="block_reason_mode_website_block_selected">Block selected: domain is selected</string>
+    <string name="block_reason_mode_website_allow_not_allowed">Allow selected: domain is not allowed</string>
+    <string name="block_reason_source_app_blocking">App blocking</string>
+    <string name="block_reason_source_website">Website rule</string>
+    <string name="block_reason_source_in_app">In-app rule</string>
+    <string name="block_reason_source_strict_mode">Strict mode</string>
+    <string name="block_reason_result_blocked">Blocked</string>
+    <string name="block_reason_result_surface_blocked">Surface blocked</string>
+
+    <!-- ====================================================== -->
+    <!-- Pause until actions -->
+    <!-- ====================================================== -->
+    <string name="dashboard_pause_until_title">Pause until…</string>
+    <string name="dashboard_pause_until_next_schedule">Pause until next schedule change</string>
+    <string name="dashboard_pause_until_leave_location">Pause until I leave this location</string>
+    <string name="dashboard_pause_until_tomorrow">Pause until tomorrow</string>
 </resources>

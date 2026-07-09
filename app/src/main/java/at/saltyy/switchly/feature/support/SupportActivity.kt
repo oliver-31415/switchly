@@ -52,29 +52,39 @@ import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockedInboxStore
+import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.InAppRuleStore
+import at.saltyy.switchly.data.prefs.LastBlockReasonStore
 import at.saltyy.switchly.data.prefs.NfcScanCountStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.data.prefs.NotificationBlockStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
+import at.saltyy.switchly.data.prefs.ScheduleInsights
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.SwitchlyRuntimeStore
+import at.saltyy.switchly.data.sync.BackupSelectionStore
+import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
+import at.saltyy.switchly.feature.usage.SwitchlyActivityHistory
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.receiver.DPMReceiver
 import at.saltyy.switchly.security.PlayIntegrityRuntime
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
-import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
 import at.saltyy.switchly.util.BatteryOptimizationCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.switchmaterial.SwitchMaterial
+import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -83,10 +93,21 @@ import java.util.TimeZone
 class SupportActivity : AppCompatActivity() {
 
     private companion object {
+        private const val SUPPORT_EMAIL = "support@saltyy.at"
         private const val KEY_INCLUDE_DEBUG = "support_include_debug"
         private const val KEY_INCLUDE_ADVANCED_DEBUG = "support_include_advanced_debug"
+        private const val KEY_INCLUDE_SETUP_DETAILS = "support_include_setup_details"
+        private const val KEY_INCLUDE_ACTIVE_PROFILE_APPS = "support_include_active_profile_apps"
         private const val KEY_INCLUDE_LOGS = "support_include_logs"
     }
+
+    private data class ReportSelection(
+        val includeDebug: Boolean,
+        val includeActiveProfileApps: Boolean,
+        val includeSetupDetails: Boolean,
+        val includeAdvancedDebug: Boolean,
+        val includeLogs: Boolean
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
@@ -104,8 +125,13 @@ class SupportActivity : AppCompatActivity() {
         toolbar.setTitleTextColor(toolbarIconColor)
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
 
-        val email = getString(R.string.about_mail_address)
-        findViewById<TextView>(R.id.tvSupportEmail).text = email
+        val email = SUPPORT_EMAIL
+        findViewById<TextView>(R.id.tvSupportEmail).apply {
+            text = email
+            setTextColor(ContextCompat.getColor(this@SupportActivity, R.color.contact_text))
+            visibility = android.view.View.VISIBLE
+            alpha = 1f
+        }
 
         findViewById<ImageButton>(R.id.btnCopyEmailInline).apply {
             ImageViewCompat.setImageTintList(this, AccentColor.getActiveColor(this@SupportActivity))
@@ -115,36 +141,6 @@ class SupportActivity : AppCompatActivity() {
             }
         }
 
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        val includeDebug = findViewById<SwitchMaterial>(R.id.switchIncludeDebug)
-        val includeAdvancedDebug = findViewById<SwitchMaterial>(R.id.switchIncludeAdvancedDebug)
-        val includeLogs = findViewById<SwitchMaterial>(R.id.switchIncludeLogs)
-
-        includeDebug.isChecked = sp.getBoolean(KEY_INCLUDE_DEBUG, true)
-        includeAdvancedDebug.isChecked = sp.getBoolean(KEY_INCLUDE_ADVANCED_DEBUG, false)
-        includeLogs.isChecked = sp.getBoolean(KEY_INCLUDE_LOGS, false)
-
-        fun syncAdvancedState() {
-            val enabled = includeDebug.isChecked
-            includeAdvancedDebug.isEnabled = enabled
-            includeAdvancedDebug.alpha = if (enabled) 1f else 0.55f
-        }
-
-        includeDebug.setOnCheckedChangeListener { _, isChecked ->
-            sp.edit { putBoolean(KEY_INCLUDE_DEBUG, isChecked) }
-            syncAdvancedState()
-        }
-
-        includeAdvancedDebug.setOnCheckedChangeListener { _, isChecked ->
-            sp.edit { putBoolean(KEY_INCLUDE_ADVANCED_DEBUG, isChecked) }
-        }
-
-        includeLogs.setOnCheckedChangeListener { _, isChecked ->
-            sp.edit { putBoolean(KEY_INCLUDE_LOGS, isChecked) }
-        }
-
-        syncAdvancedState()
-
         findViewById<MaterialButton>(R.id.btnCopyEmail).setOnClickListener {
             val payload = AppLogStore.export(this@SupportActivity)
             copyToClipboard(label = getString(R.string.support_copy_latest_logs), text = payload)
@@ -152,38 +148,7 @@ class SupportActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.btnOpenEmail).setOnClickListener {
-            val subject = getString(R.string.support_email_subject)
-            val debugBody = if (includeDebug.isChecked) {
-                buildDebugInfo(includeAdvanced = includeAdvancedDebug.isChecked)
-            } else {
-                ""
-            }
-            val logsBody = if (includeLogs.isChecked) {
-                AppLogStore.export(this@SupportActivity).trim()
-            } else {
-                ""
-            }
-            val body = buildString {
-                if (debugBody.isNotBlank()) append(debugBody.trim())
-
-                if (logsBody.isNotBlank()) {
-                    if (isNotEmpty()) append("\n\n")
-                    append("-----\n")
-                    append(getString(R.string.support_latest_logs_heading))
-                    append("\n-----\n")
-                    append(logsBody)
-                }
-            }
-
-            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                data = "mailto:".toUri()
-                putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
-                putExtra(Intent.EXTRA_SUBJECT, subject)
-                if (body.isNotBlank()) putExtra(Intent.EXTRA_TEXT, body)
-            }
-
-            // Prefer an email client.
-            runCatching { startActivity(Intent.createChooser(intent, getString(R.string.support_open_email))) }
+            showReportSelectionDialog()
         }
     }
 
@@ -216,7 +181,160 @@ class SupportActivity : AppCompatActivity() {
         cm.setPrimaryClip(ClipData.newPlainText(label, text))
     }
 
-    private fun buildDebugInfo(includeAdvanced: Boolean): String = buildString {
+    private fun showReportSelectionDialog() {
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        val options = listOf(
+            SwitchlyDialogOption(
+                title = getString(R.string.support_include_debug),
+                summary = getString(R.string.support_include_debug_summary),
+                iconRes = R.drawable.info_24
+            ),
+            SwitchlyDialogOption(
+                title = getString(R.string.support_include_active_profile_apps),
+                summary = getString(R.string.support_include_active_profile_apps_summary),
+                iconRes = R.drawable.apps_24
+            ),
+            SwitchlyDialogOption(
+                title = getString(R.string.support_include_setup_details),
+                summary = getString(R.string.support_include_setup_details_summary),
+                iconRes = R.drawable.tune_24
+            ),
+            SwitchlyDialogOption(
+                title = getString(R.string.support_include_advanced_debug),
+                summary = getString(R.string.support_include_advanced_debug_summary),
+                iconRes = R.drawable.security_24
+            ),
+            SwitchlyDialogOption(
+                title = getString(R.string.support_include_logs),
+                summary = getString(R.string.support_include_logs_summary),
+                iconRes = R.drawable.layers_24
+            )
+        )
+        val checked = booleanArrayOf(
+            sp.getBoolean(KEY_INCLUDE_DEBUG, true),
+            sp.getBoolean(KEY_INCLUDE_ACTIVE_PROFILE_APPS, true),
+            sp.getBoolean(KEY_INCLUDE_SETUP_DETAILS, false),
+            sp.getBoolean(KEY_INCLUDE_ADVANCED_DEBUG, false),
+            sp.getBoolean(KEY_INCLUDE_LOGS, false)
+        )
+
+        showSwitchlyMultiChoiceDialog(
+            title = getString(R.string.support_choose_report_data),
+            options = options,
+            checked = checked,
+            positiveTextRes = R.string.support_open_email,
+            compact = false
+        ) { states ->
+            val selection = ReportSelection(
+                includeDebug = states.getOrNull(0) == true,
+                includeActiveProfileApps = states.getOrNull(1) == true,
+                includeSetupDetails = states.getOrNull(2) == true,
+                includeAdvancedDebug = states.getOrNull(3) == true,
+                includeLogs = states.getOrNull(4) == true
+            )
+            sp.edit {
+                putBoolean(KEY_INCLUDE_DEBUG, selection.includeDebug)
+                putBoolean(KEY_INCLUDE_ACTIVE_PROFILE_APPS, selection.includeActiveProfileApps)
+                putBoolean(KEY_INCLUDE_SETUP_DETAILS, selection.includeSetupDetails)
+                putBoolean(KEY_INCLUDE_ADVANCED_DEBUG, selection.includeAdvancedDebug)
+                putBoolean(KEY_INCLUDE_LOGS, selection.includeLogs)
+            }
+            openSupportEmail(selection)
+        }
+    }
+
+    private fun openSupportEmail(selection: ReportSelection) {
+        val includeDebugReport = selection.includeDebug ||
+            selection.includeSetupDetails ||
+            selection.includeAdvancedDebug
+        val sections = mutableListOf<String>()
+
+        if (includeDebugReport) {
+            sections += buildDebugInfo(
+                includeAdvanced = selection.includeAdvancedDebug,
+                includeSetupDetails = selection.includeSetupDetails
+            ).trim()
+        }
+        if (selection.includeActiveProfileApps) {
+            sections += buildActiveProfileAppsInfo().trim()
+        }
+        if (selection.includeLogs) {
+            val logs = AppLogStore.export(this@SupportActivity).trim()
+            if (logs.isNotBlank()) {
+                sections += buildString {
+                    append("-----\n")
+                    append(getString(R.string.support_latest_logs_heading))
+                    append("\n-----\n")
+                    append(logs)
+                }
+            }
+        }
+
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = "mailto:".toUri()
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(SUPPORT_EMAIL))
+            putExtra(Intent.EXTRA_SUBJECT, getString(R.string.support_email_subject))
+            sections.filter { it.isNotBlank() }
+                .joinToString("\n\n")
+                .takeIf { it.isNotBlank() }
+                ?.let { putExtra(Intent.EXTRA_TEXT, it) }
+        }
+
+        runCatching {
+            startActivity(Intent.createChooser(intent, getString(R.string.support_open_email)))
+        }
+    }
+
+    private fun buildActiveProfileAppsInfo(): String = buildString {
+        val profile = runCatching { ProfileStore.getCurrent(this@SupportActivity) }
+            .getOrNull()
+            .orEmpty()
+        append("-----\n")
+        append("Active profile app rules\n")
+        append("-----\n")
+        append("Profile: ").append(profile.ifBlank { "-" }).append("\n")
+        if (profile.isBlank()) {
+            append("Selected apps: 0\n")
+            return@buildString
+        }
+
+        val ruleMode = runCatching {
+            ProfileRuleModeStore.getMode(this@SupportActivity, profile)
+        }.getOrDefault("-")
+        val packages = runCatching {
+            ProfileStore.getSelectedForProfileMode(this@SupportActivity, profile)
+        }.getOrDefault(emptySet())
+        val apps = packages.map { packageName ->
+            applicationLabel(packageName) to packageName
+        }.sortedWith(
+            compareBy<Pair<String, String>> { it.first.lowercase(Locale.getDefault()) }
+                .thenBy { it.second }
+        )
+
+        append("Rule mode: ").append(ruleMode).append("\n")
+        append("Selected apps: ").append(apps.size).append("\n")
+        apps.forEach { (label, packageName) ->
+            append("- ").append(label)
+            append(" | ").append(packageName)
+            append("\n")
+        }
+    }
+
+    private fun applicationLabel(packageName: String): String {
+        return runCatching {
+            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getApplicationInfo(
+                    packageName,
+                    PackageManager.ApplicationInfoFlags.of(0L)
+                )
+            } else {
+                packageManager.getApplicationInfo(packageName, 0)
+            }
+            packageManager.getApplicationLabel(info).toString()
+        }.getOrDefault(packageName)
+    }
+
+    private fun buildDebugInfo(includeAdvanced: Boolean, includeSetupDetails: Boolean): String = buildString {
         fun line(key: String, value: Any?) {
             val v = value?.toString()?.takeIf { it.isNotBlank() } ?: "-"
             append(key).append(": ").append(v).append("\n")
@@ -259,6 +377,9 @@ class SupportActivity : AppCompatActivity() {
             line("Last update", "-")
         }
 
+        section("Build configuration")
+        line("Maps API key bundled", BuildConfig.SWITCHLY_HAS_MAPS_API_KEY)
+
         section("Device")
         line("Device", "${Build.MANUFACTURER} ${Build.MODEL}")
         line("Android", "${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
@@ -272,10 +393,33 @@ class SupportActivity : AppCompatActivity() {
         } else {
             0
         }
+        val profiles = runCatching { ProfileStore.getProfiles(this@SupportActivity) }.getOrDefault(emptySet())
+        val currentRuleMode = if (currentProfile.isBlank()) {
+            "-"
+        } else {
+            runCatching { ProfileRuleModeStore.getMode(this@SupportActivity, currentProfile) }.getOrDefault("-")
+        }
 
         val mode = runCatching { AutomationModeStore.getMode(this@SupportActivity) }
             .getOrDefault(AutomationModeStore.Mode.MIXED)
         val defaultSp = PreferenceManager.getDefaultSharedPreferences(this@SupportActivity)
+        val switchlyPrefs = this@SupportActivity.getSharedPreferences("switchly_prefs", MODE_PRIVATE)
+        val homeMode = defaultSp.getString(ToggleOptionsActivity.KEY_HOME_LAYOUT_MODE, ToggleOptionsActivity.HOME_MODE_DEFAULT)
+            ?: ToggleOptionsActivity.HOME_MODE_DEFAULT
+        val customHomeKeys = listOf(
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_TIMER to true,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_MAIN_BUTTON to true,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_PROFILE to true,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_CONTROL_MODE to true,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_PICK_APPS to true,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_TEMPORARY to false,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_EMERGENCY to false,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_QUICK_ACTIONS to false,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_NEXT_SCHEDULE to false,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_NOW to false,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_APPS to false,
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_PROFILE_DROPDOWN to false
+        )
 
         line("Premium", PremiumManager.isPremium(this@SupportActivity))
         line("Premium source", PremiumManager.premiumSource(this@SupportActivity))
@@ -286,13 +430,27 @@ class SupportActivity : AppCompatActivity() {
         line("Switchly base enabled", SwitchModeStore.isBaseEnabled(this@SupportActivity))
         line("Mode", mode.raw)
 
-        line("Profiles count", runCatching { ProfileStore.getProfiles(this@SupportActivity).size }.getOrDefault(0))
+        line("Profiles count", profiles.size)
         line("Active profile", if (currentProfile.isBlank()) "-" else currentProfile)
-        line("Blocked apps (active profile)", blockedCurrentProfile)
+        line("Rule mode (active profile)", currentRuleMode)
+        line("Profiles in allow mode", profiles.count { ProfileRuleModeStore.isAllowMode(this@SupportActivity, it) })
+        line("Selected apps (active profile)", blockedCurrentProfile)
+        line("Website rules enabled", DomainBlockStore.isEnabled(this@SupportActivity))
+        line(
+            "Website rules (active profile)",
+            if (currentProfile.isBlank()) 0 else DomainBlockStore.getDomainsForProfile(this@SupportActivity, currentProfile).size
+        )
+        line(
+            "Allowed website rules (active profile)",
+            if (currentProfile.isBlank()) 0 else DomainBlockStore.getAllowedDomainsForProfile(this@SupportActivity, currentProfile).size
+        )
+        line(
+            "In-app rule packages (active profile)",
+            if (currentProfile.isBlank()) 0 else InAppRuleStore.getPackagesWithEnabledRules(this@SupportActivity, currentProfile).size
+        )
         line(
             "Time limits with session reset",
-            this@SupportActivity.getSharedPreferences("switchly_prefs", MODE_PRIVATE)
-                .all.keys.count { it.startsWith("usage_limit_reset__") }
+            switchlyPrefs.all.keys.count { it.startsWith("usage_limit_reset__") }
         )
 
         line("NFC required to disable", SwitchModeStore.isNfcRequiredForDisable(this@SupportActivity))
@@ -351,9 +509,12 @@ class SupportActivity : AppCompatActivity() {
         line("Quick actions visible", defaultSp.getBoolean("pref_show_quick_actions", true))
         line("Temporary mode visible", defaultSp.getBoolean("pref_show_temporary_mode", true))
         line("Emergency unlock visible", defaultSp.getBoolean("pref_show_emergency_unlock", true))
+        line("Home display mode", homeMode)
+        line("Custom Home sections", "${customHomeKeys.count { (key, defaultValue) -> defaultSp.getBoolean(key, defaultValue) }}/${customHomeKeys.size}")
         line("Quick actions expanded", defaultSp.getBoolean("home_quick_actions_expanded", true))
         line("QR tools visible", AutomationModeStore.shouldShowQrTools(this@SupportActivity))
         line("Barcode tools visible", AutomationModeStore.shouldShowBarcodeTools(this@SupportActivity))
+        line("Backup selection", BackupSelectionStore.load(this@SupportActivity).displaySummary())
 
         section("Permissions")
         val notificationsEnabled = NotificationManagerCompat.from(this@SupportActivity).areNotificationsEnabled()
@@ -395,7 +556,6 @@ class SupportActivity : AppCompatActivity() {
         line("Battery effectively OK", batteryEffectivelyOk)
         line("Battery max confirmed", batteryMaxConfirmed)
         line("Exact alarms allowed", canScheduleExactAlarmsCompat())
-        line("Maps API key configured", BuildConfig.SWITCHLY_HAS_MAPS_API_KEY)
 
         section("Play Integrity")
         val integrity = PlayIntegrityRuntime.snapshot(this@SupportActivity)
@@ -427,6 +587,82 @@ class SupportActivity : AppCompatActivity() {
 
         line("Schedule executions today", runCatching { ScheduleExecutionCountStore.getToday(this@SupportActivity) }.getOrDefault(0))
         line("Schedule executions last 7d", runCatching { ScheduleExecutionCountStore.getForLastNDays(this@SupportActivity, 7) }.getOrDefault(0))
+
+        if (includeSetupDetails) {
+            section("Setup details")
+            line("Setup details included", true)
+            line("Setup privacy note", "Contains profile names, schedule times, trigger labels, and rule counts")
+
+            line("Current day", dayName(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)))
+            line("Current minutes", minutesOfDay(Calendar.getInstance()))
+
+            append("\nProfiles:\n")
+            if (profiles.isEmpty()) {
+                append("- none\n")
+            } else {
+                profiles.sortedWith(String.CASE_INSENSITIVE_ORDER).forEach { profile ->
+                    val modeForProfile = ProfileRuleModeStore.getMode(this@SupportActivity, profile)
+                    val blocked = runCatching { ProfileStore.getBlockedForProfile(this@SupportActivity, profile).size }.getOrDefault(0)
+                    val allowed = runCatching { ProfileStore.getAllowedForProfile(this@SupportActivity, profile).size }.getOrDefault(0)
+                    val selected = runCatching { ProfileStore.getSelectedForProfileMode(this@SupportActivity, profile).size }.getOrDefault(0)
+                    val websites = runCatching { DomainBlockStore.getDomainsForProfile(this@SupportActivity, profile).size }.getOrDefault(0)
+                    val allowedWebsites = runCatching { DomainBlockStore.getAllowedDomainsForProfile(this@SupportActivity, profile).size }.getOrDefault(0)
+                    val inAppPackages = runCatching { InAppRuleStore.getPackagesWithEnabledRules(this@SupportActivity, profile).size }.getOrDefault(0)
+
+                    append("- ")
+                    append(if (profile == currentProfile) "* " else "")
+                    append(profile)
+                    append(" | mode=").append(modeForProfile)
+                    append(" | selectedApps=").append(selected)
+                    append(" | blockedApps=").append(blocked)
+                    append(" | allowedApps=").append(allowed)
+                    append(" | websiteRules=").append(websites)
+                    append(" | allowedWebsiteRules=").append(allowedWebsites)
+                    append(" | inAppRulePackages=").append(inAppPackages)
+                    append(" | autoBlockNewApps=").append(ProfileStore.isAutoBlockNewAppsEnabled(this@SupportActivity, profile))
+                    append("\n")
+                }
+            }
+
+            append("\nSchedules:\n")
+            if (schedules.isEmpty()) {
+                append("- none\n")
+            } else {
+                schedules.sortedWith(compareBy<ScheduleStore.Schedule> { !it.enabled }.thenBy { it.startMinutes }.thenBy { it.id })
+                    .forEach { schedule ->
+                        append("- #").append(schedule.id)
+                        append(" | enabled=").append(schedule.enabled)
+                        append(" | activeNow=").append(isScheduleActiveNow(schedule))
+                        append(" | profile=").append(schedule.profile.ifBlank { "-" })
+                        append(" | action=").append(schedule.action.name)
+                        append(" | type=").append(schedule.type.name)
+                        append(" | title=").append(schedule.title.ifBlank { "-" })
+                        append(" | days=").append(daysMaskSummary(schedule.daysMask))
+                        append(" | time=").append(formatMinutes(schedule.startMinutes)).append("-").append(formatMinutes(schedule.endMinutes))
+                        append(" | date=").append(formatScheduleDate(schedule.startDate)).append("-").append(formatScheduleDate(schedule.endDate))
+                        append(" | trigger=").append(scheduleTriggerSummary(schedule))
+                        append("\n")
+                    }
+            }
+
+            val overlaps = ScheduleInsights.detectOverlaps(schedules)
+            append("\nSchedule overlaps:\n")
+            if (overlaps.isEmpty()) {
+                append("- none\n")
+            } else {
+                overlaps.take(10).forEach { overlap ->
+                    append("- #").append(overlap.first.id)
+                    append(" ").append(ScheduleInsights.scheduleDisplayName(overlap.first))
+                    append(" overlaps #").append(overlap.second.id)
+                    append(" ").append(ScheduleInsights.scheduleDisplayName(overlap.second))
+                    append(" | profiles=")
+                    append(overlap.first.profile.ifBlank { "-" })
+                    append(" -> ")
+                    append(overlap.second.profile.ifBlank { "-" })
+                    append("\n")
+                }
+            }
+        }
 
         section("Runtime")
         line("Watcher runtime today ms", runCatching { SwitchlyRuntimeStore.getRuntimeMsToday(this@SupportActivity) }.getOrDefault(0L))
@@ -490,16 +726,25 @@ class SupportActivity : AppCompatActivity() {
         if (includeAdvanced) {
             section("Advanced diagnostics")
 
-            val switchlyPrefs = getSharedPreferences("switchly_prefs", MODE_PRIVATE)
             val switchlyAll = switchlyPrefs.all
             val defaultAll = defaultSp.all
 
             fun countKeys(prefix: String): Int = switchlyAll.keys.count { it.startsWith(prefix) }
+            fun countDefaultKeys(prefix: String): Int = defaultAll.keys.count { it.startsWith(prefix) }
 
             line("switchly_prefs key count", switchlyAll.size)
             line("default prefs key count", defaultAll.size)
             line("blocked_count_* keys", countKeys("blocked_count_"))
             line("blocked_attempt_* keys", countKeys("blocked_attempt_"))
+            line("profile_rule_mode__ keys", countKeys("profile_rule_mode__"))
+            line("allowed_apps_* keys", countKeys("allowed_apps_"))
+            line("session_limit_min__ keys", countKeys("session_limit_min__"))
+            line("attempt_limit__ keys", countKeys("attempt_limit__"))
+            line("domain_block_domains__p__ keys", countDefaultKeys("domain_block_domains__p__"))
+            line("domain_allowed_domains__p__ keys", countDefaultKeys("domain_allowed_domains__p__"))
+            line("inapp_limit_min__ keys", countKeys("inapp_limit_min__"))
+            line("surf_rule__ keys", countKeys("surf_rule__"))
+            line("home_custom_* keys", countDefaultKeys("home_custom_"))
             line("schedule_exec_count_* keys", countKeys("schedule_exec_count_"))
             line("nfc_scan_count_* keys", countKeys("nfc_scan_count_"))
             line("runtime day keys", countKeys("switchly_runtime_ms_"))
@@ -509,6 +754,113 @@ class SupportActivity : AppCompatActivity() {
                 .getOrDefault("-")
             line("Profile names sample", if (sampleProfiles.isBlank()) "-" else sampleProfiles)
         }
+
+        section("Recent context")
+        val lastBlock = LastBlockReasonStore.snapshot(this@SupportActivity)
+        line("Last block package", lastBlock?.pkg ?: "-")
+        line("Last block profile", lastBlock?.profile ?: "-")
+        line("Last block rule", lastBlock?.rule ?: "-")
+        line("Last block source", lastBlock?.source ?: "-")
+        line("Last block matched", lastBlock?.matched ?: "-")
+        line("Last block result", lastBlock?.result ?: "-")
+        line("Last block time", formatDateTime(lastBlock?.timeMillis ?: 0L))
+        val latestLines = AppLogStore.latestLines(this@SupportActivity, 250)
+        line("Last NFC/QR/barcode action", latestLines.lastOrNull { it.contains("[NFC]") || it.contains("[QR]") || it.contains("[Barcode]") } ?: "-")
+        line("Last schedule event", latestLines.lastOrNull { it.contains("[Schedule]") } ?: "-")
+        append("Recent activity:\n")
+        val recentActivity = runCatching { SwitchlyActivityHistory.recentEntries(this@SupportActivity, days = 7, limit = 8) }.getOrDefault(emptyList())
+        if (recentActivity.isEmpty()) {
+            append("- none\n")
+        } else {
+            recentActivity.forEach { entry ->
+                append("- ")
+                    .append(formatDateTime(entry.timeMillis))
+                    .append(" | ")
+                    .append(entry.title)
+                    .append(" | ")
+                    .append(entry.summary.replace('\n', ' '))
+                    .append("\n")
+            }
+        }
+    }
+
+    private fun minutesOfDay(calendar: Calendar): Int {
+        return calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+    }
+
+    private fun isScheduleActiveNow(schedule: ScheduleStore.Schedule): Boolean {
+        if (!schedule.enabled) return false
+        val now = Calendar.getInstance()
+        val today = ScheduleStore.todayYmd()
+
+        if (schedule.type == ScheduleStore.Type.ONE_TIME) {
+            if (today < schedule.startDate || today > schedule.endDate) return false
+        } else {
+            val mask = ScheduleStore.Days.fromCalendarDay(now.get(Calendar.DAY_OF_WEEK))
+            if ((schedule.daysMask and mask) == 0) return false
+        }
+
+        val current = minutesOfDay(now)
+        return if (schedule.startMinutes <= schedule.endMinutes) {
+            current in schedule.startMinutes until schedule.endMinutes
+        } else {
+            current >= schedule.startMinutes || current < schedule.endMinutes
+        }
+    }
+
+    private fun daysMaskSummary(mask: Int): String {
+        if (mask == 0) return "-"
+        val days = listOf(
+            ScheduleStore.Days.MON to "Mon",
+            ScheduleStore.Days.TUE to "Tue",
+            ScheduleStore.Days.WED to "Wed",
+            ScheduleStore.Days.THU to "Thu",
+            ScheduleStore.Days.FRI to "Fri",
+            ScheduleStore.Days.SAT to "Sat",
+            ScheduleStore.Days.SUN to "Sun"
+        )
+        return days.filter { (bit, _) -> (mask and bit) != 0 }
+            .joinToString(",") { (_, label) -> label }
+            .ifBlank { "-" }
+    }
+
+    private fun dayName(dayOfWeek: Int): String {
+        return when (dayOfWeek) {
+            Calendar.MONDAY -> "Mon"
+            Calendar.TUESDAY -> "Tue"
+            Calendar.WEDNESDAY -> "Wed"
+            Calendar.THURSDAY -> "Thu"
+            Calendar.FRIDAY -> "Fri"
+            Calendar.SATURDAY -> "Sat"
+            Calendar.SUNDAY -> "Sun"
+            else -> "-"
+        }
+    }
+
+    private fun formatMinutes(minutes: Int): String {
+        val safe = minutes.coerceIn(0, 24 * 60)
+        return "%02d:%02d".format(Locale.US, safe / 60, safe % 60)
+    }
+
+    private fun formatScheduleDate(ymd: Int): String {
+        if (ymd <= 0) return "-"
+        val y = ymd / 10000
+        val m = (ymd / 100) % 100
+        val d = ymd % 100
+        return "%04d-%02d-%02d".format(Locale.US, y, m, d)
+    }
+
+    private fun scheduleTriggerSummary(schedule: ScheduleStore.Schedule): String {
+        val parts = mutableListOf<String>()
+        schedule.wifiSsid?.takeIf { it.isNotBlank() }?.let { parts += "wifi=$it" }
+        schedule.btDeviceName?.takeIf { it.isNotBlank() }?.let { parts += "btName=$it" }
+        schedule.btDeviceAddress?.takeIf { it.isNotBlank() }?.let { parts += "btAddress=$it" }
+        schedule.locationLabel?.takeIf { it.isNotBlank() }?.let { parts += "location=$it" }
+        schedule.locationTrigger?.let { parts += "locationTrigger=${it.name}" }
+        if (schedule.locationLat != null && schedule.locationLng != null) {
+            parts += "locationRadius=${schedule.locationRadiusMeters}m"
+        }
+        return parts.joinToString("; ").ifBlank { "time" }
     }
 
     private fun hasPermission(permission: String): Boolean {

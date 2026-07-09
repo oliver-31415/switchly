@@ -118,18 +118,51 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tvTagUsageSettingsTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="@string/paired_tag_limits_section_title"
+            android:text="@string/paired_tag_usage_settings_section_title"
             android:textSize="14sp"
             android:textStyle="bold" />
 
         <LinearLayout
+            android:id="@+id/tagUsageSettingsGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:orientation="vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilReadOnlyDurationMinutes"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/paired_tag_duration_label"
+                app:boxStrokeColor="?attr/colorPrimary"
+                app:endIconMode="none"
+                app:startIconDrawable="@drawable/alarm_24">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etReadOnlyDurationMinutes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/tvReadOnlyDurationHelper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/paired_tag_duration_helper"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="11sp" />
+
+            <Space
+                android:id="@+id/spReadOnlyDurationSpacer"
+                android:layout_width="1dp"
+                android:layout_height="10dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -204,13 +237,6 @@
             android:layout_marginTop="12dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDelete"
-                style="@style/Switchly.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/delete" />
 
             <Space
                 android:layout_width="0dp"

@@ -41,11 +41,12 @@ import android.text.style.StyleSpan
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -73,8 +74,10 @@ import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -362,7 +365,7 @@ class NfcWriterActivity : AppCompatActivity() {
         }
 
         ddProfile.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, profileEntries)
+            SwitchlyDropdownAdapter(this, profileEntries)
         )
         ddProfile.setText(noneLabel, false)
 
@@ -392,7 +395,7 @@ class NfcWriterActivity : AppCompatActivity() {
         val availableActions = actionLabels
 
         ddAction.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, availableActions)
+            SwitchlyDropdownAdapter(this, availableActions)
         )
 
         val selectedToApply = if (keepCurrentSelection && availableActions.contains(selectedNow)) {
@@ -431,7 +434,7 @@ class NfcWriterActivity : AppCompatActivity() {
             values += TEMP_ASK_WHEN_SCANNED_VALUE
         }
 
-        ddTime.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, entries))
+        ddTime.setAdapter(SwitchlyDropdownAdapter(this, entries))
 
         val savedRaw = prefs.getString("pref_nfc_unlock_minutes", "10").orEmpty()
         val idx = values.indexOf(savedRaw)
@@ -673,6 +676,7 @@ class NfcWriterActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle(R.string.nfc_action_info_title)
             .setView(scroll)
+            .setNeutralButton(R.string.store_open) { _, _ -> SwitchlyStoreLinks.openStore(this) }
             .setPositiveButton(R.string.ok, null)
             .showAccented()
     }
@@ -735,6 +739,11 @@ class NfcWriterActivity : AppCompatActivity() {
                 ),
             )
         }
+
+        addItem(
+            getString(R.string.store_card_title),
+            getString(R.string.store_card_summary),
+        )
 
         sb.append(getString(R.string.pref_limit_temp_disable_tags_summary))
 
@@ -820,7 +829,7 @@ class NfcWriterActivity : AppCompatActivity() {
     }
 
     private fun showPairMetaPrompt(uid: String) {
-        val v = layoutInflater.inflate(R.layout.dialog_paired_tag_pair_meta, null)
+        val v = layoutInflater.inflate(R.layout.dialog_paired_tag_pair_meta, FrameLayout(this), false)
         v.findViewById<TextView>(R.id.tvUid).text = uid
 
         val etName = v.findViewById<TextInputEditText>(R.id.etTagName)

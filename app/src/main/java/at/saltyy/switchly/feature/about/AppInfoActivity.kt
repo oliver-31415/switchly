@@ -53,6 +53,7 @@ class AppInfoActivity : TilesInfoActivity() {
         val apkVariant = BuildConfig.SWITCHLY_APK_VARIANT
 
         val website = getString(R.string.about_website_url)
+        val store = getString(R.string.about_store_url)
         val downloads = getString(R.string.about_downloads_url)
         val repo = getString(R.string.about_gitlab_url)
         val discord = getString(R.string.about_discord_url)
@@ -134,6 +135,15 @@ class AppInfoActivity : TilesInfoActivity() {
                 copyValue = website,
                 showOpenButton = true,
                 iconRes = R.drawable.language_24
+            ),
+            Tile(
+                getString(R.string.about_store_label),
+                displayUrl(store),
+                sectionTitle = getString(R.string.about_section_links),
+                onClick = { openUrl(store) },
+                copyValue = store,
+                showOpenButton = true,
+                iconRes = R.drawable.nfc_24
             ),
             Tile(
                 getString(R.string.about_older_versions_label),

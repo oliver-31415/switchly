@@ -33,8 +33,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
-import androidx.core.content.edit
-import androidx.preference.PreferenceManager
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import at.saltyy.switchly.R
@@ -54,9 +52,10 @@ import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.util.EditingLockGuard
+import at.saltyy.switchly.util.PackageLaunchIntentCompat
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import java.util.Locale
 
 class InAppBlockingActivity : AppCompatActivity() {
 
@@ -66,19 +65,29 @@ class InAppBlockingActivity : AppCompatActivity() {
 
     private var contentReady = false
 
-    private val prefs by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
-
-    private fun sanitizeProfile(profile: String): String {
-        return profile.trim()
-            .lowercase(Locale.US)
-            .replace(Regex("[^a-z0-9_.-]"), "_")
-            .ifBlank { "default" }
-    }
-
     private fun currentProfile(): String = ProfileStore.getCurrent(this) ?: "default"
 
+    private fun isInAppAllowMode(): Boolean = InAppRuleStore.isAllowMode(this, currentProfile())
+
+    private fun ruleSwitchText(surfaceLabel: String): String =
+        getString(
+            if (isInAppAllowMode()) R.string.in_app_rule_allow_surface_fmt else R.string.in_app_rule_block_surface_fmt,
+            surfaceLabel
+        )
+
+    private fun setSurfaceRuleForMode(surfaceKey: String, checked: Boolean) {
+        if (isInAppAllowMode()) {
+            // In allow-mode the switch means “allowed exception”, not “blocked surface”.
+            SurfaceLimitStore.clear(this, currentProfile(), surfaceKey)
+        } else if (checked) {
+            setSurfaceRule(surfaceKey, -1)
+        } else {
+            SurfaceLimitStore.clear(this, currentProfile(), surfaceKey)
+        }
+    }
+
     private fun isLaunchableAppInstalled(packageName: String): Boolean {
-        return packageManager.getLaunchIntentForPackage(packageName) != null
+        return PackageLaunchIntentCompat.isLaunchable(this, packageName)
     }
 
     private fun setVisibleIfInstalled(viewId: Int, packageName: String): Boolean {
@@ -87,27 +96,13 @@ class InAppBlockingActivity : AppCompatActivity() {
         return installed
     }
 
-    private fun scopedKey(baseKey: String): String {
-        val p = sanitizeProfile(currentProfile())
-        return "p_${p}_$baseKey"
-    }
-
     private fun readProfileBool(baseKey: String, def: Boolean = false): Boolean {
-        val k = scopedKey(baseKey)
-        if (prefs.contains(k)) return prefs.getBoolean(k, def)
-
-        if (prefs.contains(baseKey)) {
-            val v = prefs.getBoolean(baseKey, def)
-            // One-time copy into scoped key for current profile.
-            prefs.edit { putBoolean(k, v) }
-            return v
-        }
-
-        return def
+        val selected = InAppRuleStore.isRuleSelected(this, currentProfile(), baseKey)
+        return if (selected) true else def
     }
 
     private fun writeProfileBool(baseKey: String, value: Boolean) {
-        prefs.edit { putBoolean(scopedKey(baseKey), value) }
+        InAppRuleStore.setRuleSelected(this, currentProfile(), baseKey, value)
     }
 
     private fun keepAppAllowedForInAppRule(baseKey: String, enabled: Boolean) {
@@ -177,17 +172,22 @@ class InAppBlockingActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
         toolbar.title = getString(R.string.in_app_blocking_title)
-        toolbar.subtitle = getString(R.string.in_app_rules_profile_subtitle)
+        toolbar.subtitle = getString(R.string.in_app_rules_profile_subtitle, currentProfile())
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
 
+        setupInAppRuleMode()
+
         // Only show in-app blocking sections for apps that are actually installed.
         // The underlying rules stay profile-scoped and are kept intact if the app is installed later.
-        setVisibleIfInstalled(R.id.cardYouTube, "com.google.android.youtube")
-        setVisibleIfInstalled(R.id.cardInstagram, "com.instagram.android")
-        setVisibleIfInstalled(R.id.cardX, "com.twitter.android")
-        setVisibleIfInstalled(R.id.cardSnapchat, "com.snapchat.android")
+        val installedSections = listOf(
+            setVisibleIfInstalled(R.id.cardYouTube, "com.google.android.youtube"),
+            setVisibleIfInstalled(R.id.cardInstagram, "com.instagram.android"),
+            setVisibleIfInstalled(R.id.cardX, "com.twitter.android"),
+            setVisibleIfInstalled(R.id.cardSnapchat, "com.snapchat.android")
+        ).count { it }
+        findViewById<View>(R.id.cardInAppEmpty)?.visibility = if (installedSections == 0) View.VISIBLE else View.GONE
 
         // Website blocking (profile-specific)
         // In-app limit (applies to timed in-app surfaces that are toggled on)
@@ -196,18 +196,6 @@ class InAppBlockingActivity : AppCompatActivity() {
         val openLimit = { showInAppLimitDialog(tvLimit) }
         tvLimit.setOnClickListener { openLimit() }
         btnLimit.setOnClickListener { openLimit() }
-
-        // Global in-app master (same key as Toggle Options → Blocking controls)
-        val rowInAppMaster = findViewById<View>(R.id.rowInAppMaster)
-        val swInAppMaster = findViewById<SwitchCompat>(R.id.swInAppMaster)
-        CustomAccentApplier.tintSwitch(swInAppMaster)
-        swInAppMaster.isChecked = readProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, true)
-        rowInAppMaster.setOnClickListener { swInAppMaster.toggle() }
-        swInAppMaster.setOnCheckedChangeListener { _, checked ->
-            writeProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, checked)
-            // Make sure service policy cache refreshes quickly
-            BlockingRuntime.ensureRunning(this)
-        }
 
         // YouTube
         setupTimedSwitch(
@@ -231,7 +219,8 @@ class InAppBlockingActivity : AppCompatActivity() {
             surfaceLabel = getString(R.string.in_app_surface_you_label),
             tvLimit = tvLimit
         )
-        setupSwitch(R.id.swYtPip, BlockingToggleKeys.KEY_BLOCK_YT_PIP)
+        setupSwitch(R.id.swYtMiniPlayer, BlockingToggleKeys.KEY_BLOCK_YT_MINI_PLAYER, getString(R.string.in_app_surface_mini_player_label))
+        setupSwitch(R.id.swYtPip, BlockingToggleKeys.KEY_BLOCK_YT_PIP, getString(R.string.in_app_surface_pip_label))
 
         // Instagram
         setupTimedSwitch(
@@ -255,7 +244,7 @@ class InAppBlockingActivity : AppCompatActivity() {
             surfaceLabel = getString(R.string.in_app_surface_search_label),
             tvLimit = tvLimit
         )
-        setupSwitch(R.id.swIgComments, BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS)
+        setupSwitch(R.id.swIgComments, BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS, getString(R.string.in_app_surface_comments_label))
         setupTimedSwitch(
             R.id.swIgStories,
             BlockingToggleKeys.KEY_BLOCK_IG_STORIES,
@@ -345,8 +334,30 @@ class InAppBlockingActivity : AppCompatActivity() {
         CustomAccentApplier.applyIfNeeded(this)
         val limitView: TextView? = findViewById(R.id.tvInAppLimitValue)
         limitView?.let { refreshInAppLimit(it) }
-        val masterSwitch: SwitchCompat? = findViewById(R.id.swInAppMaster)
-        masterSwitch?.isChecked = readProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, true)
+    }
+
+    private fun setupInAppRuleMode() {
+        val group = findViewById<MaterialButtonToggleGroup>(R.id.toggleInAppRuleMode)
+        val summary = findViewById<TextView>(R.id.tvInAppRuleModeSummary)
+        fun renderSummary() {
+            val allow = isInAppAllowMode()
+            summary.text = getString(if (allow) R.string.in_app_rule_mode_allow_summary else R.string.in_app_rule_mode_block_summary)
+        }
+
+        group.check(if (isInAppAllowMode()) R.id.btnInAppModeAllow else R.id.btnInAppModeBlock)
+        renderSummary()
+        group.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val mode = if (checkedId == R.id.btnInAppModeAllow) {
+                InAppRuleStore.MODE_ALLOW_SELECTED
+            } else {
+                InAppRuleStore.MODE_BLOCK_SELECTED
+            }
+            if (mode == InAppRuleStore.getMode(this, currentProfile())) return@addOnButtonCheckedListener
+            InAppRuleStore.setMode(this, currentProfile(), mode)
+            BlockingRuntime.ensureRunning(this)
+            recreate()
+        }
     }
 
     private fun focusRequestedAppSection() {
@@ -367,9 +378,10 @@ class InAppBlockingActivity : AppCompatActivity() {
         card.post { card.requestFocus() }
     }
 
-    private fun setupSwitch(switchId: Int, prefKey: String) {
+    private fun setupSwitch(switchId: Int, prefKey: String, surfaceLabel: String) {
         val sw = findViewById<SwitchCompat>(switchId)
         CustomAccentApplier.tintSwitch(sw)
+        sw.text = ruleSwitchText(surfaceLabel)
         sw.isChecked = readProfileBool(prefKey, false)
         sw.setOnCheckedChangeListener { _, checked ->
             writeProfileBool(prefKey, checked)
@@ -391,20 +403,17 @@ class InAppBlockingActivity : AppCompatActivity() {
     ) {
         val sw = findViewById<SwitchCompat>(switchId)
         CustomAccentApplier.tintSwitch(sw)
+        sw.text = ruleSwitchText(surfaceLabel)
         sw.isChecked = readProfileBool(prefKey, false)
         if (sw.isChecked) {
-            setSurfaceRule(surfaceKey, -1)
+            setSurfaceRuleForMode(surfaceKey, checked = true)
         }
 
         sw.setOnLongClickListener(null)
         sw.setOnCheckedChangeListener { _, checked ->
             writeProfileBool(prefKey, checked)
             keepAppAllowedForInAppRule(prefKey, checked)
-            if (checked) {
-                setSurfaceRule(surfaceKey, -1)
-            } else {
-                SurfaceLimitStore.clear(this, currentProfile(), surfaceKey)
-            }
+            setSurfaceRuleForMode(surfaceKey, checked)
             BlockingRuntime.ensureRunning(this)
             refreshInAppLimit(tvLimit)
         }

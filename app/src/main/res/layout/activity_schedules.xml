@@ -40,67 +40,6 @@
             android:visibility="gone" />
 
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardScheduleDisplayOptions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginTop="8dp"
-            app:cardUseCompatPadding="true"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/switchly_card_stroke"
-            app:cardBackgroundColor="@color/switchly_card_bg">
-
-            <LinearLayout
-                android:id="@+id/rowShowNextSchedule"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:minHeight="56dp"
-                android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingTop="8dp"
-                android:paddingEnd="14dp"
-                android:paddingBottom="8dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:contentDescription="@null"
-                    android:src="@drawable/alarm_24"
-                    app:tint="?attr/colorOnSurface" />
-
-                <Space
-                    android:layout_width="10dp"
-                    android:layout_height="1dp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/TextAppearance.Material3.BodyLarge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/pref_show_next_schedule_title" />
-                </LinearLayout>
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchShowNextSchedule"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
             android:id="@+id/tvEmpty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

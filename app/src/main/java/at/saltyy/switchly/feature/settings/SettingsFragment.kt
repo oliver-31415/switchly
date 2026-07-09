@@ -78,9 +78,11 @@ import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.sync.BackupCategory
+import at.saltyy.switchly.data.sync.BackupCategoryFilter
 import at.saltyy.switchly.data.sync.BackupSelection
 import at.saltyy.switchly.data.sync.BackupSelectionStore
 import at.saltyy.switchly.data.sync.CloudSyncRuntime
@@ -90,6 +92,7 @@ import at.saltyy.switchly.feature.about.DeveloperInfoActivity
 import at.saltyy.switchly.feature.about.DeveloperModeActivity
 import at.saltyy.switchly.feature.about.DeviceInfoActivity
 import at.saltyy.switchly.feature.about.OtherSwitchlyProductsActivity
+import at.saltyy.switchly.feature.about.PrivacyReportActivity
 import at.saltyy.switchly.feature.about.WhatsNewActivity
 import at.saltyy.switchly.feature.faq.FaqActivity
 import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
@@ -121,7 +124,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Calendar
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
@@ -236,6 +241,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     false
                 } else {
                     SwitchModeStore.setEnabled(ctx, target)
+                    AppLogStore.append(
+                        ctx,
+                        "Profiles",
+                        "Manual toggle action=${if (target) "enable" else "disable"} profile=${ProfileStore.getCurrent(ctx)}"
+                    )
                     refreshLockUi()
                     true
                 }
@@ -267,6 +277,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     false
                 } else {
                     SwitchModeStore.setEnabled(ctx, target)
+                    AppLogStore.append(
+                        ctx,
+                        "Profiles",
+                        "Manual toggle action=${if (target) "enable" else "disable"} profile=${ProfileStore.getCurrent(ctx)}"
+                    )
                     refreshLockUi()
                     true
                 }
@@ -527,21 +542,31 @@ class SettingsFragment : PreferenceFragmentCompat() {
                         ),
                         positiveText = getString(R.string.settings_confirm_backup_title),
                     ) {
-                        CloudSyncRuntime.pushLocalState(requireContext(), selection) { ok, err ->
-                            val c = context ?: return@pushLocalState
-                            if (!isAdded) return@pushLocalState
-                            val msg = if (ok) {
-                                PreferenceManager.getDefaultSharedPreferences(c).edit {
-                                    putLong("pref_last_backup_epoch_ms", System.currentTimeMillis())
+                        val backupCtx = context ?: return@confirmAction
+                        val loadingDialog = showProgressDialog(
+                            backupCtx,
+                            R.string.pref_cloud_backup_title,
+                            R.string.cloud_backup_loading
+                        )
+                        val startBackup = {
+                            CloudSyncRuntime.pushLocalState(backupCtx, selection) { ok, err ->
+                                val c = context ?: return@pushLocalState
+                                if (!isAdded) return@pushLocalState
+                                if (loadingDialog.isShowing) loadingDialog.dismiss()
+                                val msg = if (ok) {
+                                    PreferenceManager.getDefaultSharedPreferences(c).edit {
+                                        putLong("pref_last_backup_epoch_ms", System.currentTimeMillis())
+                                    }
+                                    updateGooglePrefSummary()
+                                    updateCloudPrefVisibility()
+                                    getString(R.string.cloud_backup_ok)
+                                } else {
+                                    getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown))
                                 }
-                                updateGooglePrefSummary()
-                                updateCloudPrefVisibility()
-                                getString(R.string.cloud_backup_ok)
-                            } else {
-                                getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown))
+                                Toast.makeText(c, msg, Toast.LENGTH_SHORT).show()
                             }
-                            Toast.makeText(c, msg, Toast.LENGTH_SHORT).show()
                         }
+                        if (view?.post { startBackup() } != true) startBackup()
                     }
                 }
                 true
@@ -603,6 +628,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 showDeleteBackupsDialog()
                 true
             }
+        }
+
+        findPreference<Preference>("pref_privacy_report")?.setOnPreferenceClickListener {
+            startActivity(Intent(requireContext(), PrivacyReportActivity::class.java))
+            true
         }
 
         // Local in-app reset (clear ALL app data)
@@ -1126,7 +1156,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     iconDrawable = iconDrawables?.getOrNull(index),
                     selected = index == checkedIndex
                 )
-            }
+            },
+            confirmSelection = true
         ) { which ->
             onSelected(which, dialog)
         }
@@ -1206,6 +1237,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             textPaint.colorFilter = colorFilter
         }
 
+        @Deprecated("Required by the Android Drawable API")
         override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
     }
 
@@ -1279,7 +1311,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val initialHex = prefs.getString("pref_accent_custom", "#2E8B57") ?: "#2E8B57"
         var color = try { initialHex.toColorInt() } catch (_: IllegalArgumentException) { "#2E8B57".toColorInt() }
 
-        val view = layoutInflater.inflate(R.layout.dialog_color_picker, null)
+        val view = layoutInflater.inflate(R.layout.dialog_color_picker, FrameLayout(requireContext()), false)
         val preview = view.findViewById<View>(R.id.colorPreview)
         val sliderR = view.findViewById<SeekBar>(R.id.sliderR)
         val sliderG = view.findViewById<SeekBar>(R.id.sliderG)
@@ -1357,7 +1389,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         val df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
         val formatted = df.format(Date(lastBackup))
-        pref.summary = "$base – " + getString(R.string.settings_last_backup, formatted)
+        pref.summary = "$base\n" + getString(R.string.settings_last_backup, formatted)
     }
 
     private fun makeIconAdapter(items: List<IconActionItem>): ArrayAdapter<IconActionItem> {
@@ -1797,35 +1829,59 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val activeCtx = context ?: return
         val selection = pendingFileBackupSelection ?: BackupSelectionStore.load(activeCtx)
         pendingFileBackupSelection = null
-        val result = FileBackupRuntime.writeLocalBackupToUri(activeCtx, uri, selection)
-        val msg = result.fold(
-            onSuccess = {
-                PreferenceManager.getDefaultSharedPreferences(activeCtx).edit {
-                    putLong("pref_last_backup_epoch_ms", System.currentTimeMillis())
-                }
-                updateGooglePrefSummary()
-                getString(R.string.file_backup_ok)
-            },
-            onFailure = { e ->
-                getString(R.string.file_backup_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown))
-            }
+        val loadingDialog = showProgressDialog(
+            activeCtx,
+            R.string.settings_confirm_file_backup_title,
+            R.string.file_backup_loading
         )
-        Toast.makeText(activeCtx, msg, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                FileBackupRuntime.writeLocalBackupToUri(activeCtx, uri, selection)
+            }
+            if (!isAdded) return@launch
+            if (loadingDialog.isShowing) loadingDialog.dismiss()
+            val msg = result.fold(
+                onSuccess = {
+                    PreferenceManager.getDefaultSharedPreferences(activeCtx).edit {
+                        putLong("pref_last_backup_epoch_ms", System.currentTimeMillis())
+                    }
+                    updateGooglePrefSummary()
+                    getString(R.string.file_backup_ok)
+                },
+                onFailure = { e ->
+                    getString(R.string.file_backup_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown))
+                }
+            )
+            Toast.makeText(activeCtx, msg, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun restoreBackupFile(uri: Uri) {
         val activeCtx = context ?: return
-        val result = FileBackupRuntime.restoreBackupFromUri(activeCtx, uri)
-        val msg = result.fold(
-            onSuccess = { getString(R.string.file_restore_ok_restart) },
-            onFailure = { e ->
-                getString(R.string.file_restore_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown))
+        val payloadResult = FileBackupRuntime.readBackupPayloadFromUri(activeCtx, uri)
+        payloadResult
+            .onFailure { e ->
+                Toast.makeText(
+                    activeCtx,
+                    getString(R.string.file_restore_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown)),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-        )
-        Toast.makeText(activeCtx, msg, Toast.LENGTH_SHORT).show()
-        if (result.isSuccess) {
-            restartAppTask()
-        }
+            .onSuccess { payload ->
+                showRestoreSelectionDialog(activeCtx, payload) { selectedPayload ->
+                    val result = FileBackupRuntime.restoreBackupPayload(activeCtx, selectedPayload)
+                    val msg = result.fold(
+                        onSuccess = { getString(R.string.file_restore_ok_restart) },
+                        onFailure = { e ->
+                            getString(R.string.file_restore_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown))
+                        }
+                    )
+                    Toast.makeText(activeCtx, msg, Toast.LENGTH_SHORT).show()
+                    if (result.isSuccess) {
+                        restartAppTask()
+                    }
+                }
+            }
     }
 
     private fun startRestoreFlowWithChoice() {
@@ -1876,33 +1932,92 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
             activeCtx.showSwitchlyOptionDialog(
                 title = getString(R.string.settings_restore_choose_title),
-                options = labels.map { SwitchlyDialogOption(title = it) } + SwitchlyDialogOption(
-                    title = getString(R.string.settings_delete_backups_title),
-                    destructive = true
-                )
+                options = labels.map { SwitchlyDialogOption(title = it) }
             ) { which ->
-                if (which == labels.size) {
-                    showDeleteBackupsDialog(activeCtx, list)
-                    return@showSwitchlyOptionDialog
-                }
-
                 val meta = list[which]
-                CloudSyncRuntime.pullBackup(activeCtx, meta.id) { ok3, err3 ->
-                    val restoreCtx = context ?: return@pullBackup
-                    if (!isAdded) return@pullBackup
-                    if (ok3) {
-                        Toast.makeText(restoreCtx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
-                        restartAppTask()
-                    } else {
+                CloudSyncRuntime.loadBackupPayload(activeCtx, meta.id) { ok3, err3, payload ->
+                    val restoreCtx = context ?: return@loadBackupPayload
+                    if (!isAdded) return@loadBackupPayload
+                    if (!ok3 || payload == null) {
                         Toast.makeText(
                             restoreCtx,
                             getString(R.string.cloud_error_fmt, err3 ?: getString(R.string.error_unknown)),
                             Toast.LENGTH_SHORT
                         ).show()
+                        return@loadBackupPayload
+                    }
+
+                    showRestoreSelectionDialog(restoreCtx, payload) { selectedPayload ->
+                        runCatching {
+                            CloudSyncRuntime.applyBackupPayload(restoreCtx, selectedPayload)
+                        }.fold(
+                            onSuccess = {
+                                Toast.makeText(restoreCtx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
+                                restartAppTask()
+                            },
+                            onFailure = { e ->
+                                Toast.makeText(
+                                    restoreCtx,
+                                    getString(R.string.cloud_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown)),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
                     }
                 }
             }
         }
+    }
+
+    private fun showRestoreSelectionDialog(
+        ctx: Context,
+        payload: Map<*, *>,
+        onConfirm: (Map<*, *>) -> Unit
+    ) {
+        val includedIds = BackupCategoryFilter.includedCategoryIdsFromPayload(payload)
+        val categories = BackupCategory.values()
+            .filter { category -> includedIds == null || category.id in includedIds }
+            .ifEmpty { BackupCategory.values().toList() }
+        val checked = categories.map { true }.toBooleanArray()
+        val options = categories.map { category ->
+            SwitchlyDialogOption(
+                title = category.displayName,
+                summary = category.description,
+                iconRes = backupCategoryIconRes(category)
+            )
+        }
+
+        ctx.showSwitchlyMultiChoiceDialog(
+            title = getString(R.string.restore_select_categories_title),
+            options = options,
+            checked = checked,
+            positiveTextRes = R.string.settings_confirm_restore_apply,
+            compact = false,
+            widthFraction = 0.94f,
+        ) { states ->
+            val selected = categories
+                .filterIndexed { index, _ -> states.getOrNull(index) == true }
+                .map { it.id }
+                .toSet()
+            val selection = BackupSelection.fromIds(selected)
+            if (selection.categoryIds.isEmpty()) {
+                Toast.makeText(ctx, getString(R.string.restore_select_at_least_one), Toast.LENGTH_SHORT).show()
+                return@showSwitchlyMultiChoiceDialog
+            }
+            onConfirm(BackupCategoryFilter.filterPayloadForRestore(payload, selection))
+        }
+    }
+
+    private fun showProgressDialog(ctx: Context, titleRes: Int, messageRes: Int): AlertDialog {
+        val dialog = AlertDialog.Builder(ctx)
+            .setTitle(titleRes)
+            .setMessage(getString(messageRes))
+            .setCancelable(false)
+            .create()
+
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
+        return dialog
     }
 
     private fun confirmAction(title: String, message: String, positiveText: String, onConfirm: () -> Unit) {
@@ -2188,6 +2303,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                         }
                     }
                     1 -> {
+                        AppLogStore.append(ctx, "Emergency", "Emergency mode ended from Settings")
                         EmergencyBypassStore.cancel(ctx)
                         SwitchModeStore.clearTemporary(ctx)
                         Toast.makeText(ctx, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
@@ -2334,9 +2450,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun showDeleteBackupsDialog() {
-        CloudSyncRuntime.listBackups(requireContext()) { ok, err, backups ->
+        val initialCtx = context ?: return
+        val loadingDialog = showProgressDialog(
+            initialCtx,
+            R.string.settings_delete_backups_title,
+            R.string.cloud_restore_loading
+        )
+
+        CloudSyncRuntime.listBackups(initialCtx) { ok, err, backups ->
             val activeCtx = context ?: return@listBackups
             if (!isAdded) return@listBackups
+            if (loadingDialog.isShowing) loadingDialog.dismiss()
             if (!ok) {
                 Toast.makeText(activeCtx, getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown)), Toast.LENGTH_SHORT).show()
                 return@listBackups
@@ -2360,13 +2484,44 @@ class SettingsFragment : PreferenceFragmentCompat() {
             ) { result ->
                 val ids = list.indices.filter { result[it] }.map { list[it].id }
                 if (ids.isEmpty()) return@showSwitchlyMultiChoiceDialog
-                // delete sequentially if API supports it; otherwise ignore
+
+                val deleteDialog = showProgressDialog(
+                    activeCtx,
+                    R.string.settings_delete_backups_title,
+                    R.string.cloud_delete_backups_loading
+                )
+                var remaining = ids.size
+                var failed = 0
+                var lastError: String? = null
+
+                fun finishOne(ok: Boolean, err: String?) {
+                    if (!ok) {
+                        failed += 1
+                        if (!err.isNullOrBlank()) lastError = err
+                    }
+                    remaining -= 1
+                    if (remaining > 0) return
+
+                    val ctx = context ?: return
+                    if (!isAdded) return
+                    if (deleteDialog.isShowing) deleteDialog.dismiss()
+                    val message = if (failed == 0) {
+                        getString(R.string.deleted)
+                    } else {
+                        getString(R.string.cloud_error_fmt, lastError ?: getString(R.string.error_unknown))
+                    }
+                    Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
+                }
+
                 ids.forEach { id ->
                     runCatching {
-                        CloudSyncRuntime.deleteBackup(activeCtx, id) { _, _ -> }
+                        CloudSyncRuntime.deleteBackup(activeCtx, id) { ok, err ->
+                            finishOne(ok, err)
+                        }
+                    }.onFailure { e ->
+                        finishOne(false, e.localizedMessage)
                     }
                 }
-                Toast.makeText(activeCtx, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
             }
         }
     }

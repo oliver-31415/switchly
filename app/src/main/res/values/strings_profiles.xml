@@ -11,11 +11,27 @@
     <string name="profile_row_subtitle">Tap to manage.</string>
 
     <!-- ====================================================== -->
+    <!-- Rules hub shortcut -->
+    <!-- ====================================================== -->
+    <string name="tools_profiles_title">Manage profiles</string>
+    <string name="tools_profiles_summary">Create, switch, and organize blocking profiles</string>
+
+    <!-- ====================================================== -->
     <!-- Profile actions -->
     <!-- ====================================================== -->
     <string name="action_set_active_profile">Set active</string>
     <string name="action_duplicate_profile">Duplicate profile</string>
     <string name="action_delete_profile">Delete profile</string>
+    <string name="action_manage_selected_apps">Manage selected apps</string>
+    <string name="action_edit_profile_details">Edit details</string>
+
+    <!-- ====================================================== -->
+    <!-- Profile action summaries -->
+    <!-- ====================================================== -->
+    <string name="profile_action_apps_summary">Open the blocked/allowed app list for this profile.</string>
+    <string name="profile_action_duplicate_summary">Copy apps, websites and rules into a new profile.</string>
+    <string name="profile_action_set_active_summary">Use this profile for blocking now.</string>
+    <string name="profile_action_details_summary">Change the name or description.</string>
 
     <!-- ====================================================== -->
     <!-- Delete and rename dialogs -->
@@ -27,36 +43,28 @@
     <string name="profile_name_helper">Choose a short name for this profile.</string>
 
     <!-- ====================================================== -->
+    <!-- Profile details -->
+    <!-- ====================================================== -->
+    <string name="profile_description_field_hint">Description (optional)</string>
+    <string name="profile_create_helper">Create the profile, then choose its app list right away.</string>
+    <string name="profile_details_title">Profile details</string>
+    <string name="profile_details_helper">Update the name or optional description shown on the profile card.</string>
+
+    <!-- ====================================================== -->
     <!-- Profile labels and duplicate names -->
     <!-- ====================================================== -->
     <string name="profile_label_default">Profile</string>
     <string name="profile_duplicate_name_fmt">%1$s (copy)</string>
     <string name="profile_duplicate_name_numbered_fmt">%1$s (copy %2$d)</string>
-    <string name="profile_duplicated">Profile “%1$s” duplicated.</string>
 
     <!-- ====================================================== -->
     <!-- Profile result toasts -->
     <!-- ====================================================== -->
     <string name="profile_created">Profile “%1$s” created.</string>
+    <string name="profile_created_open_apps">Profile “%1$s” created. Choose its app list next.</string>
+    <string name="profile_saved">Profile “%1$s” saved.</string>
+    <string name="profile_duplicated">Profile “%1$s” duplicated.</string>
     <string name="profile_set_active_toast">“%1$s” is now active.</string>
     <string name="state_profile_on_status">Active</string>
-
-    <string name="action_manage_selected_apps">Manage selected apps</string>
-
-    <!-- ====================================================== -->
-    <!-- UX polish/dialog consistency -->
-    <!-- ====================================================== -->
-    <string name="profile_action_apps_summary">Open the blocked/allowed app list for this profile.</string>
-    <string name="profile_action_duplicate_summary">Copy apps, websites and rules into a new profile.</string>
-    <string name="profile_action_set_active_summary">Use this profile for blocking now.</string>
-
-    <string name="profile_description_field_hint">Description (optional)</string>
-    <string name="profile_create_helper">Create the profile, then choose its app list right away.</string>
-    <string name="profile_details_title">Profile details</string>
-    <string name="profile_details_helper">Update the name or optional description shown on the profile card.</string>
-    <string name="profile_saved">Profile “%1$s” saved.</string>
-    <string name="profile_created_open_apps">Profile “%1$s” created. Choose its app list next.</string>
-    <string name="action_edit_profile_details">Edit details</string>
-    <string name="profile_action_details_summary">Change the name or description.</string>
 
 </resources>

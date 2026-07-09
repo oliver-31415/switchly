@@ -28,9 +28,11 @@ object BlockingToggleKeys {
     const val KEY_BLOCK_INAPP = "block_inapp_toggle"
 
     // YouTube
+    const val KEY_BLOCK_YT_HOME = "block_yt_home"
     const val KEY_BLOCK_YT_SHORTS = "block_yt_shorts"
     const val KEY_BLOCK_YT_SUBSCRIPTIONS = "block_yt_subscriptions"
     const val KEY_BLOCK_YT_YOU = "block_yt_you"
+    const val KEY_BLOCK_YT_MINI_PLAYER = "block_yt_mini_player"
     const val KEY_BLOCK_YT_PIP = "block_yt_pip"
 
     // Instagram
@@ -70,9 +72,11 @@ object BlockingToggleKeys {
     val IN_APP_RULE_KEYS: Set<String> by lazy { setOf(KEY_BLOCK_INAPP) + IN_APP_SURFACE_KEYS }
 
     private val IN_APP_SURFACE_KEYS = setOf(
+        KEY_BLOCK_YT_HOME,
         KEY_BLOCK_YT_SHORTS,
         KEY_BLOCK_YT_SUBSCRIPTIONS,
         KEY_BLOCK_YT_YOU,
+        KEY_BLOCK_YT_MINI_PLAYER,
         KEY_BLOCK_YT_PIP,
 
         KEY_BLOCK_IG_REELS,

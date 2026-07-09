@@ -284,6 +284,7 @@ class FaqActivity : AppCompatActivity() {
                     item(R.string.faq_q_nutshell, R.string.faq_a_nutshell, R.drawable.info_24),
                     item(R.string.faq_q_tutorial_what, R.string.faq_a_tutorial_what, R.drawable.help_24),
                     item(R.string.faq_q_profiles, R.string.faq_a_profiles, R.drawable.switch_account_24),
+                    item(R.string.faq_q_profile_rule_scopes, R.string.faq_a_profile_rule_scopes, R.drawable.switch_account_24),
                     item(R.string.faq_q_control_mode, R.string.faq_a_control_mode, R.drawable.tune_24),
                     item(R.string.faq_q_idiot_gray, R.string.faq_a_idiot_gray, R.drawable.lock_24)
                 )
@@ -311,8 +312,11 @@ class FaqActivity : AppCompatActivity() {
                 iconRes = R.drawable.apps_24,
                 items = listOf(
                     item(R.string.faq_q_idiot_features, R.string.faq_a_idiot_features, R.drawable.apps_24),
+                    item(R.string.faq_q_block_allow_modes, R.string.faq_a_block_allow_modes, R.drawable.tune_24),
                     item(R.string.faq_q_blocked_websites, R.string.faq_a_blocked_websites, R.drawable.language_24),
+                    item(R.string.faq_q_website_rule_modes, R.string.faq_a_website_rule_modes, R.drawable.language_24),
                     item(R.string.faq_q_in_app_blocking, R.string.faq_a_in_app_blocking, R.drawable.security_24),
+                    item(R.string.faq_q_in_app_supported_apps, R.string.faq_a_in_app_supported_apps, R.drawable.apps_24),
                     item(R.string.faq_q_usage_access, R.string.faq_a_usage_access, R.drawable.security_24),
                     item(R.string.faq_q_overlay, R.string.faq_a_overlay, R.drawable.info_24),
                     item(R.string.faq_q_switchly_disabled_no_blocking, R.string.faq_a_switchly_disabled_no_blocking, R.drawable.toggle_off_24)

@@ -22,7 +22,7 @@
     <string name="toggle_section_control_mode_summary">Wähle, wie Switchly aktiviert und deaktiviert wird.</string>
     <string name="toggle_section_mixed_channels">Mixed-Mode-Kanäle</string>
     <string name="toggle_section_mixed_channels_summary">Nur in Mixed Mode relevant. Wähle, welche Kanäle Switchly steuern dürfen, wenn Mixed Mode ausgewählt ist.</string>
-    <string name="toggle_section_additional_features">Funktionszugriff während Blocking</string>
+    <string name="toggle_section_additional_features">Funktionszugriff während Schutz</string>
     <string name="toggle_section_additional_features_summary">Allow-selected Bearbeitung und Hilfsfunktionen während Switchly aktiv ist. Home-Aussehen ist in Appearance.</string>
     <string name="toggle_section_protection">Sicherheit &amp; Einschränkungen</string>
     <string name="toggle_section_protection_summary">Sicherheits-, Wiederherstellungs- und Zuverlässigkeitsoptionen.</string>
@@ -56,13 +56,13 @@
     <string name="mode_one_must_stay_active">Ein Modus muss aktiv bleiben.</string>
     <string name="mode_switch_info_toast">Modi sind gegenseitig exklusiv. Umschalten…</string>
     <string name="mode_switch_requires_switchly_disabled">Deaktiviere Switchly, um den Steuerungsmodus zu ändern.</string>
+    <string name="mode_not_supported_on_device">Auf diesem Gerät nicht verfügbar</string>
     <string name="mode_blocked_nfc_action">NFC-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_qr_action">QR-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_barcode_action">Barcode-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_tile_action">Die Schnelleinstellungen-Kachel ist deaktiviert, weil manuelle Steuerung im aktuellen Modus deaktiviert ist.</string>
     <string name="mode_blocked_button_action">Manuelle Buttons sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_button_disable_enable_only">Manuelle Buttons können Switchly hier nur einschalten. Zum Ausschalten nutze die erlaubte Steuerungsmethode.</string>
-    <string name="control_mode_lock_inline_hint">Der Steuerungsmodus ist gesperrt, solange Switchly aktiv ist. Deaktiviere Switchly und wähle dann den Modus.</string>
 
     <!-- ====================================================== -->
     <!-- Mixed mode channels -->
@@ -125,8 +125,6 @@
     <string name="toggle_info_lock_and_temp_title">Einstellungs-Sperre &amp; temporäre Tags</string>
     <string name="toggle_info_lock_and_temp_body">„Zugriff auf Switchly-Einstellungen blockieren“ verhindert das Öffnen von Switchly-Einstellungen und Steuerseiten, solange der Schutz aktiv ist.\nTemporäre Deaktivierungsaktionen geben dir ein kurzes Zeitfenster (z. B. 10 Minuten), bevor der vorherige Schutzstatus wiederhergestellt wird.</string>
     <string name="pref_block_notifications_summary">Hält blockierte Apps still.</string>
-    <string name="pref_block_inapp_title">In-App-Feeds blockieren</string>
-    <string name="pref_block_inapp_summary">Master-Schalter für In-App-Blockierungsflächen</string>
     <string name="pref_uninstall_friction_title">Uninstall Protection</string>
     <string name="pref_uninstall_friction_summary">Erschwert App-Info-, Deinstallationswege und Switchly-bezogene Systemeinstellungen, solange Switchly aktiv ist.</string>
     <string name="blocking_uninstall_friction_title">Deinstallations-Reibung aktiv</string>
@@ -147,6 +145,10 @@
     <string name="pref_home_layout_custom_title">Home anpassen</string>
     <string name="pref_home_layout_custom_summary">Wähle die Bereiche und Aktionen, die im Custom Home-Modus angezeigt werden.</string>
     <string name="pref_home_layout_custom_builder_intro">Tippe auf eine Karte, um diesen Home-Bereich hinzuzufügen oder zu entfernen. Ausgewählte Karten werden direkt hervorgehoben.</string>
+    <string name="pref_home_layout_custom_reorder_hint">Mit den Pfeilen oder per langem Drücken kannst du Home-Bereiche verschieben.</string>
+    <string name="pref_home_layout_custom_move_up">Nach oben verschieben</string>
+    <string name="pref_home_layout_custom_move_down">Nach unten verschieben</string>
+    <string name="pref_home_layout_custom_restore_default">Standard wiederherstellen</string>
     <plurals name="pref_home_layout_custom_selected_count">
         <item quantity="one">%1$d von %2$d Bereich ausgewählt</item>
         <item quantity="other">%1$d von %2$d Bereichen ausgewählt</item>

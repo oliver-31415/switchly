@@ -22,6 +22,8 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Calendar
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,17 +34,37 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object WebUsageStore {
     private const val PREFIX_DAY = "web_usage_day_" // + yyyymmdd + "_" + domain
+    private const val PREFIX_SESSION_DAY = "web_usage_sessions_" // + yyyymmdd
 
     private const val FLUSH_INTERVAL_MS = 10_000L
     private const val MAX_PENDING_KEYS = 64
+    private const val MAX_SESSIONS_PER_DAY = 600
+    private const val SESSION_MERGE_GAP_MS = 30_000L
 
     private val lock = Any()
     private val pending = ConcurrentHashMap<String, Long>()
+    private val pendingSessions = ArrayList<WebsiteSession>()
     @Volatile private var lastFlushAt: Long = 0L
+
+    data class WebsiteSession(
+        val domain: String,
+        val startMs: Long,
+        val endMs: Long
+    ) {
+        val durationMs: Long get() = (endMs - startMs).coerceAtLeast(0L)
+    }
 
     private fun dayKey(offsetDays: Int = 0): String {
         val c = Calendar.getInstance()
         c.add(Calendar.DAY_OF_YEAR, offsetDays)
+        val y = c.get(Calendar.YEAR)
+        val m = c.get(Calendar.MONTH) + 1
+        val d = c.get(Calendar.DAY_OF_MONTH)
+        return "%04d%02d%02d".format(y, m, d)
+    }
+
+    private fun dayKeyForMillis(timeMillis: Long): String {
+        val c = Calendar.getInstance().apply { this.timeInMillis = timeMillis }
         val y = c.get(Calendar.YEAR)
         val m = c.get(Calendar.MONTH) + 1
         val d = c.get(Calendar.DAY_OF_MONTH)
@@ -57,8 +79,13 @@ object WebUsageStore {
     fun addUsageMsToday(ctx: Context, domain: String, deltaMs: Long) {
         val norm = DomainBlockStore.normalize(domain) ?: return
         if (norm.isBlank() || deltaMs <= 0L) return
+        val now = System.currentTimeMillis()
+        val start = (now - deltaMs).coerceAtMost(now)
         val k = prefKeyForDay(norm, dayKey(0))
         pending.merge(k, deltaMs) { a, b -> a + b }
+        synchronized(lock) {
+            pendingSessions += WebsiteSession(norm, start, now)
+        }
         maybeFlush(ctx, force = false)
     }
 
@@ -102,6 +129,79 @@ object WebUsageStore {
             val base = prefs.getLong(k, 0L)
             val extra = if (i == 0) (pending[k] ?: 0L) else 0L
             out.add((base + extra).coerceAtLeast(0L))
+        }
+        return out
+    }
+
+    fun getUsageMsMapForDateRange(ctx: Context, startMs: Long, endMs: Long): Map<String, Long> {
+        if (endMs <= startMs) return emptyMap()
+        flush(ctx)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val wanted = HashSet<String>()
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = startMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        while (cal.timeInMillis <= endMs) {
+            wanted += dayKeyForMillis(cal.timeInMillis)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        val totals = linkedMapOf<String, Long>()
+        for ((key, raw) in prefs.all) {
+            if (!key.startsWith(PREFIX_DAY)) continue
+            val rest = key.removePrefix(PREFIX_DAY)
+            if (rest.length <= 9) continue
+            val day = rest.substring(0, 8)
+            if (day !in wanted) continue
+            val domain = rest.substring(9).trim()
+            val ms = (raw as? Long)?.coerceAtLeast(0L) ?: 0L
+            if (domain.isNotBlank() && ms > 0L) totals[domain] = (totals[domain] ?: 0L) + ms
+        }
+        return totals
+    }
+
+    fun getSessionsForDateRange(ctx: Context, startMs: Long, endMs: Long): List<WebsiteSession> {
+        if (endMs <= startMs) return emptyList()
+        flush(ctx)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val out = ArrayList<WebsiteSession>()
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = startMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        while (cal.timeInMillis <= endMs) {
+            out += parseSessions(prefs.getString(sessionKeyForDay(dayKeyForMillis(cal.timeInMillis)), null))
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return out
+            .filter { it.endMs > startMs && it.startMs < endMs && it.durationMs > 0L }
+            .map { it.copy(startMs = maxOf(it.startMs, startMs), endMs = minOf(it.endMs, endMs)) }
+            .mergeWebsiteSessions()
+    }
+
+    fun getUsageMsForDateRange(ctx: Context, domain: String, startMs: Long, endMs: Long): List<Long> {
+        val norm = DomainBlockStore.normalize(domain) ?: return emptyList()
+        if (norm.isBlank() || endMs <= startMs) return emptyList()
+        flush(ctx)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val out = ArrayList<Long>()
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = startMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        while (cal.timeInMillis <= endMs) {
+            out += prefs.getLong(prefKeyForDay(norm, dayKeyForMillis(cal.timeInMillis)), 0L).coerceAtLeast(0L)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         return out
     }
@@ -161,10 +261,20 @@ object WebUsageStore {
         val suffix = "_" + norm
         val keysToRemove = prefs.all.keys
             .filter { it.startsWith(PREFIX_DAY) && it.endsWith(suffix) }
+        val sessionUpdates = prefs.all.keys
+            .filter { it.startsWith(PREFIX_SESSION_DAY) }
+            .mapNotNull { key ->
+                val sessions = parseSessions(prefs.getString(key, null))
+                val kept = sessions.filterNot { it.domain == norm }
+                if (kept.size == sessions.size) null else key to kept
+            }
 
-        if (keysToRemove.isEmpty()) return
+        if (keysToRemove.isEmpty() && sessionUpdates.isEmpty()) return
         prefs.edit {
             for (k in keysToRemove) remove(k)
+            for ((k, kept) in sessionUpdates) {
+                if (kept.isEmpty()) remove(k) else putString(k, encodeSessions(kept))
+            }
         }
     }
 
@@ -218,14 +328,16 @@ object WebUsageStore {
 
     private fun maybeFlush(ctx: Context, force: Boolean) {
         val now = System.currentTimeMillis()
-        val should = force || (now - lastFlushAt) >= FLUSH_INTERVAL_MS || pending.size >= MAX_PENDING_KEYS
+        val should = force || (now - lastFlushAt) >= FLUSH_INTERVAL_MS || pending.size >= MAX_PENDING_KEYS || pendingSessions.size >= MAX_PENDING_KEYS
         if (!should) return
         synchronized(lock) {
-            if (!force && (now - lastFlushAt) < FLUSH_INTERVAL_MS && pending.size < MAX_PENDING_KEYS) return
+            if (!force && (now - lastFlushAt) < FLUSH_INTERVAL_MS && pending.size < MAX_PENDING_KEYS && pendingSessions.size < MAX_PENDING_KEYS) return
             lastFlushAt = now
             val snapshot = HashMap(pending)
+            val sessionSnapshot = ArrayList(pendingSessions)
             pending.clear()
-            if (snapshot.isEmpty()) return
+            pendingSessions.clear()
+            if (snapshot.isEmpty() && sessionSnapshot.isEmpty()) return
 
             val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
             prefs.edit {
@@ -233,7 +345,61 @@ object WebUsageStore {
                     val cur = prefs.getLong(k, 0L)
                     putLong(k, cur + add)
                 }
+                val byDay = sessionSnapshot
+                    .filter { it.domain.isNotBlank() && it.endMs > it.startMs }
+                    .groupBy { dayKeyForMillis(it.startMs) }
+                for ((day, sessions) in byDay) {
+                    val key = sessionKeyForDay(day)
+                    val merged = (parseSessions(prefs.getString(key, null)) + sessions)
+                        .mergeWebsiteSessions()
+                        .takeLast(MAX_SESSIONS_PER_DAY)
+                    putString(key, encodeSessions(merged))
+                }
             }
         }
+    }
+
+    private fun sessionKeyForDay(day: String): String = PREFIX_SESSION_DAY + day
+
+    private fun parseSessions(raw: String?): List<WebsiteSession> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return runCatching {
+            val array = JSONArray(raw)
+            buildList {
+                for (i in 0 until array.length()) {
+                    val item = array.optJSONObject(i) ?: continue
+                    val domain = item.optString("d").takeIf { it.isNotBlank() } ?: continue
+                    val start = item.optLong("s", 0L)
+                    val end = item.optLong("e", 0L)
+                    if (end > start) add(WebsiteSession(domain, start, end))
+                }
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun encodeSessions(sessions: List<WebsiteSession>): String {
+        val array = JSONArray()
+        sessions.forEach { session ->
+            array.put(JSONObject().apply {
+                put("d", session.domain)
+                put("s", session.startMs)
+                put("e", session.endMs)
+            })
+        }
+        return array.toString()
+    }
+
+    private fun List<WebsiteSession>.mergeWebsiteSessions(): List<WebsiteSession> {
+        if (isEmpty()) return emptyList()
+        val merged = ArrayList<WebsiteSession>()
+        for (session in sortedBy { it.startMs }) {
+            val last = merged.lastOrNull()
+            if (last != null && last.domain == session.domain && session.startMs - last.endMs in 0..SESSION_MERGE_GAP_MS) {
+                merged[merged.lastIndex] = last.copy(endMs = maxOf(last.endMs, session.endMs))
+            } else {
+                merged += session
+            }
+        }
+        return merged
     }
 }

@@ -22,6 +22,7 @@ package at.saltyy.switchly.ui
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.ClipData
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
@@ -39,6 +40,7 @@ import android.text.InputType
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.view.DragEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -77,17 +79,22 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.blocking.isBrowserPackage
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.EmergencyPinStore
 import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
+import at.saltyy.switchly.data.prefs.InAppRuleStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
+import at.saltyy.switchly.data.prefs.PauseUntilStore
+import at.saltyy.switchly.data.prefs.SchedulePlanner
+import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
+import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
-import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
@@ -101,17 +108,19 @@ import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
 import at.saltyy.switchly.feature.qr.QrGenerateActivity
 import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.schedule.SchedulesActivity
-import at.saltyy.switchly.feature.settings.InAppBlockingActivity
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
 import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
+import at.saltyy.switchly.feature.settings.ReelsShortsBlockingActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
+import at.saltyy.switchly.feature.settings.HomeModeDialogHelper
 import at.saltyy.switchly.feature.support.SupportActivity
 import at.saltyy.switchly.feature.tools.BlockingHubActivity
 import at.saltyy.switchly.feature.tools.ManageInsightsActivity
 import at.saltyy.switchly.feature.tools.ToolsHubActivity
+import at.saltyy.switchly.feature.usage.ActiveTimeStatsActivity
 import at.saltyy.switchly.feature.usage.QuickLimitDialogs
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.nfc.NfcWriterActivity
@@ -122,6 +131,7 @@ import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
+import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
@@ -162,7 +172,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TEMP_MODE_DISCOVERED = "temp_mode_discovered"
         private const val KEY_PRIMARY_TOGGLE_TAP_COUNT = "primary_toggle_tap_count"
         private const val KEY_QUICK_ACTIONS_EXPANDED = "home_quick_actions_expanded"
-        private const val KEY_EXPERIMENTAL_NOTICE_220 = "experimental_notice_2_2_0_shown"
+        private const val KEY_EXPERIMENTAL_NOTICE = "experimental_notice_shown"
         private const val KEY_HOME_LAYOUT_DETAILED = "home_layout_detailed"
         private const val KEY_HOME_LAYOUT_MODE = "home_layout_mode"
         private const val HOME_MODE_DEFAULT = "default"
@@ -191,6 +201,8 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_QA_BLOCKED_NOTIFICATIONS = "home_quick_tile_blocked_notifications"
         private const val KEY_QA_QR = "home_quick_tile_qr"
         private const val KEY_QA_BARCODE = "home_quick_tile_barcode"
+        private const val KEY_QA_ORDER = "home_quick_tile_order"
+        private const val TAG_QUICK_ACTIONS_DYNAMIC_ROW = "quick_actions_dynamic_row"
         private val PAYLOAD_BLOCKED_CHIPS = Any()
         private val PAYLOAD_BLOCKED_EDIT_STATE = Any()
 
@@ -209,6 +221,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipTemp: Chip
     private lateinit var tvTempHint: TextView
     private lateinit var tvEmergencyHint: TextView
+    private lateinit var layoutHomeRoot: LinearLayout
+    private lateinit var layoutStatusContent: LinearLayout
+    private lateinit var cardStatus: MaterialCardView
+    private lateinit var spaceBeforeStatusCard: View
+    private val customHomeCards = mutableMapOf<String, MaterialCardView>()
+    private val customHomeOriginalLayoutParams = mutableMapOf<View, ViewGroup.LayoutParams>()
 
     // Profile controls
     private lateinit var profileDropdown: MaterialAutoCompleteTextView
@@ -313,16 +331,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun showExperimentalFeaturesNoticeIfNeeded() {
         val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE_220, false)) return
+        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE, false)) return
 
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.experimental_notice_title)
             .setMessage(R.string.experimental_notice_body)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_220, true) }
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE, true) }
             }
             .setOnCancelListener {
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_220, true) }
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE, true) }
             }
             .showAccented()
     }
@@ -391,11 +409,20 @@ class MainActivity : AppCompatActivity() {
 
         // UI refs
 
+        layoutHomeRoot = findViewById(R.id.layoutHomeRoot)
+        layoutStatusContent = findViewById(R.id.layoutStatusContent)
+        cardStatus = findViewById(R.id.cardStatus)
+        spaceBeforeStatusCard = findViewById(R.id.spaceBeforeStatusCard)
         ivStatusIcon = findViewById(R.id.ivStatusIcon)
         tvSwitchMode = findViewById(R.id.tvSwitchMode)
         tvActiveDuration = findViewById(R.id.tvActiveDuration)
         tvControlModeHint = findViewById(R.id.tvControlModeHint)
         styleActiveDurationPill()
+        tvActiveDuration.isClickable = true
+        tvActiveDuration.isFocusable = true
+        tvActiveDuration.setOnClickListener {
+            startActivity(ActiveTimeStatsActivity.intent(this))
+        }
         tvActiveProfile = findViewById(R.id.tvActiveProfile)
         rowActiveProfile = findViewById(R.id.rowActiveProfile)
         tvNfcLockedHint = findViewById(R.id.tvNfcLockedHint)
@@ -517,7 +544,7 @@ class MainActivity : AppCompatActivity() {
             if (SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_inapp)
             } else {
-                startActivity(Intent(this, InAppBlockingActivity::class.java))
+                startActivity(Intent(this, ReelsShortsBlockingActivity::class.java))
             }
         }
         tileQr.setOnClickListener { openQrScannerDirectly() }
@@ -531,7 +558,7 @@ class MainActivity : AppCompatActivity() {
             true
         }
         tilePermissions.setOnClickListener {
-            startActivity(Intent(this, ManageInsightsActivity::class.java))
+            startActivity(Intent(this, ToolsHubActivity::class.java))
         }
         tileNfcWrite.setOnClickListener {
             if (isNfcTagWritingLocked()) {
@@ -845,6 +872,22 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
+    private fun View.hideNow() {
+        animate().cancel()
+        alpha = 1f
+        isVisible = false
+    }
+
+    private fun View.hideHomeLayoutView(mode: String = homeLayoutMode()) {
+        // Custom Home can reorder views in the same refresh pass.
+        // Reordering a fading view can cancel the animation end action and leave an empty row/card behind, so hidden Custom Home blocks are removed immediately instead of fading out.
+        if (mode == HOME_MODE_CUSTOM) {
+            hideNow()
+        } else {
+            hideFade()
+        }
+    }
+
     private fun isNfcLocked(): Boolean {
         val enabled = SwitchModeStore.isEnabled(this)
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
@@ -952,11 +995,22 @@ class MainActivity : AppCompatActivity() {
             ).show()
             return
         }
-        SwitchModeStore.setEnabled(this, !enabled)
+        val nextEnabled = !enabled
+        if (SwitchModeStore.setEnabled(this, nextEnabled, allowNfcBypass = false)) {
+            AppLogStore.append(
+                this,
+                "Profiles",
+                "Manual toggle action=${if (nextEnabled) "enable" else "disable"} profile=${ProfileStore.getCurrent(this)}"
+            )
+        }
         updateSwitchState()
     }
 
     private enum class TempSheetMode { DISABLE, ENABLE }
+    private data class PauseUntilOption(
+        val label: String,
+        val runAction: () -> Unit
+    )
 
     private fun showTempToggleSheet(): Boolean {
         if (!AutomationModeStore.isButtonAllowed(this)) {
@@ -1090,6 +1144,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            if (mode == TempSheetMode.DISABLE) {
+                addPauseUntilMenuOption(sheet, ::addOption)
+            }
+
             // Custom
             addOption(getString(R.string.custom_minutes)) {
                 sheet.dismiss()
@@ -1123,6 +1181,74 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    private fun addPauseUntilMenuOption(
+        sheet: BottomSheetDialog,
+        addOption: (String, () -> Unit) -> Unit
+    ) {
+        val options = buildPauseUntilOptions(sheet)
+        if (options.size == 1) {
+            val option = options.first()
+            addOption(option.label) { option.runAction() }
+        } else if (options.size > 1) {
+            addOption(getString(R.string.dashboard_pause_until_title)) {
+                showPauseUntilDialog(sheet)
+            }
+        }
+    }
+
+    private fun buildPauseUntilOptions(sheet: BottomSheetDialog): List<PauseUntilOption> {
+        val now = System.currentTimeMillis()
+        fun pauseFor(ms: Long, log: String) {
+            val clamped = ms.coerceIn(60_000L, 24L * 60L * 60L * 1000L)
+            SwitchModeStore.setTemporarilyDisabled(this, clamped)
+            AppLogStore.append(this, "Profiles", "Temp disable quick pause reason=$log duration=${clamped}ms")
+            sheet.dismiss()
+            updateSwitchState()
+        }
+
+        val options = mutableListOf<PauseUntilOption>()
+        val nextBoundary = runCatching { SchedulePlanner.getNextBoundaryMillis(this) }.getOrDefault(0L)
+        if (nextBoundary > now + 60_000L) {
+            options += PauseUntilOption(getString(R.string.dashboard_pause_until_next_schedule)) {
+                pauseFor(nextBoundary - now, "next_schedule")
+            }
+        }
+
+        val activeRangeId = runCatching { ScheduleRuntimeStore.getActiveRangeScheduleId(this) }.getOrDefault(-1)
+        val activeSchedule = runCatching { ScheduleStore.getAll(this).firstOrNull { it.id == activeRangeId } }.getOrNull()
+        if (activeSchedule?.isLocationSchedule() == true) {
+            options += PauseUntilOption(getString(R.string.dashboard_pause_until_leave_location)) {
+                PauseUntilStore.markUntilLocationExit(this, activeSchedule.id)
+                ScheduleRuntimeStore.setManualSchedulePauseActive(this, true, activeSchedule.id)
+                pauseFor(24L * 60L * 60L * 1000L, "location_exit scheduleId=${activeSchedule.id}")
+            }
+        }
+
+        val tomorrow = java.util.Calendar.getInstance().apply {
+            add(java.util.Calendar.DAY_OF_YEAR, 1)
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        options += PauseUntilOption(getString(R.string.dashboard_pause_until_tomorrow)) {
+            pauseFor(tomorrow - now, "tomorrow")
+        }
+        return options
+    }
+
+    private fun showPauseUntilDialog(sheet: BottomSheetDialog) {
+        val options = buildPauseUntilOptions(sheet)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.dashboard_pause_until_title)
+            .setItems(options.map { it.label }.toTypedArray()) { dialog, which ->
+                options.getOrNull(which)?.runAction?.invoke()
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .showAccented()
+    }
+
     private fun showCustomTempMinutesInput(onPicked: (Int) -> Unit) {
         val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
@@ -1148,7 +1274,7 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.ok) { _, _ ->
                 val m = input.text?.toString()?.trim()?.toIntOrNull()
-                if (m == null || m < 1 || m > 120) {
+                if (m == null || m < 1 || m > 1440) {
                     Toast.makeText(this, R.string.nfc_time_custom_invalid, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
@@ -1393,6 +1519,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshHomeLayout() {
+        val mode = homeLayoutMode()
+        if (mode != HOME_MODE_CUSTOM) {
+            restoreStatusCardHomeItemsIfNeeded()
+        }
+
         updateTempHintVisibility()
         updateEmergencyHintVisibility()
 
@@ -1412,21 +1543,274 @@ class MainActivity : AppCompatActivity() {
         if (shouldShowHomeQuickActions()) {
             updateQuickActionsVisibility()
         } else {
-            gridQuickActions.hideFade()
-            ivQuickActionsChevron.hideFade()
-            ivQuickActionsEdit.hideFade()
-            tvQuickActionsTitle.hideFade()
-            rowQuickActionsHeader.hideFade()
+            gridQuickActions.hideHomeLayoutView(mode)
+            ivQuickActionsChevron.hideHomeLayoutView(mode)
+            ivQuickActionsEdit.hideHomeLayoutView(mode)
+            tvQuickActionsTitle.hideHomeLayoutView(mode)
+            rowQuickActionsHeader.hideHomeLayoutView(mode)
         }
 
-        if (shouldShowHomeNextSchedule()) updateNextScheduleCard() else cardNextSchedule.hideFade()
-        if (shouldShowHomeBlockedNow()) updateBlockedNowCard() else cardBlockedNow.hideFade()
+        if (shouldShowHomeNextSchedule()) updateNextScheduleCard() else cardNextSchedule.hideHomeLayoutView(mode)
+        if (shouldShowHomeBlockedNow()) updateBlockedNowCard() else cardBlockedNow.hideHomeLayoutView(mode)
         if (!shouldShowHomeBlockedApps()) {
-            cardBlockedApps.hideFade()
-            layoutBlockedAppsEmpty.hideFade()
-            rvBlocked.hideFade()
+            cardBlockedApps.hideHomeLayoutView(mode)
+            layoutBlockedAppsEmpty.hideHomeLayoutView(mode)
+            rvBlocked.hideHomeLayoutView(mode)
         } else {
             refreshBlockedList()
+        }
+
+        if (mode == HOME_MODE_CUSTOM) {
+            applyCustomHomeOrderIfNeeded()
+        } else {
+            applyDefaultAndAdvancedHomeOrderIfNeeded()
+        }
+    }
+
+    private fun applyDefaultAndAdvancedHomeOrderIfNeeded() {
+        val mode = homeLayoutMode()
+        if (mode != HOME_MODE_DEFAULT && mode != HOME_MODE_ADVANCED) return
+        if (!::layoutHomeRoot.isInitialized || !::cardStatus.isInitialized || !::cardBlockedApps.isInitialized) return
+        if (cardStatus.parent !== layoutHomeRoot || cardBlockedApps.parent !== layoutHomeRoot) return
+
+        val statusIndex = layoutHomeRoot.indexOfChild(cardStatus)
+        if (statusIndex < 0) return
+        val targetIndex = (statusIndex + 1).coerceAtMost(layoutHomeRoot.childCount - 1)
+        val currentIndex = layoutHomeRoot.indexOfChild(cardBlockedApps)
+        if (currentIndex == targetIndex) return
+
+        val params = cardBlockedApps.layoutParams
+        layoutHomeRoot.removeView(cardBlockedApps)
+        val insertIndex = (layoutHomeRoot.indexOfChild(cardStatus) + 1).coerceAtMost(layoutHomeRoot.childCount)
+        layoutHomeRoot.addView(cardBlockedApps, insertIndex, params)
+    }
+
+    private fun applyCustomHomeOrderIfNeeded() {
+        if (homeLayoutMode() != HOME_MODE_CUSTOM) return
+        if (!::layoutHomeRoot.isInitialized || !::layoutStatusContent.isInitialized || !::cardStatus.isInitialized || !::spaceBeforeStatusCard.isInitialized) return
+
+        val order = HomeModeDialogHelper.customHomeOrderKeys(this)
+        val customCards = ensureCustomHomeFlatStatusItems()
+
+        // Custom Home order is global, not "status-card first, everything else after".
+        // The hero / active timer stays in the main status card.
+        // Individual status controls are rendered as small movable cards so external sections such as Blocked apps can sit directly between Active time and the switch/profile controls.
+        reorderCustomHomeGroups(
+            parent = layoutHomeRoot,
+            order = order,
+            viewsByKey = mapOf(
+                KEY_HOME_CUSTOM_ACTIVE_TIMER to listOf(spaceBeforeStatusCard, cardStatus),
+                KEY_HOME_CUSTOM_MAIN_BUTTON to listOfNotNull(customCards[KEY_HOME_CUSTOM_MAIN_BUTTON]),
+                KEY_HOME_CUSTOM_ACTIVE_PROFILE to listOfNotNull(customCards[KEY_HOME_CUSTOM_ACTIVE_PROFILE]),
+                KEY_HOME_CUSTOM_CONTROL_MODE to listOfNotNull(customCards[KEY_HOME_CUSTOM_CONTROL_MODE]),
+                KEY_HOME_CUSTOM_PICK_APPS to listOfNotNull(customCards[KEY_HOME_CUSTOM_PICK_APPS]),
+                KEY_HOME_CUSTOM_TEMPORARY to listOfNotNull(customCards[KEY_HOME_CUSTOM_TEMPORARY]),
+                KEY_HOME_CUSTOM_EMERGENCY to listOfNotNull(customCards[KEY_HOME_CUSTOM_EMERGENCY]),
+                KEY_HOME_CUSTOM_QUICK_ACTIONS to listOf(rowQuickActionsHeader, gridQuickActions),
+                KEY_HOME_CUSTOM_NEXT_SCHEDULE to listOf(cardNextSchedule),
+                KEY_HOME_CUSTOM_BLOCKED_NOW to listOf(cardBlockedNow),
+                KEY_HOME_CUSTOM_BLOCKED_APPS to listOf(cardBlockedApps),
+                KEY_HOME_CUSTOM_PROFILE_DROPDOWN to listOfNotNull(customCards[KEY_HOME_CUSTOM_PROFILE_DROPDOWN])
+            )
+        )
+    }
+
+    private fun ensureCustomHomeFlatStatusItems(): Map<String, MaterialCardView> {
+        if (::dividerBeforeProfileDropdown.isInitialized) {
+            dividerBeforeProfileDropdown.isVisible = false
+        }
+        return customHomeStatusGroups().mapValues { (key, views) ->
+            ensureCustomHomeCard(key, views)
+        }
+    }
+
+    private fun customHomeStatusGroups(): Map<String, List<View>> = mapOf(
+        KEY_HOME_CUSTOM_MAIN_BUTTON to listOf(btnToggle),
+        KEY_HOME_CUSTOM_ACTIVE_PROFILE to listOf(rowActiveProfile),
+        KEY_HOME_CUSTOM_CONTROL_MODE to listOf(tvControlModeHint),
+        KEY_HOME_CUSTOM_PICK_APPS to listOf(btnSimplePickApps),
+        KEY_HOME_CUSTOM_TEMPORARY to listOf(tvTempHint),
+        KEY_HOME_CUSTOM_EMERGENCY to listOf(tvEmergencyHint),
+        KEY_HOME_CUSTOM_PROFILE_DROPDOWN to listOf(layoutProfileDropdown)
+    )
+
+    private fun ensureCustomHomeCard(key: String, views: List<View>): MaterialCardView {
+        val card = customHomeCards.getOrPut(key) { createCustomHomeItemCard() }
+        val content = card.getChildAt(0) as LinearLayout
+        ensureCustomHomeCardHeader(content, key)
+
+        views.forEach { view ->
+            customHomeOriginalLayoutParams.getOrPut(view) { view.layoutParams }
+            if (view.parent !== content) {
+                (view.parent as? ViewGroup)?.removeView(view)
+                content.addView(view, customHomeItemLayoutParams(view))
+            }
+        }
+
+        if (card.parent !== layoutHomeRoot) {
+            (card.parent as? ViewGroup)?.removeView(card)
+            layoutHomeRoot.addView(card, card.layoutParams)
+        }
+
+        val hasVisibleContent = views.any { it.isVisible }
+        if (!hasVisibleContent) {
+            card.hideNow()
+        } else {
+            card.alpha = 1f
+            card.isVisible = true
+        }
+        return card
+    }
+
+    private fun ensureCustomHomeCardHeader(content: LinearLayout, key: String) {
+        val tag = "custom_home_item_header"
+        val existing = (0 until content.childCount)
+            .map { index -> content.getChildAt(index) }
+            .firstOrNull { it.tag == tag } as? TextView
+        val header = existing ?: TextView(this).apply {
+            this.tag = tag
+            setTextColor(ColorUtils.setAlphaComponent(
+                MaterialColors.getColor(this@MainActivity, com.google.android.material.R.attr.colorOnSurface, Color.BLACK),
+                0xA8
+            ))
+            textSize = 12f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            letterSpacing = 0.04f
+        }
+        header.text = getString(customHomeCardTitleRes(key))
+        if (header.parent == null) {
+            content.addView(
+                header,
+                0,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = homeDp(6f)
+                }
+            )
+        }
+    }
+
+    @StringRes
+    private fun customHomeCardTitleRes(key: String): Int = when (key) {
+        KEY_HOME_CUSTOM_MAIN_BUTTON -> R.string.home_custom_main_button
+        KEY_HOME_CUSTOM_ACTIVE_PROFILE -> R.string.home_custom_active_profile
+        KEY_HOME_CUSTOM_CONTROL_MODE -> R.string.home_custom_control_mode
+        KEY_HOME_CUSTOM_PICK_APPS -> R.string.home_custom_pick_apps
+        KEY_HOME_CUSTOM_TEMPORARY -> R.string.home_custom_temporary
+        KEY_HOME_CUSTOM_EMERGENCY -> R.string.home_custom_emergency
+        KEY_HOME_CUSTOM_PROFILE_DROPDOWN -> R.string.home_custom_profile_dropdown
+        else -> R.string.home_layout_custom
+    }
+
+    private fun createCustomHomeItemCard(): MaterialCardView {
+        val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
+        val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.WHITE)
+        return MaterialCardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = homeDp(12f)
+            }
+            radius = homeDp(18f).toFloat()
+            cardElevation = 0f
+            setCardBackgroundColor(surface)
+            setStrokeWidth(homeDp(1f))
+            setStrokeColor(ColorUtils.setAlphaComponent(onSurface, 0x1F))
+
+            val content = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(homeDp(12f), homeDp(12f), homeDp(12f), homeDp(12f))
+            }
+            addView(
+                content,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+    }
+
+    private fun customHomeItemLayoutParams(view: View): LinearLayout.LayoutParams {
+        val original = customHomeOriginalLayoutParams[view] as? LinearLayout.LayoutParams
+        return LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            original?.height ?: LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+    }
+
+    private fun restoreStatusCardHomeItemsIfNeeded() {
+        if (!::layoutStatusContent.isInitialized) return
+        val statusViews = listOf(
+            btnToggle,
+            rowActiveProfile,
+            tvControlModeHint,
+            btnSimplePickApps,
+            tvTempHint,
+            tvEmergencyHint,
+            dividerBeforeProfileDropdown,
+            layoutProfileDropdown
+        )
+
+        customHomeCards.values.forEach { card ->
+            (card.parent as? ViewGroup)?.removeView(card)
+        }
+
+        statusViews.forEach { view ->
+            if (view.parent !== layoutStatusContent) {
+                (view.parent as? ViewGroup)?.removeView(view)
+                val params = customHomeOriginalLayoutParams[view] ?: view.layoutParams
+                layoutStatusContent.addView(view, params)
+            }
+        }
+        reorderDirectChildren(layoutStatusContent, statusViews.filter { it.parent === layoutStatusContent })
+    }
+
+    private fun reorderCustomHomeViews(
+        parent: ViewGroup,
+        order: List<String>,
+        viewsByKey: Map<String, List<View>>
+    ) {
+        val orderedViews = order
+            .flatMap { key -> viewsByKey[key].orEmpty() }
+            .filter { view -> view.parent === parent }
+        reorderDirectChildren(parent, orderedViews)
+    }
+
+    private fun reorderCustomHomeGroups(
+        parent: ViewGroup,
+        order: List<String>,
+        viewsByKey: Map<String, List<View>>
+    ) {
+        val orderedViews = order
+            .flatMap { key -> viewsByKey[key].orEmpty() }
+            .filter { view -> view.parent === parent }
+            .distinct()
+        reorderDirectChildren(parent, orderedViews)
+    }
+
+    private fun reorderDirectChildren(parent: ViewGroup, orderedViews: List<View>) {
+        if (orderedViews.size <= 1) return
+
+        val firstIndex = orderedViews
+            .mapNotNull { view -> parent.indexOfChild(view).takeIf { it >= 0 } }
+            .minOrNull()
+            ?: return
+        val layoutParams = orderedViews.associateWith { view -> view.layoutParams }
+
+        orderedViews.forEach { view -> parent.removeView(view) }
+        var insertAt = firstIndex.coerceAtMost(parent.childCount)
+        orderedViews.forEach { view ->
+            val params = layoutParams[view]
+            if (params != null) {
+                parent.addView(view, insertAt, params)
+            } else {
+                parent.addView(view, insertAt)
+            }
+            insertAt += 1
         }
     }
 
@@ -1470,12 +1854,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateQuickActionsVisibility() {
+        val mode = homeLayoutMode()
+        tvQuickActionsTitle.setPadding(
+            if (mode == HOME_MODE_CUSTOM) homeDp(12f) else 0,
+            tvQuickActionsTitle.paddingTop,
+            tvQuickActionsTitle.paddingRight,
+            tvQuickActionsTitle.paddingBottom
+        )
+
         if (!shouldShowHomeQuickActions()) {
-            gridQuickActions.hideFade()
-            ivQuickActionsChevron.hideFade()
-            ivQuickActionsEdit.hideFade()
-            tvQuickActionsTitle.hideFade()
-            rowQuickActionsHeader.hideFade()
+            gridQuickActions.hideHomeLayoutView(mode)
+            ivQuickActionsChevron.hideHomeLayoutView(mode)
+            ivQuickActionsEdit.hideHomeLayoutView(mode)
+            tvQuickActionsTitle.hideHomeLayoutView(mode)
+            rowQuickActionsHeader.hideHomeLayoutView(mode)
             return
         }
 
@@ -1500,11 +1892,11 @@ class MainActivity : AppCompatActivity() {
                 gridQuickActions.hideFade()
             }
         } else {
-            gridQuickActions.hideFade()
-            ivQuickActionsChevron.hideFade()
-            ivQuickActionsEdit.hideFade()
-            tvQuickActionsTitle.hideFade()
-            rowQuickActionsHeader.hideFade()
+            gridQuickActions.hideHomeLayoutView(mode)
+            ivQuickActionsChevron.hideHomeLayoutView(mode)
+            ivQuickActionsEdit.hideHomeLayoutView(mode)
+            tvQuickActionsTitle.hideHomeLayoutView(mode)
+            rowQuickActionsHeader.hideHomeLayoutView(mode)
         }
 
         ivQuickActionsChevron.animate().cancel()
@@ -1563,52 +1955,266 @@ class MainActivity : AppCompatActivity() {
         sp.edit { putBoolean(key, enabled) }
     }
 
+    private fun quickActionCheckBoxTint(accent: Int): ColorStateList {
+        val checked = intArrayOf(android.R.attr.state_checked)
+        val unchecked = intArrayOf(-android.R.attr.state_checked)
+        return ColorStateList(
+            arrayOf(checked, unchecked),
+            intArrayOf(accent, ColorUtils.setAlphaComponent(accent, 140))
+        )
+    }
+
+    private fun defaultQuickActionOrderKeys(): List<String> = listOf(
+        KEY_QA_APPS,
+        KEY_QA_PROFILES,
+        KEY_QA_WEBSITES,
+        KEY_QA_INAPP,
+        KEY_QA_USAGE,
+        KEY_QA_NFC_WRITE,
+        KEY_QA_BLOCKED_NOTIFICATIONS,
+        KEY_QA_QR,
+        KEY_QA_BARCODE
+    )
+
+    private fun quickActionOrderKeys(availableKeys: Set<String>? = null): List<String> {
+        val defaultKeys = defaultQuickActionOrderKeys()
+        val allowedKeys = availableKeys?.let { available -> defaultKeys.filter { it in available } } ?: defaultKeys
+        val raw = PreferenceManager.getDefaultSharedPreferences(this)
+            .getString(KEY_QA_ORDER, null)
+            .orEmpty()
+        val stored = raw.split("|")
+            .map { it.trim() }
+            .filter { it in allowedKeys }
+            .distinct()
+        return stored + allowedKeys.filterNot { it in stored }
+    }
+
+    private fun saveQuickActionOrder(orderedVisibleKeys: List<String>) {
+        val currentFullOrder = quickActionOrderKeys()
+        val remainingKeys = currentFullOrder.filterNot { it in orderedVisibleKeys }
+        PreferenceManager.getDefaultSharedPreferences(this).edit {
+            putString(KEY_QA_ORDER, (orderedVisibleKeys + remainingKeys).joinToString("|"))
+        }
+    }
+
     private fun showQuickActionsCustomizeDialog() {
-        val items = buildList {
-            add(Triple(KEY_QA_APPS, getString(R.string.dashboard_tile_apps), isQuickActionTileEnabled(KEY_QA_APPS)))
-            add(Triple(KEY_QA_PROFILES, getString(R.string.dashboard_tile_profiles), isQuickActionTileEnabled(KEY_QA_PROFILES)))
-            add(Triple(KEY_QA_WEBSITES, getString(R.string.dashboard_tile_blocked_websites), isQuickActionTileEnabled(KEY_QA_WEBSITES)))
-            add(Triple(KEY_QA_INAPP, getString(R.string.dashboard_tile_in_app), isQuickActionTileEnabled(KEY_QA_INAPP)))
-            add(Triple(KEY_QA_USAGE, getString(R.string.dashboard_tile_usage), isQuickActionTileEnabled(KEY_QA_USAGE)))
-            add(Triple(KEY_QA_NFC_WRITE, getString(R.string.dashboard_tile_write_nfc), isQuickActionTileEnabled(KEY_QA_NFC_WRITE, defaultValue = false)))
-            add(Triple(KEY_QA_BLOCKED_NOTIFICATIONS, getString(R.string.dashboard_tile_blocked_notifications), isQuickActionTileEnabled(KEY_QA_BLOCKED_NOTIFICATIONS, defaultValue = false)))
+        data class QuickActionDialogItem(
+            val key: String,
+            val label: String,
+            val summary: String,
+            val iconRes: Int,
+            var checked: Boolean
+        )
+
+        val allItemsByKey = buildMap {
+            put(KEY_QA_APPS, QuickActionDialogItem(KEY_QA_APPS, getString(R.string.dashboard_tile_apps), getString(R.string.dashboard_tile_apps_sub), R.drawable.apps_24, isQuickActionTileEnabled(KEY_QA_APPS)))
+            put(KEY_QA_PROFILES, QuickActionDialogItem(KEY_QA_PROFILES, getString(R.string.dashboard_tile_profiles), getString(R.string.dashboard_tile_profiles_sub), R.drawable.switch_account_24, isQuickActionTileEnabled(KEY_QA_PROFILES)))
+            put(KEY_QA_WEBSITES, QuickActionDialogItem(KEY_QA_WEBSITES, getString(R.string.dashboard_tile_blocked_websites), getString(R.string.dashboard_tile_blocked_websites_sub), R.drawable.language_24, isQuickActionTileEnabled(KEY_QA_WEBSITES)))
+            put(KEY_QA_INAPP, QuickActionDialogItem(KEY_QA_INAPP, getString(R.string.dashboard_tile_in_app), getString(R.string.dashboard_tile_in_app_sub), R.drawable.layers_24, isQuickActionTileEnabled(KEY_QA_INAPP)))
+            put(KEY_QA_USAGE, QuickActionDialogItem(KEY_QA_USAGE, getString(R.string.dashboard_tile_usage), getString(R.string.dashboard_tile_usage_sub), R.drawable.bar_chart_24, isQuickActionTileEnabled(KEY_QA_USAGE)))
+            put(KEY_QA_NFC_WRITE, QuickActionDialogItem(KEY_QA_NFC_WRITE, getString(R.string.dashboard_tile_write_nfc), getString(R.string.dashboard_tile_write_nfc_sub), R.drawable.nfc_24, isQuickActionTileEnabled(KEY_QA_NFC_WRITE, defaultValue = false)))
+            put(KEY_QA_BLOCKED_NOTIFICATIONS, QuickActionDialogItem(KEY_QA_BLOCKED_NOTIFICATIONS, getString(R.string.dashboard_tile_blocked_notifications), getString(R.string.dashboard_tile_blocked_notifications_sub), R.drawable.notifications_24, isQuickActionTileEnabled(KEY_QA_BLOCKED_NOTIFICATIONS, defaultValue = false)))
             if (AutomationModeStore.isQrAllowed(this@MainActivity)) {
-                add(Triple(KEY_QA_QR, getString(R.string.dashboard_tile_qr), isQuickActionTileEnabled(KEY_QA_QR)))
+                put(KEY_QA_QR, QuickActionDialogItem(KEY_QA_QR, getString(R.string.dashboard_tile_qr), getString(R.string.dashboard_tile_qr_sub), R.drawable.qr_code_24, isQuickActionTileEnabled(KEY_QA_QR)))
             }
             if (AutomationModeStore.isBarcodeAllowed(this@MainActivity)) {
-                add(Triple(KEY_QA_BARCODE, getString(R.string.dashboard_tile_barcode), isQuickActionTileEnabled(KEY_QA_BARCODE)))
+                put(KEY_QA_BARCODE, QuickActionDialogItem(KEY_QA_BARCODE, getString(R.string.dashboard_tile_barcode), getString(R.string.dashboard_tile_barcode_sub), R.drawable.barcode_24, isQuickActionTileEnabled(KEY_QA_BARCODE)))
             }
         }
+        val items = quickActionOrderKeys(allItemsByKey.keys).mapNotNull { allItemsByKey[it] }.toMutableList()
 
         val accent = AccentColor.getAccentColorInt(this)
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            val pad = (20 * resources.displayMetrics.density).toInt()
-            setPadding(pad, pad / 2, pad, 0)
-        }
-        val boxes = mutableListOf<Pair<String, MaterialCheckBox>>()
-        items.forEach { (key, label, checked) ->
-            val box = MaterialCheckBox(this).apply {
-                text = label
-                isChecked = checked
-                buttonTintList = ColorStateList.valueOf(accent)
-                setUseMaterialThemeColors(false)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
-            container.addView(box)
-            boxes += key to box
+        val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
+        val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.WHITE)
+        val surfaceVariant = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant, surface)
+        val checkBoxTint = quickActionCheckBoxTint(accent)
+        fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
+
+        lateinit var rowsContainer: LinearLayout
+        lateinit var renderRows: () -> Unit
+        var draggedKey: String? = null
+
+        fun moveItem(fromIndex: Int, toIndex: Int) {
+            if (fromIndex !in items.indices || toIndex !in items.indices || fromIndex == toIndex) return
+            val moved = items.removeAt(fromIndex)
+            items.add(toIndex, moved)
+            rowsContainer.removeAllViews()
+            renderRows()
         }
 
+        fun moveItemByKey(fromKey: String, toKey: String) {
+            val fromIndex = items.indexOfFirst { it.key == fromKey }
+            val toIndex = items.indexOfFirst { it.key == toKey }
+            moveItem(fromIndex, toIndex)
+        }
+
+        fun createMoveButton(iconRes: Int, descriptionRes: Int, enabled: Boolean, onClick: () -> Unit): ImageView {
+            return ImageView(this).apply {
+                setImageResource(iconRes)
+                contentDescription = getString(descriptionRes)
+                alpha = if (enabled) 0.82f else 0.28f
+                isEnabled = enabled
+                isClickable = enabled
+                isFocusable = enabled
+                setPadding(dp(7), dp(7), dp(7), dp(7))
+                setColorFilter(if (enabled) onSurface else ColorUtils.setAlphaComponent(onSurface, 0x66))
+                setOnClickListener { onClick() }
+            }
+        }
+
+        fun attachDragReorder(card: MaterialCardView, key: String) {
+            card.setOnLongClickListener {
+                draggedKey = key
+                val data = ClipData.newPlainText("quick_action_tile", key)
+                val shadow = View.DragShadowBuilder(it)
+                it.startDragAndDrop(data, shadow, key, 0)
+                true
+            }
+            card.setOnDragListener { view, event ->
+                when (event.action) {
+                    DragEvent.ACTION_DRAG_STARTED -> (event.localState as? String) != null
+                    DragEvent.ACTION_DRAG_ENTERED -> {
+                        if ((draggedKey ?: event.localState as? String) != key) view.alpha = 0.72f
+                        true
+                    }
+                    DragEvent.ACTION_DRAG_EXITED -> {
+                        view.alpha = 1f
+                        true
+                    }
+                    DragEvent.ACTION_DROP -> {
+                        view.alpha = 1f
+                        val fromKey = draggedKey ?: event.localState as? String
+                        if (!fromKey.isNullOrBlank() && fromKey != key) {
+                            moveItemByKey(fromKey, key)
+                        }
+                        true
+                    }
+                    DragEvent.ACTION_DRAG_ENDED -> {
+                        view.alpha = 1f
+                        draggedKey = null
+                        true
+                    }
+                    else -> true
+                }
+            }
+        }
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = dp(18)
+            setPadding(pad, dp(8), pad, 0)
+        }
+
+        val hint = TextView(this).apply {
+            text = getString(R.string.pref_home_layout_custom_reorder_hint)
+            setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xAA))
+            textSize = 12.5f
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+            setPadding(dp(6), 0, dp(6), dp(10))
+        }
+        container.addView(hint)
+
+        rowsContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        container.addView(rowsContainer)
+
+        renderRows = {
+            items.forEachIndexed { index, item ->
+                val card = MaterialCardView(this).apply {
+                    radius = dp(16).toFloat()
+                    cardElevation = 0f
+                    useCompatPadding = true
+                    setCardBackgroundColor(if (item.checked) ColorUtils.setAlphaComponent(accent, 0x12) else surfaceVariant)
+                    setStrokeWidth(dp(if (item.checked) 2 else 1))
+                    setStrokeColor(if (item.checked) accent else ColorUtils.setAlphaComponent(onSurface, 0x24))
+                    isClickable = true
+                    isFocusable = true
+                }
+
+                val row = LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                    setPadding(dp(14), dp(12), dp(6), dp(12))
+                }
+
+                val icon = ImageView(this).apply {
+                    setImageResource(item.iconRes)
+                    setColorFilter(accent)
+                }
+                row.addView(icon, LinearLayout.LayoutParams(dp(24), dp(24)))
+
+                val textColumn = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(dp(14), 0, dp(8), 0)
+                }
+                val label = TextView(this).apply {
+                    text = item.label
+                    setTextColor(onSurface)
+                    textSize = 15f
+                    typeface = android.graphics.Typeface.DEFAULT_BOLD
+                }
+                val summary = TextView(this).apply {
+                    text = item.summary
+                    setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xB0))
+                    textSize = 13f
+                    setPadding(0, dp(3), 0, 0)
+                }
+                textColumn.addView(label)
+                textColumn.addView(summary)
+                row.addView(textColumn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+
+                val moveColumn = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = android.view.Gravity.CENTER
+                }
+                moveColumn.addView(
+                    createMoveButton(R.drawable.arrow_upward_24, R.string.pref_home_layout_custom_move_up, index > 0) { moveItem(index, index - 1) },
+                    LinearLayout.LayoutParams(dp(34), dp(36))
+                )
+                moveColumn.addView(
+                    createMoveButton(R.drawable.arrow_downward_24, R.string.pref_home_layout_custom_move_down, index < items.lastIndex) { moveItem(index, index + 1) },
+                    LinearLayout.LayoutParams(dp(34), dp(36))
+                )
+                row.addView(moveColumn)
+
+                val box = MaterialCheckBox(this).apply {
+                    isChecked = item.checked
+                    setUseMaterialThemeColors(false)
+                    buttonTintList = checkBoxTint
+                    contentDescription = item.label
+                }
+                row.addView(box)
+
+                fun updateChecked(checked: Boolean) {
+                    item.checked = checked
+                    box.isChecked = checked
+                    card.setCardBackgroundColor(if (checked) ColorUtils.setAlphaComponent(accent, 0x12) else surfaceVariant)
+                    card.setStrokeWidth(dp(if (checked) 2 else 1))
+                    card.setStrokeColor(if (checked) accent else ColorUtils.setAlphaComponent(onSurface, 0x24))
+                }
+
+                card.setOnClickListener { updateChecked(!item.checked) }
+                box.setOnClickListener { updateChecked(box.isChecked) }
+
+                attachDragReorder(card, item.key)
+                card.addView(row)
+                rowsContainer.addView(
+                    card,
+                    LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                )
+            }
+        }
+
+        renderRows()
         val scroll = android.widget.ScrollView(this).apply { addView(container) }
 
         Dialogs.builder(this)
             .setTitle(R.string.dashboard_quick_actions_customize)
             .setView(scroll)
             .setPositiveButton(R.string.ok) { _, _ ->
-                boxes.forEach { (key, box) -> setQuickActionTileEnabled(key, box.isChecked) }
+                items.forEach { item -> setQuickActionTileEnabled(item.key, item.checked) }
+                saveQuickActionOrder(items.map { it.key })
                 syncScanQuickActions()
                 updateQuickActionsVisibility()
             }
@@ -1650,38 +2256,64 @@ class MainActivity : AppCompatActivity() {
         val qrVisible = isQuickActionTileEnabled(KEY_QA_QR) && AutomationModeStore.isQrAllowed(this)
         val barcodeVisible = isQuickActionTileEnabled(KEY_QA_BARCODE) && AutomationModeStore.isBarcodeAllowed(this)
 
-        val orderedTiles = listOf(
-            tileManageApps to appsVisible,
-            tileWriteNfc to websitesVisible,
-            tileToggleOptions to inAppVisible,
-            tileProfiles to profilesVisible,
-            tilePermissions to usageVisible,
-            tileNfcWrite to nfcWriteVisible,
-            tileBlockedNotifications to blockedNotificationsVisible,
-            tileQr to qrVisible,
-            tileBarcode to barcodeVisible,
+        val tilesByKey = mapOf(
+            KEY_QA_APPS to (tileManageApps to appsVisible),
+            KEY_QA_PROFILES to (tileProfiles to profilesVisible),
+            KEY_QA_WEBSITES to (tileWriteNfc to websitesVisible),
+            KEY_QA_INAPP to (tileToggleOptions to inAppVisible),
+            KEY_QA_USAGE to (tilePermissions to usageVisible),
+            KEY_QA_NFC_WRITE to (tileNfcWrite to nfcWriteVisible),
+            KEY_QA_BLOCKED_NOTIFICATIONS to (tileBlockedNotifications to blockedNotificationsVisible),
+            KEY_QA_QR to (tileQr to qrVisible),
+            KEY_QA_BARCODE to (tileBarcode to barcodeVisible)
         )
+        val orderedTiles = quickActionOrderKeys().mapNotNull { key -> tilesByKey[key] }
 
         listOf(tileManageApps, tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode).forEach { tile ->
             (tile.parent as? LinearLayout)?.removeView(tile)
             tile.visibility = View.GONE
         }
 
-        listOf(rowManageShortcuts, rowUtilityShortcuts, rowToolsShortcuts, rowScanShortcuts).forEach { row ->
+        val grid = gridQuickActions as? LinearLayout
+        if (grid != null) {
+            for (index in grid.childCount - 1 downTo 0) {
+                val child = grid.getChildAt(index)
+                if (child.tag == TAG_QUICK_ACTIONS_DYNAMIC_ROW) {
+                    grid.removeViewAt(index)
+                }
+            }
+        }
+
+        val staticRows = listOf(rowManageShortcuts, rowUtilityShortcuts, rowToolsShortcuts, rowScanShortcuts)
+        staticRows.forEach { row ->
             row.removeAllViews()
             row.visibility = View.GONE
         }
 
         val visibleTiles = orderedTiles.filter { it.second }.map { it.first }
-        val rows = listOf(rowManageShortcuts, rowUtilityShortcuts, rowToolsShortcuts, rowScanShortcuts)
         visibleTiles.chunked(2).forEachIndexed { index, chunk ->
-            val row = rows.getOrNull(index) ?: return@forEachIndexed
+            val row = staticRows.getOrNull(index) ?: createQuickActionRow().also { dynamicRow ->
+                grid?.addView(dynamicRow)
+            }
             row.visibility = View.VISIBLE
-            chunk.forEachIndexed { tileIndex, tile ->
+            chunk.forEach { tile ->
                 tile.visibility = View.VISIBLE
                 tile.layoutParams = quickActionTileLayoutParams(single = chunk.size == 1)
                 row.addView(tile)
             }
+        }
+    }
+
+    private fun createQuickActionRow(): LinearLayout {
+        return LinearLayout(this).apply {
+            tag = TAG_QUICK_ACTIONS_DYNAMIC_ROW
+            orientation = LinearLayout.HORIZONTAL
+            weightSum = 2f
+            visibility = View.GONE
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
     }
 
@@ -1799,7 +2431,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
-            } else if (!hasAnyLimit) {
+            } else if (!hasAnyLimit && !isInAppOnlyManagedApp(this, profile, app.pkg)) {
                 hardBlocked.add(
                     BlockedNowItem(
                         label = app.label,
@@ -1986,14 +2618,15 @@ class MainActivity : AppCompatActivity() {
         tvSwitchMode.text = span
         updateControlModeHint(enabled)
 
-        val showActiveDuration = PreferenceManager.getDefaultSharedPreferences(this)
-            .getBoolean(ToggleOptionsActivity.KEY_SHOW_ACTIVE_DURATION, true)
+        val showActiveTimerOnHome = enabled && shouldShowHomeActiveTimer()
         val activeDurationMs = SwitchModeStore.getActiveDurationMillis(this)
-        tvActiveDuration.isVisible = showActiveDuration && enabled && shouldShowHomeActiveTimer()
-        tvActiveDuration.text = getString(
-            R.string.dashboard_active_duration_fmt,
-            formatActiveDuration(activeDurationMs)
-        )
+        tvActiveDuration.isVisible = showActiveTimerOnHome
+        if (showActiveTimerOnHome) {
+            tvActiveDuration.text = getString(
+                R.string.dashboard_active_duration_fmt,
+                formatActiveDuration(activeDurationMs)
+            )
+        }
 
         // Keep quick-entry text in sync with current state
         updateEmergencyHintVisibility()
@@ -2172,6 +2805,7 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.ok) { _, _ ->
                 val ok = EmergencyBypassStore.enableIfAllowed(this, 15)
                 if (ok) {
+                    AppLogStore.append(this, "Emergency", "Emergency mode started from Home for 15m")
                     SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
                     Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
@@ -2213,6 +2847,7 @@ class MainActivity : AppCompatActivity() {
         if (active) {
             addAction(getString(R.string.emergency_action_pause)) {
                 if (EmergencyBypassStore.pause(this)) {
+                    AppLogStore.append(this, "Emergency", "Emergency mode paused from Home")
                     SwitchModeStore.clearTemporary(this)
                     Toast.makeText(this, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
@@ -2220,6 +2855,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             addAction(getString(R.string.emergency_action_end)) {
+                AppLogStore.append(this, "Emergency", "Emergency mode ended from Home")
                 EmergencyBypassStore.cancel(this)
                 SwitchModeStore.clearTemporary(this)
                 Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
@@ -2230,6 +2866,7 @@ class MainActivity : AppCompatActivity() {
             addAction(getString(R.string.emergency_action_resume)) {
                 if (EmergencyBypassStore.resume(this)) {
                     val remainingMinutes = EmergencyBypassStore.minutesRemaining(this).coerceAtLeast(1)
+                    AppLogStore.append(this, "Emergency", "Emergency mode resumed from Home with ${remainingMinutes}m remaining")
                     SwitchModeStore.setTemporarilyDisabled(this, remainingMinutes * 60_000L)
                     Toast.makeText(this, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
@@ -2237,6 +2874,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             addAction(getString(R.string.emergency_action_end)) {
+                AppLogStore.append(this, "Emergency", "Emergency mode ended from Home")
                 EmergencyBypassStore.cancel(this)
                 SwitchModeStore.clearTemporary(this)
                 Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
@@ -2367,7 +3005,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshProfilesUi() {
         val profiles: List<String> = ProfileStore.getProfiles(this).toList().sorted()
-        val adapter = android.widget.ArrayAdapter(this, android.R.layout.simple_list_item_1, profiles)
+        val adapter = SwitchlyDropdownAdapter(this, profiles)
         profileDropdown.setAdapter(adapter)
 
         // Keep dropdown width aligned with the field (prevents full-screen-wide popup on some OEMs).
@@ -2488,35 +3126,71 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val options = arrayOf(
-            getString(R.string.dashboard_blocked_app_action_edit_limits),
-            getString(R.string.dashboard_blocked_app_action_remove)
-        )
+        val actions = mutableListOf<Pair<SwitchlyDialogOption, () -> Unit>>()
+
+        if (hasWebsiteRulesShortcut(item)) {
+            actions += SwitchlyDialogOption(
+                title = getString(R.string.app_picker_row_action_website_rules),
+                summary = getString(R.string.app_picker_row_action_website_rules_summary),
+                iconRes = R.drawable.language_24
+            ) to { openWebsiteRulesFromHomeList(item) }
+        }
+
+        if (hasInAppRulesShortcut(item)) {
+            actions += SwitchlyDialogOption(
+                title = getString(R.string.app_picker_row_action_in_app_rules),
+                summary = getString(R.string.app_picker_row_action_in_app_rules_summary),
+                iconRes = R.drawable.tune_24
+            ) to { openInAppRulesFromHomeList(item) }
+        }
+
+        actions += SwitchlyDialogOption(
+            title = getString(R.string.dashboard_blocked_app_action_edit_limits),
+            summary = getString(R.string.dashboard_blocked_app_action_edit_limits_summary, item.label),
+            iconRes = R.drawable.schedule_24
+        ) to { showBlockedAppLimitActions(item) }
+
+        actions += SwitchlyDialogOption(
+            title = getString(R.string.dashboard_blocked_app_action_remove),
+            summary = getString(R.string.dashboard_blocked_app_action_remove_summary, item.label),
+            iconRes = R.drawable.delete_24,
+            destructive = true
+        ) to { confirmRemoveBlockedApp(item) }
 
         showSwitchlyOptionDialog(
             title = item.label,
-            options = options.mapIndexed { index, label ->
-                SwitchlyDialogOption(
-                    title = label,
-                    summary = getString(
-                        if (index == 0) {
-                            R.string.dashboard_blocked_app_action_edit_limits_summary
-                        } else {
-                            R.string.dashboard_blocked_app_action_remove_summary
-                        },
-                        item.label
-                    ),
-                    iconRes = if (index == 0) R.drawable.schedule_24 else R.drawable.delete_24,
-                    destructive = index == 1
-                )
-            },
+            options = actions.map { it.first },
             showCancelButton = false
-        ) { which ->
-            when (which) {
-                0 -> showBlockedAppLimitActions(item)
-                1 -> confirmRemoveBlockedApp(item)
-            }
+        ) { index ->
+            actions.getOrNull(index)?.second?.invoke()
         }
+    }
+
+    private fun hasWebsiteRulesShortcut(item: AppDisplay): Boolean =
+        item.isAvailable && isBrowserPackage(item.pkg)
+
+    private fun hasInAppRulesShortcut(item: AppDisplay): Boolean =
+        item.isAvailable && item.pkg in InAppRuleStore.supportedPackages()
+
+    private fun openWebsiteRulesFromHomeList(item: AppDisplay) {
+        Toast.makeText(
+            this,
+            getString(R.string.app_picker_open_website_rules_for, item.label),
+            Toast.LENGTH_SHORT
+        ).show()
+        startActivity(Intent(this, ManageBlockedWebsitesActivity::class.java))
+    }
+
+    private fun openInAppRulesFromHomeList(item: AppDisplay) {
+        Toast.makeText(
+            this,
+            getString(R.string.app_picker_open_in_app_rules_for, item.label),
+            Toast.LENGTH_SHORT
+        ).show()
+        startActivity(
+            Intent(this, ReelsShortsBlockingActivity::class.java)
+                .putExtra(ReelsShortsBlockingActivity.EXTRA_FOCUS_PACKAGE, item.pkg)
+        )
     }
 
     private fun showBlockedAppLimitActions(item: AppDisplay) {
@@ -2670,13 +3344,19 @@ class MainActivity : AppCompatActivity() {
             addAll(SessionLimitStore.getAllLimitedPackages(this@MainActivity, profile))
             addAll(AttemptLimitStore.getAllLimitedPackages(this@MainActivity, profile))
         }
+        val inAppRulePackages = InAppRuleStore.getPackagesWithEnabledRules(this, profile)
 
-        return (explicitlyBlocked + limited)
+        return (explicitlyBlocked + limited + inAppRulePackages)
             .asSequence()
             .filter { it.isNotBlank() }
             .distinct()
             .sorted()
             .toList()
+    }
+
+    private fun isInAppOnlyManagedApp(ctx: Context, profile: String, pkgName: String): Boolean {
+        if (!InAppRuleStore.hasEnabledRulesForPackage(ctx, profile, pkgName)) return false
+        return !ProfileStore.getBlockedForProfile(ctx, profile).contains(pkgName)
     }
 
     private fun resolveAppDisplay(context: Context, pkg: String): AppDisplay {
@@ -2921,15 +3601,24 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
 
-                return if (lines.isNotEmpty()) {
-                    when (lines.size) {
+                if (lines.isNotEmpty()) {
+                    return when (lines.size) {
                         1 -> lines.first()
                         2 -> lines.joinToString(separator = "  –  ")
                         else -> lines.joinToString(separator = "  •  ")
                     }
-                } else {
-                    ctx.getString(R.string.in_app_surface_always_block)
                 }
+
+                if (!profile.isNullOrBlank() && isInAppOnlyManagedApp(ctx, profile, pkgName)) {
+                    return ctx.getString(R.string.app_picker_in_app_rules_pinned_hint)
+                }
+
+                return ctx.getString(R.string.in_app_surface_always_block)
+            }
+
+            private fun isInAppOnlyManagedApp(ctx: Context, profile: String, pkgName: String): Boolean {
+                if (!InAppRuleStore.hasEnabledRulesForPackage(ctx, profile, pkgName)) return false
+                return !ProfileStore.getBlockedForProfile(ctx, profile).contains(pkgName)
             }
 
             fun bind(item: AppDisplay, editEnabled: Boolean) {

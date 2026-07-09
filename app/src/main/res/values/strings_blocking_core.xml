@@ -2,6 +2,28 @@
 <resources>
 
     <!-- ====================================================== -->
+    <!-- Rules hub -->
+    <!-- ====================================================== -->
+    <string name="blocking_hub_title">Rules</string>
+    <string name="blocking_hub_profiles_section">Profiles</string>
+    <string name="blocking_hub_blocked_content_section">Rules for this profile</string>
+    <string name="blocking_hub_apps_title">App rules</string>
+    <string name="blocking_hub_apps_summary">Choose blocked or allowed apps, limits, and app rules</string>
+    <string name="blocking_hub_websites_title">Website rules</string>
+    <string name="blocking_hub_websites_summary">Choose blocked or allowed website/domain rules for the active profile</string>
+    <string name="blocking_hub_inapp_title">In-app rules</string>
+    <string name="blocking_hub_inapp_summary">Choose blocked or allowed Shorts, Reels, feeds, and other supported in-app sections</string>
+
+    <!-- ====================================================== -->
+    <!-- Rules hub compatibility controls -->
+    <!-- ====================================================== -->
+    <string name="blocking_hub_controls_section">Switchly controls</string>
+    <string name="blocking_hub_modes_title">Control modes</string>
+    <string name="blocking_hub_modes_summary">Choose how Switchly is enabled and disabled</string>
+    <string name="blocking_hub_features_title">Feature access</string>
+    <string name="blocking_hub_features_summary">Choose what can still be changed or used while protection is active</string>
+
+    <!-- ====================================================== -->
     <!-- Automatic blocking -->
     <!-- ====================================================== -->
     <string name="app_picker_auto_block_new_apps_title">Automatically block newly installed apps</string>

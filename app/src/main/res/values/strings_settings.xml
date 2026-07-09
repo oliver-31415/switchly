@@ -11,40 +11,54 @@
     <string name="settings_section_help">Help &amp; about</string>
 
     <!-- ====================================================== -->
-    <!-- Account and appearance -->
+    <!-- Controls -->
+    <!-- ====================================================== -->
+    <string name="settings_tools_automation_title">Keys &amp; codes</string>
+    <string name="settings_tools_automation_summary">Manage NFC tags, paired tags, QR codes, barcode actions, and scanner shortcuts</string>
+
+    <!-- ====================================================== -->
+    <!-- Personalization -->
+    <!-- ====================================================== -->
+    <string name="settings_theme_title">Appearance</string>
+    <string name="settings_theme_summary">Theme, colors &amp; language</string>
+    <string name="blocking_hub_display_title">Display &amp; shortcuts</string>
+    <string name="blocking_hub_display_summary">Switchly Home display, Quick Settings tiles, and Android widgets</string>
+
+    <!-- ====================================================== -->
+    <!-- Permissions and reliability -->
+    <!-- ====================================================== -->
+    <string name="settings_permissions_reliability_title">Permissions &amp; reliability</string>
+    <string name="settings_permissions_reliability_summary">Permissions and troubleshooting</string>
+    <string name="pref_permissions_title">Permissions</string>
+    <string name="pref_permissions_summary">Check and manage the system permissions Switchly needs.</string>
+    <string name="settings_emergency_unlock_title">Emergency unlock</string>
+    <string name="settings_emergency_unlock_summary">Start, pause, resume, or end Emergency unlock</string>
+
+    <!-- ====================================================== -->
+    <!-- Account and data -->
     <!-- ====================================================== -->
     <string name="settings_account_title">Account</string>
     <string name="settings_account_summary">Backup, emergency PIN &amp; sync</string>
-    <string name="settings_theme_title">Appearance</string>
-    <string name="settings_theme_summary">Theme, colors &amp; language</string>
-
-    <!-- ====================================================== -->
-    <!-- Data and changelog -->
-    <!-- ====================================================== -->
-    <string name="settings_changelog_title">What’s new</string>
-    <string name="settings_changelog_summary">Release notes</string>
     <string name="settings_backup_title">Backup</string>
     <string name="settings_backup_summary">Sync &amp; restore your config</string>
     <string name="settings_backup_create_title">Backup</string>
     <string name="settings_backup_create_summary">Create a cloud or local file backup</string>
     <string name="settings_restore_title">Restore</string>
     <string name="settings_restore_summary">Restore from cloud or a local file</string>
+    <string name="settings_changelog_title">What’s new</string>
+    <string name="settings_changelog_summary">Release notes</string>
 
     <!-- ====================================================== -->
-    <!-- Help, about and permissions -->
+    <!-- Help and about -->
     <!-- ====================================================== -->
-    <string name="settings_contact_support_title">Contact support</string>
-    <string name="settings_contact_support_summary">Email the developer</string>
-    <string name="settings_permissions_reliability_title">Permissions &amp; reliability</string>
-    <string name="settings_permissions_reliability_summary">Permissions and troubleshooting</string>
     <string name="settings_help_about_title">Help &amp; about</string>
     <string name="settings_help_about_summary">FAQ, support and app information</string>
-    <string name="settings_info_title">Info</string>
-    <string name="settings_info_summary">App, device and developer details</string>
-    <string name="pref_permissions_title">Permissions</string>
-    <string name="pref_permissions_summary">Check and manage the system permissions Switchly needs.</string>
     <string name="pref_faq_title">Help Center</string>
     <string name="pref_faq_summary">Guides, FAQ groups and device-specific troubleshooting</string>
+    <string name="settings_contact_support_title">Contact support</string>
+    <string name="settings_contact_support_summary">Email the developer</string>
+    <string name="settings_info_title">Info</string>
+    <string name="settings_info_summary">App, device and developer details</string>
 
     <!-- ====================================================== -->
     <!-- Reset app data -->

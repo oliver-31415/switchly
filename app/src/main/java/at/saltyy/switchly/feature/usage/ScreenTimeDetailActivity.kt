@@ -26,6 +26,8 @@ import android.text.InputType
 import android.view.View
 import android.view.MenuItem
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -35,7 +37,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
-import at.saltyy.switchly.data.prefs.BlockAttemptStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
@@ -44,7 +45,7 @@ import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.UsageLimitResetStore
 import at.saltyy.switchly.data.prefs.UsageLimitSessionRuntimeStore
 import at.saltyy.switchly.data.prefs.UsageStore
-import at.saltyy.switchly.databinding.ActivityScreenTimeDetailBinding
+import at.saltyy.switchly.databinding.ActivityStatisticsAppUsageDetailBinding
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -55,11 +56,15 @@ import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.AppBlockSafety
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.text.DateFormat
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
@@ -104,26 +109,22 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         b.btnEditLimits.alpha = if (locked) 0.62f else 1f
     }
 
-    private lateinit var b: ActivityScreenTimeDetailBinding
+    private lateinit var b: ActivityStatisticsAppUsageDetailBinding
 
     private var currentRange: Range = Range.TODAY
     private var currentSeries: List<Long> = emptyList()
     private var currentXAxisLabels: List<String> = emptyList()
     private var rangeJob: Job? = null
+    private var customRangeStartMillis: Long? = null
+    private var customRangeEndMillis: Long? = null
+    private var customRangePickerShowing = false
 
-    private data class CountSummary(
-        val sessionsLabelRes: Int,
-        val attemptsLabelRes: Int,
-        val sessionsCount: Int,
-        val attemptsCount: Int
-    )
-
-    private enum class Range { TODAY, WEEK, MONTH, YEAR, OVERALL }
+    private enum class Range { TODAY, WEEK, MONTH, YEAR, CUSTOM }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        b = ActivityScreenTimeDetailBinding.inflate(layoutInflater)
+        b = ActivityStatisticsAppUsageDetailBinding.inflate(layoutInflater)
         setContentView(b.root)
 
         b.toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
@@ -136,10 +137,17 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         val pkg = intent.getStringExtra(EXTRA_PKG) ?: return
         val label = intent.getStringExtra(EXTRA_LABEL) ?: pkg
 
-        b.toolbar.title = label
+        b.toolbar.title = getString(R.string.app_usage_detail_title)
+        b.detailTitle.text = label
+        b.detailSubtitle.text = getString(R.string.app_usage_detail_subtitle)
+        updateProfileSubtitle()
 
         b.btnRangeYear.visibility = View.VISIBLE
-        b.btnRangeOverall.visibility = View.VISIBLE
+        b.btnRangeCustom.visibility = View.VISIBLE
+        b.sessions.visibility = View.GONE
+        b.attempts.visibility = View.GONE
+        b.cardLaunchStats.visibility = View.GONE
+        b.cardUsageTimeline.visibility = View.GONE
 
         val today = UsageStore.getUsageMsToday(this, pkg)
 
@@ -164,6 +172,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         b.tvProfileIndicator.text = ProfileStore.getCurrent(this)?.let {
             getString(R.string.profile_active_fmt, it)
         }.orEmpty()
+        b.tvProfileIndicator.visibility = View.GONE
 
         // Direct editing: tapping a limit card opens the correct editor.
         b.cardLimitTime.setOnClickListener {
@@ -211,37 +220,59 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             }
         }
 
-        // Range selector (Week/Month/Year)
+        val initialCustomStart = intent.getLongExtra(EXTRA_INITIAL_START_MS, -1L)
+        val initialCustomEnd = intent.getLongExtra(EXTRA_INITIAL_END_MS, -1L)
+        if (initialCustomStart > 0L && initialCustomEnd >= initialCustomStart) {
+            customRangeStartMillis = initialCustomStart
+            customRangeEndMillis = initialCustomEnd
+        }
 
         // If opened from a specific Stats range, default the chart to the most relevant view.
-        val initialRange = when (intent.getStringExtra(EXTRA_INITIAL_RANGE)) {
+        val requestedInitialRange = when (intent.getStringExtra(EXTRA_INITIAL_RANGE)) {
             RANGE_TODAY -> Range.TODAY
             RANGE_MONTH -> Range.MONTH
             RANGE_YEAR -> Range.YEAR
-            RANGE_OVERALL -> Range.OVERALL
+            RANGE_CUSTOM -> Range.CUSTOM
             else -> Range.WEEK
         }
+        val initialRange = if (ensureRangeAllowed(requestedInitialRange, showGate = false)) {
+            requestedInitialRange
+        } else {
+            Range.TODAY
+        }
         setWeekdayLabels()
+        configureRangeFilterButtons()
         b.toggleRange.check(when (initialRange) {
             Range.TODAY -> b.btnRangeToday.id
             Range.MONTH -> b.btnRangeMonth.id
             Range.YEAR -> b.btnRangeYear.id
-            Range.OVERALL -> b.btnRangeOverall.id
+            Range.CUSTOM -> b.btnRangeCustom.id
             else -> b.btnRangeWeek.id
         })
         setupChartInteractions(label)
-        updateCountSummaryForRange(pkg, initialRange)
-
         b.toggleRange.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
+            if (checkedId == b.btnRangeCustom.id) {
+                showCustomRangePicker(pkg)
+                return@addOnButtonCheckedListener
+            }
             val range = when (checkedId) {
                 b.btnRangeToday.id -> Range.TODAY
                 b.btnRangeMonth.id -> Range.MONTH
                 b.btnRangeYear.id -> Range.YEAR
-                b.btnRangeOverall.id -> Range.OVERALL
                 else -> Range.WEEK
             }
+            if (!ensureRangeAllowed(range)) {
+                b.toggleRange.check(chipIdForRange(currentRange))
+                return@addOnButtonCheckedListener
+            }
             applyRange(pkg, range)
+        }
+        b.btnClearCustomRange.setOnClickListener {
+            customRangeStartMillis = null
+            customRangeEndMillis = null
+            b.toggleRange.check(b.btnRangeToday.id)
+            applyRange(pkg, Range.TODAY)
         }
 
         lifecycleScope.launch {
@@ -261,63 +292,11 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         val pkg = intent.getStringExtra(EXTRA_PKG) ?: return
-        b.tvProfileIndicator.text = ProfileStore.getCurrent(this)?.let {
-            getString(R.string.profile_active_fmt, it)
-        }.orEmpty()
-        updateCountSummaryForRange(pkg, currentRange)
+        updateProfileSubtitle()
+        b.tvProfileIndicator.visibility = View.GONE
         refreshDailyLimit(pkg)
         refreshAttemptLimit(pkg)
         syncLimitEditingUi()
-    }
-
-    private fun updateCountSummaryForRange(pkg: String, range: Range) {
-        lifecycleScope.launch {
-            val summary = withContext(Dispatchers.IO) {
-                when (range) {
-                    Range.TODAY -> CountSummary(
-                        sessionsLabelRes = R.string.usage_sessions_today,
-                        attemptsLabelRes = R.string.usage_attempts_today,
-                        sessionsCount = OpenCountStore.getTodayAllProfiles(this@ScreenTimeDetailActivity, pkg),
-                        attemptsCount = BlockAttemptStore.getToday(this@ScreenTimeDetailActivity, pkg)
-                    )
-                    Range.WEEK -> CountSummary(
-                        sessionsLabelRes = R.string.usage_sessions_week,
-                        attemptsLabelRes = R.string.usage_attempts_week,
-                        sessionsCount = OpenCountStore.getForCurrentWeekAllProfiles(this@ScreenTimeDetailActivity, pkg),
-                        attemptsCount = BlockAttemptStore.getForCurrentWeek(this@ScreenTimeDetailActivity, pkg)
-                    )
-                    Range.MONTH -> CountSummary(
-                        sessionsLabelRes = R.string.usage_sessions_month,
-                        attemptsLabelRes = R.string.usage_attempts_month,
-                        sessionsCount = OpenCountStore.getForCurrentMonthAllProfiles(this@ScreenTimeDetailActivity, pkg),
-                        attemptsCount = BlockAttemptStore.getForCurrentMonth(this@ScreenTimeDetailActivity, pkg)
-                    )
-                    Range.YEAR -> CountSummary(
-                        sessionsLabelRes = R.string.usage_sessions_year,
-                        attemptsLabelRes = R.string.usage_attempts_year,
-                        sessionsCount = OpenCountStore.getForCurrentYearAllProfiles(this@ScreenTimeDetailActivity, pkg),
-                        attemptsCount = BlockAttemptStore.getForCurrentYear(this@ScreenTimeDetailActivity, pkg)
-                    )
-                    Range.OVERALL -> CountSummary(
-                        sessionsLabelRes = R.string.usage_sessions_overall,
-                        attemptsLabelRes = R.string.usage_attempts_overall,
-                        sessionsCount = OpenCountStore.getOverallAllProfiles(this@ScreenTimeDetailActivity, pkg),
-                        attemptsCount = BlockAttemptStore.getOverall(this@ScreenTimeDetailActivity, pkg)
-                    )
-                }
-            }
-
-            b.sessions.text = getString(
-                R.string.usage_kv_fmt,
-                getString(summary.sessionsLabelRes),
-                summary.sessionsCount.toString()
-            )
-            b.attempts.text = getString(
-                R.string.usage_kv_fmt,
-                getString(summary.attemptsLabelRes),
-                summary.attemptsCount.toString()
-            )
-        }
     }
 
     private fun setHeaderUsageTotal(labelRes: Int, totalMs: Long) {
@@ -331,7 +310,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
     private fun applyRange(pkg: String, range: Range) {
         rangeJob?.cancel()
         currentRange = range
-        updateCountSummaryForRange(pkg, range)
+        updateCustomRangeSummary()
         when (range) {
             Range.TODAY -> {
                 currentSeries = UsageSanity.capSeriesToRange(this, UsageStatsRepo.getTodayPerHour(this, pkg), UsageSanity.RangeCap.TODAY)
@@ -388,22 +367,115 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
                 }
             }
 
-            Range.OVERALL -> {
+            Range.CUSTOM -> {
                 b.chart.visibility = View.GONE
                 b.weekdayRow.visibility = View.GONE
                 b.lineChart.visibility = View.VISIBLE
-                rangeJob = lifecycleScope.launch {
-                    val buckets = withContext(Dispatchers.IO) { UsageStore.getUsageMsMonthBucketsAllTime(this@ScreenTimeDetailActivity, pkg, maxMonths = 36) }
-                    if (currentRange != Range.OVERALL) return@launch
-                    currentSeries = UsageSanity.capSeriesToRange(this@ScreenTimeDetailActivity, buckets.map { it.totalMs }, UsageSanity.RangeCap.OVERALL)
-                    currentXAxisLabels = buckets.map { monthLabel(it.month1Based, it.year, shortYear = true) }
-                    b.lineChart.setValues(currentSeries)
-                    b.lineChart.setXAxisLabels(currentXAxisLabels)
-                    setHeaderUsageTotal(R.string.usage_overall_total, UsageSanity.capTotalToRange(this@ScreenTimeDetailActivity, UsageStore.getUsageMsOverall(this@ScreenTimeDetailActivity, pkg), UsageSanity.RangeCap.OVERALL))
-                }
+                val start = customRangeStartMillis ?: startOfTodayMillis()
+                val end = customRangeEndMillis ?: System.currentTimeMillis()
+                currentSeries = UsageStore.getUsageMsSeriesForDateRange(this, pkg, start, end)
+                currentXAxisLabels = buildCustomDateLabels(start, currentSeries.size)
+                b.lineChart.setValues(currentSeries)
+                b.lineChart.setXAxisLabels(currentXAxisLabels)
+                setHeaderUsageTotal(R.string.activity_history_range_custom, currentSeries.sum())
             }
         }
     }
+
+    private fun configureRangeFilterButtons() {
+        listOf(b.btnRangeToday, b.btnRangeWeek, b.btnRangeMonth, b.btnRangeYear).forEach { button ->
+            configureRangeButton(button, custom = false)
+        }
+        configureRangeButton(b.btnRangeCustom, custom = true)
+    }
+
+    private fun configureRangeButton(button: MaterialButton, custom: Boolean) {
+        button.minWidth = 0
+        button.minimumWidth = 0
+        button.minHeight = dp(40)
+        button.minimumHeight = dp(40)
+        button.insetTop = 0
+        button.insetBottom = 0
+        button.cornerRadius = dp(4)
+        button.iconPadding = 0
+        button.gravity = android.view.Gravity.CENTER
+        button.setAllCaps(false)
+        button.setPadding(if (custom) dp(8) else dp(4), 0, if (custom) dp(8) else dp(4), 0)
+        button.layoutParams = (button.layoutParams as LinearLayout.LayoutParams).apply {
+            width = if (custom) dp(44) else 0
+            height = dp(40)
+            weight = if (custom) 0f else 1f
+        }
+    }
+
+    private fun updateProfileSubtitle() {
+        b.toolbar.subtitle = ProfileStore.getCurrent(this)?.let {
+            getString(R.string.profile_active_fmt, it)
+        }
+    }
+
+    private fun updateCustomRangeSummary() {
+        val start = customRangeStartMillis
+        val end = customRangeEndMillis
+        if (currentRange != Range.CUSTOM || start == null || end == null) {
+            b.customRangeSummary.visibility = View.GONE
+            return
+        }
+        b.customRangeSummary.visibility = View.VISIBLE
+        val fmt = DateFormat.getDateInstance(DateFormat.SHORT)
+        b.customRangeValue.text = getString(
+            R.string.activity_history_range_custom_value,
+            fmt.format(Date(start)),
+            fmt.format(Date(end))
+        )
+    }
+
+    private fun ensureRangeAllowed(range: Range, showGate: Boolean = true): Boolean {
+        if (range == Range.TODAY || StatsPremiumGate.canUseExtendedStats(this)) return true
+        if (showGate) StatsPremiumGate.show(this)
+        return false
+    }
+
+    private fun chipIdForRange(range: Range): Int {
+        return when (range) {
+            Range.TODAY -> b.btnRangeToday.id
+            Range.WEEK -> b.btnRangeWeek.id
+            Range.MONTH -> b.btnRangeMonth.id
+            Range.YEAR -> b.btnRangeYear.id
+            Range.CUSTOM -> b.btnRangeCustom.id
+        }
+    }
+
+    private fun showCustomRangePicker(pkg: String) {
+        if (!ensureRangeAllowed(Range.CUSTOM)) {
+            b.toggleRange.check(chipIdForRange(currentRange))
+            return
+        }
+        if (customRangePickerShowing || supportFragmentManager.isStateSaved) return
+        customRangePickerShowing = true
+        val now = System.currentTimeMillis()
+        val currentStart = customRangeStartMillis ?: startOfTodayMillis()
+        val currentEnd = customRangeEndMillis ?: now
+        val picker = MaterialDatePicker.Builder.dateRangePicker()
+            .setTheme(com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialCalendar)
+            .setTitleText(R.string.activity_history_range_custom)
+            .setSelection(androidx.core.util.Pair(localDayToDatePickerUtcMillis(currentStart), localDayToDatePickerUtcMillis(currentEnd)))
+            .build()
+        picker.addOnPositiveButtonClickListener { selection ->
+            val startUtc = selection.first ?: return@addOnPositiveButtonClickListener
+            val endUtc = selection.second ?: startUtc
+            customRangeStartMillis = datePickerUtcMillisToLocalDayStart(minOf(startUtc, endUtc))
+            customRangeEndMillis = datePickerUtcMillisToLocalDayEnd(maxOf(startUtc, endUtc))
+            b.toggleRange.check(b.btnRangeCustom.id)
+            applyRange(pkg, Range.CUSTOM)
+        }
+        picker.addOnDismissListener { customRangePickerShowing = false }
+        runCatching { picker.show(supportFragmentManager, "app_usage_detail_custom_range") }
+            .onSuccess { UsageDatePickerAccentTint.apply(this, picker) }
+            .onFailure { customRangePickerShowing = false }
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private data class OverallUsageResult(
         val totalMs: Long,
@@ -623,7 +695,8 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
 
         val whenLabel = when (range) {
             Range.TODAY -> currentXAxisLabels.getOrNull(index) ?: formatHourLabel(index)
-            Range.YEAR, Range.OVERALL -> currentXAxisLabels.getOrNull(index) ?: formatMonthLabel(index, series.size)
+            Range.YEAR -> currentXAxisLabels.getOrNull(index) ?: formatMonthLabel(index, series.size)
+            Range.CUSTOM -> currentXAxisLabels.getOrNull(index) ?: formatDayLabel(index, series.size)
             else -> formatDayLabel(index, series.size)
         }
 
@@ -668,6 +741,47 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         cal.add(Calendar.MONTH, index - (size - 1))
         val fmt = SimpleDateFormat("MMM yyyy", Locale.getDefault())
         return fmt.format(cal.time)
+    }
+
+    private fun buildCustomDateLabels(startMs: Long, count: Int): List<String> {
+        val fmt = SimpleDateFormat("d MMM", Locale.getDefault())
+        val cal = Calendar.getInstance().apply { timeInMillis = startMs }
+        return (0 until count.coerceAtLeast(0)).map {
+            fmt.format(cal.time).also { cal.add(Calendar.DAY_OF_YEAR, 1) }
+        }
+    }
+
+    private fun startOfTodayMillis(): Long = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
+    private fun localDayToDatePickerUtcMillis(localMillis: Long): Long {
+        val local = Calendar.getInstance().apply { timeInMillis = localMillis }
+        return Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH))
+        }.timeInMillis
+    }
+
+    private fun datePickerUtcMillisToLocalDayStart(utcMillis: Long): Long {
+        val utc = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMillis }
+        return Calendar.getInstance().apply {
+            clear()
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun datePickerUtcMillisToLocalDayEnd(utcMillis: Long): Long {
+        val utc = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMillis }
+        return Calendar.getInstance().apply {
+            clear()
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH), 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.timeInMillis
     }
 
     private fun refreshDailyLimit(pkg: String) {
@@ -773,9 +887,14 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
                 SwitchlyDialogOption(
                     title = item,
                     iconRes = if (index == items.lastIndex) R.drawable.edit_24 else R.drawable.bar_chart_24,
-                    selected = index < presets.size && presets[index] == current
+                    selected = if (index < presets.size) {
+                        presets[index] == current
+                    } else {
+                        current !in presets
+                    }
                 )
-            }
+            },
+            confirmSelection = true
         ) { which ->
             if (which == items.lastIndex) {
                 showCustomOpensInput(pkg, label)
@@ -844,9 +963,14 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
                 SwitchlyDialogOption(
                     title = item,
                     iconRes = if (index == items.lastIndex) R.drawable.edit_24 else R.drawable.alarm_24,
-                    selected = index < presets.size && presets[index] == current
+                    selected = if (index < presets.size) {
+                        presets[index] == current
+                    } else {
+                        current !in presets
+                    }
                 )
-            }
+            },
+            confirmSelection = true
         ) { which ->
             if (which == items.lastIndex) {
                 showCustomMinutesInput(pkg, label)
@@ -933,6 +1057,8 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         const val RANGE_WEEK = "week"
         const val RANGE_MONTH = "month"
         const val RANGE_YEAR = "year"
-        const val RANGE_OVERALL = "overall"
+        const val RANGE_CUSTOM = "custom"
+        const val EXTRA_INITIAL_START_MS = "initial_start_ms"
+        const val EXTRA_INITIAL_END_MS = "initial_end_ms"
     }
 }

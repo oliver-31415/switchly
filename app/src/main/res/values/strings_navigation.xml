@@ -6,8 +6,8 @@
     <!-- ====================================================== -->
     <string name="app_icon">App icon</string>
     <string name="nav_home">Home</string>
-    <string name="nav_blocking">Blocking</string>
-    <string name="nav_tools">Manage</string>
+    <string name="nav_blocking">Rules</string>
+    <string name="nav_tools">Activity</string>
     <string name="nav_settings">Settings</string>
 
 </resources>

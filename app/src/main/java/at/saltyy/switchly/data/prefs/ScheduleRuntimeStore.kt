@@ -44,6 +44,8 @@ object ScheduleRuntimeStore {
     private const val KEY_MANUAL_OVERRIDE_ACTIVE = "manual_override_active"
     private const val KEY_MANUAL_OVERRIDE_SCHEDULE_ID = "manual_override_schedule_id"
     private const val KEY_ACTIVE_RANGE_SCHEDULE_ID = "active_range_schedule_id"
+    private const val KEY_MANUAL_SCHEDULE_PAUSE_ACTIVE = "manual_schedule_pause_active"
+    private const val KEY_MANUAL_SCHEDULE_PAUSE_SCHEDULE_ID = "manual_schedule_pause_schedule_id"
     private const val KEY_LAST_TICK_MS = "last_tick_ms"
     private const val KEY_LAST_EXECUTION_MS = "last_execution_ms"
     private const val KEY_LAST_DISABLE_BLOCKED_NFC_MS = "last_disable_blocked_nfc_ms"
@@ -132,6 +134,33 @@ object ScheduleRuntimeStore {
         sp.edit { remove(KEY_ACTIVE_RANGE_SCHEDULE_ID) }
     }
 
+    fun isManualSchedulePauseActive(ctx: Context): Boolean {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getBoolean(KEY_MANUAL_SCHEDULE_PAUSE_ACTIVE, false)
+    }
+
+    fun getManualSchedulePauseScheduleId(ctx: Context): Int {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getInt(KEY_MANUAL_SCHEDULE_PAUSE_SCHEDULE_ID, -1)
+    }
+
+    fun isManualSchedulePausedFor(ctx: Context, scheduleId: Int): Boolean {
+        return isManualSchedulePauseActive(ctx) && getManualSchedulePauseScheduleId(ctx) == scheduleId
+    }
+
+    fun setManualSchedulePauseActive(ctx: Context, value: Boolean, scheduleId: Int = -1) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit {
+            if (value && scheduleId > 0) {
+                putBoolean(KEY_MANUAL_SCHEDULE_PAUSE_ACTIVE, true)
+                putInt(KEY_MANUAL_SCHEDULE_PAUSE_SCHEDULE_ID, scheduleId)
+            } else {
+                remove(KEY_MANUAL_SCHEDULE_PAUSE_ACTIVE)
+                remove(KEY_MANUAL_SCHEDULE_PAUSE_SCHEDULE_ID)
+            }
+        }
+    }
+
     fun getLastFiredToken(ctx: Context, scheduleId: Int): String? {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return sp.getString(KEY_LAST_FIRED_PREFIX + scheduleId, null)?.takeIf { it.isNotBlank() }
@@ -215,6 +244,8 @@ object ScheduleRuntimeStore {
             putBoolean(KEY_MANUAL_OVERRIDE_ACTIVE, false)
             remove(KEY_MANUAL_OVERRIDE_SCHEDULE_ID)
             remove(KEY_ACTIVE_RANGE_SCHEDULE_ID)
+            remove(KEY_MANUAL_SCHEDULE_PAUSE_ACTIVE)
+            remove(KEY_MANUAL_SCHEDULE_PAUSE_SCHEDULE_ID)
             val keys = sp.all.keys.filter {
                 it.startsWith(KEY_LAST_FIRED_PREFIX) ||
                     it.startsWith(KEY_LAST_LOCATION_TRANSITION_PREFIX) ||

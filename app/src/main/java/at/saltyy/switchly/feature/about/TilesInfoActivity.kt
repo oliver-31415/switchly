@@ -218,7 +218,7 @@ abstract class TilesInfoActivity : AppCompatActivity() {
             }
             tile.showOpenButton && clickAction != null -> {
                 copyButton.visibility = View.VISIBLE
-                copyButton.setImageResource(tile.actionIconRes ?: R.drawable.arrow_forward_ios_24)
+                copyButton.setImageResource(tile.actionIconRes ?: R.drawable.open_in_new_24)
                 copyButton.contentDescription = tile.title
                 copyButton.alpha = 0.7f
                 ImageViewCompat.setImageTintList(copyButton, accentTint)

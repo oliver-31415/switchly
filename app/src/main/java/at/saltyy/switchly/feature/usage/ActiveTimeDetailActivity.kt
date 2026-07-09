@@ -120,24 +120,40 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
     private fun renderDayDetails(content: LinearLayout, timeMillis: Long) {
         val sessions = ActiveDurationStore.daySessions(this, timeMillis)
         val total = sessions.sumOf { it.durationMs }
+        val timeFmt = DateFormat.getTimeInstance(DateFormat.SHORT)
+
         content.addView(totalCard(
             title = getString(R.string.active_time_details_total_label),
             value = StatsFormat.prettyMs(total)
         ))
 
+        content.addView(sectionHeader(getString(R.string.active_time_sessions_title)))
         if (sessions.isEmpty()) {
             content.addView(emptyText(getString(R.string.active_time_no_sessions)))
-            return
+        } else {
+            sessions.forEachIndexed { index, session ->
+                content.addView(rowCard(
+                    title = getString(R.string.active_time_session_title, index + 1),
+                    summary = "${timeFmt.format(java.util.Date(session.startMs))} – ${timeFmt.format(java.util.Date(session.endMs))}",
+                    value = StatsFormat.prettyMs(session.durationMs),
+                    iconRes = R.drawable.schedule_24
+                ))
+            }
         }
 
-        val fmt = DateFormat.getTimeInstance(DateFormat.SHORT)
-        sessions.forEachIndexed { index, session ->
-            content.addView(rowCard(
-                title = getString(R.string.active_time_session_title, index + 1),
-                summary = "${fmt.format(java.util.Date(session.startMs))} – ${fmt.format(java.util.Date(session.endMs))}",
-                value = StatsFormat.prettyMs(session.durationMs),
-                iconRes = R.drawable.schedule_24
-            ))
+        content.addView(sectionHeader(getString(R.string.active_time_activity_history_title)))
+        val historyEntries = SwitchlyActivityHistory.entriesForDay(this, timeMillis)
+        if (historyEntries.isEmpty()) {
+            content.addView(emptyText(getString(R.string.active_time_activity_history_empty)))
+        } else {
+            historyEntries.forEach { entry ->
+                content.addView(rowCard(
+                    title = entry.title,
+                    summary = entry.summary,
+                    value = timeFmt.format(java.util.Date(entry.timeMillis)),
+                    iconRes = entry.iconRes
+                ))
+            }
         }
     }
 
@@ -172,14 +188,26 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
                 title = day.label,
                 summary = getString(R.string.active_time_day_sessions_hint),
                 value = StatsFormat.prettyMs(day.valueMs),
-                iconRes = R.drawable.bar_chart_24
+                iconRes = R.drawable.bar_chart_24,
+                onClick = {
+                    startActivity(ActiveTimeDetailActivity.intent(this, day.label, day.timeMillis, isMonth = false))
+                }
             ))
         }
     }
 
+    private fun sectionHeader(title: String): TextView =
+        TextView(this).apply {
+            text = title
+            textSize = 14f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            alpha = 0.82f
+            setPadding(dp(4), dp(18), dp(4), dp(4))
+        }
+
     private fun totalCard(title: String, value: String): MaterialCardView {
         val card = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
+            radius = dp(26).toFloat()
             cardElevation = dp(2).toFloat()
             useCompatPadding = true
             applySwitchlyCardColors()
@@ -205,7 +233,7 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
 
     private fun graphCard(title: String, entries: List<GraphEntry>): MaterialCardView {
         val card = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
+            radius = dp(26).toFloat()
             cardElevation = dp(2).toFloat()
             useCompatPadding = true
             applySwitchlyCardColors()
@@ -278,12 +306,24 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
         return card
     }
 
-    private fun rowCard(title: String, summary: String, value: String, iconRes: Int): MaterialCardView {
+    private fun rowCard(
+        title: String,
+        summary: String,
+        value: String,
+        iconRes: Int,
+        onClick: (() -> Unit)? = null
+    ): MaterialCardView {
         val card = MaterialCardView(this).apply {
-            radius = dp(18).toFloat()
+            radius = dp(26).toFloat()
             cardElevation = dp(1).toFloat()
             useCompatPadding = true
             applySwitchlyCardColors()
+            if (onClick != null) {
+                isClickable = true
+                isFocusable = true
+                foreground = selectableItemBackground()
+                setOnClickListener { onClick() }
+            }
         }
 
         val row = LinearLayout(this).apply {
@@ -333,6 +373,12 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
             alpha = 0.72f
             setPadding(dp(12), dp(16), dp(12), dp(16))
         }
+
+    private fun selectableItemBackground(): android.graphics.drawable.Drawable? {
+        val typedValue = android.util.TypedValue()
+        theme.resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true)
+        return ContextCompat.getDrawable(this, typedValue.resourceId)
+    }
 
     private fun MaterialCardView.applySwitchlyCardColors() {
         setCardBackgroundColor(ContextCompat.getColor(this@ActiveTimeDetailActivity, R.color.switchly_card_bg))

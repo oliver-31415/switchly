@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Switchly.Card"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="4dp"
-    app:cardUseCompatPadding="true"
-    app:cardCornerRadius="18dp"
+    android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     app:cardElevation="1dp"
-    app:strokeWidth="1dp"
-    app:strokeColor="@color/switchly_card_stroke"
-    app:cardBackgroundColor="@color/switchly_card_bg">
+    app:cardUseCompatPadding="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="14dp">
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -40,10 +39,10 @@
                 android:layout_height="24dp"
                 android:src="@drawable/schedule_24"
                 android:contentDescription="@null"
-                app:tint="?attr/colorOnSurface" />
+                app:tint="?attr/colorPrimary" />
 
             <Space
-                android:layout_width="12dp"
+                android:layout_width="14dp"
                 android:layout_height="1dp" />
 
             <LinearLayout
@@ -56,7 +55,8 @@
                     android:id="@+id/textTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
                     android:text="@string/schedule_item_title_placeholder" />
 
                 <TextView
@@ -64,8 +64,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    style="@style/TextAppearance.Material3.BodyMedium"
-                    android:alpha="0.78"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="13sp"
+                    android:alpha="0.86"
                     android:text="@string/schedule_item_subtitle_placeholder" />
 
             </LinearLayout>
@@ -82,9 +83,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:layout_marginStart="36dp"
-            style="@style/TextAppearance.Material3.BodySmall"
-            android:alpha="0.78"
+            android:layout_marginStart="38dp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp"
+            android:alpha="0.86"
             android:maxLines="3"
             android:ellipsize="end"
             android:visibility="gone" />

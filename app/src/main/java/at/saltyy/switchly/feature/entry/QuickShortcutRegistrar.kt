@@ -21,55 +21,83 @@ package at.saltyy.switchly.feature.entry
 
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.edit
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
+import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import java.util.concurrent.Executors
 
 object QuickShortcutRegistrar {
 
+    private const val PREFS = "switchly_shortcuts"
+    private const val KEY_REGISTERED_SPEC = "registered_spec"
+    private const val SHORTCUT_SPEC = "focus_qr_barcode_v2"
+
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "SwitchlyShortcuts").apply { isDaemon = true }
     }
 
-    fun refreshAsync(context: Context) {
+    fun refreshAsync(context: Context, force: Boolean = false) {
         val appContext = context.applicationContext
-        executor.execute { refresh(appContext) }
+        if (!force && isRegisteredForCurrentSpec(appContext)) return
+        executor.execute {
+            if (!force && isRegisteredForCurrentSpec(appContext)) return@execute
+            if (refresh(appContext)) {
+                markRegisteredForCurrentSpec(appContext)
+            }
+        }
     }
 
-    fun refresh(context: Context) {
-        runCatching {
-            ShortcutManagerCompat.removeAllDynamicShortcuts(context)
-            ShortcutManagerCompat.addDynamicShortcuts(
-                context,
-                listOf(
-                    shortcut(
-                        context = context,
-                        id = "quick_focus_now",
-                        shortLabelRes = R.string.shortcut_focus_now_short,
-                        longLabelRes = R.string.shortcut_focus_now_long,
-                        drawableRes = R.drawable.play_arrow_24,
-                        action = ScanLauncherActivity.ACTION_FOCUS_NOW,
-                    ),
-                    shortcut(
-                        context = context,
-                        id = "quick_qr_scan",
-                        shortLabelRes = R.string.shortcut_qr_short,
-                        longLabelRes = R.string.shortcut_qr_long,
-                        drawableRes = R.drawable.qr_code_24,
-                        action = ScanLauncherActivity.ACTION_OPEN_QR_SCAN,
-                    ),
-                    shortcut(
-                        context = context,
-                        id = "quick_barcode_scan",
-                        shortLabelRes = R.string.shortcut_barcode_short,
-                        longLabelRes = R.string.shortcut_barcode_long,
-                        drawableRes = R.drawable.barcode_24,
-                        action = ScanLauncherActivity.ACTION_OPEN_BARCODE_SCAN,
-                    )
-                )
+    fun refresh(context: Context): Boolean {
+        return runCatching {
+            // Avoid removeAllDynamicShortcuts on startup.
+            // On Samsung/Android 14-16 this binder call has caused ANRs when invoked from Application.onCreate().
+            // Adding the same IDs updates/replaces the dynamic shortcut definitions.
+            ShortcutManagerCompat.addDynamicShortcuts(context, buildShortcuts(context))
+        }.getOrDefault(false)
+    }
+
+    private fun buildShortcuts(context: Context): List<ShortcutInfoCompat> {
+        return listOf(
+            shortcut(
+                context = context,
+                id = "quick_focus_now",
+                shortLabelRes = R.string.shortcut_focus_now_short,
+                longLabelRes = R.string.shortcut_focus_now_long,
+                drawableRes = R.drawable.play_arrow_24,
+                action = ScanLauncherActivity.ACTION_FOCUS_NOW,
+            ),
+            shortcut(
+                context = context,
+                id = "quick_qr_scan",
+                shortLabelRes = R.string.shortcut_qr_short,
+                longLabelRes = R.string.shortcut_qr_long,
+                drawableRes = R.drawable.qr_code_24,
+                action = ScanLauncherActivity.ACTION_OPEN_QR_SCAN,
+            ),
+            shortcut(
+                context = context,
+                id = "quick_barcode_scan",
+                shortLabelRes = R.string.shortcut_barcode_short,
+                longLabelRes = R.string.shortcut_barcode_long,
+                drawableRes = R.drawable.barcode_24,
+                action = ScanLauncherActivity.ACTION_OPEN_BARCODE_SCAN,
             )
+        )
+    }
+
+    private fun currentSpec(): String = "${BuildConfig.VERSION_CODE}:$SHORTCUT_SPEC"
+
+    private fun isRegisteredForCurrentSpec(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_REGISTERED_SPEC, null) == currentSpec()
+    }
+
+    private fun markRegisteredForCurrentSpec(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit {
+            putString(KEY_REGISTERED_SPEC, currentSpec())
         }
     }
 

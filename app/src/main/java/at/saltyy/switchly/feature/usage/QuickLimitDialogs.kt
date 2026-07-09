@@ -23,7 +23,7 @@ import android.content.res.ColorStateList
 import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.ArrayAdapter
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -43,6 +43,7 @@ import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.dialog.Dialogs
+import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.applySwitchlyDialogWidth
 import at.saltyy.switchly.util.AppBlockSafety
@@ -233,7 +234,7 @@ object QuickLimitDialogs {
         initialResetMode: String = UsageLimitResetStore.MODE_DAY,
         onApply: (mode: Int, value: Int, resetMode: String?) -> Unit
     ) {
-        val v = LayoutInflater.from(activity).inflate(R.layout.dialog_quick_limit_compact, null)
+        val v = LayoutInflater.from(activity).inflate(R.layout.dialog_quick_limit_compact, FrameLayout(activity), false)
         val tilType = v.findViewById<TextInputLayout>(R.id.tilType)
         val tvSubtitle = v.findViewById<TextView>(R.id.tvLimitSubtitle)
         val tvModeSummary = v.findViewById<TextView>(R.id.tvLimitModeSummary)
@@ -285,13 +286,13 @@ object QuickLimitDialogs {
                 else -> UsageLimitResetStore.MODE_DAY
             }
         )
-        etResetMode.setAdapter(ArrayAdapter(activity, android.R.layout.simple_list_item_1, resetLabels))
+        etResetMode.setAdapter(SwitchlyDropdownAdapter(activity, resetLabels))
         etResetMode.setText(resetLabels[resetModes.indexOf(activeResetMode[0]).coerceAtLeast(0)], false)
         etResetMode.setOnItemClickListener { _, _, position, _ ->
             activeResetMode[0] = resetModes.getOrNull(position) ?: UsageLimitResetStore.MODE_DAY
         }
 
-        etType.setAdapter(ArrayAdapter(activity, android.R.layout.simple_list_item_1, modeLabels))
+        etType.setAdapter(SwitchlyDropdownAdapter(activity, modeLabels))
         if (supportedModes.size <= 1) tilType.visibility = View.GONE
 
         fun applyMode(mode: Int, keepTypedValue: Boolean) {

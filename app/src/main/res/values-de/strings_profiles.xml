@@ -9,9 +9,29 @@
     <string name="add_profile">Profil hinzufügen</string>
     <string name="add_profile_subtitle">Erstelle ein neues Switchly-Profil.</string>
     <string name="profile_row_subtitle">Zum Verwalten tippen.</string>
+
+    <!-- ====================================================== -->
+    <!-- Rules hub shortcut -->
+    <!-- ====================================================== -->
+    <string name="tools_profiles_title">Profile verwalten</string>
+    <string name="tools_profiles_summary">Blockierprofile erstellen, wechseln und organisieren</string>
+
+    <!-- ====================================================== -->
+    <!-- Profile actions -->
+    <!-- ====================================================== -->
     <string name="action_set_active_profile">Als aktiv festlegen</string>
     <string name="action_duplicate_profile">Profil duplizieren</string>
     <string name="action_delete_profile">Profil löschen</string>
+    <string name="action_manage_selected_apps">Ausgewählte Apps verwalten</string>
+    <string name="action_edit_profile_details">Details bearbeiten</string>
+
+    <!-- ====================================================== -->
+    <!-- Profile action summaries -->
+    <!-- ====================================================== -->
+    <string name="profile_action_apps_summary">Öffnet die blockierte/erlaubte App-Liste für dieses Profil.</string>
+    <string name="profile_action_duplicate_summary">Kopiert Apps, Websites und Regeln in ein neues Profil.</string>
+    <string name="profile_action_set_active_summary">Dieses Profil jetzt für die Blockierung verwenden.</string>
+    <string name="profile_action_details_summary">Name oder Beschreibung ändern.</string>
 
     <!-- ====================================================== -->
     <!-- Delete and rename dialogs -->
@@ -23,30 +43,28 @@
     <string name="profile_name_helper">Wähle einen kurzen Namen für dieses Profil.</string>
 
     <!-- ====================================================== -->
+    <!-- Profile details -->
+    <!-- ====================================================== -->
+    <string name="profile_description_field_hint">Beschreibung (optional)</string>
+    <string name="profile_create_helper">Erstelle das Profil und wähle danach direkt seine App-Liste aus.</string>
+    <string name="profile_details_title">Profildetails</string>
+    <string name="profile_details_helper">Aktualisiere Name oder optionale Beschreibung auf der Profilkarte.</string>
+
+    <!-- ====================================================== -->
     <!-- Profile labels and duplicate names -->
     <!-- ====================================================== -->
     <string name="profile_label_default">Profil</string>
     <string name="profile_duplicate_name_fmt">%1$s (Kopie)</string>
     <string name="profile_duplicate_name_numbered_fmt">%1$s (Kopie %2$d)</string>
-    <string name="profile_duplicated">Profil „%1$s“ dupliziert.</string>
 
     <!-- ====================================================== -->
     <!-- Profile result toasts -->
     <!-- ====================================================== -->
     <string name="profile_created">Profil „%1$s“ erstellt.</string>
+    <string name="profile_created_open_apps">Profil „%1$s“ erstellt. Wähle als Nächstes seine App-Liste.</string>
+    <string name="profile_saved">Profil „%1$s“ gespeichert.</string>
+    <string name="profile_duplicated">Profil „%1$s“ dupliziert.</string>
     <string name="profile_set_active_toast">„%1$s“ ist jetzt aktiv.</string>
     <string name="state_profile_on_status">Aktiv</string>
-    <string name="action_manage_selected_apps">Ausgewählte Apps verwalten</string>
-    <string name="profile_action_apps_summary">Öffnet die blockierte/erlaubte App-Liste für dieses Profil.</string>
-    <string name="profile_action_duplicate_summary">Kopiert Apps, Websites und Regeln in ein neues Profil.</string>
-    <string name="profile_action_set_active_summary">Dieses Profil jetzt für die Blockierung verwenden.</string>
-    <string name="profile_description_field_hint">Beschreibung (optional)</string>
-    <string name="profile_create_helper">Erstelle das Profil und wähle danach direkt seine App-Liste aus.</string>
-    <string name="profile_details_title">Profildetails</string>
-    <string name="profile_details_helper">Aktualisiere Name oder optionale Beschreibung auf der Profilkarte.</string>
-    <string name="profile_saved">Profil „%1$s“ gespeichert.</string>
-    <string name="profile_created_open_apps">Profil „%1$s“ erstellt. Wähle als Nächstes seine App-Liste.</string>
-    <string name="action_edit_profile_details">Details bearbeiten</string>
-    <string name="profile_action_details_summary">Name oder Beschreibung ändern.</string>
 
 </resources>

@@ -275,6 +275,13 @@
                 <data android:host="profile" />
             </intent-filter>
 
+            <!-- Paired UID fallback for writable tags that contain unrelated plain text. -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
             <!-- Tech-discovered fallback for cards/tags that are claimed earlier than TAG_DISCOVERED for example IsoDep bank cards and some external/read-only tags). -->
             <intent-filter>
                 <action android:name="android.nfc.action.TECH_DISCOVERED" />
@@ -488,6 +495,11 @@
             android:name=".feature.usage.ActiveTimeDetailActivity"
             android:exported="false" />
 
+        <!-- Recent Switchly activity timeline -->
+        <activity
+            android:name=".feature.usage.ActivityHistoryActivity"
+            android:exported="false" />
+
         <!-- Usage statistics dashboard -->
         <activity
             android:name=".feature.usage.ScreenTimeDashboardActivity"
@@ -496,6 +508,24 @@
         <!-- Usage statistics detail screen for apps -->
         <activity
             android:name=".feature.usage.ScreenTimeDetailActivity"
+            android:exported="false" />
+
+        <!-- App launch statistics and timeline screens -->
+        <activity
+            android:name=".feature.usage.AppLaunchesActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.usage.AppLaunchDetailActivity"
+            android:exported="false" />
+
+        <!-- Screen unlock statistics and detail timeline screens -->
+        <activity
+            android:name=".feature.usage.ScreenUnlocksActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.usage.ScreenUnlockDetailActivity"
             android:exported="false" />
 
         <!-- Usage statistics detail screen for websites -->
@@ -511,6 +541,11 @@
         <!-- In-app blocking setup screen -->
         <activity
             android:name=".feature.settings.InAppBlockingActivity"
+            android:exported="false" />
+
+        <!-- Legacy focused surface setup screen; the visible entry point is In-app rules. -->
+        <activity
+            android:name=".feature.settings.ReelsShortsBlockingActivity"
             android:exported="false" />
 
         <!-- Paired NFC tag management screen -->
@@ -554,6 +589,10 @@
         <!-- Developer information screen -->
         <activity
             android:name=".feature.about.DeveloperInfoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.about.PrivacyReportActivity"
             android:exported="false" />
 
         <!-- Package-added receiver to refresh app lists after installs -->

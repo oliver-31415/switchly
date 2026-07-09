@@ -44,8 +44,11 @@ object ActiveDurationStore {
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
+    private fun dayFormatter(): SimpleDateFormat =
+        dayKeyFormat.get() ?: SimpleDateFormat("yyyyMMdd", Locale.US).also(dayKeyFormat::set)
+
     private fun dayKey(timeMillis: Long): String =
-        dayKeyFormat.get().format(Date(timeMillis))
+        dayFormatter().format(Date(timeMillis))
 
     private fun startOfDay(timeMillis: Long): Long {
         val cal = Calendar.getInstance()
@@ -209,6 +212,18 @@ object ActiveDurationStore {
         return total
     }
 
+    fun rangeMs(ctx: Context, startMs: Long, endMs: Long): Long {
+        if (endMs <= startMs) return 0L
+        val cal = Calendar.getInstance()
+        cal.timeInMillis = startOfDay(startMs)
+        var total = 0L
+        while (cal.timeInMillis <= endMs) {
+            total += dayTotalMs(ctx, cal.timeInMillis)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return total
+    }
+
     fun overallMs(ctx: Context): Long =
         prefs(ctx).getLong(KEY_OVERALL_MS, 0L) + getActiveDurationMillis(ctx)
 
@@ -264,6 +279,19 @@ object ActiveDurationStore {
         }
     }
 
+    fun dailyBucketsForRange(ctx: Context, startMs: Long, endMs: Long): List<Bucket> {
+        if (endMs <= startMs) return emptyList()
+        val fmt = SimpleDateFormat("EEE, d MMM", Locale.getDefault())
+        val cal = Calendar.getInstance()
+        cal.timeInMillis = startOfDay(startMs)
+        return buildList {
+            while (cal.timeInMillis <= endMs) {
+                add(Bucket(fmt.format(Date(cal.timeInMillis)), dayTotalMs(ctx, cal.timeInMillis), cal.timeInMillis))
+                cal.add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+    }
+
     fun dailyBucketsForMonth(ctx: Context, monthStartMs: Long): List<Bucket> {
         val fmt = SimpleDateFormat("EEE, d MMM", Locale.getDefault())
         val cal = Calendar.getInstance()
@@ -290,7 +318,7 @@ object ActiveDurationStore {
             .mapNotNull { key ->
                 val day = key.removePrefix(PREFIX_DAY_MS)
                 val parsed = runCatching {
-                    dayKeyFormat.get().parse(day)?.time
+                    dayFormatter().parse(day)?.time
                 }.getOrNull()
                 parsed?.let { it to sp.getLong(key, 0L) }
             }

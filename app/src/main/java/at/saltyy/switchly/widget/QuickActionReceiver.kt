@@ -25,8 +25,10 @@ import android.content.Intent
 import android.widget.Toast
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.settings.PermissionsActivity
 
@@ -76,6 +78,7 @@ class QuickActionReceiver : BroadcastReceiver() {
             }
 
             SwitchModeStore.setEnabled(context, true)
+            AppLogStore.append(context, "Profiles", "Manual toggle action=enable profile=${ProfileStore.getCurrent(context)}")
             BlockingRuntime.ensureRunning(context)
             Toast.makeText(context, context.getString(R.string.widget_focus_now_applied), Toast.LENGTH_SHORT).show()
             refreshWidgets(context)
@@ -111,6 +114,7 @@ class QuickActionReceiver : BroadcastReceiver() {
             }
 
             SwitchModeStore.setTemporarilyDisabled(context, minutes * 60_000L)
+            AppLogStore.append(context, "Profiles", "Manual toggle action=temp_disable profile=${ProfileStore.getCurrent(context)} duration=${minutes * 60_000L}ms")
             BlockingRuntime.ensureRunning(context)
             Toast.makeText(
                 context,

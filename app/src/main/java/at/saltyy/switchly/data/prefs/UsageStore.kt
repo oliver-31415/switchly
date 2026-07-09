@@ -234,6 +234,11 @@ object UsageStore {
         return out
     }
 
+    fun getUsageMsMapForDay(ctx: Context, ymd: Int): Map<String, Long> {
+        flush(ctx)
+        return getUsageMsMapMatching(ctx) { day, _ -> day == ymd }
+    }
+
     fun getUsageMsMapForLastNDays(ctx: Context, days: Int): Map<String, Long> {
         if (days <= 0) return emptyMap()
         flush(ctx)
@@ -256,6 +261,43 @@ object UsageStore {
     fun getUsageMsMapForYear(ctx: Context, year: Int): Map<String, Long> {
         flush(ctx)
         return getUsageMsMapMatching(ctx) { ymd, _ -> (ymd / 10000) == year }
+    }
+
+    fun getUsageMsMapForDateRange(ctx: Context, startMs: Long, endMs: Long): Map<String, Long> {
+        if (endMs <= startMs) return emptyMap()
+        flush(ctx)
+        val wanted = HashSet<Int>()
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = startMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        while (cal.timeInMillis <= endMs) {
+            wanted += ymdInt(cal)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return getUsageMsMapMatching(ctx) { ymd, _ -> ymd in wanted }
+    }
+
+    fun getUsageMsSeriesForDateRange(ctx: Context, pkg: String, startMs: Long, endMs: Long): List<Long> {
+        if (pkg.isBlank() || endMs <= startMs) return emptyList()
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val out = ArrayList<Long>()
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = startMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        while (cal.timeInMillis <= endMs) {
+            out += sp.getLong(dayKey(ymdInt(cal), pkg), 0L).coerceAtLeast(0L)
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return out
     }
 
     fun getUsageMsMapOverall(ctx: Context): Map<String, Long> {

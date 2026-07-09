@@ -5,7 +5,8 @@
     <!-- Permission sections and banner states -->
     <!-- ====================================================== -->
     <string name="permissions_section_core">Core permissions</string>
-    <string name="permissions_section_triggers">Triggers &amp; battery</string>
+    <string name="permissions_section_triggers">Schedule triggers</string>
+    <string name="permissions_section_battery">Battery &amp; background</string>
     <string name="permissions_section_notifications">Notifications</string>
     <string name="permissions_section_oem">OEM background settings</string>
     <plurals name="permissions_banner_missing_count_short">
@@ -34,6 +35,9 @@
     <string name="permissions_exact_alarms_summary">Needed so time-based schedules can run reliably at the correct time.</string>
     <string name="permissions_exact_alarms_allowed">Allowed</string>
     <string name="permissions_exact_alarms_not_allowed">Not allowed</string>
+    <string name="permissions_nfc_title">Launch via NFC</string>
+    <string name="permissions_nfc_status_manual">Check manually</string>
+    <string name="permissions_nfc_desc">Some Android versions show a separate “Launch via NFC” entry under Special app access. Allow Switchly there so written NFC tags can open Switchly when scanned. Also make sure the system “Use NFC” toggle is enabled. Android normally requires the device to be unlocked before passive NFC tags are dispatched to apps.</string>
 
     <!-- ====================================================== -->
     <!-- Trigger and notification permissions -->

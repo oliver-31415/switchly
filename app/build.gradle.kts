@@ -10,8 +10,8 @@ plugins {
     id("com.google.firebase.crashlytics") apply false
 }
 
-val switchlyVersionCode = 220
-val switchlyVersionName = "2.2.0"
+val switchlyVersionCode = 221
+val switchlyVersionName = "2.2.1"
 
 val switchlySecretPropertiesFile = rootProject.file("signing.properties")
 val switchlySecretProperties = Properties().apply {

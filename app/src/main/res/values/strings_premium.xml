@@ -6,7 +6,7 @@
     <!-- ====================================================== -->
     <string name="premium_title">Switchly Premium</string>
     <string name="premium_summary">Unlock premium features.</string>
-    <string name="premium_short_desc">Unlock Wi-Fi, Bluetooth, and location schedules, detailed statistics, and more premium controls.</string>
+    <string name="premium_short_desc">Unlock custom time ranges, detailed statistics insights, Wi-Fi, Bluetooth and location schedules, and advanced automations.</string>
     <string name="premium_active_header">Active premium features</string>
     <string name="premium_status_active">Active</string>
     <string name="premium_source_note">Premium active via %1$s.</string>
@@ -58,7 +58,7 @@
     <string name="premium_automation_title">Automations</string>
     <string name="premium_automation_desc">Unlock advanced automation features, including time, Wi-Fi, Bluetooth, and location triggers.</string>
     <string name="premium_stats_title">Statistics &amp; insights</string>
-    <string name="premium_stats_desc">Unlock detailed usage insights to see how often you use Switchly and which apps distract you most.</string>
+    <string name="premium_stats_desc">Unlock week, month, year, and custom range statistics with detailed drill-down insights.</string>
 
     <!-- ====================================================== -->
     <!-- Premium restrictions and notes -->

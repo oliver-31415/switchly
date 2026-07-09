@@ -42,7 +42,9 @@
     <!-- ====================================================== -->
     <string name="cloud_backup_ok">Backup abgeschlossen</string>
     <string name="cloud_restore_ok_restart">Wiederherstellung abgeschlossen — App wird neu gestartet…</string>
+    <string name="cloud_backup_loading">Cloud-Backup wird erstellt…</string>
     <string name="cloud_restore_loading">Cloud-Backups werden geladen…</string>
+    <string name="cloud_delete_backups_loading">Cloud-Backups werden gelöscht…</string>
     <string name="cloud_no_backups">Keine Backups gefunden</string>
     <string name="cloud_not_logged_in">Du bist nicht angemeldet</string>
     <string name="cloud_error_fmt">Fehler: %1$s</string>
@@ -65,6 +67,7 @@
     <string name="pref_file_restore_summary">Lokales JSON-Backup importieren und lokale Einstellungen überschreiben</string>
     <string name="file_backup_ok">Datei-Backup gespeichert</string>
     <string name="file_restore_ok_restart">Datei-Wiederherstellung abgeschlossen — App wird neu gestartet…</string>
+    <string name="file_backup_loading">Backup-Datei wird erstellt…</string>
     <string name="file_backup_error_fmt">Datei-Backup fehlgeschlagen: %1$s</string>
     <string name="file_restore_error_fmt">Datei-Wiederherstellung fehlgeschlagen: %1$s</string>
 
@@ -76,6 +79,7 @@
     <string name="settings_last_backup">Letztes Backup: %1$s</string>
     <string name="settings_confirm_backup_title">Sichern</string>
     <string name="settings_confirm_restore_title">Wiederherstellen</string>
+    <string name="settings_confirm_restore_apply">Wiederherstellen</string>
     <string name="settings_confirm_restore_message">Backup aus der Cloud laden und lokale Einstellungen überschreiben?</string>
     <string name="settings_confirm_file_backup_title">In Datei sichern</string>
     <string name="settings_confirm_file_restore_title">Aus Datei wiederherstellen</string>
@@ -147,8 +151,10 @@
     <string name="backup_preset_profiles_only_summary">Nur Profile und ausgewählte App-Listen.</string>
     <string name="backup_preset_manual_custom_summary">Kategorien prüfen und die letzte eigene Auswahl wiederverwenden.</string>
     <string name="backup_select_categories_title">Backup-Daten wählen</string>
+    <string name="restore_select_categories_title">Restore-Daten wählen</string>
     <string name="backup_category_sensitive_suffix"> (sensibel)</string>
     <string name="backup_create_with_selection">Backup erstellen</string>
     <string name="backup_select_at_least_one">Wähle mindestens eine Backup-Kategorie</string>
+    <string name="restore_select_at_least_one">Wähle mindestens eine Restore-Kategorie</string>
 
 </resources>

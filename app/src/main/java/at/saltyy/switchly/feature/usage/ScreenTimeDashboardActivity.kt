@@ -25,8 +25,8 @@ import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import android.widget.RadioButton
-import android.widget.RadioGroup
+import android.widget.FrameLayout
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -37,28 +37,37 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
+import at.saltyy.switchly.data.prefs.BlockAttemptStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
+import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
 import at.saltyy.switchly.data.prefs.UsageLimitResetStore
-import at.saltyy.switchly.databinding.ActivityScreenTimeDashboardBinding
-import at.saltyy.switchly.feature.premium.PremiumInfoActivity
+import at.saltyy.switchly.databinding.ActivityStatisticsAppWebsiteUsageBinding
 import at.saltyy.switchly.feature.settings.AccessibilityDisclosure
 import at.saltyy.switchly.feature.stats.StatsFormat
-import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.PermissionUtils
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.DateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.TimeZone
 
 class ScreenTimeDashboardActivity : AppCompatActivity() {
     private fun readableOnColor(color: Int): Int {
@@ -73,7 +82,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             .showAccented()
     }
 
-    private enum class Range { TODAY, WEEK, MONTH, YEAR, OVERALL }
+    private enum class Range { TODAY, WEEK, MONTH, YEAR, CUSTOM }
     private enum class Filter { ALL_APPS, BLOCKED_ONLY }
     private enum class Sort { USED_TIME, NAME_AZ, NAME_ZA }
     private enum class SortDir { DESC, ASC }
@@ -85,17 +94,35 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     private var lastWebsites: List<AppUsage> = emptyList()
     private var currentBlockedSet: Set<String> = emptySet()
     private var currentWebsiteRuleSet: Set<String> = emptySet()
+    private var currentMetricsByPackage: Map<String, AppUsageMetrics> = emptyMap()
     private var isWebMode: Boolean = false
+    private var currentRange: Range = Range.TODAY
+    private var currentProfileName: String? = null
     private var fallbackDeviceRange: Range? = null
+    private var fallbackDeviceSummary: UsageSummary? = null
     private var fallbackPromptShownForRange: Range? = null
+    private var refreshJob: Job? = null
+    private var refreshVersion: Int = 0
+    private var customRangeStartMillis: Long? = null
+    private var customRangeEndMillis: Long? = null
+    private var customRangePickerShowing = false
 
-    private lateinit var b: ActivityScreenTimeDashboardBinding
+    private lateinit var b: ActivityStatisticsAppWebsiteUsageBinding
     private lateinit var adapter: AppUsageAdapter
+
+    private data class RefreshData(
+        val summary: UsageSummary,
+        val hasAccessibility: Boolean,
+        val profile: String?,
+        val blockedSet: Set<String> = emptySet(),
+        val websiteRuleSet: Set<String> = emptySet(),
+        val metricsByPackage: Map<String, AppUsageMetrics> = emptyMap()
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        b = ActivityScreenTimeDashboardBinding.inflate(layoutInflater)
+        b = ActivityStatisticsAppWebsiteUsageBinding.inflate(layoutInflater)
         setContentView(b.root)
 
         EdgeToEdgeUtils.setupClassic(
@@ -117,36 +144,34 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
 
         adapter = AppUsageAdapter(
             onClick = { item ->
-                if (!PremiumManager.isPremium(this)) {
-                    showPremiumStatsDetailsGate()
+                if (!StatsPremiumGate.isPremium(this)) {
+                    StatsPremiumGate.show(this)
                 } else {
-                    val selectedRange = when (b.chipGroupRange.checkedChipId) {
-                        b.chipToday.id -> ScreenTimeDetailActivity.RANGE_TODAY
-                        b.chipMonth.id -> ScreenTimeDetailActivity.RANGE_MONTH
-                        b.chipYear.id -> ScreenTimeDetailActivity.RANGE_YEAR
-                        b.chipOverall.id -> ScreenTimeDetailActivity.RANGE_OVERALL
-                        else -> ScreenTimeDetailActivity.RANGE_WEEK
-                    }
+                    val selectedRange = screenTimeDetailRange(currentRange)
 
                     if (isWebMode) {
+                        val detailIntent = Intent(this, WebsiteDetailActivity::class.java)
+                            .putExtra(WebsiteDetailActivity.EXTRA_DOMAIN, item.packageName)
+                            .putExtra(WebsiteDetailActivity.EXTRA_LABEL, item.label)
+                            .putExtra(WebsiteDetailActivity.EXTRA_INITIAL_RANGE, websiteDetailRange(currentRange))
+                        if (currentRange == Range.CUSTOM) {
+                            customRangeStartMillis?.let { detailIntent.putExtra(WebsiteDetailActivity.EXTRA_INITIAL_START_MS, it) }
+                            customRangeEndMillis?.let { detailIntent.putExtra(WebsiteDetailActivity.EXTRA_INITIAL_END_MS, it) }
+                        }
                         startActivity(
-                            Intent(this, WebsiteDetailActivity::class.java)
-                                .putExtra(WebsiteDetailActivity.EXTRA_DOMAIN, item.packageName)
-                                .putExtra(WebsiteDetailActivity.EXTRA_LABEL, item.label)
-                                .putExtra(WebsiteDetailActivity.EXTRA_INITIAL_RANGE, when (b.chipGroupRange.checkedChipId) {
-                                    b.chipToday.id -> WebsiteDetailActivity.RANGE_TODAY
-                                    b.chipMonth.id -> WebsiteDetailActivity.RANGE_MONTH
-                                    b.chipYear.id -> WebsiteDetailActivity.RANGE_YEAR
-                                    b.chipOverall.id -> WebsiteDetailActivity.RANGE_OVERALL
-                                    else -> WebsiteDetailActivity.RANGE_WEEK
-                                })
+                            detailIntent
                         )
                     } else {
+                        val detailIntent = Intent(this, ScreenTimeDetailActivity::class.java)
+                            .putExtra(ScreenTimeDetailActivity.EXTRA_PKG, item.packageName)
+                            .putExtra(ScreenTimeDetailActivity.EXTRA_LABEL, item.label)
+                            .putExtra(ScreenTimeDetailActivity.EXTRA_INITIAL_RANGE, selectedRange)
+                        if (currentRange == Range.CUSTOM) {
+                            customRangeStartMillis?.let { detailIntent.putExtra(ScreenTimeDetailActivity.EXTRA_INITIAL_START_MS, it) }
+                            customRangeEndMillis?.let { detailIntent.putExtra(ScreenTimeDetailActivity.EXTRA_INITIAL_END_MS, it) }
+                        }
                         startActivity(
-                            Intent(this, ScreenTimeDetailActivity::class.java)
-                                .putExtra(ScreenTimeDetailActivity.EXTRA_PKG, item.packageName)
-                                .putExtra(ScreenTimeDetailActivity.EXTRA_LABEL, item.label)
-                                .putExtra(ScreenTimeDetailActivity.EXTRA_INITIAL_RANGE, selectedRange)
+                            detailIntent
                         )
                     }
                 }
@@ -168,14 +193,17 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             },
             limitBadgeProvider = { item ->
                 if (isWebMode) websiteLimitBadge(item) else appLimitBadge(item)
-            }
+            },
+            usageMetricsProvider = null
         )
 
         adapter.setDetailsCtaEnabled(true)
         b.rowTapHint.isVisible = true
         b.rowTapHint.text = getString(R.string.usage_row_tap_hint_app)
         b.toolbar.title = getString(R.string.statistics_usage_title)
+        b.statsPageSubtitle.isVisible = false
 
+        configureRangeFilterButtons()
         b.recycler.layoutManager = LinearLayoutManager(this)
         b.recycler.adapter = adapter
 
@@ -188,9 +216,15 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.chipWeek.setOnClickListener { setRangeChip(b.chipWeek.id) }
         b.chipMonth.setOnClickListener { setRangeChip(b.chipMonth.id) }
         b.chipYear.setOnClickListener { setRangeChip(b.chipYear.id) }
-        b.chipOverall.setOnClickListener { setRangeChip(b.chipOverall.id) }
+        b.chipCustom.setOnClickListener { showCustomRangePicker() }
+        b.btnClearCustomRange.setOnClickListener {
+            customRangeStartMillis = null
+            customRangeEndMillis = null
+            setRangeChip(b.chipToday.id)
+        }
         b.toggleType.addOnButtonCheckedListener { _, _, _ ->
             fallbackDeviceRange = null
+            fallbackDeviceSummary = null
             fallbackPromptShownForRange = null
             updateRangeVisibilityForCurrentMode()
             refresh()
@@ -214,17 +248,6 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun showPremiumStatsDetailsGate() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.usage_details_premium_title)
-            .setMessage(R.string.usage_details_premium_message)
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton(R.string.usage_details_premium_action) { _, _ ->
-                startActivity(Intent(this, PremiumInfoActivity::class.java))
-            }
-            .showAccented()
-    }
-
     private fun websiteLimitBadge(item: AppUsage): String? {
         val domain = DomainBlockStore.normalize(item.packageName) ?: item.packageName
         val alwaysBlocked = DomainBlockStore.getDomains(this).contains(domain)
@@ -244,6 +267,36 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     private fun appLimitBadge(item: AppUsage): String? {
         val profile = ProfileStore.getCurrent(this)?.takeIf { it.isNotBlank() } ?: return null
         return appLimitBadgeParts(profile, item.packageName).takeIf { it.isNotEmpty() }?.joinToString(" • ")
+    }
+
+    private fun buildAppUsageMetrics(pkg: String, range: Range): AppUsageMetrics? {
+        val opens = when (range) {
+            Range.TODAY -> OpenCountStore.getTodayAllProfiles(this, pkg)
+            Range.WEEK -> OpenCountStore.getForCurrentWeekAllProfiles(this, pkg)
+            Range.MONTH -> OpenCountStore.getForCurrentMonthAllProfiles(this, pkg)
+            Range.YEAR -> OpenCountStore.getForCurrentYearAllProfiles(this, pkg)
+            Range.CUSTOM -> return null
+        }
+        val attempts = when (range) {
+            Range.TODAY -> BlockAttemptStore.getToday(this, pkg)
+            Range.WEEK -> BlockAttemptStore.getForCurrentWeek(this, pkg)
+            Range.MONTH -> BlockAttemptStore.getForCurrentMonth(this, pkg)
+            Range.YEAR -> BlockAttemptStore.getForCurrentYear(this, pkg)
+            Range.CUSTOM -> return null
+        }
+        if (opens <= 0 && attempts <= 0) return null
+        return AppUsageMetrics(
+            opensLabel = if (opens <= 0) {
+                getString(R.string.usage_opens_zero)
+            } else {
+                resources.getQuantityString(R.plurals.opens_format, opens, opens)
+            },
+            attemptsLabel = if (attempts <= 0) {
+                getString(R.string.usage_attempts_zero)
+            } else {
+                resources.getQuantityString(R.plurals.attempts_format, attempts, attempts)
+            }
+        )
     }
 
     private fun appLimitBadgeParts(profile: String, packageName: String): List<String> {
@@ -274,7 +327,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         applyAccentUi()
-        syncRangeChipUi(b.chipGroupRange.checkedChipId.takeIf { it != View.NO_ID } ?: b.chipToday.id)
+        syncRangeChipUi(chipIdForRange(currentRange))
         updateRangeVisibilityForCurrentMode()
         refresh()
     }
@@ -298,6 +351,16 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
 
         // Only style the Apps/Web toggle buttons here.
         listOf(b.btnApps, b.btnWeb).forEach { btn ->
+            btn.minWidth = 0
+            btn.minimumWidth = 0
+            btn.minHeight = dp(40)
+            btn.minimumHeight = dp(40)
+            btn.insetTop = 0
+            btn.insetBottom = 0
+            btn.cornerRadius = dp(4)
+            btn.shapeAppearanceModel = btn.shapeAppearanceModel.toBuilder()
+                .setAllCornerSizes(dp(4).toFloat())
+                .build()
             btn.strokeColor = accentTint
             btn.setTextColor(accent)
             btn.iconTint = accentTint
@@ -306,19 +369,148 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     }
 
     private fun updateRangeVisibilityForCurrentMode() {
-        val isWeb = b.toggleType.checkedButtonId == b.btnWeb.id
         b.chipYear.visibility = View.VISIBLE
-        b.chipOverall.visibility = View.VISIBLE
-        if (b.chipGroupRange.checkedChipId == View.NO_ID) {
-            syncRangeChipUi(b.chipToday.id)
-        }
     }
 
     private fun setRangeChip(chipId: Int) {
+        val requestedRange = rangeForChipId(chipId)
+        if (!ensureRangeAllowed(requestedRange)) {
+            syncRangeChipUi(chipIdForRange(currentRange))
+            return
+        }
         fallbackDeviceRange = null
+        fallbackDeviceSummary = null
         fallbackPromptShownForRange = null
+        currentRange = requestedRange
         syncRangeChipUi(chipId)
         refresh()
+    }
+
+    private fun ensureRangeAllowed(range: Range): Boolean {
+        if (range == Range.TODAY || StatsPremiumGate.canUseExtendedStats(this)) return true
+        StatsPremiumGate.show(this)
+        return false
+    }
+
+    private fun showCustomRangePicker() {
+        if (!ensureRangeAllowed(Range.CUSTOM)) {
+            syncRangeChipUi(chipIdForRange(currentRange))
+            return
+        }
+        if (customRangePickerShowing || supportFragmentManager.isStateSaved) return
+        customRangePickerShowing = true
+        val now = System.currentTimeMillis()
+        val currentStart = customRangeStartMillis ?: startOfTodayMillis()
+        val currentEnd = customRangeEndMillis ?: now
+        val picker = MaterialDatePicker.Builder.dateRangePicker()
+            .setTheme(com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialCalendar)
+            .setTitleText(R.string.activity_history_range_custom)
+            .setSelection(androidx.core.util.Pair(localDayToDatePickerUtcMillis(currentStart), localDayToDatePickerUtcMillis(currentEnd)))
+            .build()
+        picker.addOnPositiveButtonClickListener { selection ->
+            val startUtc = selection.first ?: return@addOnPositiveButtonClickListener
+            val endUtc = selection.second ?: startUtc
+            customRangeStartMillis = datePickerUtcMillisToLocalDayStart(minOf(startUtc, endUtc))
+            customRangeEndMillis = datePickerUtcMillisToLocalDayEnd(maxOf(startUtc, endUtc))
+            fallbackDeviceRange = null
+            fallbackDeviceSummary = null
+            fallbackPromptShownForRange = null
+            currentRange = Range.CUSTOM
+            syncRangeChipUi(b.chipCustom.id)
+            refresh()
+        }
+        picker.addOnDismissListener { customRangePickerShowing = false }
+        runCatching { picker.show(supportFragmentManager, "usage_stats_custom_range") }
+            .onSuccess { UsageDatePickerAccentTint.apply(this, picker) }
+            .onFailure { customRangePickerShowing = false }
+    }
+
+    private fun configureRangeFilterButtons() {
+        listOf(b.chipToday, b.chipWeek, b.chipMonth, b.chipYear).forEach { button ->
+            configureRangeButton(button, custom = false)
+        }
+        configureRangeButton(b.chipCustom, custom = true)
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    private fun configureRangeButton(button: MaterialButton, custom: Boolean) {
+        button.minWidth = 0
+        button.minimumWidth = 0
+        button.minHeight = dp(40)
+        button.minimumHeight = dp(40)
+        button.insetTop = 0
+        button.insetBottom = 0
+        button.cornerRadius = dp(4)
+        button.shapeAppearanceModel = button.shapeAppearanceModel.toBuilder()
+            .setAllCornerSizes(dp(4).toFloat())
+            .build()
+        button.iconPadding = 0
+        button.gravity = android.view.Gravity.CENTER
+        button.textSize = 14f
+        button.setAllCaps(false)
+        button.setPadding(if (custom) dp(8) else dp(4), 0, if (custom) dp(8) else dp(4), 0)
+        button.layoutParams = (button.layoutParams as LinearLayout.LayoutParams).apply {
+            width = if (custom) dp(44) else 0
+            height = dp(40)
+            weight = if (custom) 0f else 1f
+        }
+    }
+
+    private fun rangeForChipId(chipId: Int): Range {
+        return when (chipId) {
+            b.chipWeek.id -> Range.WEEK
+            b.chipMonth.id -> Range.MONTH
+            b.chipYear.id -> Range.YEAR
+            b.chipCustom.id -> Range.CUSTOM
+            else -> Range.TODAY
+        }
+    }
+
+    private fun chipIdForRange(range: Range): Int {
+        return when (range) {
+            Range.TODAY -> b.chipToday.id
+            Range.WEEK -> b.chipWeek.id
+            Range.MONTH -> b.chipMonth.id
+            Range.YEAR -> b.chipYear.id
+            Range.CUSTOM -> b.chipCustom.id
+        }
+    }
+
+    private fun screenTimeDetailRange(range: Range): String {
+        return when (range) {
+            Range.TODAY -> ScreenTimeDetailActivity.RANGE_TODAY
+            Range.MONTH -> ScreenTimeDetailActivity.RANGE_MONTH
+            Range.YEAR -> ScreenTimeDetailActivity.RANGE_YEAR
+            Range.CUSTOM -> ScreenTimeDetailActivity.RANGE_CUSTOM
+            else -> ScreenTimeDetailActivity.RANGE_WEEK
+        }
+    }
+
+    private fun websiteDetailRange(range: Range): String {
+        return when (range) {
+            Range.TODAY -> WebsiteDetailActivity.RANGE_TODAY
+            Range.MONTH -> WebsiteDetailActivity.RANGE_MONTH
+            Range.YEAR -> WebsiteDetailActivity.RANGE_YEAR
+            Range.CUSTOM -> WebsiteDetailActivity.RANGE_CUSTOM
+            else -> WebsiteDetailActivity.RANGE_WEEK
+        }
+    }
+
+    private fun updateCustomRangeSummary() {
+        val start = customRangeStartMillis
+        val end = customRangeEndMillis
+        if (currentRange != Range.CUSTOM || start == null || end == null) {
+            b.customRangeSummary.isVisible = false
+            return
+        }
+        b.customRangeSummary.isVisible = true
+        val fmt = DateFormat.getDateInstance(DateFormat.SHORT)
+        b.customRangeValue.text = getString(
+            R.string.activity_history_range_custom_value,
+            fmt.format(Date(start)),
+            fmt.format(Date(end))
+        )
     }
 
     private fun syncRangeChipUi(activeChipId: Int) {
@@ -328,122 +520,100 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         val inactiveText = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, 0)
         val outline = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, inactiveText)
 
-        val chips = listOf(b.chipToday, b.chipWeek, b.chipMonth, b.chipYear, b.chipOverall)
-        b.chipGroupRange.clearCheck()
-        chips.forEach { chip ->
-            val active = chip.id == activeChipId
-            chip.isChecked = active
-            chip.isCheckable = true
-            chip.isCheckedIconVisible = false
-            chip.checkedIcon = null
-            chip.isClickable = true
-            chip.isPressed = false
-            chip.isSelected = false
-            chip.isActivated = active
-            chip.chipBackgroundColor = ColorStateList.valueOf(if (active) activeBg else inactiveBg)
-            chip.setTextColor(if (active) activeText else inactiveText)
-            chip.chipStrokeColor = ColorStateList.valueOf(if (active) activeBg else outline)
-            chip.chipStrokeWidth = resources.displayMetrics.density
-            chip.jumpDrawablesToCurrentState()
-            chip.refreshDrawableState()
-        }
         b.chipGroupRange.check(activeChipId)
+        val buttons = listOf(b.chipToday, b.chipWeek, b.chipMonth, b.chipYear, b.chipCustom)
+        buttons.forEach { button ->
+            val active = button.id == activeChipId
+            button.isChecked = active
+            button.isCheckable = true
+            button.isActivated = active
+            button.backgroundTintList = ColorStateList.valueOf(if (active) activeBg else inactiveBg)
+            button.shapeAppearanceModel = button.shapeAppearanceModel.toBuilder()
+                .setAllCornerSizes(dp(4).toFloat())
+                .build()
+            button.setTextColor(if (active) activeText else inactiveText)
+            button.iconTint = ColorStateList.valueOf(if (active) activeText else inactiveText)
+            button.strokeColor = ColorStateList.valueOf(if (active) activeBg else outline)
+            button.strokeWidth = resources.displayMetrics.density.toInt().coerceAtLeast(1)
+            button.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(activeBg, 0x35))
+            button.jumpDrawablesToCurrentState()
+            button.refreshDrawableState()
+        }
+        updateCustomRangeSummary()
+    }
+
+    private fun updateStatisticsProfileSubtitle() {
+        b.toolbar.subtitle = if (filter == Filter.BLOCKED_ONLY) {
+            currentProfileName?.let { getString(R.string.profile_active_fmt, it) }
+        } else {
+            null
+        }
     }
 
     private fun refresh() {
-        val range = when (b.chipGroupRange.checkedChipId) {
-            b.chipToday.id -> Range.TODAY
-            b.chipWeek.id -> Range.WEEK
-            b.chipMonth.id -> Range.MONTH
-            b.chipYear.id -> Range.YEAR
-            b.chipOverall.id -> Range.OVERALL
-            else -> Range.TODAY
-        }
+        val range = currentRange
 
         val isWeb = b.toggleType.checkedButtonId == b.btnWeb.id
         isWebMode = isWeb
         if (isWeb) {
             fallbackDeviceRange = null
+            fallbackDeviceSummary = null
             fallbackPromptShownForRange = null
         }
         b.recycler.isVisible = true
         b.webPlaceholder.isVisible = false
+        b.permHint.isVisible = false
+        b.btnOpenSettings.isVisible = false
+
+        val requestVersion = ++refreshVersion
+        refreshJob?.cancel()
+        refreshJob = lifecycleScope.launch {
+            val data = withContext(Dispatchers.IO) {
+                buildRefreshData(range, isWeb)
+            }
+            if (requestVersion != refreshVersion) return@launch
+            applyRefreshData(range, isWeb, data)
+        }
+    }
+
+    private fun buildRefreshData(range: Range, isWeb: Boolean): RefreshData {
+        val hasA11y = PermissionUtils.isAccessibilityServiceEnabled(this, SwitchlyAccessibilityService::class.java)
+        val profile = ProfileStore.getCurrent(this)
 
         if (isWeb) {
-            adapter.setDetailsCtaEnabled(true)
-            b.rowTapHint.isVisible = true
-            b.rowTapHint.text = getString(R.string.usage_row_tap_hint_website)
-            b.toolbar.title = getString(R.string.statistics_usage_title)
-            b.toolbar.subtitle = null
-            b.statsPageSubtitle.text = getString(R.string.statistics_usage_subtitle_web)
-        val summary = when (range) {
+            val summary = when (range) {
                 Range.TODAY -> WebUsageRepo.getTodaySummary(this)
                 Range.WEEK -> WebUsageRepo.getLastNDaysSummary(this, 7)
                 Range.MONTH -> WebUsageRepo.getThisMonthSummary(this)
                 Range.YEAR -> WebUsageRepo.getThisYearSummary(this)
-                Range.OVERALL -> WebUsageRepo.getOverallSummary(this)
+                Range.CUSTOM -> customRangeStartMillis?.let { start ->
+                    customRangeEndMillis?.let { end -> WebUsageRepo.getDateRangeSummary(this, start, end) }
+                } ?: UsageSummary(0L, emptyList())
             }
-
-            val hasA11y = PermissionUtils.isAccessibilityServiceEnabled(this, SwitchlyAccessibilityService::class.java)
-            b.totalTime.text = if (summary.totalTimeMs <= 0L) "—" else StatsFormat.prettyMsWithSeconds(summary.totalTimeMs)
-
-            // Store latest web list + current rule set so sorting/filtering works.
-            lastWebsites = summary.topApps
             val blocked = DomainBlockStore.getDomains(this).map { it.trim() }.filter { it.isNotBlank() }
             val limited = DomainLimitStore.getDomainsWithLimit(this).map { it.trim() }.filter { it.isNotBlank() }
-            currentWebsiteRuleSet = (blocked + limited).toSet()
-
-            applyAndShowCurrent()
-
-            // Empty state handling
-            val visibleEmpty = adapter.itemCount == 0
-            b.webPlaceholder.isVisible = visibleEmpty
-            if (visibleEmpty) {
-                b.webPlaceholder.text = when {
-                    !hasA11y -> getString(R.string.usage_websites_no_accessibility)
-                    filter == Filter.BLOCKED_ONLY && currentWebsiteRuleSet.isEmpty() -> getString(R.string.usage_websites_no_blocked)
-                    else -> getString(R.string.usage_websites_no_data)
-                }
-            }
-
-            b.permHint.isVisible = !hasA11y
-            if (!hasA11y) {
-                b.permHint.text = getString(R.string.usage_websites_no_accessibility)
-            }
-            b.btnOpenSettings.isVisible = !hasA11y
-            b.btnOpenSettings.text = getString(R.string.onb_open)
-            b.btnOpenSettings.setOnClickListener {
-                AccessibilityDisclosure.openSettingsWithDisclosure(this)
-            }
-            return
+            return RefreshData(
+                summary = summary,
+                hasAccessibility = hasA11y,
+                profile = profile,
+                websiteRuleSet = (blocked + limited).toSet()
+            )
         }
 
-        adapter.setDetailsCtaEnabled(true)
-        b.toolbar.title = getString(R.string.statistics_usage_title)
-        b.toolbar.subtitle = null
-        // Make it obvious that limits (time/attempts) are profile-bound.
-        val activeProfileLabel = ProfileStore.getCurrent(this)?.let { getString(R.string.profile_active_fmt, it) } ?: getString(R.string.usage_apps_tab)
-        b.statsPageSubtitle.text = getString(R.string.statistics_usage_subtitle_apps, activeProfileLabel)
-        b.rowTapHint.text = getString(R.string.usage_row_tap_hint_app)
-
-        val hasA11y = PermissionUtils.isAccessibilityServiceEnabled(this, SwitchlyAccessibilityService::class.java)
         val summary = when {
             range == Range.TODAY -> AppUsageRepo.getTodaySummary(this)
-            fallbackDeviceRange == range -> getDeviceFallbackSummary(range)
+            fallbackDeviceRange == range -> fallbackDeviceSummary ?: UsageSummary(0L, emptyList())
             else -> when (range) {
                 Range.TODAY -> AppUsageRepo.getTodaySummary(this)
                 Range.WEEK -> AppUsageRepo.getLastNDaysSummary(this, 7)
                 Range.MONTH -> AppUsageRepo.getThisMonthSummary(this)
                 Range.YEAR -> AppUsageRepo.getThisYearSummary(this)
-                Range.OVERALL -> AppUsageRepo.getOverallSummary(this)
+                Range.CUSTOM -> customRangeStartMillis?.let { start ->
+                    customRangeEndMillis?.let { end -> AppUsageRepo.getDateRangeSummary(this, start, end) }
+                } ?: UsageSummary(0L, emptyList())
             }
         }
-
-        b.totalTime.text = if (summary.totalTimeMs <= 0L) "—" else StatsFormat.prettyMsWithSeconds(summary.totalTimeMs)
-
-        // Keep blocked-app filter in sync with current profile.
-        val profile = ProfileStore.getCurrent(this)
-        currentBlockedSet = if (profile.isNullOrBlank()) {
+        val blockedSet = if (profile.isNullOrBlank()) {
             emptySet()
         } else {
             buildSet {
@@ -453,11 +623,63 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
                 addAll(AttemptLimitStore.getAllLimitedPackages(this@ScreenTimeDashboardActivity, profile))
             }
         }
+        val metrics = summary.topApps.mapNotNull { item ->
+            buildAppUsageMetrics(item.packageName, range)?.let { item.packageName to it }
+        }.toMap()
+        return RefreshData(
+            summary = summary,
+            hasAccessibility = hasA11y,
+            profile = profile,
+            blockedSet = blockedSet,
+            metricsByPackage = metrics
+        )
+    }
 
-        lastApps = summary.topApps
+    private fun applyRefreshData(range: Range, isWeb: Boolean, data: RefreshData) {
+        adapter.setDetailsCtaEnabled(true)
+        b.toolbar.title = getString(R.string.statistics_usage_title)
+        currentProfileName = data.profile
+        updateStatisticsProfileSubtitle()
+        b.statsPageSubtitle.isVisible = false
+        b.totalTime.text = if (data.summary.totalTimeMs <= 0L) "—" else StatsFormat.prettyMsWithSeconds(data.summary.totalTimeMs)
+
+        if (isWeb) {
+            b.rowTapHint.isVisible = true
+            b.rowTapHint.text = getString(R.string.usage_row_tap_hint_website)
+            lastWebsites = data.summary.topApps
+            currentWebsiteRuleSet = data.websiteRuleSet
+            currentMetricsByPackage = emptyMap()
+            applyAndShowCurrent()
+
+            val visibleEmpty = adapter.itemCount == 0
+            b.webPlaceholder.isVisible = visibleEmpty
+            if (visibleEmpty) {
+                b.webPlaceholder.text = when {
+                    !data.hasAccessibility -> getString(R.string.usage_websites_no_accessibility)
+                    filter == Filter.BLOCKED_ONLY && currentWebsiteRuleSet.isEmpty() -> getString(R.string.usage_websites_no_blocked)
+                    else -> getString(R.string.usage_websites_no_data)
+                }
+            }
+
+            b.permHint.isVisible = !data.hasAccessibility
+            if (!data.hasAccessibility) {
+                b.permHint.text = getString(R.string.usage_websites_no_accessibility)
+            }
+            b.btnOpenSettings.isVisible = !data.hasAccessibility
+            b.btnOpenSettings.text = getString(R.string.onb_open)
+            b.btnOpenSettings.setOnClickListener {
+                AccessibilityDisclosure.openSettingsWithDisclosure(this)
+            }
+            return
+        }
+
+        b.rowTapHint.text = getString(R.string.usage_row_tap_hint_app)
+        currentBlockedSet = data.blockedSet
+        currentMetricsByPackage = data.metricsByPackage
+        lastApps = data.summary.topApps
         applyAndShowCurrent()
 
-        if (range != Range.TODAY && fallbackDeviceRange != range && summary.topApps.isEmpty() && hasA11y) {
+        if (range != Range.TODAY && range != Range.CUSTOM && fallbackDeviceRange != range && data.summary.topApps.isEmpty() && data.hasAccessibility) {
             maybeShowDeviceFallbackDialog(range)
         }
 
@@ -465,17 +687,17 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         b.webPlaceholder.isVisible = visibleEmpty
         if (visibleEmpty) {
             b.webPlaceholder.text = when {
-                !hasA11y -> getString(R.string.usage_apps_no_accessibility)
+                !data.hasAccessibility -> getString(R.string.usage_apps_no_accessibility)
                 filter == Filter.BLOCKED_ONLY && currentBlockedSet.isEmpty() -> getString(R.string.usage_apps_no_blocked)
                 else -> getString(R.string.usage_apps_no_data)
             }
         }
 
-        b.permHint.isVisible = !hasA11y && visibleEmpty
-        if (!hasA11y && visibleEmpty) {
+        b.permHint.isVisible = !data.hasAccessibility && visibleEmpty
+        if (!data.hasAccessibility && visibleEmpty) {
             b.permHint.text = getString(R.string.usage_apps_no_accessibility)
         }
-        b.btnOpenSettings.isVisible = !hasA11y && visibleEmpty
+        b.btnOpenSettings.isVisible = !data.hasAccessibility && visibleEmpty
         b.btnOpenSettings.text = getString(R.string.onb_open)
         b.btnOpenSettings.setOnClickListener {
             AccessibilityDisclosure.openSettingsWithDisclosure(this)
@@ -489,71 +711,122 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             Range.WEEK -> AppUsageRepo.getDeviceSummary(this, 7)
             Range.MONTH -> AppUsageRepo.getDeviceSummary(this, 30)
             Range.YEAR -> AppUsageRepo.getDeviceSummary(this, 365)
-            Range.OVERALL -> AppUsageRepo.getDeviceSummary(this, -1)
+            Range.CUSTOM -> UsageSummary(0L, emptyList())
         }
+    }
+
+    private fun startOfTodayMillis(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun localDayToDatePickerUtcMillis(localMillis: Long): Long {
+        val local = Calendar.getInstance().apply { timeInMillis = localMillis }
+        return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+        }.timeInMillis
+    }
+
+    private fun datePickerUtcMillisToLocalDayStart(utcMillis: Long): Long {
+        val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMillis }
+        return Calendar.getInstance().apply {
+            clear()
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+        }.timeInMillis
+    }
+
+    private fun datePickerUtcMillisToLocalDayEnd(utcMillis: Long): Long {
+        val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMillis }
+        return Calendar.getInstance().apply {
+            clear()
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH), 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.timeInMillis
     }
 
     private fun maybeShowDeviceFallbackDialog(range: Range) {
         if (fallbackPromptShownForRange == range) return
         fallbackPromptShownForRange = range
+        val hasUsageAccess = UsageStatsRepo.hasUsageAccess(this)
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.usage_switchly_fallback_title)
             .setMessage(R.string.usage_switchly_fallback_message)
-            .setPositiveButton(R.string.usage_switchly_fallback_positive) { _, _ ->
-                fallbackDeviceRange = range
-                refresh()
+            .setPositiveButton(if (hasUsageAccess) R.string.usage_switchly_fallback_positive else R.string.onb_open) { _, _ ->
+                if (hasUsageAccess) {
+                    loadDeviceFallbackSummary(range)
+                } else {
+                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                }
             }
             .setNegativeButton(android.R.string.cancel, null)
             .showAccented()
     }
 
+    private fun loadDeviceFallbackSummary(range: Range) {
+        lifecycleScope.launch {
+            val summary = withContext(Dispatchers.IO) { getDeviceFallbackSummary(range) }
+            fallbackDeviceRange = range
+            fallbackDeviceSummary = summary
+            refresh()
+        }
+    }
+
     private fun showSortFilterMenu(anchor: View) {
-        // Use the same clean grouped dialog as the other Statistics screens.
-        val v = layoutInflater.inflate(R.layout.dialog_sort_filter, null)
-        val rgFilter = v.findViewById<RadioGroup>(R.id.rgFilter)
-        val rgSort = v.findViewById<RadioGroup>(R.id.rgSort)
+        val v = layoutInflater.inflate(R.layout.dialog_statistics_dropdown_sort_filter, FrameLayout(this), false)
+        val filterDropdown = v.findViewById<MaterialAutoCompleteTextView>(R.id.dropdownStatsPrimary)
+        val sortDropdown = v.findViewById<MaterialAutoCompleteTextView>(R.id.dropdownStatsSort)
 
-        // Adjust filter labels based on current type (Apps vs Websites).
         val isWeb = b.toggleType.checkedButtonId == b.btnWeb.id
-        v.findViewById<RadioButton>(R.id.rbFilterAll).text = getString(
-            if (isWeb) R.string.stats_filter_all_websites else R.string.stats_filter_all_apps
+        val filterOptions = listOf(
+            Filter.ALL_APPS to getString(if (isWeb) R.string.stats_filter_all_websites else R.string.stats_filter_all_apps),
+            Filter.BLOCKED_ONLY to getString(if (isWeb) R.string.stats_filter_blocked_only_websites else R.string.stats_filter_blocked_only)
         )
-        v.findViewById<RadioButton>(R.id.rbFilterBlocked).text = getString(
-            if (isWeb) R.string.stats_filter_blocked_only_websites else R.string.stats_filter_blocked_only
+        val sortOptions = listOf(
+            Pair(Sort.USED_TIME, SortDir.DESC) to getString(R.string.stats_sort_used_time_desc),
+            Pair(Sort.USED_TIME, SortDir.ASC) to getString(R.string.stats_sort_used_time_asc),
+            Pair(Sort.NAME_AZ, SortDir.ASC) to getString(R.string.stats_sort_az),
+            Pair(Sort.NAME_ZA, SortDir.DESC) to getString(R.string.stats_sort_za)
         )
 
-        // Primary sort labels
-        v.findViewById<RadioButton>(R.id.rbSortPrimaryDesc).text = getString(R.string.stats_sort_used_time_desc)
-        v.findViewById<RadioButton>(R.id.rbSortPrimaryAsc).text = getString(R.string.stats_sort_used_time_asc)
+        var selectedFilter = filter
+        var selectedSort = sort
+        var selectedSortDir = sortDir
 
-        // Initial selections
-        when (filter) {
-            Filter.ALL_APPS -> rgFilter.check(R.id.rbFilterAll)
-            Filter.BLOCKED_ONLY -> rgFilter.check(R.id.rbFilterBlocked)
+        filterDropdown.setAdapter(SwitchlyDropdownAdapter(this, filterOptions.map { it.second }))
+        filterDropdown.setText(filterOptions.first { it.first == filter }.second, false)
+        filterDropdown.setOnItemClickListener { _, _, position, _ ->
+            selectedFilter = filterOptions.getOrElse(position) { filterOptions.first() }.first
         }
+        filterDropdown.setOnClickListener { filterDropdown.showDropDown() }
 
-        when (sort) {
-            Sort.NAME_AZ -> rgSort.check(R.id.rbSortAz)
-            Sort.NAME_ZA -> rgSort.check(R.id.rbSortZa)
-            Sort.USED_TIME -> rgSort.check(if (sortDir == SortDir.ASC) R.id.rbSortPrimaryAsc else R.id.rbSortPrimaryDesc)
+        sortDropdown.setAdapter(SwitchlyDropdownAdapter(this, sortOptions.map { it.second }))
+        val currentSortLabel = sortOptions.firstOrNull { option ->
+            when (sort) {
+                Sort.USED_TIME -> option.first.first == sort && option.first.second == sortDir
+                Sort.NAME_AZ, Sort.NAME_ZA -> option.first.first == sort
+            }
+        }?.second ?: sortOptions.first().second
+        sortDropdown.setText(currentSortLabel, false)
+        sortDropdown.setOnItemClickListener { _, _, position, _ ->
+            val selected = sortOptions.getOrElse(position) { sortOptions.first() }.first
+            selectedSort = selected.first
+            selectedSortDir = selected.second
         }
+        sortDropdown.setOnClickListener { sortDropdown.showDropDown() }
 
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.stats_sort_filter_title))
             .setView(v)
             .setPositiveButton(getString(R.string.stats_apply)) { _, _ ->
-                filter = when (rgFilter.checkedRadioButtonId) {
-                    R.id.rbFilterBlocked -> Filter.BLOCKED_ONLY
-                    else -> Filter.ALL_APPS
-                }
-
-                when (rgSort.checkedRadioButtonId) {
-                    R.id.rbSortAz -> sort = Sort.NAME_AZ
-                    R.id.rbSortZa -> sort = Sort.NAME_ZA
-                    R.id.rbSortPrimaryAsc -> { sort = Sort.USED_TIME; sortDir = SortDir.ASC }
-                    else -> { sort = Sort.USED_TIME; sortDir = SortDir.DESC }
-                }
-
+                filter = selectedFilter
+                sort = selectedSort
+                sortDir = selectedSortDir
+                updateStatisticsProfileSubtitle()
                 applyAndShowCurrent()
             }
             .setNegativeButton(android.R.string.cancel, null)
@@ -561,6 +834,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
     }
 
     private fun applyAndShowCurrent() {
+        updateStatisticsProfileSubtitle()
         if (b.toggleType.checkedButtonId == b.btnWeb.id) {
             applyAndShowWebsites()
         } else {

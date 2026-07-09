@@ -23,17 +23,20 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
 import at.saltyy.switchly.feature.picker.AppPickerActivity
 import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
 import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
-import at.saltyy.switchly.feature.settings.InAppBlockingActivity
+import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
+import at.saltyy.switchly.feature.settings.ReelsShortsBlockingActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
 import at.saltyy.switchly.theme.AccentColor
@@ -142,9 +145,26 @@ class BlockingHubActivity : AppCompatActivity() {
             if (SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_inapp)
             } else {
-                startActivity(Intent(this, InAppBlockingActivity::class.java))
+                startActivity(Intent(this, ReelsShortsBlockingActivity::class.java))
             }
         }
+
+        card(R.id.cardSchedules).setOnClickListener {
+            if (!AutomationModeStore.isScheduleAllowed(this)) {
+                Toast.makeText(this, R.string.toast_manage_schedules_requires_enabled, Toast.LENGTH_LONG).show()
+            } else {
+                startActivity(Intent(this, SchedulesActivity::class.java))
+            }
+        }
+
+        card(R.id.cardBlockedNotifications).setOnClickListener {
+            if (SwitchModeStore.isEnabled(this)) {
+                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_blocked_notifications)
+            } else {
+                startActivity(Intent(this, BlockedInboxActivity::class.java))
+            }
+        }
+
     }
 
     private fun syncLockedCardState() {
@@ -152,11 +172,19 @@ class BlockingHubActivity : AppCompatActivity() {
         val appsLocked = SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)
         val websitesLocked = EditingLockGuard.isLocked(this)
         val inAppLocked = SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)
+        val schedulesLocked = !AutomationModeStore.isScheduleAllowed(this)
+        val notificationsLocked = SwitchModeStore.isEnabled(this)
+
+        // Notification history is an insight, not a profile rule.
+        // Keep the old card in the layout for compatibility, but hide it from Rules.
+        card(R.id.cardBlockedNotifications).visibility = View.GONE
 
         applyLockedCardState(card(R.id.cardManageProfiles), profilesLocked)
         applyLockedCardState(card(R.id.cardManageApps), appsLocked)
         applyLockedCardState(card(R.id.cardManageWebsites), websitesLocked)
         applyLockedCardState(card(R.id.cardInAppBlocking), inAppLocked)
+        applyLockedCardState(card(R.id.cardSchedules), schedulesLocked)
+        applyLockedCardState(card(R.id.cardBlockedNotifications), notificationsLocked)
         applyLockedCardState(card(R.id.cardBlockingModes), false)
         applyLockedCardState(card(R.id.cardBlockingFeatures), false)
         applyLockedCardState(card(R.id.cardBlockingDisplay), false)
@@ -164,11 +192,10 @@ class BlockingHubActivity : AppCompatActivity() {
     }
 
     private fun syncScanSectionVisibility() {
-        val qrVisible = AutomationModeStore.isQrAllowed(this)
-        val barcodeVisible = AutomationModeStore.isBarcodeAllowed(this)
-        findViewById<View>(R.id.sectionScan).visibility = if (qrVisible || barcodeVisible) View.VISIBLE else View.GONE
-        card(R.id.cardScanQr).visibility = if (qrVisible) View.VISIBLE else View.GONE
-        card(R.id.cardScanBarcode).visibility = if (barcodeVisible) View.VISIBLE else View.GONE
+        // Quick scanners are tools, not profile rules.
+        findViewById<View>(R.id.sectionScan).visibility = View.GONE
+        card(R.id.cardScanQr).visibility = View.GONE
+        card(R.id.cardScanBarcode).visibility = View.GONE
     }
 
     private fun applyLockedCardState(view: View, locked: Boolean) {

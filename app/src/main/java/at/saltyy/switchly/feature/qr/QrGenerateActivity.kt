@@ -35,7 +35,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -51,9 +50,11 @@ import at.saltyy.switchly.databinding.ActivityQrGenerateBinding
 import at.saltyy.switchly.nfc.NfcSchema
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
 import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
@@ -132,7 +133,7 @@ class QrGenerateActivity : AppCompatActivity() {
         // Action dropdown
         val actionLabels = actions.map { getString(it.labelRes) }
         b.actionDropdown.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, actionLabels)
+            SwitchlyDropdownAdapter(this, actionLabels)
         )
         val defaultAction = defaultAction()
         b.actionDropdown.setText(getString(defaultAction.labelRes), false)
@@ -142,7 +143,7 @@ class QrGenerateActivity : AppCompatActivity() {
 
         // Minutes dropdown
         b.minutesDropdown.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, minutePresetsFor(defaultAction))
+            SwitchlyDropdownAdapter(this, minutePresetsFor(defaultAction))
         )
         b.minutesDropdown.setText(getString(R.string.qr_minutes_default), false)
 
@@ -227,15 +228,20 @@ class QrGenerateActivity : AppCompatActivity() {
     private fun showQrInfoDialog() {
         Dialogs.builder(this)
             .setTitle(R.string.qr_info_title)
-            .setMessage(R.string.qr_info_body)
+            .setMessage(buildStoreInfoMessage(R.string.qr_info_body))
+            .setNeutralButton(R.string.store_open) { _, _ -> SwitchlyStoreLinks.openStore(this) }
             .setPositiveButton(R.string.ok, null)
             .showAccented()
+    }
+
+    private fun buildStoreInfoMessage(baseMessageRes: Int): String {
+        return getString(baseMessageRes) + "\n\n" + getString(R.string.store_card_title) + "\n" + getString(R.string.store_card_summary)
     }
 
     private fun refreshProfiles() {
         val profiles = ProfileStore.getProfiles(this).toList().sorted()
         b.profileDropdown.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, profiles)
+            SwitchlyDropdownAdapter(this, profiles)
         )
 
         val current = ProfileStore.getCurrent(this)
@@ -325,7 +331,7 @@ class QrGenerateActivity : AppCompatActivity() {
 
         if (action.supportsMinutes) {
             val presets = minutePresetsFor(action)
-            b.minutesDropdown.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, presets))
+            b.minutesDropdown.setAdapter(SwitchlyDropdownAdapter(this, presets))
             val current = b.minutesDropdown.text?.toString().orEmpty()
             if (current == getString(R.string.qr_minutes_ask_when_scanned) && action.id !in setOf("temp_enable", "temp_disable")) {
                 b.minutesDropdown.setText(getString(R.string.qr_minutes_default), false)

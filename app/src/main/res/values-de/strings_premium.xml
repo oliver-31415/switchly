@@ -6,7 +6,7 @@
     <!-- ====================================================== -->
     <string name="premium_title">Switchly Premium</string>
     <string name="premium_summary">Schalte Premium-Funktionen frei.</string>
-    <string name="premium_short_desc">Schalte WLAN-, Bluetooth- und Standort-Zeitpläne, detaillierte Statistiken und weitere Premium-Optionen frei.</string>
+    <string name="premium_short_desc">Schalte benutzerdefinierte Zeiträume, detaillierte Statistik-Einblicke, WLAN-, Bluetooth- und Standort-Zeitpläne sowie erweiterte Automatisierungen frei.</string>
     <string name="premium_active_header">Aktive Premium-Funktionen</string>
     <string name="premium_status_active">Aktiv</string>
     <string name="premium_source_note">Premium aktiv über %1$s.</string>
@@ -58,7 +58,7 @@
     <string name="premium_automation_title">Automatisierungen</string>
     <string name="premium_automation_desc">Schalte erweiterte Automatisierungen frei, einschließlich Zeit-, WLAN-, Bluetooth- und Standort-Triggern.</string>
     <string name="premium_stats_title">Statistiken &amp; Einblicke</string>
-    <string name="premium_stats_desc">Schalte detaillierte Nutzungseinblicke frei, um zu sehen, wie oft du Switchly nutzt und welche Apps dich am meisten ablenken.</string>
+    <string name="premium_stats_desc">Schalte Wochen-, Monats-, Jahres- und benutzerdefinierte Statistikzeiträume mit detaillierten Drilldown-Einblicken frei.</string>
 
     <!-- ====================================================== -->
     <!-- Premium restrictions and notes -->

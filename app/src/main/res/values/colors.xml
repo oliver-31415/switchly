@@ -11,6 +11,7 @@
          TEXT
          ========================= -->
     <color name="font_white">#FFFFFFFF</color>
+    <color name="contact_text">#FF111827</color>
 
     <!-- =========================
          ACCENT PALETTE

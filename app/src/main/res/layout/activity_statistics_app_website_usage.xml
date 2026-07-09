@@ -60,53 +60,88 @@
                 android:textSize="14.5sp"
                 android:textStyle="bold" />
 
-            <!-- Range chips (same look as other statistics screens) -->
-            <com.google.android.material.chip.ChipGroup
+            <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/chipGroupRange"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="0dp"
-                app:chipSpacingHorizontal="8dp"
-                app:chipSpacingVertical="8dp"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
-                <com.google.android.material.chip.Chip
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipToday"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/stats_range_today" />
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:textAllCaps="false"
+                    android:text="@string/stats_range_today"
+                    app:cornerRadius="4dp" />
 
-                <com.google.android.material.chip.Chip
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipWeek"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/stats_range_week" />
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:textAllCaps="false"
+                    android:text="@string/stats_range_week"
+                    app:cornerRadius="4dp" />
 
-                <com.google.android.material.chip.Chip
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipMonth"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/stats_range_month" />
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:textAllCaps="false"
+                    android:text="@string/stats_range_month"
+                    app:cornerRadius="4dp" />
 
-                <com.google.android.material.chip.Chip
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipYear"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/stats_range_year" />
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:textAllCaps="false"
+                    android:text="@string/stats_range_year"
+                    app:cornerRadius="4dp" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipOverall"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/stats_range_overall" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chipCustom"
+                    android:layout_width="44dp"
+                    android:layout_height="40dp"
+                    android:minWidth="0dp"
+                    android:contentDescription="@string/activity_history_range_custom"
+                    app:icon="@drawable/calendar_month_24"
+                    app:iconPadding="0dp"
+                    app:cornerRadius="4dp" />
 
-            </com.google.android.material.chip.ChipGroup>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <LinearLayout
+                android:id="@+id/customRangeSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/customRangeValue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnClearCustomRange"
+                    style="@style/Switchly.OutlinedButton.CompactSegment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:minWidth="0dp"
+                    android:text="@string/stats_range_clear" />
+            </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardUsageTotal"
@@ -114,9 +149,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                app:cardUseCompatPadding="true"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -156,19 +189,19 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnApps"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:layout_weight="1"
-                    android:text="@string/usage_apps_tab" />
+                    android:text="@string/usage_apps_tab"
+                    app:cornerRadius="4dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnWeb"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:layout_weight="1"
-                    android:text="@string/usage_websites_tab" />
+                    android:text="@string/usage_websites_tab"
+                    app:cornerRadius="4dp" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <TextView
@@ -196,7 +229,7 @@
                 android:layout_marginTop="10dp"
                 android:text="@string/usage_open_settings"
                 android:visibility="gone"
-                style="@style/Widget.MaterialComponents.Button"/>
+                style="@style/Switchly.Button"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler"

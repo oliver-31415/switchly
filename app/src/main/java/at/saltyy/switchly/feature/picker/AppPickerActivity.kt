@@ -52,8 +52,8 @@ import at.saltyy.switchly.data.prefs.InAppRuleStore
 import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.UsageStore
-import at.saltyy.switchly.feature.settings.InAppBlockingActivity
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
+import at.saltyy.switchly.feature.settings.ReelsShortsBlockingActivity
 import at.saltyy.switchly.feature.usage.QuickLimitDialogs
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -65,6 +65,7 @@ import at.saltyy.switchly.util.ActivityTransitionCompat
 import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.PackageLaunchIntentCompat
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -170,7 +171,7 @@ class AppPickerActivity : AppCompatActivity() {
             setOnClickListener { showAppRulesInfo() }
         }
         btnPickWebsites.setOnClickListener { startActivity(Intent(this, ManageBlockedWebsitesActivity::class.java)) }
-        btnPickInAppRules.setOnClickListener { startActivity(Intent(this, InAppBlockingActivity::class.java)) }
+        btnPickInAppRules.setOnClickListener { startActivity(Intent(this, ReelsShortsBlockingActivity::class.java)) }
         findViewById<ImageButton>(R.id.btnAutoBlockNewAppsInfo).apply {
             val surfaceIconColor = MaterialColors.getColor(
                 this,
@@ -401,10 +402,9 @@ class AppPickerActivity : AppCompatActivity() {
     }
 
     private fun loadSupportedInAppApps(context: Context): List<AppEntry> {
-        val pm = context.packageManager
         return InAppRuleStore.supportedPackages()
             .mapNotNull { pkg ->
-                if (pm.getLaunchIntentForPackage(pkg) == null) return@mapNotNull null
+                if (!PackageLaunchIntentCompat.isLaunchable(context, pkg)) return@mapNotNull null
                 resolveInstalledPackageEntry(context, pkg)
             }
     }
@@ -602,8 +602,8 @@ class AppPickerActivity : AppCompatActivity() {
             Toast.LENGTH_SHORT
         ).show()
         startActivity(
-            Intent(this, InAppBlockingActivity::class.java)
-                .putExtra(InAppBlockingActivity.EXTRA_FOCUS_PACKAGE, app.packageName)
+            Intent(this, ReelsShortsBlockingActivity::class.java)
+                .putExtra(ReelsShortsBlockingActivity.EXTRA_FOCUS_PACKAGE, app.packageName)
         )
     }
 
@@ -891,9 +891,14 @@ class AppPickerActivity : AppCompatActivity() {
                 options = labels.mapIndexed { index, label ->
                     SwitchlyDialogOption(
                         title = label,
-                        selected = index < presets.size && presets[index] == currentLimit
+                        selected = if (index < presets.size) {
+                            presets[index] == currentLimit
+                        } else {
+                            currentLimit !in presets
+                        }
                     )
-                }
+                },
+                confirmSelection = true
             ) { which ->
                 if (which < presets.size) {
                     val chosen = presets[which]

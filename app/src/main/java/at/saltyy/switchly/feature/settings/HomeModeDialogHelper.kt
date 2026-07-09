@@ -20,10 +20,13 @@
 package at.saltyy.switchly.feature.settings
 
 import android.content.Context
+import android.content.ClipData
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.view.Gravity
+import android.view.DragEvent
+import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.ImageView
@@ -40,11 +43,14 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 object HomeModeDialogHelper {
+
+    private const val ORDER_SEPARATOR = "|"
 
     private data class CustomHomeOption(
         val key: String,
@@ -82,6 +88,38 @@ object HomeModeDialogHelper {
         else -> context.getString(R.string.home_layout_detailed)
     }
 
+    private fun customHomeOptions(): List<CustomHomeOption> = listOf(
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_TIMER, R.string.home_custom_active_timer, R.string.home_custom_active_timer_summary, R.drawable.schedule_24, true),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_MAIN_BUTTON, R.string.home_custom_main_button, R.string.home_custom_main_button_summary, R.drawable.toggle_on_24, true),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_PROFILE, R.string.home_custom_active_profile, R.string.home_custom_active_profile_summary, R.drawable.account_box_24, true),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_CONTROL_MODE, R.string.home_custom_control_mode, R.string.home_custom_control_mode_summary, R.drawable.tune_24, true),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_PICK_APPS, R.string.home_custom_pick_apps, R.string.home_custom_pick_apps_summary, R.drawable.apps_24, true),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_TEMPORARY, R.string.home_custom_temporary, R.string.home_custom_temporary_summary, R.drawable.alarm_24, false),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_EMERGENCY, R.string.home_custom_emergency, R.string.home_custom_emergency_summary, R.drawable.lock_open_24, false),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_QUICK_ACTIONS, R.string.home_custom_quick_actions, R.string.home_custom_quick_actions_summary, R.drawable.dashboard_24, false),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_NEXT_SCHEDULE, R.string.home_custom_next_schedule, R.string.home_custom_next_schedule_summary, R.drawable.schedule_24, false),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_NOW, R.string.home_custom_blocked_now, R.string.home_custom_blocked_now_summary, R.drawable.info_24, false),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_APPS, R.string.home_custom_blocked_apps, R.string.home_custom_blocked_apps_summary, R.drawable.apps_24, false),
+        CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_PROFILE_DROPDOWN, R.string.home_custom_profile_dropdown, R.string.home_custom_profile_dropdown_summary, R.drawable.switch_account_24, false)
+    )
+
+    fun customHomeOrderKeys(context: Context): List<String> {
+        val defaultKeys = customHomeOptions().map { it.key }
+        val raw = PreferenceManager.getDefaultSharedPreferences(context)
+            .getString(ToggleOptionsActivity.KEY_HOME_CUSTOM_ORDER, null)
+            .orEmpty()
+        val stored = raw.split(ORDER_SEPARATOR)
+            .map { it.trim() }
+            .filter { it in defaultKeys }
+            .distinct()
+        return stored + defaultKeys.filterNot { it in stored }
+    }
+
+    private fun orderedCustomHomeOptions(context: Context): MutableList<CustomHomeOption> {
+        val byKey = customHomeOptions().associateBy { it.key }
+        return customHomeOrderKeys(context).mapNotNull { byKey[it] }.toMutableList()
+    }
+
     fun showHomeLayoutModeDialog(context: Context, onChanged: (() -> Unit)? = null) {
         val sp = PreferenceManager.getDefaultSharedPreferences(context)
         val modes = listOf(
@@ -115,7 +153,8 @@ object HomeModeDialogHelper {
 
         context.showSwitchlyOptionDialog(
             title = context.getString(R.string.pref_home_layout_mode_title),
-            options = options
+            options = options,
+            confirmSelection = true
         ) { index ->
             val mode = modes.getOrNull(index) ?: return@showSwitchlyOptionDialog
             if (mode == ToggleOptionsActivity.HOME_MODE_CUSTOM) {
@@ -135,21 +174,7 @@ object HomeModeDialogHelper {
 
     fun showCustomizeHomeDialog(context: Context, onChanged: (() -> Unit)? = null) {
         val sp = PreferenceManager.getDefaultSharedPreferences(context)
-        val options = listOf(
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_TIMER, R.string.home_custom_active_timer, R.string.home_custom_active_timer_summary, R.drawable.schedule_24, true),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_MAIN_BUTTON, R.string.home_custom_main_button, R.string.home_custom_main_button_summary, R.drawable.toggle_on_24, true),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_PROFILE, R.string.home_custom_active_profile, R.string.home_custom_active_profile_summary, R.drawable.account_box_24, true),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_CONTROL_MODE, R.string.home_custom_control_mode, R.string.home_custom_control_mode_summary, R.drawable.tune_24, true),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_PICK_APPS, R.string.home_custom_pick_apps, R.string.home_custom_pick_apps_summary, R.drawable.apps_24, true),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_TEMPORARY, R.string.home_custom_temporary, R.string.home_custom_temporary_summary, R.drawable.alarm_24, false),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_EMERGENCY, R.string.home_custom_emergency, R.string.home_custom_emergency_summary, R.drawable.lock_open_24, false),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_QUICK_ACTIONS, R.string.home_custom_quick_actions, R.string.home_custom_quick_actions_summary, R.drawable.dashboard_24, false),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_NEXT_SCHEDULE, R.string.home_custom_next_schedule, R.string.home_custom_next_schedule_summary, R.drawable.schedule_24, false),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_NOW, R.string.home_custom_blocked_now, R.string.home_custom_blocked_now_summary, R.drawable.info_24, false),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_APPS, R.string.home_custom_blocked_apps, R.string.home_custom_blocked_apps_summary, R.drawable.apps_24, false),
-            CustomHomeOption(ToggleOptionsActivity.KEY_HOME_CUSTOM_PROFILE_DROPDOWN, R.string.home_custom_profile_dropdown, R.string.home_custom_profile_dropdown_summary, R.drawable.switch_account_24, false)
-        )
-
+        val options = orderedCustomHomeOptions(context)
         val accent = AccentColor.getAccentColorInt(context)
         val surface = MaterialColors.getColor(context, com.google.android.material.R.attr.colorSurface, Color.TRANSPARENT)
         val surfaceVariant = MaterialColors.getColor(context, com.google.android.material.R.attr.colorSurfaceVariant, surface)
@@ -157,20 +182,113 @@ object HomeModeDialogHelper {
         val outline = MaterialColors.getColor(context, com.google.android.material.R.attr.colorOutline, ColorUtils.setAlphaComponent(onSurface, 0x44))
         fun dp(value: Int): Int = (value * context.resources.displayMetrics.density + 0.5f).toInt()
 
-        val checked = BooleanArray(options.size) { index ->
-            sp.getBoolean(options[index].key, options[index].defaultValue)
-        }
+        val checkedByKey = options.associate { option ->
+            option.key to sp.getBoolean(option.key, option.defaultValue)
+        }.toMutableMap()
 
         lateinit var countText: TextView
+        lateinit var rowsContainer: LinearLayout
         val cards = mutableListOf<MaterialCardView>()
+        var draggedKey: String? = null
 
-        fun updateRowState(index: Int) {
+        fun updateCountText() {
+            val checkedCount = checkedByKey.count { it.value }
+            countText.text = context.resources.getQuantityString(
+                R.plurals.pref_home_layout_custom_selected_count,
+                checkedCount,
+                checkedCount,
+                options.size
+            )
+        }
+
+        fun updateRowState(index: Int, check: CheckBox? = null) {
             val card = cards.getOrNull(index) ?: return
-            val isChecked = checked[index]
+            val option = options.getOrNull(index) ?: return
+            val isChecked = checkedByKey[option.key] ?: option.defaultValue
+            check?.isChecked = isChecked
             card.strokeWidth = dp(if (isChecked) 2 else 1)
             card.strokeColor = if (isChecked) accent else outline
             card.setCardBackgroundColor(if (isChecked) ColorUtils.setAlphaComponent(accent, 0x14) else surfaceVariant)
-            countText.text = context.resources.getQuantityString(R.plurals.pref_home_layout_custom_selected_count, options.size, checked.count { it }, options.size)
+            updateCountText()
+        }
+
+        lateinit var renderRows: () -> Unit
+
+        fun moveOption(fromIndex: Int, toIndex: Int) {
+            if (fromIndex !in options.indices || toIndex !in options.indices || fromIndex == toIndex) return
+            val moved = options.removeAt(fromIndex)
+            options.add(toIndex, moved)
+            rowsContainer.removeAllViews()
+            cards.clear()
+            renderRows()
+        }
+
+        fun moveOptionByKey(fromKey: String, toKey: String) {
+            val fromIndex = options.indexOfFirst { it.key == fromKey }
+            val toIndex = options.indexOfFirst { it.key == toKey }
+            moveOption(fromIndex, toIndex)
+        }
+
+        fun attachDragReorder(card: MaterialCardView, key: String) {
+            card.setOnLongClickListener {
+                draggedKey = key
+                val data = ClipData.newPlainText("custom_home_section", key)
+                val shadow = View.DragShadowBuilder(it)
+                it.startDragAndDrop(data, shadow, key, 0)
+                true
+            }
+            card.setOnDragListener { view, event ->
+                when (event.action) {
+                    DragEvent.ACTION_DRAG_STARTED -> (event.localState as? String) != null
+                    DragEvent.ACTION_DRAG_ENTERED -> {
+                        if ((draggedKey ?: event.localState as? String) != key) view.alpha = 0.72f
+                        true
+                    }
+                    DragEvent.ACTION_DRAG_EXITED -> {
+                        view.alpha = 1f
+                        true
+                    }
+                    DragEvent.ACTION_DROP -> {
+                        view.alpha = 1f
+                        val fromKey = draggedKey ?: event.localState as? String
+                        if (!fromKey.isNullOrBlank() && fromKey != key) {
+                            moveOptionByKey(fromKey, key)
+                        }
+                        true
+                    }
+                    DragEvent.ACTION_DRAG_ENDED -> {
+                        view.alpha = 1f
+                        draggedKey = null
+                        true
+                    }
+                    else -> true
+                }
+            }
+        }
+
+        fun resetToDefaults() {
+            options.clear()
+            options.addAll(customHomeOptions())
+            checkedByKey.clear()
+            options.forEach { option -> checkedByKey[option.key] = option.defaultValue }
+            rowsContainer.removeAllViews()
+            cards.clear()
+            renderRows()
+        }
+
+        fun createMoveButton(iconRes: Int, descriptionRes: Int, enabled: Boolean, onClick: () -> Unit): ImageView {
+            return ImageView(context).apply {
+                setImageResource(iconRes)
+                contentDescription = context.getString(descriptionRes)
+                alpha = if (enabled) 0.78f else 0.28f
+                isEnabled = enabled
+                isClickable = enabled
+                isFocusable = enabled
+                setPadding(dp(7), dp(7), dp(7), dp(7))
+                background = null
+                ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(onSurface))
+                setOnClickListener { onClick() }
+            }
         }
 
         val content = ScrollView(context).apply {
@@ -191,9 +309,18 @@ object HomeModeDialogHelper {
             setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xCC))
             textSize = 14f
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(8), 0, dp(8), dp(10))
+            setPadding(dp(8), 0, dp(8), dp(6))
         }
         list.addView(intro)
+
+        val reorderHint = TextView(context).apply {
+            text = context.getString(R.string.pref_home_layout_custom_reorder_hint)
+            setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xAA))
+            textSize = 12.5f
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(8), 0, dp(8), dp(10))
+        }
+        list.addView(reorderHint)
 
         countText = TextView(context).apply {
             setTextColor(accent)
@@ -203,85 +330,149 @@ object HomeModeDialogHelper {
         }
         list.addView(countText)
 
-        options.forEachIndexed { index, option ->
-            val card = MaterialCardView(context).apply {
-                radius = dp(18).toFloat()
-                cardElevation = 0f
-                useCompatPadding = true
-                isClickable = true
-                isFocusable = true
-            }
+        rowsContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        list.addView(rowsContainer)
 
-            val row = LinearLayout(context).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(14), dp(12), dp(10), dp(12))
-            }
+        renderRows = {
+            options.forEachIndexed { index, option ->
+                val card = MaterialCardView(context).apply {
+                    radius = dp(18).toFloat()
+                    cardElevation = 0f
+                    useCompatPadding = true
+                    isClickable = true
+                    isFocusable = true
+                }
 
-            val icon = ImageView(context).apply {
-                setImageResource(option.iconRes)
-                ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(accent))
-            }
-            row.addView(icon, LinearLayout.LayoutParams(dp(24), dp(24)))
+                val row = LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    setPadding(dp(14), dp(12), dp(6), dp(12))
+                }
 
-            val textColumn = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(dp(14), 0, dp(8), 0)
-            }
+                val icon = ImageView(context).apply {
+                    setImageResource(option.iconRes)
+                    ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(accent))
+                }
+                row.addView(icon, LinearLayout.LayoutParams(dp(24), dp(24)))
 
-            val title = TextView(context).apply {
-                text = context.getString(option.titleRes)
-                setTextColor(onSurface)
-                textSize = 15f
-            }
-            val summary = TextView(context).apply {
-                text = context.getString(option.summaryRes)
-                setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xB0))
-                textSize = 13f
-                setPadding(0, dp(3), 0, 0)
-            }
-            textColumn.addView(title)
-            textColumn.addView(summary)
-            row.addView(textColumn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                val textColumn = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(dp(14), 0, dp(8), 0)
+                }
 
-            val check = CheckBox(context).apply {
-                isChecked = checked[index]
-                CompoundButtonCompat.setButtonTintList(this, ColorStateList.valueOf(accent))
-                contentDescription = context.getString(option.titleRes)
-            }
-            row.addView(check)
+                val title = TextView(context).apply {
+                    text = context.getString(option.titleRes)
+                    setTextColor(onSurface)
+                    textSize = 15f
+                    typeface = Typeface.DEFAULT_BOLD
+                }
+                val summary = TextView(context).apply {
+                    text = context.getString(option.summaryRes)
+                    setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xB0))
+                    textSize = 13f
+                    setPadding(0, dp(3), 0, 0)
+                }
+                textColumn.addView(title)
+                textColumn.addView(summary)
+                row.addView(textColumn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
 
-            card.setOnClickListener {
-                checked[index] = !checked[index]
-                check.isChecked = checked[index]
-                updateRowState(index)
-            }
-            check.setOnClickListener {
-                checked[index] = check.isChecked
-                updateRowState(index)
-            }
+                val moveColumn = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                }
+                moveColumn.addView(
+                    createMoveButton(
+                        R.drawable.arrow_upward_24,
+                        R.string.pref_home_layout_custom_move_up,
+                        index > 0
+                    ) { moveOption(index, index - 1) },
+                    LinearLayout.LayoutParams(dp(34), dp(36))
+                )
+                moveColumn.addView(
+                    createMoveButton(
+                        R.drawable.arrow_downward_24,
+                        R.string.pref_home_layout_custom_move_down,
+                        index < options.lastIndex
+                    ) { moveOption(index, index + 1) },
+                    LinearLayout.LayoutParams(dp(34), dp(36))
+                )
+                row.addView(moveColumn)
 
-            card.addView(row)
-            cards += card
-            list.addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-            updateRowState(index)
+                val check = CheckBox(context).apply {
+                    isChecked = checkedByKey[option.key] ?: option.defaultValue
+                    CompoundButtonCompat.setButtonTintList(this, ColorStateList.valueOf(accent))
+                    contentDescription = context.getString(option.titleRes)
+                }
+                row.addView(check)
+
+                card.setOnClickListener {
+                    val newValue = !(checkedByKey[option.key] ?: option.defaultValue)
+                    checkedByKey[option.key] = newValue
+                    check.isChecked = newValue
+                    updateRowState(index, check)
+                }
+                check.setOnClickListener {
+                    checkedByKey[option.key] = check.isChecked
+                    updateRowState(index, check)
+                }
+
+                attachDragReorder(card, option.key)
+                card.addView(row)
+                cards += card
+                rowsContainer.addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                updateRowState(index, check)
+            }
         }
 
-        val dialog = MaterialAlertDialogBuilder(context)
-            .setTitle(R.string.pref_home_layout_custom_title)
+        renderRows()
+
+        lateinit var dialog: AlertDialog
+        val titleView = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(24), dp(18), dp(16), dp(4))
+        }
+        val titleText = TextView(context).apply {
+            text = context.getString(R.string.pref_home_layout_custom_title)
+            setTextColor(onSurface)
+            textSize = 20f
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        titleView.addView(titleText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        val resetIcon = ImageView(context).apply {
+            setImageResource(R.drawable.sync_24)
+            contentDescription = context.getString(R.string.pref_home_layout_custom_restore_default)
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            isClickable = true
+            isFocusable = true
+            ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(accent))
+            setOnClickListener { resetToDefaults() }
+        }
+        titleView.addView(resetIcon, LinearLayout.LayoutParams(dp(44), dp(44)))
+
+        dialog = MaterialAlertDialogBuilder(context)
+            .setCustomTitle(titleView)
             .setView(content)
+            .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.save) { _, _ ->
                 sp.edit {
-                    options.forEachIndexed { index, option -> putBoolean(option.key, checked[index]) }
+                    options.forEach { option -> putBoolean(option.key, checkedByKey[option.key] ?: option.defaultValue) }
+                    putString(ToggleOptionsActivity.KEY_HOME_CUSTOM_ORDER, options.joinToString(separator = ORDER_SEPARATOR) { it.key })
                     putString(ToggleOptionsActivity.KEY_HOME_LAYOUT_MODE, ToggleOptionsActivity.HOME_MODE_CUSTOM)
                     putBoolean(ToggleOptionsActivity.KEY_HOME_LAYOUT_DETAILED, false)
                 }
                 onChanged?.invoke()
             }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-        dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)?.setTextColor(accent)
-        dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE)?.setTextColor(accent)
-        dialog.window?.setLayout((context.resources.displayMetrics.widthPixels * 0.98f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            .create()
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.window?.setLayout(
+                (context.resources.displayMetrics.widthPixels * 0.98f).toInt(),
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        dialog.show()
     }
 }

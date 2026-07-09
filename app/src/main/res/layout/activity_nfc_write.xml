@@ -178,7 +178,6 @@
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
             <!-- Start/Cancel button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnArmWrite"

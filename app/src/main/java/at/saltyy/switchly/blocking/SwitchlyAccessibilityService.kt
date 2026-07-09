@@ -52,7 +52,9 @@ import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.InAppLimitStore
+import at.saltyy.switchly.data.prefs.InAppRuleStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
+import at.saltyy.switchly.data.prefs.LastBlockReasonStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
@@ -71,6 +73,7 @@ import at.saltyy.switchly.feature.blocker.BlockerActivity
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.util.AppUsageToday
+import at.saltyy.switchly.util.PackageLaunchIntentCompat
 import java.util.ArrayDeque
 import java.util.Locale
 import kotlin.math.abs
@@ -111,6 +114,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private var lastEventAt: Long = 0L
     private var lastEventType: Int = 0
     private var lastTransitionAt: Long = 0L
+    private var lastYouTubeRetryProbeAt: Long = 0L
+    private var lastYouTubeShortsCloseAt: Long = 0L
+    private var lastYouTubeFloatingPlayerBlockAt: Long = 0L
 
     // Browser state cache for website blocking + per-domain website stats
     private val browserWebsiteState = BrowserWebsiteState()
@@ -166,51 +172,156 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     private val ATTEMPT_COOLDOWN_MS = 1_200L
     // Count an "open" once per foreground session.
-    // Apps such as Gmail and Instagram can emit multiple ACTIVITY_RESUMED events while the user is still inside the same app,  so a short cooldown alone would incorrectly count one real open many times.
+    // Apps such as Gmail and Instagram can emit multiple ACTIVITY_RESUMED events while the user is still inside the same app, so a short cooldown alone would incorrectly count one real open many times.
     private val OPEN_COUNT_COOLDOWN_MS = 800L
     private val BLOCK_SHOWN_COOLDOWN_MS = 800L
     private val HOME_BOUNCE_COOLDOWN_MS = 900L
     private var lastHomeBounceAt: Long = 0L
     private val SURFACE_CONFIRM_MS = 850L
-    private val SURFACE_HINT_TTL_MS = 2_200L
+    private val SURFACE_HINT_TTL_MS = 4_500L
 
-    private val SNAP_MAP_LABELS = listOf("map", "snap map", "karte")
-    private val SNAP_STORIES_LABELS = listOf(
-        "stories", "story", "discover", "subscriptions", "geschichte", "geschichten", "storys",
-        "friends' stories", "friend stories", "publisher stories", "for you", "für dich",
-        "view story", "watch story", "reply to story", "story reply"
-    )
-    private val SNAP_SPOTLIGHT_LABELS = listOf("spotlight")
-    private val SNAP_FOLLOWING_LABELS = listOf("following", "folgen")
-    private val SNAP_SAFE_LABELS = listOf("camera", "capture", "chat", "chats", "kamera")
+    // YouTube surface labels
     private val YT_HOME_LABELS = listOf("home", "startseite")
     private val YT_SHORTS_LABELS = listOf("shorts")
-    private val YT_MINI_PLAYER_CLOSE_LABELS = listOf(
-        "close player",
-        "close mini player",
-        "close miniplayer",
-        "dismiss player",
-        "close video",
-        "player schließen",
-        "miniplayer schließen",
-        "video schließen",
-        "schließen"
+    private val YT_YOU_LABELS = listOf("you", "du", "library", "bibliothek")
+
+    private val YT_SHORTS_PLAYER_HINT_LABELS = listOf(
+        "like", "dislike", "share", "teilen", "remix",
+        "use this sound", "sound",
+        "subscribe", "abonnieren",
+        "comments", "kommentare"
+    )
+    private val YT_COMMENTS_LABELS = listOf(
+        "comments", "kommentare",
+        "add a comment", "sort comments", "top comments", "write a comment"
     )
     private val YT_SUBSCRIPTIONS_LABELS = listOf(
-        "subscriptions", "subscription", "abos", "abo", "abonnements", "abonnement",
-        "subscriptions tab", "my subscriptions", "subscriptions button", "selected subscriptions",
-        "subscriptions, tab", "subscription, tab", "subscribed", "channels",
+        "subscriptions", "subscription", "subscriptions tab",
+        "my subscriptions", "subscriptions button", "selected subscriptions",
+        "subscriptions, tab", "subscription, tab",
+        "abos", "abo", "abonnements", "abonnement",
         "abo, tab", "abos, tab"
     )
-    private val YT_YOU_LABELS = listOf("you", "du", "library", "bibliothek")
     private val YT_SEARCH_LABELS = listOf(
-        "search youtube", "youtube durchsuchen", "youtube suchen", "search", "suche", "search button", "search tab", "open search"
+        "search youtube", "youtube durchsuchen", "youtube suchen",
+        "search", "suche",
+        "search button", "search tab", "open search"
     )
     private val YT_SEARCH_SCREEN_LABELS = listOf(
-        "search youtube", "youtube durchsuchen", "youtube suchen", "search history", "suchverlauf"
+        "search youtube", "youtube durchsuchen", "youtube suchen",
+        "search history", "suchverlauf"
     )
-    private val YT_PIP_LABELS = listOf("picture-in-picture", "picture in picture", "bild-im-bild", "pip", "miniplayer", "mini player")
+
+    private val YT_MINI_PLAYER_NAME_LABELS = listOf("miniplayer", "mini player", "mini-player")
+    private val YT_MINI_PLAYER_CLOSE_LABELS = listOf(
+        "close player", "close mini player", "close miniplayer",
+        "dismiss player", "dismiss mini player",
+        "close video", "video schließen",
+        "player schließen", "player ausblenden",
+        "miniplayer schließen", "mini player schließen", "miniplayer ausblenden",
+        "schließen"
+    )
+    private val YT_MINI_PLAYER_PLAY_PAUSE_LABELS = listOf(
+        "play", "resume", "pause", "paused", "pause video",
+        "abspielen", "fortsetzen", "pausieren",
+        "video pausieren", "wiedergabe pausieren", "wiedergabe fortsetzen"
+    )
+    private val YT_MINI_PLAYER_HINT_LABELS = YT_MINI_PLAYER_NAME_LABELS + listOf(
+        "close player", "close mini player", "close miniplayer",
+        "dismiss player", "player schließen", "miniplayer schließen"
+    )
+
+    private val YT_REAL_PIP_LABELS = listOf("picture-in-picture", "picture in picture", "bild-im-bild", "pip")
+    private val YT_PIP_LABELS = YT_REAL_PIP_LABELS + YT_MINI_PLAYER_NAME_LABELS
+    private val YT_LOW_SIGNAL_LABELS = listOf("shorts", "you", "library", "picture", "pip", "miniplayer")
+
+    // Instagram surface labels
+    private val IG_HOME_LABELS = listOf("home", "startseite")
+    private val IG_REELS_LABELS = listOf("reels")
+    private val IG_EXPLORE_LABELS = listOf("search", "suche", "discover", "entdecken", "explore")
+    private val IG_REELS_STRONG_EVENT_LABELS = listOf("watch more reels", "send reel")
+    private val IG_LOW_SIGNAL_LABELS = listOf("reels", "explore", "search", "story", "comment")
+
+    private val IG_STORIES_VIEWER_LABELS = listOf(
+        "send message", "nachricht senden",
+        "reply to story", "antworten",
+        "viewers", "zuschauer"
+    )
+    private val IG_STORIES_EVENT_LABELS = listOf("reply to story", "send message", "nachricht senden")
+    private val IG_COMMENTS_LABELS = listOf(
+        "comments", "kommentare",
+        "add a comment", "kommentar hinzufügen",
+        "view all comments"
+    )
+
+    private val IG_MESSAGES_EVENT_LABELS = listOf(
+        "messages", "nachrichten", "chats", "direct", "inbox", "posteingang",
+        "message requests", "nachrichtenanfragen",
+        "search messages", "nachrichten suchen",
+        "new message", "neue nachricht"
+    )
+    private val IG_MESSAGES_SCREEN_LABELS = listOf(
+        "message requests", "nachrichtenanfragen",
+        "search messages", "nachrichten suchen",
+        "new message", "neue nachricht",
+        "primary", "general"
+    )
+
+    private val IG_PROFILE_SELECTED_LABELS = listOf("profile", "profil")
+    private val IG_PROFILE_CONTEXT_LABELS = listOf(
+        "edit profile", "profil bearbeiten",
+        "professional dashboard", "dashboard für professionelle"
+    )
+    private val IG_PROFILE_EVENT_LABELS = listOf(
+        "profile tab", "profil tab",
+        "edit profile", "profil bearbeiten"
+    )
+
+    // X surface labels
+    private val X_HOME_LABELS = listOf("home", "home timeline", "startseite", "for you", "following")
+    private val X_HOME_NAV_LABELS = listOf("home", "home timeline", "startseite")
+    private val X_SEARCH_LABELS = listOf("search", "explore")
+    private val X_GROK_LABELS = listOf("grok")
+    private val X_NOTIFICATIONS_LABELS = listOf("notifications", "notification")
+    private val X_NOTIFICATIONS_NAV_LABELS = listOf("notifications", "notification", "benachrichtigungen")
+    private val X_LOW_SIGNAL_LABELS = listOf(
+        "for you", "following",
+        "search", "explore", "grok",
+        "notification", "notifications", "home"
+    )
+
+    // Snapchat surface labels
+    private val SNAP_MAP_LABELS = listOf("map", "snap map", "karte")
+    private val SNAP_SPOTLIGHT_LABELS = listOf("spotlight")
+    private val SNAP_FOLLOWING_LABELS = listOf("following", "folgen")
+    private val SNAP_CAMERA_LABELS = listOf("camera", "capture")
+    private val SNAP_CHAT_LABELS = listOf("chat", "chats")
+    private val SNAP_SAFE_LABELS = listOf("camera", "capture", "chat", "chats", "kamera")
+    private val SNAP_LOW_SIGNAL_LABELS = listOf("map", "stories", "spotlight", "following", "chat", "camera")
+
+    private val SNAP_STORIES_LABELS = listOf(
+        "stories", "story", "storys",
+        "geschichte", "geschichten",
+        "discover", "subscriptions",
+        "friends' stories", "friend stories", "publisher stories",
+        "reply to story", "story reply"
+    )
+    private val SNAP_STORY_VIEWER_LABELS = listOf(
+        "reply to story", "story reply", "reply to snap", "snap reply",
+        "watch story",
+        "next story", "previous story", "next snap", "previous snap",
+        "view next snap", "view previous snap", "tap to view next snap",
+        "tap to skip", "hold to pause", "swipe up",
+        "geschichte ansehen", "auf story antworten"
+    )
+    private val SNAP_STORY_REPLY_LABELS = listOf(
+        "send a chat", "send chat", "send message", "reply",
+        "antworten", "nachricht senden"
+    )
+
     private val INAPP_POST_BLOCK_GRACE_MS = 3_500L
+    private val SNAP_POST_BLOCK_GRACE_MS = 450L
+    private val YT_MINI_PLAYER_CLEANUP_GRACE_MS = 650L
     private val INSTA_REELS_REENTRY_GUARD_MS = 1_800L
     private val INSTA_EXPLORE_REENTRY_GUARD_MS = 2_200L
     private val INAPP_ENTRY_SETTLE_MS = 1_400L
@@ -454,33 +565,32 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun packageHasInAppFeaturesEnabled(pkg: String): Boolean {
-        if (!prefsBoolProfile(true, BlockingToggleKeys.KEY_BLOCK_INAPP)) return false
-
         return when {
             pkg == "com.google.android.youtube" ->
-                prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_SHORTS) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_SUBSCRIPTIONS) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_YOU) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_PIP)
+                inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SHORTS) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SUBSCRIPTIONS) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_YOU) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_MINI_PLAYER) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_PIP)
 
             pkg == "com.instagram.android" ->
-                prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_REELS) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_EXPLORE) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_SEARCH) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_STORIES) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS)
+                inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_REELS) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_EXPLORE) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_SEARCH) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_STORIES) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS)
 
             pkg == "com.twitter.android" ->
-                prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_HOME) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_SEARCH) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_GROK) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_NOTIFICATIONS)
+                inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_HOME) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_SEARCH) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_GROK) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_NOTIFICATIONS)
 
             pkg == "com.snapchat.android" ->
-                prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_MAP) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_STORIES) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_SPOTLIGHT) ||
-                    prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_FOLLOWING)
+                inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_MAP) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_STORIES) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_SPOTLIGHT) ||
+                    inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_FOLLOWING)
 
             else -> false
         }
@@ -488,10 +598,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     private fun lowSignalNeedlesForPkg(pkg: String): List<String> {
         return when {
-            pkg == "com.google.android.youtube" -> listOf("shorts", "you", "library", "picture", "pip", "miniplayer")
-            pkg == "com.instagram.android" -> listOf("reels", "explore", "search", "story", "comment")
-            pkg == "com.twitter.android" -> listOf("for you", "following", "search", "explore", "grok", "notification", "notifications", "home")
-            pkg == "com.snapchat.android" -> listOf("map", "stories", "spotlight", "following", "chat", "camera")
+            pkg == "com.google.android.youtube" -> YT_LOW_SIGNAL_LABELS
+            pkg == "com.instagram.android" -> IG_LOW_SIGNAL_LABELS
+            pkg == "com.twitter.android" -> X_LOW_SIGNAL_LABELS
+            pkg == "com.snapchat.android" -> SNAP_LOW_SIGNAL_LABELS
             else -> emptyList()
         }
     }
@@ -649,12 +759,21 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (maybeBlockSwitchlySettingsBypassSurface(pkg, event)) return
         if (maybeBlockUninstallFrictionSurface(pkg, event)) return
 
-        if (pkg == "com.google.android.youtube" && BlockerActivity.consumePendingYouTubeHomeRedirectFor(pkg)) {
+        if (pkg == "com.google.android.youtube" && maybeBlockYouTubeHomeShortsBeforeDedupe(event)) return
+
+        val pendingYouTubeHomeRedirectFlags =
+            if (pkg == "com.google.android.youtube") BlockerActivity.consumePendingYouTubeHomeRedirectFlagsFor(pkg) else 0
+        if (pendingYouTubeHomeRedirectFlags != 0) {
             val ackNow = System.currentTimeMillis()
+            val cleanupShorts =
+                (pendingYouTubeHomeRedirectFlags and BlockerActivity.FLAG_YOUTUBE_CLEANUP_SHORTS) != 0
+            val cleanupMini =
+                (pendingYouTubeHomeRedirectFlags and BlockerActivity.FLAG_YOUTUBE_CLEANUP_MINI) != 0
             inAppGraceUntilByPkg[pkg] = ackNow + maxOf(INAPP_POST_BLOCK_GRACE_MS, YT_SHORTS_REENTRY_GUARD_MS)
             surfaceBlockGuardUntil["$pkg|yt:shorts"] = ackNow + YT_SHORTS_REENTRY_GUARD_MS
             surfaceBlockGuardUntil["$pkg|yt:subscriptions"] = ackNow + YT_SHORTS_REENTRY_GUARD_MS
             clearSurfaceEvidenceForPackage(pkg)
+            clearSurfaceHintForPackage(pkg)
             if (currentSurfacePkg == pkg) {
                 currentSurfaceKey = null
                 currentSurfacePkg = null
@@ -662,13 +781,25 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             appendBlockingLog(
                 category = "yt_home_redirect",
                 key = "post-ack-youtube-home|$pkg",
-                message = "reason=post_ack pkg=$pkg"
+                message = "reason=post_ack pkg=$pkg cleanupShorts=$cleanupShorts cleanupMini=$cleanupMini"
             )
             runCatching { blockLaunchController.pauseActiveMediaPlayback() }
-            dismissYouTubeMiniPlayer("post_ack_before_home")
-            redirectYouTubeToHome("post_ack", currentRoot(event))
-            handler.postDelayed({ dismissYouTubeMiniPlayer("post_ack_retry_300") }, 300L)
-            handler.postDelayed({ dismissYouTubeMiniPlayer("post_ack_retry_750") }, 750L)
+            val postAckRoot = youtubeCurrentRoot(event)
+            if (cleanupMini) {
+                dismissYouTubeMiniPlayer("post_ack_before_home")
+            }
+            if (cleanupShorts) {
+                cleanupYouTubeShortsAfterAck("post_ack")
+                handler.postDelayed({ cleanupYouTubeShortsAfterAck("post_ack_retry_300") }, 300L)
+                handler.postDelayed({ cleanupYouTubeShortsAfterAck("post_ack_retry_750") }, 750L)
+                handler.postDelayed({ cleanupYouTubeShortsAfterAck("post_ack_retry_1300") }, 1_300L)
+            } else if (cleanupMini) {
+                redirectYouTubeToHome("post_ack", postAckRoot, allowLaunchFallback = false, closeMiniPlayer = true)
+                handler.postDelayed({ dismissYouTubeMiniPlayer("post_ack_retry_300") }, 300L)
+                handler.postDelayed({ dismissYouTubeMiniPlayer("post_ack_retry_750") }, 750L)
+            } else {
+                redirectYouTubeToHome("post_ack", postAckRoot, allowLaunchFallback = false, closeMiniPlayer = false)
+            }
             return
         }
 
@@ -679,6 +810,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             // Prevent immediate re-detection loops while navigating back to app home.
             inAppGraceUntilByPkg[pkg] = ackNow + INAPP_POST_BLOCK_GRACE_MS
             clearSurfaceEvidenceForPackage(pkg)
+            clearSurfaceHintForPackage(pkg)
             if (currentSurfacePkg == pkg) {
                 currentSurfaceKey = null
                 currentSurfacePkg = null
@@ -689,7 +821,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 val rootNow = currentRoot(event)
                 val stateNow = rootNow?.let { instagramState(it, event) }
                 val searchNow = rootNow?.let { isInstagramSearchScreen(it, event) } == true
-                val homeSelected = rootNow?.let { hasSelectedLabel(it, listOf("home", "startseite")) } == true
+                val homeSelected = rootNow?.let { hasSelectedLabel(it, IG_HOME_LABELS) } == true
 
                 effectiveBackCount = when {
                     stateNow == "home" || homeSelected -> 0
@@ -703,15 +835,16 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 surfaceBlockGuardUntil["$pkg|ig:explore"] = guardUntil
             } else if (pkg == "com.google.android.youtube") {
                 val ytPkg = "com.google.android.youtube"
-                val rootNow = currentRoot(event)
+                val rootNow = youtubeCurrentRoot(event)
                 val ytWindowReady = isRootFromPackage(rootNow, ytPkg)
-                val shortsNow = ytWindowReady && (rootNow?.let { isYouTubeShortsScreen(it, event) } == true)
+                val shortsNow = ytWindowReady && (rootNow?.let { isYouTubeShortsScreen(it, event) || isLikelyYouTubeShortsPlayer(it, event) } == true)
+                val homeFeedShortsNow = ytWindowReady && rootNow?.let { isYouTubeHomeFeedShortsPlayer(it, event) } == true
                 val homeSelected =
                     if (ytWindowReady) {
                         rootNow?.let {
                             hasSelectedLabelInPackage(
                                 it,
-                                listOf("home", "startseite"),
+                                YT_HOME_LABELS,
                                 ytPkg
                             )
                         } == true
@@ -723,13 +856,16 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 // Prefer explicit in-app Home tab navigation. Pause first to reduce YouTube mini-player leftovers.
                 effectiveBackCount = 0
                 runCatching { blockLaunchController.pauseActiveMediaPlayback() }
+                if (homeFeedShortsNow) {
+                    closeYouTubeShortsPlayer("pending_back", rootNow)
+                }
 
                 // If YouTube root is not active yet, wait briefly for task restore first.
                 // Launch fallback only on late retries to avoid launcher flashes.
                 val movedToHome = when {
                     !ytWindowReady -> false
-                    homeSelected -> true
-                    else -> tryNavigateYouTubeToHome(rootNow)
+                    homeSelected && !homeFeedShortsNow -> true
+                    else -> tryNavigateYouTubeToAllowedSafeSurface(rootNow, "pending_back")
                 }
 
                 // Guard against immediate re-trigger while tab transition settles.
@@ -741,10 +877,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     for (delay in retryDelays) {
                         handler.postDelayed({
                             runCatching {
-                                val rootRetry = rootInActiveWindow
+                                val rootRetry = youtubeCurrentRoot()
 
-                                // If the active root is not YouTube yet (e.g. launcher while PiP is visible),
-                                // bring YouTube task to foreground and wait for the next retry.
+                                // If the active root is not YouTube yet (e.g. launcher while PiP is visible), bring YouTube task to foreground and wait for the next retry.
                                 if (!isRootFromPackage(rootRetry, ytPkg)) {
                                     if (delay >= 860L) {
                                         launchYouTubeHomeFallback()
@@ -752,17 +887,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                                     return@runCatching
                                 }
 
-                                val alreadyHome =
-                                    rootRetry?.let {
-                                        hasSelectedLabelInPackage(
-                                            it,
-                                            listOf("home", "startseite"),
-                                            ytPkg
-                                        )
-                                    } == true
-                                if (!alreadyHome) {
-                                    tryNavigateYouTubeToHome(rootRetry)
-                                }
+                                tryNavigateYouTubeToAllowedSafeSurface(rootRetry, "pending_back_retry_$delay")
                             }
                         }, delay)
                     }
@@ -836,6 +961,14 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             if (shouldRunDeepProbe(pkg, type, isTransition = true, now = now)) {
                 maybeBlockNow(pkg, event)
             }
+            if (pkg == "com.google.android.youtube" ||
+                type == AccessibilityEvent.TYPE_WINDOWS_CHANGED ||
+                type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+                maybeBlockYouTubeFloatingPlayer(event, "transition")
+                if (pkg == "com.google.android.youtube") {
+                    scheduleYouTubeContentRetryProbe(type, now)
+                }
+            }
             return
         }
 
@@ -859,6 +992,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             if (shouldRunDeepProbe(pkg, type, isTransition = false, now = now)) {
                 maybeBlockNow(pkg, event)
             }
+            if (pkg == "com.google.android.youtube") {
+                scheduleYouTubeContentRetryProbe(type, now)
+            }
         } else if (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
             // Fallback: shortly after transitions, reduce one-frame flash.
             if (now - lastTransitionAt <= 350L) {
@@ -866,6 +1002,38 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     maybeBlockNow(pkg, event)
                 }
             }
+        }
+    }
+
+    private fun scheduleYouTubeContentRetryProbe(eventType: Int, now: Long) {
+        val relevant =
+            eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||
+                eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED ||
+                eventType == AccessibilityEvent.TYPE_VIEW_CLICKED ||
+                eventType == AccessibilityEvent.TYPE_VIEW_SELECTED ||
+                eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED
+        if (!relevant) return
+        if (now - lastYouTubeRetryProbeAt < 260L) return
+        lastYouTubeRetryProbeAt = now
+
+        val pkg = "com.google.android.youtube"
+        longArrayOf(50L, 100L, 150L).forEach { delay ->
+            handler.postDelayed({
+                runCatching {
+                    val retryNow = System.currentTimeMillis()
+                    if (surfaceGuardActive(pkg, "yt:shorts", retryNow)) {
+                        return@runCatching
+                    }
+                    val root = youtubeCurrentRoot()
+                    if (root != null && isYouTubeShortsScreen(root)) {
+                        rememberSurfaceHint(pkg, "yt:shorts", retryNow)
+                    }
+                    if (root != null || findYouTubeWindowRoot() != null) {
+                        maybeBlockNow(pkg, null)
+                        maybeBlockYouTubeFloatingPlayer(null, "retry_$delay")
+                    }
+                }
+            }, delay)
         }
     }
 
@@ -1389,6 +1557,27 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             reason = "decision_block",
             details = "profile=$profile limitMin=$limitMin attemptLimit=$attemptLimit opensExceeded=$opensExceeded immediate=${decision.immediate} force=$force event=${eventTypeLabel(event)}"
         )
+        val appRule = when {
+            allowMode && allowModeListed && !isManagedPackage(pkg, blocked) -> getString(R.string.block_reason_rule_allow_selected)
+            limitMin > 0 && effectiveUsageMsToday >= limitMin * 60_000L -> getString(R.string.block_reason_rule_daily_time_limit)
+            opensExceeded -> getString(R.string.block_reason_rule_open_limit)
+            lockActive && isHighRiskBlockTarget(this, pkg) -> getString(R.string.block_reason_rule_strict_lock)
+            else -> getString(R.string.block_reason_rule_blocked_apps)
+        }
+        val appMode = if (allowMode) {
+            getString(R.string.block_reason_mode_allow_not_allowed)
+        } else {
+            getString(R.string.block_reason_mode_block_selected)
+        }
+        rememberBlockReason(
+            pkg = pkg,
+            profile = profile,
+            rule = appRule,
+            mode = appMode,
+            source = getString(R.string.block_reason_source_app_blocking),
+            matched = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg),
+            result = getString(R.string.block_reason_result_blocked)
+        )
         blockNow(pkg, immediate = decision.immediate)
     }
 
@@ -1464,6 +1653,31 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         AppLogStore.append(this, "Blocking", "[$category] $message")
     }
 
+    private fun rememberBlockReason(
+        pkg: String,
+        label: String? = null,
+        profile: String? = null,
+        rule: String,
+        mode: String? = null,
+        source: String,
+        matched: String? = null,
+        result: String? = null,
+        details: String? = null
+    ) {
+        LastBlockReasonStore.mark(
+            this,
+            pkg = pkg,
+            label = label,
+            profile = profile,
+            rule = rule,
+            mode = mode,
+            source = source,
+            matched = matched,
+            result = result,
+            details = details
+        )
+    }
+
     private fun softBlockSurface(
         pkg: String,
         appLabel: String,
@@ -1475,8 +1689,11 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         forceShow: Boolean = false,
         postAcknowledgeYouTubeHome: Boolean = false,
         postAcknowledgeYouTubeClose: Boolean = false,
+        postAcknowledgeYouTubeCleanupShorts: Boolean = false,
+        postAcknowledgeYouTubeCleanupMini: Boolean = true,
         prePopupPhoneHome: Boolean = false,
-        prePopupYouTubeHome: Boolean = false
+        prePopupYouTubeHome: Boolean = false,
+        prePopupYouTubeCloseShorts: Boolean = false
     ) {
         if (!SwitchModeStore.isEnabled(this)) {
             BlockerActivity.clearVisibilityState("surface_block_skipped_disabled")
@@ -1503,8 +1720,20 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             message = "pkg=$pkg title=${sanitizeWebsiteSignal(title, 80)} backCount=$backCount defer=$deferNavigationUntilAcknowledge returnToPkg=$returnToPackageOnClose force=$forceShow preHome=$prePopupPhoneHome preYtHome=$prePopupYouTubeHome"
         )
 
-        // Short grace period after a surface block to prevent Reels/Shorts re-detect loops while the app is animating back to feed/home.
-        inAppGraceUntilByPkg[pkg] = now + INAPP_POST_BLOCK_GRACE_MS
+        rememberBlockReason(
+            pkg = pkg,
+            label = appLabel,
+            profile = ProfileStore.getCurrent(this),
+            rule = title,
+            source = getString(R.string.block_reason_source_in_app),
+            matched = title,
+            result = getString(R.string.block_reason_result_surface_blocked)
+        )
+
+        // Short grace period after a surface block to prevent re-detect loops while the app animates away.
+        // Snapchat needs a much tighter window: after blocking one story, opening the next story should be checked immediately.
+        val postBlockGraceMs = if (pkg == "com.snapchat.android") SNAP_POST_BLOCK_GRACE_MS else INAPP_POST_BLOCK_GRACE_MS
+        inAppGraceUntilByPkg[pkg] = now + postBlockGraceMs
         clearSurfaceEvidenceForPackage(pkg)
         if (currentSurfacePkg == pkg) {
             currentSurfaceKey = null
@@ -1544,20 +1773,30 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             blockLaunchController.postHome(delayMs = 60L)
         }
 
-        if (prePopupYouTubeHome && pkg == "com.google.android.youtube") {
-            val isShortsPopup = title.contains(getString(R.string.in_app_surface_shorts_label), ignoreCase = true)
-            prepareYouTubeHomeBeforeSurfacePopup(
-                reason = if (isShortsPopup) "shorts_pre_popup_yt_home" else "pre_popup_yt_home",
-                allowLaunchFallback = !isShortsPopup
-            )
-        }
-
         val isYouTubeShortsPopup =
             pkg == "com.google.android.youtube" &&
                 title.contains(getString(R.string.in_app_surface_shorts_label), ignoreCase = true)
+        val isYouTubeHomeFeedShortsPopup =
+            prePopupYouTubeHome &&
+                prePopupYouTubeCloseShorts &&
+                isYouTubeShortsPopup &&
+                youtubeCurrentRoot()?.let { isYouTubeHomeFeedShortsPlayer(it) } == true
+
+        if (prePopupYouTubeHome && pkg == "com.google.android.youtube") {
+            prepareYouTubeHomeBeforeSurfacePopup(
+                reason = if (isYouTubeShortsPopup) "shorts_pre_popup_yt_home" else "pre_popup_yt_home",
+                allowLaunchFallback = !isYouTubeShortsPopup,
+                closeVisibleShorts = isYouTubeHomeFeedShortsPopup,
+                closeMiniPlayer = prePopupYouTubeCloseShorts
+            )
+        }
+
         val showDelay = when {
-            // For Shorts, click the YouTube Home tab first but show the blocker on the next main-loop tick.
-            // This hides YouTube's Home transition under the popup instead of showing Home first and then popping the blocker.
+            // For Shorts opened from Home, first close the player with BACK, then show the popup.
+            // Otherwise YouTube keeps the same Short under the blocker because Home is already selected.
+            isYouTubeHomeFeedShortsPopup -> 180L
+            // Bottom-nav Shorts should use the older flow: move YouTube to Home before the popup, then OK only dismisses the popup.
+            // A second Home redirect after OK can restore Shorts again.
             prePopupYouTubeHome && isYouTubeShortsPopup -> 0L
             prePopupYouTubeHome -> 900L
             prePopupPhoneHome -> 260L
@@ -1584,7 +1823,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     postAcknowledgeBackCount = if (deferNavigationUntilAcknowledge) backCount else 0,
                     returnToPackageOnClose = returnToPackageOnClose,
                     postAcknowledgeYouTubeHome = postAcknowledgeYouTubeHome,
-                    postAcknowledgeYouTubeClose = postAcknowledgeYouTubeClose
+                    postAcknowledgeYouTubeClose = postAcknowledgeYouTubeClose,
+                    postAcknowledgeYouTubeCleanupShorts = postAcknowledgeYouTubeCleanupShorts,
+                    postAcknowledgeYouTubeCleanupMini = postAcknowledgeYouTubeCleanupMini
                 )
             }
         }
@@ -1629,6 +1870,16 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             message = "pkg=$pkg title=${sanitizeWebsiteSignal(title, 80)} action=home_then_popup surface=$surfaceKey force=$forceShow"
         )
 
+        rememberBlockReason(
+            pkg = pkg,
+            label = appLabel,
+            profile = ProfileStore.getCurrent(this),
+            rule = title,
+            source = getString(R.string.block_reason_source_in_app),
+            matched = surfaceKey,
+            result = getString(R.string.block_reason_result_surface_blocked)
+        )
+
         inAppGraceUntilByPkg[pkg] = now + maxOf(INAPP_POST_BLOCK_GRACE_MS, YT_SHORTS_REENTRY_GUARD_MS)
         surfaceBlockGuardUntil["$pkg|$surfaceKey"] = now + maxOf(INAPP_POST_BLOCK_GRACE_MS, YT_SHORTS_REENTRY_GUARD_MS)
         clearSurfaceEvidenceForPackage(pkg)
@@ -1647,7 +1898,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             // Also close YouTube's own mini-player when it appears after leaving Shorts.
             runCatching { blockLaunchController.pauseActiveMediaPlayback() }
             dismissYouTubeMiniPlayer("surface_${surfaceKey}_before_home")
-            redirectYouTubeToHome("surface:$surfaceKey", rootInActiveWindow)
+            redirectYouTubeToHome("surface:$surfaceKey", youtubeCurrentRoot())
             handler.postDelayed({ dismissYouTubeMiniPlayer("surface_${surfaceKey}_retry_350") }, 350L)
             handler.postDelayed({ dismissYouTubeMiniPlayer("surface_${surfaceKey}_retry_900") }, 900L)
         } else {
@@ -1721,6 +1972,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             key = "settings-bypass|$pkg|${signal.reason}",
             message = "pkg=$pkg reason=${signal.reason} event=${eventTypeLabel(event)}",
             throttleMs = 1_200L
+        )
+        rememberBlockReason(
+            pkg = pkg,
+            label = appLabel,
+            profile = ProfileStore.getCurrent(this),
+            rule = getString(R.string.block_reason_rule_settings_bypass),
+            source = getString(R.string.block_reason_source_strict_mode),
+            matched = signal.reason,
+            result = getString(R.string.block_reason_result_blocked)
         )
         showSettingsBypassBlock(
             pkg = pkg,
@@ -2178,46 +2438,49 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private fun inAppTotalUsageMsToday(): Long {
         var total = 0L
 
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_SHORTS)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SHORTS)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "yt:shorts")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_YOU)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SUBSCRIPTIONS)) {
+            total += SurfaceUsageStore.getUsageMsToday(this, "yt:subscriptions")
+        }
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_YOU)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "yt:you")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_REELS)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_REELS)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "ig:reels")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_EXPLORE)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_EXPLORE)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "ig:explore")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_SEARCH)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_SEARCH)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "ig:search")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_STORIES)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_STORIES)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "ig:stories")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_HOME)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_HOME)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "x:foryou")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_SEARCH)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_SEARCH)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "x:search")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_GROK)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_GROK)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "x:grok")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_NOTIFICATIONS)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_NOTIFICATIONS)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "x:notifications")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_MAP)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_MAP)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "snap:map")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_STORIES)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_STORIES)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "snap:stories")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_SPOTLIGHT)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_SPOTLIGHT)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "snap:spotlight")
         }
-        if (prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_FOLLOWING)) {
+        if (inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_FOLLOWING)) {
             total += SurfaceUsageStore.getUsageMsToday(this, "snap:following")
         }
 
@@ -2242,15 +2505,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             cachedPrefsBool.clear()
         }
 
-        // Global master gate for all in-app surface blockers.
-        if (BlockingToggleKeys.isInAppSurfaceKey(baseKey)) {
-            val inAppEnabled = prefsBoolProfile(true, BlockingToggleKeys.KEY_BLOCK_INAPP)
-            if (!inAppEnabled) {
-                cachedPrefsBool[baseKey] = false
-                return false
-            }
-        }
-
         cachedPrefsBool[baseKey]?.let { return it }
 
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
@@ -2272,6 +2526,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         cachedPrefsBool[baseKey] = value
         return value
+    }
+
+    private fun inAppSurfaceRuleEnabled(baseKey: String): Boolean {
+        val now = System.currentTimeMillis()
+        val profile = getCurrentProfileCached(now) ?: "default"
+        return InAppRuleStore.shouldBlockSurface(this, profile, baseKey)
     }
 
     private fun tryExtractDomainFromBrowserUrlViews(root: AccessibilityNodeInfo, pkg: String): String? {
@@ -2785,6 +3045,31 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             ?: runCatching { windows?.firstOrNull()?.root }.getOrNull()
     }
 
+    private fun youtubeCurrentRoot(event: AccessibilityEvent? = null): AccessibilityNodeInfo? {
+        val active = rootInActiveWindow
+        if (isRootFromPackage(active, "com.google.android.youtube")) return active
+        val source = runCatching { event?.source }.getOrNull()
+        if (isRootFromPackage(source, "com.google.android.youtube")) return source
+        return findYouTubeWindowRoot() ?: active ?: source
+    }
+
+    private fun findYouTubeWindowRoot(): AccessibilityNodeInfo? {
+        val activeWindows = runCatching { windows }.getOrNull().orEmpty()
+        for (window in activeWindows) {
+            val isAppWindow = runCatching { window.type == AccessibilityWindowInfo.TYPE_APPLICATION }.getOrDefault(false)
+            val root = runCatching { window.root }.getOrNull() ?: continue
+            if (isRootFromPackage(root, "com.google.android.youtube")) return root
+            if (isAppWindow && containsPackageNode(root, "com.google.android.youtube")) return root
+        }
+        return null
+    }
+
+    private fun containsPackageNode(root: AccessibilityNodeInfo, pkg: String): Boolean {
+        return findAnyNode(root) { node ->
+            node.packageName?.toString()?.lowercase(Locale.getDefault()) == pkg
+        } != null
+    }
+
     private fun tryRedirectBrowserToSafePage(pkg: String): Boolean {
         val safeUris = listOf("about:blank", "about:home")
         for (raw in safeUris) {
@@ -2853,8 +3138,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             return
         }
 
-        val blockWebsitesEnabled = isDomainBlockingEnabledCached() && prefsBoolProfile(true, BlockingToggleKeys.KEY_BLOCK_WEBSITES)
-        val blockedDomainsList = if (blockWebsitesEnabled) DomainBlockStore.getDomains(this).toList() else emptyList()
+        val blockWebsitesEnabled = DomainBlockStore.isEnabled(this)
+        val blockedDomainsList = if (blockWebsitesEnabled) DomainBlockStore.getEnabledDomains(this).toList() else emptyList()
 
         val host = tryExtractDomainFromBrowser(root, pkg, event)
             ?: if (isFirefoxFamily(pkg) && blockWebsitesEnabled) {
@@ -2953,10 +3238,13 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         if (!blockWebsitesEnabled) return
 
-        val selectedDomains = blockedDomainsList
         val hardBlocked = DomainBlockStore.shouldBlockHost(this, host)
 
-        val limitMin = DomainLimitStore.getLimitMinutes(this, host)
+        val limitMin = if (DomainBlockStore.isRuleEnabledForHost(this, host)) {
+            DomainLimitStore.getLimitMinutes(this, host)
+        } else {
+            0
+        }
         val usageMs = if (limitMin > 0) WebUsageStore.getUsageMsToday(this, host) else 0L
         val limitReached = limitMin > 0 && usageMs >= limitMin.toLong() * 60_000L
 
@@ -2979,6 +3267,23 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         // Prefer redirecting the current browser task to a safe page so the browser stays open without dropping the user out of the whole app.
         // Fall back to a single BACK only if the redirect is not supported by the current browser build.
         val redirected = tryRedirectBrowserToSafePage(pkg)
+        val websiteAllowMode = ProfileStore.getCurrent(this)
+            ?.let { ProfileRuleModeStore.isAllowMode(this, it) } == true
+        rememberBlockReason(
+            pkg = pkg,
+            label = appLabel,
+            profile = ProfileStore.getCurrent(this),
+            rule = if (hardBlocked) getString(R.string.block_reason_rule_website_rule) else getString(R.string.block_reason_rule_website_limit),
+            mode = if (websiteAllowMode) {
+                getString(R.string.block_reason_mode_website_allow_not_allowed)
+            } else {
+                getString(R.string.block_reason_mode_website_block_selected)
+            },
+            source = getString(R.string.block_reason_source_website),
+            matched = host,
+            result = getString(R.string.block_reason_result_blocked)
+        )
+
         appendBlockingLog(
             category = "website_block",
             key = "web-block|$pkg|$host",
@@ -3020,13 +3325,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private fun enforceFirefoxShortcutWebsiteIfVisible(pkg: String) {
         if (!SwitchModeStore.isEnabled(this)) return
         if (EmergencyBypassStore.isActive(this)) return
-        if (!isDomainBlockingEnabledCached()) return
-        if (!prefsBoolProfile(true, BlockingToggleKeys.KEY_BLOCK_WEBSITES)) return
-
         val root = currentRoot(null) ?: return
         if (!isRootFromPackage(root, pkg)) return
 
-        val blockedDomains = DomainBlockStore.getDomains(this).toList()
+        val blockedDomains = DomainBlockStore.getEnabledDomains(this).toList()
         val allowWebsiteMode = ProfileStore.getCurrent(this)?.let { ProfileRuleModeStore.isAllowMode(this, it) } == true
         if (blockedDomains.isEmpty() && !allowWebsiteMode) return
 
@@ -3037,7 +3339,11 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             ?: return
 
         val hardBlocked = DomainBlockStore.shouldBlockHost(this, visibleHost)
-        val limitMin = DomainLimitStore.getLimitMinutes(this, visibleHost)
+        val limitMin = if (DomainBlockStore.isRuleEnabledForHost(this, visibleHost)) {
+            DomainLimitStore.getLimitMinutes(this, visibleHost)
+        } else {
+            0
+        }
         val limitReached = limitMin > 0 && WebUsageStore.getUsageMsToday(this, visibleHost) >= limitMin.toLong() * 60_000L
         if (!hardBlocked && !limitReached) return
 
@@ -3096,9 +3402,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     ) {
         if (!SwitchModeStore.isEnabled(this)) return
         if (EmergencyBypassStore.isActive(this)) return
-        if (!isDomainBlockingEnabledCached()) return
-        if (!prefsBoolProfile(true, BlockingToggleKeys.KEY_BLOCK_WEBSITES)) return
-
         val root = currentRoot(null) ?: return
         if (!isRootFromPackage(root, pkg)) return
 
@@ -3107,7 +3410,11 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             ?: return
 
         val stillBlocked = DomainBlockStore.shouldBlockHost(this, visibleHost)
-        val limitMin = DomainLimitStore.getLimitMinutes(this, visibleHost)
+        val limitMin = if (DomainBlockStore.isRuleEnabledForHost(this, visibleHost)) {
+            DomainLimitStore.getLimitMinutes(this, visibleHost)
+        } else {
+            0
+        }
         val limitReached = limitMin > 0 && WebUsageStore.getUsageMsToday(this, visibleHost) >= limitMin.toLong() * 60_000L
 
         if (!stillBlocked && !limitReached) return
@@ -3359,8 +3666,32 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
         val x = (width * centerXRatio).coerceIn(1f, width.toFloat() - 1f)
         val y = (height * centerYRatio).coerceIn(1f, height.toFloat() - 1f)
-        val path = Path().apply { moveTo(x, y) }
+        return tapScreenAtPoint(x, y)
+    }
+
+    private fun tapScreenAtPoint(x: Float, y: Float): Boolean {
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val safeX = x.coerceIn(1f, width.toFloat() - 1f)
+        val safeY = y.coerceIn(1f, height.toFloat() - 1f)
+        val path = Path().apply { moveTo(safeX, safeY) }
         val stroke = GestureDescription.StrokeDescription(path, 0L, 50L)
+        val gesture = GestureDescription.Builder().addStroke(stroke).build()
+        return runCatching { dispatchGesture(gesture, null, null) }.getOrDefault(false)
+    }
+
+    private fun swipeScreen(fromX: Float, fromY: Float, toX: Float, toY: Float, durationMs: Long = 180L): Boolean {
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val safeFromX = fromX.coerceIn(1f, width.toFloat() - 1f)
+        val safeFromY = fromY.coerceIn(1f, height.toFloat() - 1f)
+        val safeToX = toX.coerceIn(1f, width.toFloat() - 1f)
+        val safeToY = toY.coerceIn(1f, height.toFloat() - 1f)
+        val path = Path().apply {
+            moveTo(safeFromX, safeFromY)
+            lineTo(safeToX, safeToY)
+        }
+        val stroke = GestureDescription.StrokeDescription(path, 0L, durationMs)
         val gesture = GestureDescription.Builder().addStroke(stroke).build()
         return runCatching { dispatchGesture(gesture, null, null) }.getOrDefault(false)
     }
@@ -3466,7 +3797,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val r = root ?: return tapScreenAtRatio(0.50f, 0.90f)
         val pkg = "com.snapchat.android"
 
-        if (tryClickAnyLabelInPackage(r, pkg, listOf("camera", "capture"))) return true
+        if (tryClickAnyLabelInPackage(r, pkg, SNAP_CAMERA_LABELS)) return true
 
         val cameraNode = findBestSnapchatBottomTabNode(r, 0.50f)
         val cameraClicked = try {
@@ -3477,7 +3808,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         if (tapScreenAtRatio(0.50f, 0.90f) || tapScreenAtRatio(0.50f, 0.86f)) return true
 
-        if (tryClickAnyLabelInPackage(r, pkg, listOf("chat", "chats"))) return true
+        if (tryClickAnyLabelInPackage(r, pkg, SNAP_CHAT_LABELS)) return true
 
         val chatNode = findBestSnapchatBottomTabNode(r, 0.30f)
         val chatClicked = try {
@@ -3492,13 +3823,13 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private fun tryNavigateTwitterToHome(root: AccessibilityNodeInfo?): Boolean {
         val r = root ?: return false
         val pkg = "com.twitter.android"
-        return tryClickAnyLabelInPackage(r, pkg, listOf("home", "home timeline", "startseite"))
+        return tryClickAnyLabelInPackage(r, pkg, X_HOME_NAV_LABELS)
     }
 
     private fun tryNavigateTwitterToNotifications(root: AccessibilityNodeInfo?): Boolean {
         val r = root ?: return false
         val pkg = "com.twitter.android"
-        return tryClickAnyLabelInPackage(r, pkg, listOf("notifications", "notification", "benachrichtigungen"))
+        return tryClickAnyLabelInPackage(r, pkg, X_NOTIFICATIONS_NAV_LABELS)
     }
 
     private fun isTwitterSurfaceSelected(root: AccessibilityNodeInfo, labels: List<String>): Boolean {
@@ -3549,8 +3880,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
             when {
                 SNAP_MAP_LABELS.any { combinedHaystack.contains(it) } -> "snap:map"
-                SNAP_STORIES_LABELS.any { combinedHaystack.contains(it) } -> "snap:stories"
                 SNAP_SPOTLIGHT_LABELS.any { combinedHaystack.contains(it) } -> "snap:spotlight"
+                SNAP_STORIES_LABELS.any { combinedHaystack.contains(it) } -> "snap:stories"
                 SNAP_FOLLOWING_LABELS.any { combinedHaystack.contains(it) } -> "snap:following"
                 SNAP_SAFE_LABELS.any { combinedHaystack.contains(it) } -> "snap:safe"
                 rawSourceSurface != null && rawSourceSurface != "snap:safe" -> rawSourceSurface
@@ -3605,6 +3936,11 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return false
     }
 
+    private fun dismissOrClickNodeOrClickableParent(node: AccessibilityNodeInfo?): Boolean {
+        val dismissed = runCatching { node?.performAction(AccessibilityNodeInfo.ACTION_DISMISS) == true }.getOrDefault(false)
+        return dismissed || clickNodeOrClickableParent(node)
+    }
+
     private fun launchYouTubeHomeFallback(reason: String = "fallback") {
         // Keep navigation inside YouTube.
         // Prefer explicit YouTube Home/web entry intents over the package launch intent because YouTube's default launch can restore the last Shorts task or leave the device on the phone launcher after closing the mini-player.
@@ -3622,7 +3958,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 setPackage("com.google.android.youtube")
                 addFlags(flags)
             },
-            packageManager.getLaunchIntentForPackage("com.google.android.youtube")?.apply {
+            PackageLaunchIntentCompat.getLaunchIntent(this, "com.google.android.youtube")?.apply {
                 addFlags(flags)
             }
         ).filterNotNull()
@@ -3642,22 +3978,29 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun prepareYouTubeHomeBeforeSurfacePopup(reason: String, allowLaunchFallback: Boolean = true) {
+    private fun prepareYouTubeHomeBeforeSurfacePopup(
+        reason: String,
+        allowLaunchFallback: Boolean = true,
+        closeVisibleShorts: Boolean = false,
+        closeMiniPlayer: Boolean = true
+    ) {
         runCatching { blockLaunchController.pauseActiveMediaPlayback() }
 
         fun attempt(step: String, allowFallbackThisStep: Boolean) {
             runCatching {
-                val r = rootInActiveWindow
+                val r = youtubeCurrentRoot()
                 val rootIsYouTube = isRootFromPackage(r, "com.google.android.youtube")
                 val moved = if (rootIsYouTube) {
-                    tryNavigateYouTubeToHome(r)
+                    tryNavigateYouTubeToAllowedSafeSurface(r, "$reason:$step")
                 } else {
                     false
                 }
                 if (!moved && allowLaunchFallback && allowFallbackThisStep) {
                     launchYouTubeHomeFallback("$reason:$step")
                 }
-                dismissYouTubeMiniPlayer("$reason:$step")
+                if (closeMiniPlayer) {
+                    dismissYouTubeMiniPlayer("$reason:$step")
+                }
                 appendBlockingLog(
                     category = "yt_home_pre_popup",
                     key = "yt-home-pre-popup|$reason|$step",
@@ -3667,19 +4010,31 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
         }
 
-        // YouTube Shorts is special: the smoother path is:
+        // YouTube Home-feed Shorts is special: the smoother path is:
         // 1) pause/close any player chrome,
-        // 2) tap YouTube Home immediately while YouTube is still the active window,
+        // 2) close the Home-feed Shorts player before the blocker covers YouTube,
         // 3) launch the blocker on the next main-loop tick so the Home transition happens underneath it.
-        // Do NOT use the launch-intent fallback for Shorts here; on some builds it revives the mini/PiP player or drops the user to the phone launcher.
-        dismissYouTubeMiniPlayer("$reason:before")
+        // Bottom-tab Shorts should keep the older behavior and just navigate back to YouTube Home.
+        if (closeVisibleShorts) {
+            closeYouTubeShortsPlayer("$reason:before")
+        }
+        if (closeMiniPlayer) {
+            dismissYouTubeMiniPlayer("$reason:before")
+        }
         attempt("home_tab_immediate", allowFallbackThisStep = true)
         handler.postDelayed({ attempt("home_tab_retry_120", allowFallbackThisStep = false) }, 120L)
         handler.postDelayed({ attempt("settle_360", allowFallbackThisStep = false) }, 360L)
-        handler.postDelayed({ dismissYouTubeMiniPlayer("$reason:mini_retry_650") }, 650L)
+        if (closeMiniPlayer) {
+            handler.postDelayed({ dismissYouTubeMiniPlayer("$reason:mini_retry_650") }, 650L)
+        }
     }
 
-    private fun redirectYouTubeToHome(reason: String, root: AccessibilityNodeInfo? = null) {
+    private fun redirectYouTubeToHome(
+        reason: String,
+        root: AccessibilityNodeInfo? = null,
+        allowLaunchFallback: Boolean = true,
+        closeMiniPlayer: Boolean = true
+    ) {
         // A clicked YouTube tab/search icon can open its destination after our Accessibility event is delivered.
         // Try immediately, then retry shortly after the UI has switched.
         // This keeps the user inside YouTube but moves them back to Home instead of minimizing the app with BACK.
@@ -3687,18 +4042,20 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         fun attempt(tag: String) {
             runCatching {
-                val r = rootInActiveWindow
+                val r = youtubeCurrentRoot()
                 val moved = if (isRootFromPackage(r, "com.google.android.youtube")) {
-                    tryNavigateYouTubeToHome(r)
+                    tryNavigateYouTubeToAllowedSafeSurface(r, "$reason:$tag")
                 } else {
                     false
                 }
-                if (!moved) launchYouTubeHomeFallback("$reason:$tag")
-                dismissYouTubeMiniPlayer("$reason:$tag")
+                if (!moved && allowLaunchFallback) launchYouTubeHomeFallback("$reason:$tag")
+                if (closeMiniPlayer) {
+                    dismissYouTubeMiniPlayer("$reason:$tag")
+                }
                 appendBlockingLog(
                     category = "yt_home_redirect",
                     key = "yt-home-redirect|$reason|$tag",
-                    message = "reason=$reason step=$tag moved=$moved",
+                    message = "reason=$reason step=$tag moved=$moved fallback=$allowLaunchFallback",
                     throttleMs = 900L
                 )
             }
@@ -3706,16 +4063,18 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         runCatching {
             val moved = if (isRootFromPackage(root, "com.google.android.youtube")) {
-                tryNavigateYouTubeToHome(root)
+                tryNavigateYouTubeToAllowedSafeSurface(root, "$reason:immediate")
             } else {
                 false
             }
-            if (!moved) launchYouTubeHomeFallback("$reason:immediate")
-            dismissYouTubeMiniPlayer("$reason:immediate")
+            if (!moved && allowLaunchFallback) launchYouTubeHomeFallback("$reason:immediate")
+            if (closeMiniPlayer) {
+                dismissYouTubeMiniPlayer("$reason:immediate")
+            }
             appendBlockingLog(
                 category = "yt_home_redirect",
                 key = "yt-home-redirect|$reason|immediate",
-                message = "reason=$reason step=immediate moved=$moved",
+                message = "reason=$reason step=immediate moved=$moved fallback=$allowLaunchFallback",
                 throttleMs = 900L
             )
         }
@@ -3723,8 +4082,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         handler.postDelayed({ attempt("retry_700") }, 700L)
     }
 
-    private fun dismissYouTubeMiniPlayer(reason: String): Boolean {
-        val root = rootInActiveWindow ?: return false
+    private fun dismissYouTubeMiniPlayer(reason: String, allowFallbackTap: Boolean = false): Boolean {
+        val root = youtubeCurrentRoot() ?: return false
         if (!isRootFromPackage(root, "com.google.android.youtube")) return false
 
         val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
@@ -3772,16 +4131,721 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 message = "reason=$reason clicked=true match=$matchedLabel",
                 throttleMs = 500L
             )
+            return true
         }
+
+        if (allowFallbackTap && (isLikelyYouTubeMiniPlayerVisible(root) || hasYouTubeMiniPlayerGeometry(root))) {
+            val pauseAxisClicked = closeYouTubeMiniPlayerFromPlayPauseAxis(root, reason)
+            if (pauseAxisClicked) return true
+
+            val actionDismissed = dismissYouTubeMiniPlayerByAccessibilityAction(root, reason)
+            if (actionDismissed) return true
+
+            val boundsClicked = tapYouTubeMiniPlayerCloseByBounds(root, reason)
+            if (boundsClicked) return true
+
+            val swiped = swipeYouTubeMiniPlayerAway(root, reason)
+            if (swiped) return true
+
+            val fallbackClicked =
+                tapScreenAtRatio(0.94f, 0.68f) ||
+                    tapScreenAtRatio(0.94f, 0.76f) ||
+                    tapScreenAtRatio(0.94f, 0.82f) ||
+                    tapScreenAtRatio(0.94f, 0.86f) ||
+                    tapScreenAtRatio(0.94f, 0.88f) ||
+                    tapScreenAtRatio(0.88f, 0.76f)
+            appendBlockingLog(
+                category = "yt_mini_close",
+                key = "yt-mini-close-fallback|$reason",
+                message = "reason=$reason fallbackClicked=$fallbackClicked",
+                throttleMs = 500L
+            )
+            return fallbackClicked
+        }
+        return false
+    }
+
+    private fun dismissYouTubeMiniPlayerByAccessibilityAction(root: AccessibilityNodeInfo, reason: String): Boolean {
+        val playerBounds = findYouTubeMiniPlayerBounds(root) ?: return false
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        var matchedSignal = "-"
+
+        val node = findAnyNode(root) { candidate ->
+            val nodePkg = candidate.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { candidate.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+            val inMiniArea =
+                bounds.left >= playerBounds.left - width * 0.04f &&
+                    bounds.right <= playerBounds.right + width * 0.04f &&
+                    bounds.top >= playerBounds.top - height * 0.04f &&
+                    bounds.bottom <= playerBounds.bottom + height * 0.04f
+            if (!inMiniArea) return@findAnyNode false
+
+            val centerX = bounds.exactCenterX() / width.toFloat()
+            val text = candidate.text?.toString().orEmpty()
+            val desc = candidate.contentDescription?.toString().orEmpty()
+            val viewId = candidate.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val signal = "$text $desc $viewId".lowercase(Locale.getDefault())
+            val hasDismiss = candidate.actionList?.any { it.id == AccessibilityNodeInfo.ACTION_DISMISS } == true
+            val closeish =
+                anyNeedleMatches(signal, YT_MINI_PLAYER_CLOSE_LABELS) ||
+                    viewId.contains("close") ||
+                    viewId.contains("dismiss") ||
+                    centerX > 0.74f
+            val actionable =
+                hasDismiss ||
+                    candidate.isClickable ||
+                    candidate.actionList?.any { it.id == AccessibilityNodeInfo.ACTION_CLICK } == true
+            val matched = closeish && actionable
+            if (matched) matchedSignal = sanitizeWebsiteSignal(signal, 80)
+            matched
+        } ?: return false
+
+        val dismissed = runCatching { node.performAction(AccessibilityNodeInfo.ACTION_DISMISS) }.getOrDefault(false)
+        val clicked = if (!dismissed) clickNodeOrClickableParent(node) else false
+        appendBlockingLog(
+            category = "yt_mini_close",
+            key = "yt-mini-close-action|$reason",
+            message = "reason=$reason dismissed=$dismissed clicked=$clicked match=$matchedSignal",
+            throttleMs = 500L
+        )
+        return dismissed || clicked
+    }
+
+    private fun closeYouTubeMiniPlayerFromPlayPauseAxis(root: AccessibilityNodeInfo, reason: String): Boolean {
+        val playerBounds = findYouTubeMiniPlayerBounds(root) ?: return false
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+
+        val pauseCandidates = mutableListOf<AccessibilityNodeInfo>()
+        findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+            val centerX = bounds.exactCenterX()
+            val centerY = bounds.exactCenterY()
+            val inMiniArea =
+                centerX >= playerBounds.left &&
+                    centerX <= playerBounds.right &&
+                    centerY >= playerBounds.top &&
+                    centerY <= playerBounds.bottom
+            if (!inMiniArea) return@findAnyNode false
+
+            val text = node.text?.toString().orEmpty()
+            val desc = node.contentDescription?.toString().orEmpty()
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val className = node.className?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            val signal = "$text $desc $viewId".lowercase(Locale.getDefault())
+            val playPauseId =
+                viewId.contains("play") ||
+                    viewId.contains("pause") ||
+                    viewId.contains("player_control") ||
+                    viewId.contains("control")
+            val playPauseLabel = anyNeedleMatches(signal, YT_MINI_PLAYER_PLAY_PAUSE_LABELS)
+            val leftSideControlLike =
+                centerX <= playerBounds.left + playerBounds.width() * 0.48f &&
+                    bounds.width() <= width * 0.32f &&
+                    bounds.height() <= height * 0.14f &&
+                    (
+                        viewId.contains("button") ||
+                            viewId.contains("control") ||
+                            className.contains("button") ||
+                            className.contains("image") ||
+                            desc.isNotBlank()
+                        )
+            val actionable =
+                node.isClickable ||
+                    node.actionList?.any { it.id == AccessibilityNodeInfo.ACTION_CLICK } == true ||
+                    firstClickableAncestorInPackage(node, "com.google.android.youtube") != null
+            if ((playPauseId || playPauseLabel || leftSideControlLike) && actionable) {
+                pauseCandidates.add(node)
+            }
+            pauseCandidates.size >= 10
+        }
+        if (pauseCandidates.isEmpty()) return false
+
+        var tapped = false
+        pauseCandidates.forEach { pauseNode ->
+            val pauseBounds = Rect()
+            runCatching { pauseNode.getBoundsInScreen(pauseBounds) }.getOrNull()
+            if (pauseBounds.isEmpty) return@forEach
+
+            val parentSiblingClicked = closeYouTubeMiniPlayerFromPauseSiblings(pauseNode, playerBounds, reason)
+            if (parentSiblingClicked) return true
+
+            val closeSibling = findRightSideMiniPlayerActionNode(root, playerBounds, pauseBounds)
+            val siblingClicked = dismissOrClickNodeOrClickableParent(closeSibling)
+            if (siblingClicked) {
+                appendBlockingLog(
+                    category = "yt_mini_close",
+                    key = "yt-mini-close-pause-axis-node|$reason",
+                    message = "reason=$reason pause=${pauseBounds.left},${pauseBounds.top},${pauseBounds.right},${pauseBounds.bottom} clicked=true",
+                    throttleMs = 500L
+                )
+                return true
+            }
+
+            val y = pauseBounds.exactCenterY().coerceIn(playerBounds.top + 1f, playerBounds.bottom - 1f)
+            val xCandidates = listOf(
+                playerBounds.right - width * 0.025f,
+                playerBounds.right - width * 0.045f,
+                playerBounds.right - width * 0.065f,
+                playerBounds.right - width * 0.095f,
+                playerBounds.left + playerBounds.width() * 0.88f,
+                playerBounds.left + playerBounds.width() * 0.94f,
+                playerBounds.left + playerBounds.width() * 0.98f
+            )
+            xCandidates.forEach { x ->
+                if (tapScreenAtPoint(x, y)) tapped = true
+            }
+        }
+        appendBlockingLog(
+            category = "yt_mini_close",
+            key = "yt-mini-close-pause-axis-tap|$reason",
+            message = "reason=$reason candidates=${pauseCandidates.size} tapped=$tapped",
+            throttleMs = 500L
+        )
+        return tapped
+    }
+
+    private fun closeYouTubeMiniPlayerFromPauseSiblings(
+        workingPauseNode: AccessibilityNodeInfo,
+        playerBounds: Rect,
+        reason: String
+    ): Boolean {
+        val pauseBounds = Rect()
+        runCatching { workingPauseNode.getBoundsInScreen(pauseBounds) }.getOrNull()
+        if (pauseBounds.isEmpty) return false
+
+        var container = runCatching { workingPauseNode.parent }.getOrNull()
+        var hops = 0
+        while (container != null && hops < 5) {
+            val closeNode = findBestRightSideMiniPlayerControlInContainer(container, playerBounds, pauseBounds)
+            val clicked = dismissOrClickNodeOrClickableParent(closeNode)
+            if (clicked) {
+                appendBlockingLog(
+                    category = "yt_mini_close",
+                    key = "yt-mini-close-parent-sibling|$reason",
+                    message = "reason=$reason hops=$hops pause=${pauseBounds.left},${pauseBounds.top},${pauseBounds.right},${pauseBounds.bottom}",
+                    throttleMs = 500L
+                )
+                return true
+            }
+            container = runCatching { container?.parent }.getOrNull()
+            hops++
+        }
+
+        return false
+    }
+
+    private fun findBestRightSideMiniPlayerControlInContainer(
+        container: AccessibilityNodeInfo,
+        playerBounds: Rect,
+        pauseBounds: Rect
+    ): AccessibilityNodeInfo? {
+        data class WorkItem(val node: AccessibilityNodeInfo, val depth: Int)
+
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val pauseCenterX = pauseBounds.exactCenterX()
+        val pauseCenterY = pauseBounds.exactCenterY()
+        val maxYDistance = maxOf(52f, playerBounds.height() * 0.72f)
+        val bounds = Rect()
+        val stack = ArrayDeque<WorkItem>()
+        stack.addLast(WorkItem(container, 0))
+        var visited = 0
+        var best: AccessibilityNodeInfo? = null
+        var bestScore = Int.MIN_VALUE
+
+        while (stack.isNotEmpty() && visited < 120) {
+            val item = stack.removeLast()
+            val node = item.node
+            visited++
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (!bounds.isEmpty) {
+                val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+                val centerX = bounds.exactCenterX()
+                val centerY = bounds.exactCenterY()
+                val text = node.text?.toString().orEmpty()
+                val desc = node.contentDescription?.toString().orEmpty()
+                val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+                val signal = "$text $desc $viewId".lowercase(Locale.getDefault())
+                val samePauseNode =
+                    abs(centerX - pauseCenterX) < 2f &&
+                        abs(centerY - pauseCenterY) < 2f &&
+                        abs(bounds.width() - pauseBounds.width()) < 2 &&
+                        abs(bounds.height() - pauseBounds.height()) < 2
+                val closeSignal =
+                    anyNeedleMatches(signal, YT_MINI_PLAYER_CLOSE_LABELS) ||
+                        viewId.contains("close") ||
+                        viewId.contains("dismiss")
+                val sameAxisRightSide =
+                    centerX > pauseCenterX &&
+                        centerX >= playerBounds.left + playerBounds.width() * 0.55f &&
+                        centerX <= playerBounds.right + width * 0.04f &&
+                        centerY >= playerBounds.top - height * 0.04f &&
+                        centerY <= playerBounds.bottom + height * 0.04f &&
+                        abs(centerY - pauseCenterY) <= maxYDistance
+                val smallEnough =
+                    bounds.width() <= width * 0.34f &&
+                        bounds.height() <= height * 0.18f
+                val actionable =
+                    node.isClickable ||
+                        node.actionList?.any {
+                            it.id == AccessibilityNodeInfo.ACTION_CLICK ||
+                                it.id == AccessibilityNodeInfo.ACTION_DISMISS
+                        } == true ||
+                        firstClickableAncestorInPackage(node, "com.google.android.youtube") != null
+
+                if (
+                    !samePauseNode &&
+                    (nodePkg.isBlank() || nodePkg == "com.google.android.youtube") &&
+                    actionable &&
+                    smallEnough &&
+                    (closeSignal || sameAxisRightSide)
+                ) {
+                    val closeScore = if (closeSignal) 1_000_000 else 0
+                    val rightScore = centerX.toInt()
+                    val yScore = (height - abs(centerY - pauseCenterY).toInt())
+                    val sizeScore = maxOf(0, 20_000 - bounds.width() * bounds.height())
+                    val score = closeScore + rightScore + yScore + sizeScore
+                    if (score > bestScore) {
+                        bestScore = score
+                        best = node
+                    }
+                }
+            }
+
+            if (item.depth < 4) {
+                val childCount = runCatching { node.childCount }.getOrDefault(0)
+                for (i in childCount - 1 downTo 0) {
+                    val child = runCatching { node.getChild(i) }.getOrNull() ?: continue
+                    stack.addLast(WorkItem(child, item.depth + 1))
+                }
+            }
+        }
+
+        return best
+    }
+
+    private fun findRightSideMiniPlayerActionNode(
+        root: AccessibilityNodeInfo,
+        playerBounds: Rect,
+        pauseBounds: Rect
+    ): AccessibilityNodeInfo? {
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        var best: AccessibilityNodeInfo? = null
+        var bestScore = Int.MIN_VALUE
+        val pauseCenterY = pauseBounds.exactCenterY()
+
+        findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+            val centerX = bounds.exactCenterX()
+            val centerY = bounds.exactCenterY()
+            if (centerX <= pauseBounds.exactCenterX()) return@findAnyNode false
+            if (centerX < playerBounds.left || centerX > playerBounds.right) return@findAnyNode false
+            if (centerY < playerBounds.top || centerY > playerBounds.bottom) return@findAnyNode false
+            if (abs(centerY - pauseCenterY) > height * 0.12f) return@findAnyNode false
+            if (bounds.width() > width * 0.34f || bounds.height() > height * 0.18f) return@findAnyNode false
+
+            val text = node.text?.toString().orEmpty()
+            val desc = node.contentDescription?.toString().orEmpty()
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val signal = "$text $desc $viewId".lowercase(Locale.getDefault())
+            val actionable =
+                node.isClickable ||
+                    node.actionList?.any {
+                        it.id == AccessibilityNodeInfo.ACTION_CLICK ||
+                            it.id == AccessibilityNodeInfo.ACTION_DISMISS
+                    } == true ||
+                    firstClickableAncestorInPackage(node, "com.google.android.youtube") != null
+            if (!actionable) return@findAnyNode false
+
+            val closeScore = if (
+                anyNeedleMatches(signal, YT_MINI_PLAYER_CLOSE_LABELS) ||
+                viewId.contains("close") ||
+                viewId.contains("dismiss")
+            ) 1_000_000 else 0
+            val rightScore = centerX.toInt()
+            val yScore = (height - abs(centerY - pauseCenterY).toInt())
+            val score = closeScore + rightScore + yScore
+            if (score > bestScore) {
+                bestScore = score
+                best = node
+            }
+            false
+        }
+
+        return best
+    }
+
+    private fun swipeYouTubeMiniPlayerAway(root: AccessibilityNodeInfo, reason: String): Boolean {
+        val playerBounds = findYouTubeMiniPlayerBounds(root) ?: return false
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val fromX = playerBounds.exactCenterX()
+        val fromY = playerBounds.exactCenterY()
+        val toX = minOf(width - 4f, playerBounds.right + width * 0.36f)
+        val toY = minOf(height - 4f, playerBounds.bottom + playerBounds.height() * 1.35f)
+        val swiped =
+            swipeScreen(fromX, fromY, toX, fromY, durationMs = 220L) ||
+                swipeScreen(playerBounds.left + playerBounds.width() * 0.25f, fromY, toX, fromY, durationMs = 260L) ||
+                swipeScreen(fromX, fromY, fromX, toY, durationMs = 220L) ||
+                swipeScreen(playerBounds.left + playerBounds.width() * 0.78f, fromY, fromX, toY, durationMs = 220L)
+        appendBlockingLog(
+            category = "yt_mini_close",
+            key = "yt-mini-close-swipe|$reason",
+            message = "reason=$reason bounds=${playerBounds.left},${playerBounds.top},${playerBounds.right},${playerBounds.bottom} swiped=$swiped",
+            throttleMs = 500L
+        )
+        return swiped
+    }
+
+    private fun tapYouTubeMiniPlayerCloseByBounds(root: AccessibilityNodeInfo, reason: String): Boolean {
+        val playerBounds = findYouTubeMiniPlayerBounds(root) ?: return false
+        val closeX1 = playerBounds.right - playerBounds.width() * 0.06f
+        val closeX2 = playerBounds.right - resources.displayMetrics.widthPixels.coerceAtLeast(1) * 0.035f
+        val closeX3 = playerBounds.left + playerBounds.width() * 0.94f
+        val closeY1 = playerBounds.exactCenterY()
+        val closeY2 = playerBounds.top + playerBounds.height() * 0.42f
+        val closeY3 = playerBounds.top + playerBounds.height() * 0.62f
+
+        val clicked =
+            tapScreenAtPoint(closeX1, closeY1) ||
+                tapScreenAtPoint(closeX2, closeY1) ||
+                tapScreenAtPoint(closeX3, closeY1) ||
+                tapScreenAtPoint(closeX1, closeY2) ||
+                tapScreenAtPoint(closeX1, closeY3)
+
+        appendBlockingLog(
+            category = "yt_mini_close",
+            key = "yt-mini-close-bounds|$reason",
+            message = "reason=$reason bounds=${playerBounds.left},${playerBounds.top},${playerBounds.right},${playerBounds.bottom} clicked=$clicked",
+            throttleMs = 500L
+        )
         return clicked
     }
 
-    private fun tryNavigateYouTubeToHome(root: AccessibilityNodeInfo?): Boolean {
+    private fun maybeBlockYouTubeFloatingPlayer(
+        event: AccessibilityEvent?,
+        reason: String,
+        rootOverride: AccessibilityNodeInfo? = null,
+        force: Boolean = false
+    ): Boolean {
+        val pkg = "com.google.android.youtube"
+        if (!SwitchModeStore.isEnabled(this)) return false
+        val blockMiniPlayer = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_MINI_PLAYER)
+        val blockPictureInPicture = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_PIP)
+        val blockShorts = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SHORTS)
+        if (!blockMiniPlayer && !blockPictureInPicture && !blockShorts) return false
+
+        val now = System.currentTimeMillis()
+        if (!force && now - lastYouTubeFloatingPlayerBlockAt < 420L) return false
+
+        val root = rootOverride ?: youtubeCurrentRoot(event)
+        val eventSignal = youtubeEventSourceSignal(event, maxHops = 3)
+        val eventRealPip = isLikelyYouTubePictureInPicture(root, event) ||
+            anyNeedleMatches(eventSignal, YT_REAL_PIP_LABELS)
+        val windowPip = isYouTubePictureInPictureWindowVisible()
+        val miniVisible =
+            root?.let { isLikelyYouTubeMiniPlayerVisible(it) || hasYouTubeMiniPlayerGeometry(it) } == true ||
+                anyNeedleMatches(eventSignal, YT_MINI_PLAYER_NAME_LABELS)
+
+        val selectedSurface = root?.let { detectYouTubeSelectedSurface(it) ?: resolveYouTubeSurfaceFromEvent(event) }
+        val explicitShortsFloatingContext =
+            eventRealPip ||
+                windowPip ||
+                selectedSurface == "yt:shorts" ||
+                isYouTubeShortsEntryEvent(event)
+        val shortsFloating =
+            blockShorts &&
+                (eventRealPip || windowPip || (miniVisible && explicitShortsFloatingContext)) &&
+                root?.let { isLikelyYouTubeShortsPlayer(it, event) || isYouTubeHomeFeedShortsPlayer(it, event) || hasYouTubeDeepShortsSignal(it) } == true
+        if (shortsFloating) {
+            lastYouTubeFloatingPlayerBlockAt = now
+            logInAppSurfaceDetect(
+                pkg,
+                "yt:shorts",
+                enabled = true,
+                event = event,
+                detail = "floating_shorts reason=$reason realPip=$eventRealPip windowPip=$windowPip mini=$miniVisible"
+            )
+            if (eventRealPip || windowPip) {
+                runCatching { blockLaunchController.pauseActiveMediaPlayback() }
+                killYouTubePictureInPicture(pkg)
+                return true
+            }
+            return closeYouTubeShortsPlayer("floating_$reason", root)
+        }
+
+        if (!eventRealPip && !windowPip && !miniVisible) return false
+        val surfaceKey = if (eventRealPip || windowPip) "yt:pip" else "yt:miniplayer"
+        if ((surfaceKey == "yt:pip" && !blockPictureInPicture) || (surfaceKey == "yt:miniplayer" && !blockMiniPlayer)) {
+            return false
+        }
+        lastYouTubeFloatingPlayerBlockAt = now
+
+        logInAppSurfaceDetect(
+            pkg,
+            surfaceKey,
+            enabled = true,
+            event = event,
+            detail = "floating reason=$reason realPip=$eventRealPip windowPip=$windowPip mini=$miniVisible"
+        )
+
+        clearSurfaceEvidence(surfaceKey)
+        clearSurfaceHintForPackage(pkg)
+
+        if (eventRealPip || windowPip) {
+            runCatching { blockLaunchController.pauseActiveMediaPlayback() }
+            dismissYouTubeMiniPlayer("pip_rule_$reason", allowFallbackTap = true)
+            killYouTubePictureInPicture(pkg)
+            return true
+        }
+
+        blockYouTubeMiniPlayer(reason)
+        return true
+    }
+
+    private fun maybeBlockYouTubeHomeShortsBeforeDedupe(event: AccessibilityEvent?): Boolean {
+        if (!SwitchModeStore.isEnabled(this)) return false
+        if (!inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SHORTS)) return false
+
+        val type = event?.eventType ?: return false
+        val relevant =
+            type == AccessibilityEvent.TYPE_VIEW_CLICKED ||
+                type == AccessibilityEvent.TYPE_VIEW_SELECTED ||
+                type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||
+                type == AccessibilityEvent.TYPE_WINDOWS_CHANGED
+        if (!relevant) return false
+
+        val pkg = "com.google.android.youtube"
+        val now = System.currentTimeMillis()
+        if (surfaceGuardActive(pkg, "yt:shorts", now)) return false
+
+        val root = youtubeCurrentRoot(event) ?: return false
+        val detected =
+            isYouTubeHomeShortsShelfEvent(event, root) ||
+                isYouTubeHomeFeedShortsPlayer(root, event)
+        if (!detected) return false
+
+        rememberSurfaceHint(pkg, "yt:shorts", now)
+        currentSurfaceKey = "yt:shorts"
+        currentSurfacePkg = pkg
+        runCatching { blockLaunchController.pauseActiveMediaPlayback() }
+        softBlockSurface(
+            pkg = pkg,
+            appLabel = safeAppLabel(pkg),
+            title = getString(R.string.blocking_surface_blocked_title, getString(R.string.in_app_surface_shorts_label)),
+            message = surfaceUsageLine("yt:shorts", 0),
+            backCount = 0,
+            deferNavigationUntilAcknowledge = false,
+            returnToPackageOnClose = true,
+            forceShow = true,
+            prePopupYouTubeHome = true,
+            prePopupYouTubeCloseShorts = false,
+            postAcknowledgeYouTubeCleanupShorts = true,
+            postAcknowledgeYouTubeCleanupMini = false
+        )
+        return true
+    }
+
+    private fun blockYouTubeMiniPlayer(reason: String) {
+        val pkg = "com.google.android.youtube"
+        val now = System.currentTimeMillis()
+        inAppGraceUntilByPkg[pkg] = now + YT_MINI_PLAYER_CLEANUP_GRACE_MS
+        clearSurfaceEvidence("yt:shorts")
+        clearSurfaceHintForPackage(pkg)
+        surfaceBlockGuardUntil["$pkg|yt:shorts"] = now + 2_800L
+        attemptYouTubeMiniPlayerCloseStrategy("mini_rule_${reason}_immediate", "axis")
+
+        listOf(
+            120L to "axis",
+            320L to "action",
+            700L to "bounds",
+            1_100L to "swipe",
+            1_600L to "all"
+        ).forEach { (delay, strategy) ->
+            handler.postDelayed({
+                runCatching {
+                    attemptYouTubeMiniPlayerCloseStrategy("mini_rule_${reason}_retry_${delay}_$strategy", strategy)
+                }
+            }, delay)
+        }
+    }
+
+    private fun attemptYouTubeMiniPlayerCloseStrategy(reason: String, strategy: String): Boolean {
+        val root = youtubeCurrentRoot() ?: return false
+        if (!isRootFromPackage(root, "com.google.android.youtube")) return false
+        if (!isLikelyYouTubeMiniPlayerVisible(root) && !hasYouTubeMiniPlayerGeometry(root)) return false
+
+        return when (strategy) {
+            "axis" -> closeYouTubeMiniPlayerFromPlayPauseAxis(root, reason)
+            "action" -> dismissYouTubeMiniPlayerByAccessibilityAction(root, reason)
+            "bounds" -> tapYouTubeMiniPlayerCloseByBounds(root, reason)
+            "swipe" -> swipeYouTubeMiniPlayerAway(root, reason)
+            else -> dismissYouTubeMiniPlayer(reason, allowFallbackTap = true)
+        }
+    }
+
+    private fun cleanupYouTubeShortsAfterAck(reason: String): Boolean {
+        val root = youtubeCurrentRoot() ?: return false
+        if (!isRootFromPackage(root, "com.google.android.youtube")) return false
+
+        val stillShorts =
+            isYouTubeShortsScreen(root) ||
+                isYouTubeHomeFeedShortsPlayer(root) ||
+                isLikelyYouTubeShortsPlayer(root)
+        if (!stillShorts) {
+            tryNavigateYouTubeToAllowedSafeSurface(root, reason)
+            return false
+        }
+
+        val now = System.currentTimeMillis()
+        if (now - lastYouTubeShortsCloseAt < 1_800L) {
+            tryNavigateYouTubeToAllowedSafeSurface(root, reason)
+            return true
+        }
+
+        return closeYouTubeShortsPlayer(reason, root, recoverToYouTubeHome = true)
+    }
+
+    private fun closeYouTubeShortsPlayer(
+        reason: String,
+        root: AccessibilityNodeInfo? = youtubeCurrentRoot(),
+        recoverToYouTubeHome: Boolean = false
+    ): Boolean {
         val r = root ?: return false
-        val labels = listOf("home", "startseite")
+        if (!isRootFromPackage(r, "com.google.android.youtube") && !containsPackageNode(r, "com.google.android.youtube")) {
+            return false
+        }
+        if (!isYouTubeShortsScreen(r) && !hasYouTubeDeepShortsSignal(r)) return false
+
+        val now = System.currentTimeMillis()
+        if (now - lastYouTubeShortsCloseAt < 320L) return true
+        lastYouTubeShortsCloseAt = now
+
+        runCatching { blockLaunchController.pauseActiveMediaPlayback() }
+        dismissYouTubeMiniPlayer("shorts_close_$reason", allowFallbackTap = true)
+        val backSent = runCatching { performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK) }.getOrDefault(false)
+        surfaceBlockGuardUntil["com.google.android.youtube|yt:shorts"] = now + YT_SHORTS_REENTRY_GUARD_MS
+        appendBlockingLog(
+            category = "yt_shorts_close",
+            key = "yt-shorts-close|$reason",
+            message = "reason=$reason backSent=$backSent",
+            throttleMs = 650L
+        )
+        handler.postDelayed({
+            runCatching {
+                dismissYouTubeMiniPlayer("shorts_close_${reason}_settle_120", allowFallbackTap = true)
+                val retryRoot = youtubeCurrentRoot()
+                tryNavigateYouTubeToAllowedSafeSurface(retryRoot, "shorts_close_${reason}_settle_120")
+            }
+        }, 120L)
+        handler.postDelayed({
+            runCatching {
+                dismissYouTubeMiniPlayer("shorts_close_${reason}_settle_360", allowFallbackTap = true)
+                val retryRoot = youtubeCurrentRoot()
+                tryNavigateYouTubeToAllowedSafeSurface(retryRoot, "shorts_close_${reason}_settle_360")
+            }
+        }, 360L)
+        if (recoverToYouTubeHome) {
+            handler.postDelayed({
+                runCatching {
+                    val retryRoot = youtubeCurrentRoot()
+                    tryNavigateYouTubeToAllowedSafeSurface(retryRoot, "shorts_close_${reason}_recover_720")
+                }
+            }, 720L)
+            handler.postDelayed({
+                runCatching {
+                    val retryRoot = youtubeCurrentRoot()
+                    tryNavigateYouTubeToAllowedSafeSurface(retryRoot, "shorts_close_${reason}_recover_1400")
+                }
+            }, 1_400L)
+        }
+        return backSent
+    }
+
+    private fun tryNavigateYouTubeToAllowedSafeSurface(root: AccessibilityNodeInfo?, reason: String): Boolean {
+        val r = root ?: return false
+        if (!isRootFromPackage(r, "com.google.android.youtube")) return false
+
+        val homeBlocked = false
+        val subscriptionsBlocked = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SUBSCRIPTIONS)
+        val youBlocked = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_YOU)
+
+        val moved = when {
+            !homeBlocked && tryNavigateYouTubeToHome(r) -> true
+            !subscriptionsBlocked && tryNavigateYouTubeToSubscriptions(r) -> true
+            !youBlocked && tryNavigateYouTubeToYou(r) -> true
+            else -> false
+        }
+
+        appendBlockingLog(
+            category = "yt_safe_redirect",
+            key = "yt-safe-redirect|$reason",
+            message = "reason=$reason moved=$moved homeBlocked=$homeBlocked subscriptionsBlocked=$subscriptionsBlocked youBlocked=$youBlocked",
+            throttleMs = 900L
+        )
+
+        if (!moved && homeBlocked) {
+            blockLaunchController.postHome()
+            return true
+        }
+        return moved
+    }
+
+    private fun tryNavigateYouTubeToHome(root: AccessibilityNodeInfo?): Boolean {
+        return tryNavigateYouTubeToTab(
+            root = root,
+            labels = YT_HOME_LABELS,
+            fallbackX = 0.12f,
+            fallbackY = 0.90f
+        )
+    }
+
+    private fun tryNavigateYouTubeToSubscriptions(root: AccessibilityNodeInfo?): Boolean {
+        return tryNavigateYouTubeToTab(
+            root = root,
+            labels = YT_SUBSCRIPTIONS_LABELS,
+            fallbackX = 0.70f,
+            fallbackY = 0.90f
+        )
+    }
+
+    private fun tryNavigateYouTubeToYou(root: AccessibilityNodeInfo?): Boolean {
+        return tryNavigateYouTubeToTab(
+            root = root,
+            labels = YT_YOU_LABELS,
+            fallbackX = 0.92f,
+            fallbackY = 0.90f
+        )
+    }
+
+    private fun tryNavigateYouTubeToTab(
+        root: AccessibilityNodeInfo?,
+        labels: List<String>,
+        fallbackX: Float,
+        fallbackY: Float
+    ): Boolean {
+        val r = root ?: return false
         val ytPkg = "com.google.android.youtube"
 
-        fun isHomeLabel(node: AccessibilityNodeInfo): Boolean {
+        fun isTargetLabel(node: AccessibilityNodeInfo): Boolean {
             val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
             if (nodePkg != ytPkg) return false
 
@@ -3790,9 +4854,18 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             return labels.any { t.contains(it) || cd.contains(it) }
         }
 
+        fun isBottomNavigationNode(node: AccessibilityNodeInfo): Boolean {
+            val bounds = Rect()
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return false
+            val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+            return bounds.exactCenterY() / height.toFloat() >= 0.68f
+        }
+
         // Prefer bottom navigation/pivot candidates first.
         val navCandidate = findAnyNode(r) { n ->
-            if (!isHomeLabel(n)) return@findAnyNode false
+            if (!isTargetLabel(n)) return@findAnyNode false
+            if (!isBottomNavigationNode(n)) return@findAnyNode false
             val vid = n.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
             if (vid.isNotEmpty() && !vid.startsWith("$ytPkg:id/")) return@findAnyNode false
             vid.contains("pivot") ||
@@ -3804,34 +4877,57 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (clickNodeOrClickableParent(navCandidate)) return true
 
         val genericCandidate = findAnyNode(r) { n ->
-            if (!isHomeLabel(n) || n.isSelected) return@findAnyNode false
+            if (!isTargetLabel(n) || n.isSelected) return@findAnyNode false
+            if (!isBottomNavigationNode(n)) return@findAnyNode false
             val vid = n.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
-            // Avoid accidental clicks on system HOME controls (which would minimize YouTube).
+            // Avoid accidental clicks on system controls outside YouTube.
             vid.startsWith("$ytPkg:id/") || vid.isBlank()
         }
         if (clickNodeOrClickableParent(genericCandidate)) return true
 
-        // Already on home tab.
-        val alreadyHomeNode = findAnyNode(r) { n -> isHomeLabel(n) && n.isSelected }
-        if (alreadyHomeNode != null) return true
+        val alreadySelectedNode = findAnyNode(r) { n -> isTargetLabel(n) && n.isSelected && isBottomNavigationNode(n) }
+        if (alreadySelectedNode != null) return true
 
-        // Last in-app fallback: tap the left-most bottom navigation area where YouTube Home usually lives.
-        // This is safer than sending BACK, which can close YouTube from Search on some builds.
-        return tapScreenAtRatio(0.12f, 0.90f) || tapScreenAtRatio(0.12f, 0.86f)
+        return tapScreenAtRatio(fallbackX, fallbackY) || tapScreenAtRatio(fallbackX, 0.86f)
     }
 
     private fun isSnapchatStoryViewer(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
-        val labels = listOf(
-            "reply to story",
-            "send chat",
-            "send a chat",
-            "story reply",
-            "view story",
-            "watch story",
-            "next story",
-            "previous story"
+        if (nodeTextMatches(root, SNAP_STORY_VIEWER_LABELS) || eventTextMatches(event, SNAP_STORY_VIEWER_LABELS)) {
+            return true
+        }
+
+        val storiesSurfaceActive =
+            detectSnapchatSelectedSurface(root) == "snap:stories" ||
+                resolveSnapchatSurfaceFromEvent(event, allowFocused = false) == "snap:stories" ||
+                hasSelectedLabelInPackage(root, SNAP_STORIES_LABELS, "com.snapchat.android")
+        if (!storiesSurfaceActive) return false
+
+        return nodeTextMatches(root, SNAP_STORY_REPLY_LABELS) ||
+            eventTextMatches(event, SNAP_STORY_REPLY_LABELS)
+    }
+
+    private fun isSnapchatChatContext(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
+        if (isSnapchatStoryViewer(root, event)) return false
+
+        val selected = detectSnapchatSelectedSurface(root)
+        if (selected == "snap:stories") return false
+        if (selected == "snap:chat") return true
+        val eventSurface = resolveSnapchatSurfaceFromEvent(event, allowFocused = false)
+        if (eventSurface == "snap:stories") return false
+        if (eventSurface == "snap:chat") return true
+        return nodeTextMatches(
+            root,
+            listOf(
+                "send a chat",
+                "send chat",
+                "chat input",
+                "type a chat",
+                "message",
+                "bitmoji",
+                "call",
+                "video call"
+            )
         )
-        return nodeTextMatches(root, labels) || eventTextMatches(event, labels)
     }
 
     private fun snapchatImmediateSurfaceHit(surfaceKey: String, event: AccessibilityEvent?): Boolean {
@@ -3877,7 +4973,11 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             return
         }
 
-        val root = currentRoot(event) ?: run {
+        val root = if (pkg == "com.google.android.youtube") {
+            youtubeCurrentRoot(event)
+        } else {
+            currentRoot(event)
+        } ?: run {
             perf.rootMisses++
             return
         }
@@ -3890,18 +4990,48 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
 
         if (pkg == "com.google.android.youtube") {
-            val blockYtShortsEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_SHORTS)
-            val blockYtSubscriptionsEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_SUBSCRIPTIONS)
-            val blockYtYouEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_YOU)
-            val blockYtPipEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_YT_PIP)
+            val blockYtHomeEnabled = false
+            val blockYtShortsEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SHORTS)
+            val blockYtSubscriptionsEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_SUBSCRIPTIONS)
+            val blockYtYouEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_YOU)
+            val blockYtMiniPlayerEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_MINI_PLAYER)
+            val blockYtPipEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_YT_PIP)
 
             val ytTappedSurface = resolveYouTubeSurfaceFromEvent(event, allowFocused = true)
             val ytEnteredAt = appEnteredAtByPkg[pkg] ?: 0L
             val ytSettled = ytEnteredAt == 0L || (now - ytEnteredAt) >= 350L
             val ytSelectedSurface = if (ytSettled) detectYouTubeSelectedSurface(root) else null
-            val ytHomeNow = ytTappedSurface == "yt:home" || ytSelectedSurface == "yt:home"
-            if (ytHomeNow) {
-                clearSurfaceEvidence("yt:shorts", "yt:subscriptions", "yt:you")
+            val ytShortsEntryNow = isYouTubeShortsEntryEvent(event) || isYouTubeHomeShortsShelfEvent(event, root)
+            val ytHomeSurfaceCandidate = ytTappedSurface == "yt:home" || ytSelectedSurface == "yt:home"
+            val ytExplicitShortsContext = ytTappedSurface == "yt:shorts" || ytSelectedSurface == "yt:shorts" || ytShortsEntryNow
+            val ytShortsPlayerNow =
+                when {
+                    ytHomeSurfaceCandidate -> isYouTubeHomeFeedShortsPlayer(root, event)
+                    ytExplicitShortsContext -> isLikelyYouTubeShortsPlayer(root, event) || hasYouTubeShortsPlayerControl(root)
+                    else -> isYouTubeShortsScreen(root, event) ||
+                        (eventTextMatches(event, YT_SHORTS_PLAYER_HINT_LABELS) && hasYouTubeShortsPlayerControl(root))
+                }
+            val ytPipEntryNow = isYouTubePipEntryEvent(event)
+            val ytMiniPlayerNow = isLikelyYouTubeMiniPlayerVisible(root)
+            val ytMiniPlayerGeometryNow = hasYouTubeMiniPlayerGeometry(root)
+            val ytShortsGuardActive = surfaceGuardActive(pkg, "yt:shorts", now)
+
+            if ((blockYtMiniPlayerEnabled || blockYtPipEnabled) && maybeBlockYouTubeFloatingPlayer(event, "in_app_scan", root)) return
+
+            if (!ytShortsGuardActive && (ytShortsEntryNow || ytShortsPlayerNow)) {
+                rememberSurfaceHint(pkg, "yt:shorts", now)
+            }
+            if (ytPipEntryNow) {
+                rememberSurfaceHint(pkg, "yt:pip", now)
+            }
+
+            val ytHomeNow = (ytTappedSurface == "yt:home" || ytSelectedSurface == "yt:home") &&
+                !ytShortsEntryNow &&
+                !ytShortsPlayerNow &&
+                !ytMiniPlayerNow &&
+                !ytMiniPlayerGeometryNow
+            if (ytHomeNow && !blockYtHomeEnabled) {
+                clearSurfaceEvidence("yt:home", "yt:shorts", "yt:subscriptions", "yt:you")
                 clearSurfaceHintForPackage(pkg)
                 if (currentSurfacePkg == pkg) {
                     currentSurfaceKey = null
@@ -3921,9 +5051,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 forceShow: Boolean = false,
                 postAcknowledgeYouTubeHome: Boolean = false,
                 postAcknowledgeYouTubeClose: Boolean = false,
+                postAcknowledgeYouTubeCleanupShorts: Boolean = false,
+                postAcknowledgeYouTubeCleanupMini: Boolean = true,
                 prePopupPhoneHome: Boolean = false,
                 prePopupYouTubeHome: Boolean = false
             ): Boolean {
+                if (surfaceKey == "yt:shorts" && eventType == 0) {
+                    clearSurfaceEvidence(surfaceKey)
+                    return false
+                }
                 val conflictingTap = ytTappedSurface != null && ytTappedSurface != surfaceKey && ytTappedSurface != "yt:home"
                 val conflictingSelected = ytSelectedSurface != null && ytSelectedSurface != surfaceKey && ytSelectedSurface != "yt:home"
                 if (conflictingTap || conflictingSelected) {
@@ -3941,6 +5077,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 currentSurfacePkg = pkg
                 val msg = timedBlockMsg(enabled, surfaceKey, label) ?: return false
                 val appLabel = safeAppLabel(pkg)
+
+                if (surfaceKey == "yt:home") {
+                    runCatching { blockLaunchController.pauseActiveMediaPlayback() }
+                    tryNavigateYouTubeToAllowedSafeSurface(root, "home_block_pre_popup")
+                    surfaceBlockGuardUntil["$pkg|yt:home"] = now + INAPP_POST_BLOCK_GRACE_MS
+                }
 
                 if (surfaceKey == "yt:shorts" || surfaceKey == "yt:subscriptions") {
                     // Pause before the surface redirect.
@@ -3973,12 +5115,31 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                         forceShow = forceShow,
                         postAcknowledgeYouTubeHome = postAcknowledgeYouTubeHome,
                         postAcknowledgeYouTubeClose = postAcknowledgeYouTubeClose,
+                        postAcknowledgeYouTubeCleanupShorts = postAcknowledgeYouTubeCleanupShorts,
+                        postAcknowledgeYouTubeCleanupMini = postAcknowledgeYouTubeCleanupMini,
                         prePopupPhoneHome = prePopupPhoneHome,
                         prePopupYouTubeHome = prePopupYouTubeHome
                     )
                 }
                 return true
             }
+
+            val homeDetected =
+                ytTappedSurface == "yt:home" ||
+                    ytSelectedSurface == "yt:home" ||
+                    ytHomeNow ||
+                    isYouTubeHomeScreen(root, event)
+            if (handleYtSurface(
+                    surfaceKey = "yt:home",
+                    enabled = blockYtHomeEnabled,
+                    detected = homeDetected,
+                    label = getString(R.string.in_app_surface_home_label),
+                    hardHomeBlock = false,
+                    backCount = 0,
+                    deferNavigationUntilAcknowledge = false,
+                    returnToPackageOnClose = false,
+                    forceShow = true
+                )) return
 
             val subscriptionsDetected =
                 ytTappedSurface == "yt:subscriptions" ||
@@ -3998,11 +5159,22 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     postAcknowledgeYouTubeHome = true
                 )) return
 
+            val ytHomeSelectedWithoutShortsPlayer =
+                ytSelectedSurface == "yt:home" &&
+                    !ytShortsEntryNow &&
+                    !ytShortsPlayerNow &&
+                    !ytMiniPlayerNow &&
+                    !ytMiniPlayerGeometryNow
+            val ytBottomShortsNow =
+                !ytShortsGuardActive &&
+                    (ytTappedSurface == "yt:shorts" || ytSelectedSurface == "yt:shorts")
             val shortsDetected =
-                ytTappedSurface == "yt:shorts" ||
-                    ytSelectedSurface == "yt:shorts" ||
-                    recentSurfaceHintMatches(pkg, "yt:shorts", now) ||
+                !ytShortsGuardActive && (
+                    ytBottomShortsNow ||
+                    ytShortsEntryNow ||
+                    ytShortsPlayerNow ||
                     isYouTubeShortsScreen(root, event)
+                    )
             if (handleYtSurface(
                     surfaceKey = "yt:shorts",
                     enabled = blockYtShortsEnabled,
@@ -4015,6 +5187,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     forceShow = true,
                     postAcknowledgeYouTubeHome = false,
                     postAcknowledgeYouTubeClose = false,
+                    postAcknowledgeYouTubeCleanupShorts = true,
+                    postAcknowledgeYouTubeCleanupMini = false,
                     prePopupPhoneHome = false,
                     prePopupYouTubeHome = true
                 )) return
@@ -4031,10 +5205,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     label = getString(R.string.in_app_surface_you_label)
                 )) return
 
-            if (blockYtPipEnabled && isLikelyYouTubePictureInPicture(root, event)) {
-                logInAppSurfaceDetect(pkg, "yt:pip", true, event, "kill")
-                killYouTubePictureInPicture(pkg)
-                return
+            val ytPipHintNow = recentSurfaceHintMatches(pkg, "yt:pip", now)
+            val ytRealPipNow = ytPipEntryNow || isLikelyYouTubePictureInPicture(root, event)
+            if (blockYtMiniPlayerEnabled && (ytMiniPlayerNow || ytMiniPlayerGeometryNow) && !ytRealPipNow && maybeBlockYouTubeFloatingPlayer(event, "in_app_mini", root)) return
+            if (blockYtPipEnabled && (ytPipHintNow || ytRealPipNow)) {
+                if (maybeBlockYouTubeFloatingPlayer(event, "in_app_pip", root, force = true)) return
+            }
+
+            if (blockYtPipEnabled && (ytTappedSurface == "yt:home" || ytSelectedSurface == "yt:home")) {
+                clearSurfaceEvidence("yt:pip")
             }
         }
 
@@ -4051,19 +5230,19 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             val exploreDetectAllowed = now >= exploreGuardUntil && (!requiresSettle || igSettled)
 
             val instagramPositionSurface = detectInstagramSelectedSurfaceByPosition(root) ?: instagramSurfaceFromEventPosition(event)
-            val homeSelectedNow = instagramPositionSurface == "ig:home" || hasSelectedLabel(root, listOf("home", "startseite"))
-            val reelsTabSelectedNow = instagramPositionSurface == "ig:reels" || hasSelectedLabel(root, listOf("reels"))
-            val exploreTabSelectedNow = instagramPositionSurface == "ig:explore" || hasSelectedLabel(root, listOf("search", "suche", "discover", "entdecken", "explore"))
+            val homeSelectedNow = instagramPositionSurface == "ig:home" || hasSelectedLabel(root, IG_HOME_LABELS)
+            val reelsTabSelectedNow = instagramPositionSurface == "ig:reels" || hasSelectedLabel(root, IG_REELS_LABELS)
+            val exploreTabSelectedNow = instagramPositionSurface == "ig:explore" || hasSelectedLabel(root, IG_EXPLORE_LABELS)
             val searchScreenNow = isInstagramSearchScreen(root, event)
             val reelsHintNow = recentSurfaceHintMatches(pkg, "ig:reels", now)
             val exploreHintNow = recentSurfaceHintMatches(pkg, "ig:explore", now)
             val searchHintNow = recentSurfaceHintMatches(pkg, "ig:search", now)
 
-            val blockIgReelsEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_REELS)
-            val blockIgExploreEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_EXPLORE)
-            val blockIgSearchEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_SEARCH)
-            val blockIgStoriesEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_STORIES)
-            val blockIgCommentsEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS)
+            val blockIgReelsEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_REELS)
+            val blockIgExploreEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_EXPLORE)
+            val blockIgSearchEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_SEARCH)
+            val blockIgStoriesEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_STORIES)
+            val blockIgCommentsEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_IG_COMMENTS)
 
             val storiesViewerNow = isInstagramStoriesViewer(root, event)
             val commentsVisibleNow = isInstagramCommentsVisible(root)
@@ -4085,8 +5264,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
             // Explicit tab clicks/selected bottom-nav positions should block immediately.
             // The more conservative state machine below is still kept for scroll/content events, but it was too easy for the guards to suppress every Instagram block on some builds.
-            val explicitReelsHit = reelsTabSelectedNow || instagramPositionSurface == "ig:reels" || reelsHintNow || isInstagramBottomNavEvent(event, listOf("reels"))
-            val explicitExploreHit = exploreTabSelectedNow || instagramPositionSurface == "ig:explore" || exploreHintNow || isInstagramBottomNavEvent(event, listOf("search", "suche", "discover", "entdecken", "explore"))
+            val explicitReelsHit = reelsTabSelectedNow || instagramPositionSurface == "ig:reels" || reelsHintNow || isInstagramBottomNavEvent(event, IG_REELS_LABELS)
+            val explicitExploreHit = exploreTabSelectedNow || instagramPositionSurface == "ig:explore" || exploreHintNow || isInstagramBottomNavEvent(event, IG_EXPLORE_LABELS)
             val explicitSearchHit = searchScreenNow || searchHintNow
             if (immediateInstagramSurfaceBlock("ig:reels", blockIgReelsEnabled, getString(R.string.in_app_surface_reels_label), explicitReelsHit)) return
             if (immediateInstagramSurfaceBlock("ig:explore", blockIgExploreEnabled, getString(R.string.in_app_surface_explore_label), explicitExploreHit)) return
@@ -4155,7 +5334,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
             // If home appears selected (and reels tab is not), treat reels detections from scroll/content events as suspicious to avoid delayed false blocks while user just scrolls the feed.
             // Keep this intentionally strict to avoid false Reels hits while scrolling Home feed.
-            val reelsEventStrongCue = eventTextMatches(event, listOf("watch more reels", "send reel"))
+            val reelsEventStrongCue = eventTextMatches(event, IG_REELS_STRONG_EVENT_LABELS)
             val suspiciousHomeReels =
                 stateById == "reels" &&
                     homeSelectedNow &&
@@ -4164,7 +5343,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     (eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED ||
                         eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
 
-            val exploreEventStrongCue = eventTextMatches(event, listOf("search", "suche", "explore", "discover", "entdecken"))
+            val exploreEventStrongCue = eventTextMatches(event, IG_EXPLORE_LABELS)
             val suspiciousHomeExplore =
                 stateById == "explore" &&
                     homeSelectedNow &&
@@ -4328,12 +5507,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
 
         if (pkg == "com.twitter.android") {
-            val blockHomeEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_HOME)
-            val blockSearchEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_SEARCH)
-            val blockGrokEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_GROK)
-            val blockNotificationsEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_X_NOTIFICATIONS)
+            val blockHomeEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_HOME)
+            val blockSearchEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_SEARCH)
+            val blockGrokEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_GROK)
+            val blockNotificationsEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_X_NOTIFICATIONS)
 
-            val homeNeedles = listOf("home", "home timeline", "startseite", "for you", "following")
+            val homeNeedles = X_HOME_LABELS
             val homeDetected =
                 recentSurfaceHintMatches(pkg, "x:foryou", now) ||
                     isTwitterSurfaceSelected(root, homeNeedles) ||
@@ -4354,7 +5533,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 }
             }
 
-            val searchNeedles = listOf("search", "explore")
+            val searchNeedles = X_SEARCH_LABELS
             val searchDetected =
                 recentSurfaceHintMatches(pkg, "x:search", now) ||
                     isTwitterSurfaceSelected(root, searchNeedles) ||
@@ -4375,7 +5554,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 }
             }
 
-            val grokNeedles = listOf("grok")
+            val grokNeedles = X_GROK_LABELS
             val grokDetected =
                 recentSurfaceHintMatches(pkg, "x:grok", now) ||
                     isTwitterSurfaceSelected(root, grokNeedles) ||
@@ -4396,7 +5575,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 }
             }
 
-            val notificationNeedles = listOf("notifications", "notification")
+            val notificationNeedles = X_NOTIFICATIONS_LABELS
             val notificationsDetected =
                 recentSurfaceHintMatches(pkg, "x:notifications", now) ||
                     isTwitterSurfaceSelected(root, notificationNeedles) ||
@@ -4424,10 +5603,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
 
         if (pkg == "com.snapchat.android") {
-            val blockSnapMapEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_MAP)
-            val blockSnapStoriesEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_STORIES)
-            val blockSnapSpotlightEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_SPOTLIGHT)
-            val blockSnapFollowingEnabled = prefsBoolProfile(false, BlockingToggleKeys.KEY_BLOCK_SNAP_FOLLOWING)
+            val blockSnapMapEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_MAP)
+            val blockSnapStoriesEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_STORIES)
+            val blockSnapSpotlightEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_SPOTLIGHT)
+            val blockSnapFollowingEnabled = inAppSurfaceRuleEnabled(BlockingToggleKeys.KEY_BLOCK_SNAP_FOLLOWING)
 
             val snapTappedSurface = resolveSnapchatSurfaceFromEvent(event, allowFocused = false)
             val snapEnteredAt = appEnteredAtByPkg[pkg] ?: 0L
@@ -4472,15 +5651,17 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 }
             }
 
+            val snapChatContextNow = isSnapchatChatContext(root, event)
             val storiesImmediate = snapchatImmediateSurfaceHit("snap:stories", event)
-            val storiesViewerDetected = isSnapchatStoryViewer(root, event)
+            val storiesViewerDetected = !snapChatContextNow && isSnapchatStoryViewer(root, event)
             val storiesDetected =
-                storiesImmediate ||
-                    storiesViewerDetected ||
-                    recentSurfaceHintMatches(pkg, "snap:stories", now) ||
-                    snapTappedSurface == "snap:stories" ||
-                    snapSelectedSurface == "snap:stories" ||
-                    (snapSettled && hasSelectedLabelInPackage(root, SNAP_STORIES_LABELS, pkg))
+                !snapChatContextNow &&
+                    (storiesImmediate ||
+                        storiesViewerDetected ||
+                        recentSurfaceHintMatches(pkg, "snap:stories", now) ||
+                        snapTappedSurface == "snap:stories" ||
+                        snapSelectedSurface == "snap:stories" ||
+                        (snapSettled && hasSelectedLabelInPackage(root, SNAP_STORIES_LABELS, pkg)))
             if (storiesDetected) {
                 logInAppSurfaceDetect(pkg, "snap:stories", blockSnapStoriesEnabled, event, "tapped=$snapTappedSurface selected=$snapSelectedSurface immediate=$storiesImmediate viewer=$storiesViewerDetected")
             }
@@ -4605,6 +5786,14 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                     "yt:subscriptions" -> rememberSurfaceHint(pkg, "yt:subscriptions", now)
                     "yt:you" -> rememberSurfaceHint(pkg, "yt:you", now)
                 }
+                if (isYouTubeShortsEntryEvent(event)) {
+                    rememberSurfaceHint(pkg, "yt:shorts", now)
+                    logInAppSurfaceDetect(pkg, "yt:shorts", true, event, "entry_hint")
+                }
+                if (isYouTubePipEntryEvent(event)) {
+                    rememberSurfaceHint(pkg, "yt:pip", now)
+                    logInAppSurfaceDetect(pkg, "yt:pip", true, event, "entry_hint")
+                }
             }
             "com.instagram.android" -> {
                 when (instagramSurfaceFromEventPosition(event)) {
@@ -4615,22 +5804,22 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                         rememberSurfaceHint(pkg, "ig:search", now)
                     }
                     else -> when {
-                        isInstagramBottomNavEvent(event, listOf("home", "startseite")) -> clearSurfaceHintForPackage(pkg)
-                        isInstagramBottomNavEvent(event, listOf("reels")) -> rememberSurfaceHint(pkg, "ig:reels", now)
-                        isInstagramBottomNavEvent(event, listOf("search", "suche", "discover", "entdecken", "explore")) -> {
+                        isInstagramBottomNavEvent(event, IG_HOME_LABELS) -> clearSurfaceHintForPackage(pkg)
+                        isInstagramBottomNavEvent(event, IG_REELS_LABELS) -> rememberSurfaceHint(pkg, "ig:reels", now)
+                        isInstagramBottomNavEvent(event, IG_EXPLORE_LABELS) -> {
                             rememberSurfaceHint(pkg, "ig:explore", now)
                             rememberSurfaceHint(pkg, "ig:search", now)
                         }
-                        eventOrSourceMatches(event, listOf("messages", "nachrichten", "inbox", "direct", "chats")) -> clearSurfaceHintForPackage(pkg)
+                        eventOrSourceMatches(event, IG_MESSAGES_EVENT_LABELS) -> clearSurfaceHintForPackage(pkg)
                     }
                 }
             }
             "com.twitter.android" -> {
                 when {
-                    eventOrSourceMatches(event, listOf("home", "home timeline", "startseite", "for you", "following")) -> rememberSurfaceHint(pkg, "x:foryou", now)
-                    eventOrSourceMatches(event, listOf("search", "explore")) -> rememberSurfaceHint(pkg, "x:search", now)
-                    eventOrSourceMatches(event, listOf("grok")) -> rememberSurfaceHint(pkg, "x:grok", now)
-                    eventOrSourceMatches(event, listOf("notifications", "notification")) -> rememberSurfaceHint(pkg, "x:notifications", now)
+                    eventOrSourceMatches(event, X_HOME_LABELS) -> rememberSurfaceHint(pkg, "x:foryou", now)
+                    eventOrSourceMatches(event, X_SEARCH_LABELS) -> rememberSurfaceHint(pkg, "x:search", now)
+                    eventOrSourceMatches(event, X_GROK_LABELS) -> rememberSurfaceHint(pkg, "x:grok", now)
+                    eventOrSourceMatches(event, X_NOTIFICATIONS_LABELS) -> rememberSurfaceHint(pkg, "x:notifications", now)
                 }
             }
             "com.snapchat.android" -> {
@@ -4660,6 +5849,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         clearSurfaceHintForPackage(pkg)
     }
 
+    private fun surfaceGuardActive(pkg: String, surfaceKey: String, now: Long = System.currentTimeMillis()): Boolean {
+        return now < (surfaceBlockGuardUntil["$pkg|$surfaceKey"] ?: 0L)
+    }
+
     private fun surfaceConfirmed(key: String, detected: Boolean, required: Int = 2): Boolean {
         if (!detected) {
             clearSurfaceEvidence(key)
@@ -4685,7 +5878,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         // Instagram Direct/Messages also contains a search field, so generic root text matching would incorrectly block DMs.
         if (isInstagramMessagesScreen(root, event) || isInstagramStoriesViewer(root, event)) return false
 
-        val searchLabels = listOf("search", "suche", "discover", "entdecken", "explore")
+        val searchLabels = IG_EXPLORE_LABELS
         return hasSelectedLabel(root, searchLabels) ||
             instagramSurfaceFromEventPosition(event) == "ig:explore" ||
             isInstagramBottomNavEvent(event, searchLabels)
@@ -4795,69 +5988,36 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private fun isInstagramStoriesViewer(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
         // Keep this strict: the normal Instagram Home feed often contains a stories row.
         // Generic "story" text in the root would suppress Reels/Explore/Search blocking completely.
-        val viewerLabels = listOf(
-            "send message",
-            "nachricht senden",
-            "reply to story",
-            "antworten",
-            "viewers",
-            "zuschauer"
-        )
-        return nodeTextMatches(root, viewerLabels) ||
-            eventTextMatches(event, listOf("reply to story", "send message", "nachricht senden"))
+        return nodeTextMatches(root, IG_STORIES_VIEWER_LABELS) ||
+            eventTextMatches(event, IG_STORIES_EVENT_LABELS)
     }
 
     private fun isInstagramCommentsVisible(root: AccessibilityNodeInfo): Boolean {
-        return nodeTextMatches(root, listOf("comments", "kommentare", "add a comment", "kommentar hinzufügen", "view all comments"))
+        return nodeTextMatches(root, IG_COMMENTS_LABELS)
     }
 
     private fun isInstagramMessagesScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
         // Keep this deliberately strict.
         // The normal Instagram Home/Explore/Reels screens often expose a "Messages"/DM icon somewhere in the root tree, which must not suppress all in-app blocking.
-        val eventLabels = listOf(
-            "messages",
-            "nachrichten",
-            "chats",
-            "direct",
-            "inbox",
-            "posteingang",
-            "message requests",
-            "nachrichtenanfragen",
-            "search messages",
-            "nachrichten suchen",
-            "new message",
-            "neue nachricht"
-        )
-        if (eventTextMatches(event, eventLabels)) return true
-
-        val screenOnlyLabels = listOf(
-            "message requests",
-            "nachrichtenanfragen",
-            "search messages",
-            "nachrichten suchen",
-            "new message",
-            "neue nachricht",
-            "primary",
-            "general"
-        )
-        return nodeTextMatches(root, screenOnlyLabels)
+        if (eventTextMatches(event, IG_MESSAGES_EVENT_LABELS)) return true
+        return nodeTextMatches(root, IG_MESSAGES_SCREEN_LABELS)
     }
 
     private fun isInstagramProfileScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
         // Keep profile detection narrow.
         // Words like "followers", "following" or "posts" can appear in normal feeds/search results and would otherwise disable all Instagram surface blocking.
-        return hasSelectedLabel(root, listOf("profile", "profil")) ||
-            nodeTextMatches(root, listOf("edit profile", "profil bearbeiten", "professional dashboard", "dashboard für professionelle")) ||
-            eventTextMatches(event, listOf("profile tab", "profil tab", "edit profile", "profil bearbeiten"))
+        return hasSelectedLabel(root, IG_PROFILE_SELECTED_LABELS) ||
+            nodeTextMatches(root, IG_PROFILE_CONTEXT_LABELS) ||
+            eventTextMatches(event, IG_PROFILE_EVENT_LABELS)
     }
 
     private fun instagramState(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): String? {
         val positionSurface = instagramSurfaceFromEventPosition(event) ?: detectInstagramSelectedSurfaceByPosition(root)
         return when {
             isInstagramStoriesViewer(root, event) -> "stories"
-            positionSurface == "ig:reels" || hasSelectedLabel(root, listOf("reels")) || eventTextMatches(event, listOf("reels", "watch more reels", "send reel")) -> "reels"
+            positionSurface == "ig:reels" || hasSelectedLabel(root, IG_REELS_LABELS) || eventTextMatches(event, IG_REELS_LABELS + IG_REELS_STRONG_EVENT_LABELS) -> "reels"
             positionSurface == "ig:explore" || isInstagramSearchScreen(root, event) -> "explore"
-            positionSurface == "ig:home" || hasSelectedLabel(root, listOf("home", "startseite")) -> "home"
+            positionSurface == "ig:home" || hasSelectedLabel(root, IG_HOME_LABELS) -> "home"
             positionSurface == "ig:profile" -> "profile"
             else -> null
         }
@@ -4885,52 +6045,51 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (sourcePkg.isNotBlank() && sourcePkg != "com.google.android.youtube") return null
 
         val viewId = source?.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+        val surfaceFromPosition = youtubeSurfaceFromEventPosition(event)
+        val sourceLooksLikeBottomNav =
+            viewId.contains("pivot") ||
+                viewId.contains("bottom") ||
+                viewId.contains("navigation") ||
+                viewId.contains("tab") ||
+                viewId.contains("nav")
         val eventText = event.text?.joinToString(" ").orEmpty()
         val eventDesc = event.contentDescription?.toString().orEmpty()
-        val sourceSubtree = source?.let { collectNodeTextBlob(it, null) }.orEmpty()
-        val parentText = runCatching { source?.parent?.let { nodeTextOrDesc(it) } }.getOrNull().orEmpty()
-        val parentId = runCatching { source?.parent?.viewIdResourceName?.lowercase(Locale.getDefault()) }.getOrNull().orEmpty()
         val directSignal = listOf(
             nodeTextOrDesc(source),
             viewId,
             eventText,
             eventDesc
         ).filter { it.isNotBlank() }.joinToString(" ")
-        val broadSignal = listOf(
-            directSignal,
-            sourceSubtree,
-            parentText,
-            parentId
-        ).filter { it.isNotBlank() }.joinToString(" ")
 
-        // Prefer direct click/focus signals.
-        // Parent/subtree text can include the whole bottom navigation and otherwise misclassify a Search/Subs click as Home.
+        val sourceLooksLikeYouTubeBottomNav = sourceLooksLikeBottomNav || surfaceFromPosition != null
+
+        // Prefer direct click/focus signals, but only map YouTube tabs when the event really comes from the bottom nav.
+        // Player controls can expose texts like "Subscribed", channel names or "You" and must not become tab blocks.
         when {
             anyNeedleMatches(directSignal, YT_SEARCH_LABELS) -> return "yt:search"
-            anyNeedleMatches(directSignal, YT_SUBSCRIPTIONS_LABELS) -> return "yt:subscriptions"
-            anyNeedleMatches(directSignal, YT_SHORTS_LABELS) -> return "yt:shorts"
-            anyNeedleMatches(directSignal, YT_YOU_LABELS) -> return "yt:you"
-            anyNeedleMatches(directSignal, YT_HOME_LABELS) -> return "yt:home"
+            sourceLooksLikeYouTubeBottomNav && anyNeedleMatches(directSignal, YT_SUBSCRIPTIONS_LABELS) -> return "yt:subscriptions"
+            anyNeedleMatches(directSignal, YT_SHORTS_LABELS) &&
+                (surfaceFromPosition == "yt:shorts" || sourceLooksLikeBottomNav) -> return "yt:shorts"
+            sourceLooksLikeYouTubeBottomNav && anyNeedleMatches(directSignal, YT_YOU_LABELS) -> return "yt:you"
+            sourceLooksLikeYouTubeBottomNav && anyNeedleMatches(directSignal, YT_HOME_LABELS) -> return "yt:home"
         }
 
         return when {
             // Do not resolve Search from broad parent/subtree text.
-            // The Search icon is often visible on many YouTube screens, so only direct source/click signals should produce yt:search.
-            anyNeedleMatches(broadSignal, YT_SUBSCRIPTIONS_LABELS) -> "yt:subscriptions"
-            anyNeedleMatches(broadSignal, YT_SHORTS_LABELS) -> "yt:shorts"
-            anyNeedleMatches(broadSignal, YT_YOU_LABELS) -> "yt:you"
-            anyNeedleMatches(broadSignal, YT_HOME_LABELS) -> "yt:home"
-            else -> youtubeSurfaceFromEventPosition(event)
+            // The Search icon and bottom nav labels are often visible on many YouTube screens, so only direct bottom-nav signals should produce tab surfaces.
+            surfaceFromPosition == "yt:shorts" -> "yt:shorts"
+            else -> surfaceFromPosition
         }
     }
 
     private fun detectYouTubeSelectedSurface(root: AccessibilityNodeInfo): String? {
+        detectYouTubeSelectedSurfaceByPosition(root)?.let { return it }
         return when {
-            hasActiveLabelInPackage(root, YT_HOME_LABELS, "com.google.android.youtube") -> "yt:home"
-            hasActiveLabelInPackage(root, YT_SHORTS_LABELS, "com.google.android.youtube") -> "yt:shorts"
-            hasActiveLabelInPackage(root, YT_SUBSCRIPTIONS_LABELS, "com.google.android.youtube") -> "yt:subscriptions"
-            hasActiveLabelInPackage(root, YT_YOU_LABELS, "com.google.android.youtube") -> "yt:you"
-            else -> detectYouTubeSelectedSurfaceByPosition(root)
+            hasActiveYouTubeBottomLabel(root, YT_HOME_LABELS) -> "yt:home"
+            hasActiveYouTubeBottomLabel(root, YT_SHORTS_LABELS) -> "yt:shorts"
+            hasActiveYouTubeBottomLabel(root, YT_SUBSCRIPTIONS_LABELS) -> "yt:subscriptions"
+            hasActiveYouTubeBottomLabel(root, YT_YOU_LABELS) -> "yt:you"
+            else -> null
         }
     }
 
@@ -4938,7 +6097,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
         val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
         val found = findAnyNode(root) { node ->
-            val active = node.isSelected || node.isFocused || node.isAccessibilityFocused || node.isCheckedCompat()
+            val active = node.isSelected || node.isCheckedCompat()
             if (!active) return@findAnyNode false
             val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
             if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
@@ -5004,16 +6163,45 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         return null
     }
 
+    private fun hasActiveYouTubeBottomLabel(
+        root: AccessibilityNodeInfo,
+        needles: List<String>
+    ): Boolean {
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        val found = findAnyNode(root) { node ->
+            val active = node.isSelected || node.isCheckedCompat()
+            if (!active) return@findAnyNode false
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+            val centerY = bounds.exactCenterY() / height.toFloat()
+            if (centerY < 0.72f) return@findAnyNode false
+
+            val widthRatio = bounds.width() / width.toFloat()
+            val heightRatio = bounds.height() / height.toFloat()
+            if (widthRatio > 0.35f || heightRatio > 0.22f) return@findAnyNode false
+
+            val t = node.text?.toString().orEmpty()
+            val cd = node.contentDescription?.toString().orEmpty()
+            val vid = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            anyNeedleMatches(t, needles) || anyNeedleMatches(cd, needles) || anyNeedleMatches(vid, needles)
+        }
+        return found != null
+    }
+
     private fun hasActiveLabelInPackage(
         root: AccessibilityNodeInfo,
         needles: List<String>,
         pkg: String
     ): Boolean {
-        // Some YouTube builds expose the current tab as focused/accessibility-focused instead of selected.
         // Keep this strict to avoid matching all visible bottom navigation labels.
         val targetPkg = pkg.lowercase(Locale.getDefault())
         val found = findAnyNode(root) { node ->
-            val active = node.isSelected || node.isFocused || node.isAccessibilityFocused || node.isCheckedCompat()
+            val active = node.isSelected || node.isCheckedCompat()
             if (!active) return@findAnyNode false
             val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
             if (nodePkg.isNotBlank() && nodePkg != targetPkg) return@findAnyNode false
@@ -5053,6 +6241,448 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun isYouTubeShortsEntryEvent(event: AccessibilityEvent?): Boolean {
+        val type = event?.eventType ?: return false
+        if (type != AccessibilityEvent.TYPE_VIEW_CLICKED &&
+            type != AccessibilityEvent.TYPE_VIEW_SELECTED
+        ) return false
+
+        val source = runCatching { event.source }.getOrNull()
+        val sourcePkg = source?.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+        if (sourcePkg.isNotBlank() && sourcePkg != "com.google.android.youtube") return false
+
+        val surfaceFromPosition = youtubeSurfaceFromEventPosition(event)
+        if (surfaceFromPosition == "yt:shorts") return true
+        if (surfaceFromPosition == "yt:home" || surfaceFromPosition == "yt:subscriptions" || surfaceFromPosition == "yt:you") {
+            return false
+        }
+
+        val signal = youtubeEventSourceSignal(event, maxHops = 4)
+        if (!anyNeedleMatches(signal, YT_SHORTS_LABELS)) return false
+        val viewId = source?.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+        return viewId.contains("pivot") ||
+            viewId.contains("bottom") ||
+            viewId.contains("navigation") ||
+            viewId.contains("tab") ||
+            viewId.contains("nav")
+    }
+
+    private fun isYouTubeHomeShortsShelfEvent(event: AccessibilityEvent?, root: AccessibilityNodeInfo): Boolean {
+        val type = event?.eventType ?: return false
+        if (type != AccessibilityEvent.TYPE_VIEW_CLICKED) return false
+        if (!isRootFromPackage(root, "com.google.android.youtube")) return false
+
+        val clickBounds = youtubeSourceBounds(event, maxHops = 5) ?: return false
+        val shelfBounds = youtubeHomeShortsShelfLabelBounds(root) ?: return false
+        return isClickInsideYouTubeHomeShortsTile(root, clickBounds, shelfBounds)
+    }
+
+    private fun isClickInsideYouTubeHomeShortsTile(
+        root: AccessibilityNodeInfo,
+        clickBounds: Rect,
+        shelfBounds: Rect
+    ): Boolean {
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val clickCenterX = clickBounds.exactCenterX()
+        val clickCenterY = clickBounds.exactCenterY()
+        val shelfBottom = shelfBounds.bottom.toFloat()
+        val maxShelfY = minOf(height * 0.88f, shelfBottom + height * 0.46f)
+        if (clickCenterY < shelfBottom || clickCenterY > maxShelfY) return false
+
+        val bounds = Rect()
+        val found = findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+            if (bounds.top < shelfBottom - height * 0.04f || bounds.bottom > maxShelfY + height * 0.08f) {
+                return@findAnyNode false
+            }
+
+            val widthRatio = bounds.width() / width.toFloat()
+            val heightRatio = bounds.height() / height.toFloat()
+            val portraitTile = widthRatio in 0.20f..0.58f &&
+                heightRatio in 0.16f..0.54f &&
+                bounds.height().toFloat() >= bounds.width().toFloat() * 1.12f
+            if (!portraitTile) return@findAnyNode false
+
+            val text = node.text?.toString().orEmpty()
+            val desc = node.contentDescription?.toString().orEmpty()
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val className = node.className?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            val signal = "$text $desc $viewId $className"
+            val explicitShortsTile =
+                anyNeedleMatches(signal, YT_SHORTS_LABELS) ||
+                    viewId.contains("reel") ||
+                    viewId.contains("short") ||
+                    className.contains("reel")
+            if (!explicitShortsTile) return@findAnyNode false
+
+            val expanded = Rect(bounds).apply {
+                inset(-(width * 0.03f).toInt(), -(height * 0.025f).toInt())
+            }
+            expanded.contains(clickCenterX.toInt(), clickCenterY.toInt())
+        }
+        return found != null
+    }
+
+    private fun isYouTubeHomeShortsShelfVisible(root: AccessibilityNodeInfo): Boolean {
+        return youtubeHomeShortsShelfLabelBounds(root) != null
+    }
+
+    private fun isYouTubeHomeShortsGridVisible(root: AccessibilityNodeInfo): Boolean {
+        if (!isRootFromPackage(root, "com.google.android.youtube")) return false
+        val selectedSurface = detectYouTubeSelectedSurface(root)
+        if (selectedSurface != null && selectedSurface != "yt:home") return false
+
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val candidates = ArrayList<Rect>(6)
+        val bounds = Rect()
+        val foundPair = findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+
+            val centerY = bounds.exactCenterY() / height.toFloat()
+            if (centerY !in 0.24f..0.88f) return@findAnyNode false
+
+            val widthRatio = bounds.width() / width.toFloat()
+            val heightRatio = bounds.height() / height.toFloat()
+            val portraitTile = widthRatio in 0.24f..0.58f &&
+                heightRatio in 0.16f..0.58f &&
+                bounds.height().toFloat() >= bounds.width().toFloat() * 0.78f
+            if (!portraitTile) return@findAnyNode false
+
+            val candidate = Rect(bounds)
+            val paired = candidates.any { other ->
+                abs(other.top - candidate.top) <= height * 0.08f &&
+                    abs(other.exactCenterX() - candidate.exactCenterX()) >= width * 0.22f
+            }
+            candidates += candidate
+            paired
+        }
+        return foundPair != null
+    }
+
+    private fun youtubeHomeShortsShelfLabelBounds(root: AccessibilityNodeInfo): Rect? {
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        val found = findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+            val centerY = bounds.exactCenterY() / height.toFloat()
+            if (centerY !in 0.16f..0.72f) return@findAnyNode false
+
+            val text = node.text?.toString().orEmpty()
+            val desc = node.contentDescription?.toString().orEmpty()
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            anyNeedleMatches("$text $desc $viewId", YT_SHORTS_LABELS)
+        } ?: return null
+
+        val out = Rect()
+        return runCatching {
+            found.getBoundsInScreen(out)
+            if (out.isEmpty) null else Rect(out)
+        }.getOrNull()
+    }
+
+    private fun youtubeSourceBounds(event: AccessibilityEvent?, maxHops: Int): Rect? {
+        var current = runCatching { event?.source }.getOrNull()
+        var hops = 0
+        val bounds = Rect()
+        while (current != null && hops <= maxHops) {
+            val node = current ?: break
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isBlank() || nodePkg == "com.google.android.youtube") {
+                runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+                if (!bounds.isEmpty) return Rect(bounds)
+            }
+            current = runCatching { node.parent }.getOrNull()
+            hops++
+        }
+        return null
+    }
+
+    private fun isYouTubePipEntryEvent(event: AccessibilityEvent?): Boolean {
+        val type = event?.eventType ?: return false
+        if (type != AccessibilityEvent.TYPE_VIEW_CLICKED &&
+            type != AccessibilityEvent.TYPE_VIEW_SELECTED &&
+            type != AccessibilityEvent.TYPE_VIEW_FOCUSED &&
+            type != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED &&
+            type != AccessibilityEvent.TYPE_WINDOWS_CHANGED
+        ) return false
+
+        val source = runCatching { event.source }.getOrNull()
+        val sourcePkg = source?.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+        if (sourcePkg.isNotBlank() && sourcePkg != "com.google.android.youtube") return false
+
+        return anyNeedleMatches(youtubeEventSourceSignal(event, maxHops = 3), YT_REAL_PIP_LABELS)
+    }
+
+    private fun youtubeEventSourceSignal(event: AccessibilityEvent?, maxHops: Int): String {
+        if (event == null) return ""
+        val parts = ArrayList<String>(16)
+        event.text?.forEach { text ->
+            text?.toString()?.takeIf { it.isNotBlank() }?.let { parts += it }
+        }
+        event.contentDescription?.toString()?.takeIf { it.isNotBlank() }?.let { parts += it }
+
+        var current = runCatching { event.source }.getOrNull()
+        var hops = 0
+        while (current != null && hops <= maxHops) {
+            val node = current ?: break
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isBlank() || nodePkg == "com.google.android.youtube") {
+                node.text?.toString()?.takeIf { it.isNotBlank() }?.let { parts += it }
+                node.contentDescription?.toString()?.takeIf { it.isNotBlank() }?.let { parts += it }
+                node.viewIdResourceName?.takeIf { it.isNotBlank() }?.let { parts += it }
+            }
+            current = runCatching { node.parent }.getOrNull()
+            hops++
+        }
+        return parts.joinToString(" ").lowercase(Locale.getDefault())
+    }
+
+    private fun isLikelyYouTubeShortsPlayer(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
+        if (isYouTubeShortsScreen(root, event)) return true
+        return hasYouTubeDeepShortsSignal(root) && hasYouTubeShortsPlayerGeometry(root)
+    }
+
+    private fun isYouTubeHomeFeedShortsPlayer(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
+        if (!isRootFromPackage(root, "com.google.android.youtube")) return false
+        val type = event?.eventType ?: return false
+        if (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||
+            type == AccessibilityEvent.TYPE_VIEW_SCROLLED ||
+            type == AccessibilityEvent.TYPE_WINDOWS_CHANGED ||
+            type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        ) {
+            // OK: layout/player changes can reveal a Home-feed Shorts viewer.
+        } else {
+            return false
+        }
+        if (isLikelyYouTubeMiniPlayerVisible(root) || hasYouTubeMiniPlayerGeometry(root)) return false
+        val selectedSurface = detectYouTubeSelectedSurface(root) ?: resolveYouTubeSurfaceFromEvent(event)
+        if (selectedSurface != null && selectedSurface != "yt:home") return false
+        if (isYouTubeHomeShortsShelfVisible(root)) return false
+        if (hasYouTubeDeepShortsSignal(root) && hasYouTubeShortsPlayerGeometry(root)) return true
+        return false
+    }
+
+    private fun hasYouTubeShortsPlayerGeometry(root: AccessibilityNodeInfo): Boolean {
+        if (!isRootFromPackage(root, "com.google.android.youtube")) return false
+
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        val found = findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+
+            val widthRatio = bounds.width() / width.toFloat()
+            val heightRatio = bounds.height() / height.toFloat()
+            val centerY = bounds.exactCenterY() / height.toFloat()
+            val portraitPlayer =
+                widthRatio in 0.64f..1.04f &&
+                    heightRatio in 0.62f..1.04f &&
+                    centerY in 0.36f..0.64f &&
+                    bounds.height() > bounds.width()
+            if (!portraitPlayer) return@findAnyNode false
+
+            val text = node.text?.toString().orEmpty()
+            val desc = node.contentDescription?.toString().orEmpty()
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val signal = "$text $desc $viewId"
+            anyNeedleMatches(signal, YT_SHORTS_LABELS) ||
+                viewId.contains("reel") ||
+                viewId.contains("short")
+        }
+        return found != null
+    }
+
+    private fun hasYouTubeDeepShortsSignal(root: AccessibilityNodeInfo): Boolean {
+        if (!isRootFromPackage(root, "com.google.android.youtube") && !containsPackageNode(root, "com.google.android.youtube")) {
+            return false
+        }
+        val reelIdHit = findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val className = node.className?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            viewId.contains("reel") || className.contains("reel")
+        } != null
+        if (reelIdHit) return true
+
+        return hasYouTubeShortsPlayerControl(root) && hasYouTubeShortsPlayerGeometry(root)
+    }
+
+    private fun hasYouTubeShortsPlayerControl(root: AccessibilityNodeInfo): Boolean {
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        val matchedControls = LinkedHashSet<String>()
+        val found = findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+            val centerX = bounds.exactCenterX() / width.toFloat()
+            val centerY = bounds.exactCenterY() / height.toFloat()
+            if (centerX < 0.56f || centerY !in 0.18f..0.92f) return@findAnyNode false
+
+            val text = node.text?.toString().orEmpty()
+            val desc = node.contentDescription?.toString().orEmpty()
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val signal = "$text $desc $viewId".lowercase(Locale.getDefault())
+            YT_SHORTS_PLAYER_HINT_LABELS.firstOrNull { raw ->
+                signal.contains(raw.lowercase(Locale.getDefault()))
+            }?.let { matchedControls += it }
+            matchedControls.size >= 2
+        }
+        return found != null
+    }
+
+    private fun isLikelyYouTubeMiniPlayerVisible(root: AccessibilityNodeInfo?): Boolean {
+        val r = root ?: return false
+        if (!isRootFromPackage(r, "com.google.android.youtube")) return false
+
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        val found = findAnyNode(r) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+            val centerY = bounds.exactCenterY() / height.toFloat()
+            val widthRatio = bounds.width() / width.toFloat()
+            val heightRatio = bounds.height() / height.toFloat()
+            if (centerY < 0.46f || widthRatio > 0.96f || heightRatio > 0.36f) return@findAnyNode false
+
+            val text = node.text?.toString().orEmpty()
+            val desc = node.contentDescription?.toString().orEmpty()
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val signal = "$text $desc $viewId"
+            anyNeedleMatches(signal, YT_PIP_LABELS) ||
+                anyNeedleMatches(signal, YT_MINI_PLAYER_CLOSE_LABELS) ||
+                (viewId.contains("mini") && viewId.contains("player"))
+        }
+        return found != null
+    }
+
+    private fun hasYouTubeMiniPlayerGeometry(root: AccessibilityNodeInfo): Boolean {
+        return findYouTubeMiniPlayerBounds(root) != null
+    }
+
+    private fun findYouTubeMiniPlayerBounds(root: AccessibilityNodeInfo): Rect? {
+        if (!isRootFromPackage(root, "com.google.android.youtube")) return null
+
+        val selectedSurface = detectYouTubeSelectedSurface(root)
+        if (selectedSurface == "yt:shorts") return null
+
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        var bestBounds: Rect? = null
+        var bestScore = -1
+
+        findAnyNode(root) { node ->
+            val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
+            if (nodePkg.isNotBlank() && nodePkg != "com.google.android.youtube") return@findAnyNode false
+
+            runCatching { node.getBoundsInScreen(bounds) }.getOrNull()
+            if (bounds.isEmpty) return@findAnyNode false
+
+            val centerY = bounds.exactCenterY() / height.toFloat()
+            val widthRatio = bounds.width() / width.toFloat()
+            val heightRatio = bounds.height() / height.toFloat()
+            if (centerY !in 0.50f..0.90f) return@findAnyNode false
+            if (widthRatio !in 0.28f..1.02f || heightRatio !in 0.035f..0.20f) return@findAnyNode false
+
+            val text = node.text?.toString().orEmpty()
+            val desc = node.contentDescription?.toString().orEmpty()
+            val viewId = node.viewIdResourceName?.lowercase(Locale.getDefault()).orEmpty()
+            val signal = "$text $desc $viewId".lowercase(Locale.getDefault())
+            val bottomNavLike =
+                viewId.contains("pivot") ||
+                    viewId.contains("navigation") ||
+                    viewId.contains("bottom_bar") ||
+                    viewId.contains("bottom_nav") ||
+                    (centerY > 0.78f && widthRatio < 0.36f && anyNeedleMatches(signal, YT_HOME_LABELS + YT_SHORTS_LABELS + YT_SUBSCRIPTIONS_LABELS + YT_YOU_LABELS))
+            if (bottomNavLike) return@findAnyNode false
+
+            val miniId = viewId.contains("mini") ||
+                viewId.contains("compact") ||
+                (viewId.contains("player") && centerY > 0.58f)
+            val mediaHint = anyNeedleMatches(signal, YT_MINI_PLAYER_HINT_LABELS) ||
+                anyNeedleMatches(signal, YT_MINI_PLAYER_CLOSE_LABELS)
+            val compactBottomPlayer =
+                centerY in 0.66f..0.90f &&
+                    bounds.top >= (height * 0.54f).toInt() &&
+                    bounds.bottom <= (height * 0.94f).toInt() &&
+                    widthRatio in 0.48f..1.02f &&
+                    heightRatio in 0.045f..0.135f
+
+            val matched = miniId || mediaHint || compactBottomPlayer
+            if (!matched) return@findAnyNode false
+
+            val score =
+                (if (miniId) 1_000_000 else 0) +
+                    (if (mediaHint) 500_000 else 0) +
+                    bounds.width() * bounds.height()
+            if (score > bestScore) {
+                bestScore = score
+                bestBounds = Rect(bounds)
+            }
+            false
+        }
+        return bestBounds
+    }
+
+    private fun isYouTubePictureInPictureWindowVisible(): Boolean {
+        val width = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+        val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
+        val bounds = Rect()
+        val activeWindows = runCatching { windows }.getOrNull().orEmpty()
+
+        for (window in activeWindows) {
+            val inPip = runCatching {
+                (AccessibilityWindowInfo::class.java
+                    .getMethod("isInPictureInPictureMode")
+                    .invoke(window) as? Boolean) == true
+            }.getOrDefault(false)
+
+            val root = runCatching { window.root }.getOrNull()
+            val containsYouTube = isRootFromPackage(root, "com.google.android.youtube") ||
+                root?.let { containsPackageNode(it, "com.google.android.youtube") } == true
+            if (!containsYouTube && !inPip) continue
+
+            runCatching { window.getBoundsInScreen(bounds) }.getOrNull()
+            if (inPip && containsYouTube) return true
+            if (bounds.isEmpty || !containsYouTube) continue
+
+            val widthRatio = bounds.width() / width.toFloat()
+            val heightRatio = bounds.height() / height.toFloat()
+            if (widthRatio in 0.12f..0.82f && heightRatio in 0.08f..0.46f) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     private fun isYouTubeShortsScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
         // Do not treat any visible "Shorts" text as the Shorts surface.
         // YouTube keeps the bottom navigation visible on unrelated screens such as Subscriptions and the profile/You tab.
@@ -5068,6 +6698,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     private fun isYouTubeYouScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
         return detectYouTubeSelectedSurface(root) == "yt:you" || resolveYouTubeSurfaceFromEvent(event) == "yt:you"
+    }
+
+    private fun isYouTubeHomeScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
+        return detectYouTubeSelectedSurface(root) == "yt:home" || resolveYouTubeSurfaceFromEvent(event) == "yt:home"
     }
 
     private fun isYouTubeSearchScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
@@ -5086,7 +6720,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun isYouTubeCommentsVisible(root: AccessibilityNodeInfo): Boolean {
-        return nodeTextMatches(root, listOf("comments", "kommentare", "add a comment", "sort comments", "top comments", "write a comment"))
+        return nodeTextMatches(root, YT_COMMENTS_LABELS)
     }
 
     private fun isLikelyYouTubePictureInPicture(root: AccessibilityNodeInfo?, event: AccessibilityEvent? = null): Boolean {

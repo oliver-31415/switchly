@@ -39,6 +39,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
+            android:id="@+id/layoutHomeRoot"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:animateLayoutChanges="true"
@@ -151,6 +152,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <Space
+                android:id="@+id/spaceBeforeStatusCard"
                 android:layout_width="1dp"
                 android:layout_height="12dp" />
 
@@ -162,6 +164,7 @@
                 android:layout_height="wrap_content">
 
                 <LinearLayout
+                    android:id="@+id/layoutStatusContent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"

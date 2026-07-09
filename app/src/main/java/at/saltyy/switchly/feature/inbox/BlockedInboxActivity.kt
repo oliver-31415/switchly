@@ -23,18 +23,19 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.isNotEmpty
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
@@ -46,17 +47,19 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
-import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
+import at.saltyy.switchly.ui.attachEditDeleteSwipe
+import at.saltyy.switchly.ui.updateSelectionSubtitle
 import at.saltyy.switchly.ui.dialog.showDestructiveAccented
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
-import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
-import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
-import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.widget.BlockedNotificationsWidgetProvider
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import java.text.DateFormat
 import java.util.Date
 
@@ -108,10 +111,14 @@ class BlockedInboxActivity : AppCompatActivity() {
         recycler = findViewById(R.id.recyclerInbox)
         empty = findViewById(R.id.tvEmpty)
         recycler.layoutManager = LinearLayoutManager(this)
+        recycler.attachEditDeleteSwipe(
+            canSwipe = { !selectionMode },
+            editIconRes = R.drawable.open_in_new_24,
+            onEdit = { position -> visibleItems.getOrNull(position)?.let(::showDetailDialog) },
+            onDelete = { position -> visibleItems.getOrNull(position)?.let(::confirmDeleteSingle) }
+        )
 
         findViewById<View>(R.id.btnFilter)?.setOnClickListener { showFilterMenuDialog() }
-        findViewById<View>(R.id.btnAppFilterChip)?.setOnClickListener { showAppFilterDialog() }
-        findViewById<View>(R.id.btnSortChip)?.setOnClickListener { showSortDialog() }
 
         load()
     }
@@ -135,6 +142,10 @@ class BlockedInboxActivity : AppCompatActivity() {
         }
 
         visibleItems = sorted
+        selectedKeys.retainAll(visibleItems.map { eventKey(it) }.toSet())
+        if (selectionMode && selectedKeys.isEmpty()) {
+            selectionMode = false
+        }
         recycler.adapter = InboxAdapter(
             items = visibleItems,
             isSelectionMode = { selectionMode },
@@ -158,8 +169,8 @@ class BlockedInboxActivity : AppCompatActivity() {
 
         empty.visibility = if (visibleItems.isEmpty()) View.VISIBLE else View.GONE
 
-        toolbar.subtitle = buildSubtitle()
-        updateFilterSortChips()
+        toolbar.updateSelectionSubtitle(selectionMode, selectedKeys.size, null)
+        renderActiveFilterTags()
         invalidateOptionsMenu()
     }
 
@@ -167,7 +178,7 @@ class BlockedInboxActivity : AppCompatActivity() {
         selectionMode = true
         selectedKeys.clear()
         preselect?.let { selectedKeys.add(eventKey(it)) }
-        toolbar.subtitle = getString(R.string.blocked_inbox_select_mode_subtitle)
+        toolbar.updateSelectionSubtitle(true, selectedKeys.size)
         invalidateOptionsMenu()
         recycler.adapter?.let { it.notifyItemRangeChanged(0, it.itemCount) }
     }
@@ -175,8 +186,8 @@ class BlockedInboxActivity : AppCompatActivity() {
     private fun exitSelectionMode() {
         selectionMode = false
         selectedKeys.clear()
-        toolbar.subtitle = buildSubtitle()
-        updateFilterSortChips()
+        toolbar.updateSelectionSubtitle(false, 0, null)
+        renderActiveFilterTags()
         invalidateOptionsMenu()
         recycler.adapter?.let { it.notifyItemRangeChanged(0, it.itemCount) }
     }
@@ -188,55 +199,61 @@ class BlockedInboxActivity : AppCompatActivity() {
 
         // keep subtitle useful in selection mode
         if (selectionMode) {
-            toolbar.subtitle = resources.getQuantityString(R.plurals.blocked_inbox_select_count_fmt, selectedKeys.size, selectedKeys.size)
+            toolbar.updateSelectionSubtitle(true, selectedKeys.size)
         }
     }
 
-    private fun updateFilterSortChips() {
+    private fun renderActiveFilterTags() {
+        val scroll = findViewById<View>(R.id.activeFilterScroll) ?: return
+        val group = findViewById<ChipGroup>(R.id.activeFilterChipGroup) ?: return
+        group.removeAllViews()
+
+        appFilter?.takeIf { it.isNotBlank() }?.let { pkg ->
+            group.addView(activeFilterChip(getString(R.string.blocked_inbox_filter_tag_fmt, appLabel(pkg))) {
+                appFilter = null
+                prefs.edit { remove(KEY_APP_FILTER) }
+                applyFilterSort()
+            })
+        }
+
+        if (!sortNewestFirst) {
+            group.addView(activeFilterChip(getString(R.string.blocked_inbox_sort_oldest)) {
+                sortNewestFirst = true
+                prefs.edit { putBoolean(KEY_SORT_NEWEST, true) }
+                applyFilterSort()
+            })
+        }
+
+        scroll.isVisible = group.isNotEmpty()
+    }
+
+    private fun activeFilterChip(label: String, onClear: () -> Unit): Chip {
         val accent = AccentColor.getAccentColorInt(this)
         val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.WHITE)
-        val filterLabel = appFilter?.let { appLabel(it) } ?: getString(R.string.blocked_inbox_chip_all_apps)
-        val sortLabel = getString(if (sortNewestFirst) R.string.blocked_inbox_sort_newest else R.string.blocked_inbox_sort_oldest)
-        fun MaterialButton.lockChipSize() {
+        return Chip(this).apply {
+            text = label
             maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
+            ellipsize = android.text.TextUtils.TruncateAt.END
             minHeight = dp(44)
             minimumHeight = dp(44)
             isSingleLine = true
-            isAllCaps = false
-            gravity = android.view.Gravity.CENTER
-            textAlignment = View.TEXT_ALIGNMENT_CENTER
-            iconPadding = dp(6)
-        }
-        findViewById<MaterialButton>(R.id.btnAppFilterChip)?.apply {
-            lockChipSize()
-            text = filterLabel
-            setTextColor(onSurface)
-            strokeColor = ColorStateList.valueOf(accent)
-            iconTint = ColorStateList.valueOf(onSurface)
-        }
-        findViewById<MaterialButton>(R.id.btnSortChip)?.apply {
-            lockChipSize()
-            minWidth = 0
-            minimumWidth = 0
+            isCheckable = false
+            isCloseIconVisible = true
+            closeIconTint = ColorStateList.valueOf(onSurface)
+            chipStrokeWidth = dp(1).toFloat()
+            chipStrokeColor = ColorStateList.valueOf(accent)
+            chipBackgroundColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x16))
             textSize = 13f
-            text = sortLabel
             setTextColor(onSurface)
-            strokeColor = ColorStateList.valueOf(accent)
-            iconTint = ColorStateList.valueOf(onSurface)
+            setOnClickListener { showFilterMenuDialog() }
+            setOnCloseIconClickListener { onClear() }
         }
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
 
-    private fun buildSubtitle(): String? {
-        val sort = getString(if (sortNewestFirst) R.string.blocked_inbox_sort_newest else R.string.blocked_inbox_sort_oldest)
-        val filter = appFilter?.let { getString(R.string.blocked_inbox_filter_subtitle_fmt, appLabel(it)) }
-        return listOfNotNull(filter, sort).joinToString(" • ").takeIf { it.isNotBlank() }
-    }
-
     private fun showDetailDialog(e: BlockedNotificationEvent) {
-        val v = layoutInflater.inflate(R.layout.dialog_blocked_inbox_detail, null)
+        val v = layoutInflater.inflate(R.layout.dialog_blocked_inbox_detail, FrameLayout(this), false)
         val tv = v.findViewById<TextView>(R.id.tvDetail)
         val detailIcon = v.findViewById<ImageView>(R.id.imgDetailIcon)
         val detailTitle = v.findViewById<TextView>(R.id.tvDetailTitle)
@@ -275,29 +292,24 @@ class BlockedInboxActivity : AppCompatActivity() {
             .setTitle(getString(R.string.blocked_inbox_detail_title))
             .setView(v)
             .setPositiveButton(android.R.string.ok, null)
-            .setNeutralButton(R.string.delete) { _, _ ->
-                MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.delete)
-                    .setMessage(getString(R.string.destructive_cannot_be_undone))
-                    .setPositiveButton(R.string.delete) { _, _ ->
-                        BlockedInboxStore.remove(this, e)
-                        BlockedNotificationsWidgetProvider.refreshAll(this)
-                        load()
-                    }
-                    .setNegativeButton(R.string.cancel, null)
-                    .showDestructiveAccented()
-            }
             .create()
         detailDialog.setOnShowListener {
             detailDialog.styleSwitchlyDialogButtons()
-            val error = Color.rgb(186, 26, 26)
-            detailDialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.let { button ->
-                button.setTextColor(error)
-                button.backgroundTintList = null
-                runCatching { button.setBackgroundColor(Color.TRANSPARENT) }
-            }
         }
         detailDialog.show()
+    }
+
+    private fun confirmDeleteSingle(event: BlockedNotificationEvent) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.delete)
+            .setMessage(getString(R.string.destructive_cannot_be_undone))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                BlockedInboxStore.remove(this, event)
+                BlockedNotificationsWidgetProvider.refreshAll(this)
+                load()
+            }
+            .showDestructiveAccented()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -340,156 +352,72 @@ class BlockedInboxActivity : AppCompatActivity() {
     }
 
     private fun showFilterMenuDialog() {
-        val sortLabel = getString(if (sortNewestFirst) R.string.blocked_inbox_sort_newest else R.string.blocked_inbox_sort_oldest)
-        val filterLabel = appFilter?.let { appLabel(it) } ?: getString(R.string.blocked_inbox_filter_all_apps)
-        val options = listOf(
-            SwitchlyDialogOption(
-                title = getString(R.string.blocked_inbox_sort_title),
-                summary = sortLabel,
-                iconRes = R.drawable.sort_24
-            ),
-            SwitchlyDialogOption(
-                title = getString(R.string.blocked_inbox_filter_app),
-                summary = filterLabel,
-                iconRes = R.drawable.apps_24
-            )
-        )
-
-        showSwitchlyOptionDialog(
-            title = getString(R.string.blocked_inbox_filter_menu_title),
-            options = options,
-            compact = false,
-            showCancelButton = true
-        ) { which ->
-            when (which) {
-                0 -> showSortDialog()
-                1 -> showAppFilterDialog()
-            }
-        }
-    }
-
-    private fun showSortDialog() {
-        val labels = listOf(
-            getString(R.string.blocked_inbox_sort_newest),
-            getString(R.string.blocked_inbox_sort_oldest)
-        )
-        val icons = listOf(R.drawable.arrow_downward_24, R.drawable.arrow_upward_24)
-        val checked = if (sortNewestFirst) 0 else 1
-
-        showRadioSingleChoiceDialog(
-            title = getString(R.string.blocked_inbox_sort_title),
-            entries = labels,
-            selectedIndex = checked,
-            icons = icons,
-            compact = false
-        ) { which ->
-            sortNewestFirst = which == 0
-            prefs.edit { putBoolean(KEY_SORT_NEWEST, sortNewestFirst) }
-            applyFilterSort()
-        }
-    }
-
-    private fun showAppFilterDialog() {
         val pkgs = allItems.map { it.pkg }.distinct().sortedBy { appLabel(it).lowercase() }
-        if (pkgs.isEmpty()) return
-
-        val entries = mutableListOf<String>()
-        val values = mutableListOf<String?>()
-
-        entries += getString(R.string.blocked_inbox_filter_all_apps)
-        values += null
-
+        val appLabels = mutableListOf(getString(R.string.blocked_inbox_filter_all_apps))
+        val appValues = mutableListOf<String?>(null)
         pkgs.forEach { pkg ->
-            entries += appLabel(pkg)
-            values += pkg
+            appLabels += appLabel(pkg)
+            appValues += pkg
         }
 
-        val selectedIndex = values.indexOf(appFilter).takeIf { it >= 0 } ?: 0
-        val icons = values.map { pkg -> pkg?.let { appIcon(it) } }
+        val root = layoutInflater.inflate(R.layout.dialog_statistics_dropdown_sort_filter, FrameLayout(this), false)
+        val filterLabel = root.findViewById<TextView>(R.id.tvStatsDropdownPrimaryLabel)
+        val sortLabel = root.findViewById<TextView>(R.id.tvStatsDropdownSortLabel)
+        val appDropdown = root.findViewById<MaterialAutoCompleteTextView>(R.id.dropdownStatsPrimary)
+        val sortDropdown = root.findViewById<MaterialAutoCompleteTextView>(R.id.dropdownStatsSort)
+        val extraFilter = root.findViewById<View>(R.id.cbStatsExtraFilter)
 
-        showRadioSingleChoiceDialog(
-            title = getString(R.string.blocked_inbox_filter_app),
-            entries = entries,
-            selectedIndex = selectedIndex,
-            iconDrawables = icons,
-            fallbackIconRes = R.drawable.apps_24,
-            compact = false
-        ) { which ->
-            appFilter = values.getOrNull(which)
-            prefs.edit {
-                val v = appFilter
-                if (v.isNullOrBlank()) remove(KEY_APP_FILTER) else putString(KEY_APP_FILTER, v)
+        filterLabel.text = getString(R.string.blocked_inbox_filter_app)
+        sortLabel.text = getString(R.string.blocked_inbox_sort_title)
+        extraFilter.visibility = View.GONE
+
+        var selectedAppFilter = appFilter
+        val appIndex = appValues.indexOf(appFilter).takeIf { it >= 0 } ?: 0
+        appDropdown.setAdapter(SwitchlyDropdownAdapter(this, appLabels))
+        appDropdown.setText(appLabels[appIndex], false)
+        appDropdown.setOnItemClickListener { _, _, position, _ ->
+            selectedAppFilter = appValues.getOrNull(position)
+        }
+        appDropdown.setOnClickListener { appDropdown.showDropDown() }
+
+        val sortOptions = listOf(
+            true to getString(R.string.blocked_inbox_sort_newest),
+            false to getString(R.string.blocked_inbox_sort_oldest)
+        )
+        var selectedSortNewest = sortNewestFirst
+        sortDropdown.setAdapter(SwitchlyDropdownAdapter(this, sortOptions.map { it.second }))
+        sortDropdown.setText(sortOptions.first { it.first == sortNewestFirst }.second, false)
+        sortDropdown.setOnItemClickListener { _, _, position, _ ->
+            selectedSortNewest = sortOptions.getOrElse(position) { sortOptions.first() }.first
+        }
+        sortDropdown.setOnClickListener { sortDropdown.showDropDown() }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.blocked_inbox_filter_menu_title)
+            .setView(root)
+            .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.blocked_inbox_clear_filters) { _, _ ->
+                appFilter = null
+                sortNewestFirst = true
+                prefs.edit {
+                    remove(KEY_APP_FILTER)
+                    putBoolean(KEY_SORT_NEWEST, true)
+                }
+                applyFilterSort()
             }
-            applyFilterSort()
-        }
-    }
-
-    /**
-     * Shared Switchly card-choice dialog.
-     * No radios/checkmarks; selected row uses only accent border/background.
-     */
-    private fun showRadioSingleChoiceDialog(
-        title: String,
-        entries: List<String>,
-        selectedIndex: Int,
-        icons: List<Int?>? = null,
-        iconDrawables: List<Drawable?>? = null,
-        fallbackIconRes: Int? = null,
-        compact: Boolean = false,
-        onPicked: (Int) -> Unit
-    ) {
-        showSwitchlyOptionDialog(
-            title = title,
-            options = entries.mapIndexed { index, label ->
-                SwitchlyDialogOption(
-                    title = label,
-                    iconRes = iconDrawables?.getOrNull(index)?.let { null } ?: icons?.getOrNull(index) ?: fallbackIconRes,
-                    iconDrawable = iconDrawables?.getOrNull(index),
-                    selected = index == selectedIndex
-                )
-            },
-            compact = compact,
-            showCancelButton = false
-        ) { which ->
-            onPicked(which)
-        }
-    }
-
-    private fun showDeleteDialog() {
-        if (visibleItems.isEmpty()) return
-
-        val fmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
-        val labels = visibleItems.map { e ->
-            val app = appLabel(e.pkg)
-            val preview = listOfNotNull(
-                e.title.takeIf { it.isNotBlank() },
-                e.text.takeIf { it.isNotBlank() }
-            ).joinToString(" — ").ifBlank {
-                getString(R.string.blocked_inbox_content_unknown)
+            .setPositiveButton(R.string.blocked_inbox_apply_filters) { _, _ ->
+                appFilter = selectedAppFilter
+                sortNewestFirst = selectedSortNewest
+                prefs.edit {
+                    val v = appFilter
+                    if (v.isNullOrBlank()) remove(KEY_APP_FILTER) else putString(KEY_APP_FILTER, v)
+                    putBoolean(KEY_SORT_NEWEST, sortNewestFirst)
+                }
+                applyFilterSort()
             }
-            "$app • ${fmt.format(Date(e.timeMillis))}\n$preview"
-        }.toTypedArray()
-
-        val checked = BooleanArray(labels.size) { false }
-
-        showSwitchlyMultiChoiceDialog(
-            title = getString(R.string.blocked_inbox_delete_title),
-            options = visibleItems.mapIndexed { index, e ->
-                SwitchlyDialogOption(
-                    title = labels[index],
-                    iconDrawable = appIcon(e.pkg),
-                    destructive = true
-                )
-            },
-            checked = checked,
-            positiveTextRes = R.string.delete,
-            compact = true
-        ) { result ->
-            val toDelete = visibleItems.filterIndexed { idx, _ -> result.getOrNull(idx) == true }
-            toDelete.forEach { BlockedInboxStore.remove(this, it) }
-            BlockedNotificationsWidgetProvider.refreshAll(this)
-            load()
-        }
+            .create()
+        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.show()
     }
 
     private fun confirmDeleteSelected() {
@@ -588,14 +516,19 @@ class BlockedInboxActivity : AppCompatActivity() {
             holder.checkbox.visibility = if (selecting) View.VISIBLE else View.GONE
             holder.checkbox.isChecked = selected
             (holder.itemView as? MaterialCardView)?.let { card ->
-                val accent = AccentColor.getAccentColorInt(holder.itemView.context)
-                card.strokeWidth = if (selected) (2 * holder.itemView.resources.displayMetrics.density).toInt().coerceAtLeast(1) else 0
-                card.strokeColor = if (selected) accent else Color.TRANSPARENT
-                card.setCardBackgroundColor(
-                    if (selected) ColorUtils.setAlphaComponent(accent, 0x14)
-                    else MaterialColors.getColor(holder.itemView, com.google.android.material.R.attr.colorSurface)
-                )
+                val ctx = holder.itemView.context
+                val accent = AccentColor.getAccentColorInt(ctx)
+                if (selected) {
+                    card.strokeWidth = (2 * holder.itemView.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+                    card.strokeColor = accent
+                    card.setCardBackgroundColor(ColorUtils.setAlphaComponent(accent, 0x14))
+                } else {
+                    card.strokeWidth = (1 * holder.itemView.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+                    card.strokeColor = ContextCompat.getColor(ctx, R.color.switchly_card_stroke)
+                    card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.switchly_card_bg))
+                }
             }
+            holder.more.visibility = if (selecting) View.GONE else View.VISIBLE
 
             holder.itemView.setOnClickListener { onRowClick(e) }
             holder.itemView.setOnLongClickListener { onRowLongPress(e) }
@@ -609,60 +542,7 @@ class BlockedInboxActivity : AppCompatActivity() {
             val content: TextView = v.findViewById(R.id.tvContent)
             val subtitle: TextView = v.findViewById(R.id.tvSubtitle)
             val checkbox: com.google.android.material.checkbox.MaterialCheckBox = v.findViewById(R.id.cbSelect)
-        }
-    }
-
-    private class RadioSingleChoiceAdapter(
-        private val entries: List<String>,
-        selectedIndex: Int,
-        private val onPick: (Int) -> Unit
-    ) : RecyclerView.Adapter<RadioSingleChoiceAdapter.VH>() {
-
-        private var selected = selectedIndex
-
-        override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): VH {
-            val v = android.view.LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_single_select_checkbox, parent, false)
-            return VH(v)
-        }
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.title.text = entries[position]
-
-            // Round selection indicator + consistent accent (including CUSTOM).
-            val ctx = holder.itemView.context
-            val accent = AccentColor.getAccentColorInt(ctx)
-            val onSurface = MaterialColors.getColor(holder.radio, com.google.android.material.R.attr.colorOnSurface)
-            val unchecked = ColorUtils.setAlphaComponent(onSurface, 0x88)
-            holder.radio.buttonTintList = ColorStateList(
-                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                intArrayOf(accent, unchecked)
-            )
-            runCatching { holder.radio.setUseMaterialThemeColors(false) }
-
-            holder.radio.isChecked = position == selected
-
-            holder.itemView.setOnClickListener {
-                val adapterPosition = holder.bindingAdapterPosition
-                if (adapterPosition == RecyclerView.NO_POSITION) return@setOnClickListener
-
-                val old = selected
-                selected = adapterPosition
-                if (old != adapterPosition) {
-                    notifyItemChanged(old)
-                    notifyItemChanged(adapterPosition)
-                } else {
-                    notifyItemChanged(adapterPosition)
-                }
-                onPick(adapterPosition)
-            }
-        }
-
-        override fun getItemCount(): Int = entries.size
-
-        class VH(v: View) : RecyclerView.ViewHolder(v) {
-            val radio: com.google.android.material.radiobutton.MaterialRadioButton = v.findViewById(R.id.radio)
-            val title: TextView = v.findViewById(R.id.title)
+            val more: ImageView = v.findViewById(R.id.imgMore)
         }
     }
 

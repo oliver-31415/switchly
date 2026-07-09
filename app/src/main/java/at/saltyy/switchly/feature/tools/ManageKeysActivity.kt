@@ -31,7 +31,9 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
+import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
 import at.saltyy.switchly.feature.qr.QrGenerateActivity
+import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.nfc.NfcWriterActivity
@@ -87,7 +89,9 @@ class ManageKeysActivity : AppCompatActivity() {
         findViewById<View>(R.id.cardWriteNfc).visibility = if (showNfc) View.VISIBLE else View.GONE
         findViewById<View>(R.id.cardPairedTags).visibility = if (showNfc) View.VISIBLE else View.GONE
         findViewById<View>(R.id.cardGenerateQr).visibility = if (showQr) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardScanQr).visibility = if (showQr) View.VISIBLE else View.GONE
         findViewById<View>(R.id.cardManageBarcodes).visibility = if (showBarcode) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardScanBarcode).visibility = if (showBarcode) View.VISIBLE else View.GONE
     }
 
     private fun setupCards() {
@@ -129,6 +133,15 @@ class ManageKeysActivity : AppCompatActivity() {
             }
         }
 
+        findViewById<View>(R.id.cardScanQr).setOnClickListener {
+            if (!AutomationModeStore.isQrAllowed(this)) {
+                showFeatureDisabledToast(R.string.toast_manage_qr_requires_enabled)
+            } else {
+                startActivity(Intent(this, QrScanActivity::class.java)
+                    .putExtra(QrScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true))
+            }
+        }
+
         findViewById<View>(R.id.cardManageBarcodes).setOnClickListener {
             val barcodeEnabled = AutomationModeStore.shouldShowBarcodeTools(this)
             val allowBarcodeSetupFallback = AutomationModeStore.isBarcodeSetupMissing(this)
@@ -142,6 +155,15 @@ class ManageKeysActivity : AppCompatActivity() {
                 EditingLockGuard.isLocked(this) && !allowBarcodeSetupFallback ->
                     EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
                 else -> startActivity(Intent(this, ManageBarcodesActivity::class.java))
+            }
+        }
+
+        findViewById<View>(R.id.cardScanBarcode).setOnClickListener {
+            if (!AutomationModeStore.isBarcodeAllowed(this)) {
+                showFeatureDisabledToast(R.string.toast_manage_barcodes_requires_enabled)
+            } else {
+                startActivity(Intent(this, BarcodeScanActivity::class.java)
+                    .putExtra(BarcodeScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true))
             }
         }
     }
@@ -172,10 +194,12 @@ class ManageKeysActivity : AppCompatActivity() {
         applyLockedCardState(findViewById(R.id.cardWriteNfc), !nfcAllowed || isNfcTagWritingLocked())
         applyLockedCardState(findViewById(R.id.cardPairedTags), !nfcAllowed || editLocked || !arePairedTagsEnabled())
         applyLockedCardState(findViewById(R.id.cardGenerateQr), !AutomationModeStore.shouldShowQrTools(this))
+        applyLockedCardState(findViewById(R.id.cardScanQr), !AutomationModeStore.isQrAllowed(this))
         applyLockedCardState(
             findViewById(R.id.cardManageBarcodes),
             !AutomationModeStore.shouldShowBarcodeTools(this) || (editLocked && !barcodeSetupFallback)
         )
+        applyLockedCardState(findViewById(R.id.cardScanBarcode), !AutomationModeStore.isBarcodeAllowed(this))
     }
 
     private fun applyLockedCardState(view: View, locked: Boolean) {

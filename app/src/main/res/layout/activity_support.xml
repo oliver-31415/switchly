@@ -63,20 +63,26 @@
                         android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                         android:textColor="?android:attr/textColorSecondary" />
 
-                    <LinearLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:minHeight="48dp">
 
                         <TextView
                             android:id="@+id/tvSupportEmail"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/support_email_placeholder"
-                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                            android:layout_marginEnd="8dp"
+                            android:maxLines="1"
+                            android:text="@string/about_mail_address"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textColor="@color/contact_text"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/btnCopyEmailInline"
+                            app:layout_constraintHorizontal_bias="0"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
 
                         <ImageButton
                             android:id="@+id/btnCopyEmailInline"
@@ -86,33 +92,12 @@
                             android:contentDescription="@string/support_copy_email"
                             android:padding="8dp"
                             android:src="@drawable/content_copy_24"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
                             app:tint="?attr/colorOnSurface" />
 
-                    </LinearLayout>
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchIncludeDebug"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/support_include_debug"
-                        android:checked="true" />
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchIncludeAdvancedDebug"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/support_include_advanced_debug"
-                        android:checked="false" />
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchIncludeLogs"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/support_include_logs"
-                        android:checked="false" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"

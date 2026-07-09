@@ -41,7 +41,9 @@ import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.PauseUntilStore
 import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
+import at.saltyy.switchly.data.prefs.ScheduleInsights
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
@@ -298,6 +300,9 @@ class ScheduleReceiver : BroadcastReceiver() {
                 ScheduleRuntimeStore.setManualOverrideActive(ctx, false)
                 ScheduleRuntimeStore.clearManualOverrideScheduleId(ctx)
             }
+            val manualSchedulePauseWasActive = ScheduleRuntimeStore.isManualSchedulePauseActive(ctx)
+            val manualSchedulePauseScheduleId = ScheduleRuntimeStore.getManualSchedulePauseScheduleId(ctx)
+            val manualSchedulePauseAppliesToPrevious = manualSchedulePauseWasActive && manualSchedulePauseScheduleId == previousActiveRangeId
             ScheduleRuntimeStore.clearActiveRangeScheduleId(ctx)
 
             val effectiveLastSource = when {
@@ -333,13 +338,29 @@ class ScheduleReceiver : BroadcastReceiver() {
                 // DISABLE_AND_ENABLE => enable on exit if we owned disable
                 if (
                     hadDisableAndEnable &&
+                        !manualSchedulePauseAppliesToPrevious &&
                         (ScheduleRuntimeStore.wasDisabledBySchedule(ctx) || manualOverrideWasActive)
                 ) {
                     if (!SwitchModeStore.isBaseEnabled(ctx)) {
                         SwitchModeStore.setEnabledBySchedule(ctx, true)
                         ScheduleRuntimeStore.setDisabledBySchedule(ctx, false)
                     }
+                } else if (hadDisableAndEnable && manualSchedulePauseAppliesToPrevious) {
+                    AppLogStore.append(
+                        ctx,
+                        "Schedule",
+                        "schedule_skipped id=$manualSchedulePauseScheduleId action=exit_enable source=$effectiveLastSource reason=manual_disabled"
+                    )
                 }
+            }
+
+            if (manualSchedulePauseWasActive) {
+                ScheduleRuntimeStore.setManualSchedulePauseActive(ctx, false)
+                AppLogStore.append(
+                    ctx,
+                    "Schedule",
+                    "schedule_manual_pause_cleared id=$manualSchedulePauseScheduleId reason=no_active_match"
+                )
             }
 
             if (hadEnableAndDisable) ScheduleRuntimeStore.setHadEnableAndDisable(ctx, false)
@@ -358,7 +379,21 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
 
         val target = pickWinningMatch(matches, nowMinutes)
-        AppLogStore.append(ctx, "Schedule", "Match success day=$todayBit time=$nowMinutes")
+        if (matches.size > 1) {
+            val overwritten = matches
+                .filter { it.id != target.id }
+                .joinToString(separator = ",") { "#${it.id}:${ScheduleInsights.scheduleDisplayName(it)}" }
+            AppLogStore.append(
+                ctx,
+                "Schedule",
+                "schedule_conflict active=#${target.id}:${ScheduleInsights.scheduleDisplayName(target)} overwritten=$overwritten"
+            )
+        }
+        AppLogStore.append(
+            ctx,
+            "Schedule",
+            "schedule_match id=${target.id} name=${ScheduleInsights.scheduleDisplayName(target)} action=${target.action.name} profile=${target.profile.ifBlank { "-" }} day=$todayBit time=$nowMinutes"
+        )
         dbg("matches=${matches.size} -> winner id=${target.id} profile=${target.profile} start=${target.startMinutes} end=${target.endMinutes} action=${target.action}")
         val source = when {
             !target.wifiSsid.isNullOrBlank() -> SOURCE_WIFI
@@ -382,6 +417,9 @@ class ScheduleReceiver : BroadcastReceiver() {
             dbg("Manual override owner changed ($manualOverrideScheduleId -> ${target.id}) -> clear override and apply winner")
             ScheduleRuntimeStore.setManualOverrideActive(ctx, false)
             ScheduleRuntimeStore.clearManualOverrideScheduleId(ctx)
+            if (ScheduleRuntimeStore.getManualSchedulePauseScheduleId(ctx) == manualOverrideScheduleId) {
+                ScheduleRuntimeStore.setManualSchedulePauseActive(ctx, false)
+            }
         }
 
         // Stats: count schedule executions (not every tick)
@@ -410,18 +448,17 @@ class ScheduleReceiver : BroadcastReceiver() {
             shouldFireOneShotTime(ctx, target, token)
         }
 
-        if (executedNow) {
-            ScheduleExecutionCountStore.incrementToday(ctx)
+        val applied = applySchedule(ctx, target, source)
+        if (applied) {
+            if (executedNow) {
+                ScheduleExecutionCountStore.incrementToday(ctx)
+            }
+            ScheduleRuntimeStore.markExecutedNow(ctx)
         }
-
-        ScheduleRuntimeStore.markExecutedNow(ctx)
-        applySchedule(ctx, target, source)
     }
 
     /**
      * Apply schedule action + profile.
-     *
-     * IMPORTANT FIX:
      * For range schedules we must set "ownership" even if the baseEnabled state did not change.
      * Otherwise exit-revert can't happen reliably.
      */
@@ -489,8 +526,30 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
         ScheduleRuntimeStore.setLastLocationTransitionMs(ctx, schedule.id, transitionKey, nowMs)
 
-        applySchedule(ctx, schedule.copy(action = effectiveAction), SOURCE_LOCATION)
+        val applied = applySchedule(ctx, schedule.copy(action = effectiveAction), SOURCE_LOCATION)
+        if (!applied) {
+            if (isExit && ScheduleRuntimeStore.isManualSchedulePausedFor(ctx, schedule.id)) {
+                ScheduleRuntimeStore.setManualSchedulePauseActive(ctx, false)
+                AppLogStore.append(
+                    ctx,
+                    "Schedule",
+                    "schedule_manual_pause_cleared reason=location_exit id=${schedule.id}"
+                )
+            }
+            if (isExit && PauseUntilStore.shouldEndOnLocationExit(ctx, schedule.id)) {
+                SwitchModeStore.cancelTemporaryDisable(ctx)
+                PauseUntilStore.clearLocationPause(ctx)
+                AppLogStore.append(ctx, "Schedule", "pause_until_location_exit_completed id=${schedule.id}")
+            }
+            return
+        }
         ScheduleRuntimeStore.markExecutedNow(ctx)
+
+        if (isExit && PauseUntilStore.shouldEndOnLocationExit(ctx, schedule.id)) {
+            SwitchModeStore.cancelTemporaryDisable(ctx)
+            PauseUntilStore.clearLocationPause(ctx)
+            AppLogStore.append(ctx, "Schedule", "pause_until_location_exit_completed id=${schedule.id}")
+        }
 
         if (pairedMode) {
             if (isEnter) {
@@ -541,7 +600,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         )
     }
 
-    private fun applySchedule(ctx: Context, s: ScheduleStore.Schedule, source: String) {
+    private fun applySchedule(ctx: Context, s: ScheduleStore.Schedule, source: String): Boolean {
         val currentProfile = ProfileStore.getCurrent(ctx)
         val tempOverrideActive = SwitchModeStore.hasActiveTemporaryOverride(ctx)
         val profileChanged = !tempOverrideActive && currentProfile != s.profile
@@ -574,6 +633,16 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
 
         if (shouldWriteEnabled) {
+            if (newEnabled && ScheduleRuntimeStore.isManualSchedulePausedFor(ctx, s.id)) {
+                AppLogStore.append(
+                    ctx,
+                    "Schedule",
+                    "schedule_skipped id=${s.id} name=${ScheduleInsights.scheduleDisplayName(s)} action=${s.action.name} source=$source reason=manual_disabled"
+                )
+                dbg("Schedule enable skipped by manual disable pause (id=${s.id}, source=$source)")
+                updateNextAlarmAndNotifyIfChanged(ctx)
+                return false
+            }
             SwitchModeStore.setEnabledBySchedule(ctx, newEnabled)
         }
 
@@ -651,7 +720,11 @@ class ScheduleReceiver : BroadcastReceiver() {
             BlockingRuntime.ensureRunning(ctx)
         }
 
-        AppLogStore.append(ctx, "Schedule", "Applied scheduled state enabled=$baseEnabledAfter")
+        AppLogStore.append(
+            ctx,
+            "Schedule",
+            "schedule_apply id=${s.id} name=${ScheduleInsights.scheduleDisplayName(s)} action=${s.action.name} profile=${s.profile.ifBlank { "-" }} source=$source enabledBefore=$baseEnabledBefore enabledAfter=$baseEnabledAfter profileChanged=$profileChanged"
+        )
 
         if (isRangeEnableDisable || isRangeDisableEnable) {
             ScheduleRuntimeStore.setActiveRangeScheduleId(ctx, s.id)
@@ -673,6 +746,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
 
         updateNextAlarmAndNotifyIfChanged(ctx)
+        return true
     }
 
     private fun shouldFireOneShotTime(ctx: Context, s: ScheduleStore.Schedule, token: String): Boolean {
@@ -694,9 +768,16 @@ class ScheduleReceiver : BroadcastReceiver() {
         nowMin: Int
     ): ScheduleStore.Schedule {
         return matches.maxWithOrNull(
-            compareBy<ScheduleStore.Schedule> { activeStartSortKey(it, nowMin) }
+            compareBy<ScheduleStore.Schedule> { scheduleSourcePriority(it) }
+                .thenBy { activeStartSortKey(it, nowMin) }
                 .thenBy { actionPriority(it.action) }
         ) ?: matches.first()
+    }
+
+    private fun scheduleSourcePriority(s: ScheduleStore.Schedule): Int = when {
+        s.isLocationSchedule() -> 3
+        !s.wifiSsid.isNullOrBlank() || !s.btDeviceName.isNullOrBlank() || !s.btDeviceAddress.isNullOrBlank() -> 2
+        else -> 1
     }
 
     private fun activeStartSortKey(s: ScheduleStore.Schedule, nowMin: Int): Int {

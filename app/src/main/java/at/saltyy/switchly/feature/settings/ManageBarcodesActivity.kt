@@ -20,7 +20,6 @@
 package at.saltyy.switchly.feature.settings
 
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -28,14 +27,13 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
@@ -51,15 +49,17 @@ import at.saltyy.switchly.nfc.NfcSchema
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
+import at.saltyy.switchly.ui.attachEditDeleteSwipe
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.updateSelectionSubtitle
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.showDestructiveAccented
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
-import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
-import at.saltyy.switchly.ui.dialog.applySwitchlyDialogWidth
-import at.saltyy.switchly.ui.dialog.styleSwitchlyFormButtons
+import at.saltyy.switchly.ui.dialog.showSwitchlyFormDialog
 import at.saltyy.switchly.util.EditingLockGuard
+import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
@@ -80,6 +80,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
     private lateinit var recycler: RecyclerView
     private lateinit var empty: View
     private lateinit var adapter: CodeAdapter
+    private lateinit var toolbar: MaterialToolbar
     private var fabAdd: FloatingActionButton? = null
     private val selectedRawValues: MutableSet<String> = linkedSetOf()
     private var selectionMode: Boolean = false
@@ -140,7 +141,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         setContentView(R.layout.activity_manage_barcodes)
         CustomAccentApplier.applyIfNeeded(this)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        toolbar = findViewById(R.id.toolbar)
         EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -172,6 +173,15 @@ class ManageBarcodesActivity : AppCompatActivity() {
             }
         )
         recycler.adapter = adapter
+        recycler.attachEditDeleteSwipe(
+            canSwipe = { !selectionMode },
+            onEdit = { position ->
+                adapter.itemAt(position)?.let { showEditDialog(it) }
+            },
+            onDelete = { position ->
+                adapter.itemAt(position)?.let(::confirmDeleteSingle)
+            }
+        )
 
         fabAdd = findViewById<FloatingActionButton>(R.id.fabAdd)
         fabAdd?.setOnClickListener {
@@ -237,9 +247,14 @@ class ManageBarcodesActivity : AppCompatActivity() {
     private fun showBarcodeInfoDialog() {
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.manage_barcodes_info_title)
-            .setMessage(R.string.manage_barcodes_info_body)
+            .setMessage(buildStoreInfoMessage(R.string.manage_barcodes_info_body))
+            .setNeutralButton(R.string.store_open) { _, _ -> SwitchlyStoreLinks.openStore(this) }
             .setPositiveButton(R.string.ok, null)
             .showAccented()
+    }
+
+    private fun buildStoreInfoMessage(baseMessageRes: Int): String {
+        return getString(baseMessageRes) + "\n\n" + getString(R.string.store_card_title) + "\n" + getString(R.string.store_card_summary)
     }
 
     private fun refresh() {
@@ -252,10 +267,14 @@ class ManageBarcodesActivity : AppCompatActivity() {
         adapter.submit(entries)
         empty.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
         invalidateOptionsMenu()
+        notifySelectionUiChanged()
     }
 
     private fun notifySelectionUiChanged() {
         if (::adapter.isInitialized) adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        if (::toolbar.isInitialized) {
+            toolbar.updateSelectionSubtitle(selectionMode, selectedRawValues.size)
+        }
     }
 
     private fun toggleSelection(rawValue: String) {
@@ -299,6 +318,22 @@ class ManageBarcodesActivity : AppCompatActivity() {
                 refresh()
             }
             .setNegativeButton(R.string.cancel, null)
+            .showDestructiveAccented()
+    }
+
+    private fun confirmDeleteSingle(entry: ScanCodeStore.Entry) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.manage_barcodes_delete_single_title)
+            .setMessage(
+                getString(R.string.manage_barcodes_delete_single_message) +
+                    "\n\n" +
+                    getString(R.string.destructive_cannot_be_undone)
+            )
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                ScanCodeStore.remove(this, ScanCodeStore.Kind.BARCODE, entry.rawValue)
+                refresh()
+            }
             .showDestructiveAccented()
     }
 
@@ -347,8 +382,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         existing: ScanCodeStore.Entry?,
         prefilledRaw: String? = null,
     ) {
-        val view = layoutInflater.inflate(R.layout.dialog_barcode_edit, null)
-        runCatching { CustomAccentApplier.applyToView(view, this) }
+        val view = layoutInflater.inflate(R.layout.dialog_barcode_edit, FrameLayout(this), false)
         val etRaw = view.findViewById<TextInputEditText>(R.id.etRawValue)
         val etName = view.findViewById<TextInputEditText>(R.id.etCodeName)
         val etNote = view.findViewById<TextInputEditText>(R.id.etCodeNote)
@@ -360,14 +394,13 @@ class ManageBarcodesActivity : AppCompatActivity() {
         val tilMinutes = view.findViewById<View>(R.id.tilMinutes)
         val btnSave = view.findViewById<MaterialButton>(R.id.btnSave)
         val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
-        val btnDelete = view.findViewById<MaterialButton>(R.id.btnDelete)
 
         val actionLabels = actions.map { getString(it.labelRes) }
-        acAction.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, actionLabels))
+        acAction.setAdapter(SwitchlyDropdownAdapter(this, actionLabels))
 
         val profiles = listOf(getString(R.string.manage_barcodes_profile_universal)) +
             ProfileStore.getProfiles(this).toList().sorted()
-        acProfile.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, profiles))
+        acProfile.setAdapter(SwitchlyDropdownAdapter(this, profiles))
 
         fun minutePresetsFor(action: ActionSpec): List<String> {
             val presets = mutableListOf("5", "10", "30", "60", "120")
@@ -378,7 +411,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         }
 
         fun applyMinutePresets(action: ActionSpec) {
-            acMinutes.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, minutePresetsFor(action)))
+            acMinutes.setAdapter(SwitchlyDropdownAdapter(this, minutePresetsFor(action)))
             if (action.id !in setOf("temp_enable", "temp_disable") && acMinutes.text?.toString() == getString(R.string.qr_minutes_ask_when_scanned)) {
                 acMinutes.setText(String.format(Locale.ROOT, "%d", DEFAULT_MINUTES), false)
             }
@@ -412,42 +445,16 @@ class ManageBarcodesActivity : AppCompatActivity() {
         updateVisibility()
         acAction.setOnItemClickListener { _, _, _, _ -> updateVisibility() }
 
-        // Use the same in-view button row as the paired-tag editor so both edit dialogs feel identical.
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(if (existing == null) R.string.manage_barcodes_add_title else R.string.manage_barcodes_edit_title)
-            .setView(view)
-            .create()
-        dialog.setOnShowListener {
-            dialog.applySwitchlyDialogWidth(0.94f)
-            runCatching { CustomAccentApplier.applyToDialog(dialog) }
-            longArrayOf(0L, 120L, 360L, 720L).forEach { delay ->
-                view.postDelayed({ runCatching { CustomAccentApplier.applyToView(view, this) } }, delay)
-            }
-        }
-        dialog.show()
-
-        styleSwitchlyFormButtons(
-            deleteButton = btnDelete,
+        val dialog = showSwitchlyFormDialog(
+            title = getString(
+                if (existing == null) R.string.manage_barcodes_add_title
+                else R.string.manage_barcodes_edit_title
+            ),
+            content = view,
             cancelButton = btnCancel,
             saveButton = btnSave,
-            destructiveButtonVisible = existing != null,
             saveIsAdd = existing == null
         )
-
-        btnCancel.setOnClickListener { dialog.dismiss() }
-        btnDelete.setOnClickListener {
-            val current = existing ?: return@setOnClickListener
-            MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.manage_barcodes_delete_single_title)
-                .setMessage(R.string.manage_barcodes_delete_single_message)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.delete) { _, _ ->
-                    ScanCodeStore.remove(this, ScanCodeStore.Kind.BARCODE, current.rawValue)
-                    refresh()
-                    dialog.dismiss()
-                }
-                .showDestructiveAccented()
-        }
 
         btnSave.setOnClickListener {
             val form = readForm(
@@ -588,36 +595,6 @@ class ManageBarcodesActivity : AppCompatActivity() {
         }
     }
 
-    private class SimpleChoiceAdapter(
-        private val entries: List<String>,
-        private val onSelected: (Int) -> Unit,
-    ) : RecyclerView.Adapter<SimpleChoiceAdapter.VH>() {
-
-        inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-            private val text = view.findViewById<TextView>(android.R.id.text1)
-
-            fun bind(label: String) {
-                text.text = label
-                itemView.setOnClickListener {
-                    val pos = bindingAdapterPosition
-                    if (pos != RecyclerView.NO_POSITION) onSelected(pos)
-                }
-            }
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(android.R.layout.simple_list_item_1, parent, false)
-            return VH(view)
-        }
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.bind(entries[position])
-        }
-
-        override fun getItemCount(): Int = entries.size
-    }
-
     private inner class CodeAdapter(
         private val isSelectionMode: () -> Boolean,
         private val isSelected: (ScanCodeStore.Entry) -> Boolean,
@@ -643,6 +620,8 @@ class ManageBarcodesActivity : AppCompatActivity() {
             items.addAll(list)
             diff.dispatchUpdatesTo(this)
         }
+
+        fun itemAt(position: Int): ScanCodeStore.Entry? = items.getOrNull(position)
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val view = LayoutInflater.from(parent.context).inflate(R.layout.item_barcode, parent, false)

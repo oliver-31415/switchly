@@ -5,10 +5,12 @@
     <!-- Website blocking overview -->
     <!-- ====================================================== -->
     <string name="website_rules_title">Website-Regeln</string>
-    <string name="block_websites">Website-Regeln</string>
     <string name="blocked_websites_empty">Noch keine blockierten Websites.\n\nTippe auf +, um eine Website für dieses Profil zu blockieren.</string>
     <string name="website_rules_info_title">Website-Regeln</string>
-    <string name="website_rules_info_body">Website-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nMit dem Hauptschalter kannst du Website-Regeln vorübergehend deaktivieren, ohne Domains zu entfernen. Im Block selected Modus werden ausgewählte Domains blockiert. Im Allow selected Modus werden ausgewählte Domains erlaubt.\n\nWebsite-Blockierung liest die sichtbare URL in unterstützten Browsern über die Bedienungshilfe aus. Unterstützte/getestete Browser sind Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo und Ecosia. Die Unterstützung kann je nach Browser-Version und Gerät variieren.</string>
+    <string name="website_rules_info_body">Website-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nRegeln sind aktiv, sobald sie existieren. Mit dem Schalter direkt bei der Domain kannst du nur diese Regel vorübergehend deaktivieren, ohne sie zu löschen. Im Block selected Modus werden ausgewählte aktivierte Domains blockiert. Im Allow selected Modus werden ausgewählte aktivierte Domains erlaubt.\n\nWebsite-Blockierung liest die sichtbare URL in unterstützten Browsern über die Bedienungshilfe aus. Unterstützte/getestete Browser sind Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo und Ecosia. Die Unterstützung kann je nach Browser-Version und Gerät variieren.</string>
+    <string name="website_rule_mode_title">Website-Regelmodus</string>
+    <string name="website_rule_mode_block_summary">Ausgewählte aktivierte Websites werden blockiert, solange dieses Profil aktiv ist.</string>
+    <string name="website_rule_mode_allow_summary">Ausgewählte aktivierte Websites sind erlaubt. Andere Websites werden blockiert, solange dieses Profil aktiv ist.</string>
     <string name="blocked_websites_add_title">Website hinzufügen</string>
 
     <!-- ====================================================== -->
@@ -20,6 +22,8 @@
     <string name="rule_type">Regeltyp</string>
     <string name="rule_block_always">Immer blockieren</string>
     <string name="rule_daily_limit">Tägliches Limit</string>
+    <string name="website_rule_disabled">Regel deaktiviert</string>
+    <string name="website_rule_toggle">Website-Regel aktivieren</string>
     <string name="rule_blocked">Blockiert</string>
     <string name="domain_limit_required">Bitte gib ein Tageslimit in Minuten ein.</string>
 
@@ -47,7 +51,7 @@
 
     <string name="session_reset_limit_value_format">%1$d Min/Sitzung</string>
     <string name="allowed_websites_empty">Noch keine erlaubten Websites.\n\nFüge Websites hinzu, die in diesem Profil im Allow Mode verfügbar bleiben sollen.</string>
-    <string name="blocked_websites_profile_subtitle">Regeln für das aktive Profil.</string>
+    <string name="blocked_websites_profile_subtitle">Regeln für: %1$s</string>
     <string name="rule_allowed">Erlaubt</string>
     <string name="rule_allowed_always">Immer erlaubt</string>
 </resources>

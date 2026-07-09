@@ -24,6 +24,7 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -46,18 +47,22 @@ import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.DateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.TimeZone
 
 class ActiveTimeStatsActivity : AppCompatActivity() {
 
-    private enum class Range { TODAY, WEEK, MONTH, YEAR, OVERALL }
+    private enum class Range { TODAY, WEEK, MONTH, YEAR, CUSTOM }
 
     private lateinit var toolbar: MaterialToolbar
     private lateinit var totalValue: TextView
@@ -65,13 +70,18 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
     private lateinit var bucketContainer: LinearLayout
     private lateinit var emptyText: TextView
 
-    private lateinit var chipToday: Chip
-    private lateinit var chipWeek: Chip
-    private lateinit var chipMonth: Chip
-    private lateinit var chipYear: Chip
-    private lateinit var chipOverall: Chip
+    private lateinit var chipToday: MaterialButton
+    private lateinit var chipWeek: MaterialButton
+    private lateinit var chipMonth: MaterialButton
+    private lateinit var chipYear: MaterialButton
+    private lateinit var chipCustom: MaterialButton
+    private lateinit var customRangeSummary: LinearLayout
+    private lateinit var customRangeValue: TextView
 
     private var range: Range = Range.TODAY
+    private var customRangeStartMillis: Long? = null
+    private var customRangeEndMillis: Long? = null
+    private var customRangePickerShowing = false
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(at.saltyy.switchly.util.LocaleHelper.wrapContext(newBase))
@@ -129,24 +139,63 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
             1f
         ))
 
-        val chipGroup = ChipGroup(this).apply {
+        val chipGroup = MaterialButtonToggleGroup(this).apply {
             isSingleSelection = true
             isSelectionRequired = true
-            chipSpacingHorizontal = dp(8)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
         }
-        chipToday = rangeChip(R.string.active_time_today, Range.TODAY)
-        chipWeek = rangeChip(R.string.active_time_week, Range.WEEK)
-        chipMonth = rangeChip(R.string.active_time_month, Range.MONTH)
-        chipYear = rangeChip(R.string.active_time_year, Range.YEAR)
-        chipOverall = rangeChip(R.string.active_time_overall, Range.OVERALL)
-        listOf(chipToday, chipWeek, chipMonth, chipYear, chipOverall).forEach(chipGroup::addView)
+        chipToday = rangeButton(R.string.active_time_today, Range.TODAY)
+        chipWeek = rangeButton(R.string.active_time_week, Range.WEEK)
+        chipMonth = rangeButton(R.string.active_time_month, Range.MONTH)
+        chipYear = rangeButton(R.string.active_time_year, Range.YEAR)
+        chipCustom = calendarRangeButton(Range.CUSTOM)
+        listOf(chipToday, chipWeek, chipMonth, chipYear, chipCustom).forEach(chipGroup::addView)
         content.addView(chipGroup)
+        customRangeSummary = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            visibility = View.GONE
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
+        }
+        customRangeValue = TextView(this).apply {
+            textSize = 13f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setTextColor(MaterialColors.getColor(this@ActiveTimeStatsActivity, com.google.android.material.R.attr.colorOnSurface, Color.WHITE))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val clearCustomRange = MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = getString(R.string.stats_range_clear)
+            minWidth = 0
+            minimumWidth = 0
+            minHeight = dp(36)
+            minimumHeight = dp(36)
+            insetTop = 0
+            insetBottom = 0
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                dp(36)
+            )
+            setOnClickListener {
+                customRangeStartMillis = null
+                customRangeEndMillis = null
+                setRange(Range.TODAY, chipToday.id)
+            }
+        }
+        customRangeSummary.addView(customRangeValue)
+        customRangeSummary.addView(clearCustomRange)
+        content.addView(customRangeSummary)
 
         chipGroup.check(chipToday.id)
         syncRangeChipUi(chipToday.id)
 
         val totalCard = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
+            radius = dp(26).toFloat()
             cardElevation = dp(2).toFloat()
             useCompatPadding = true
             applySwitchlyCardColors()
@@ -204,23 +253,79 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
         }
     }
 
-    private fun rangeChip(labelRes: Int, target: Range): Chip {
-        return Chip(this).apply {
+    private fun rangeButton(labelRes: Int, target: Range): MaterialButton {
+        return MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             id = View.generateViewId()
             text = getString(labelRes)
             isCheckable = true
-            isCheckedIconVisible = false
-            checkedIcon = null
+            minWidth = 0
+            minimumWidth = 0
+            setPadding(dp(4), 0, dp(4), 0)
+            minHeight = dp(40)
+            insetTop = 0
+            insetBottom = 0
+            cornerRadius = dp(4)
+            setAllCaps(false)
+            layoutParams = LinearLayout.LayoutParams(0, dp(40), 1f)
             setOnClickListener {
                 setRange(target, id)
             }
         }
     }
 
+    private fun calendarRangeButton(target: Range): MaterialButton {
+        return MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            id = View.generateViewId()
+            text = ""
+            contentDescription = getString(R.string.activity_history_range_custom)
+            icon = ContextCompat.getDrawable(this@ActiveTimeStatsActivity, R.drawable.calendar_month_24)
+            iconTint = ColorStateList.valueOf(AccentColor.getAccentColorInt(this@ActiveTimeStatsActivity))
+            iconPadding = 0
+            isCheckable = true
+            minWidth = 0
+            minimumWidth = 0
+            setPadding(dp(8), 0, dp(8), 0)
+            gravity = Gravity.CENTER
+            minHeight = dp(40)
+            insetTop = 0
+            insetBottom = 0
+            cornerRadius = dp(4)
+            setAllCaps(false)
+            layoutParams = LinearLayout.LayoutParams(dp(44), dp(40))
+            setOnClickListener {
+                if (target == Range.CUSTOM) showCustomRangePicker()
+            }
+        }
+    }
+
     private fun setRange(target: Range, chipId: Int) {
+        if (!ensureRangeAllowed(target)) {
+            syncRangeChipUi(chipIdForRange(range))
+            return
+        }
+        if (target == Range.CUSTOM) {
+            showCustomRangePicker()
+            return
+        }
         range = target
         syncRangeChipUi(chipId)
         refresh()
+    }
+
+    private fun ensureRangeAllowed(target: Range): Boolean {
+        if (target == Range.TODAY || StatsPremiumGate.canUseExtendedStats(this)) return true
+        StatsPremiumGate.show(this)
+        return false
+    }
+
+    private fun chipIdForRange(target: Range): Int {
+        return when (target) {
+            Range.TODAY -> chipToday.id
+            Range.WEEK -> chipWeek.id
+            Range.MONTH -> chipMonth.id
+            Range.YEAR -> chipYear.id
+            Range.CUSTOM -> chipCustom.id
+        }
     }
 
     private fun syncRangeChipUi(activeChipId: Int) {
@@ -230,22 +335,67 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
         val inactiveText = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, 0)
         val outline = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, inactiveText)
 
-        listOf(chipToday, chipWeek, chipMonth, chipYear, chipOverall).forEach { chip ->
-            val active = chip.id == activeChipId
-            chip.isChecked = active
-            chip.isCheckable = true
-            chip.isCheckedIconVisible = false
-            chip.checkedIcon = null
-            chip.isClickable = true
-            chip.isActivated = active
-            chip.chipBackgroundColor = ColorStateList.valueOf(if (active) activeBg else inactiveBg)
-            chip.setTextColor(if (active) activeText else inactiveText)
-            chip.chipStrokeColor = ColorStateList.valueOf(if (active) activeBg else outline)
-            chip.chipStrokeWidth = resources.displayMetrics.density
-            chip.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(activeBg, 0x35))
-            chip.jumpDrawablesToCurrentState()
-            chip.refreshDrawableState()
+        listOf(chipToday, chipWeek, chipMonth, chipYear, chipCustom).forEach { button ->
+            val active = button.id == activeChipId
+            button.isChecked = active
+            button.isCheckable = true
+            button.isActivated = active
+            button.backgroundTintList = ColorStateList.valueOf(if (active) activeBg else inactiveBg)
+            button.setTextColor(if (active) activeText else inactiveText)
+            button.iconTint = ColorStateList.valueOf(if (active) activeText else inactiveText)
+            button.strokeColor = ColorStateList.valueOf(if (active) activeBg else outline)
+            button.strokeWidth = resources.displayMetrics.density.toInt().coerceAtLeast(1)
+            button.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(activeBg, 0x35))
+            button.jumpDrawablesToCurrentState()
+            button.refreshDrawableState()
         }
+        updateCustomRangeSummary()
+    }
+
+    private fun updateCustomRangeSummary() {
+        val start = customRangeStartMillis
+        val end = customRangeEndMillis
+        if (range != Range.CUSTOM || start == null || end == null) {
+            customRangeSummary.visibility = View.GONE
+            return
+        }
+        customRangeSummary.visibility = View.VISIBLE
+        val fmt = DateFormat.getDateInstance(DateFormat.SHORT)
+        customRangeValue.text = getString(
+            R.string.activity_history_range_custom_value,
+            fmt.format(Date(start)),
+            fmt.format(Date(end))
+        )
+    }
+
+    private fun showCustomRangePicker() {
+        if (!ensureRangeAllowed(Range.CUSTOM)) {
+            syncRangeChipUi(chipIdForRange(range))
+            return
+        }
+        if (customRangePickerShowing || supportFragmentManager.isStateSaved) return
+        customRangePickerShowing = true
+        val now = System.currentTimeMillis()
+        val currentStart = customRangeStartMillis ?: startOfTodayMillis()
+        val currentEnd = customRangeEndMillis ?: now
+        val picker = MaterialDatePicker.Builder.dateRangePicker()
+            .setTheme(com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialCalendar)
+            .setTitleText(R.string.activity_history_range_custom)
+            .setSelection(androidx.core.util.Pair(localDayToDatePickerUtcMillis(currentStart), localDayToDatePickerUtcMillis(currentEnd)))
+            .build()
+        picker.addOnPositiveButtonClickListener { selection ->
+            val startUtc = selection.first ?: return@addOnPositiveButtonClickListener
+            val endUtc = selection.second ?: startUtc
+            customRangeStartMillis = datePickerUtcMillisToLocalDayStart(minOf(startUtc, endUtc))
+            customRangeEndMillis = datePickerUtcMillisToLocalDayEnd(maxOf(startUtc, endUtc))
+            range = Range.CUSTOM
+            syncRangeChipUi(chipCustom.id)
+            refresh()
+        }
+        picker.addOnDismissListener { customRangePickerShowing = false }
+        runCatching { picker.show(supportFragmentManager, "active_time_custom_range") }
+            .onSuccess { UsageDatePickerAccentTint.apply(this, picker) }
+            .onFailure { customRangePickerShowing = false }
     }
 
     private fun toolbarIconColor(): Int {
@@ -268,7 +418,9 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
             Range.WEEK -> ActiveDurationStore.lastNDaysMs(this, 7)
             Range.MONTH -> ActiveDurationStore.thisMonthMs(this)
             Range.YEAR -> ActiveDurationStore.thisYearMs(this)
-            Range.OVERALL -> ActiveDurationStore.overallMs(this)
+            Range.CUSTOM -> customRangeStartMillis?.let { start ->
+                customRangeEndMillis?.let { end -> ActiveDurationStore.rangeMs(this, start, end) }
+            } ?: 0L
         }
 
         totalValue.text = StatsFormat.prettyMs(totalMs)
@@ -283,7 +435,7 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
             Range.WEEK -> 7
             Range.MONTH -> daysElapsedThisMonth()
             Range.YEAR -> daysElapsedThisYear()
-            Range.OVERALL -> 0
+            Range.CUSTOM -> customRangeDays()
         }
         if (averageDays > 1) {
             subtitleParts += getString(
@@ -304,7 +456,9 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
             Range.WEEK -> ActiveDurationStore.dailyBuckets(this, 7)
             Range.MONTH -> ActiveDurationStore.dailyBuckets(this, daysElapsedThisMonth())
             Range.YEAR -> ActiveDurationStore.monthlyBucketsThisYear(this)
-            Range.OVERALL -> ActiveDurationStore.monthlyBucketsOverall(this)
+            Range.CUSTOM -> customRangeStartMillis?.let { start ->
+                customRangeEndMillis?.let { end -> ActiveDurationStore.dailyBucketsForRange(this, start, end) }
+            } ?: emptyList()
         }
     }
 
@@ -314,7 +468,7 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
         val max = buckets.maxOfOrNull { it.valueMs }?.coerceAtLeast(1L) ?: 1L
         buckets.forEach { bucket ->
             val card = MaterialCardView(this).apply {
-                radius = dp(18).toFloat()
+                radius = dp(26).toFloat()
                 cardElevation = dp(1).toFloat()
                 useCompatPadding = true
                 applySwitchlyCardColors()
@@ -326,7 +480,7 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
                         context = this@ActiveTimeStatsActivity,
                         label = bucket.label,
                         timeMillis = bucket.timeMillis,
-                        isMonth = range == Range.YEAR || range == Range.OVERALL
+                        isMonth = range == Range.YEAR
                     ))
                 }
             }
@@ -385,6 +539,46 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
         return cal.get(Calendar.DAY_OF_YEAR).coerceAtLeast(1)
     }
 
+    private fun customRangeDays(): Int {
+        val start = customRangeStartMillis ?: return 0
+        val end = customRangeEndMillis ?: return 0
+        return (((end - start).coerceAtLeast(0L) / DAY_MILLIS) + 1L).toInt().coerceAtLeast(1)
+    }
+
+    private fun startOfTodayMillis(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun localDayToDatePickerUtcMillis(localMillis: Long): Long {
+        val local = Calendar.getInstance().apply { timeInMillis = localMillis }
+        return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+        }.timeInMillis
+    }
+
+    private fun datePickerUtcMillisToLocalDayStart(utcMillis: Long): Long {
+        val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMillis }
+        return Calendar.getInstance().apply {
+            clear()
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+        }.timeInMillis
+    }
+
+    private fun datePickerUtcMillisToLocalDayEnd(utcMillis: Long): Long {
+        val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMillis }
+        return Calendar.getInstance().apply {
+            clear()
+            set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH), 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.timeInMillis
+    }
+
     private fun selectableItemBackground(): android.graphics.drawable.Drawable? {
         val typedValue = android.util.TypedValue()
         theme.resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true)
@@ -416,6 +610,8 @@ class ActiveTimeStatsActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val DAY_MILLIS = 24L * 60L * 60L * 1000L
+
         fun intent(context: Context): Intent =
             Intent(context, ActiveTimeStatsActivity::class.java)
     }

@@ -39,7 +39,7 @@ import at.saltyy.switchly.feature.settings.PermissionsActivity
 // Shows a persistent warning notification when Switchly is enabled but the Accessibility service is not active (meaning blocking is currently not enforced).
 object ProtectionStatusNotifier {
 
-    private const val CHANNEL_ID = "protection_status"
+    private const val CHANNEL_ID = "protection_status_silent"
     private const val NOTIF_ID = 9001
 
     fun refresh(context: Context) {
@@ -83,6 +83,8 @@ object ProtectionStatusNotifier {
             NotificationManager.IMPORTANCE_LOW
         ).apply {
             description = ctx.getString(R.string.protection_inactive_text)
+            setSound(null, null)
+            enableVibration(false)
             setShowBadge(false)
         }
         nm.createNotificationChannel(channel)
@@ -105,6 +107,9 @@ object ProtectionStatusNotifier {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setAutoCancel(false)
+            .setSilent(true)
+            .setDefaults(0)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
         // Explicitly handle SecurityException (permission can change at runtime).

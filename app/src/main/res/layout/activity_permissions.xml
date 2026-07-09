@@ -460,6 +460,77 @@
                         android:alpha="0.12"
                         android:background="?attr/colorOnSurface" />
 
+                    <!-- NFC launch access -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:src="@drawable/nfc_24"
+                                android:contentDescription="@null"
+                                app:tint="?attr/colorPrimary" />
+
+                            <Space
+                                android:layout_width="12dp"
+                                android:layout_height="1dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    style="@style/TextAppearance.Material3.BodyLarge"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/permissions_nfc_title" />
+
+                                <TextView
+                                    android:id="@+id/tvNfcStatus"
+                                    style="@style/TextAppearance.Material3.BodyMedium"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@string/permissions_nfc_status_manual" />
+                            </LinearLayout>
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/btnWhyNfc"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/info"
+                                android:padding="10dp"
+                                android:src="@drawable/info_24"
+                                app:tint="?attr/colorPrimary" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnOpenNfc"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:text="@string/permissions_btn_open" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.12"
+                        android:background="?attr/colorOnSurface" />
+
                     <!-- Location -->
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -612,18 +683,30 @@
                             android:text="@string/permissions_btn_open" />
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Battery -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp">
+            <!-- SECTION: Battery and background -->
+            <TextView
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/permissions_section_battery" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardUseCompatPadding="true"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -689,7 +772,6 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:text="@string/permissions_btn_open" />
-                    </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

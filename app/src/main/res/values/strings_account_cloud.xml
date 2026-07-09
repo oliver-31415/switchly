@@ -42,7 +42,9 @@
     <!-- ====================================================== -->
     <string name="cloud_backup_ok">Backup completed</string>
     <string name="cloud_restore_ok_restart">Restore completed — restarting app…</string>
+    <string name="cloud_backup_loading">Creating cloud backup…</string>
     <string name="cloud_restore_loading">Loading cloud backups…</string>
+    <string name="cloud_delete_backups_loading">Deleting cloud backups…</string>
     <string name="cloud_no_backups">No backups found</string>
     <string name="cloud_not_logged_in">You are not signed in</string>
     <string name="cloud_error_fmt">Error: %1$s</string>
@@ -65,6 +67,7 @@
     <string name="pref_file_restore_summary">Import a local JSON backup and overwrite local settings</string>
     <string name="file_backup_ok">File backup saved</string>
     <string name="file_restore_ok_restart">File restore completed — restarting app…</string>
+    <string name="file_backup_loading">Creating backup file…</string>
     <string name="file_backup_error_fmt">File backup failed: %1$s</string>
     <string name="file_restore_error_fmt">File restore failed: %1$s</string>
 
@@ -76,6 +79,7 @@
     <string name="settings_last_backup">Last backup: %1$s</string>
     <string name="settings_confirm_backup_title">Back up</string>
     <string name="settings_confirm_restore_title">Restore</string>
+    <string name="settings_confirm_restore_apply">Restore</string>
     <string name="settings_confirm_restore_message">Load a backup from the cloud and overwrite local settings?</string>
     <string name="settings_confirm_file_backup_title">Back up to file</string>
     <string name="settings_confirm_file_restore_title">Restore from file</string>
@@ -147,8 +151,10 @@
     <string name="backup_preset_profiles_only_summary">Only profiles and selected app lists.</string>
     <string name="backup_preset_manual_custom_summary">Review categories and reuse your last custom selection.</string>
     <string name="backup_select_categories_title">Choose backup data</string>
+    <string name="restore_select_categories_title">Choose restore data</string>
     <string name="backup_category_sensitive_suffix"> (sensitive)</string>
     <string name="backup_create_with_selection">Create backup</string>
     <string name="backup_select_at_least_one">Select at least one backup category</string>
+    <string name="restore_select_at_least_one">Select at least one restore category</string>
 
 </resources>

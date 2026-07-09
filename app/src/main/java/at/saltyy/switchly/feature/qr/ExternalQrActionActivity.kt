@@ -31,6 +31,7 @@ import at.saltyy.switchly.nfc.InternalScanDispatchGuard
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import at.saltyy.switchly.nfc.NfcSchema
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
 
 /**
  * Public, browsable entry point for switchly:// QR links opened by external scanners.
@@ -72,7 +73,7 @@ class ExternalQrActionActivity : AppCompatActivity() {
                 finish()
             }
             .setOnCancelListener { finish() }
-            .show()
+            .showAccented()
     }
 
 }

@@ -195,15 +195,15 @@
                     android:summary="@string/pref_file_restore_summary"
                     android:icon="@drawable/cloud_download_24"
                     app:iconSpaceReserved="false" />
-
-                <Preference
-                    android:key="pref_cloud_delete_backups"
-                    android:layout="@layout/item_pref_card"
-                    android:title="@string/pref_cloud_delete_backups_title"
-                    android:summary="@string/pref_cloud_delete_backups_summary"
-                    android:icon="@drawable/delete_24"
-                    app:iconSpaceReserved="false" />
             </PreferenceScreen>
+
+            <Preference
+                android:key="pref_cloud_delete_backups"
+                android:layout="@layout/item_pref_card"
+                android:title="@string/pref_cloud_delete_backups_title"
+                android:summary="@string/pref_cloud_delete_backups_summary"
+                android:icon="@drawable/delete_24"
+                app:iconSpaceReserved="false" />
         </PreferenceScreen>
 
         <Preference
@@ -295,6 +295,14 @@
                 android:title="@string/about_developer_info_title"
                 android:summary="@string/about_developer_info_summary"
                 android:icon="@drawable/info_24"
+                app:iconSpaceReserved="false" />
+
+            <Preference
+                android:key="pref_privacy_report"
+                android:layout="@layout/item_pref_card"
+                android:title="@string/privacy_report_title"
+                android:summary="@string/privacy_report_settings_summary"
+                android:icon="@drawable/security_24"
                 app:iconSpaceReserved="false" />
 
             <Preference

@@ -27,67 +27,34 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
-            android:id="@+id/filterSortChipRow"
+        <HorizontalScrollView
+            android:id="@+id/activeFilterScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:clipToPadding="false"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:paddingTop="10dp">
+            android:paddingTop="10dp"
+            android:visibility="gone">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAppFilterChip"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="1"
-                android:minHeight="44dp"
-                android:singleLine="true"
-                android:text="@string/blocked_inbox_filter_all_apps"
-                android:textAlignment="center"
-                android:textAllCaps="false"
-                android:textSize="13sp"
-                app:icon="@drawable/apps_24"
-                app:iconGravity="textStart"
-                app:iconPadding="6dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSortChip"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="1"
-                android:minHeight="44dp"
-                android:singleLine="true"
-                android:text="@string/blocked_inbox_sort_newest"
-                android:textAlignment="center"
-                android:textAllCaps="false"
-                android:textSize="13sp"
-                app:icon="@drawable/sort_24"
-                app:iconGravity="textStart"
-                app:iconPadding="6dp" />
-        </LinearLayout>
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/activeFilterChipGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:singleLine="true"
+                app:chipSpacingHorizontal="8dp" />
+        </HorizontalScrollView>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/tvEmpty"
+            style="@style/Switchly.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginTop="18dp"
             android:visibility="gone"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/status_border"
-            app:strokeWidth="1dp">
+            app:cardUseCompatPadding="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -135,16 +102,16 @@
 
     </LinearLayout>
 
-    <!-- Legacy filter FAB kept hidden; filters are now chips above the list. -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnFilter"
-        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="96dp"
         app:srcCompat="@drawable/tune_24"
         android:contentDescription="@string/blocked_inbox_filter"
+        app:backgroundTint="?attr/colorPrimary"
+        app:tint="?attr/colorOnPrimary"
         app:layout_anchor="@id/recyclerInbox"
         app:layout_anchorGravity="bottom|end" />
 

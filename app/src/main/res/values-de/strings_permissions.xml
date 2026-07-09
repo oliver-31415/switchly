@@ -5,7 +5,8 @@
     <!-- Permission sections and banner states -->
     <!-- ====================================================== -->
     <string name="permissions_section_core">Kernberechtigungen</string>
-    <string name="permissions_section_triggers">Trigger &amp; Akku</string>
+    <string name="permissions_section_triggers">Zeitplan-Trigger</string>
+    <string name="permissions_section_battery">Akku &amp; Hintergrund</string>
     <string name="permissions_section_notifications">Benachrichtigungen</string>
     <string name="permissions_section_oem">OEM-Hintergrundeinstellungen</string>
     <plurals name="permissions_banner_missing_count_short">
@@ -34,6 +35,9 @@
     <string name="permissions_exact_alarms_summary">Erforderlich, damit zeitbasierte Zeitpläne zuverlässig zur richtigen Zeit ausgeführt werden.</string>
     <string name="permissions_exact_alarms_allowed">Erlaubt</string>
     <string name="permissions_exact_alarms_not_allowed">Nicht erlaubt</string>
+    <string name="permissions_nfc_title">Per NFC starten</string>
+    <string name="permissions_nfc_status_manual">Manuell prüfen</string>
+    <string name="permissions_nfc_desc">Einige Android-Versionen zeigen unter „Spezieller App-Zugriff“ einen eigenen Eintrag „Per NFC starten“. Erlaube Switchly dort, damit geschriebene NFC-Tags Switchly beim Scannen öffnen können. Stelle außerdem sicher, dass der System-Schalter „NFC verwenden“ aktiviert ist. Android verlangt normalerweise, dass das Gerät entsperrt ist, bevor passive NFC-Tags an Apps weitergegeben werden.</string>
 
     <!-- ====================================================== -->
     <!-- Trigger and notification permissions -->

@@ -56,6 +56,11 @@
     <string name="about_discord_label">Discord</string>
     <string name="about_email_label">E-Mail</string>
     <string name="about_gitlab_label">GitLab-Repository</string>
+    <string name="about_store_label">Switchly Store</string>
+    <string name="store_card_title">Offizielle Switchly-Tags</string>
+    <string name="store_card_summary">Brauchst du einen physischen Tag? Offizielle NFC-, QR- und Barcode-Tags gibt es im Switchly Store.</string>
+    <string name="store_open">Store öffnen</string>
+    <string name="store_open_failed">Der Switchly Store konnte nicht geöffnet werden.</string>
     <string name="about_website_label">Website</string>
     <string name="about_mail">E-Mail</string>
     <string name="about_discord_copied">Discord-Link kopiert</string>

@@ -56,10 +56,10 @@
     <!-- ====================================================== -->
     <!-- Temporary QR actions -->
     <!-- ====================================================== -->
-    <string name="qr_temp_limiter_cooldown">This QR code is on cooldown. Try again in %1$d min.</string>
+    <string name="qr_temp_limiter_cooldown">Try this QR code again in %1$d min.</string>
     <plurals name="qr_temp_limiter_daily_limit">
-        <item quantity="one">Daily limit reached for this QR code (%1$d use/day).</item>
-        <item quantity="other">Daily limit reached for this QR code (%1$d uses/day).</item>
+        <item quantity="one">Daily QR limit reached (%1$d/day).</item>
+        <item quantity="other">Daily QR limit reached (%1$d/day).</item>
     </plurals>
 
 </resources>

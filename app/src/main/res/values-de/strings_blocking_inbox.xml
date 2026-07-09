@@ -17,13 +17,20 @@
     <string name="blocked_inbox_field_big_text">Langer Text</string>
 
     <!-- ====================================================== -->
+    <!-- Activity hub shortcut -->
+    <!-- ====================================================== -->
+    <string name="tools_blocked_notifications_summary">Benachrichtigungen ansehen, die Switchly blockiert hat</string>
+
+    <!-- ====================================================== -->
     <!-- Filter and sort -->
     <!-- ====================================================== -->
     <string name="blocked_inbox_filter_app">Nach App filtern</string>
     <string name="blocked_inbox_filter">Filter</string>
     <string name="blocked_inbox_filter_menu_title">Filtern &amp; sortieren</string>
     <string name="blocked_inbox_filter_all_apps">Alle Apps</string>
-    <string name="blocked_inbox_filter_subtitle_fmt">Filter: %1$s</string>
+    <string name="blocked_inbox_filter_tag_fmt">App: %1$s</string>
+    <string name="blocked_inbox_apply_filters">Anwenden</string>
+    <string name="blocked_inbox_clear_filters">Zurücksetzen</string>
     <string name="blocked_inbox_sort_title">Blockierte Benachrichtigungen sortieren</string>
     <string name="blocked_inbox_sort_newest">Neueste zuerst</string>
     <string name="blocked_inbox_sort_oldest">Älteste zuerst</string>
@@ -36,11 +43,6 @@
         <item quantity="one">%1$d ausgewählte Benachrichtigung löschen?</item>
         <item quantity="other">%1$d ausgewählte Benachrichtigungen löschen?</item>
     </plurals>
-    <string name="blocked_inbox_select_mode_subtitle">Benachrichtigungen auswählen</string>
-    <plurals name="blocked_inbox_select_count_fmt">
-        <item quantity="one">%1$d ausgewählt</item>
-        <item quantity="other">%1$d ausgewählt</item>
-    </plurals>
     <string name="select">Auswählen</string>
 
     <!-- ====================================================== -->
@@ -49,6 +51,5 @@
     <string name="blocked_inbox_subtitle_compact_fmt">%1$s%2$s</string>
     <string name="blocked_inbox_empty_title">Noch keine blockierten Benachrichtigungen</string>
     <string name="blocked_inbox_empty_body">Blockierte Benachrichtigungen erscheinen hier, während Benachrichtigungsblockierung aktiv ist.</string>
-    <string name="blocked_inbox_chip_all_apps">Alle Apps</string>
 
 </resources>

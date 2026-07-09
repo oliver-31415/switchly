@@ -21,15 +21,35 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_max="340dp">
 
-        <TextView
-            android:id="@+id/blocker_title"
+        <LinearLayout
+            android:id="@+id/blocker_title_row"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="@string/blocked_app_default"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/blocker_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/blocked_app_default"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/blocker_debug_info"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/block_reason_info_button_desc"
+                android:padding="10dp"
+                android:src="@drawable/info_24"
+                app:tint="?attr/colorPrimary"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/blocker_app_name"

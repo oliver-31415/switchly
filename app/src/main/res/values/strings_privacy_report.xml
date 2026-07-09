@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="privacy_report_title">Privacy &amp; data</string>
+    <string name="privacy_report_settings_summary">Local storage, data sharing and controls</string>
+    <string name="privacy_report_section_privacy">Privacy &amp; sharing</string>
+    <string name="privacy_report_section_actions">Your data controls</string>
+
+    <string name="privacy_report_local_title">Local Switchly data</string>
+    <string name="privacy_report_profiles_schedules_title">Profiles &amp; schedules</string>
+    <string name="privacy_report_profiles_schedules_summary">Profiles: %1$d · Schedules: %2$d</string>
+    <string name="privacy_report_rules_title">Rules</string>
+    <string name="privacy_report_rules_summary">Website rules: %1$d · In-app apps: %2$d</string>
+    <string name="privacy_report_diagnostics_title">Local diagnostics</string>
+    <string name="privacy_report_diagnostics_summary">Blocked notifications: %1$d · Logs: %2$d</string>
+    <string name="privacy_report_local_compact">Profiles: %1$d · Schedules: %2$d\nWebsite rules: %3$d · In-app apps: %4$d\nNotifications: %5$d · Logs: %6$d</string>
+    <string name="privacy_report_not_stored_title">Not stored by Switchly</string>
+    <string name="privacy_report_not_stored_compact">Passwords, messages and screen contents are not stored</string>
+    <string name="privacy_report_not_stored_summary">Switchly does not store passwords, private messages, complete browser history, or the visible screen content processed by Accessibility. Accessibility events are evaluated locally for blocking.</string>
+
+    <string name="privacy_report_sharing_title">Data sharing</string>
+    <string name="privacy_report_sharing_compact">Local by default; online services depend on the APK variant</string>
+    <string name="privacy_report_sharing_summary">Switchly’s blocking engine does not automatically upload profile names, app/website rules, blocked-notification contents, or detailed usage history. These can leave the device when you explicitly use cloud backup, send a support report, or export/share data.\n\nDepending on the APK variant, Google Play or Firebase services may process technical crash, integrity, authentication, purchase, and basic app/device metadata.</string>
+
+    <string name="privacy_report_backup_title">Backup</string>
+    <string name="privacy_report_backup_compact">Current selection: %1$s</string>
+    <string name="privacy_report_backup_summary">Preset: %1$s\n\nIncluded categories:\n%2$s</string>
+
+    <string name="privacy_report_export_report_title">Share privacy overview</string>
+    <string name="privacy_report_export_report_summary">Share this overview without exporting your actual rules or usage history.</string>
+    <string name="privacy_report_export_data_title">Export selected Switchly data</string>
+    <string name="privacy_report_export_data_summary">Create a local JSON backup using the current selection: %1$s</string>
+    <string name="privacy_report_export_select_title">Choose data to export</string>
+    <string name="privacy_report_export_select_action">Export</string>
+    <string name="privacy_report_export_select_empty">Select at least one data category.</string>
+    <string name="privacy_report_export_progress">Preparing data export…</string>
+    <string name="privacy_report_export_done">Switchly data exported.</string>
+    <string name="privacy_report_export_failed">Switchly data could not be exported.</string>
+    <string name="privacy_report_export_body">Switchly Privacy Report\n\nStored locally:\n%1$s\n\nNot stored:\n%2$s\n\nData sharing:\n%3$s\n\nBackup preset: %4$s\n%5$s</string>
+
+    <string name="privacy_report_delete_title">Delete all local Switchly data</string>
+    <string name="privacy_report_delete_summary">Remove profiles, rules, schedules, statistics, paired tags and settings from this device.</string>
+</resources>

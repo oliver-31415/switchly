@@ -35,6 +35,8 @@ import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 object LocationTriggerMonitor {
 
@@ -51,6 +53,10 @@ object LocationTriggerMonitor {
     @Volatile private var inFlightRegistrationSignature: String? = null
     @Volatile private var lastRegistrationAttemptMs: Long = 0L
     private var schedulesListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
+    private val syncExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "SwitchlyLocationMonitor").apply { isDaemon = true }
+    }
+    private val syncScheduled = AtomicBoolean(false)
 
     fun ensureStarted(context: Context) {
         val ctx = context.applicationContext
@@ -58,12 +64,24 @@ object LocationTriggerMonitor {
             listening = true
             val schedulePrefs = ctx.getSharedPreferences(PREFS_SCHEDULES, Context.MODE_PRIVATE)
             val scheduleL = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-                if (key == KEY_SCHEDULES) syncNow(ctx)
+                if (key == KEY_SCHEDULES) syncAsync(ctx)
             }
             schedulesListener = scheduleL
             schedulePrefs.registerOnSharedPreferenceChangeListener(scheduleL)
         }
-        syncNow(ctx)
+        syncAsync(ctx)
+    }
+
+    fun syncAsync(context: Context) {
+        val ctx = context.applicationContext
+        if (!syncScheduled.compareAndSet(false, true)) return
+        syncExecutor.execute {
+            try {
+                syncNow(ctx)
+            } finally {
+                syncScheduled.set(false)
+            }
+        }
     }
 
     fun syncNow(context: Context) {

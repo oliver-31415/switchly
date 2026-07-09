@@ -190,12 +190,13 @@ object SwitchModeStore {
         syncActiveSinceForEffectiveState(ctx)
 
         val rangeScheduleActive = ScheduleRuntimeStore.hadEnableAndDisable(ctx) || ScheduleRuntimeStore.hadDisableAndEnable(ctx)
+        val activeRangeScheduleId = ScheduleRuntimeStore.getActiveRangeScheduleId(ctx)
+        ScheduleRuntimeStore.setManualSchedulePauseActive(ctx, !enabled && rangeScheduleActive, activeRangeScheduleId)
 
         // If a RANGE schedule is currently active and the user flips the state manually, mark a temporary manual override so the schedule won't instantly fight the user.
         // IMPORTANT: keep schedule ownership flags intact while inside the active range, otherwise exit-revert at range end can break (e.g. NFC toggle at lunch keeps the profile enabled forever after end time).
         if (rangeScheduleActive) {
             ScheduleRuntimeStore.setManualOverrideActive(ctx, true)
-            val activeRangeScheduleId = ScheduleRuntimeStore.getActiveRangeScheduleId(ctx)
             if (activeRangeScheduleId > 0) {
                 ScheduleRuntimeStore.setManualOverrideScheduleId(ctx, activeRangeScheduleId)
             } else {

@@ -7,8 +7,15 @@
     <string name="in_app_blocking_title">In-App-Regeln</string>
 
     <string name="in_app_rules_info_title">In-App-Regeln</string>
-    <string name="in_app_rules_info_body">In-App-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nMit dem Hauptschalter kannst du alle In-App-Regeln für dieses Profil vorübergehend deaktivieren, ohne einzelne Bereichsregeln zu löschen.\n\nUnterstützt werden z. B. YouTube Shorts, Instagram Reels/Explore/Suche, X-Tabs und Snapchat-Bereiche. Die Erkennung nutzt die Bedienungshilfe, daher können UI-Änderungen der Apps die Zuverlässigkeit beeinflussen.</string>
-    <string name="in_app_rules_profile_subtitle">Regeln für das aktive Profil.</string>
+    <string name="in_app_rules_info_body">In-App-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nRegeln sind aktiv, sobald für dieses Profil ausgewählte Bereiche existieren. Mit „Ausgewählte blockieren“ werden nur ausgewählte Bereiche blockiert. Mit „Ausgewählte erlauben“ bleiben ausgewählte Bereiche erlaubt und andere unterstützte Bereiche dieser App werden blockiert. Switchly nutzt die Bedienungshilfe, um unterstützte In-App-Bereiche zu erkennen. UI-Änderungen der Apps können die Zuverlässigkeit beeinflussen.\n\nVerfügbar bedeutet, dass der Bereich für die installierte App-Version unterstützt wird. Experimentell bedeutet Best-Effort und kann je nach App-Version, Einstiegspunkt, Sprache oder Gerät variieren. Deaktiviert bedeutet, dass die App nicht installiert ist oder die Regel gerade nicht genutzt werden kann. Demnächst bedeutet, dass der Bereich geplant, aber noch nicht erzwingbar ist.</string>
+    <string name="in_app_rule_mode_title">In-App-Regelmodus</string>
+    <string name="in_app_rule_mode_block">Ausgewählte blockieren</string>
+    <string name="in_app_rule_mode_allow">Ausgewählte erlauben</string>
+    <string name="in_app_rule_mode_block_summary">Schalter markieren Bereiche, die Switchly blockieren soll.</string>
+    <string name="in_app_rule_mode_allow_summary">Schalter markieren Bereiche, die erlaubt bleiben. Andere unterstützte Bereiche dieser App werden blockiert, sobald mindestens ein Bereich ausgewählt ist.</string>
+    <string name="in_app_rule_block_surface_fmt">%1$s blockieren</string>
+    <string name="in_app_rule_allow_surface_fmt">%1$s erlauben</string>
+    <string name="in_app_rules_profile_subtitle">Regeln für: %1$s</string>
     <string name="in_app_blocking_youtube">YouTube</string>
     <string name="in_app_blocking_instagram">Instagram</string>
     <string name="in_app_blocking_x">X/Twitter</string>
@@ -27,6 +34,7 @@
     <string name="in_app_blocking_block_spotlight">Spotlight blockieren</string>
     <string name="in_app_blocking_block_following">Following blockieren</string>
     <string name="in_app_blocking_block_comments">Kommentare blockieren</string>
+    <string name="in_app_blocking_block_mini_player">YouTube-Miniplayer blockieren</string>
     <string name="in_app_blocking_block_pip">Bild-im-Bild-Modus blockieren</string>
     <string name="in_app_blocking_limit_title">In-App-Blockierungslimit</string>
     <string name="in_app_limit_label">In-App-Limit</string>
@@ -38,6 +46,9 @@
     <string name="in_app_surface_explore_label">Entdecken</string>
     <string name="in_app_surface_search_label">Suche</string>
     <string name="in_app_surface_stories_label">Stories</string>
+    <string name="in_app_surface_comments_label">Kommentare</string>
+    <string name="in_app_surface_mini_player_label">Miniplayer</string>
+    <string name="in_app_surface_pip_label">Bild-in-Bild</string>
     <string name="in_app_surface_home_label">Home</string>
     <string name="in_app_surface_grok_label">Grok</string>
     <string name="in_app_surface_notifications_label">Benachrichtigungen</string>
@@ -50,6 +61,16 @@
     <string name="in_app_surface_custom">Benutzerdefiniert…</string>
     <string name="in_app_surface_rule_dialog_title">%1$s</string>
     <string name="in_app_surface_daily_limit_title">%1$s: tägliches Limit</string>
+    <string name="reels_shorts_subtitle">Shorts, Reels, Feeds, Tabs und andere unterstützte In-App-Bereiche verwalten.</string>
+    <string name="reels_shorts_status_installed">Installiert</string>
+    <string name="reels_shorts_status_supported">Verfügbar</string>
+    <string name="reels_shorts_status_experimental">Experimentell</string>
+    <string name="reels_shorts_status_planned">Demnächst</string>
+    <string name="reels_shorts_facebook">Facebook</string>
+    <string name="reels_shorts_tiktok">TikTok</string>
+    <string name="reels_shorts_for_you">For-You-Feed</string>
+    <string name="in_app_rules_empty_installed">Derzeit sind keine unterstützten Apps installiert.</string>
+    <string name="in_app_rules_empty_installed_summary">Hier werden nur installierte unterstützte Apps angezeigt. Installiere eine unterstützte App und öffne diesen Screen erneut, um ihre In-App-Bereiche zu verwalten.</string>
 
     <!-- ====================================================== -->
     <!-- Shared actions and blocking messages -->

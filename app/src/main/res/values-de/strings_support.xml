@@ -7,18 +7,25 @@
     <string name="support_title">Support</string>
     <string name="support_desc">Brauchst du Hilfe oder hast einen Fehler gefunden?\nSende eine E-Mail und füge nach Möglichkeit Debug-Infos sowie eine kurze Beschreibung hinzu.</string>
     <string name="support_email_subject">Switchly-Support</string>
-    <string name="support_email_placeholder">E-Mail</string>
     <string name="support_open_email">E-Mail öffnen</string>
     <string name="support_copy_email">E-Mail kopieren</string>
     <string name="support_copied">E-Mail kopiert</string>
-    <string name="support_copy_latest_logs">Neueste Logs kopieren</string>
+    <string name="support_copy_latest_logs">Logs kopieren</string>
     <string name="support_logs_copied">Neueste Logs kopiert</string>
+    <string name="support_choose_report_data">Report-Daten auswählen</string>
     <string name="support_include_debug">Debug-Infos anhängen</string>
+    <string name="support_include_debug_summary">App, Gerät, Berechtigungen, Switchly-Status, Zeitpläne und Laufzeitstatus</string>
     <string name="support_include_advanced_debug">Erweiterte Diagnoseinfos anhängen</string>
+    <string name="support_include_advanced_debug_summary">Ergänzt interne Einstellungs- und Funktionszähler im Debug-Report</string>
+    <string name="support_include_setup_details">Setup-Details für Modi, Profile und Zeitpläne anhängen</string>
+    <string name="support_include_setup_details_summary">Ergänzt Profilnamen, Regelanzahlen, Zeitplan-Konfiguration, Trigger und Überschneidungen</string>
+    <string name="support_include_active_profile_apps">Apps aus dem aktiven Profil anhängen</string>
+    <string name="support_include_active_profile_apps_summary">Ergänzt App-Namen und Paket-IDs, die durch den Regelmodus des aktiven Profils ausgewählt sind</string>
     <string name="support_debug_preface">Bitte beschreibe dein Problem oberhalb dieser Zeile.</string>
     <string name="support_include_logs">Logs anhängen</string>
+    <string name="support_include_logs_summary">Ergänzt aktuelle Switchly-Ereignisse und Diagnose-Logs</string>
     <string name="support_latest_logs_heading">Neueste Logs</string>
-    <string name="support_response_time_short">Antwortzeit: meistens so schnell wie möglich, aber bis zu 7 Tage.</string>
+    <string name="support_response_time_short">Antwortzeit: bis zu 7 Tage</string>
     <string name="support_response_time_title">Support-Antwortzeit</string>
     <string name="support_response_time_details">Switchly wird von einer einzelnen Person entwickelt und unterstützt. Ich lese Support-Nachrichten und Bugreports so schnell wie möglich, Antworten können je nach Auslastung aber manchmal bis zu 7 Tage dauern.\n\nBitte füge bei Problemen mit Blocking, Zeitplänen, Premium oder Berechtigungen nach Möglichkeit Debug-Infos hinzu. Das hilft mir, schneller zu verstehen, was passiert ist.</string>
 
@@ -51,9 +58,9 @@
     <string name="troubleshooting_xiaomi_note">Xiaomi-/Redmi-/POCO-Hinweis:\n\n• Aktiviere zusätzlich Autostart für Switchly\n• Stelle den Akku-Modus auf Uneingeschränkt/Nicht optimieren, falls verfügbar\n• Sperre die App nach Möglichkeit in den letzten Apps\n• Wenn vorhanden, erlaube Hintergrundaktivität für Switchly\n• Schalte die Bedienungshilfe einmal aus und wieder ein, falls sie als aktiv angezeigt wird, Switchly aber nicht reagiert</string>
 
     <!-- ====================================================== -->
-    <!-- Tutorial link -->
+    <!-- Onboarding link -->
     <!-- ====================================================== -->
-    <string name="pref_tutorial_title">Tutorial</string>
-    <string name="pref_tutorial_summary">Einrichtungsschritte und Funktionen noch einmal ansehen</string>
+    <string name="pref_tutorial_title">Onboarding</string>
+    <string name="pref_tutorial_summary">Einrichtungsschritte, Berechtigungen und Funktionen erneut ansehen</string>
 
 </resources>

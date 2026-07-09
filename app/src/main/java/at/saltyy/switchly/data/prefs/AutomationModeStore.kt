@@ -20,6 +20,7 @@
 package at.saltyy.switchly.data.prefs
 
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.core.content.edit
 import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 
@@ -32,6 +33,12 @@ import at.saltyy.switchly.util.ManagedDevicePolicyHelper
  * - MIXED: channel-specific toggles decide what is allowed
  */
 object AutomationModeStore {
+    @Volatile
+    private var nfcSupportedCache: Boolean? = null
+
+    @Volatile
+    private var cameraSupportedCache: Boolean? = null
+
     private const val PREFS = "switchly_prefs"
     private const val KEY_AUTOMATION_MODE = "automation_mode"
     private const val KEY_MIXED_ALLOW_NFC = "automation_mixed_allow_nfc"
@@ -64,35 +71,59 @@ object AutomationModeStore {
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
+    fun isNfcSupported(context: Context): Boolean {
+        nfcSupportedCache?.let { return it }
+        return runCatching {
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_NFC)
+        }.getOrDefault(false).also { nfcSupportedCache = it }
+    }
+
+    fun isCameraSupported(context: Context): Boolean {
+        cameraSupportedCache?.let { return it }
+        return runCatching {
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+        }.getOrDefault(false).also { cameraSupportedCache = it }
+    }
+
+    fun isModeSupported(context: Context, mode: Mode): Boolean {
+        return when (mode) {
+            Mode.NFC -> isNfcSupported(context)
+            Mode.QR, Mode.BARCODE -> isCameraSupported(context)
+            Mode.SCHEDULE, Mode.MIXED -> true
+        }
+    }
+
     fun getMode(context: Context): Mode {
-        return Mode.fromRaw(prefs(context).getString(KEY_AUTOMATION_MODE, Mode.MIXED.raw))
+        val storedMode = Mode.fromRaw(prefs(context).getString(KEY_AUTOMATION_MODE, Mode.MIXED.raw))
+        return if (isModeSupported(context, storedMode)) storedMode else Mode.MIXED
     }
 
     fun setMode(context: Context, mode: Mode) {
-        prefs(context).edit(commit = true) { putString(KEY_AUTOMATION_MODE, mode.raw) }
+        val supportedMode = if (isModeSupported(context, mode)) mode else Mode.MIXED
+        prefs(context).edit(commit = true) { putString(KEY_AUTOMATION_MODE, supportedMode.raw) }
     }
 
     fun isMixedMode(context: Context): Boolean = getMode(context) == Mode.MIXED
 
     fun isMixedAllowNfc(context: Context): Boolean =
-        getBool(context, KEY_MIXED_ALLOW_NFC, true)
+        isNfcSupported(context) && getBool(context, KEY_MIXED_ALLOW_NFC, true)
 
     fun setMixedAllowNfc(context: Context, enabled: Boolean) {
-        putBool(context, KEY_MIXED_ALLOW_NFC, enabled)
+        putBool(context, KEY_MIXED_ALLOW_NFC, enabled && isNfcSupported(context))
     }
 
     fun isMixedAllowQr(context: Context): Boolean =
-        getBool(context, KEY_MIXED_ALLOW_QR, true)
+        isCameraSupported(context) && getBool(context, KEY_MIXED_ALLOW_QR, true)
 
     fun setMixedAllowQr(context: Context, enabled: Boolean) {
-        putBool(context, KEY_MIXED_ALLOW_QR, enabled)
+        putBool(context, KEY_MIXED_ALLOW_QR, enabled && isCameraSupported(context))
     }
 
     fun isMixedAllowBarcode(context: Context): Boolean =
-        getBool(context, KEY_MIXED_ALLOW_BARCODE, true)
+        isCameraSupported(context) && getBool(context, KEY_MIXED_ALLOW_BARCODE, true)
 
     fun setMixedAllowBarcode(context: Context, enabled: Boolean) {
-        putBool(context, KEY_MIXED_ALLOW_BARCODE, enabled)
+        putBool(context, KEY_MIXED_ALLOW_BARCODE, enabled && isCameraSupported(context))
     }
 
     fun isMixedAllowSchedule(context: Context): Boolean =
@@ -144,10 +175,10 @@ object AutomationModeStore {
     }
 
     fun isMixedAllowNfcTagWriting(context: Context): Boolean =
-        getBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, true)
+        isNfcSupported(context) && getBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, true)
 
     fun setMixedAllowNfcTagWriting(context: Context, enabled: Boolean) {
-        putBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, enabled)
+        putBool(context, KEY_MIXED_ALLOW_NFC_TAG_WRITING, enabled && isNfcSupported(context))
     }
 
     fun isScheduleAllowed(context: Context): Boolean {
@@ -159,6 +190,7 @@ object AutomationModeStore {
     }
 
     fun isNfcAllowed(context: Context): Boolean {
+        if (!isNfcSupported(context)) return false
         return when (getMode(context)) {
             Mode.NFC -> true
             Mode.MIXED -> isMixedAllowNfc(context)
@@ -170,6 +202,7 @@ object AutomationModeStore {
      * Pure capability check for QR based only on the selected control mode.
      */
     fun isQrChannelAllowed(context: Context): Boolean {
+        if (!isCameraSupported(context)) return false
         return when (getMode(context)) {
             Mode.QR -> true
             Mode.MIXED -> isMixedAllowQr(context)
@@ -182,6 +215,7 @@ object AutomationModeStore {
     fun shouldShowQrTools(context: Context): Boolean = isQrChannelAllowed(context)
 
     fun isBarcodeChannelAllowed(context: Context): Boolean {
+        if (!isCameraSupported(context)) return false
         return when (getMode(context)) {
             Mode.BARCODE -> true
             Mode.MIXED -> isMixedAllowBarcode(context)

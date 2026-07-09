@@ -26,9 +26,8 @@ import java.time.LocalDate
 
 /**
  * Scope: per tag UID (fallback bucket "global" if UID unavailable).
- * Defaults (intentionally conservative):
- * - max [DEFAULT_DAILY_USES_PER_TAG] uses per day and tag
- * - [DEFAULT_COOLDOWN_MINUTES] minutes cooldown between uses for the same tag
+ * Written NFC actions can still use the global defaults when the limiter feature is enabled. 
+ * UID-only paired tags use only explicitly configured per-tag daily/cooldown overrides; empty fields mean no per-tag limit.
  */
 object NfcTempDisableLimiterStore {
 
@@ -104,7 +103,7 @@ object NfcTempDisableLimiterStore {
         return p.getInt(key, DEFAULT_COOLDOWN_MINUTES).coerceAtLeast(1)
     }
 
-    // Saves optional per-tag limits. Pass null to remove an override and fall back to defaults.
+    // Saves optional per-tag limits. Pass null to remove that specific limit.
     fun setTagConfig(
         uidBucket: String,
         ctx: Context,
@@ -143,27 +142,38 @@ object NfcTempDisableLimiterStore {
         }
     }
 
-    fun check(uidBucket: String, ctx: Context): CheckResult {
+    fun hasTagConfig(uidBucket: String, ctx: Context): Boolean {
+        val bucket = bucketForUid(uidBucket)
+        val p = prefs(ctx)
+        return p.contains("$KEY_CFG_DAILY_PREFIX$bucket") ||
+            p.contains("$KEY_CFG_COOLDOWN_PREFIX$bucket")
+    }
+
+    fun check(uidBucket: String, ctx: Context, configuredOnly: Boolean = false): CheckResult {
         val bucket = bucketForUid(uidBucket)
         val p = prefs(ctx)
         val config = getTagConfig(bucket, ctx)
 
         val now = System.currentTimeMillis()
-        val cooldownMs = config.cooldownMinutes * 60_000L
-        val last = p.getLong("$KEY_LAST_PREFIX$bucket", 0L)
-        if (last > 0L) {
-            val elapsed = now - last
-            if (elapsed in 0 until cooldownMs) {
-                val remainingMs = cooldownMs - elapsed
-                val mins = ((remainingMs + 59_999L)/60_000L).toInt().coerceAtLeast(1)
-                return CheckResult.Cooldown(mins)
+        if (!configuredOnly || config.hasCooldownOverride) {
+            val cooldownMs = config.cooldownMinutes * 60_000L
+            val last = p.getLong("$KEY_LAST_PREFIX$bucket", 0L)
+            if (last > 0L) {
+                val elapsed = now - last
+                if (elapsed in 0 until cooldownMs) {
+                    val remainingMs = cooldownMs - elapsed
+                    val mins = ((remainingMs + 59_999L)/60_000L).toInt().coerceAtLeast(1)
+                    return CheckResult.Cooldown(mins)
+                }
             }
         }
 
-        val day = LocalDate.now().toEpochDay()
-        val todayCount = p.getInt("$KEY_COUNT_PREFIX${bucket}_$day", 0)
-        if (todayCount >= config.dailyLimit) {
-            return CheckResult.DailyLimitReached(todayCount, config.dailyLimit)
+        if (!configuredOnly || config.hasDailyOverride) {
+            val day = LocalDate.now().toEpochDay()
+            val todayCount = p.getInt("$KEY_COUNT_PREFIX${bucket}_$day", 0)
+            if (todayCount >= config.dailyLimit) {
+                return CheckResult.DailyLimitReached(todayCount, config.dailyLimit)
+            }
         }
 
         return CheckResult.Allowed

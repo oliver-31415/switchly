@@ -24,6 +24,22 @@
     <string name="onb_core_point_controls">Schedules, NFC, QR, barcodes, widgets, tiles and buttons can control that state.</string>
 
     <!-- ====================================================== -->
+    <!-- Optional usage report -->
+    <!-- ====================================================== -->
+    <string name="onb_usage_report_title">Show your current usage</string>
+    <string name="onb_usage_report_desc">Optional: grant Usage Access to see a quick 7-day report and find your biggest distractions before setup.</string>
+    <string name="onb_usage_report_point_average">Shows your 7-day average screen time.</string>
+    <string name="onb_usage_report_point_top_apps">Finds the apps you used most recently.</string>
+    <string name="onb_usage_report_point_optional">You can skip this and set up Switchly manually.</string>
+    <string name="onb_usage_report_action">Show usage report</string>
+    <string name="onb_usage_report_result_title">7-day usage report</string>
+    <string name="onb_usage_report_result_body">Daily average: %1$s\n7-day total: %2$s\n\nTop apps:\n%3$s</string>
+    <string name="onb_usage_report_app_row">• %1$s · %2$s</string>
+    <string name="onb_usage_report_no_apps">No usage data found yet.</string>
+    <string name="onb_usage_report_add_top_apps">Add top apps</string>
+    <string name="onb_usage_report_added_to_profile">Top apps added to this profile.</string>
+
+    <!-- ====================================================== -->
     <!-- Pick apps -->
     <!-- ====================================================== -->
     <string name="onb_pick_title">Pick apps to block</string>
@@ -64,18 +80,21 @@
     <string name="onb_perm_camera_desc">Only needed for QR and barcode scanning.</string>
     <string name="onb_perm_exact_alarm_title">Exact alarms</string>
     <string name="onb_perm_exact_alarm_desc">Helps timed schedules run reliably.</string>
+    <string name="onb_perm_nfc_title">Launch via NFC</string>
+    <string name="onb_perm_nfc_desc">If you use NFC tags, Android may require Switchly to be allowed under Special app access &gt; Launch via NFC. Passive tags normally require the device to be unlocked.</string>
 
     <string name="onb_permission_status_ready">Ready</string>
     <string name="onb_permission_status_missing">Setup needed</string>
+    <string name="onb_permission_status_manual">Check manually</string>
 
     <!-- ====================================================== -->
     <!-- Optional keys setup -->
     <!-- ====================================================== -->
     <string name="onb_keys_title_selected">Set up your selected keys</string>
     <string name="onb_keys_desc_selected">You chose %1$s as control channel(s). Set them up now, or skip and do it later.</string>
-    <string name="onb_keys_action">Open Manage Keys</string>
+    <string name="onb_keys_action">Open Keys &amp; codes</string>
     <string name="onb_keys_point_actions">NFC, QR and barcodes can enable, disable or toggle Switchly.</string>
-    <string name="onb_keys_point_manage">Manage Keys is where your NFC, QR and barcode items are stored.</string>
+    <string name="onb_keys_point_manage">Keys &amp; codes is where your NFC, QR, and barcode items are stored.</string>
 
     <!-- ====================================================== -->
     <!-- Optional schedule setup -->

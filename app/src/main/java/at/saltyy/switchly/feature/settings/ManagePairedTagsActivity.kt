@@ -30,13 +30,13 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ArrayAdapter
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.edit
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
@@ -51,30 +51,32 @@ import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
+import at.saltyy.switchly.ui.attachEditDeleteSwipe
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.updateSelectionSubtitle
 import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.showDestructiveAccented
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
-import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
-import at.saltyy.switchly.ui.dialog.applySwitchlyDialogWidth
-import at.saltyy.switchly.ui.dialog.styleSwitchlyFormButtons
+import at.saltyy.switchly.ui.dialog.showSwitchlyFormDialog
 import at.saltyy.switchly.util.EditingLockGuard
+import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
-import java.text.NumberFormat
+import java.util.Locale
 
 class ManagePairedTagsActivity : AppCompatActivity() {
 
     private lateinit var recycler: RecyclerView
     private lateinit var empty: View
+    private lateinit var toolbar: MaterialToolbar
     private val selectedUids: MutableSet<String> = linkedSetOf()
     private var selectionMode: Boolean = false
     private var lastTags: List<NfcUidPairingStore.TagMeta> = emptyList()
@@ -188,7 +190,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         // Ensure CUSTOM accent mode recolors checkboxes/cursor in this screen + dialogs.
         CustomAccentApplier.applyIfNeeded(this)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        toolbar = findViewById(R.id.toolbar)
         EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -202,6 +204,10 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         adapter = TagAdapter(
             isSelectionMode = { selectionMode },
             isSelected = { selectedUids.contains(it.uid) },
+            onEnabledChanged = { tag, enabled ->
+                NfcUidPairingStore.setTagEnabled(this, tag.uid, enabled)
+                refresh()
+            },
             onRowClick = { tag ->
                 if (selectionMode) toggleSelection(tag.uid) else showEditDialog(tag)
             },
@@ -219,6 +225,15 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             }
         )
         recycler.adapter = adapter
+        recycler.attachEditDeleteSwipe(
+            canSwipe = { !selectionMode },
+            onEdit = { position ->
+                adapter.itemAt(position)?.let(::showEditDialog)
+            },
+            onDelete = { position ->
+                adapter.itemAt(position)?.let { confirmRemove(it.uid) }
+            }
+        )
 
         fabAdd = findViewById(R.id.fabAdd)
         fabAdd?.setOnClickListener {
@@ -231,6 +246,9 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         // Selection mode toggles checkboxes in row layout.
         // A full refresh keeps it simple and avoids edge cases with moves.
         if (::adapter.isInitialized) adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        if (::toolbar.isInitialized) {
+            toolbar.updateSelectionSubtitle(selectionMode, selectedUids.size)
+        }
     }
 
     override fun onResume() {
@@ -243,8 +261,13 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         val tags = NfcUidPairingStore.getPairedTags(this)
         val sorted = applySort(tags, getSortMode())
         lastTags = sorted
+        selectedUids.retainAll(sorted.map { it.uid }.toSet())
+        if (selectionMode && selectedUids.isEmpty()) {
+            selectionMode = false
+        }
         adapter.submit(sorted)
         empty.visibility = if (sorted.isEmpty()) View.VISIBLE else View.GONE
+        notifySelectionUiChanged()
     }
 
     private fun applySort(
@@ -275,9 +298,14 @@ class ManagePairedTagsActivity : AppCompatActivity() {
     private fun showPairedTagsInfoDialog() {
         Dialogs.builder(this)
             .setTitle(R.string.paired_tags_info_title)
-            .setMessage(R.string.paired_tags_info_body)
+            .setMessage(buildStoreInfoMessage(R.string.paired_tags_info_body))
+            .setNeutralButton(R.string.store_open) { _, _ -> SwitchlyStoreLinks.openStore(this) }
             .setPositiveButton(R.string.ok, null)
             .showAccented()
+    }
+
+    private fun buildStoreInfoMessage(baseMessageRes: Int): String {
+        return getString(baseMessageRes) + "\n\n" + getString(R.string.store_card_title) + "\n" + getString(R.string.store_card_summary)
     }
 
     private fun showSortDialog() {
@@ -378,7 +406,8 @@ class ManagePairedTagsActivity : AppCompatActivity() {
                     iconRes = icons?.getOrNull(index),
                     selected = index == checkedIndex
                 )
-            }
+            },
+            confirmSelection = true
         ) { which ->
             onSelected(which, dialog)
         }
@@ -390,29 +419,34 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             selectionMode = false
         }
         invalidateOptionsMenu()
-        adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        notifySelectionUiChanged()
     }
 
     private fun exitSelectionMode() {
         selectionMode = false
         selectedUids.clear()
         invalidateOptionsMenu()
-        adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        notifySelectionUiChanged()
     }
 
     private fun showEditDialog(tag: NfcUidPairingStore.TagMeta) {
-        val content = LayoutInflater.from(this).inflate(R.layout.dialog_paired_tag_edit, null)
+        val content = LayoutInflater.from(this).inflate(R.layout.dialog_paired_tag_edit, FrameLayout(this), false)
         val etName = content.findViewById<EditText>(R.id.etTagName)
         val etNote = content.findViewById<EditText>(R.id.etTagNote)
+        val etReadOnlyDuration = content.findViewById<EditText>(R.id.etReadOnlyDurationMinutes)
         val etDailyLimit = content.findViewById<EditText>(R.id.etTagDailyLimit)
         val etCooldown = content.findViewById<EditText>(R.id.etTagCooldownMinutes)
         val acReadOnlyAction = content.findViewById<MaterialAutoCompleteTextView>(R.id.acReadOnlyAction)
         val readOnlyActionGroup = content.findViewById<View>(R.id.readOnlyActionGroup)
+        val tagUsageSettingsGroup = content.findViewById<View>(R.id.tagUsageSettingsGroup)
+        val tagUsageSettingsTitle = content.findViewById<View>(R.id.tvTagUsageSettingsTitle)
+        val durationInputLayout = content.findViewById<View>(R.id.tilReadOnlyDurationMinutes)
+        val durationHelper = content.findViewById<View>(R.id.tvReadOnlyDurationHelper)
+        val durationSpacer = content.findViewById<View>(R.id.spReadOnlyDurationSpacer)
         val etUid = content.findViewById<EditText>(R.id.etTagUid)
 
         val btnSave = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSave)
         val btnCancel = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
-        val btnDelete = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnDelete)
 
         val uidBucket = NfcTempDisableLimiterStore.bucketForUid(tag.uid)
 
@@ -422,64 +456,60 @@ class ManagePairedTagsActivity : AppCompatActivity() {
 
         val readOnlyActionEntries = listOf(
             NfcUidPairingStore.ReadOnlyAction.TOGGLE to getString(R.string.paired_tag_readonly_action_toggle),
-            NfcUidPairingStore.ReadOnlyAction.UNLOCK_ONLY to getString(R.string.paired_tag_readonly_action_unlock_only),
-            NfcUidPairingStore.ReadOnlyAction.LOCK_ONLY to getString(R.string.paired_tag_readonly_action_lock_only),
+            NfcUidPairingStore.ReadOnlyAction.DISABLE to getString(R.string.paired_tag_readonly_action_disable),
+            NfcUidPairingStore.ReadOnlyAction.ENABLE to getString(R.string.paired_tag_readonly_action_enable),
+            NfcUidPairingStore.ReadOnlyAction.TEMP_DISABLE to getString(R.string.paired_tag_readonly_action_temp_disable),
+            NfcUidPairingStore.ReadOnlyAction.TEMP_ENABLE to getString(R.string.paired_tag_readonly_action_temp_enable),
         )
+
+        fun selectedReadOnlyAction(): NfcUidPairingStore.ReadOnlyAction {
+            return readOnlyActionEntries
+                .firstOrNull { it.second == acReadOnlyAction.text?.toString().orEmpty() }
+                ?.first
+                ?: NfcUidPairingStore.ReadOnlyAction.TOGGLE
+        }
+
+        fun usesTemporaryReadOnlyAction(): Boolean {
+            val action = selectedReadOnlyAction()
+            return action == NfcUidPairingStore.ReadOnlyAction.TEMP_DISABLE ||
+                action == NfcUidPairingStore.ReadOnlyAction.TEMP_ENABLE
+        }
+
+        fun updateTagUsageSettingsVisibility() {
+            val supportsUidOnlyAction = tag.supportsUidOnlyAction
+            val durationVisible = supportsUidOnlyAction && usesTemporaryReadOnlyAction()
+            tagUsageSettingsGroup.isVisible = supportsUidOnlyAction
+            tagUsageSettingsTitle.isVisible = supportsUidOnlyAction
+            durationInputLayout.isVisible = durationVisible
+            durationHelper.isVisible = durationVisible
+            durationSpacer.isVisible = durationVisible
+        }
+
         acReadOnlyAction.setAdapter(
-            ArrayAdapter(
-                this,
-                android.R.layout.simple_list_item_1,
-                readOnlyActionEntries.map { it.second }
-            )
+            SwitchlyDropdownAdapter(this, readOnlyActionEntries.map { it.second })
         )
         acReadOnlyAction.setText(
             readOnlyActionEntries.firstOrNull { it.first == tag.readOnlyAction }?.second
                 ?: getString(R.string.paired_tag_readonly_action_toggle),
             false
         )
+        acReadOnlyAction.setOnItemClickListener { _, _, _, _ -> updateTagUsageSettingsVisibility() }
+        acReadOnlyAction.setOnClickListener { acReadOnlyAction.showDropDown() }
         readOnlyActionGroup.isVisible = tag.supportsUidOnlyAction
+        etReadOnlyDuration.setText(String.format(Locale.ROOT, "%d", tag.readOnlyDurationMinutes))
+        updateTagUsageSettingsVisibility()
 
         NfcTempDisableLimiterStore.getDailyLimitOverride(uidBucket, this)
-            ?.let { etDailyLimit.setText(NumberFormat.getIntegerInstance().format(it)) }
+            ?.let { etDailyLimit.setText(String.format(Locale.ROOT, "%d", it)) }
         NfcTempDisableLimiterStore.getCooldownOverrideMinutes(uidBucket, this)
-            ?.let { etCooldown.setText(NumberFormat.getIntegerInstance().format(it)) }
+            ?.let { etCooldown.setText(String.format(Locale.ROOT, "%d", it)) }
 
-        // Make sure inputs (cursor blink/selection) are already hooked before the dialog is shown.
-        runCatching { CustomAccentApplier.applyToView(content, this) }
-
-        // Use a custom button row inside the dialog view so spacing/tint is consistent.
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.paired_tag_edit_title))
-            .setView(content)
-            .create()
-        dialog.setOnShowListener {
-            dialog.applySwitchlyDialogWidth(0.94f)
-            // Retint inputs + any default Material accents when CUSTOM accent is selected.
-            runCatching { CustomAccentApplier.applyToDialog(dialog) }
-
-            // Some Material/OEM combos recreate focused stroke + cursor tint after show/focus.
-            // Re-apply on the whole content view a few times so TextInputLayout focus state doesnt fall back to theme green
-            longArrayOf(0L, 80L, 220L, 520L, 1000L).forEach { d ->
-                content.postDelayed({ runCatching { CustomAccentApplier.applyToView(content, this) } }, d)
-            }
-
-        }
-        dialog.show()
-
-        // Keep cancel/delete as lightweight text buttons, but make save the primary filled action.
-        styleSwitchlyFormButtons(
-            deleteButton = btnDelete,
+        val dialog = showSwitchlyFormDialog(
+            title = getString(R.string.paired_tag_edit_title),
+            content = content,
             cancelButton = btnCancel,
-            saveButton = btnSave,
-            destructiveButtonVisible = true,
-            saveIsAdd = false
+            saveButton = btnSave
         )
-
-        btnCancel.setOnClickListener { dialog.dismiss() }
-        btnDelete.setOnClickListener {
-            dialog.dismiss()
-            confirmRemove(tag.uid)
-        }
 
         btnSave.setOnClickListener {
             val dailyResult = parseOptionalBoundedInt(
@@ -505,24 +535,38 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             val daily = dailyResult.takeIf { it != EMPTY_NUMBER }
             val cooldown = cooldownResult.takeIf { it != EMPTY_NUMBER }
 
-            val selectedReadOnlyAction = readOnlyActionEntries
-                .firstOrNull { it.second == acReadOnlyAction.text?.toString().orEmpty() }
-                ?.first
-                ?: NfcUidPairingStore.ReadOnlyAction.TOGGLE
+            val selectedReadOnlyAction = selectedReadOnlyAction()
+            val durationResult = parseOptionalBoundedInt(
+                raw = etReadOnlyDuration.text?.toString(),
+                min = 1,
+                max = 1440,
+            )
+            if (usesTemporaryReadOnlyAction() && durationResult == INVALID_NUMBER) {
+                Toast.makeText(this, getString(R.string.paired_tag_duration_invalid), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val duration = durationResult
+                .takeIf { it != EMPTY_NUMBER && it != INVALID_NUMBER }
+                ?: NfcUidPairingStore.DEFAULT_READ_ONLY_TEMP_DURATION_MINUTES
 
             NfcUidPairingStore.setTagMeta(
                 this,
                 tag.uid,
                 etName.text?.toString(),
                 etNote.text?.toString(),
-                if (tag.supportsUidOnlyAction) selectedReadOnlyAction else null
+                if (tag.supportsUidOnlyAction) selectedReadOnlyAction else null,
+                if (tag.supportsUidOnlyAction && usesTemporaryReadOnlyAction()) duration else null
             )
-            NfcTempDisableLimiterStore.setTagConfig(
-                uidBucket = uidBucket,
-                ctx = this,
-                dailyLimit = daily,
-                cooldownMinutes = cooldown,
-            )
+            if (tag.supportsUidOnlyAction) {
+                NfcTempDisableLimiterStore.setTagConfig(
+                    uidBucket = uidBucket,
+                    ctx = this,
+                    dailyLimit = daily,
+                    cooldownMinutes = cooldown,
+                )
+            } else {
+                NfcTempDisableLimiterStore.clearTagConfig(uidBucket = uidBucket, ctx = this)
+            }
 
             refresh()
             dialog.dismiss()
@@ -655,7 +699,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
                 selectionMode = true
                 selectedUids.clear()
                 invalidateOptionsMenu()
-                adapter.notifyItemRangeChanged(0, adapter.itemCount)
+                notifySelectionUiChanged()
                 true
             }
 
@@ -687,92 +731,10 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             .showDestructiveAccented()
     }
 
-    /**
-     * Custom single-select list adapter (radio rows) used in dialogs.
-     * Ensures the radio indicator always follows Switchly's accent/custom colour.
-     */
-    private class SingleSelectRadioAdapter(
-        private val entries: List<String>,
-        initialSelected: Int,
-        private val onSelected: (Int) -> Unit,
-    ) : RecyclerView.Adapter<SingleSelectRadioAdapter.VH>() {
-
-        private var selectedIndex: Int = initialSelected.coerceIn(0, (entries.size - 1).coerceAtLeast(0))
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_single_select_checkbox, parent, false)
-            return VH(v)
-        }
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.title.text = entries[position]
-
-            val accent = AccentColor.getAccentColorInt(holder.itemView.context)
-            val unchecked = (accent and 0x00FFFFFF) or (0x8C shl 24) // ~55% alpha
-            holder.radio.buttonTintList = ColorStateList(
-                arrayOf(
-                    intArrayOf(android.R.attr.state_checked),
-                    intArrayOf()
-                ),
-                intArrayOf(
-                    accent,
-                    unchecked
-                )
-            )
-
-            holder.radio.setOnCheckedChangeListener(null)
-            holder.radio.isChecked = position == selectedIndex
-            holder.radio.isClickable = false
-            holder.radio.isFocusable = false
-
-            fun select() {
-                val p = holder.bindingAdapterPosition
-                if (p == RecyclerView.NO_POSITION) return
-                selectedIndex = p
-                onSelected(p)
-            }
-
-            holder.itemView.setOnClickListener { select() }
-        }
-
-        override fun getItemCount(): Int = entries.size
-
-        class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val title: TextView = itemView.findViewById(R.id.title)
-            val radio: MaterialRadioButton = itemView.findViewById(R.id.radio)
-        }
-    }
-
-    private class SimpleChoiceAdapter(
-        private val entries: List<String>,
-        private val onSelected: (Int) -> Unit,
-    ) : RecyclerView.Adapter<SimpleChoiceAdapter.VH>() {
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_single_select_plain, parent, false)
-            return VH(v)
-        }
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.title.text = entries[position]
-            holder.itemView.setOnClickListener {
-                val p = holder.bindingAdapterPosition
-                if (p != RecyclerView.NO_POSITION) onSelected(p)
-            }
-        }
-
-        override fun getItemCount(): Int = entries.size
-
-        class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val title: TextView = itemView.findViewById(R.id.title)
-        }
-    }
-
     private class TagAdapter(
         private val isSelectionMode: () -> Boolean,
         private val isSelected: (NfcUidPairingStore.TagMeta) -> Boolean,
+        private val onEnabledChanged: (NfcUidPairingStore.TagMeta, Boolean) -> Unit,
         private val onRowClick: (NfcUidPairingStore.TagMeta) -> Unit,
         private val onRowLongPress: (NfcUidPairingStore.TagMeta) -> Boolean,
     ) : RecyclerView.Adapter<TagAdapter.VH>() {
@@ -799,6 +761,8 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             }
         }
 
+        fun itemAt(position: Int): NfcUidPairingStore.TagMeta? = items.getOrNull(position)
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val v = LayoutInflater.from(parent.context)
                 .inflate(R.layout.item_paired_tag, parent, false)
@@ -812,10 +776,22 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             holder.uid.text = item.uid
 
             // Keep the list compact: name + NFC ID only. Details stay available in the edit dialog.
-            holder.note.visibility = View.GONE
-            holder.note.text = ""
+            holder.note.visibility = if (item.enabled) View.GONE else View.VISIBLE
+            holder.note.text = if (item.enabled) "" else holder.itemView.context.getString(R.string.paired_tag_disabled)
+            val contentAlpha = if (item.enabled) 1f else 0.56f
+            holder.name.alpha = contentAlpha
+            holder.uid.alpha = if (item.enabled) 0.80f else 0.56f
 
             val sel = isSelectionMode.invoke()
+            holder.swEnabled.visibility = if (sel) View.GONE else View.VISIBLE
+            holder.swEnabled.setOnCheckedChangeListener(null)
+            holder.swEnabled.isChecked = item.enabled
+            holder.swEnabled.contentDescription = holder.itemView.context.getString(R.string.paired_tag_enabled_toggle)
+            CustomAccentApplier.tintSwitch(holder.swEnabled)
+            holder.swEnabled.setOnCheckedChangeListener { _, checked ->
+                onEnabledChanged(item, checked)
+            }
+
             holder.cb.visibility = if (sel) View.VISIBLE else View.GONE
             holder.cb.setOnCheckedChangeListener(null)
             val selected = sel && isSelected.invoke(item)
@@ -873,6 +849,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             val name: TextView = v.findViewById(R.id.tvName)
             val uid: TextView = v.findViewById(R.id.tvUid)
             val note: TextView = v.findViewById(R.id.tvNote)
+            val swEnabled: SwitchCompat = v.findViewById(R.id.swTagEnabled)
             val cb: MaterialCheckBox = v.findViewById(R.id.cbSelect)
         }
     }

@@ -232,14 +232,6 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDelete"
-                style="@style/Switchly.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/delete"
-                android:visibility="gone" />
-
             <Space
                 android:layout_width="0dp"
                 android:layout_height="1dp"

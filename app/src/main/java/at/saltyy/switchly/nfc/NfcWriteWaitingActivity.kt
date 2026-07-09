@@ -30,6 +30,7 @@ import android.nfc.tech.NdefFormatable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -252,7 +253,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
     }
 
     private fun showPairMetaPrompt(uid: String, onDone: () -> Unit) {
-        val v = layoutInflater.inflate(R.layout.dialog_paired_tag_pair_meta, null)
+        val v = layoutInflater.inflate(R.layout.dialog_paired_tag_pair_meta, FrameLayout(this), false)
         v.findViewById<TextView>(R.id.tvUid).text = uid
 
         val etName = v.findViewById<TextInputEditText>(R.id.etTagName)

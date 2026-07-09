@@ -31,11 +31,18 @@ import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.theme.AccentColor
+import com.google.android.material.chip.Chip
+
+data class AppUsageMetrics(
+    val opensLabel: String,
+    val attemptsLabel: String
+)
 
 class AppUsageAdapter(
     private val onClick: ((AppUsage) -> Unit)? = null,
     private val onEditLimits: ((AppUsage) -> Unit)? = null,
     private val limitBadgeProvider: ((AppUsage) -> String?)? = null,
+    private val usageMetricsProvider: ((AppUsage) -> AppUsageMetrics?)? = null,
     private val sessionUsageProvider: ((AppUsage) -> SessionUsageGraph?)? = null
 ) : RecyclerView.Adapter<AppUsageAdapter.VH>() {
 
@@ -73,7 +80,15 @@ class AppUsageAdapter(
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.bind(items[position], onClick, onEditLimits, detailsCtaEnabled, limitBadgeProvider, sessionUsageProvider)
+        holder.bind(
+            items[position],
+            onClick,
+            onEditLimits,
+            detailsCtaEnabled,
+            limitBadgeProvider,
+            usageMetricsProvider,
+            sessionUsageProvider
+        )
     }
 
     override fun getItemCount(): Int = items.size
@@ -86,6 +101,9 @@ class AppUsageAdapter(
         private val details = v.findViewById<TextView>(R.id.details)
         private val progress = v.findViewById<ProgressBar>(R.id.progress)
         private val btnEditLimits = v.findViewById<ImageView>(R.id.btnEditLimits)
+        private val usageMetricRow = v.findViewById<View>(R.id.usageMetricRow)
+        private val opensChip = v.findViewById<Chip>(R.id.opensChip)
+        private val attemptsChip = v.findViewById<Chip>(R.id.attemptsChip)
         private val limitBadge = v.findViewById<TextView>(R.id.limitBadge)
         private val sessionUsageContainer = v.findViewById<View>(R.id.sessionUsageContainer)
         private val sessionUsageText = v.findViewById<TextView>(R.id.sessionUsageText)
@@ -97,6 +115,7 @@ class AppUsageAdapter(
             onEditLimits: ((AppUsage) -> Unit)?,
             detailsCtaEnabled: Boolean,
             limitBadgeProvider: ((AppUsage) -> String?)?,
+            usageMetricsProvider: ((AppUsage) -> AppUsageMetrics?)?,
             sessionUsageProvider: ((AppUsage) -> SessionUsageGraph?)?
         ) {
             val ctx = itemView.context
@@ -112,6 +131,15 @@ class AppUsageAdapter(
             progress.progressTintList = ColorStateList.valueOf(accent)
             details.setTextColor(accent)
             btnEditLimits.imageTintList = ColorStateList.valueOf(accent)
+
+            val metrics = usageMetricsProvider?.invoke(item)
+            usageMetricRow.isVisible = metrics != null
+            if (metrics != null) {
+                opensChip.text = metrics.opensLabel
+                attemptsChip.text = metrics.attemptsLabel
+                opensChip.setTextColor(accent)
+                attemptsChip.setTextColor(accent)
+            }
 
             val badge = limitBadgeProvider?.invoke(item)?.trim().orEmpty()
             limitBadge.isVisible = badge.isNotBlank()
