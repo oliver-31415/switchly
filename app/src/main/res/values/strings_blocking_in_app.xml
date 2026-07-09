@@ -4,12 +4,11 @@
     <!-- ====================================================== -->
     <!-- In-app blocking overview -->
     <!-- ====================================================== -->
-    <string name="in_app_blocking_title">In-app blocking</string>
-    <string name="in_app_blocking_limitations_note">In-app blocking is best-effort and only works while Switchly is active. Enabled sections are blocked immediately. Shorts/Reels can usually be blocked in their dedicated tabs, but recommendations inside the normal Home feed may still appear.</string>
+    <string name="in_app_blocking_title">In-app rules</string>
 
-    <!-- ====================================================== -->
-    <!-- Supported apps -->
-    <!-- ====================================================== -->
+    <string name="in_app_rules_info_title">In-app rules</string>
+    <string name="in_app_rules_info_body">In-app rules are profile-specific and apply only while this profile is active.\n\nUse the master switch to temporarily disable all in-app rules for this profile without removing individual section rules.\n\nSupported sections include YouTube Shorts, Instagram Reels/Explore/Search, X tabs, and Snapchat sections. Detection uses Accessibility, so third-party app UI changes can affect reliability.</string>
+    <string name="in_app_rules_profile_subtitle">Rules for the active profile.</string>
     <string name="in_app_blocking_youtube">YouTube</string>
     <string name="in_app_blocking_instagram">Instagram</string>
     <string name="in_app_blocking_x">X/Twitter</string>
@@ -29,17 +28,9 @@
     <string name="in_app_blocking_block_following">Block Following</string>
     <string name="in_app_blocking_block_comments">Block comments</string>
     <string name="in_app_blocking_block_pip">Block picture-in-picture mode</string>
-
-    <!-- ====================================================== -->
-    <!-- Global limit controls -->
-    <!-- ====================================================== -->
     <string name="in_app_blocking_limit_title">In-app blocking limit</string>
     <string name="in_app_limit_label">In-app limit</string>
     <string name="in_app_blocking_limit_desc">Daily time limit across enabled in-app sections.\nIf no limit is set, enabled sections are blocked immediately.</string>
-
-    <!-- ====================================================== -->
-    <!-- Surface labels -->
-    <!-- ====================================================== -->
     <string name="in_app_surface_shorts_label">Shorts</string>
     <string name="in_app_surface_subscriptions_label">Subscriptions</string>
     <string name="in_app_surface_you_label">You</string>
@@ -61,18 +52,18 @@
     <string name="in_app_surface_daily_limit_title">%1$s: daily limit</string>
 
     <!-- ====================================================== -->
-    <!-- Rule dialog and options -->
+    <!-- Shared actions and blocking messages -->
     <!-- ====================================================== -->
     <string name="edit">Edit</string>
+    <string name="blocking_in_app_limit_reached_title">In-app limit reached!</string>
+    <string name="blocking_instagram_comments_blocked_message">Instagram comments are blocked by Switchly.</string>
+    <string name="blocking_daily_limit_duration_fmt">Daily limit: %1$s</string>
 
     <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
+    <!-- Surface limits and messages -->
     <!-- ====================================================== -->
-    <string name="blocking_in_app_limit_reached_title">In-app limit reached!</string>
     <string name="blocking_surface_blocked_title">%1$s is blocked!</string>
     <string name="blocking_comments_blocked_title">Comments are blocked!</string>
-    <string name="blocking_instagram_comments_blocked_message">Instagram comments are blocked by Switchly.</string>
     <string name="blocking_surface_base_message">You can’t use this app’s feature while Switchly is active.</string>
-    <string name="blocking_daily_limit_duration_fmt">Daily limit: %1$s</string>
 
 </resources>

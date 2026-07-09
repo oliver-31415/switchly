@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.feature.usage
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
@@ -33,16 +34,24 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
+import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.databinding.ActivityWebsiteDetailBinding
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
 import at.saltyy.switchly.feature.stats.StatsFormat
+import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
+import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
+import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.EditingLockGuard
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
@@ -52,8 +61,12 @@ import kotlinx.coroutines.launch
 
 class WebsiteDetailActivity : AppCompatActivity() {
 
+    private fun toolbarIconColor(): Int {
+        return if (MaterialColors.isColorLight(AccentColor.getToolbarColor(this))) Color.BLACK else Color.WHITE
+    }
+
     private fun syncWebsiteEditingUi() {
-        val locked = SwitchModeStore.isEnabled(this)
+        val locked = EditingLockGuard.isLocked(this)
         b.btnEditLimits.isEnabled = !locked
         b.btnManageBlocking.isEnabled = !locked
         b.btnEditLimits.alpha = if (locked) 0.62f else 1f
@@ -65,9 +78,9 @@ class WebsiteDetailActivity : AppCompatActivity() {
     }
 
     private fun websiteEditingLocked(): Boolean {
-        val locked = SwitchModeStore.isEnabled(this)
+        val locked = EditingLockGuard.isLocked(this)
         if (locked) {
-            Toast.makeText(this, R.string.toast_disable_switchly_to_edit_websites, Toast.LENGTH_SHORT).show()
+            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_websites)
         }
         return locked
     }
@@ -85,9 +98,13 @@ class WebsiteDetailActivity : AppCompatActivity() {
         b = ActivityWebsiteDetailBinding.inflate(layoutInflater)
         setContentView(b.root)
 
+        b.toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        b.toolbar.navigationIcon?.mutate()?.setTint(toolbarIconColor())
         b.toolbar.setNavigationOnClickListener { finish() }
+        EdgeToEdgeUtils.setupClassic(activity = this, toolbar = b.toolbar)
 
         b.toolbar.inflateMenu(R.menu.menu_website_detail)
+        b.toolbar.menu?.findItem(R.id.action_delete)?.icon?.mutate()?.setTint(toolbarIconColor())
 
         val domain = intent.getStringExtra(EXTRA_DOMAIN) ?: return
         val label = intent.getStringExtra(EXTRA_LABEL) ?: domain
@@ -452,10 +469,11 @@ class WebsiteDetailActivity : AppCompatActivity() {
     private fun refreshDailyLimit(domain: String) {
         val normalized = DomainBlockStore.normalize(domain) ?: domain
         val isAlways = DomainBlockStore.getDomains(this).contains(normalized)
+        val allowMode = ProfileStore.getCurrent(this)?.let { ProfileRuleModeStore.isAllowMode(this, it) } == true
         val limitMin = DomainLimitStore.getLimitMinutes(this, normalized)
 
         b.tvDailyLimitValue.text = when {
-            isAlways -> getString(R.string.rule_block_always)
+            isAlways -> getString(if (allowMode) R.string.rule_allowed_always else R.string.rule_block_always)
             limitMin > 0 -> getString(R.string.daily_limit_value_format, limitMin)
             else -> getString(R.string.no_limit)
         }
@@ -469,21 +487,24 @@ class WebsiteDetailActivity : AppCompatActivity() {
             if (it == 0) getString(R.string.no_limit) else resources.getQuantityString(R.plurals.minutes_format, it, it)
         } + getString(R.string.custom_minutes)
 
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.set_daily_limit_title, label))
-            .setSingleChoiceItems(items.toTypedArray(), presets.indexOf(current).takeIf { it >= 0 } ?: -1) { dialog, which ->
-                if (which == items.lastIndex) {
-                    dialog.dismiss()
-                    showCustomMinutesInput(domain, label)
-                    return@setSingleChoiceItems
-                }
-
-                val chosen = presets.getOrNull(which) ?: 0
-                applyDailyLimit(domain, chosen)
-                dialog.dismiss()
+        showSwitchlyOptionDialog(
+            title = getString(R.string.set_daily_limit_title, label),
+            options = items.mapIndexed { index, item ->
+                SwitchlyDialogOption(
+                    title = item,
+                    iconRes = if (index == items.lastIndex) R.drawable.edit_24 else R.drawable.alarm_24,
+                    selected = index < presets.size && presets[index] == current
+                )
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .showAccented()
+        ) { which ->
+            if (which == items.lastIndex) {
+                showCustomMinutesInput(domain, label)
+                return@showSwitchlyOptionDialog
+            }
+
+            val chosen = presets.getOrNull(which) ?: 0
+            applyDailyLimit(domain, chosen)
+        }
     }
 
     private fun showCustomMinutesInput(domain: String, label: String) {
@@ -535,26 +556,23 @@ class WebsiteDetailActivity : AppCompatActivity() {
         )
         val checked = booleanArrayOf(true, false, false)
 
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.website_delete_title, label))
-            .setMultiChoiceItems(items, checked) { _, which, isChecked ->
-                when (which) {
-                    0 -> clearUsage[0] = isChecked
-                    1 -> removeLimit[0] = isChecked
-                    2 -> removeBlock[0] = isChecked
-                }
-            }
-            .setMessage(R.string.website_delete_message)
-            .setPositiveButton(R.string.delete) { _, _ ->
-                if (clearUsage[0]) WebUsageStore.clearAllUsage(this, domain)
-                if (removeLimit[0]) DomainLimitStore.clear(this, domain)
-                if (removeBlock[0]) DomainBlockStore.removeDomain(this, domain)
+        showSwitchlyMultiChoiceDialog(
+            title = getString(R.string.website_delete_title, label),
+            options = items.map { SwitchlyDialogOption(title = it, destructive = true) },
+            checked = checked,
+            positiveTextRes = R.string.delete
+        ) { result ->
+            clearUsage[0] = result.getOrNull(0) == true
+            removeLimit[0] = result.getOrNull(1) == true
+            removeBlock[0] = result.getOrNull(2) == true
 
-                Toast.makeText(this, R.string.website_deleted_toast, Toast.LENGTH_SHORT).show()
-                finish()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .showAccented()
+            if (clearUsage[0]) WebUsageStore.clearAllUsage(this, domain)
+            if (removeLimit[0]) DomainLimitStore.clear(this, domain)
+            if (removeBlock[0]) DomainBlockStore.removeDomain(this, domain)
+
+            Toast.makeText(this, R.string.website_deleted_toast, Toast.LENGTH_SHORT).show()
+            finish()
+        }
     }
 
     private fun setWeekdayLabels() {

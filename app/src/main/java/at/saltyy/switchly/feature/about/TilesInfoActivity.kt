@@ -22,33 +22,43 @@ package at.saltyy.switchly.feature.about
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.res.Configuration
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.card.MaterialCardView
 
 abstract class TilesInfoActivity : AppCompatActivity() {
 
     data class Tile(
         val title: String,
         val subtitle: String,
+        val sectionTitle: String? = null,
         val onClick: (() -> Unit)? = null,
         val onLongClick: (() -> Boolean)? = null,
         val enableLongPressCopy: Boolean = true,
         val copyValue: String = subtitle,
         val showCopyButton: Boolean = false,
         val showOpenButton: Boolean = false,
+        @param:DrawableRes @field:DrawableRes val iconRes: Int? = null,
+        @param:DrawableRes @field:DrawableRes val actionIconRes: Int? = null,
         val copiedToast: String? = null,
         @param:ColorRes @field:ColorRes val subtitleColorRes: Int? = null,
         val subtitleAlpha: Float? = null
@@ -80,6 +90,9 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        val toolbarIconColor = readableToolbarIconColor()
+        toolbar.navigationIcon?.mutate()?.setTint(toolbarIconColor)
+        toolbar.setTitleTextColor(toolbarIconColor)
 
         val title = screenTitle()
         supportActionBar?.title = title
@@ -100,22 +113,73 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         val inflater = LayoutInflater.from(this)
         val visibleTiles = tiles().filter { it.title.isNotBlank() && it.subtitle.isNotBlank() }
 
-        visibleTiles.forEachIndexed { index, tile ->
-            rowsContainer.addView(createTileRow(inflater, tile))
-
-            if (index != visibleTiles.lastIndex) {
-                rowsContainer.addView(inflater.inflate(R.layout.item_info_divider, rowsContainer, false))
+        visibleTiles
+            .fold(mutableListOf<Pair<String?, MutableList<Tile>>>()) { groups, tile ->
+                val section = tile.sectionTitle?.takeIf { it.isNotBlank() }
+                if (groups.lastOrNull()?.first == section) {
+                    groups.last().second += tile
+                } else {
+                    groups += section to mutableListOf(tile)
+                }
+                groups
             }
-        }
+            .forEachIndexed { groupIndex, (section, groupTiles) ->
+                section?.let { rowsContainer.addView(createSectionTitle(it, groupIndex > 0)) }
+
+                val card = MaterialCardView(this).apply {
+                    radius = dp(14).toFloat()
+                    cardElevation = dp(1).toFloat()
+                    useCompatPadding = true
+                    strokeWidth = dp(1)
+                    strokeColor = ContextCompat.getColor(this@TilesInfoActivity, R.color.switchly_card_stroke)
+                    setCardBackgroundColor(ContextCompat.getColor(this@TilesInfoActivity, R.color.switchly_card_bg))
+                }
+                val groupContainer = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(0, dp(4), 0, dp(4))
+                }
+
+                groupTiles.forEachIndexed { index, tile ->
+                    groupContainer.addView(createTileRow(inflater, tile))
+
+                    if (index != groupTiles.lastIndex) {
+                        groupContainer.addView(inflater.inflate(R.layout.item_info_divider, groupContainer, false))
+                    }
+                }
+
+                card.addView(groupContainer)
+                rowsContainer.addView(card)
+            }
     }
+
+    private fun createSectionTitle(title: String, hasTopMargin: Boolean): TextView =
+        TextView(this).apply {
+            text = title
+            setTextColor(AccentColor.getAccentColorInt(this@TilesInfoActivity))
+            textSize = 12.5f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            letterSpacing = 0.06f
+            isAllCaps = true
+            setPadding(dp(4), if (hasTopMargin) dp(14) else dp(2), dp(4), dp(5))
+        }
 
     private fun createTileRow(inflater: LayoutInflater, tile: Tile): View {
         val row = inflater.inflate(R.layout.item_info_tile, rowsContainer, false)
         val root = row.findViewById<View>(R.id.root)
+        val iconView = row.findViewById<ImageView>(R.id.ivIcon)
         val titleView = row.findViewById<TextView>(R.id.tvTitle)
         val subtitleView = row.findViewById<TextView>(R.id.tvSubtitle)
         val copyButton = row.findViewById<ImageButton>(R.id.btnCopy)
         val clickAction = tile.onClick
+
+        val accentTint = ColorStateList.valueOf(AccentColor.getAccentColorInt(this))
+        tile.iconRes?.let { iconRes ->
+            iconView.visibility = View.VISIBLE
+            iconView.setImageResource(iconRes)
+            ImageViewCompat.setImageTintList(iconView, accentTint)
+        } ?: run {
+            iconView.visibility = View.GONE
+        }
 
         titleView.text = tile.title
         subtitleView.text = tile.subtitle
@@ -139,9 +203,10 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         when {
             tile.showCopyButton -> {
                 copyButton.visibility = View.VISIBLE
-                copyButton.setImageResource(R.drawable.content_copy_24)
+                copyButton.setImageResource(tile.actionIconRes ?: R.drawable.content_copy_24)
                 copyButton.contentDescription = getString(R.string.action_copy)
                 copyButton.alpha = 0.72f
+                ImageViewCompat.setImageTintList(copyButton, accentTint)
                 copyButton.setOnClickListener {
                     copyToClipboard(tile.copyValue)
                     Toast.makeText(
@@ -153,9 +218,10 @@ abstract class TilesInfoActivity : AppCompatActivity() {
             }
             tile.showOpenButton && clickAction != null -> {
                 copyButton.visibility = View.VISIBLE
-                copyButton.setImageResource(R.drawable.arrow_forward_ios_24)
+                copyButton.setImageResource(tile.actionIconRes ?: R.drawable.arrow_forward_ios_24)
                 copyButton.contentDescription = tile.title
                 copyButton.alpha = 0.7f
+                ImageViewCompat.setImageTintList(copyButton, accentTint)
                 copyButton.setOnClickListener { clickAction.invoke() }
             }
             else -> {
@@ -170,5 +236,14 @@ abstract class TilesInfoActivity : AppCompatActivity() {
     private fun copyToClipboard(text: String) {
         val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         clipboardManager.setPrimaryClip(ClipData.newPlainText("Switchly", text))
+    }
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density + 0.5f).toInt()
+
+    private fun readableToolbarIconColor(): Int {
+        val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        return if (night) Color.WHITE else Color.BLACK
     }
 }

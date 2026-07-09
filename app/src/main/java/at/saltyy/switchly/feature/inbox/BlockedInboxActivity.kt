@@ -20,12 +20,17 @@
 package at.saltyy.switchly.feature.inbox
 
 import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
@@ -42,6 +47,11 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.showDestructiveAccented
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
+import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.widget.BlockedNotificationsWidgetProvider
 import com.google.android.material.appbar.MaterialToolbar
@@ -53,7 +63,7 @@ import java.util.Date
 class BlockedInboxActivity : AppCompatActivity() {
 
     private lateinit var recycler: RecyclerView
-    private lateinit var empty: TextView
+    private lateinit var empty: View
     private lateinit var toolbar: MaterialToolbar
 
     private val prefs by lazy { getSharedPreferences("switchly_prefs", MODE_PRIVATE) }
@@ -99,8 +109,9 @@ class BlockedInboxActivity : AppCompatActivity() {
         empty = findViewById(R.id.tvEmpty)
         recycler.layoutManager = LinearLayoutManager(this)
 
-        // Bottom filter button (now on the right)
         findViewById<View>(R.id.btnFilter)?.setOnClickListener { showFilterMenuDialog() }
+        findViewById<View>(R.id.btnAppFilterChip)?.setOnClickListener { showAppFilterDialog() }
+        findViewById<View>(R.id.btnSortChip)?.setOnClickListener { showSortDialog() }
 
         load()
     }
@@ -148,6 +159,7 @@ class BlockedInboxActivity : AppCompatActivity() {
         empty.visibility = if (visibleItems.isEmpty()) View.VISIBLE else View.GONE
 
         toolbar.subtitle = buildSubtitle()
+        updateFilterSortChips()
         invalidateOptionsMenu()
     }
 
@@ -164,6 +176,7 @@ class BlockedInboxActivity : AppCompatActivity() {
         selectionMode = false
         selectedKeys.clear()
         toolbar.subtitle = buildSubtitle()
+        updateFilterSortChips()
         invalidateOptionsMenu()
         recycler.adapter?.let { it.notifyItemRangeChanged(0, it.itemCount) }
     }
@@ -179,15 +192,55 @@ class BlockedInboxActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateFilterSortChips() {
+        val accent = AccentColor.getAccentColorInt(this)
+        val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.WHITE)
+        val filterLabel = appFilter?.let { appLabel(it) } ?: getString(R.string.blocked_inbox_chip_all_apps)
+        val sortLabel = getString(if (sortNewestFirst) R.string.blocked_inbox_sort_newest else R.string.blocked_inbox_sort_oldest)
+        fun MaterialButton.lockChipSize() {
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            minHeight = dp(44)
+            minimumHeight = dp(44)
+            isSingleLine = true
+            isAllCaps = false
+            gravity = android.view.Gravity.CENTER
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
+            iconPadding = dp(6)
+        }
+        findViewById<MaterialButton>(R.id.btnAppFilterChip)?.apply {
+            lockChipSize()
+            text = filterLabel
+            setTextColor(onSurface)
+            strokeColor = ColorStateList.valueOf(accent)
+            iconTint = ColorStateList.valueOf(onSurface)
+        }
+        findViewById<MaterialButton>(R.id.btnSortChip)?.apply {
+            lockChipSize()
+            minWidth = 0
+            minimumWidth = 0
+            textSize = 13f
+            text = sortLabel
+            setTextColor(onSurface)
+            strokeColor = ColorStateList.valueOf(accent)
+            iconTint = ColorStateList.valueOf(onSurface)
+        }
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
+
     private fun buildSubtitle(): String? {
-        val app = appFilter ?: return null
-        val label = appLabel(app)
-        return getString(R.string.blocked_inbox_filter_subtitle_fmt, label)
+        val sort = getString(if (sortNewestFirst) R.string.blocked_inbox_sort_newest else R.string.blocked_inbox_sort_oldest)
+        val filter = appFilter?.let { getString(R.string.blocked_inbox_filter_subtitle_fmt, appLabel(it)) }
+        return listOfNotNull(filter, sort).joinToString(" • ").takeIf { it.isNotBlank() }
     }
 
     private fun showDetailDialog(e: BlockedNotificationEvent) {
         val v = layoutInflater.inflate(R.layout.dialog_blocked_inbox_detail, null)
         val tv = v.findViewById<TextView>(R.id.tvDetail)
+        val detailIcon = v.findViewById<ImageView>(R.id.imgDetailIcon)
+        val detailTitle = v.findViewById<TextView>(R.id.tvDetailTitle)
+        val detailSubtitle = v.findViewById<TextView>(R.id.tvDetailSubtitle)
 
         fun line(label: String, value: String?): String {
             val clean = value?.trim()?.takeIf { it.isNotBlank() } ?: "-"
@@ -195,6 +248,10 @@ class BlockedInboxActivity : AppCompatActivity() {
         }
 
         val appName = appLabel(e.pkg)
+        detailTitle.text = appName
+        detailSubtitle.text = dateFmt.format(Date(e.timeMillis))
+        appIcon(e.pkg)?.let { detailIcon.setImageDrawable(it) } ?: detailIcon.setImageResource(R.drawable.notifications_24)
+
         val profile = e.profile.takeIf { it.isNotBlank() }
         val title = e.title.takeIf { it.isNotBlank() }
         val text = e.text.takeIf { it.isNotBlank() }
@@ -203,8 +260,6 @@ class BlockedInboxActivity : AppCompatActivity() {
         val summaryText = e.summaryText.takeIf { it.isNotBlank() }
 
         val lines = mutableListOf<String>()
-        lines += line(getString(R.string.blocked_inbox_field_app), appName)
-        lines += line(getString(R.string.blocked_inbox_field_time), dateFmt.format(Date(e.timeMillis)))
         profile?.let { lines += line(getString(R.string.blocked_inbox_field_profile), it) }
         lines += line(getString(R.string.blocked_inbox_field_reason), e.reason)
         lines += line(getString(R.string.blocked_inbox_field_title), title)
@@ -216,16 +271,33 @@ class BlockedInboxActivity : AppCompatActivity() {
 
         tv.text = lines.joinToString("\n\n")
 
-        MaterialAlertDialogBuilder(this)
+        val detailDialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.blocked_inbox_detail_title))
             .setView(v)
             .setPositiveButton(android.R.string.ok, null)
             .setNeutralButton(R.string.delete) { _, _ ->
-                BlockedInboxStore.remove(this, e)
-                BlockedNotificationsWidgetProvider.refreshAll(this)
-                load()
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.delete)
+                    .setMessage(getString(R.string.destructive_cannot_be_undone))
+                    .setPositiveButton(R.string.delete) { _, _ ->
+                        BlockedInboxStore.remove(this, e)
+                        BlockedNotificationsWidgetProvider.refreshAll(this)
+                        load()
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .showDestructiveAccented()
             }
-            .showAccented()
+            .create()
+        detailDialog.setOnShowListener {
+            detailDialog.styleSwitchlyDialogButtons()
+            val error = Color.rgb(186, 26, 26)
+            detailDialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.let { button ->
+                button.setTextColor(error)
+                button.backgroundTintList = null
+                runCatching { button.setBackgroundColor(Color.TRANSPARENT) }
+            }
+        }
+        detailDialog.show()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -268,22 +340,32 @@ class BlockedInboxActivity : AppCompatActivity() {
     }
 
     private fun showFilterMenuDialog() {
-        val options = arrayOf(
-            getString(R.string.blocked_inbox_sort_title),
-            getString(R.string.blocked_inbox_filter_app)
+        val sortLabel = getString(if (sortNewestFirst) R.string.blocked_inbox_sort_newest else R.string.blocked_inbox_sort_oldest)
+        val filterLabel = appFilter?.let { appLabel(it) } ?: getString(R.string.blocked_inbox_filter_all_apps)
+        val options = listOf(
+            SwitchlyDialogOption(
+                title = getString(R.string.blocked_inbox_sort_title),
+                summary = sortLabel,
+                iconRes = R.drawable.sort_24
+            ),
+            SwitchlyDialogOption(
+                title = getString(R.string.blocked_inbox_filter_app),
+                summary = filterLabel,
+                iconRes = R.drawable.apps_24
+            )
         )
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.blocked_inbox_filter_menu_title))
-            .setItems(options) { d, which ->
-                when (which) {
-                    0 -> showSortDialog()
-                    1 -> showAppFilterDialog()
-                }
-                d.dismiss()
+        showSwitchlyOptionDialog(
+            title = getString(R.string.blocked_inbox_filter_menu_title),
+            options = options,
+            compact = false,
+            showCancelButton = true
+        ) { which ->
+            when (which) {
+                0 -> showSortDialog()
+                1 -> showAppFilterDialog()
             }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .showAccented()
+        }
     }
 
     private fun showSortDialog() {
@@ -291,12 +373,15 @@ class BlockedInboxActivity : AppCompatActivity() {
             getString(R.string.blocked_inbox_sort_newest),
             getString(R.string.blocked_inbox_sort_oldest)
         )
+        val icons = listOf(R.drawable.arrow_downward_24, R.drawable.arrow_upward_24)
         val checked = if (sortNewestFirst) 0 else 1
 
         showRadioSingleChoiceDialog(
             title = getString(R.string.blocked_inbox_sort_title),
             entries = labels,
-            selectedIndex = checked
+            selectedIndex = checked,
+            icons = icons,
+            compact = false
         ) { which ->
             sortNewestFirst = which == 0
             prefs.edit { putBoolean(KEY_SORT_NEWEST, sortNewestFirst) }
@@ -320,11 +405,15 @@ class BlockedInboxActivity : AppCompatActivity() {
         }
 
         val selectedIndex = values.indexOf(appFilter).takeIf { it >= 0 } ?: 0
+        val icons = values.map { pkg -> pkg?.let { appIcon(it) } }
 
         showRadioSingleChoiceDialog(
             title = getString(R.string.blocked_inbox_filter_app),
             entries = entries,
-            selectedIndex = selectedIndex
+            selectedIndex = selectedIndex,
+            iconDrawables = icons,
+            fallbackIconRes = R.drawable.apps_24,
+            compact = false
         ) { which ->
             appFilter = values.getOrNull(which)
             prefs.edit {
@@ -336,38 +425,34 @@ class BlockedInboxActivity : AppCompatActivity() {
     }
 
     /**
-     * Custom single-choice dialog using round radio buttons.
-     * This avoids framework list-choice indicators that can keep OEM/theme green even in CUSTOM accent mode.
+     * Shared Switchly card-choice dialog.
+     * No radios/checkmarks; selected row uses only accent border/background.
      */
     private fun showRadioSingleChoiceDialog(
         title: String,
         entries: List<String>,
         selectedIndex: Int,
+        icons: List<Int?>? = null,
+        iconDrawables: List<Drawable?>? = null,
+        fallbackIconRes: Int? = null,
+        compact: Boolean = false,
         onPicked: (Int) -> Unit
     ) {
-        val content = layoutInflater.inflate(R.layout.dialog_single_select_list, null)
-        val rv = content.findViewById<RecyclerView>(R.id.recycler)
-        rv.layoutManager = LinearLayoutManager(this)
-
-        lateinit var dialog: AlertDialog
-        val adapter = RadioSingleChoiceAdapter(
-            entries = entries,
-            selectedIndex = selectedIndex,
-            onPick = { idx ->
-                onPicked(idx)
-                dialog.dismiss()
-            }
-        )
-        rv.adapter = adapter
-
-        dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setView(content)
-            .setNegativeButton(R.string.cancel, null)
-            .create()
-
-        dialog.setOnShowListener { runCatching { CustomAccentApplier.applyToDialog(dialog) } }
-        dialog.show()
+        showSwitchlyOptionDialog(
+            title = title,
+            options = entries.mapIndexed { index, label ->
+                SwitchlyDialogOption(
+                    title = label,
+                    iconRes = iconDrawables?.getOrNull(index)?.let { null } ?: icons?.getOrNull(index) ?: fallbackIconRes,
+                    iconDrawable = iconDrawables?.getOrNull(index),
+                    selected = index == selectedIndex
+                )
+            },
+            compact = compact,
+            showCancelButton = false
+        ) { which ->
+            onPicked(which)
+        }
     }
 
     private fun showDeleteDialog() {
@@ -387,19 +472,24 @@ class BlockedInboxActivity : AppCompatActivity() {
 
         val checked = BooleanArray(labels.size) { false }
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.blocked_inbox_delete_title))
-            .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
-                checked[which] = isChecked
-            }
-            .setPositiveButton(getString(R.string.delete)) { _, _ ->
-                val toDelete = visibleItems.filterIndexed { idx, _ -> checked.getOrNull(idx) == true }
-                toDelete.forEach { BlockedInboxStore.remove(this, it) }
-                BlockedNotificationsWidgetProvider.refreshAll(this)
-                load()
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .showAccented()
+        showSwitchlyMultiChoiceDialog(
+            title = getString(R.string.blocked_inbox_delete_title),
+            options = visibleItems.mapIndexed { index, e ->
+                SwitchlyDialogOption(
+                    title = labels[index],
+                    iconDrawable = appIcon(e.pkg),
+                    destructive = true
+                )
+            },
+            checked = checked,
+            positiveTextRes = R.string.delete,
+            compact = true
+        ) { result ->
+            val toDelete = visibleItems.filterIndexed { idx, _ -> result.getOrNull(idx) == true }
+            toDelete.forEach { BlockedInboxStore.remove(this, it) }
+            BlockedNotificationsWidgetProvider.refreshAll(this)
+            load()
+        }
     }
 
     private fun confirmDeleteSelected() {
@@ -410,7 +500,7 @@ class BlockedInboxActivity : AppCompatActivity() {
 
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.blocked_inbox_delete_title))
-            .setMessage(resources.getQuantityString(R.plurals.blocked_inbox_delete_selected_confirm_fmt, selectedKeys.size, selectedKeys.size))
+            .setMessage(resources.getQuantityString(R.plurals.blocked_inbox_delete_selected_confirm_fmt, selectedKeys.size, selectedKeys.size) + "\n\n" + getString(R.string.destructive_cannot_be_undone))
             .setPositiveButton(getString(R.string.delete)) { _, _ ->
                 val toDelete = visibleItems.filter { selectedKeys.contains(eventKey(it)) }
                 toDelete.forEach { BlockedInboxStore.remove(this, it) }
@@ -419,7 +509,7 @@ class BlockedInboxActivity : AppCompatActivity() {
                 load()
             }
             .setNegativeButton(getString(R.string.cancel)) { _, _ -> }
-            .showAccented()
+            .showDestructiveAccented()
     }
 
     private fun eventKey(e: BlockedNotificationEvent): String {
@@ -433,6 +523,13 @@ class BlockedInboxActivity : AppCompatActivity() {
             val label = packageManager.getApplicationLabel(ai)?.toString().orEmpty().trim()
             if (label.isNotBlank()) label else pkg
         }.getOrElse { pkg }
+    }
+
+    private fun appIcon(pkg: String): Drawable? {
+        return runCatching {
+            val ai = packageManager.getApplicationInfo(pkg, 0)
+            packageManager.getApplicationIcon(ai)
+        }.getOrNull()
     }
 
     private class InboxAdapter(
@@ -487,8 +584,18 @@ class BlockedInboxActivity : AppCompatActivity() {
             }
 
             val selecting = isSelectionMode()
+            val selected = selecting && isSelected(e)
             holder.checkbox.visibility = if (selecting) View.VISIBLE else View.GONE
-            holder.checkbox.isChecked = selecting && isSelected(e)
+            holder.checkbox.isChecked = selected
+            (holder.itemView as? MaterialCardView)?.let { card ->
+                val accent = AccentColor.getAccentColorInt(holder.itemView.context)
+                card.strokeWidth = if (selected) (2 * holder.itemView.resources.displayMetrics.density).toInt().coerceAtLeast(1) else 0
+                card.strokeColor = if (selected) accent else Color.TRANSPARENT
+                card.setCardBackgroundColor(
+                    if (selected) ColorUtils.setAlphaComponent(accent, 0x14)
+                    else MaterialColors.getColor(holder.itemView, com.google.android.material.R.attr.colorSurface)
+                )
+            }
 
             holder.itemView.setOnClickListener { onRowClick(e) }
             holder.itemView.setOnLongClickListener { onRowLongPress(e) }

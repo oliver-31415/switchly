@@ -43,8 +43,8 @@
     <string name="settings_info_summary">App-, Geräte- und Entwicklerdetails</string>
     <string name="pref_permissions_title">Berechtigungen</string>
     <string name="pref_permissions_summary">Prüfe und verwalte die Systemberechtigungen, die Switchly benötigt.</string>
-    <string name="pref_faq_title">FAQ &amp; Tipps</string>
-    <string name="pref_faq_summary">Antworten auf häufige Fragen und hilfreiche Informationen</string>
+    <string name="pref_faq_title">Hilfe-Center</string>
+    <string name="pref_faq_summary">Guides, FAQ-Gruppen und gerätespezifische Fehlersuche</string>
 
     <!-- ====================================================== -->
     <!-- Reset app data -->

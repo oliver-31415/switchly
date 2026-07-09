@@ -207,6 +207,46 @@
                 android:text="@string/limits_quick_edit_hint"
                 android:textColor="?attr/colorOnSurface" />
 
+            <LinearLayout
+                android:id="@+id/sessionLimitContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/sessionLimitLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/session_limit_current_label"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:alpha="0.88"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/sessionLimitSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text=""
+                    android:textSize="12sp"
+                    android:alpha="0.78"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <ProgressBar
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:id="@+id/sessionLimitProgress"
+                    android:layout_width="match_parent"
+                    android:layout_height="5dp"
+                    android:layout_marginTop="5dp"
+                    android:max="100"
+                    android:progress="0" />
+            </LinearLayout>
+
             <!-- Range selector -->
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleRange"

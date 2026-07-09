@@ -69,7 +69,7 @@ class ScannerWidgetProvider : AppWidgetProvider() {
             val options = manager.getAppWidgetOptions(appWidgetId)
             val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
-            val showExpandedRow = minWidth >= 300 || minHeight >= 130
+            val showExpandedRow = minWidth >= 260 && minHeight >= 190
 
             return RemoteViews(context.packageName, R.layout.widget_scanner).apply {
                 setImageViewBitmap(R.id.widgetOpenAppIcon, QuickActionIconFactory.createWidgetBitmap(context, R.drawable.apps_24))

@@ -7,6 +7,14 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 package at.saltyy.switchly.feature.about
@@ -82,6 +90,8 @@ class AdvancedModeActivity : TilesInfoActivity() {
             Tile(
                 title = getString(R.string.advanced_mode_tile_status),
                 subtitle = statusSubtitle,
+                sectionTitle = getString(R.string.about_section_admin_status),
+                iconRes = R.drawable.security_24,
                 subtitleColorRes = if (managedActive) R.color.accent_default_green else android.R.color.holo_red_dark,
                 subtitleAlpha = 1f,
                 onClick = { openAdminScreen() },
@@ -90,21 +100,29 @@ class AdvancedModeActivity : TilesInfoActivity() {
             Tile(
                 title = getString(R.string.advanced_mode_tile_constraints),
                 subtitle = getString(R.string.advanced_mode_constraints_body),
+                sectionTitle = getString(R.string.about_section_admin_status),
+                iconRes = R.drawable.lock_24,
                 copyValue = getString(R.string.advanced_mode_constraints_body)
             ),
             Tile(
                 title = getString(R.string.advanced_mode_tile_summary),
                 subtitle = summary,
+                sectionTitle = getString(R.string.about_section_documentation),
+                iconRes = R.drawable.info_24,
                 copyValue = summary
             ),
             Tile(
                 title = getString(R.string.advanced_mode_tile_recommendation),
                 subtitle = recommendation,
+                sectionTitle = getString(R.string.about_section_documentation),
+                iconRes = R.drawable.help_24,
                 copyValue = recommendation
             ),
             Tile(
                 title = getString(R.string.advanced_mode_tile_receiver),
                 subtitle = adminFlatComponent,
+                sectionTitle = getString(R.string.about_section_adb_tools),
+                iconRes = R.drawable.account_box_24,
                 copyValue = adminFlatComponent,
                 showCopyButton = true,
                 copiedToast = getString(R.string.advanced_mode_component_copied)
@@ -112,6 +130,8 @@ class AdvancedModeActivity : TilesInfoActivity() {
             Tile(
                 title = getString(R.string.advanced_mode_tile_device_owner),
                 subtitle = deviceOwnerCmd,
+                sectionTitle = getString(R.string.about_section_adb_tools),
+                iconRes = R.drawable.security_24,
                 copyValue = deviceOwnerCmd,
                 showCopyButton = true,
                 copiedToast = getString(R.string.advanced_mode_command_copied)
@@ -119,6 +139,8 @@ class AdvancedModeActivity : TilesInfoActivity() {
             Tile(
                 title = getString(R.string.advanced_mode_tile_profile_owner),
                 subtitle = profileOwnerCmd,
+                sectionTitle = getString(R.string.about_section_adb_tools),
+                iconRes = R.drawable.switch_account_24,
                 copyValue = profileOwnerCmd,
                 showCopyButton = true,
                 copiedToast = getString(R.string.advanced_mode_command_copied)
@@ -126,6 +148,8 @@ class AdvancedModeActivity : TilesInfoActivity() {
             Tile(
                 title = getString(R.string.advanced_mode_tile_remove_admin),
                 subtitle = removeAdminCmd,
+                sectionTitle = getString(R.string.about_section_adb_tools),
+                iconRes = R.drawable.delete_24,
                 copyValue = removeAdminCmd,
                 showCopyButton = true,
                 copiedToast = getString(R.string.advanced_mode_command_copied)
@@ -133,6 +157,8 @@ class AdvancedModeActivity : TilesInfoActivity() {
             Tile(
                 title = getString(R.string.advanced_mode_tile_check_state),
                 subtitle = dumpsysCmd,
+                sectionTitle = getString(R.string.about_section_adb_tools),
+                iconRes = R.drawable.tune_24,
                 copyValue = dumpsysCmd,
                 showCopyButton = true,
                 copiedToast = getString(R.string.advanced_mode_command_copied)
@@ -140,6 +166,8 @@ class AdvancedModeActivity : TilesInfoActivity() {
             Tile(
                 title = getString(R.string.advanced_mode_tile_docs),
                 subtitle = getString(R.string.advanced_mode_docs_body),
+                sectionTitle = getString(R.string.about_section_documentation),
+                iconRes = R.drawable.language_24,
                 onClick = { openUrl(getString(R.string.advanced_mode_docs_url)) },
                 copyValue = getString(R.string.advanced_mode_docs_url),
                 showCopyButton = true,

@@ -39,14 +39,17 @@ object FileBackupRuntime {
     private const val FIELD_SCHEMA = "schema"
     private const val SCHEMA = "switchly_backup_v1"
 
-    fun writeLocalBackupToUri(ctx: Context, uri: Uri): Result<Unit> {
+    fun writeLocalBackupToUri(ctx: Context, uri: Uri): Result<Unit> =
+        writeLocalBackupToUri(ctx, uri, BackupSelection.full())
+
+    fun writeLocalBackupToUri(ctx: Context, uri: Uri, selection: BackupSelection): Result<Unit> {
         return runCatching {
             val root = JSONObject()
                 .put(FIELD_SCHEMA, SCHEMA)
                 .put(FIELD_EXPORTED_AT, System.currentTimeMillis())
                 .put(FIELD_APP_VERSION_NAME, BuildConfig.VERSION_NAME)
                 .put(FIELD_APP_VERSION_CODE, BuildConfig.VERSION_CODE)
-                .put(FIELD_PAYLOAD, toJsonValue(CloudSyncRuntime.createLocalBackupPayload(ctx)))
+                .put(FIELD_PAYLOAD, toJsonValue(CloudSyncRuntime.createLocalBackupPayload(ctx, selection)))
 
             ctx.contentResolver.openOutputStream(uri, "wt")?.use { stream ->
                 OutputStreamWriter(stream, Charsets.UTF_8).use { writer ->

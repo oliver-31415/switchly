@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_info"
+        android:title="@string/manage_barcodes_info_title"
+        android:icon="@drawable/info_24"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_cancel_select"
         android:title="@string/cancel"
         android:icon="@drawable/close_24"

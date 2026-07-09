@@ -5,53 +5,53 @@
     <!-- Barcode scanner -->
     <!-- ====================================================== -->
     <string name="barcode_scan_title">Scan barcode</string>
+    <string name="barcode_scan_option_summary">Open the camera and scan a saved barcode action.</string>
     <string name="permission_barcode_camera_required">Camera permission is required to scan barcodes.</string>
     <string name="invalid_barcode">Unknown barcode</string>
     <string name="barcode_camera_unavailable">No camera is available for barcode scanning on this device.</string>
 
     <!-- ====================================================== -->
-    <!-- Barcode management overview -->
+    <!-- Barcode management -->
     <!-- ====================================================== -->
+    <string name="barcode_manage_option_summary">Create, edit, test and delete barcode actions.</string>
     <string name="manage_barcodes_title">Manage barcodes</string>
-    <string name="manage_barcodes_setup_title">Map physical codes to Switchly actions</string>
-    <string name="manage_barcodes_setup_body">Add a barcode value, then assign the Switchly action it should trigger. This is useful for printed barcodes, product packaging, or strict managed-code setups.</string>
-    <string name="manage_barcodes_empty">No managed codes yet.</string>
-
-    <!-- ====================================================== -->
-    <!-- Add/edit barcode -->
-    <!-- ====================================================== -->
     <string name="manage_barcodes_add_title">Add barcode</string>
     <string name="manage_barcodes_edit_title">Edit barcode</string>
     <string name="manage_barcodes_add_scan_barcode">Add barcode (scan)</string>
     <string name="manage_barcodes_add_manual">Add barcode (manual)</string>
     <string name="manage_barcodes_kind_barcode">Barcode</string>
     <string name="manage_barcodes_raw_label">Scanned value</string>
-    <string name="manage_barcodes_name_label">Name (optional)</string>
-    <string name="manage_barcodes_note_label">Notes (optional)</string>
+    <string name="manage_barcodes_name_label">Name</string>
+    <string name="manage_barcodes_note_label">Note</string>
     <string name="manage_barcodes_profile_universal">Universal</string>
-    <string name="manage_barcodes_action_summary_fmt">%1$s - Action: %2$s</string>
 
     <!-- ====================================================== -->
-    <!-- Barcode limits -->
+    <!-- Barcode actions and limits -->
     <!-- ====================================================== -->
+    <string name="manage_barcodes_action_summary_fmt">%1$s - Action: %2$s</string>
     <string name="manage_barcodes_limit_daily_summary">Max %1$d/day</string>
     <string name="manage_barcodes_limit_cooldown_summary">Cooldown %1$d min</string>
     <string name="manage_barcodes_limit_daily_toast">Daily limit reached (%1$d).</string>
     <string name="manage_barcodes_limit_cooldown_toast">Try again in %1$d min.</string>
+    <string name="manage_barcodes_daily_limit_label">Daily uses</string>
+    <string name="manage_barcodes_cooldown_label">Cooldown (min)</string>
+    <string name="manage_barcodes_action_section_title">Action</string>
+    <string name="manage_barcodes_limits_section_title">Limits</string>
+    <string name="manage_barcodes_daily_limit_helper">Leave empty for unlimited use.</string>
+    <string name="manage_barcodes_cooldown_helper">Leave empty for no cooldown.</string>
 
     <!-- ====================================================== -->
-    <!-- Delete barcode -->
+    <!-- Barcode delete and empty states -->
     <!-- ====================================================== -->
     <string name="manage_barcodes_delete_selected_title">Delete barcodes</string>
     <plurals name="manage_barcodes_delete_selected_confirm_fmt">
         <item quantity="one">Delete %d barcode?</item>
         <item quantity="other">Delete %d barcodes?</item>
     </plurals>
-
-    <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
-    <!-- ====================================================== -->
-    <string name="manage_barcodes_daily_limit_label">Daily limit (optional)</string>
-    <string name="manage_barcodes_cooldown_label">Cooldown in minutes (optional)</string>
+    <string name="manage_barcodes_delete_single_title">Delete barcode</string>
+    <string name="manage_barcodes_delete_single_message">Delete this barcode?\n\nThis cannot be undone.</string>
+    <string name="manage_barcodes_empty_title">No barcodes yet</string>
+    <string name="manage_barcodes_empty_body">Tap + to add your first barcode action.</string>
+    <string name="empty_action_add_first_barcode">Add first barcode</string>
 
 </resources>

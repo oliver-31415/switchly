@@ -2,18 +2,47 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Picker basics -->
+    <!-- List basics -->
     <!-- ====================================================== -->
-    <string name="blocked_list_title">Blocked apps</string>
+    <string name="blocked_list_title">App list</string>
     <string name="blocked_app_default">App blocked</string>
-    <string name="blocked_message">You can’t use this app while Switchly is active.</string>
     <string name="no_blocked_apps">No blocked apps</string>
-    <string name="pick_apps">Pick apps</string>
+    <string name="no_allowed_apps">No allowed apps</string>
+    <string name="blocked_message">You can’t use this app while Switchly is active.</string>
     <string name="search_apps">Search apps</string>
 
     <!-- ====================================================== -->
-    <!-- Selection actions -->
+    <!-- Profile rule mode -->
     <!-- ====================================================== -->
+    <string name="profile_rule_mode_title">Profile behavior</string>
+    <string name="profile_rule_mode_block">Block selected</string>
+    <string name="profile_rule_mode_allow">Allow selected</string>
+    <string name="profile_rule_mode_block_summary">Selected apps and websites are blocked while this profile is active.</string>
+    <string name="profile_rule_mode_allow_summary">Only selected apps and websites from this picker list are allowed while this profile is active. Apps not shown here are treated as allowed.</string>
+    <string name="profile_name_mode_format">%1$s · %2$s</string>
+
+    <!-- ====================================================== -->
+    <!-- Picker titles and descriptions -->
+    <!-- ====================================================== -->
+    <string name="pick_apps">Pick apps</string>
+    <string name="pick_allowed_apps">Allowed app list</string>
+    <string name="pick_blocked_apps">Blocked app list</string>
+    <string name="pick_things_to_block">Pick apps to block</string>
+    <string name="pick_things_to_allow">Pick apps to allow</string>
+    <string name="app_picker_header_editing_profile">Editing: %1$s</string>
+    <string name="app_picker_blocked_list_description">Choose the apps blocked in this profile.</string>
+    <string name="app_picker_allowed_list_description">Choose the apps that stay available in this profile.</string>
+    <string name="pick_websites_domains">Website/domain rules</string>
+    <string name="pick_in_app_sections">In-app sections</string>
+
+    <!-- ====================================================== -->
+    <!-- Selection counts and bulk actions -->
+    <!-- ====================================================== -->
+    <string name="app_picker_selected_count_zero">0 selected</string>
+    <plurals name="app_picker_selected_count_fmt">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
     <string name="app_picker_select_all">Select all</string>
     <string name="app_picker_clear_all">Clear all</string>
     <string name="app_picker_clear_unavailable">Clear unavailable</string>
@@ -21,9 +50,13 @@
         <item quantity="one">Skipped %d safety-sensitive app.</item>
         <item quantity="other">Skipped %d safety-sensitive apps.</item>
     </plurals>
+    <string name="app_picker_select_all_allow">Allow all</string>
+    <string name="app_picker_clear_all_allow">Clear allowed</string>
+    <string name="continue_label">Continue</string>
+    <string name="close">Close</string>
 
     <!-- ====================================================== -->
-    <!-- Protected app chips and hints -->
+    <!-- Protected chips and generic hints -->
     <!-- ====================================================== -->
     <string name="app_picker_protected_chip">Protected</string>
     <string name="app_picker_caution_chip">Caution</string>
@@ -33,21 +66,22 @@
     <string name="app_picker_protected_caution_title">This app is safety-sensitive</string>
 
     <!-- ====================================================== -->
-    <!-- Sensitive app warnings -->
+    <!-- Safety-sensitive app warnings -->
     <!-- ====================================================== -->
+    <string name="app_picker_play_store_hint">Play Store is safety-sensitive because it can install or update apps.</string>
+    <string name="app_picker_play_store_warning_title">Block Play Store anyway?</string>
+    <string name="app_picker_play_store_warning_message">Blocking Play Store can make app installs, updates, and recovery harder.</string>
     <string name="app_picker_wallet_hint">Wallet apps can interfere with gestures or quick access on some devices.</string>
-    <string name="app_picker_dialer_hint">Blocking your current phone app can make calls and emergency access harder.</string>
     <string name="app_picker_wallet_warning_title">Block this wallet app anyway?</string>
     <string name="app_picker_wallet_warning_message">Wallet apps can interfere with gestures or quick access on some devices. Only block this app if you’re sure you can still use your phone normally.</string>
     <string name="app_picker_wallet_warning_message_samsung">Samsung Wallet can be opened from the bottom-edge Quick access gesture on Galaxy devices. Blocking it can interfere with normal Home screen use. Only block it if you’re sure you still want that behavior.</string>
+    <string name="app_picker_dialer_hint">Blocking your current phone app can make calls and emergency access harder.</string>
     <string name="app_picker_dialer_warning_title">Block this phone app anyway?</string>
     <string name="app_picker_dialer_warning_message">Blocking your current phone app can make regular calls and emergency access harder.</string>
     <string name="app_picker_settings_hint">Blocking Settings can make troubleshooting and permission changes harder.</string>
     <string name="app_picker_settings_warning_title">Block Settings anyway?</string>
     <string name="app_picker_settings_warning_message">Blocking Settings can make troubleshooting and permission changes harder.</string>
-    <string name="app_picker_play_store_hint">Play Store is safety-sensitive because it can install or update apps.</string>
-    <string name="app_picker_play_store_warning_title">Block Play Store anyway?</string>
-    <string name="app_picker_play_store_warning_message">Blocking Play Store can make app installs, updates, and recovery harder.</string>
+    <string name="app_picker_block_settings_confirm">Block Settings</string>
     <string name="app_picker_installer_hint">Package installer is safety-sensitive because it installs or updates apps.</string>
     <string name="app_picker_installer_warning_title">Block package installer anyway?</string>
     <string name="app_picker_installer_warning_message">Blocking the package installer can make app installs, updates, and recovery harder.</string>
@@ -60,6 +94,10 @@
     <string name="app_picker_browser_hint">Browsers are often used for downloads, support, sign-in, and recovery steps.</string>
     <string name="app_picker_browser_warning_title">Block browser app anyway?</string>
     <string name="app_picker_browser_warning_message">Blocking a browser can make downloads, support, and recovery steps harder.</string>
+
+    <!-- ====================================================== -->
+    <!-- Settings lockout requirements -->
+    <!-- ====================================================== -->
     <string name="app_picker_settings_requirements_title">Emergency Unlock required</string>
     <string name="app_picker_settings_requirements_message">To block Settings, advanced protection must be enabled and Emergency Unlock with an Emergency PIN must already be configured.</string>
     <string name="app_picker_settings_second_warning_title">Are you absolutely sure?</string>
@@ -67,10 +105,8 @@
     <string name="app_picker_settings_temporarily_allowed">Settings temporarily allowed to prevent a lockout.</string>
 
     <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
+    <!-- Cleanup notices -->
     <!-- ====================================================== -->
-    <string name="continue_label">Continue</string>
-    <string name="close">Close</string>
     <plurals name="app_picker_removed_protected_notice">
         <item quantity="one">Removed %d protected app from this profile for device safety.</item>
         <item quantity="other">Removed %d protected apps from this profile for device safety.</item>
@@ -79,6 +115,36 @@
         <item quantity="one">%1$d unavailable app entry was removed. Tap Save to keep the cleanup.</item>
         <item quantity="other">%1$d unavailable app entries were removed. Tap Save to keep the cleanup.</item>
     </plurals>
-    <string name="app_picker_block_settings_confirm">Block Settings</string>
+
+    <!-- ====================================================== -->
+    <!-- App rules info and allow mode warnings -->
+    <!-- ====================================================== -->
+    <string name="app_rules_info_title">App rules</string>
+    <string name="app_rules_info_body">App rules:\n• Apps, website/domain rules, and in-app sections are managed per profile.\n• Use the app list below for whole-app blocking or allowing.\n• Use Website/domain rules for browser rules in the active profile.\n• Use In-app sections for supported installed apps like YouTube, Instagram, X, and Snapchat.\n\nBlock selected:\n• Selected apps and website rules are blocked while this profile is active.\n• Apps not selected here are allowed unless another limit blocks them.\n\nAllow selected:\n• Apps in this picker list are allowed only when selected.\n• Apps in this picker list that are not selected are blocked.\n• Apps not shown in the picker are treated as allowed because they cannot be selected here.\n\nAutomatically block newly installed apps:\n• Only available in Block selected mode.\n• When enabled, newly installed launchable apps are added to this profile automatically.\n• Select all also turns this on for future installs.</string>
+    <string name="allow_mode_empty_save_title">No allowed apps selected?</string>
+    <string name="allow_mode_empty_save_message">This profile is in Allow selected mode, but no apps are selected. Listed picker apps may be blocked, but apps not shown in the picker are treated as allowed.</string>
+    <string name="allow_mode_empty_save_confirm">Save anyway</string>
+
+    <!-- ====================================================== -->
+    <!-- Website and in-app shortcuts -->
+    <!-- ====================================================== -->
+    <string name="app_picker_open_website_rules">Website rules</string>
+    <string name="app_picker_open_website_rules_for">Website rules for %1$s</string>
+    <string name="app_picker_open_in_app_rules">In-app rules</string>
+    <string name="app_picker_open_in_app_rules_for">In-app rules for %1$s</string>
+    <string name="app_picker_in_app_rules_chip">In-app</string>
+    <string name="app_picker_in_app_rules_pinned_hint">Selected because in-app rules are enabled. Remove the in-app rules first to turn this app off.</string>
+    <string name="app_picker_in_app_rules_pinned_toast">Remove the in-app rules first to turn this app off.</string>
+
+    <!-- ====================================================== -->
+    <!-- Picker row action menu -->
+    <!-- ====================================================== -->
+    <string name="app_picker_row_actions">App actions</string>
+    <string name="app_picker_row_action_app_limits">App limits</string>
+    <string name="app_picker_row_action_app_limits_summary">Set time or open limits for this app.</string>
+    <string name="app_picker_row_action_website_rules">Website rules</string>
+    <string name="app_picker_row_action_website_rules_summary">Manage browser website/domain rules for this profile.</string>
+    <string name="app_picker_row_action_in_app_rules">In-app rules</string>
+    <string name="app_picker_row_action_in_app_rules_summary">Manage supported in-app sections for this profile.</string>
 
 </resources>

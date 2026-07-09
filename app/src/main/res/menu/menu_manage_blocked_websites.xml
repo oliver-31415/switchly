@@ -5,7 +5,7 @@
     <item
         android:id="@+id/action_browser_support"
         android:icon="@drawable/info_24"
-        android:title="@string/website_supported_browsers_title"
+        android:title="@string/website_rules_info_title"
         app:showAsAction="ifRoom" />
 
     <item

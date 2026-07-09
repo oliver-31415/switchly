@@ -290,30 +290,40 @@ object CloudSyncRuntime {
         }
     }
 
-    fun createLocalBackupPayload(ctx: Context): Map<String, Any?> {
+    fun createLocalBackupPayload(ctx: Context): Map<String, Any?> =
+        createLocalBackupPayload(ctx, BackupSelection.full())
+
+    fun createLocalBackupPayload(ctx: Context, selection: BackupSelection): Map<String, Any?> {
         val now = System.currentTimeMillis()
 
         val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx).all
         val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE).all
         val schedulesPrefs = ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE).all
 
-        val all = normalizePrefsMap(defaultPrefs)
-        val internalAllRaw = normalizePrefsMap(internalPrefs)
-        val schedulesAll = normalizePrefsMap(schedulesPrefs)
+        val all = BackupCategoryFilter.filterDefaultPrefs(normalizePrefsMap(defaultPrefs), selection)
+        val internalAllRaw = BackupCategoryFilter.filterInternalPrefs(normalizePrefsMap(internalPrefs), selection)
+        val schedulesAll = BackupCategoryFilter.filterSchedulesPrefs(normalizePrefsMap(schedulesPrefs), selection)
 
-        val (internalAll, statsMap) = extractStatsFromInternalPrefs(internalAllRaw)
+        val (internalAll, statsMapRaw) = extractStatsFromInternalPrefs(internalAllRaw)
+        val statsMap = BackupCategoryFilter.filterStats(statsMapRaw, selection)
 
         return mapOf(
             FIELD_PREFS to all,
             FIELD_SWITCHLY_PREFS to internalAll,
             FIELD_STATS to statsMap,
             FIELD_SCHEDULES_PREFS to schedulesAll,
+            BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES to selection.categoryIds.toList().sorted(),
+            BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP to !selection.isFull,
             FIELD_CREATED_AT to now
         )
     }
 
     @JvmStatic
     fun pushLocalState(ctx: Context, onDone: (Boolean, String?) -> Unit) {
+        pushLocalState(ctx, BackupSelection.full(), onDone)
+    }
+
+    fun pushLocalState(ctx: Context, selection: BackupSelection, onDone: (Boolean, String?) -> Unit) {
         val uid = Auth.uid()
         if (uid == null) {
             onDone(false, ctx.getString(R.string.cloud_error_not_logged_in))
@@ -321,7 +331,7 @@ object CloudSyncRuntime {
         }
 
         try {
-            val data = createLocalBackupPayload(ctx)
+            val data = createLocalBackupPayload(ctx, selection)
             val db = FirebaseFirestore.getInstance()
             val userRef = db.collection(COLLECTION).document(uid)
 
@@ -458,16 +468,17 @@ object CloudSyncRuntime {
         val internalMap = payload[FIELD_SWITCHLY_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
         val schedulesMap = payload[FIELD_SCHEDULES_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
         val stats = payload[FIELD_STATS]
+        val partialBackup = BackupCategoryFilter.isPartialBackup(payload)
 
-        applyPrefsMapToLocal(ctx, prefsMap, isInternal = false, isSchedules = false)
-        applyPrefsMapToLocal(ctx, internalMap, isInternal = true, isSchedules = false)
-        applyPrefsMapToLocal(ctx, schedulesMap, isInternal = false, isSchedules = true)
+        applyPrefsMapToLocal(ctx, prefsMap, isInternal = false, isSchedules = false, clearBeforeApply = !partialBackup)
+        applyPrefsMapToLocal(ctx, internalMap, isInternal = true, isSchedules = false, clearBeforeApply = !partialBackup)
+        applyPrefsMapToLocal(ctx, schedulesMap, isInternal = false, isSchedules = true, clearBeforeApply = !partialBackup)
 
         // Expand compact stats payload back into internal prefs keys
         applyStatsToInternalPrefs(ctx, stats)
 
         // Safety: restored schedules should not immediately fire
-        forceDisableAllSchedules(ctx)
+        if (schedulesMap.isNotEmpty()) forceDisableAllSchedules(ctx)
 
         // Safety: after restore, keep Switchly base state OFF so users don't get locked out
         forceDisableSwitchlyAfterRestore(ctx)
@@ -486,7 +497,9 @@ object CloudSyncRuntime {
             FIELD_PREFS to snapshot.get(FIELD_PREFS),
             FIELD_SWITCHLY_PREFS to snapshot.get(FIELD_SWITCHLY_PREFS),
             FIELD_SCHEDULES_PREFS to snapshot.get(FIELD_SCHEDULES_PREFS),
-            FIELD_STATS to snapshot.get(FIELD_STATS)
+            FIELD_STATS to snapshot.get(FIELD_STATS),
+            BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES to snapshot.get(BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES),
+            BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP to snapshot.get(BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP)
         )
         applyBackupPayload(ctx, payload)
     }
@@ -496,7 +509,8 @@ object CloudSyncRuntime {
         ctx: Context,
         map: Map<*, *>,
         isInternal: Boolean = false,
-        isSchedules: Boolean = false
+        isSchedules: Boolean = false,
+        clearBeforeApply: Boolean = true
     ) {
         val prefs = when {
             isSchedules -> ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE)
@@ -512,7 +526,7 @@ object CloudSyncRuntime {
         }
 
         prefs.edit(commit = true) {
-            clear()
+            if (clearBeforeApply) clear()
 
             fun putSupportedValue(key: String, value: Any?) {
                 when (value) {

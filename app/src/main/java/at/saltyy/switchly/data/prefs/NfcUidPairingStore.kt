@@ -26,7 +26,6 @@ import at.saltyy.switchly.nfc.NfcTagUid
 /**
  * Stores paired NFC tag UIDs (serial numbers).
  * Supports multiple tags + optional user metadata (name, note) per tag.
- *
  * This store only reads/writes the canonical StringSet key.
  */
 object NfcUidPairingStore {

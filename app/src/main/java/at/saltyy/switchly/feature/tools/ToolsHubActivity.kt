@@ -20,8 +20,13 @@
 package at.saltyy.switchly.feature.tools
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
+import android.text.InputType
 import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -33,6 +38,7 @@ import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.EmergencyPinStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
 import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
@@ -40,16 +46,17 @@ import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
-import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.LockedUi
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
-import at.saltyy.switchly.util.SystemBarColorCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -84,8 +91,6 @@ class ToolsHubActivity : AppCompatActivity() {
     private fun setupToolbar() {
         EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar, bottomNav = bottomNav)
         EdgeToEdgeUtils.applyBottomNavGestureInset(bottomNav)
-        SystemBarColorCompat.setStatusBarColor(window, ContextCompat.getColor(this, android.R.color.black))
-        SystemBarColorCompat.setNavigationBarColor(window, ContextCompat.getColor(this, android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 
@@ -96,7 +101,7 @@ class ToolsHubActivity : AppCompatActivity() {
     }
 
     private fun tintToolIcons() {
-        val iconTint = AccentColor.getActiveColor(this)
+        val iconTint = ColorStateList.valueOf(AccentColor.getAccentColorInt(this))
 
         listOf(
             R.id.ivSchedulesIcon,
@@ -115,7 +120,11 @@ class ToolsHubActivity : AppCompatActivity() {
 
     private fun setupToolCardActions() {
         findViewById<View>(R.id.cardSchedules).setOnClickListener {
-            startActivity(Intent(this, SchedulesActivity::class.java))
+            if (!AutomationModeStore.isScheduleAllowed(this)) {
+                Toast.makeText(this, R.string.toast_manage_schedules_requires_enabled, Toast.LENGTH_LONG).show()
+            } else {
+                startActivity(Intent(this, SchedulesActivity::class.java))
+            }
         }
 
         findViewById<View>(R.id.cardProfiles).setOnClickListener {
@@ -145,11 +154,11 @@ class ToolsHubActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.cardPairedTags).setOnClickListener {
             val locked = EditingLockGuard.isLocked(this)
-            AppLogStore.append(this, "NFC", "Manage Paired Tags clicked from Tools locked=$locked")
-            if (locked) {
-                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
-            } else {
-                runCatching {
+            AppLogStore.append(this, "NFC", "Manage Paired Tags clicked from Tools locked=$locked nfcAllowed=${AutomationModeStore.isNfcAllowed(this)}")
+            when {
+                !AutomationModeStore.isNfcAllowed(this) -> Toast.makeText(this, R.string.toast_write_nfc_requires_enabled, Toast.LENGTH_LONG).show()
+                locked -> EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
+                else -> runCatching {
                     startActivity(Intent(this, ManagePairedTagsActivity::class.java))
                 }.onFailure { error ->
                     AppLogStore.append(this, "NFC", "Failed to open Manage Paired Tags from Tools", error)
@@ -171,7 +180,7 @@ class ToolsHubActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.cardInsights).setOnClickListener {
-            startActivity(ScreenTimeDashboardActivity.intent(this))
+            startActivity(Intent(this, ManageInsightsActivity::class.java))
         }
     }
 
@@ -223,8 +232,9 @@ class ToolsHubActivity : AppCompatActivity() {
         cardManageBarcodes.visibility = View.GONE
         cardBlockedNotifications.visibility = View.VISIBLE
 
+        applyLockedCardState(findViewById(R.id.cardSchedules), !AutomationModeStore.isScheduleAllowed(this))
         applyLockedCardState(cardProfiles, false)
-        applyLockedCardState(cardManageKeys, isNfcTagWritingLocked())
+        applyLockedCardState(cardManageKeys, false)
         applyLockedCardState(cardBlockedNotifications, isProtectionActivelyEnforced())
     }
 
@@ -237,6 +247,107 @@ class ToolsHubActivity : AppCompatActivity() {
 
     private fun isProtectionActivelyEnforced(): Boolean {
         return SwitchModeStore.isEnabled(this) && !EmergencyBypassStore.isActive(this)
+    }
+
+    private fun requestEmergencyPinBeforeStart() {
+        val storedPin = EmergencyPinStore.getPin(this)
+        if (storedPin.isNullOrBlank()) {
+            showSetEmergencyPinDialog { showEmergencyUnlockStartDialog() }
+        } else {
+            showEnterEmergencyPinDialog { showEmergencyUnlockStartDialog() }
+        }
+    }
+
+    private fun showSetEmergencyPinDialog(onSuccess: () -> Unit) {
+        val input = emergencyPinInput(getString(R.string.emergency_pin_choose_hint))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.emergency_pin_title))
+            .setMessage(getString(R.string.emergency_pin_message))
+            .setView(emergencyPinContainer(input))
+            .setPositiveButton(getString(R.string.ok), null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (pin.length < 4) {
+                    Toast.makeText(this, R.string.emergency_pin_too_short, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                EmergencyPinStore.setPin(this, pin)
+                Toast.makeText(this, R.string.emergency_pin_changed, Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                onSuccess()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showEnterEmergencyPinDialog(onSuccess: () -> Unit) {
+        val input = emergencyPinInput(getString(R.string.emergency_pin_enter_current_hint))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.emergency_pin_enter_current_title))
+            .setMessage(getString(R.string.emergency_pin_enter_current_message))
+            .setView(emergencyPinContainer(input))
+            .setPositiveButton(getString(R.string.ok), null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (!EmergencyPinStore.matchesPin(this, pin)) {
+                    Toast.makeText(this, R.string.emergency_pin_incorrect, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                dialog.dismiss()
+                onSuccess()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun emergencyPinInput(hintText: String): EditText {
+        return EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            hint = hintText
+            backgroundTintList = AccentColor.getActiveColor(this@ToolsHubActivity)
+        }
+    }
+
+    private fun emergencyPinContainer(input: EditText): FrameLayout {
+        return FrameLayout(this).apply {
+            val margin = (24 * resources.displayMetrics.density).toInt()
+            setPadding(margin, 0, margin, 0)
+            addView(
+                input,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+    }
+
+    private fun showEmergencyUnlockStartDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.pref_emergency_title))
+            .setMessage(getString(R.string.emergency_action_start_15))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                if (EmergencyBypassStore.enableIfAllowed(this, 15)) {
+                    AppLogStore.append(this, "Emergency", "Emergency mode started from Tools for 15m")
+                    SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
+                    Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
+                    BlockingRuntime.ensureRunning(this)
+                } else {
+                    Toast.makeText(this, getString(R.string.emergency_used_today), Toast.LENGTH_SHORT).show()
+                }
+            }
+            .showAccented()
     }
 
     private fun showEmergencyQuickSheet() {
@@ -298,21 +409,7 @@ class ToolsHubActivity : AppCompatActivity() {
                 BlockingRuntime.ensureRunning(this)
             }
         } else if (!hasUsedToday) {
-            AlertDialog.Builder(this)
-                .setTitle(getString(R.string.pref_emergency_title))
-                .setMessage(getString(R.string.emergency_action_start_15))
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok) { _, _ ->
-                    if (EmergencyBypassStore.enableIfAllowed(this, 15)) {
-                        AppLogStore.append(this, "Emergency", "Emergency mode started from Tools for 15m")
-                        SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
-                        Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
-                        BlockingRuntime.ensureRunning(this)
-                    } else {
-                        Toast.makeText(this, getString(R.string.emergency_used_today), Toast.LENGTH_SHORT).show()
-                    }
-                }
-                .showAccented()
+            requestEmergencyPinBeforeStart()
             return
         }
 
@@ -322,21 +419,25 @@ class ToolsHubActivity : AppCompatActivity() {
             else -> getString(R.string.pref_emergency_title)
         }
 
-        val builder = AlertDialog.Builder(this)
-            .setTitle(title)
-            .setNegativeButton(R.string.cancel, null)
-
         if (labels.isNotEmpty()) {
-            builder.setItems(labels.toTypedArray()) { _, which ->
+            showSwitchlyOptionDialog(
+                title = title,
+                options = labels.mapIndexed { index, label ->
+                    SwitchlyDialogOption(
+                        title = label,
+                        destructive = label == getString(R.string.emergency_action_end)
+                    )
+                }
+            ) { which ->
                 runCatching { actions[which].invoke() }
             }
+        } else {
+            AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(R.string.emergency_used_today)
+                .setNegativeButton(R.string.cancel, null)
+                .showAccented()
         }
-
-        if (!isActive && !isPaused && hasUsedToday) {
-            builder.setMessage(R.string.emergency_used_today)
-        }
-
-        builder.showAccented()
     }
 
     private fun isNfcLockedForProtectedEdits(): Boolean {

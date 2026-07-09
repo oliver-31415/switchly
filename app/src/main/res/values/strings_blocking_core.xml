@@ -6,5 +6,7 @@
     <!-- ====================================================== -->
     <string name="app_picker_auto_block_new_apps_title">Automatically block newly installed apps</string>
     <string name="app_picker_auto_block_new_apps_summary">When enabled, newly installed launchable apps are added to this profile automatically. Select all also turns this on for future installs.</string>
+    <string name="app_picker_auto_block_new_apps_info_title">Automatically block newly installed apps</string>
+    <string name="app_picker_auto_block_new_apps_info_body">When enabled, newly installed launchable apps are added to this profile automatically.\n\nSelect all also turns this on for future installs.</string>
 
 </resources>

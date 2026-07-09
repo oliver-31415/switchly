@@ -25,8 +25,18 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
 import at.saltyy.switchly.R
+import java.util.concurrent.Executors
 
 object QuickShortcutRegistrar {
+
+    private val executor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "SwitchlyShortcuts").apply { isDaemon = true }
+    }
+
+    fun refreshAsync(context: Context) {
+        val appContext = context.applicationContext
+        executor.execute { refresh(appContext) }
+    }
 
     fun refresh(context: Context) {
         runCatching {

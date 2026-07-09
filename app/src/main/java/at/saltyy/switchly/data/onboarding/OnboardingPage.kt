@@ -32,17 +32,23 @@ data class OnboardingPage(
     val actionLabel: String? = null,
     val action: ((Activity) -> Unit)? = null,
 
+    /** Optional rows rendered as small cards below the description. */
+    val detailRows: List<String> = emptyList(),
+
     /** Optional completion check (e.g. a permission) used to show a "Granted" state and gate required steps. */
     val completionCheck: ((Context) -> Boolean)? = null,
 
     /** Optional label used when [completionCheck] returns true. Defaults to "Granted". */
     val completedLabel: String? = null,
 
+    /** Keep the action button enabled even after [completionCheck] is true. Useful for setup steps users may want to adjust again. */
+    val keepActionEnabledWhenCompleted: Boolean = false,
+
     /** Optional message shown when the user tries to continue but the required step is incomplete. */
     val requiredMessage: String? = null
 ) {
     enum class Type {
-        STANDARD, USAGE_SUMMARY
+        STANDARD, PERMISSION_OVERVIEW, REVIEW
     }
     enum class Level {
         REQUIRED, RECOMMENDED, OPTIONAL, INFO

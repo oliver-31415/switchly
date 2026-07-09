@@ -56,7 +56,7 @@ object BlockingToggleKeys {
     const val KEY_ENABLE_REENTRY_IN_WRITE = "enable_reentry_in_write"
     const val KEY_ENABLE_EMERGENCY_IN_WRITE = "enable_emergency_in_write"
 
-    // NFC paired UID feature (gate UI + enforcement)
+    // NFC paired UID feature (UID-only/read-only tag UI + optional per-tag limits)
     const val KEY_ENABLE_PAIRED_UIDS = "enable_paired_uids"
     const val KEY_AUTO_PAIR_ON_WRITE = "auto_pair_on_write"
 
@@ -66,6 +66,8 @@ object BlockingToggleKeys {
 
     // lock Settings/control screens while protection is active
     const val KEY_LOCK_SWITCHLY_APP_ACCESS = "lock_switchly_app_access"
+
+    val IN_APP_RULE_KEYS: Set<String> by lazy { setOf(KEY_BLOCK_INAPP) + IN_APP_SURFACE_KEYS }
 
     private val IN_APP_SURFACE_KEYS = setOf(
         KEY_BLOCK_YT_SHORTS,

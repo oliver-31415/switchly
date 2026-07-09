@@ -29,7 +29,6 @@ import java.time.LocalDate
 
 /**
  * Limits temporary QR actions by scanned QR payload.
- *
  * NFC temporary limits can use a physical tag UID. 
  * QR codes do not have a UID, so the limiter uses a stable hash of the scanned Switchly URI instead.
  */
@@ -54,15 +53,8 @@ object QrTempActionLimiterStore {
 
     fun isLimitedTemporaryAction(rawUri: String): Boolean {
         val uri = runCatching { rawUri.trim().toUri() }.getOrNull() ?: return false
-        if (!uri.scheme.equals("switchly", ignoreCase = true)) return false
-        if (!NfcSchema.isKnownHost(uri.host)) return false
-
-        val action = when (uri.host?.lowercase()) {
-            NfcSchema.HOST_SWITCH -> uri.pathSegments.getOrNull(0)
-            NfcSchema.HOST_PROFILE -> uri.pathSegments.getOrNull(1)
-            else -> null
-        }?.trim()?.lowercase().orEmpty()
-
+        val command = NfcSchema.parseCommandUri(uri) ?: return false
+        val action = command.action.trim().lowercase()
         return action.startsWith("temp_disable") || action.startsWith("reentry")
     }
 

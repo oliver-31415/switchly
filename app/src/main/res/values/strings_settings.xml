@@ -43,8 +43,8 @@
     <string name="settings_info_summary">App, device and developer details</string>
     <string name="pref_permissions_title">Permissions</string>
     <string name="pref_permissions_summary">Check and manage the system permissions Switchly needs.</string>
-    <string name="pref_faq_title">FAQ &amp; Tips</string>
-    <string name="pref_faq_summary">Answers to common questions and helpful information</string>
+    <string name="pref_faq_title">Help Center</string>
+    <string name="pref_faq_summary">Guides, FAQ groups and device-specific troubleshooting</string>
 
     <!-- ====================================================== -->
     <!-- Reset app data -->

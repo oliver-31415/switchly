@@ -26,13 +26,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.ScanCodeStore
+import at.saltyy.switchly.nfc.InternalScanDispatchGuard
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import at.saltyy.switchly.nfc.NfcSchema
 import at.saltyy.switchly.ui.ThemeUtils
 
 /**
  * Public, browsable entry point for switchly:// QR links opened by external scanners.
- *
  * The actual action execution stays in NfcEntryActivity, but external scanners do not get the internal QR scanner extra. 
  * This small trampoline validates the URI, asks for an explicit user confirmation, then forwards it as a QR-sourced action.
  */
@@ -60,10 +61,13 @@ class ExternalQrActionActivity : AppCompatActivity() {
             .setMessage(R.string.external_qr_confirm_message)
             .setNegativeButton(android.R.string.cancel) { _, _ -> finish() }
             .setPositiveButton(R.string.external_qr_confirm_action) { _, _ ->
+                val source = ScanCodeStore.Kind.QR.raw
+                val token = InternalScanDispatchGuard.issue(this, source)
                 startActivity(
                     Intent(Intent.ACTION_VIEW, uri)
                         .setClass(this, NfcEntryActivity::class.java)
-                        .putExtra(QrScanActivity.EXTRA_SCAN_SOURCE, "qr")
+                        .putExtra(QrScanActivity.EXTRA_SCAN_SOURCE, source)
+                        .putExtra(InternalScanDispatchGuard.EXTRA_TOKEN, token)
                 )
                 finish()
             }

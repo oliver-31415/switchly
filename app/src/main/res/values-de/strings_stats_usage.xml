@@ -11,35 +11,53 @@
     <string name="set_daily_attempt_limit_title">Tägliches Öffnen-Limit: %1$s</string>
     <string name="attempt_limit_label">Öffnen-Limit: %1$d/Tag</string>
     <plurals name="daily_attempt_limit_value_format">
-            <item quantity="one">%1$d Öffnung/Tag</item>
-            <item quantity="other">%1$d Öffnungen/Tag</item>
-        </plurals>
+        <item quantity="one">%1$d Öffnung/Tag</item>
+        <item quantity="other">%1$d Öffnungen/Tag</item>
+    </plurals>
     <string name="opens_hint">Anzahl Öffnungen eingeben (0–200)</string>
     <string name="minutes_hint_day">Zeit eingeben</string>
     <string name="limit_type_hint">Limit-Typen</string>
     <plurals name="opens_format">
-            <item quantity="one">%1$d Öffnung</item>
-            <item quantity="other">%1$d Öffnungen</item>
-        </plurals>
-    <string name="set_session_limit_title">Sitzungslimit für %1$s festlegen</string>
-    <string name="session_limit_label">Sitzungslimit: %1$d Min</string>
+        <item quantity="one">%1$d Öffnung</item>
+        <item quantity="other">%1$d Öffnungen</item>
+    </plurals>
     <string name="custom_minutes">Benutzerdefinierte Zeit…</string>
     <string name="custom_value">Benutzerdefiniert…</string>
     <string name="custom_minutes_title">Benutzerdefinierte Minuten</string>
     <string name="minutes_hint">Zeit eingeben</string>
     <plurals name="minutes_format">
-            <item quantity="one">%1$d Minute</item>
-            <item quantity="other">%1$d Minuten</item>
-        </plurals>
+        <item quantity="one">%1$d Minute</item>
+        <item quantity="other">%1$d Minuten</item>
+    </plurals>
     <string name="no_limit">Kein Limit</string>
     <string name="limit_set">Limit festgelegt</string>
     <string name="select_profile_first">Bitte wähle zuerst ein Profil aus.</string>
     <string name="edit_limits">Limits bearbeiten</string>
     <string name="limits_quick_edit_hint">Tippe auf das Tune-Icon, um Limits zu bearbeiten.</string>
     <string name="limit_time_action">Zeit</string>
+    <string name="limit_time_action_summary">Erlaubte Minuten begrenzen, mit Reset pro Tag oder aktiver Sitzung.</string>
     <string name="limit_attempts_action">Öffnungen</string>
+    <string name="limit_attempts_action_summary">Begrenzen, wie oft diese App heute geöffnet werden darf.</string>
+    <string name="limit_always_block_action_summary">Diese Website im aktuellen Profil immer blockieren.</string>
     <string name="no_profile_selected">Bitte wähle ein Profil.</string>
     <string name="profile_active_fmt">Profil: %1$s</string>
+
+    <!-- ====================================================== -->
+    <!-- Session limits -->
+    <!-- ====================================================== -->
+    <string name="set_session_limit_title">Sitzungslimit für %1$s festlegen</string>
+    <string name="session_limit_label">Sitzungslimit: %1$d Min</string>
+    <string name="limit_reset_mode_hint">Reset-Modus</string>
+    <string name="limit_reset_per_day">Pro Tag</string>
+    <string name="limit_reset_per_session">Pro aktive Sitzung</string>
+    <string name="session_limit_current_label">Aktuelle Sitzung</string>
+    <string name="session_limit_usage_summary">Diese Sitzung: %1$s / %2$s (%3$s übrig)</string>
+
+    <!-- ====================================================== -->
+    <!-- Usage detail info -->
+    <!-- ====================================================== -->
+    <string name="usage_details_info_title">Nutzungsdetails</string>
+    <string name="usage_details_info_body">Tippe auf das Tune-Icon, um Limits zu bearbeiten.\n\nTageslimits zählen gegen das heutige Limit. Sitzungs-Limits werden zurückgesetzt, wenn Switchly oder das aktive Profil eine neue aktive Sitzung startet.\n\nDer Sitzungsbalken darunter zeigt, wie viel vom aktuellen Sitzungs-Limit bereits verwendet wurde.</string>
 
     <!-- ====================================================== -->
     <!-- Unavailable apps -->
@@ -48,14 +66,26 @@
     <string name="unavailable_app_state">Nicht installiert</string>
     <string name="unavailable_app_remove_hint">Zum Entfernen abwählen und speichern.</string>
     <plurals name="unavailable_apps_loaded_notice">
-            <item quantity="one">%1$d nicht verfügbarer App-Eintrag wurde zur Bereinigung geladen.</item>
-            <item quantity="other">%1$d nicht verfügbare App-Einträge wurden zur Bereinigung geladen.</item>
-        </plurals>
+        <item quantity="one">%1$d nicht verfügbarer App-Eintrag wurde zur Bereinigung geladen.</item>
+        <item quantity="other">%1$d nicht verfügbare App-Einträge wurden zur Bereinigung geladen.</item>
+    </plurals>
 
     <!-- ====================================================== -->
-    <!-- Stats screen and range tabs -->
+    <!-- Usage and insights menu -->
+    <!-- ====================================================== -->
+    <string name="insights_menu_title">Nutzung &amp; Einblicke</string>
+    <string name="insights_menu_summary">Nutzungsstatistiken, aktive Zeit, App-Limits und Blocking-Aktivität ansehen.</string>
+    <string name="insights_usage_statistics">Nutzungsstatistiken</string>
+    <string name="insights_usage_statistics_summary">App-, Website-, Limit- und Blockieraktivität.</string>
+    <string name="insights_active_time">Aktive Zeit</string>
+    <string name="insights_active_time_summary">Verfolge, wie lange Switchly über Zeit aktiv bleibt.</string>
+
+    <!-- ====================================================== -->
+    <!-- Usage statistics -->
     <!-- ====================================================== -->
     <string name="statistics_usage_title">Nutzungsstatistiken</string>
+    <string name="statistics_usage_info_title">Nutzungsstatistiken</string>
+    <string name="statistics_usage_info_body">Tippe auf das Tune-Icon neben einer App, um Limits zu bearbeiten.\n\nSwitchly-Statistiken konzentrieren sich auf Blockieraktivität, Versuche, Scans, Zeitpläne und limitbezogene Nutzung. Erlaubte oder temporär freigegebene Nutzung wird ggf. nicht immer vollständig erfasst; es ist kein vollständiger Digital-Wellbeing-Ersatz.\n\nTageslimits zählen gegen das heutige Limit. Sitzungs-Limits werden zurückgesetzt, wenn Switchly oder das aktive Profil eine neue aktive Sitzung startet.</string>
     <string name="stats_range_today">Heute</string>
     <string name="stats_range_week">Woche</string>
     <string name="stats_range_month">Monat</string>
@@ -73,10 +103,6 @@
     <string name="usage_range_month">Monat</string>
     <string name="usage_range_year">Jahr</string>
     <string name="usage_range_overall">Gesamt</string>
-
-    <!-- ====================================================== -->
-    <!-- Usage access and row actions -->
-    <!-- ====================================================== -->
     <string name="usage_access_needed_desc">Bitte aktiviere für Switchly den Zugriff auf „App-Nutzungsdaten“, um deine Bildschirmzeit-Statistiken anzuzeigen.</string>
     <string name="usage_open_settings">Einstellungen öffnen</string>
     <string name="usage_row_tap_hint_app">Tippe auf eine App-Zeile, um Details zu öffnen.</string>
@@ -85,10 +111,6 @@
     <string name="usage_row_tap_hint">Tippe auf eine App-Zeile, um Details zu öffnen.</string>
     <string name="usage_row_open_details_a11y">%1$s, %2$s, %3$s. Doppeltippen für Details.</string>
     <string name="usage_row_basic_a11y">%1$s, %2$s, %3$s.</string>
-
-    <!-- ====================================================== -->
-    <!-- Usage metrics -->
-    <!-- ====================================================== -->
     <string name="usage_total_screen_time">Gesamte Bildschirmzeit</string>
     <string name="usage_sessions_today">Öffnungen heute</string>
     <string name="usage_sessions_week">Öffnungen diese Woche</string>
@@ -101,21 +123,43 @@
     <string name="usage_attempts_year">Versuche dieses Jahr</string>
     <string name="usage_attempts_overall">Versuche gesamt</string>
     <string name="usage_app_placeholder">App</string>
+    <string name="statistics_usage_subtitle_apps">%1$s</string>
+    <string name="statistics_usage_subtitle_web">Webseiten</string>
 
     <!-- ====================================================== -->
-    <!-- Website usage management -->
+    <!-- Active time -->
+    <!-- ====================================================== -->
+    <string name="active_time_title">Aktive Zeit</string>
+    <string name="active_time_info_title">Aktive Zeit</string>
+    <string name="active_time_info_body">Zeigt, wie lange Switchly aktiv war. Die aktuelle Fokus-Session wird mitgerechnet, solange sie läuft. Werte werden beim Deaktivieren abgeschlossen und für Fortschritt/Progress gespeichert.</string>
+    <string name="active_time_total_label">Gesamte aktive Zeit</string>
+    <string name="active_time_current_session">Aktuelle Session: %1$s</string>
+    <string name="active_time_average_day">Durchschnitt pro Tag: %1$s</string>
+    <string name="active_time_no_data">Noch keine aktive Zeit aufgezeichnet.</string>
+    <string name="active_time_today">Heute</string>
+    <string name="active_time_week">Woche</string>
+    <string name="active_time_month">Monat</string>
+    <string name="active_time_year">Jahr</string>
+    <string name="active_time_overall">Gesamt</string>
+    <string name="active_time_no_sessions">Für diesen Tag sind keine Sessions gespeichert.</string>
+    <string name="active_time_session_title">Aktiv %1$d</string>
+    <string name="active_time_details_total_label">Aktive Zeit gesamt</string>
+    <string name="active_time_day_sessions_hint">Tippe den Tag in der Übersicht an, um Sessions zu sehen</string>
+    <string name="active_time_graph_days">Tages-Graph</string>
+
+    <!-- ====================================================== -->
+    <!-- Website usage details -->
     <!-- ====================================================== -->
     <string name="website_manage_blocking">Blockierungseinstellungen</string>
     <string name="website_delete_data">Daten löschen</string>
     <string name="website_delete_title">Löschen: %1$s</string>
-    <string name="website_delete_message">Wähle aus, was du entfernen möchtest. Das kann nicht rückgängig gemacht werden.</string>
     <string name="website_delete_clear_usage">Nutzungsverlauf löschen</string>
     <string name="website_delete_remove_limit">Tageslimit entfernen</string>
     <string name="website_delete_remove_block_rule">Blockierungsregel entfernen</string>
     <string name="website_deleted_toast">Website-Daten gelöscht</string>
 
     <!-- ====================================================== -->
-    <!-- Empty states and values -->
+    <!-- Usage empty states -->
     <!-- ====================================================== -->
     <string name="usage_web_placeholder">Website-Statistiken folgen bald.</string>
     <string name="usage_apps_no_accessibility">Für die App-Nutzungsstatistik muss die Switchly-Bedienungshilfe aktiviert sein.</string>
@@ -124,17 +168,16 @@
     <string name="usage_websites_no_accessibility">Website-Tracking benötigt aktivierte Switchly-Bedienungshilfe.</string>
     <string name="usage_websites_no_data">Noch keine Website-Daten. Öffne eine Website in einem unterstützten Browser (Chrome, Brave, Edge, Firefox, Ecosia …), während die Switchly-Bedienungshilfe aktiviert ist.</string>
     <string name="usage_websites_no_blocked">Noch keine limitierten Websites konfiguriert.</string>
+
+    <!-- ====================================================== -->
+    <!-- Usage labels and filters -->
+    <!-- ====================================================== -->
     <string name="usage_value_label">Nutzung</string>
     <string name="usage_share_of_period">Anteil am Zeitraum</string>
     <string name="usage_kv_fmt">%1$s: %2$s</string>
     <string name="usage_percent_zero" formatted="false">0,0%</string>
     <string name="usage_time_zero_short">0 Min</string>
-    <string name="usage_time_zero_medium">0 Std 00 Min</string>
     <string name="usage_time_zero_long">0 Std 00 Min 00 Sek</string>
-
-    <!-- ====================================================== -->
-    <!-- Sorting and filters -->
-    <!-- ====================================================== -->
     <string name="stats_sort_az">Name (A–Z)</string>
     <string name="stats_sort_za">Name (Z–A)</string>
     <string name="stats_filter_all_apps">Alle Apps</string>
@@ -150,23 +193,15 @@
     <string name="stats_sort_filter">Sortieren &amp; filtern</string>
 
     <!-- ====================================================== -->
-    <!-- Usage point dialog -->
+    <!-- Usage support and premium -->
     <!-- ====================================================== -->
     <string name="usage_point_dialog_title">%1$s - %2$s</string>
-
-    <!-- ====================================================== -->
-    <!-- Switchly fallback and premium details -->
-    <!-- ====================================================== -->
     <string name="usage_switchly_fallback_title">Noch keine Daten von Switchly</string>
     <string name="usage_switchly_fallback_message">Für diesen Zeitraum hat Switchly noch keine Nutzungsdaten erfasst. Möchtest du stattdessen die aktuellen Statistiken deines Smartphones anzeigen?</string>
     <string name="usage_switchly_fallback_positive">Handy-Statistiken anzeigen</string>
     <string name="usage_details_premium_title">Detaillierte Statistiken sind Teil von Premium</string>
     <string name="usage_details_premium_message">Hol dir Premium, um detaillierte Statistiken und Einblicke zu sehen.</string>
     <string name="usage_details_premium_action">Premium ansehen</string>
-
-    <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
-    <!-- ====================================================== -->
     <string name="cannot_set_limit_unavailable">Für eine nicht verfügbare App kann kein Limit gesetzt werden.</string>
 
 </resources>

@@ -2,7 +2,7 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Control mode labels -->
+    <!-- Control sources -->
     <!-- ====================================================== -->
     <string name="switch_mode_label">Switch mode: %1$s</string>
     <string name="control_manual">Manual</string>
@@ -22,7 +22,7 @@
     <string name="paired_tags_sort_name_za">Name Z → A</string>
 
     <!-- ====================================================== -->
-    <!-- Quick Settings tile setup -->
+    <!-- Quick Settings tiles -->
     <!-- ====================================================== -->
     <string name="qs_label_on">Switchly ON</string>
     <string name="qs_label_off">Switchly OFF</string>
@@ -34,7 +34,7 @@
     <string name="barcode_qs_tile_add_hint">Open Quick Settings → Edit → drag “Scan barcode” into your active tiles</string>
 
     <!-- ====================================================== -->
-    <!-- App update prompt -->
+    <!-- Updates -->
     <!-- ====================================================== -->
     <string name="update_available_title">Update available</string>
     <string name="update_available_message">A new Switchly version is available on Google Play.</string>
@@ -42,7 +42,7 @@
     <string name="switchly_update_up_to_date">You are already up to date</string>
 
     <!-- ====================================================== -->
-    <!-- Accent names and channels -->
+    <!-- Accent colors -->
     <!-- ====================================================== -->
     <string name="accent_default">Default (Green)</string>
     <string name="accent_blue">Blue</string>
@@ -58,20 +58,24 @@
     <string name="color_channel_b">B</string>
 
     <!-- ====================================================== -->
-    <!-- QR/barcode sharing and shortcuts -->
+    <!-- QR and barcode sharing -->
     <!-- ====================================================== -->
     <string name="qr_share_failed">Could not share QR code.</string>
-    <string name="shortcut_qr_short">QR scan</string>
-    <string name="shortcut_qr_long">Start QR scanning</string>
-    <string name="shortcut_barcode_short">Barcode scan</string>
-    <string name="shortcut_barcode_long">Start barcode scanning</string>
 
     <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
+    <!-- Shortcuts -->
     <!-- ====================================================== -->
+    <string name="shortcut_qr_short">QR Scan</string>
+    <string name="shortcut_qr_long">QR Scan</string>
+    <string name="shortcut_barcode_short">Barcode Scan</string>
+    <string name="shortcut_barcode_long">Barcode Scan</string>
     <string name="shortcut_nfc_short">Write NFC</string>
     <string name="shortcut_focus_now_short">Focus now</string>
     <string name="shortcut_focus_now_long">Enable Switchly now</string>
+
+    <!-- ====================================================== -->
+    <!-- Widgets -->
+    <!-- ====================================================== -->
     <string name="widget_scanner_name">Switchly Hub</string>
     <string name="widget_scanner_title">Switchly Hub</string>
     <string name="widget_scanner_open_app">Open app</string>
@@ -95,9 +99,23 @@
     <string name="widget_barcode_name">Barcode scanner</string>
     <string name="widget_nfc_name">NFC writer</string>
     <string name="widget_blocked_notifications_name">Blocked notifications</string>
-    <string name="widget_pause_blocker_name">Pause blocker</string>
+    <string name="widget_pause_blocker_name">Pause Switchly</string>
     <string name="widget_next_schedule_name">Next schedule</string>
-    <string name="experimental_notice_title">Feedback for Switchly 2.1.5</string>
-    <string name="experimental_notice_body">Some areas in this version are still experimental and need extra feedback. Please send logs if something feels wrong with split-screen/pop-up view blocking, in-app blocking for YouTube, Instagram, and Snapchat, battery warning/permission status consistency, Developer Mode logging, Support change feedback, FAQ wording and troubleshooting clarity, or German/English string quality. Multi-window and in-app blocking are best-effort and can behave differently depending on your device and app versions. A follow-up update is already planned for these areas, so reports are especially helpful.</string>
+    <string name="widget_scanner_desc">Quick access to Switchly, QR, barcode, NFC, focus, and blocked notifications.</string>
+    <string name="widget_qr_desc">Open the Switchly QR scanner.</string>
+    <string name="widget_barcode_desc">Open the Switchly barcode scanner.</string>
+    <string name="widget_nfc_desc">Open the Switchly NFC writer.</string>
+    <string name="widget_focus_now_desc">Enable Switchly from the Home screen.</string>
+    <string name="widget_blocked_notifications_desc">Show recently blocked notifications.</string>
+    <string name="widget_pause_blocker_desc">Temporarily pause Switchly for 15, 30, or 60 minutes.</string>
+    <string name="widget_next_schedule_desc">Show the next planned Switchly schedule change.</string>
+    <string name="widget_next_schedule_preview_time">Today · 18:00</string>
+    <string name="widget_blocked_notifications_preview_row">Recent blocked alerts</string>
+
+    <!-- ====================================================== -->
+    <!-- Experimental features -->
+    <!-- ====================================================== -->
+    <string name="experimental_notice_title">Feedback for Switchly 2.2.0</string>
+    <string name="experimental_notice_body">Switchly 2.2.0 is a big update, so feedback is especially helpful.\n\nPlease send logs or feedback if something feels wrong with:\n• the new onboarding flow\n• permission and background access setup\n• the new usage timer, session limits, and Usage Insights\n• the new Help Center/FAQ\n• Home display modes and Customize Home\n• Block selected/Allow selected app and website lists\n• App Picker, profiles, schedules, NFC, QR, barcode, and Manage Keys\n• blocked notifications, filter/sort, dialogs, and disabled-state messages\n• Premium, Google Play Billing, redeem codes, backup, or restore\n\nThis update touches many setup paths, so even small UX issues are worth reporting.</string>
 
 </resources>

@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.feature.widget.ActiveTimerWidgetProvider
 import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,22 +40,51 @@ object SwitchModeStore {
     private const val KEY_TEMP_DISABLE_UNTIL = "switch_mode_temp_disable_until"
     private const val KEY_TEMP_ENABLE_UNTIL = "switch_mode_temp_enable_until"
     private const val KEY_REQUIRE_NFC_DISABLE = "switch_mode_require_nfc"
+    private const val KEY_LIMIT_SESSION_GENERATION = "switch_mode_limit_session_generation"
 
     // store previous base state so we can restore after temp-enable expires
     private const val KEY_BASE_BEFORE_TEMP_ENABLE = "switch_mode_base_before_temp_enable"
     private const val KEY_PROFILE_BEFORE_TEMP_ENABLE = "switch_mode_profile_before_temp_enable"
 
-    private val _enabledFlow: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    private val _enabledFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val enabledFlow: StateFlow<Boolean> = _enabledFlow
 
     @Volatile
     private var initialized: Boolean = false
+
+    /** Marker for runtime-only per-session limit counters. */
+    fun getLimitSessionGeneration(ctx: Context): Long {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getLong(KEY_LIMIT_SESSION_GENERATION, 0L)
+    }
+
+    private fun bumpLimitSessionGeneration(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val next = sp.getLong(KEY_LIMIT_SESSION_GENERATION, 0L) + 1L
+        sp.edit { putLong(KEY_LIMIT_SESSION_GENERATION, next) }
+    }
+
+    private fun syncActiveSinceForEffectiveState(ctx: Context, enabledNow: Boolean = isEnabled(ctx)) {
+        ActiveDurationStore.syncEffectiveState(ctx, enabledNow)
+    }
+
+    fun getActiveSinceMillis(ctx: Context): Long {
+        syncActiveSinceForEffectiveState(ctx)
+        return ActiveDurationStore.getActiveSinceMillis(ctx)
+    }
+
+    fun getActiveDurationMillis(ctx: Context): Long {
+        syncActiveSinceForEffectiveState(ctx)
+        return if (isEnabled(ctx)) ActiveDurationStore.getActiveDurationMillis(ctx) else 0L
+    }
 
     fun ensureInit(ctx: Context) {
         if (!initialized) {
             synchronized(this) {
                 if (!initialized) {
                     _enabledFlow.value = isEnabled(ctx)
+                    ActiveTimerWidgetProvider.updateAll(ctx)
+                    syncActiveSinceForEffectiveState(ctx)
                     if (isEnabled(ctx)) {
                         BlockingRuntime.ensureRunning(ctx)
                     }
@@ -66,7 +96,7 @@ object SwitchModeStore {
 
     fun isEnabled(ctx: Context): Boolean {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val base = sp.getBoolean(KEY_ENABLED, true)
+        val base = sp.getBoolean(KEY_ENABLED, false)
 
         val tempDisableUntil = sp.getLong(KEY_TEMP_DISABLE_UNTIL, 0L)
         val tempEnableUntil = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L)
@@ -91,9 +121,24 @@ object SwitchModeStore {
             (tempEnableUntil != 0L && now < tempEnableUntil)
     }
 
+    fun hasActiveTemporaryEnable(ctx: Context): Boolean {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val until = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L)
+        return until != 0L && System.currentTimeMillis() < until
+    }
+
+    fun setTemporaryEnableRestoreProfileFromSchedule(ctx: Context, profile: String?) {
+        val cleanProfile = profile?.trim().orEmpty()
+        if (cleanProfile.isBlank() || !hasActiveTemporaryEnable(ctx)) return
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit {
+            putString(KEY_PROFILE_BEFORE_TEMP_ENABLE, cleanProfile)
+        }
+        AppLogStore.append(ctx, "Schedule", "Queued profile restore after temporary enable id=$cleanProfile")
+    }
+
     fun isBaseEnabled(ctx: Context): Boolean {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getBoolean(KEY_ENABLED, true)
+        return sp.getBoolean(KEY_ENABLED, false)
     }
 
     /**
@@ -131,12 +176,18 @@ object SwitchModeStore {
             remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
         }
 
+        if (currentlyEnabled != enabled) {
+            bumpLimitSessionGeneration(ctx)
+        }
+
         if (!profileBeforeTempEnable.isNullOrBlank()) {
             ProfileStore.setCurrent(ctx, profileBeforeTempEnable)
             AppLogStore.append(ctx, "Profiles", "Restored previous profile id=$profileBeforeTempEnable")
         }
 
         _enabledFlow.value = isEnabled(ctx)
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
 
         val rangeScheduleActive = ScheduleRuntimeStore.hadEnableAndDisable(ctx) || ScheduleRuntimeStore.hadDisableAndEnable(ctx)
 
@@ -172,7 +223,8 @@ object SwitchModeStore {
 
     // Enable or disable Switchly as triggered by schedules.
     fun setEnabledBySchedule(ctx: Context, enabled: Boolean) {
-        val current = isEnabled(ctx)
+        val effectiveBefore = isEnabled(ctx)
+        val activeTempEnable = hasActiveTemporaryEnable(ctx)
 
         if (!AutomationModeStore.isScheduleAllowed(ctx)) {
             return
@@ -181,28 +233,42 @@ object SwitchModeStore {
         // Hard rule:
         // NFC lock ON  -> schedules cannot disable Switchly, but they may still enable it.
         // NFC lock OFF -> schedules can change state normally.
-        if (!enabled && isNfcDisableLockEnforced(ctx) && current != enabled) {
+        if (!enabled && isNfcDisableLockEnforced(ctx) && effectiveBefore != enabled) {
             ScheduleRuntimeStore.markDisableBlockedByNfc(ctx)
             return
         }
 
         // A schedule-driven state change can clear previous warning markers.
-        if (current != enabled) {
+        if (effectiveBefore != enabled) {
             ScheduleRuntimeStore.clearDisableBlockedByNfc(ctx)
         }
 
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit {
             putBoolean(KEY_ENABLED, enabled)
-            putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
-            remove(KEY_BASE_BEFORE_TEMP_ENABLE)
-            remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
+
+            if (activeTempEnable) {
+                // Do not cancel an active Temporary Enable/Profile window.
+                // Schedules may update the base state underneath it, but the temporary profile/action must still expire normally.
+                putBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, enabled)
+            } else {
+                putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
+                remove(KEY_BASE_BEFORE_TEMP_ENABLE)
+                remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
+            }
         }
 
-        _enabledFlow.value = isEnabled(ctx)
+        val effectiveAfter = isEnabled(ctx)
+        if (effectiveBefore != effectiveAfter) {
+            bumpLimitSessionGeneration(ctx)
+        }
+
+        _enabledFlow.value = effectiveAfter
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx, effectiveAfter)
         ScheduleRuntimeStore.setEnabledBySchedule(ctx, enabled)
 
-        if (enabled) {
+        if (effectiveAfter) {
             BlockingRuntime.ensureRunning(ctx)
         } else {
             BlockingRuntime.stop(ctx)
@@ -215,8 +281,9 @@ object SwitchModeStore {
         val until = System.currentTimeMillis() + durationMs
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
-        val baseEnabled = sp.getBoolean(KEY_ENABLED, true)
+        val baseEnabled = sp.getBoolean(KEY_ENABLED, false)
         val tempEnableActive = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L) > now
+        val effectivelyEnabledBefore = isEnabled(ctx)
 
         if (!baseEnabled && !tempEnableActive) {
             AppLogStore.append(ctx, "Profiles", "Temp disable skipped reason=already_disabled")
@@ -230,13 +297,18 @@ object SwitchModeStore {
             // If we flipped KEY_ENABLED=false, Switchly would stay disabled after the timer expires.
             putLong(KEY_TEMP_DISABLE_UNTIL, until)
 
-            // mutually exclusive with temp-enable
-            putLong(KEY_TEMP_ENABLE_UNTIL, 0L)
-            remove(KEY_BASE_BEFORE_TEMP_ENABLE)
-            remove(KEY_PROFILE_BEFORE_TEMP_ENABLE)
+            // Do NOT clear temp-enable here.
+            // Temp-disable has priority in isEnabled(), so it can temporarily pause/override an active temp-enable window.
+            // When temp-disable expires, the remaining temp-enable window should resume instead of becoming a permanent enable.
+        }
+
+        if (effectivelyEnabledBefore) {
+            bumpLimitSessionGeneration(ctx)
         }
 
         _enabledFlow.value = isEnabled(ctx)
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
         AppLogStore.append(ctx, "Profiles", "Temp disable started duration=${durationMs}ms")
 
         // Clear any currently visible blocker UI/state while the temporary disable window is active.
@@ -264,22 +336,23 @@ object SwitchModeStore {
         val activeTempUntil = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L)
         val effectivelyEnabledNow = isEnabled(ctx)
 
-        // Safety rule:
-        // If the user starts Temporary Enable while Switchly is already effectively enabled, expiry must not turn Switchly off.
-        // Older behavior could preserve a previous base=false from an earlier temp-enable and later restore that disabled state, which made Temporary Enable feel like it disabled Switchly.
-        val baseBefore = if (effectivelyEnabledNow) {
+        // Preserve the original restore state while a Temporary Enable/Profile window is already active.
+        // Re-scanning the same NFC/QR/barcode action should extend/refresh the timer, not turn the restore state into permanently enabled just because the temporary window is currently active.
+        val baseBefore = if (activeTempUntil > now && sp.contains(KEY_BASE_BEFORE_TEMP_ENABLE)) {
+            sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, sp.getBoolean(KEY_ENABLED, false))
+        } else if (effectivelyEnabledNow) {
+            // If Switchly was genuinely enabled before starting Temporary Enable, expiry should keep it enabled.
             true
-        } else if (activeTempUntil > now && sp.contains(KEY_BASE_BEFORE_TEMP_ENABLE)) {
-            sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, sp.getBoolean(KEY_ENABLED, true))
         } else {
-            sp.getBoolean(KEY_ENABLED, true)
+            sp.getBoolean(KEY_ENABLED, false)
         }
 
         // Same rule for profile-scoped temp-enable: keep the ORIGINAL profile so expiry restores the last non-temporary profile.
-        val profileBefore = previousProfileOverride ?: if (activeTempUntil > now && sp.contains(KEY_PROFILE_BEFORE_TEMP_ENABLE)) {
+        // If a temp-enable window is already active, the stored restore profile must win over a new override from a repeated scan.
+        val profileBefore = if (activeTempUntil > now && sp.contains(KEY_PROFILE_BEFORE_TEMP_ENABLE)) {
             sp.getString(KEY_PROFILE_BEFORE_TEMP_ENABLE, ProfileStore.getCurrent(ctx))
         } else {
-            ProfileStore.getCurrent(ctx)
+            previousProfileOverride ?: ProfileStore.getCurrent(ctx)
         }
 
         sp.edit {
@@ -298,7 +371,13 @@ object SwitchModeStore {
             // set temp-enable window
             putLong(KEY_TEMP_ENABLE_UNTIL, until)
         }
+        if (!effectivelyEnabledNow) {
+            bumpLimitSessionGeneration(ctx)
+        }
+
         _enabledFlow.value = true
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
         val loggedTargetProfile = targetProfileForLog ?: ProfileStore.getCurrent(ctx) ?: "-"
         AppLogStore.append(ctx, "Profiles", "Temp enable started profile=$loggedTargetProfile duration=${durationMs}ms restoreEnabled=$baseBefore")
         AppLogStore.append(ctx, "Profiles", "Stored previous profile id=${profileBefore ?: "-"}")
@@ -333,7 +412,7 @@ object SwitchModeStore {
         val now = System.currentTimeMillis()
         if (now < until) return
 
-        val baseBefore = sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, true)
+        val baseBefore = sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, false)
         val profileBefore = sp.getString(KEY_PROFILE_BEFORE_TEMP_ENABLE, null)
 
         sp.edit {
@@ -352,6 +431,8 @@ object SwitchModeStore {
 
         AppLogStore.append(ctx, "Profiles", "Temp enable expired")
         _enabledFlow.value = isEnabled(ctx)
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         } else {
@@ -369,12 +450,26 @@ object SwitchModeStore {
         val now = System.currentTimeMillis()
         if (now < until) return
 
+        val effectivelyEnabledBefore = isEnabled(ctx)
         sp.edit { putLong(KEY_TEMP_DISABLE_UNTIL, 0L) }
 
+        // If temp-disable was stacked on top of temp-enable, the temp-enable marker may have expired while temp-disable was still winning. 
+        // Reconcile that before deciding the final effective state, otherwise KEY_ENABLED=true from temp-enable could look like a permanent enable.
+        finishTemporaryEnableIfExpired(ctx)
+
+        val effectivelyEnabledAfter = isEnabled(ctx)
+        if (effectivelyEnabledBefore != effectivelyEnabledAfter) {
+            bumpLimitSessionGeneration(ctx)
+        }
+
         AppLogStore.append(ctx, "Profiles", "Temp disable expired")
-        _enabledFlow.value = isEnabled(ctx)
-        if (isEnabled(ctx)) {
+        _enabledFlow.value = effectivelyEnabledAfter
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
+        if (effectivelyEnabledAfter) {
             BlockingRuntime.ensureRunning(ctx)
+        } else {
+            BlockingRuntime.stop(ctx)
         }
         ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
@@ -384,6 +479,8 @@ object SwitchModeStore {
         sp.edit { putLong(KEY_TEMP_DISABLE_UNTIL, 0L) }
 
         _enabledFlow.value = isEnabled(ctx)
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         }
@@ -399,6 +496,8 @@ object SwitchModeStore {
         }
 
         _enabledFlow.value = isEnabled(ctx)
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
 
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
@@ -412,12 +511,19 @@ object SwitchModeStore {
         val active = sp.getLong(KEY_TEMP_DISABLE_UNTIL, 0L) > 0L
         if (!active) return
 
+        val effectivelyEnabledBefore = isEnabled(ctx)
         sp.edit {
             putLong(KEY_TEMP_DISABLE_UNTIL, 0L)
         }
+        val effectivelyEnabledAfter = isEnabled(ctx)
+        if (effectivelyEnabledBefore != effectivelyEnabledAfter) {
+            bumpLimitSessionGeneration(ctx)
+        }
 
         // TempReenableStore.clear(ctx)
-        _enabledFlow.value = isEnabled(ctx)
+        _enabledFlow.value = effectivelyEnabledAfter
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
         BlockingRuntime.ensureRunning(ctx)
         ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
@@ -431,7 +537,7 @@ object SwitchModeStore {
         val active = sp.getLong(KEY_TEMP_ENABLE_UNTIL, 0L) > 0L
         if (!active) return
 
-        val baseBefore = sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, true)
+        val baseBefore = sp.getBoolean(KEY_BASE_BEFORE_TEMP_ENABLE, false)
         val profileBefore = sp.getString(KEY_PROFILE_BEFORE_TEMP_ENABLE, null)
 
         sp.edit {
@@ -446,6 +552,8 @@ object SwitchModeStore {
         }
 
         _enabledFlow.value = isEnabled(ctx)
+        ActiveTimerWidgetProvider.updateAll(ctx)
+        syncActiveSinceForEffectiveState(ctx)
         if (isEnabled(ctx)) {
             BlockingRuntime.ensureRunning(ctx)
         }

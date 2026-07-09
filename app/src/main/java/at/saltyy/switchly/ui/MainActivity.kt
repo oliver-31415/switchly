@@ -45,6 +45,8 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -79,14 +81,18 @@ import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.EmergencyPinStore
 import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
+import at.saltyy.switchly.data.prefs.UsageLimitResetStore
+import at.saltyy.switchly.data.prefs.UsageLimitSessionRuntimeStore
 import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
 import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
 import at.saltyy.switchly.feature.onboarding.OnboardingActivity
@@ -104,22 +110,24 @@ import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
 import at.saltyy.switchly.feature.support.SupportActivity
 import at.saltyy.switchly.feature.tools.BlockingHubActivity
+import at.saltyy.switchly.feature.tools.ManageInsightsActivity
 import at.saltyy.switchly.feature.tools.ToolsHubActivity
 import at.saltyy.switchly.feature.usage.QuickLimitDialogs
-import at.saltyy.switchly.feature.usage.ScreenTimeDashboardActivity
+import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
-import at.saltyy.switchly.util.AppUsageToday
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
 import at.saltyy.switchly.util.ProtectionStatusNotifier
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import at.saltyy.switchly.util.BatteryOptimizationCompat
-import at.saltyy.switchly.util.SystemBarColorCompat
 import at.saltyy.switchly.util.TimeFormatPrefs
 import at.saltyy.switchly.util.getIntCompat
 import com.google.android.material.appbar.MaterialToolbar
@@ -154,7 +162,26 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TEMP_MODE_DISCOVERED = "temp_mode_discovered"
         private const val KEY_PRIMARY_TOGGLE_TAP_COUNT = "primary_toggle_tap_count"
         private const val KEY_QUICK_ACTIONS_EXPANDED = "home_quick_actions_expanded"
-        private const val KEY_EXPERIMENTAL_NOTICE_215 = "experimental_notice_2_1_5_shown"
+        private const val KEY_EXPERIMENTAL_NOTICE_220 = "experimental_notice_2_2_0_shown"
+        private const val KEY_HOME_LAYOUT_DETAILED = "home_layout_detailed"
+        private const val KEY_HOME_LAYOUT_MODE = "home_layout_mode"
+        private const val HOME_MODE_DEFAULT = "default"
+        private const val HOME_MODE_SIMPLE = "simple"
+        private const val HOME_MODE_ADVANCED = "advanced"
+        private const val HOME_MODE_FOCUS = "focus"
+        private const val HOME_MODE_CUSTOM = "custom"
+        private const val KEY_HOME_CUSTOM_ACTIVE_TIMER = "home_custom_active_timer"
+        private const val KEY_HOME_CUSTOM_MAIN_BUTTON = "home_custom_main_button"
+        private const val KEY_HOME_CUSTOM_ACTIVE_PROFILE = "home_custom_active_profile"
+        private const val KEY_HOME_CUSTOM_CONTROL_MODE = "home_custom_control_mode"
+        private const val KEY_HOME_CUSTOM_PICK_APPS = "home_custom_pick_apps"
+        private const val KEY_HOME_CUSTOM_TEMPORARY = "home_custom_temporary"
+        private const val KEY_HOME_CUSTOM_EMERGENCY = "home_custom_emergency"
+        private const val KEY_HOME_CUSTOM_QUICK_ACTIONS = "home_custom_quick_actions"
+        private const val KEY_HOME_CUSTOM_NEXT_SCHEDULE = "home_custom_next_schedule"
+        private const val KEY_HOME_CUSTOM_BLOCKED_NOW = "home_custom_blocked_now"
+        private const val KEY_HOME_CUSTOM_BLOCKED_APPS = "home_custom_blocked_apps"
+        private const val KEY_HOME_CUSTOM_PROFILE_DROPDOWN = "home_custom_profile_dropdown"
         private const val KEY_QA_APPS = "home_quick_tile_apps"
         private const val KEY_QA_PROFILES = "home_quick_tile_profiles"
         private const val KEY_QA_WEBSITES = "home_quick_tile_websites"
@@ -172,16 +199,21 @@ class MainActivity : AppCompatActivity() {
     // Core status
     private lateinit var ivStatusIcon: ImageView
     private lateinit var tvSwitchMode: TextView
+    private lateinit var tvActiveDuration: TextView
+    private lateinit var tvControlModeHint: TextView
     private lateinit var tvActiveProfile: TextView
     private lateinit var rowActiveProfile: View
     private lateinit var tvNfcLockedHint: TextView
     private lateinit var btnToggle: MaterialButton
+    private lateinit var btnSimplePickApps: MaterialButton
     private lateinit var chipTemp: Chip
     private lateinit var tvTempHint: TextView
     private lateinit var tvEmergencyHint: TextView
 
     // Profile controls
     private lateinit var profileDropdown: MaterialAutoCompleteTextView
+    private lateinit var layoutProfileDropdown: TextInputLayout
+    private lateinit var dividerBeforeProfileDropdown: View
 
     // Setup banner
     private lateinit var cardSetup: MaterialCardView
@@ -227,8 +259,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rvBlockedNow: RecyclerView
 
     // Blocked list
+    private lateinit var cardBlockedApps: MaterialCardView
     private lateinit var rvBlocked: RecyclerView
     private lateinit var layoutBlockedAppsEmpty: View
+    private lateinit var blockedHeader: TextView
     private lateinit var tvEmpty: TextView
     private lateinit var btnPickApps: MaterialButton
 
@@ -268,8 +302,8 @@ class MainActivity : AppCompatActivity() {
     // For micro-animations: avoid animating every 1s refresh
     private var lastEnabledUi: Boolean? = null
 
-    // The blocked list rows show a "Blocked now" chip. 
-    // That chip depends on runtime state (enabled/emergency). 
+    // The blocked list rows show a "Blocked now" chip.
+    // That chip depends on runtime state (enabled/emergency).
     // Keep a small key so we can refresh row bindings when these states change without re-binding every 1s tick.
     private var lastBlockedChipKey: String? = null
     private var lastBlockedEditEnabled: Boolean? = null
@@ -279,16 +313,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun showExperimentalFeaturesNoticeIfNeeded() {
         val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE_215, false)) return
+        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE_220, false)) return
 
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.experimental_notice_title)
             .setMessage(R.string.experimental_notice_body)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_215, true) }
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_220, true) }
             }
             .setOnCancelListener {
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_215, true) }
+                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE_220, true) }
             }
             .showAccented()
     }
@@ -312,24 +346,15 @@ class MainActivity : AppCompatActivity() {
         val sp = getSharedPreferences("switchly_prefs", MODE_PRIVATE)
 
         val onboardingVersion = sp.getIntCompat("onboarding_version", 0)
-        val onboardingDone = sp.getBoolean("onboarding_done", false)
-        val hasExistingState = sp.all.isNotEmpty()
 
-        val shouldRunOnboarding = onboardingVersion <= 0 && !onboardingDone && !hasExistingState
+        // Versioned onboarding follows the build version, so refreshed setup flows can run once after updates.
+        val shouldRunOnboarding = onboardingVersion < OnboardingActivity.ONBOARDING_VERSION
         if (shouldRunOnboarding) {
             startActivity(Intent(this, OnboardingActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
             })
             finish()
             return
-        }
-
-        // Existing installs should not be forced through onboarding again on app updates.
-        if (onboardingVersion in 1 until OnboardingActivity.ONBOARDING_VERSION) {
-            sp.edit {
-                putInt("onboarding_version", OnboardingActivity.ONBOARDING_VERSION)
-                putBoolean("onboarding_done", true)
-            }
         }
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
@@ -348,8 +373,6 @@ class MainActivity : AppCompatActivity() {
         EdgeToEdgeUtils.applyBottomNavGestureInset(bottomNav)
 
         // Keep status/navigation bars neutral (no accent bleed into system bar)
-        SystemBarColorCompat.setStatusBarColor(window, ContextCompat.getColor(this, android.R.color.black))
-        SystemBarColorCompat.setNavigationBarColor(window, ContextCompat.getColor(this, android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
@@ -367,18 +390,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         // UI refs
+
         ivStatusIcon = findViewById(R.id.ivStatusIcon)
         tvSwitchMode = findViewById(R.id.tvSwitchMode)
+        tvActiveDuration = findViewById(R.id.tvActiveDuration)
+        tvControlModeHint = findViewById(R.id.tvControlModeHint)
+        styleActiveDurationPill()
         tvActiveProfile = findViewById(R.id.tvActiveProfile)
         rowActiveProfile = findViewById(R.id.rowActiveProfile)
         tvNfcLockedHint = findViewById(R.id.tvNfcLockedHint)
         btnToggle = findViewById(R.id.btnToggle)
+        btnSimplePickApps = findViewById(R.id.btnSimplePickApps)
         chipTemp = findViewById(R.id.chipTemp)
         tvTempHint = findViewById(R.id.tvTempHint)
         tvEmergencyHint = findViewById(R.id.tvEmergencyHint)
 
         profileDropdown = findViewById(R.id.profileDropdown)
-
+        layoutProfileDropdown = findViewById(R.id.layoutProfileDropdown)
+        dividerBeforeProfileDropdown = findViewById(R.id.dividerBeforeProfileDropdown)
         cardSetup = findViewById(R.id.cardSetup)
         tvSetupTitle = findViewById(R.id.tvSetupTitle)
         tvSetupSubtitle = findViewById(R.id.tvSetupSubtitle)
@@ -418,8 +447,10 @@ class MainActivity : AppCompatActivity() {
         tvBlockedNowMore = findViewById(R.id.tvBlockedNowMore)
         rvBlockedNow = findViewById(R.id.rvBlockedNow)
 
+        cardBlockedApps = findViewById(R.id.cardBlockedApps)
         rvBlocked = findViewById(R.id.rvBlocked)
         layoutBlockedAppsEmpty = findViewById(R.id.layoutBlockedAppsEmpty)
+        blockedHeader = findViewById(R.id.blockedHeader)
         tvEmpty = findViewById(R.id.tvEmpty)
         btnPickApps = findViewById(R.id.btnPickApps)
 
@@ -438,6 +469,8 @@ class MainActivity : AppCompatActivity() {
             trackPrimaryToggleTapForTempNudge()
             toggleSwitchIfAllowed()
         }
+
+        btnSimplePickApps.setOnClickListener { openAppPickerIfUnlocked() }
 
         // Temp badge (visible when a temp timer is active)
         chipTemp.setOnClickListener {
@@ -498,7 +531,7 @@ class MainActivity : AppCompatActivity() {
             true
         }
         tilePermissions.setOnClickListener {
-            startActivity(ScreenTimeDashboardActivity.intent(this))
+            startActivity(Intent(this, ManageInsightsActivity::class.java))
         }
         tileNfcWrite.setOnClickListener {
             if (isNfcTagWritingLocked()) {
@@ -597,6 +630,7 @@ class MainActivity : AppCompatActivity() {
         updateQuickActionsVisibility()
         updateTempHintVisibility()
         updateEmergencyHintVisibility()
+        refreshHomeLayout()
 
         setupBottomNav(bottomNav)
     }
@@ -616,6 +650,7 @@ class MainActivity : AppCompatActivity() {
         updateQuickActionsVisibility()
         updateTempHintVisibility()
         updateEmergencyHintVisibility()
+        refreshHomeLayout()
 
         // Refresh toolbar + accents when theme changes
         findViewById<MaterialToolbar>(R.id.toolbar)
@@ -667,6 +702,8 @@ class MainActivity : AppCompatActivity() {
                 val isOpenCountKey = key.startsWith("open_count_")
                 val isManagedRuleKey =
                     key.startsWith("blocked_apps_") ||
+                        key.startsWith("allowed_apps_") ||
+                        key.startsWith("profile_rule_mode__") ||
                         key.startsWith("usage_limit_min__") ||
                         key.startsWith("attempt_limit__") ||
                         key.startsWith("session_limit_min__")
@@ -815,15 +852,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isAppPickingLockedWhileEnabled(): Boolean {
-        return SwitchModeStore.isEnabled(this) &&
-            !AutomationModeStore.isAppPickerAllowedWhileEnabled(this)
+        // Editing the app list must never be possible while protection is enabled, even during a temporary disable window.
+        // The old mixed-mode allowance is intentionally ignored here; users may still open read-only/status screens, but app-rule changes require Switchly to be disabled first.
+        return EditingLockGuard.isLocked(this)
     }
 
     private fun isProfileSwitchLockedWhileEnabled(): Boolean {
         val enabled = SwitchModeStore.isEnabled(this)
+        val temporaryOverrideActive = SwitchModeStore.hasActiveTemporaryOverride(this)
         val emergencyActive = EmergencyBypassStore.isActive(this)
         val emergencyPaused = EmergencyBypassStore.isPaused(this)
-        if (!enabled && !emergencyActive) return false
+        if (!enabled && !temporaryOverrideActive && !emergencyActive) return false
+
+        if (temporaryOverrideActive) return true
 
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
         if (requireNfc || emergencyActive || (enabled && emergencyPaused)) return true
@@ -854,7 +895,7 @@ class MainActivity : AppCompatActivity() {
             }
             return false
         }
-        if (SwitchModeStore.isEnabled(this)) {
+        if (EditingLockGuard.isLocked(this)) {
             if (showToast) {
                 Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
             }
@@ -1083,7 +1124,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showCustomTempMinutesInput(onPicked: (Int) -> Unit) {
-        val input = android.widget.EditText(this).apply {
+        val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
             hint = getString(R.string.minutes_hint)
         }
@@ -1142,6 +1183,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun styleActiveDurationPill() {
+        val accent = AccentColor.getAccentColorInt(this)
+        val bg = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = homeDp(999f).toFloat()
+            setColor(ColorUtils.setAlphaComponent(accent, 0x20))
+            setStroke(homeDp(1f), ColorUtils.setAlphaComponent(accent, 0x55))
+        }
+        tvActiveDuration.background = bg
+        tvActiveDuration.setTextColor(accent)
+        tvActiveDuration.setPadding(homeDp(10f), homeDp(4f), homeDp(10f), homeDp(4f))
+    }
+
+    private fun homeDp(value: Float): Int =
+        (value * resources.displayMetrics.density + 0.5f).toInt()
+
     /**
      * Formats remaining milliseconds as a compact time (m:ss or h:mm:ss).
      */
@@ -1154,6 +1211,23 @@ class MainActivity : AppCompatActivity() {
             String.format(Locale.getDefault(), "%d:%02d:%02d", h, m, s)
         } else {
             String.format(Locale.getDefault(), "%d:%02d", m, s)
+        }
+    }
+
+    private fun formatActiveDuration(ms: Long): String {
+        val totalMinutes = (ms / 60_000L).coerceAtLeast(0L)
+        if (totalMinutes <= 0L) return getString(R.string.dashboard_active_duration_less_than_minute)
+
+        val days = totalMinutes / (24L * 60L)
+        val hours = (totalMinutes % (24L * 60L)) / 60L
+        val minutes = totalMinutes % 60L
+
+        return when {
+            days > 0L && hours > 0L -> String.format(Locale.getDefault(), "%dd %dh", days, hours)
+            days > 0L -> String.format(Locale.getDefault(), "%dd", days)
+            hours > 0L && minutes > 0L -> String.format(Locale.getDefault(), "%dh %dm", hours, minutes)
+            hours > 0L -> String.format(Locale.getDefault(), "%dh", hours)
+            else -> String.format(Locale.getDefault(), "%dm", minutes)
         }
     }
 
@@ -1224,7 +1298,144 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun homeLayoutMode(): String {
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        return when (sp.getString(KEY_HOME_LAYOUT_MODE, null)) {
+            HOME_MODE_DEFAULT -> HOME_MODE_DEFAULT
+            HOME_MODE_SIMPLE -> HOME_MODE_SIMPLE
+            HOME_MODE_ADVANCED -> HOME_MODE_ADVANCED
+            HOME_MODE_FOCUS -> HOME_MODE_SIMPLE
+            HOME_MODE_CUSTOM -> HOME_MODE_CUSTOM
+            else -> if (sp.contains(KEY_HOME_LAYOUT_DETAILED)) {
+                if (sp.getBoolean(KEY_HOME_LAYOUT_DETAILED, true)) HOME_MODE_ADVANCED else HOME_MODE_SIMPLE
+            } else {
+                HOME_MODE_DEFAULT
+            }
+        }
+    }
+
+    private fun isDetailedHomeLayout(): Boolean = homeLayoutMode() == HOME_MODE_ADVANCED
+
+    private fun customHomeEnabled(key: String, defaultValue: Boolean): Boolean {
+        return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(key, defaultValue)
+    }
+
+    private fun shouldShowHomeActiveTimer(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_ACTIVE_TIMER, true)
+        else -> true
+    }
+
+    private fun shouldShowHomeMainButton(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_MAIN_BUTTON, true)
+        else -> true
+    }
+
+    private fun shouldShowHomeActiveProfile(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_ACTIVE_PROFILE, true)
+        else -> true
+    }
+
+    private fun shouldShowHomeControlMode(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_DEFAULT -> false
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_CONTROL_MODE, true)
+        else -> true
+    }
+
+    private fun shouldShowHomePickApps(): Boolean = when (homeLayoutMode()) {
+        // Default already shows the app list below, so the standalone Pick apps shortcut is redundant.
+        HOME_MODE_DEFAULT -> false
+        HOME_MODE_SIMPLE -> true
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_PICK_APPS, true)
+        else -> false
+    }
+
+    private fun shouldShowHomeProfileDropdown(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_ADVANCED -> true
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_PROFILE_DROPDOWN, false)
+        else -> false
+    }
+
+    private fun shouldShowHomeQuickActions(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_ADVANCED -> true
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_QUICK_ACTIONS, false)
+        else -> false
+    }
+
+    private fun shouldShowHomeNextSchedule(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_ADVANCED -> true
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_NEXT_SCHEDULE, false)
+        else -> false
+    }
+
+    private fun shouldShowHomeBlockedNow(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_ADVANCED -> true
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_BLOCKED_NOW, false)
+        else -> false
+    }
+
+    private fun shouldShowHomeBlockedApps(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_DEFAULT -> true
+        HOME_MODE_ADVANCED -> true
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_BLOCKED_APPS, false)
+        else -> false
+    }
+
+    private fun shouldShowHomeTemporaryShortcut(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_ADVANCED -> true
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_TEMPORARY, false)
+        else -> false
+    }
+
+    private fun shouldShowHomeEmergencyShortcut(): Boolean = when (homeLayoutMode()) {
+        HOME_MODE_ADVANCED -> true
+        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_EMERGENCY, false)
+        else -> false
+    }
+
+    private fun refreshHomeLayout() {
+        updateTempHintVisibility()
+        updateEmergencyHintVisibility()
+
+        btnToggle.isVisible = shouldShowHomeMainButton()
+        rowActiveProfile.isVisible = shouldShowHomeActiveProfile()
+        tvControlModeHint.isVisible = shouldShowHomeControlMode()
+        btnSimplePickApps.isVisible = shouldShowHomePickApps()
+
+        if (shouldShowHomeProfileDropdown()) {
+            if (::dividerBeforeProfileDropdown.isInitialized) dividerBeforeProfileDropdown.showFade()
+            if (::layoutProfileDropdown.isInitialized) layoutProfileDropdown.showFade()
+        } else {
+            if (::dividerBeforeProfileDropdown.isInitialized) dividerBeforeProfileDropdown.hideFade()
+            if (::layoutProfileDropdown.isInitialized) layoutProfileDropdown.hideFade()
+        }
+
+        if (shouldShowHomeQuickActions()) {
+            updateQuickActionsVisibility()
+        } else {
+            gridQuickActions.hideFade()
+            ivQuickActionsChevron.hideFade()
+            ivQuickActionsEdit.hideFade()
+            tvQuickActionsTitle.hideFade()
+            rowQuickActionsHeader.hideFade()
+        }
+
+        if (shouldShowHomeNextSchedule()) updateNextScheduleCard() else cardNextSchedule.hideFade()
+        if (shouldShowHomeBlockedNow()) updateBlockedNowCard() else cardBlockedNow.hideFade()
+        if (!shouldShowHomeBlockedApps()) {
+            cardBlockedApps.hideFade()
+            layoutBlockedAppsEmpty.hideFade()
+            rvBlocked.hideFade()
+        } else {
+            refreshBlockedList()
+        }
+    }
+
     private fun updateNextScheduleCard() {
+        if (!shouldShowHomeNextSchedule()) {
+            cardNextSchedule.hideFade()
+            return
+        }
+
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         val show = sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_NEXT_SCHEDULE, false)
         if (show) {
@@ -1259,6 +1470,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateQuickActionsVisibility() {
+        if (!shouldShowHomeQuickActions()) {
+            gridQuickActions.hideFade()
+            ivQuickActionsChevron.hideFade()
+            ivQuickActionsEdit.hideFade()
+            tvQuickActionsTitle.hideFade()
+            rowQuickActionsHeader.hideFade()
+            return
+        }
+
         val show = areQuickActionsEnabled()
         val expanded = areQuickActionsExpanded()
         val enabledCount = getVisibleQuickActionsCount()
@@ -1494,6 +1714,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateBlockedNowCard() {
+        if (!shouldShowHomeBlockedNow()) {
+            cardBlockedNow.hideFade()
+            return
+        }
+
         // Dashboard section has been removed (card stays GONE). Keep logic as a no-op.
         if (!cardBlockedNow.isVisible) return
 
@@ -1545,7 +1770,13 @@ class MainActivity : AppCompatActivity() {
             val hasAnyLimit = limitMin > 0 || sessionLimitMin > 0 || attemptLimit > 0
 
             if (limitMin > 0) {
-                if (LimitReachedStore.isReachedToday(this, app.pkg)) {
+                val resetMode = UsageLimitResetStore.getMode(this, profile, app.pkg)
+                val reached = if (resetMode == UsageLimitResetStore.MODE_SESSION) {
+                    UsageLimitSessionRuntimeStore.get(this, profile, app.pkg)?.reached == true
+                } else {
+                    LimitReachedStore.isReachedToday(this, profile, app.pkg)
+                }
+                if (reached) {
                     limitReached.add(
                         BlockedNowItem(
                             label = app.label,
@@ -1602,6 +1833,59 @@ class MainActivity : AppCompatActivity() {
             tvBlockedNowMore.showFade()
         } else {
             tvBlockedNowMore.hideFade()
+        }
+    }
+
+    @StringRes
+    private fun controlModeLabelRes(mode: AutomationModeStore.Mode): Int {
+        return when (mode) {
+            AutomationModeStore.Mode.SCHEDULE -> R.string.dashboard_control_mode_schedule
+            AutomationModeStore.Mode.NFC -> R.string.dashboard_control_mode_nfc
+            AutomationModeStore.Mode.QR -> R.string.dashboard_control_mode_qr
+            AutomationModeStore.Mode.BARCODE -> R.string.dashboard_control_mode_barcode
+            AutomationModeStore.Mode.MIXED -> R.string.dashboard_control_mode_mixed
+        }
+    }
+
+    private fun mixedEnabledChannelsLabel(): String {
+        val methods = mutableListOf<String>()
+
+        if (AutomationModeStore.isScheduleAllowed(this)) {
+            methods += getString(R.string.dashboard_control_method_schedule)
+        }
+        if (AutomationModeStore.isNfcAllowed(this)) {
+            methods += getString(R.string.dashboard_control_method_nfc)
+        }
+        if (AutomationModeStore.isQrAllowed(this)) {
+            methods += getString(R.string.dashboard_control_method_qr)
+        }
+        if (AutomationModeStore.isBarcodeAllowed(this)) {
+            methods += getString(R.string.dashboard_control_method_barcode)
+        }
+        if (AutomationModeStore.isButtonAllowed(this)) {
+            methods += getString(R.string.dashboard_control_method_manual)
+        }
+
+        if (methods.isEmpty()) {
+            return getString(R.string.dashboard_control_method_configured)
+        }
+
+        return methods.joinToString(separator = getString(R.string.dashboard_control_method_separator))
+    }
+
+    private fun updateControlModeHint(enabled: Boolean) {
+        val mode = AutomationModeStore.getMode(this)
+        tvControlModeHint.text = if (mode == AutomationModeStore.Mode.MIXED) {
+            getString(
+                R.string.dashboard_control_mode_hint_mixed_fmt,
+                getString(controlModeLabelRes(mode)),
+                mixedEnabledChannelsLabel()
+            )
+        } else {
+            getString(
+                R.string.dashboard_control_mode_hint_fmt,
+                getString(controlModeLabelRes(mode))
+            )
         }
     }
 
@@ -1662,7 +1946,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Status line
-        val stateWord = if (enabled) getString(R.string.state_enabled) else getString(R.string.state_disabled)
+        val stateWord = when {
+            tempEnableRemaining > 0L -> getString(R.string.state_temporarily_enabled)
+            enabled -> getString(R.string.state_enabled)
+            else -> getString(R.string.state_disabled)
+        }
         val sb = StringBuilder()
         sb.append(getString(R.string.switch_mode_label, stateWord))
 
@@ -1696,6 +1984,16 @@ class MainActivity : AppCompatActivity() {
             )
         }
         tvSwitchMode.text = span
+        updateControlModeHint(enabled)
+
+        val showActiveDuration = PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(ToggleOptionsActivity.KEY_SHOW_ACTIVE_DURATION, true)
+        val activeDurationMs = SwitchModeStore.getActiveDurationMillis(this)
+        tvActiveDuration.isVisible = showActiveDuration && enabled && shouldShowHomeActiveTimer()
+        tvActiveDuration.text = getString(
+            R.string.dashboard_active_duration_fmt,
+            formatActiveDuration(activeDurationMs)
+        )
 
         // Keep quick-entry text in sync with current state
         updateEmergencyHintVisibility()
@@ -1741,7 +2039,7 @@ class MainActivity : AppCompatActivity() {
         val showTemporaryMode = PreferenceManager.getDefaultSharedPreferences(this)
             .getBoolean(ToggleOptionsActivity.KEY_SHOW_TEMPORARY_MODE, true)
 
-        tvTempHint.isVisible = showTemporaryMode || hasActiveTemp
+        tvTempHint.isVisible = hasActiveTemp || (shouldShowHomeTemporaryShortcut() && showTemporaryMode)
 
         tvTempHint.text = when {
             tempDisableRemaining > 0L -> getString(
@@ -1772,7 +2070,7 @@ class MainActivity : AppCompatActivity() {
         val showEmergencyUnlock = PreferenceManager.getDefaultSharedPreferences(this)
             .getBoolean(ToggleOptionsActivity.KEY_SHOW_EMERGENCY_UNLOCK, true)
 
-        tvEmergencyHint.isVisible = (showEmergencyUnlock && featureEnabled) || active || paused
+        tvEmergencyHint.isVisible = shouldShowHomeEmergencyShortcut() && ((showEmergencyUnlock && featureEnabled) || active || paused)
 
         tvEmergencyHint.text = when {
             active -> getString(R.string.dashboard_emergency_hint_active, rem)
@@ -1781,6 +2079,108 @@ class MainActivity : AppCompatActivity() {
             usedToday -> getString(R.string.dashboard_emergency_hint_used_today)
             else -> getString(R.string.dashboard_emergency_hint_ready)
         }
+    }
+
+    private fun requestEmergencyPinBeforeStart() {
+        val storedPin = EmergencyPinStore.getPin(this)
+        if (storedPin.isNullOrBlank()) {
+            showSetEmergencyPinDialog { showEmergencyUnlockStartDialog() }
+        } else {
+            showEnterEmergencyPinDialog { showEmergencyUnlockStartDialog() }
+        }
+    }
+
+    private fun showSetEmergencyPinDialog(onSuccess: () -> Unit) {
+        val input = emergencyPinInput(getString(R.string.emergency_pin_choose_hint))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.emergency_pin_title))
+            .setMessage(getString(R.string.emergency_pin_message))
+            .setView(emergencyPinContainer(input))
+            .setPositiveButton(getString(R.string.ok), null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (pin.length < 4) {
+                    Toast.makeText(this, R.string.emergency_pin_too_short, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                EmergencyPinStore.setPin(this, pin)
+                Toast.makeText(this, R.string.emergency_pin_changed, Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                onSuccess()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showEnterEmergencyPinDialog(onSuccess: () -> Unit) {
+        val input = emergencyPinInput(getString(R.string.emergency_pin_enter_current_hint))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.emergency_pin_enter_current_title))
+            .setMessage(getString(R.string.emergency_pin_enter_current_message))
+            .setView(emergencyPinContainer(input))
+            .setPositiveButton(getString(R.string.ok), null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (!EmergencyPinStore.matchesPin(this, pin)) {
+                    Toast.makeText(this, R.string.emergency_pin_incorrect, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                dialog.dismiss()
+                onSuccess()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun emergencyPinInput(hintText: String): EditText {
+        return EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            hint = hintText
+            backgroundTintList = AccentColor.getActiveColor(this@MainActivity)
+        }
+    }
+
+    private fun emergencyPinContainer(input: EditText): FrameLayout {
+        return FrameLayout(this).apply {
+            val margin = (24 * resources.displayMetrics.density).toInt()
+            setPadding(margin, 0, margin, 0)
+            addView(
+                input,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+    }
+
+    private fun showEmergencyUnlockStartDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.pref_emergency_title))
+            .setMessage(getString(R.string.emergency_action_start_15))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val ok = EmergencyBypassStore.enableIfAllowed(this, 15)
+                if (ok) {
+                    SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
+                    Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
+                    BlockingRuntime.ensureRunning(this)
+                    updateSwitchState()
+                } else {
+                    Toast.makeText(this, getString(R.string.emergency_used_today), Toast.LENGTH_SHORT).show()
+                }
+            }
+            .showAccented()
     }
 
     private fun showEmergencyQuickSheet() {
@@ -1844,22 +2244,7 @@ class MainActivity : AppCompatActivity() {
                 updateSwitchState()
             }
         } else if (!usedToday) {
-            AlertDialog.Builder(this)
-                .setTitle(getString(R.string.pref_emergency_title))
-                .setMessage(getString(R.string.emergency_action_start_15))
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok) { _, _ ->
-                    val ok = EmergencyBypassStore.enableIfAllowed(this, 15)
-                    if (ok) {
-                        SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
-                        Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
-                        BlockingRuntime.ensureRunning(this)
-                        updateSwitchState()
-                    } else {
-                        Toast.makeText(this, getString(R.string.emergency_used_today), Toast.LENGTH_SHORT).show()
-                    }
-                }
-                .showAccented()
+            requestEmergencyPinBeforeStart()
             return
         }
 
@@ -1869,22 +2254,26 @@ class MainActivity : AppCompatActivity() {
             else -> getString(R.string.pref_emergency_title)
         }
 
-        val builder = AlertDialog.Builder(this)
-            .setTitle(title)
-            .setNegativeButton(R.string.cancel, null)
-
         if (labels.isNotEmpty()) {
-            builder.setItems(labels.toTypedArray()) { _, which ->
+            showSwitchlyOptionDialog(
+                title = title,
+                options = labels.map { label ->
+                    SwitchlyDialogOption(
+                        title = label,
+                        destructive = label == getString(R.string.emergency_action_end)
+                    )
+                }
+            ) { which ->
                 runCatching { actions[which].invoke() }
                 updateEmergencyHintVisibility()
             }
+        } else {
+            AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(R.string.emergency_used_today)
+                .setNegativeButton(R.string.cancel, null)
+                .showAccented()
         }
-
-        if (!active && !paused && usedToday) {
-            builder.setMessage(R.string.emergency_used_today)
-        }
-
-        builder.showAccented()
     }
 
     private fun markTempModeDiscovered(showSnack: Boolean) {
@@ -2104,16 +2493,30 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.dashboard_blocked_app_action_remove)
         )
 
-        AlertDialog.Builder(this)
-            .setTitle(item.label)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> showBlockedAppLimitActions(item)
-                    1 -> confirmRemoveBlockedApp(item)
-                }
+        showSwitchlyOptionDialog(
+            title = item.label,
+            options = options.mapIndexed { index, label ->
+                SwitchlyDialogOption(
+                    title = label,
+                    summary = getString(
+                        if (index == 0) {
+                            R.string.dashboard_blocked_app_action_edit_limits_summary
+                        } else {
+                            R.string.dashboard_blocked_app_action_remove_summary
+                        },
+                        item.label
+                    ),
+                    iconRes = if (index == 0) R.drawable.schedule_24 else R.drawable.delete_24,
+                    destructive = index == 1
+                )
+            },
+            showCancelButton = false
+        ) { which ->
+            when (which) {
+                0 -> showBlockedAppLimitActions(item)
+                1 -> confirmRemoveBlockedApp(item)
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .showAccented()
+        }
     }
 
     private fun showBlockedAppLimitActions(item: AppDisplay) {
@@ -2122,28 +2525,41 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.dashboard_blocked_app_action_open_limit)
         )
 
-        AlertDialog.Builder(this)
-            .setTitle(R.string.dashboard_blocked_app_limits_title)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> QuickLimitDialogs.showForApp(
-                        activity = this,
-                        pkg = item.pkg,
-                        label = item.label,
-                        startOnAttempts = false,
-                        onChanged = { refreshBlockedList() }
-                    )
-                    1 -> QuickLimitDialogs.showForApp(
-                        activity = this,
-                        pkg = item.pkg,
-                        label = item.label,
-                        startOnAttempts = true,
-                        onChanged = { refreshBlockedList() }
-                    )
-                }
+        showSwitchlyOptionDialog(
+            title = getString(R.string.dashboard_blocked_app_limits_title),
+            subtitle = item.label,
+            options = options.mapIndexed { index, label ->
+                SwitchlyDialogOption(
+                    title = label,
+                    summary = getString(
+                        if (index == 0) {
+                            R.string.dashboard_blocked_app_action_time_limit_summary
+                        } else {
+                            R.string.dashboard_blocked_app_action_open_limit_summary
+                        }
+                    ),
+                    iconRes = if (index == 0) R.drawable.schedule_24 else R.drawable.login_24
+                )
+            },
+            showCancelButton = false
+        ) { which ->
+            when (which) {
+                0 -> QuickLimitDialogs.showForApp(
+                    activity = this,
+                    pkg = item.pkg,
+                    label = item.label,
+                    startOnAttempts = false,
+                    onChanged = { refreshBlockedList() }
+                )
+                1 -> QuickLimitDialogs.showForApp(
+                    activity = this,
+                    pkg = item.pkg,
+                    label = item.label,
+                    startOnAttempts = true,
+                    onChanged = { refreshBlockedList() }
+                )
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .showAccented()
+        }
     }
 
     private fun confirmRemoveBlockedApp(item: AppDisplay) {
@@ -2163,9 +2579,9 @@ class MainActivity : AppCompatActivity() {
         val profile = ProfileStore.getCurrent(this)
         if (profile.isNullOrBlank()) return
 
-        val blocked = ProfileStore.getBlockedForProfile(this, profile).toMutableSet()
-        blocked.remove(item.pkg)
-        ProfileStore.setBlockedForProfile(this, profile, blocked)
+        val selected = ProfileStore.getSelectedForProfileMode(this, profile).toMutableSet()
+        selected.remove(item.pkg)
+        ProfileStore.setSelectedForProfileMode(this, profile, selected)
 
         UsageLimitStore.setLimitMinutes(this, profile, item.pkg, 0)
         SessionLimitStore.setLimitMinutes(this, profile, item.pkg, 0)
@@ -2183,8 +2599,19 @@ class MainActivity : AppCompatActivity() {
         ).show()
     }
 
+    private fun updateManagedAppListHeader(profile: String?) {
+        val isAllow = !profile.isNullOrBlank() && ProfileRuleModeStore.isAllowMode(this, profile)
+        if (::blockedHeader.isInitialized) {
+            blockedHeader.setText(if (isAllow) R.string.pick_allowed_apps else R.string.pick_blocked_apps)
+        }
+        if (::tvEmpty.isInitialized) {
+            tvEmpty.setText(if (isAllow) R.string.no_allowed_apps else R.string.no_blocked_apps)
+        }
+    }
+
     private fun refreshBlockedList() {
         val current = ProfileStore.getCurrent(this)
+        updateManagedAppListHeader(current)
         val pkgs: List<String> = loadBlockedPkgsFor(current)
         val appContext = applicationContext
         val requestSeq = ++blockedListRefreshSeq
@@ -2206,12 +2633,19 @@ class MainActivity : AppCompatActivity() {
             if (requestSeq != blockedListRefreshSeq || !currentCoroutineContext().isActive) return@launch
 
             val isEmpty = items.isEmpty()
-            if (isEmpty) {
-                layoutBlockedAppsEmpty.showFade()
+            if (!shouldShowHomeBlockedApps()) {
+                cardBlockedApps.hideFade()
+                layoutBlockedAppsEmpty.hideFade()
                 rvBlocked.hideFade()
             } else {
-                layoutBlockedAppsEmpty.hideFade()
-                rvBlocked.showFade()
+                cardBlockedApps.showFade()
+                if (isEmpty) {
+                    layoutBlockedAppsEmpty.showFade()
+                    rvBlocked.hideFade()
+                } else {
+                    layoutBlockedAppsEmpty.hideFade()
+                    rvBlocked.showFade()
+                }
             }
 
             blockedAdapter.submitList(items) {
@@ -2228,18 +2662,9 @@ class MainActivity : AppCompatActivity() {
     private fun loadBlockedPkgsFor(profile: String?): List<String> {
         if (profile.isNullOrEmpty()) return emptyList()
 
-        val sp = getSharedPreferences("switchly_prefs", MODE_PRIVATE)
-        val key = "blocked_apps_$profile"
+        // Limited apps are also managed by the profile and should appear together with the other selected apps, even if the stored selected-app set was not updated.
+        val explicitlyBlocked = ProfileStore.getSelectedForProfileMode(this, profile)
 
-        // If the stored type is wrong, don't crash — drop the value.
-        val explicitlyBlocked = try {
-            sp.getStringSet(key, emptySet())?.toSet() ?: emptySet()
-        } catch (_: ClassCastException) {
-            sp.edit { remove(key) }
-            emptySet()
-        }
-
-        // Limited apps are also managed by the profile and should appear together with the other selected apps, even if the stored blocked-app set was not updated.
         val limited = buildSet {
             addAll(UsageLimitStore.getAllLimitedPackages(this@MainActivity, profile))
             addAll(SessionLimitStore.getAllLimitedPackages(this@MainActivity, profile))
@@ -2279,7 +2704,7 @@ class MainActivity : AppCompatActivity() {
         val oldBounds = copyBounds()
         setBounds(0, 0, size, size)
         draw(canvas)
-        setBounds(oldBounds)
+        bounds = oldBounds
         return bitmap.toDrawable(context.resources)
     }
 
@@ -2425,10 +2850,13 @@ class MainActivity : AppCompatActivity() {
                     OpenCountStore.getToday(ctx, profile ?: "default", item.pkg) >= attemptLimit
                 } else false
 
-                val limitReached = if (limitMin > 0) {
-                    val limitMs = limitMin.toLong() * 60_000L
-                    val usedMs = AppUsageToday.getUsageMsToday(ctx, item.pkg)
-                    LimitReachedStore.isReachedToday(ctx, item.pkg) || usedMs >= limitMs
+                val limitReached = if (limitMin > 0 && !profile.isNullOrBlank()) {
+                    val resetMode = UsageLimitResetStore.getMode(ctx, profile, item.pkg)
+                    if (resetMode == UsageLimitResetStore.MODE_SESSION) {
+                        UsageLimitSessionRuntimeStore.get(ctx, profile, item.pkg)?.reached == true
+                    } else {
+                        LimitReachedStore.isReachedToday(ctx, profile, item.pkg)
+                    }
                 } else false
 
                 val hasAnyLimit = limitMin > 0 || sessionLimitMin > 0 || attemptLimit > 0
@@ -2463,7 +2891,24 @@ class MainActivity : AppCompatActivity() {
 
                 val lines = mutableListOf<String>()
                 if (limitMin > 0) {
-                    lines += ctx.getString(R.string.daily_limit_value_format, limitMin)
+                    val profileName = profile.orEmpty()
+                    val resetMode = if (profileName.isNotBlank()) {
+                        UsageLimitResetStore.getMode(ctx, profileName, pkgName)
+                    } else UsageLimitResetStore.MODE_DAY
+                    lines += ctx.getString(
+                        if (resetMode == UsageLimitResetStore.MODE_SESSION) R.string.session_reset_limit_value_format else R.string.daily_limit_value_format,
+                        limitMin
+                    )
+                    if (resetMode == UsageLimitResetStore.MODE_SESSION && profileName.isNotBlank()) {
+                        UsageLimitSessionRuntimeStore.get(ctx, profileName, pkgName)?.let { state ->
+                            lines += ctx.getString(
+                                R.string.session_limit_usage_summary,
+                                StatsFormat.prettyMsWithSeconds(state.usedMs),
+                                StatsFormat.prettyMsWithSeconds(state.limitMs),
+                                StatsFormat.prettyMsWithSeconds(state.remainingMs)
+                            )
+                        }
+                    }
                 }
                 if (sessionLimitMin > 0) {
                     lines += ctx.getString(R.string.session_limit_label, sessionLimitMin)
@@ -2666,38 +3111,56 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showBarcodeChoiceDialog() {
-        val items = arrayOf(getString(R.string.barcode_scan_title), getString(R.string.manage_barcodes_title))
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.dashboard_tile_barcode))
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> openBarcodeScannerDirectly()
-                    1 -> {
-                        when {
-                            !AutomationModeStore.shouldShowBarcodeTools(this) ->
-                                Toast.makeText(this, R.string.toast_manage_barcodes_requires_enabled, Toast.LENGTH_LONG).show()
-                            EditingLockGuard.isLocked(this) ->
-                                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
-                            else -> startActivity(Intent(this, ManageBarcodesActivity::class.java))
-                        }
+        showSwitchlyOptionDialog(
+            title = getString(R.string.dashboard_tile_barcode),
+            options = listOf(
+                SwitchlyDialogOption(
+                    title = getString(R.string.barcode_scan_title),
+                    summary = getString(R.string.barcode_scan_option_summary),
+                    iconRes = R.drawable.barcode_24
+                ),
+                SwitchlyDialogOption(
+                    title = getString(R.string.manage_barcodes_title),
+                    summary = getString(R.string.barcode_manage_option_summary),
+                    iconRes = R.drawable.edit_24
+                )
+            )
+        ) { which ->
+            when (which) {
+                0 -> openBarcodeScannerDirectly()
+                1 -> {
+                    when {
+                        !AutomationModeStore.shouldShowBarcodeTools(this) ->
+                            Toast.makeText(this, R.string.toast_manage_barcodes_requires_enabled, Toast.LENGTH_LONG).show()
+                        EditingLockGuard.isLocked(this) ->
+                            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
+                        else -> startActivity(Intent(this, ManageBarcodesActivity::class.java))
                     }
                 }
             }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .showAccented()
+        }
     }
 
     private fun showQrChoiceDialog() {
-        val items = arrayOf(getString(R.string.qr_scan_title), getString(R.string.qr_generate_title))
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.qr_title))
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> openQrScannerDirectly()
-                    1 -> startActivity(Intent(this, QrGenerateActivity::class.java))
-                }
+        showSwitchlyOptionDialog(
+            title = getString(R.string.dashboard_tile_qr),
+            options = listOf(
+                SwitchlyDialogOption(
+                    title = getString(R.string.qr_scan_title),
+                    summary = getString(R.string.qr_scan_option_summary),
+                    iconRes = R.drawable.qr_code_24
+                ),
+                SwitchlyDialogOption(
+                    title = getString(R.string.qr_generate_title),
+                    summary = getString(R.string.qr_manage_option_summary),
+                    iconRes = R.drawable.edit_24
+                )
+            )
+        ) { which ->
+            when (which) {
+                0 -> openQrScannerDirectly()
+                1 -> startActivity(Intent(this, QrGenerateActivity::class.java))
             }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .showAccented()
+        }
     }
 }

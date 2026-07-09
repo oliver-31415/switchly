@@ -2,28 +2,52 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Theme mode -->
+    <!-- Appearance root and accent color -->
     <!-- ====================================================== -->
     <string name="pref_theme_title">Darstellung</string>
+    <string name="pref_theme_color_title">Designfarbe</string>
+    <string name="pref_theme_color_summary">Wähle die Akzentfarbe, die in der App verwendet wird.</string>
+    <string name="pref_theme_color_custom_fmt">Benutzerdefiniert: %1$s</string>
+
+    <!-- ====================================================== -->
+    <!-- Theme and display mode -->
+    <!-- ====================================================== -->
     <string name="pref_theme_mode_title">Anzeigemodus</string>
+    <string name="pref_theme_mode_summary">Wähle, wie Switchly angezeigt wird.</string>
+    <string name="pref_theme_mode_light">Hell</string>
+    <string name="pref_theme_mode_dark">Dunkel</string>
+    <string name="pref_theme_mode_system">Systemeinstellung folgen</string>
+    <string name="pref_theme_mode_system_summary">Folgt der Hell-/Dunkel-Einstellung von Android.</string>
+    <string name="pref_theme_mode_light_summary">Verwendet das helle Switchly-Design.</string>
+    <string name="pref_theme_mode_dark_summary">Verwendet das dunkle Switchly-Design.</string>
+
+    <!-- ====================================================== -->
+    <!-- Time format -->
+    <!-- ====================================================== -->
     <string name="pref_time_format_title">Zeitformat</string>
     <string name="pref_time_format_summary">Lege fest, wie Zeiten in Zeitplänen angezeigt werden</string>
     <string name="pref_time_format_system">Automatisch</string>
     <string name="pref_time_format_24h">24-Stunden</string>
     <string name="pref_time_format_12h">12-Stunden</string>
-    <string name="pref_theme_mode_summary">Wähle, wie Switchly angezeigt wird.</string>
-    <string name="pref_theme_mode_light">Hell</string>
-    <string name="pref_theme_mode_dark">Dunkel</string>
-    <string name="pref_theme_mode_system">Systemeinstellung folgen</string>
-    <string name="pref_theme_color_title">Designfarbe</string>
-    <string name="pref_theme_color_summary">Wähle die Akzentfarbe, die in der App verwendet wird.</string>
-    <string name="pref_theme_color_custom_fmt">Benutzerdefiniert: %1$s</string>
+    <string name="pref_time_format_system_summary">Verwendet das Standard-Zeitformat des Geräts.</string>
+    <string name="pref_time_format_24h_summary">Zeigt Zeiten wie 18:30 an.</string>
+    <string name="pref_time_format_12h_summary">Zeigt Zeiten wie 6:30 PM an.</string>
 
     <!-- ====================================================== -->
     <!-- Accent color -->
     <!-- ====================================================== -->
     <string name="pref_accent_custom">Benutzerdefinierte Farbe…</string>
     <string name="pref_accent_custom_title">Benutzerdefinierte Farbe</string>
+    <string name="pref_accent_default_summary">Switchlys klassische grüne Akzentfarbe.</string>
+    <string name="pref_accent_blue_summary">Ein ruhiger Blauton für einen klareren technischen Look.</string>
+    <string name="pref_accent_orange_summary">Ein warmer Orangeton mit stärkerem Kontrast.</string>
+    <string name="pref_accent_purple_summary">Ein weicher Lilaton für dunklere Setups.</string>
+    <string name="pref_accent_pink_summary">Eine hellere Akzentfarbe für eine verspieltere UI.</string>
+    <string name="pref_accent_teal_summary">Ein ausgewogener Türkiston für einen ruhigen Fokus-Look.</string>
+    <string name="pref_accent_red_summary">Ein kräftiger Rotton für hohen Kontrast.</string>
+    <string name="pref_accent_amber_summary">Ein heller Bernsteinton mit warmer Wirkung.</string>
+    <string name="pref_accent_gray_summary">Eine neutrale Akzentfarbe für eine ruhigere UI.</string>
+    <string name="pref_accent_custom_summary">Wähle deine eigene Akzentfarbe.</string>
     <string-array name="pref_accent_entries">
         <item>@string/accent_default</item>
         <item>@string/accent_blue</item>
@@ -35,7 +59,7 @@
         <item>@string/accent_amber</item>
         <item>@string/accent_gray</item>
     </string-array>
-    
+
     <string-array name="pref_accent_values">
         <item>default</item>
         <item>blue</item>
@@ -47,25 +71,28 @@
         <item>amber</item>
         <item>gray</item>
     </string-array>
-    
+
     <string name="pref_language_title">Sprache</string>
 
     <!-- ====================================================== -->
     <!-- Language -->
     <!-- ====================================================== -->
+    <string name="pref_language_system_summary">Verwendet die Gerätesprache, wenn verfügbar.</string>
+    <string name="pref_language_en_summary">Verwendet Englisch für alle Switchly-Bildschirme.</string>
+    <string name="pref_language_de_summary">Verwendet Deutsch für alle Switchly-Bildschirme.</string>
     <string name="pref_language_summary">Wähle die App-Sprache.</string>
     <string-array name="pref_language_entries">
         <item>System</item>
         <item>Englisch</item>
         <item>Deutsch</item>
     </string-array>
-    
+
     <string-array name="pref_language_values">
         <item>system</item>
         <item>en</item>
         <item>de</item>
     </string-array>
-    
+
     <string name="pref_block_notifications_title">Benachrichtigungen blockierter Apps ausblenden</string>
 
 </resources>

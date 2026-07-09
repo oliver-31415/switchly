@@ -24,6 +24,8 @@ import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -145,6 +147,9 @@ class PermissionsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        val toolbarIconColor = toolbarForegroundColor()
+        toolbar.navigationIcon?.mutate()?.setTint(toolbarIconColor)
+        toolbar.setTitleTextColor(toolbarIconColor)
 
         cardPermissionHeartbeat = findViewById(R.id.cardPermissionHeartbeat)
         rowStatusTop = cardPermissionHeartbeat.findViewById(R.id.rowStatusTop)
@@ -417,7 +422,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnOpenBluetooth.visibility = View.VISIBLE
 
         // Battery request button
-        btnReqBattery.visibility = if (batteryRelevant && !batteryOk) View.VISIBLE else View.GONE
+        btnReqBattery.visibility = if (!batteryOk) View.VISIBLE else View.GONE
         btnOpenBattery.visibility = View.VISIBLE
 
         // Exact alarms button
@@ -807,8 +812,20 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun requestIgnoreBatteryOptimizationsSystemPopup() {
-        // Play-policy safe: do not trigger the direct battery-optimization exemption popup. 
-        // Open normal settings screens and let the user choose Unrestricted/Not optimized manually.
+        // Best-effort Android system popup, similar to the “Allow in background” flow in other blocker apps.
+        // Some OEMs still require their own Unrestricted/Autostart/Background activity settings afterwards.
+        val alreadyAllowed = runCatching {
+            getSystemService(PowerManager::class.java)
+                ?.isIgnoringBatteryOptimizations(packageName) == true
+        }.getOrDefault(false)
+
+        if (!alreadyAllowed) {
+            val directRequest = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = "package:$packageName".toUri()
+            }
+            if (safeStart(directRequest)) return
+        }
+
         openBatteryOptimizationSettingsPages()
     }
 
@@ -985,6 +1002,12 @@ class PermissionsActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true
+    }
+
+    private fun toolbarForegroundColor(): Int {
+        val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        return if (night) Color.WHITE else Color.BLACK
     }
 
     companion object {

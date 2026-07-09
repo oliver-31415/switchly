@@ -14,7 +14,7 @@
     <!-- ====================================================== -->
     <string name="tools_schedules_title">Zeitpläne</string>
     <string name="tools_schedules_summary">Automatische Aktionen für Zeit, WLAN, Bluetooth und Standort erstellen und verwalten</string>
-    <string name="tools_tags_codes_title">Schlüssel verwalten</string>
+    <string name="tools_tags_codes_title">Schlüssel &amp; Codes</string>
     <string name="tools_tags_codes_summary">NFC-Tags, gepaarte Tags, QR-Codes und Barcodes</string>
     <string name="tools_tags_codes_write_nfc">NFC-Tag schreiben</string>
     <string name="tools_tags_codes_paired_tags">Gepaarte Tags verwalten</string>
@@ -27,7 +27,7 @@
     <!-- ====================================================== -->
     <!-- Management shortcuts -->
     <!-- ====================================================== -->
-    <string name="tools_keys_title">Schlüssel verwalten</string>
+    <string name="tools_keys_title">Schlüssel &amp; Codes</string>
     <string name="tools_keys_section">NFC-, QR- und Barcode-Steuerung</string>
     <string name="tools_profiles_title">Profile verwalten</string>
     <string name="tools_profiles_summary">Blockierprofile erstellen, wechseln und organisieren</string>
@@ -41,26 +41,28 @@
     <!-- ====================================================== -->
     <string name="tools_emergency_unlock_summary">Schutz vorübergehend deaktivieren, wenn du es wirklich brauchst</string>
     <string name="tools_insights_title">Nutzung &amp; Einblicke</string>
-    <string name="tools_insights_summary">Nutzungs-, Blockierungs- und verwandte Aktivitätsinfos ansehen</string>
+    <string name="tools_insights_summary">Nutzungsstatistiken und aktive Zeit</string>
     <string name="tools_blocked_notifications_summary">Blockierte Benachrichtigungen und ähnliche Aktivität ansehen</string>
 
     <!-- ====================================================== -->
-    <!-- Blocking hub sections -->
+    <!-- Blocking hub -->
     <!-- ====================================================== -->
     <string name="blocking_hub_profiles_section">Profile</string>
     <string name="blocking_hub_blocked_content_section">Blockierte Inhalte</string>
     <string name="blocking_hub_controls_section">Blocking-Steuerung</string>
-    <string name="blocking_hub_modes_title">Blocking-Steuerung</string>
-    <string name="blocking_hub_modes_summary">Blocking-Modi und Steuerungsmethoden auswählen</string>
-    <string name="blocking_hub_features_title">Während Blocking aktiv ist</string>
-    <string name="blocking_hub_features_summary">Steuere, was während aktivem Schutz noch geändert werden darf</string>
+    <string name="blocking_hub_modes_title">Kontrollmodi</string>
+    <string name="blocking_hub_modes_summary">Wähle, wie Switchly aktiviert und deaktiviert wird</string>
+    <string name="blocking_hub_features_title">Funktionszugriff</string>
+    <string name="blocking_hub_features_summary">Wähle, was noch geändert oder genutzt werden darf, während Switchly aktiv ist</string>
+    <string name="blocking_hub_display_summary">Switchly Home, Schnelleinstellungen-Kacheln und Android-Widgets</string>
+    <string name="blocking_hub_display_title">Anzeige &amp; Shortcuts</string>
     <string name="blocking_hub_title">Blocking</string>
     <string name="blocking_hub_apps_title">Apps verwalten</string>
     <string name="blocking_hub_apps_summary">Apps, Limits und Regeln für blockierte Apps auswählen</string>
-    <string name="blocking_hub_websites_title">Websites verwalten</string>
-    <string name="blocking_hub_websites_summary">Domains und Website-Regeln für unterstützte Browser hinzufügen</string>
-    <string name="blocking_hub_inapp_title">In-App-Blocking</string>
-    <string name="blocking_hub_inapp_summary">Bestimmte App-Bereiche wie Feeds, Reels, Shorts oder Tabs blockieren</string>
+    <string name="blocking_hub_websites_title">Website-Regeln</string>
+    <string name="blocking_hub_websites_summary">Website-/Domain-Regeln für das aktive Profil verwalten</string>
+    <string name="blocking_hub_inapp_title">In-App-Regeln</string>
+    <string name="blocking_hub_inapp_summary">Unterstützte In-App-Bereiche für das aktive Profil verwalten</string>
     <string name="blocking_hub_scan_section">Scannen</string>
     <string name="blocking_hub_scan_qr_title">QR-Code scannen</string>
     <string name="blocking_hub_scan_qr_summary">Öffnet den Switchly-QR-Scanner direkt</string>
@@ -68,10 +70,23 @@
     <string name="blocking_hub_scan_barcode_summary">Öffnet den Switchly-Barcode-Scanner direkt</string>
 
     <!-- ====================================================== -->
-    <!-- Error states -->
+    <!-- Disabled states and errors -->
     <!-- ====================================================== -->
     <string name="error_open_manage_paired_tags">Gepaarte Tags konnten nicht geöffnet werden. Bitte sende Debug-Logs, falls das weiterhin passiert.</string>
+    <string name="toast_write_nfc_requires_enabled">NFC-Steuerung zuerst aktivieren.</string>
+    <string name="toast_manage_paired_tags_requires_enabled">Gekoppelte NFC-Tags zuerst aktivieren.</string>
+    <string name="toast_manage_qr_requires_enabled">QR-Code-Steuerung zuerst aktivieren.</string>
+    <string name="toast_manage_barcodes_requires_enabled">Barcode-Steuerung zuerst aktivieren.</string>
+    <string name="toast_manage_schedules_requires_enabled">Zeitplan-Steuerung zuerst aktivieren.</string>
 
-    <string name="toast_manage_paired_tags_requires_enabled">Aktiviere zuerst gekoppelte NFC-Tags in den Blocking Controls/Erlaubt während Blocking.</string>
-    <string name="toast_manage_barcodes_requires_enabled">Aktiviere zuerst Barcode-Steuerung in den Blocking Controls.</string>
+    <!-- ====================================================== -->
+    <!-- Info dialogs -->
+    <!-- ====================================================== -->
+    <string name="qr_info_title">QR-Code-Aktionen</string>
+    <string name="qr_info_body">Erstelle QR-Codes, die beim Scannen Switchly-Aktionen ausführen. QR-Codes können Switchly aktivieren, deaktivieren, umschalten oder temporär ändern.\n\nFür strengere Setups kannst du in den Kontrollmodi nur QR aktiv lassen und die anderen Kanäle deaktivieren.</string>
+    <string name="manage_barcodes_info_title">Barcode-Aktionen</string>
+    <string name="manage_barcodes_info_body">Gespeicherte Barcodes machen gedruckte oder physische Codes zu Switchly-Aktionen. Damit kannst du Switchly aktivieren, deaktivieren, umschalten oder temporär ändern, ohne die App zu bearbeiten.\n\nFür mehr Hürde kannst du den Barcode außerhalb deiner Reichweite platzieren und Temporary Disable oder Temporary Enable mit „Beim Scannen fragen“ verwenden.</string>
+    <string name="paired_tags_info_title">Gekoppelte NFC-Tags</string>
+    <string name="paired_tags_info_body">Gekoppelte Tags sind für UID-only/schreibgeschützte NFC-Tags oder Setups mit Limits pro Tag gedacht. Beschreibbare Switchly-Aktionstags müssen nicht gekoppelt werden.\n\nNutze diese Seite, wenn das Tag über seine NFC-ID erkannt werden soll, wenn du eine Standardaktion für ein schreibgeschütztes Tag willst oder wenn du Tageslimits/Cooldowns verwenden möchtest.</string>
+
 </resources>

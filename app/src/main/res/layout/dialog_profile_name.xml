@@ -8,32 +8,58 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilProfile"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/profile_name_field_hint"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         app:counterEnabled="true"
         app:counterMaxLength="24"
-        app:endIconMode="none">
+        app:endIconMode="none"
+        app:startIconDrawable="@drawable/edit_24"
+        app:startIconTint="?attr/colorPrimary">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etProfile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/profile_name_field_hint"
-            android:imeOptions="actionDone"
+            android:imeOptions="actionNext"
             android:inputType="textCapWords|textPersonName"
             android:maxLength="24"
             android:maxLines="1"
             android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilProfileDescription"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="@string/profile_description_field_hint"
+        app:counterEnabled="true"
+        app:counterMaxLength="80"
+        app:endIconMode="clear_text"
+        app:startIconDrawable="@drawable/info_24"
+        app:startIconTint="?attr/colorPrimary">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etProfileDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/profile_description_field_hint"
+            android:imeOptions="actionDone"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLength="80"
+            android:maxLines="2" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <TextView
         android:id="@+id/tvHelper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:alpha="0.7"
+        android:layout_marginTop="10dp"
+        android:alpha="0.72"
         android:text="@string/profile_name_helper"
         android:textColor="?attr/colorOnSurface"
         android:textSize="13sp" />

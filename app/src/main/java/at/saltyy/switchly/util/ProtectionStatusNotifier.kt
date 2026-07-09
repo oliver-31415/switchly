@@ -47,7 +47,7 @@ object ProtectionStatusNotifier {
 
         val enabled = SwitchModeStore.isEnabled(ctx)
         val hasBlockedApps = ProfileStore.getProfiles(ctx)
-            .any { ProfileStore.getBlockedForProfile(ctx, it).isNotEmpty() }
+            .any { ProfileStore.getSelectedForProfileMode(ctx, it).isNotEmpty() }
 
         val accessibilityActive = BlockingRuntime.isAccessibilityActive(ctx)
 

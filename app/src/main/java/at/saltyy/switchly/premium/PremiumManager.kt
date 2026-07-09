@@ -29,7 +29,6 @@ import at.saltyy.switchly.R
 
 /**
  * Central place for Premium status and purchase routing.
- *
  * Play Store builds use Google Play Billing only.
  * Firebase email/password APKs can use an external checkout/portal URL and Switchly redeem codes.
  * Offline builds can unlock Premium with a local offline code allowlist, but cannot restore online purchases.
@@ -200,19 +199,39 @@ object PremiumManager {
         }
     }
 
+    fun loadLocalizedPremiumPrice(
+        context: Context,
+        productId: String = "premium_upgrade",
+        onResult: (String?) -> Unit,
+    ) {
+        if (BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) {
+            PremiumRuntime.queryPremiumPrice(context, productId, onResult)
+        } else {
+            onResult(null)
+        }
+    }
+
     // Called from UI to initiate a purchase.
-    fun launchPurchase(activity: Activity, productId: String) {
+    fun launchPurchase(
+        activity: Activity,
+        productId: String,
+        onResult: ((started: Boolean, message: String?) -> Unit)? = null,
+    ) {
         when {
             BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED -> {
-                PremiumRuntime.launchPurchase(activity, productId)
+                PremiumRuntime.launchPurchase(activity, productId, onResult)
             }
 
             BuildConfig.SWITCHLY_EXTERNAL_PAYMENTS_ENABLED -> {
-                ExternalPaymentRuntime.launchCheckout(activity)
+                val opened = ExternalPaymentRuntime.launchCheckout(activity)
+                val message = if (opened) null else activity.getString(R.string.premium_external_checkout_not_opened)
+                onResult?.invoke(opened, message)
             }
 
             else -> {
-                Toast.makeText(activity, R.string.premium_unavailable_offline_build, Toast.LENGTH_LONG).show()
+                val message = activity.getString(R.string.premium_unavailable_offline_build)
+                Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
+                onResult?.invoke(false, message)
             }
         }
     }

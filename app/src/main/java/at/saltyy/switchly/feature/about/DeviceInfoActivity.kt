@@ -41,18 +41,20 @@ class DeviceInfoActivity : TilesInfoActivity() {
         val securityPatch = runCatching { Build.VERSION.SECURITY_PATCH }.getOrNull().orEmpty()
         val locale = runCatching { Locale.getDefault().toLanguageTag() }.getOrDefault("")
 
-        return listOf(
-            Tile(getString(R.string.about_android_label), android),
-            Tile(getString(R.string.about_security_patch_label), securityPatch.ifBlank { "-" }),
-            Tile(getString(R.string.about_manufacturer_label), manufacturer),
-            Tile(getString(R.string.about_model_label), model),
-            Tile(getString(R.string.about_brand_label), brand.ifBlank { "-" }),
+        return buildList {
+            add(Tile(getString(R.string.about_android_label), android, sectionTitle = getString(R.string.about_section_system), iconRes = R.drawable.info_24))
+            add(Tile(getString(R.string.about_security_patch_label), securityPatch.ifBlank { "-" }, sectionTitle = getString(R.string.about_section_system), iconRes = R.drawable.security_24))
+            add(Tile(getString(R.string.about_manufacturer_label), manufacturer, sectionTitle = getString(R.string.about_section_device), iconRes = R.drawable.account_box_24))
+            add(Tile(getString(R.string.about_model_label), model, sectionTitle = getString(R.string.about_section_device), iconRes = R.drawable.apps_24))
+            if (!brand.equals(manufacturer, ignoreCase = true)) {
+                add(Tile(getString(R.string.about_brand_label), brand.ifBlank { "-" }, sectionTitle = getString(R.string.about_section_device), iconRes = R.drawable.layers_24))
+            }
             // Tile(getString(R.string.about_device_label), device),
             // Tile(getString(R.string.about_product_label), product.ifBlank { "-" }),
             // Tile(getString(R.string.about_hardware_label), hardware.ifBlank { "-" }),
-            Tile(getString(R.string.about_abi_label), abi),
-            Tile(getString(R.string.about_locale_label), locale.ifBlank { "-" }),
-            Tile(getString(R.string.about_fingerprint_label), fingerprint.ifBlank { "-" }, showCopyButton = true),
-        )
+            add(Tile(getString(R.string.about_abi_label), abi, sectionTitle = getString(R.string.about_section_technical), iconRes = R.drawable.tune_24))
+            add(Tile(getString(R.string.about_locale_label), locale.ifBlank { "-" }, sectionTitle = getString(R.string.about_section_technical), iconRes = R.drawable.language_24))
+            add(Tile(getString(R.string.about_fingerprint_label), fingerprint.ifBlank { "-" }, sectionTitle = getString(R.string.about_section_technical), showCopyButton = true, iconRes = R.drawable.content_copy_24))
+        }
     }
 }

@@ -5,18 +5,9 @@
     <color name="switchly_bg">#FF121212</color>
 
     <!-- Cards -->
-    <color name="switchly_card_bg">#FF1E1E1E</color>
-    <color name="switchly_card_stroke">#00000000</color>
+    <color name="switchly_card_bg">#FF24272D</color>
+    <color name="switchly_card_stroke">#26FFFFFF</color>
     <color name="switchly_divider">#26FFFFFF</color>
-
-    <!-- Onboarding summary -->
-    <color name="onb_summary_surface">#FF171A1F</color>
-    <color name="onb_summary_card_alt">#FF1D2229</color>
-    <color name="onb_summary_stroke">#40F5F7FA</color>
-
-    <color name="onb_summary_text_primary">#FFF5F7FA</color>
-    <color name="onb_summary_text_secondary">#D9F5F7FA</color>
-    <color name="onb_summary_text_on_dark">#FFF5F7FA</color>
 
     <!-- Unavailable app row -->
     <color name="unavailable_row_bg">#FF20242B</color>
@@ -27,7 +18,6 @@
     <!-- Widget scanner -->
     <color name="widget_scanner_surface">#FF1E1E1E</color>
     <color name="widget_scanner_button_surface">#FF2A2A2A</color>
-    <color name="widget_scanner_stroke">#26FFFFFF</color>
 
     <color name="widget_scanner_title">#FFF5F7FA</color>
     <color name="widget_scanner_text">#CCF5F7FA</color>

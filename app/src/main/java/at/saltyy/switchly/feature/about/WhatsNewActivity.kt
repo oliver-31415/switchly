@@ -19,6 +19,9 @@
 
 package at.saltyy.switchly.feature.about
 
+import android.content.res.Configuration
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -30,7 +33,6 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
-import at.saltyy.switchly.util.SystemBarColorCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
@@ -70,9 +72,11 @@ class WhatsNewActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        val toolbarColor = toolbarForegroundColor()
+        toolbar.navigationIcon?.mutate()?.setTint(toolbarColor)
+        toolbar.setTitleTextColor(toolbarColor)
 
         // Keep status bar neutral (like other screens)
-        SystemBarColorCompat.setStatusBarColor(window, getColor(android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
 
         val notes = loadReleaseNotes()
@@ -81,6 +85,12 @@ class WhatsNewActivity : AppCompatActivity() {
 
     private fun setupReleaseTypeTabs(notes: List<ReleaseNote>) {
         val tabLayout = findViewById<TabLayout>(R.id.tabLayoutReleaseType)
+        val accent = AccentColor.getAccentColorInt(this)
+        tabLayout.setSelectedTabIndicatorColor(accent)
+        tabLayout.setTabTextColors(ColorStateList(
+            arrayOf(intArrayOf(android.R.attr.state_selected), intArrayOf()),
+            intArrayOf(accent, withAlpha(toolbarForegroundColor(), 0xB8))
+        ))
         tabLayout.removeAllTabs()
         tabLayout.addTab(tabLayout.newTab().setText(R.string.changelog_tab_public).setTag(ReleaseType.PUBLIC))
         tabLayout.addTab(tabLayout.newTab().setText(R.string.changelog_tab_beta).setTag(ReleaseType.BETA))
@@ -102,6 +112,15 @@ class WhatsNewActivity : AppCompatActivity() {
         select(ReleaseType.PUBLIC)
         tabLayout.getTabAt(0)?.select()
     }
+
+    private fun toolbarForegroundColor(): Int {
+        val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        return if (night) Color.WHITE else Color.BLACK
+    }
+
+    private fun withAlpha(color: Int, alpha: Int): Int =
+        (color and 0x00FFFFFF) or (alpha shl 24)
 
     private fun renderReleaseNotes(notes: List<ReleaseNote>) {
         val container = findViewById<LinearLayout>(R.id.releaseNotesContainer)

@@ -17,7 +17,19 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/statistics_usage_title"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/arrow_back_ios_24">
+
+            <ImageButton
+                android:id="@+id/btnStatsInfo"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end|center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/statistics_usage_info_title"
+                android:padding="12dp"
+                android:src="@drawable/info_24"
+                app:tint="@android:color/white" />
+        </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -27,7 +39,7 @@
         android:clipToPadding="false"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="0dp"
+        android:paddingTop="8dp"
         android:paddingBottom="24dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -35,6 +47,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/statsPageSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/statistics_usage_subtitle_web"
+                android:alpha="0.82"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14.5sp"
+                android:textStyle="bold" />
 
             <!-- Range chips (same look as other statistics screens) -->
             <com.google.android.material.chip.ChipGroup
@@ -84,31 +108,49 @@
 
             </com.google.android.material.chip.ChipGroup>
 
-            <TextView
-                android:id="@+id/totalLabel"
-                android:layout_width="wrap_content"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardUsageTotal"
+                style="@style/Switchly.Card"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:text="@string/usage_total_screen_time"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"/>
+                android:layout_marginTop="10dp"
+                app:cardUseCompatPadding="true"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp">
 
-            <TextView
-                android:id="@+id/totalTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/usage_time_zero_long"
-                android:textAppearance="?attr/textAppearanceHeadlineLarge"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="24sp"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/totalLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/usage_total_screen_time"
+                        android:textSize="14sp"
+                        android:alpha="0.74"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:id="@+id/totalTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/usage_time_zero_long"
+                        android:textAppearance="?attr/textAppearanceHeadlineLarge"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="30sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleType"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="12dp"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
@@ -138,7 +180,6 @@
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="12sp"
                 android:alpha="0.9" />
-
             <TextView
                 android:id="@+id/permHint"
                 android:layout_width="match_parent"

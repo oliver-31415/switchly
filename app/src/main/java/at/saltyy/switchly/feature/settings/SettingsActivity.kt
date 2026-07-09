@@ -165,6 +165,11 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<View>(R.id.cardSettingsAppearance).setOnClickListener {
             showNestedSettingsScreen("screen_appearance")
         }
+        findViewById<View>(R.id.cardSettingsDisplayShortcuts).setOnClickListener {
+            startActivity(Intent(this, ToggleOptionsActivity::class.java).apply {
+                putExtra(ToggleOptionsActivity.EXTRA_VIEW_SECTION, ToggleOptionsActivity.SECTION_DISPLAY)
+            })
+        }
         findViewById<View>(R.id.cardSettingsPermissions).setOnClickListener {
             startActivity(Intent(this, PermissionsActivity::class.java))
         }

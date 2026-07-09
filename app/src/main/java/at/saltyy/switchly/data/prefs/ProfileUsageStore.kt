@@ -25,7 +25,6 @@ import java.util.Calendar
 
 /**
  * Per-profile usage counter used for enforcing profile-specific app limits.
- *
  * The general usage dashboard can keep using [UsageStore], but blocking decisions need to be scoped to the active profile.
  * Otherwise an app that was hard-blocked in one profile can look as if it already consumed time in another profile after an NFC/schedule profile switch.
  */

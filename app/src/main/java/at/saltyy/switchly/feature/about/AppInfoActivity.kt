@@ -60,29 +60,40 @@ class AppInfoActivity : TilesInfoActivity() {
         return listOf(
             Tile(
                 getString(R.string.about_app_name_label),
-                appName
+                appName,
+                sectionTitle = getString(R.string.about_section_app),
+                iconRes = R.drawable.apps_24
             ),
             Tile(
                 getString(R.string.about_version_label),
                 "$versionName ($versionCode)",
+                sectionTitle = getString(R.string.about_section_app),
                 onClick = { PlayStoreUpdatePrompt.promptNow(this) },
                 onLongClick = {
                     unlockAndOpenDeveloperMode()
                     true
                 },
-                enableLongPressCopy = false
+                enableLongPressCopy = false,
+                showOpenButton = true,
+                iconRes = R.drawable.cloud_download_24,
+                actionIconRes = R.drawable.cloud_download_24
             ),
             Tile(
                 getString(R.string.about_apk_variant_label),
-                apkVariant
+                apkVariant,
+                sectionTitle = getString(R.string.about_section_build),
+                iconRes = R.drawable.layers_24
             ),
             Tile(
                 getString(R.string.about_build_type_label),
-                buildType
+                buildType,
+                sectionTitle = getString(R.string.about_section_build),
+                iconRes = R.drawable.tune_24
             ),
             Tile(
                 getString(R.string.about_package_label),
                 pkg,
+                sectionTitle = getString(R.string.about_section_build),
                 onClick = {
                     runCatching {
                         startActivity(
@@ -91,46 +102,67 @@ class AppInfoActivity : TilesInfoActivity() {
                             }
                         )
                     }
-                }
+                },
+                showOpenButton = true,
+                iconRes = R.drawable.info_24
             ),
             Tile(
                 getString(R.string.about_install_source_label),
                 installer,
+                sectionTitle = getString(R.string.about_section_install),
                 showCopyButton = true,
+                iconRes = R.drawable.cloud_download_24,
                 copiedToast = getString(R.string.copied)
             ),
             Tile(
                 getString(R.string.about_first_install_label),
-                firstInstall
+                firstInstall,
+                sectionTitle = getString(R.string.about_section_install),
+                iconRes = R.drawable.schedule_24
             ),
             Tile(
                 getString(R.string.about_last_update_label),
-                lastUpdate
+                lastUpdate,
+                sectionTitle = getString(R.string.about_section_install),
+                iconRes = R.drawable.schedule_24
             ),
             Tile(
                 getString(R.string.about_website_label),
-                website,
-                onClick = { openUrl(website) }
+                displayUrl(website),
+                sectionTitle = getString(R.string.about_section_links),
+                onClick = { openUrl(website) },
+                copyValue = website,
+                showOpenButton = true,
+                iconRes = R.drawable.language_24
             ),
             Tile(
                 getString(R.string.about_older_versions_label),
-                downloads,
+                displayUrl(downloads),
+                sectionTitle = getString(R.string.about_section_links),
                 onClick = { openUrl(downloads) },
+                copyValue = downloads,
                 showCopyButton = true,
+                iconRes = R.drawable.cloud_download_24,
                 copiedToast = getString(R.string.copied)
             ),
             Tile(
                 getString(R.string.about_gitlab_label),
-                repo,
+                displayUrl(repo),
+                sectionTitle = getString(R.string.about_section_links),
                 onClick = { openUrl(repo) },
+                copyValue = repo,
                 showCopyButton = true,
+                iconRes = R.drawable.layers_24,
                 copiedToast = getString(R.string.copied)
             ),
             Tile(
                 getString(R.string.about_discord_label),
-                discord,
+                displayUrl(discord),
+                sectionTitle = getString(R.string.about_section_links),
                 onClick = { openUrl(discord) },
+                copyValue = discord,
                 showCopyButton = true,
+                iconRes = R.drawable.help_24,
                 copiedToast = getString(R.string.about_discord_copied)
             ),
         )
@@ -192,4 +224,9 @@ class AppInfoActivity : TilesInfoActivity() {
         val i = Intent(Intent.ACTION_VIEW, url.toUri())
         runCatching { startActivity(i) }
     }
+
+    private fun displayUrl(url: String): String =
+        url.removePrefix("https://")
+            .removePrefix("http://")
+            .removeSuffix("/")
 }

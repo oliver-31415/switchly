@@ -67,13 +67,11 @@ import java.util.WeakHashMap
 
 /**
  * Runtime fallback for CUSTOM accent mode.
- *
  * Why this exists:
  * - XML theme attributes (?attr/colorPrimary) are compile-time styles and cannot be swapped to an arbitrary
  *   user-chosen color globally without a full theme-overlay system.
  * - Switchly already applies custom accent in many places, but some Material/AppCompat widgets still resolve to
  *   the default green theme color.
- *
  * This pass replaces common occurrences of the default accent with the selected custom accent.
  * It only runs when "Custom" accent is selected.
  */
@@ -115,6 +113,12 @@ object CustomAccentApplier {
         val accent = AccentColor.getAccentColorInt(activity)
         val defaultAccent = ContextCompat.getColor(activity, R.color.accent_default_green)
         recolorRecursive(root, defaultAccent, accent)
+    }
+
+    fun tintSwitch(switch: SwitchCompat) {
+        val accent = AccentColor.getAccentColorInt(switch.context)
+        switch.thumbTintList = buildSwitchThumbTint(accent)
+        switch.trackTintList = buildSwitchTrackTint(accent)
     }
 
     fun applyToDialog(dialog: AlertDialog) {
@@ -853,8 +857,8 @@ object CustomAccentApplier {
         val disabled = intArrayOf(-android.R.attr.state_enabled)
         val checked = intArrayOf(android.R.attr.state_checked)
         val empty = intArrayOf()
-        val thumbOff = ColorUtils.blendARGB(accent, Color.WHITE, 0.72f)
-        val thumbDisabled = ColorUtils.blendARGB(accent, Color.LTGRAY, 0.80f)
+        val thumbOff = Color.WHITE
+        val thumbDisabled = Color.LTGRAY
         return ColorStateList(
             arrayOf(disabled, checked, empty),
             intArrayOf(thumbDisabled, accent, thumbOff)

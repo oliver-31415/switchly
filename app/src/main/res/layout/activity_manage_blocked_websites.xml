@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/blocked_websites_title"
+            app:title="@string/website_rules_title"
             app:navigationIcon="@drawable/arrow_back_ios_24" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -58,38 +58,57 @@
 	                    android:text="@string/block_websites"
 	                    android:textSize="16sp" />
 
-	                <TextView
-	                    android:layout_width="match_parent"
-	                    android:layout_height="wrap_content"
-	                    android:layout_marginTop="8dp"
-	                    android:text="@string/block_websites_desc"
-	                    android:textColor="?attr/colorOnSurface"
-	                    android:alpha="0.7" />
 	            </LinearLayout>
 
 	        </com.google.android.material.card.MaterialCardView>
 
 	    </LinearLayout>
 
-	    <androidx.recyclerview.widget.RecyclerView
-	        android:id="@+id/list"
-	        android:layout_width="match_parent"
-	        android:layout_height="0dp"
-	        android:layout_weight="1"
-	        android:padding="16dp" />
+        <FrameLayout
+            android:id="@+id/listContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:padding="16dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/emptyCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="16dp"
+                android:visibility="gone"
+                app:cardUseCompatPadding="true"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="?android:attr/colorBackground">
+
+                <TextView
+                    android:id="@+id/tvEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:lineSpacingExtra="2dp"
+                    android:paddingStart="18dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingBottom="18dp"
+                    android:text="@string/blocked_websites_empty"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp"
+                    android:alpha="0.78" />
+            </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
 
 	</LinearLayout>
-
-    <TextView
-        android:id="@+id/tvEmpty"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:padding="16dp"
-        android:text="@string/blocked_websites_empty"
-        android:textColor="?attr/colorOnSurface"
-        android:alpha="0.7"
-        android:visibility="gone" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"

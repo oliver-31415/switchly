@@ -33,8 +33,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="12dp"
             android:layout_marginBottom="12dp"
-            android:visibility="gone"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp">
 
@@ -75,24 +75,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- In-app blocking limitations note -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="@string/in_app_blocking_limitations_note"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="13sp" />
         </com.google.android.material.card.MaterialCardView>
 
         <!-- In-app limit (timed rules disabled for now) -->
@@ -163,6 +145,7 @@
 
         <!-- YouTube -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardYouTube"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
@@ -243,6 +226,7 @@
 
         <!-- Instagram -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardInstagram"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
@@ -330,6 +314,7 @@
 
         <!-- X/Twitter -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardX"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
@@ -410,6 +395,7 @@
 
         <!-- Snapchat -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSnapchat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"

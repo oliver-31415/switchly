@@ -2,7 +2,7 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Google auth result states -->
+    <!-- Authentication status -->
     <!-- ====================================================== -->
     <string name="auth_sign_in_success">Mit Google angemeldet</string>
     <string name="auth_sign_in_cancelled">Anmeldung abgebrochen</string>
@@ -11,6 +11,8 @@
     <string name="auth_no_matching_google_accounts_found">Keine passenden Google-Konten gefunden</string>
     <string name="auth_missing_google_server_client_id">Google-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
     <string name="auth_firebase_not_configured">Cloud-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
+    <string name="auth_email_sign_in_success">Angemeldet</string>
+    <string name="auth_email_create_success">Konto erstellt. Bestätigungs-E-Mail wurde gesendet.</string>
 
     <!-- ====================================================== -->
     <!-- Account deletion -->
@@ -25,7 +27,7 @@
     <string name="account_deleted">Konto gelöscht</string>
 
     <!-- ====================================================== -->
-    <!-- Google account preferences -->
+    <!-- Account preferences -->
     <!-- ====================================================== -->
     <string name="pref_google_account_title">Konto</string>
     <string name="pref_google_account_summary_logged_out">Nicht angemeldet</string>
@@ -55,7 +57,7 @@
     <string name="pref_cloud_delete_backups_summary">Ausgewählte Backups aus dem Cloud-Verlauf entfernen</string>
 
     <!-- ====================================================== -->
-    <!-- Local file backup and restore -->
+    <!-- File backup and restore -->
     <!-- ====================================================== -->
     <string name="pref_file_backup_title">In Datei sichern</string>
     <string name="pref_file_backup_summary">Lokales JSON-Backup ohne Anmeldung exportieren. Die Datei kann persönliche Blocking-Daten enthalten.</string>
@@ -67,26 +69,31 @@
     <string name="file_restore_error_fmt">Datei-Wiederherstellung fehlgeschlagen: %1$s</string>
 
     <!-- ====================================================== -->
-    <!-- Backup/restore confirmation dialogs -->
+    <!-- Backup and restore dialogs -->
     <!-- ====================================================== -->
     <string name="settings_delete_backups_title">Backups löschen</string>
     <string name="settings_restore_choose_title">Backup auswählen</string>
     <string name="settings_last_backup">Letztes Backup: %1$s</string>
     <string name="settings_confirm_backup_title">Sichern</string>
-    <string name="settings_confirm_backup_message">Aktuelle Einstellungen und Profile in der Cloud sichern?</string>
     <string name="settings_confirm_restore_title">Wiederherstellen</string>
     <string name="settings_confirm_restore_message">Backup aus der Cloud laden und lokale Einstellungen überschreiben?</string>
     <string name="settings_confirm_file_backup_title">In Datei sichern</string>
-    <string name="settings_confirm_file_backup_message">Erstelle ein lokales JSON-Backup deiner Switchly-Einstellungen, Profile, Zeitpläne, Statistiken, gekoppelten Tags, App-/Domain-Regeln und weiteren persönlichen Blocking-Daten. Bewahre diese Datei sicher auf und teile sie nicht öffentlich.</string>
     <string name="settings_confirm_file_restore_title">Aus Datei wiederherstellen</string>
     <string name="settings_confirm_file_restore_message">Lokales JSON-Backup wiederherstellen und aktuelle Switchly-Daten überschreiben? Aus Sicherheitsgründen werden Switchly und aktive Zeitpläne nach der Wiederherstellung deaktiviert.</string>
+    <string name="settings_confirm_backup_message_with_included_categories">Aktuelle Daten in der Cloud sichern?\n\nEnthalten:\n%1$s</string>
+    <string name="settings_confirm_backup_message_with_categories">Aktuelle Daten in der Cloud sichern?\n\nEnthalten:\n%1$s\n\nAusgeschlossen/bei Restore behalten:\n%2$s</string>
+    <string name="settings_confirm_file_backup_message_with_included_categories">Lokale Backup-Datei erstellen?\n\nEnthalten:\n%1$s</string>
+    <string name="settings_confirm_file_backup_message_with_categories">Lokale Backup-Datei erstellen?\n\nEnthalten:\n%1$s\n\nAusgeschlossen/bei Restore behalten:\n%2$s</string>
 
     <!-- ====================================================== -->
-    <!-- Email account auth flow -->
+    <!-- Password reset -->
     <!-- ====================================================== -->
-    <string name="auth_email_sign_in_success">Angemeldet</string>
-    <string name="auth_email_create_success">Konto erstellt. Bestätigungs-E-Mail wurde gesendet.</string>
     <string name="auth_password_reset_email_sent">E-Mail zum Zurücksetzen wurde gesendet</string>
+    <string name="settings_account_action_reset_password">Passwort zurücksetzen</string>
+
+    <!-- ====================================================== -->
+    <!-- Account dialogs -->
+    <!-- ====================================================== -->
     <string name="settings_account_dialog_title">Konto</string>
     <string name="settings_account_logged_in">Angemeldet</string>
     <string name="settings_account_logged_in_as">Angemeldet als %1$s</string>
@@ -94,7 +101,11 @@
     <string name="settings_account_signing_in">Anmeldung läuft…</string>
     <string name="settings_account_action_sign_in">Anmelden</string>
     <string name="settings_account_action_create">Konto erstellen</string>
-    <string name="settings_account_action_reset_password">Passwort zurücksetzen</string>
+    <string name="settings_account_sign_in_summary">Nutze dein Switchly-Konto, um Backups zu synchronisieren und Premium wiederherzustellen.</string>
+    <string name="settings_account_create_summary">Erstelle ein Switchly-Konto für Cloud-Backups und Wiederherstellungsoptionen.</string>
+    <string name="settings_account_google_summary">Nutze dein Google-Konto für eine schnellere Anmeldung.</string>
+    <string name="settings_account_email_sign_in_summary">Melde dich mit E-Mail-Adresse und Passwort an.</string>
+    <string name="settings_account_email_create_summary">Erstelle ein Konto mit E-Mail-Adresse und Passwort.</string>
     <string name="settings_account_continue_google">Mit Google fortfahren</string>
     <string name="settings_account_sign_in_email">Mit E-Mail anmelden</string>
     <string name="settings_account_create_email">Konto mit E-Mail erstellen</string>
@@ -104,13 +115,13 @@
     <string name="settings_account_invalid_email">Gib eine gültige E-Mail-Adresse ein</string>
     <string name="settings_account_password_required">Gib dein Passwort ein</string>
     <plurals name="settings_account_password_min_length">
-            <item quantity="one">Das Passwort muss mindestens %1$d Zeichen lang sein</item>
-            <item quantity="other">Das Passwort muss mindestens %1$d Zeichen lang sein</item>
-        </plurals>
+        <item quantity="one">Das Passwort muss mindestens %1$d Zeichen lang sein</item>
+        <item quantity="other">Das Passwort muss mindestens %1$d Zeichen lang sein</item>
+    </plurals>
     <string name="settings_account_reset_password_message">Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten.</string>
 
     <!-- ====================================================== -->
-    <!-- Auth error mapping -->
+    <!-- Authentication errors -->
     <!-- ====================================================== -->
     <string name="auth_error_invalid_login">Ungültige E-Mail oder falsches Passwort</string>
     <string name="auth_error_no_account_for_email">Kein Konto für diese E-Mail-Adresse gefunden</string>
@@ -122,5 +133,22 @@
     <string name="auth_error_sign_in_generic">Anmeldung nicht möglich</string>
     <string name="auth_error_create_account_generic">Konto konnte nicht erstellt werden</string>
     <string name="auth_error_reset_password_generic">E-Mail zum Zurücksetzen konnte nicht gesendet werden</string>
+
+    <!-- ====================================================== -->
+    <!-- Backup category picker -->
+    <!-- ====================================================== -->
+    <string name="backup_select_preset_title">Backup-Typ wählen</string>
+    <string name="backup_preset_full">Vollständiges Backup</string>
+    <string name="backup_preset_privacy">Datenschutz-fokussiertes Backup</string>
+    <string name="backup_preset_profiles_only">Nur Profile</string>
+    <string name="backup_preset_manual_custom">Manuell/letzte Auswahl</string>
+    <string name="backup_preset_full_summary">Alles inklusive Regeln, Einstellungen, Keys, Zeitplänen, Zählern und App-Optionen.</string>
+    <string name="backup_preset_privacy_summary">Kern-Setup ohne Usage-/Statistik-Zähler.</string>
+    <string name="backup_preset_profiles_only_summary">Nur Profile und ausgewählte App-Listen.</string>
+    <string name="backup_preset_manual_custom_summary">Kategorien prüfen und die letzte eigene Auswahl wiederverwenden.</string>
+    <string name="backup_select_categories_title">Backup-Daten wählen</string>
+    <string name="backup_category_sensitive_suffix"> (sensibel)</string>
+    <string name="backup_create_with_selection">Backup erstellen</string>
+    <string name="backup_select_at_least_one">Wähle mindestens eine Backup-Kategorie</string>
 
 </resources>

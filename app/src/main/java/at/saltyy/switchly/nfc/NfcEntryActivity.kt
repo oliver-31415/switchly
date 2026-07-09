@@ -20,12 +20,23 @@
 package at.saltyy.switchly.nfc
 
 import android.app.Activity
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.text.InputType
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.EditText
 import android.content.Intent
 import android.net.Uri
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.nfc.tech.Ndef
 import android.os.Bundle
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.IntentCompat
 import androidx.preference.PreferenceManager
@@ -41,14 +52,17 @@ import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.TempEnableCountStore
 import at.saltyy.switchly.feature.qr.QrScanActivity
+import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.Dialogs
+import at.saltyy.switchly.ui.dialog.showAccented
+import java.util.Locale
 
 /**
  * NFC/deep-link entry point.
- *
  * Supported formats:
- *   switchly://switch/<action>
- *   switchly://profile/<Profile>/<action>
+ *   Canonical: switchly://action?type=<action>[&duration=<minutes|ask>][&profile=<Profile>]
+ *   Legacy: switchly://switch/<action> and switchly://profile/<Profile>/<action>
  */
 class NfcEntryActivity : Activity() {
 
@@ -72,13 +86,18 @@ class NfcEntryActivity : Activity() {
         // If an NFC tag parcelable exists, this came from NFC.
         // QR scanner routes here via deep-link without EXTRA_TAG.
         val fromNfc = tag != null
-        val scanSource = intent?.getStringExtra(QrScanActivity.EXTRA_SCAN_SOURCE)
-        val fromBarcode = !fromNfc && scanSource == "barcode"
-        val fromQr = !fromNfc && scanSource == "qr"
+        val rawScanSource = intent?.getStringExtra(QrScanActivity.EXTRA_SCAN_SOURCE)
+        val trustedScanSource = if (!fromNfc && isTrustedInternalScanDispatch(intent, rawScanSource)) {
+            rawScanSource
+        } else {
+            null
+        }
+        val fromBarcode = trustedScanSource == "barcode"
+        val fromQr = trustedScanSource == "qr"
 
         // NfcEntryActivity is exported for Android's NFC dispatch system.
-        // Do not treat arbitrary non-NFC ACTION_VIEW launches as trusted QR/barcode scans. 
-        // The in-app QR and barcode scanners explicitly set EXTRA_SCAN_SOURCE before routing here.
+        // Do not treat arbitrary non-NFC ACTION_VIEW launches as trusted QR/barcode scans.
+        // In-app QR/barcode dispatches must carry a one-time token created by Switchly.
         if (!fromNfc && !fromQr && !fromBarcode) {
             toast(
                 getString(
@@ -107,29 +126,12 @@ class NfcEntryActivity : Activity() {
             return
         }
 
-        // Optional: UID-only paired tag support for NFC source.
-        // If one or more tag UIDs are paired, only those exact NFC tags are allowed.
-        // QR flow is intentionally not gated by paired UID.
-        if (fromNfc) {
-            val sp = PreferenceManager.getDefaultSharedPreferences(this)
-            val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-            if (pairedUidsEnabled) {
-                val pairedUids = NfcUidPairingStore.getPairedUidsHex(this)
-                if (pairedUids.isNotEmpty()) {
-                    val seenUid = NfcTagUid.normalizeUidHex(NfcTagUid.uidHex(tag))
-                    if (seenUid.isBlank() || pairedUids.none { it.equals(seenUid, ignoreCase = true) }) {
-                        toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_wrong_tag_paired_uid_required)))
-                        finish()
-                        return
-                    }
-                }
-            }
-        }
-
         val data: Uri? = extractSwitchlyUri(intent)
-        if (data == null || !NfcSchema.isSupportedCommandUri(data)) {
+        val command = NfcSchema.parseCommandUri(data)
+        if (data == null || command == null) {
             if (fromNfc) {
-                // Read-only/UID-paired tags should still be able to toggle Switchly without requiring a written switchly:// payload.
+                // UID-only paired tags are only used as a fallback for tags without a written Switchly action.
+                // Written switchly:// NFC action tags work without pairing as long as NFC control is allowed.
                 val sp = PreferenceManager.getDefaultSharedPreferences(this)
                 val pairedUidsEnabled = sp.getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
                 val pairedUids = if (pairedUidsEnabled) NfcUidPairingStore.getPairedUidsHex(this) else emptySet()
@@ -162,18 +164,18 @@ class NfcEntryActivity : Activity() {
             NfcScanCountStore.incrementToday(this)
         }
 
-        when (data.host?.lowercase()) {
-            NfcSchema.HOST_SWITCH -> handleGlobalAction(data, tag, fromNfc, fromBarcode)
-            NfcSchema.HOST_PROFILE -> handleProfileAction(data, tag, fromNfc, fromBarcode)
-            else -> toast(
-                getString(
-                    R.string.nfc_action_error_fmt,
-                    getString(R.string.nfc_error_unknown_host)
-                )
-            )
+        val finishAfterHandling = when (command) {
+            is NfcSchema.GlobalCommand -> handleGlobalAction(command.action, tag, fromNfc, fromBarcode)
+            is NfcSchema.ProfileCommand -> handleProfileAction(command.profile, command.action, tag, fromNfc, fromBarcode)
         }
 
-        finish()
+        if (finishAfterHandling) finish()
+    }
+
+    private fun isTrustedInternalScanDispatch(intent: Intent?, source: String?): Boolean {
+        if (source != "qr" && source != "barcode") return false
+        val token = intent?.getStringExtra(InternalScanDispatchGuard.EXTRA_TOKEN)
+        return InternalScanDispatchGuard.consume(this, source, token)
     }
 
     private fun extractSwitchlyUri(intent: Intent?): Uri? {
@@ -278,8 +280,7 @@ class NfcEntryActivity : Activity() {
         toast(getString(R.string.nfc_feedback_started, getString(R.string.app_name)))
     }
 
-    private fun handleGlobalAction(data: Uri, tag: android.nfc.Tag?, fromNfc: Boolean, fromBarcode: Boolean) {
-        val action = data.lastPathSegment?.lowercase() ?: return
+    private fun handleGlobalAction(action: String, tag: android.nfc.Tag?, fromNfc: Boolean, fromBarcode: Boolean): Boolean {
 
         when {
             action in listOf("start", "enable", "on", "activate") -> {
@@ -308,6 +309,16 @@ class NfcEntryActivity : Activity() {
             }
 
             action.startsWith("temp_enable") -> {
+                if (action == "temp_enable") {
+                    showTempEnableDurationDialog(getString(R.string.app_name)) { durationMs ->
+                        SwitchModeStore.setTemporarilyEnabled(this, durationMs)
+                        BlockingRuntime.ensureRunning(this)
+                        TempEnableCountStore.incrementToday(this)
+                        toast(getString(R.string.nfc_feedback_started, getString(R.string.app_name)))
+                    }
+                    return false
+                }
+
                 val durationMs = resolveTempDurationMs(action, prefix = "temp_enable")
                 SwitchModeStore.setTemporarilyEnabled(this, durationMs)
                 BlockingRuntime.ensureRunning(this)
@@ -316,7 +327,20 @@ class NfcEntryActivity : Activity() {
             }
 
             action.startsWith("temp_disable") -> {
-                if (!consumeTempDisableQuotaIfNeeded(tag)) return
+                if (action == "temp_disable") {
+                    showTempDurationDialog(
+                        label = getString(R.string.app_name),
+                        messageRes = R.string.temp_disable_duration_message
+                    ) { durationMs ->
+                        if (!consumeTempDisableQuotaIfNeeded(tag)) return@showTempDurationDialog
+                        SwitchModeStore.setTemporarilyDisabled(this, durationMs)
+                        BlockingRuntime.ensureRunning(this)
+                        AppLogStore.append(this, scanSourceLogTag(fromNfc, fromBarcode), "Action applied action=$action duration=ask")
+                        toast(getString(R.string.nfc_feedback_stopped, getString(R.string.app_name)))
+                    }
+                    return false
+                }
+                if (!consumeTempDisableQuotaIfNeeded(tag)) return true
                 val durationMs = resolveTempDurationMs(action, prefix = "temp_disable")
                 SwitchModeStore.setTemporarilyDisabled(this, durationMs)
                 BlockingRuntime.ensureRunning(this)
@@ -324,7 +348,7 @@ class NfcEntryActivity : Activity() {
             }
 
             action.startsWith("reentry") -> {
-                if (!consumeTempDisableQuotaIfNeeded(tag)) return
+                if (!consumeTempDisableQuotaIfNeeded(tag)) return true
                 val durationMs = resolveTempDurationMs(action, prefix = "reentry")
                 SwitchModeStore.setTemporarilyDisabled(this, durationMs)
                 BlockingRuntime.ensureRunning(this)
@@ -340,26 +364,24 @@ class NfcEntryActivity : Activity() {
                 toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
             }
         }
+        return true
     }
 
-    private fun handleProfileAction(data: Uri, tag: android.nfc.Tag?, fromNfc: Boolean, fromBarcode: Boolean) {
+    private fun handleProfileAction(profile: String, action: String, tag: android.nfc.Tag?, fromNfc: Boolean, fromBarcode: Boolean): Boolean {
         val sourceLogTag = scanSourceLogTag(fromNfc, fromBarcode)
         AppLogStore.append(this, sourceLogTag, "Tag scanned")
-        val segs = data.pathSegments ?: emptyList()
-        val profile = segs.getOrNull(0)?.trim().orEmpty()
-        val action = segs.getOrNull(1)?.lowercase() ?: "toggle"
 
         if (profile.isBlank()) {
             AppLogStore.append(this, sourceLogTag, "Action failed reason=missing_profile")
             toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_missing_profile)))
-            return
+            return true
         }
 
         val allProfiles = ProfileStore.getProfiles(this)
         if (!allProfiles.contains(profile)) {
             AppLogStore.append(this, sourceLogTag, "Action failed reason=unknown_profile")
             toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_profile_fmt, profile)))
-            return
+            return true
         }
 
         AppLogStore.append(this, sourceLogTag, "Tag resolved action=$action profile=$profile")
@@ -401,7 +423,7 @@ class NfcEntryActivity : Activity() {
                     SwitchModeStore.setEnabled(this, true)
                     BlockingRuntime.ensureRunning(this)
                     toast(getString(R.string.nfc_feedback_started, profile))
-                    return
+                    return true
                 }
 
                 if (current == profile) {
@@ -417,6 +439,23 @@ class NfcEntryActivity : Activity() {
 
             action.startsWith("temp_enable") -> {
                 val previousProfile = ProfileStore.getCurrent(this)
+                if (action == "temp_enable") {
+                    showTempEnableDurationDialog(profile) { durationMs ->
+                        SwitchModeStore.setTemporarilyEnabled(
+                            this,
+                            durationMs,
+                            previousProfileOverride = previousProfile,
+                            targetProfileForLog = profile
+                        )
+                        ProfileStore.setCurrent(this, profile)
+                        BlockingRuntime.ensureRunning(this)
+                        TempEnableCountStore.incrementToday(this)
+                        AppLogStore.append(this, sourceLogTag, "Action applied action=$action profile=$profile duration=ask")
+                        toast(getString(R.string.nfc_feedback_started, profile))
+                    }
+                    return false
+                }
+
                 val durationMs = resolveTempDurationMs(action, prefix = "temp_enable")
                 SwitchModeStore.setTemporarilyEnabled(
                     this,
@@ -434,7 +473,20 @@ class NfcEntryActivity : Activity() {
             action.startsWith("temp_disable") -> {
                 val current = ProfileStore.getCurrent(this)
                 if (current == profile) {
-                    if (!consumeTempDisableQuotaIfNeeded(tag)) return
+                    if (action == "temp_disable") {
+                        showTempDurationDialog(
+                            label = profile,
+                            messageRes = R.string.temp_disable_duration_message
+                        ) { durationMs ->
+                            if (!consumeTempDisableQuotaIfNeeded(tag)) return@showTempDurationDialog
+                            SwitchModeStore.setTemporarilyDisabled(this, durationMs)
+                            BlockingRuntime.ensureRunning(this)
+                            AppLogStore.append(this, sourceLogTag, "Action applied action=$action profile=$profile duration=ask")
+                            toast(getString(R.string.nfc_feedback_stopped, profile))
+                        }
+                        return false
+                    }
+                    if (!consumeTempDisableQuotaIfNeeded(tag)) return true
                     val durationMs = resolveTempDurationMs(action, prefix = "temp_disable")
                     SwitchModeStore.setTemporarilyDisabled(this, durationMs)
                     BlockingRuntime.ensureRunning(this)
@@ -447,7 +499,7 @@ class NfcEntryActivity : Activity() {
             action.startsWith("reentry") -> {
                 val current = ProfileStore.getCurrent(this)
                 if (current == profile) {
-                    if (!consumeTempDisableQuotaIfNeeded(tag)) return
+                    if (!consumeTempDisableQuotaIfNeeded(tag)) return true
                     val durationMs = resolveTempDurationMs(action, prefix = "reentry")
                     SwitchModeStore.setTemporarilyDisabled(this, durationMs)
                     BlockingRuntime.ensureRunning(this)
@@ -462,6 +514,134 @@ class NfcEntryActivity : Activity() {
             }
 
             else -> toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
+        }
+        return true
+    }
+
+    private fun showTempEnableDurationDialog(label: String, applyDuration: (Long) -> Unit) {
+        showTempDurationDialog(
+            label = label,
+            messageRes = R.string.temp_enable_duration_message,
+            applyDuration = applyDuration
+        )
+    }
+
+    private fun showTempDurationDialog(
+        label: String,
+        messageRes: Int,
+        applyDuration: (Long) -> Unit
+    ) {
+        // Universal temporary actions are meant to be flexible.
+        // Fixed durations already exist as explicit actions such as temp_enable15/temp_disable15, so bare temp_enable/temp_disable opens the custom duration input directly.
+        showCustomTempDurationDialog(label, messageRes, applyDuration)
+    }
+
+    private fun showCustomTempDurationDialog(
+        label: String,
+        messageRes: Int,
+        applyDuration: (Long) -> Unit
+    ) {
+        val accent = AccentColor.getAccentColorInt(this)
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            hint = getString(R.string.temp_enable_duration_custom_hint)
+            isSingleLine = true
+            backgroundTintList = ColorStateList.valueOf(accent)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        fun presetChip(minutes: Long): TextView {
+            return TextView(this).apply {
+                text = getString(R.string.temp_duration_preset_minutes, minutes)
+                textSize = 14f
+                gravity = Gravity.CENTER
+                setTextColor(accent)
+                setPadding(dp(9), dp(6), dp(9), dp(6))
+                background = GradientDrawable().apply {
+                    cornerRadius = dp(18).toFloat()
+                    setColor(Color.TRANSPARENT)
+                    setStroke(dp(1), accent)
+                }
+                setOnClickListener {
+                    input.setText(String.format(Locale.getDefault(), "%d", minutes))
+                    input.setSelection(input.text?.length ?: 0)
+                }
+            }
+        }
+
+        val presetRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        listOf(5L, 10L, 15L, 30L, 60L).forEachIndexed { index, minutes ->
+            presetRow.addView(
+                presetChip(minutes),
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (index > 0) marginStart = dp(4)
+                }
+            )
+        }
+
+        val inputContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val horizontalPadding = dp(24)
+            setPadding(horizontalPadding, 0, horizontalPadding, 0)
+            addView(TextView(this@NfcEntryActivity).apply {
+                text = getString(messageRes, label)
+                textSize = 14f
+                setLineSpacing(0f, 1.15f)
+            })
+            addView(TextView(this@NfcEntryActivity).apply {
+                text = getString(R.string.temp_duration_quick_presets)
+                textSize = 12.5f
+                alpha = 0.74f
+                setPadding(0, dp(9), 0, dp(4))
+            })
+            addView(presetRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            addView(input, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                topMargin = dp(8)
+            })
+        }
+
+        val dialog = Dialogs.builder(this)
+            .setTitle(getString(R.string.temp_enable_duration_custom_title))
+            .setView(inputContainer)
+            .setNegativeButton(R.string.cancel) { _, _ -> finish() }
+            .setPositiveButton(R.string.ok, null)
+            .setOnCancelListener { finish() }
+            .showAccented()
+
+        centerTempDurationDialog(dialog)
+
+        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val selectedMinutes = input.text?.toString()?.trim()?.toLongOrNull()
+            if (selectedMinutes == null || selectedMinutes !in 1L..1440L) {
+                toast(getString(R.string.temp_enable_duration_invalid))
+                return@setOnClickListener
+            }
+
+            applyDuration(selectedMinutes * 60_000L)
+            dialog.dismiss()
+            finish()
+        }
+    }
+
+    private fun dp(value: Int): Int = TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        value.toFloat(),
+        resources.displayMetrics
+    ).toInt()
+
+    private fun centerTempDurationDialog(dialog: androidx.appcompat.app.AlertDialog) {
+        dialog.window?.let { window ->
+            window.setGravity(Gravity.CENTER)
+            val attrs = window.attributes
+            attrs.gravity = Gravity.CENTER
+            attrs.y = 0
+            window.attributes = attrs
         }
     }
 
@@ -505,9 +685,9 @@ class NfcEntryActivity : Activity() {
 
     /**
      * Parses:
-     *  - temp_disable     -> default
+     *  - temp_disable     -> ask user when scanned
      *  - temp_disable10   -> 10 min
-     *  - temp_enable      -> default
+     *  - temp_enable      -> ask user when scanned
      *  - temp_enable10    -> 10 min
      *  - reentry          -> default
      *  - reentry10        -> 10 min
@@ -518,7 +698,7 @@ class NfcEntryActivity : Activity() {
 
         val suffix = action.removePrefix(prefix).removePrefix("_")
         val minutes = suffix.toLongOrNull() ?: return base
-        val clampedMinutes = minutes.coerceIn(1L, 120L)
+        val clampedMinutes = minutes.coerceIn(1L, 1440L)
         return clampedMinutes * 60_000L
     }
 

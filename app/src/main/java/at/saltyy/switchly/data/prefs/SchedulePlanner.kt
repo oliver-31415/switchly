@@ -31,7 +31,6 @@ import kotlin.math.max
 
 /**
  * Calculates upcoming schedule boundaries and manages the alarm that triggers schedule re-evaluation.
- *
  * NOTE:
  * Inexact alarms can be deferred heavily in Doze, so time schedules may only apply when the device wakes/user opens the app.
  * We therefore prefer exact alarms *when allowed*, otherwise fall back to inexact.
@@ -78,7 +77,7 @@ object SchedulePlanner {
         }
 
         if (timeBased.isEmpty()) {
-            saveNextBoundary(ctx, -1)
+            saveNextBoundary(ctx, -1L)
             cancelAlarm(ctx)
             ensureFallbackAlarm(ctx, enabled = false)
             ensureDailyWatchdog(ctx, enabled = all.isNotEmpty())
@@ -173,7 +172,7 @@ object SchedulePlanner {
             ensureFallbackAlarm(ctx, enabled = true)
             ensureDailyWatchdog(ctx, enabled = true)
         } else {
-            saveNextBoundary(ctx, -1)
+            saveNextBoundary(ctx, -1L)
             cancelAlarm(ctx)
             ensureFallbackAlarm(ctx, enabled = false)
             ensureDailyWatchdog(ctx, enabled = all.isNotEmpty())
@@ -182,7 +181,24 @@ object SchedulePlanner {
 
     fun getNextBoundaryMillis(context: Context): Long {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getLong(KEY_NEXT_BOUNDARY_MS, -1)
+        val raw = sp.all[KEY_NEXT_BOUNDARY_MS]
+
+        val boundaryMs = when (raw) {
+            is Long -> raw
+            is Int -> raw.toLong()
+            is Number -> raw.toLong()
+            is String -> raw.toLongOrNull() ?: -1L
+            null -> -1L
+            else -> -1L
+        }
+
+        // Older builds could leave this preference as Int/String.
+        // SharedPreferences.getLong() would crash with ClassCastException in that case, so normalize it here before the UI reads it again.
+        if (raw !is Long) {
+            sp.edit { putLong(KEY_NEXT_BOUNDARY_MS, boundaryMs) }
+        }
+
+        return boundaryMs
     }
 
     private fun saveNextBoundary(ctx: Context, t: Long) {

@@ -10,8 +10,19 @@
     <string name="about_device_info_summary">Android-Version, Modell und Gerät</string>
     <string name="about_developer_info_title">Entwicklerinfo</string>
     <string name="about_developer_info_summary">Entwickler- und Build-Details</string>
-    <string name="about_other_switchly_products_title">Weitere Switchly-Produkte</string>
-    <string name="about_other_switchly_products_summary">Switchly Lite, Launcher und spätere Extras</string>
+    <string name="about_other_switchly_products_title">Weitere Apps</string>
+    <string name="about_other_switchly_products_summary">Switchly Lite, Launcher und verwandte Apps</string>
+    <string name="about_section_app">App</string>
+    <string name="about_section_build">Build</string>
+    <string name="about_section_install">Installation</string>
+    <string name="about_section_links">Links</string>
+    <string name="about_section_system">System</string>
+    <string name="about_section_device">Gerät</string>
+    <string name="about_section_technical">Technisch</string>
+    <string name="about_section_contact">Kontakt</string>
+    <string name="about_section_admin_status">Admin-Status</string>
+    <string name="about_section_adb_tools">ADB-Tools</string>
+    <string name="about_section_documentation">Dokumentation</string>
 
     <!-- ====================================================== -->
     <!-- Device and app info labels -->
@@ -60,9 +71,11 @@
     <string name="about_switchly_lite_bonus">Eine leichtere Version für einfache Abläufe wie NFC, Tastenaktionen und zeitgesteuerte Pläne.</string>
     <string name="about_switchly_launcher">Switchly Launcher</string>
     <string name="about_switchly_launcher_bonus">Ein simpler und starker Launcher für ein minimaleres, ablenkungsärmeres Setup.</string>
+    <string name="about_other_apps_info_title">Weitere Apps</string>
+    <string name="about_other_apps_info_body">Switchly Lite ist die leichtere App für einfache NFC-, Button- und Zeitplan-Setups.\n\nSwitchly Launcher ist ein minimalistischer Launcher für strengere, ablenkungsärmere Handy-Setups.</string>
 
     <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
+    <!-- Developer labels and link feedback -->
     <!-- ====================================================== -->
     <string name="dev_name_line">Entwickler: Saltyy (Andi S.)</string>
     <string name="about_no_browser">Keine Browser-App gefunden</string>

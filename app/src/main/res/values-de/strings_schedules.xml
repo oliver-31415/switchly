@@ -2,27 +2,113 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Schedule list and editor basics -->
+    <!-- Schedule screen -->
     <!-- ====================================================== -->
     <string name="schedules_title">Zeitpläne</string>
-    <string name="schedules_add">Zeitplan hinzufügen</string>
-    <string name="schedules_edit">Zeitplan bearbeiten</string>
-    <string name="schedules_choose_type">Zeitplan-Typ wählen</string>
-    <string name="schedule_item_title_placeholder">Arbeit</string>
-    <string name="schedule_item_subtitle_placeholder">Mo–Fr - 08:00–16:00</string>
     <string name="schedules_next_title">Nächster Zeitplan</string>
     <string name="schedules_next_at">Nächster Zeitplan: %1$s</string>
     <string name="schedules_next_none">Kein kommender Zeitplan</string>
     <string name="schedules_next_inactive_control_mode">Inaktiv — der Steuerungsmodus blockiert Zeitpläne</string>
+    <string name="schedules_empty_title">Noch keine Zeitpläne</string>
+    <string name="schedules_empty_body">Tippe auf +, um deinen ersten Zeit-, WLAN-, Bluetooth- oder Standort-Zeitplan hinzuzufügen.</string>
+    <string name="empty_action_add_first_schedule">Ersten Zeitplan hinzufügen</string>
 
     <!-- ====================================================== -->
-    <!-- Schedule types and actions -->
+    <!-- Schedule editor -->
+    <!-- ====================================================== -->
+    <string name="schedules_add">Zeitplan hinzufügen</string>
+    <string name="schedules_edit">Zeitplan bearbeiten</string>
+    <string name="schedules_field_action">Das tun</string>
+    <string name="schedules_field_profile">Profil</string>
+    <string name="schedules_field_title_hint">Titel (optional)</string>
+    <string name="schedules_field_note_hint">Notizen (optional)</string>
+    <string name="schedules_days">Tage</string>
+    <string name="schedules_start_time">Startzeit</string>
+    <string name="schedules_end_time">Endzeit</string>
+    <string name="schedules_start_date">Startdatum</string>
+    <string name="schedules_end_date">Enddatum</string>
+
+    <!-- ====================================================== -->
+    <!-- Schedule type, triggers and status messages -->
+    <!-- ====================================================== -->
+    <string name="schedules_choose_type">Zeitplan-Typ wählen</string>
+    <string name="schedule_item_title_placeholder">Arbeit</string>
+    <string name="schedule_item_subtitle_placeholder">Mo–Fr - 08:00–16:00</string>
+    <string name="schedules_time_mode">Zeitmodus</string>
+    <string name="schedules_time_mode_single">Einzelzeit</string>
+    <string name="schedules_time_mode_range">Zeitspanne</string>
+    <string name="schedules_time_mode_date_range">Datumsbereich</string>
+    <string name="schedules_date_range">Datumsbereich</string>
+    <string name="schedules_date_not_set">Nicht festgelegt</string>
+    <string name="schedules_quick_groups">Schnellauswahl</string>
+    <string name="day_short_mon">Mo</string>
+    <string name="day_short_tue">Di</string>
+    <string name="day_short_wed">Mi</string>
+    <string name="day_short_thu">Do</string>
+    <string name="day_short_fri">Fr</string>
+    <string name="day_short_sat">Sa</string>
+    <string name="day_short_sun">So</string>
+    <string name="schedules_time_range_fmt">%1$s-%2$s</string>
+    <string name="schedules_bt_enable_bt">Bitte schalte zuerst Bluetooth ein.</string>
+    <string name="schedules_bt_name_hint">Bluetooth-Gerätename (exakt)</string>
+    <string name="schedules_bt_pick_paired">Gekoppeltes Gerät auswählen</string>
+    <string name="schedules_bt_use_connected">Verbundenes Gerät verwenden</string>
+    <string name="schedules_bt_no_paired">Keine gekoppelten Bluetooth-Geräte gefunden.</string>
+    <string name="schedules_bt_no_connected">Kein verbundenes Bluetooth-Gerät gefunden.</string>
+    <string name="schedules_wifi_enable_wifi">Bitte schalte zuerst WLAN ein.</string>
+    <string name="schedules_wifi_location_required">Der Standort muss aktiviert sein, um die WLAN-SSID zu lesen.</string>
+    <string name="schedules_wifi_location_hint">WLAN-Zeitpläne benötigen Zugriff auf WLAN, um die aktuelle SSID zu lesen. Ab Android 13 muss zusätzlich „Geräte in der Nähe“ erlaubt sein. Aktiviere außerdem den Standort in den Schnelleinstellungen.</string>
+    <string name="schedules_wifi_fix_message">Switchly kann WLAN-Namen nur lesen, wenn du mit WLAN verbunden bist und der Standort aktiviert ist (Android 10+). Wenn du dich gerade erst verbunden hast, kehre zurück und tippe erneut auf „Aktuelles WLAN verwenden“.</string>
+    <string name="schedules_wifi_open_picker">WLAN-Auswahl öffnen</string>
+    <string name="schedules_wifi_pick_title">WLAN-Netzwerk auswählen</string>
+    <string name="schedules_wifi_retry_scan">Scan wiederholen</string>
+    <string name="schedules_wifi_scanning">Suche läuft…</string>
+    <string name="schedules_wifi_scan_empty">Keine WLAN-Netzwerke gefunden.</string>
+    <string name="schedules_wifi_scan_empty_hint">Das WLAN-Scannen ist auf manchen Geräten eingeschränkt. Verbinde dich zuerst mit dem Netzwerk und tippe dann auf „Aktuelles WLAN verwenden“, oder gib die SSID manuell ein.</string>
+    <string name="schedules_wifi_ssid_hint">WLAN-SSID (exakt)</string>
+    <string name="schedules_wifi_enter_manually">Manuell eingeben</string>
+    <string name="schedules_wifi_pick_action">WLAN auswählen</string>
+    <string name="schedules_health_info_title">Zeitplan-Status</string>
+    <string name="schedules_health_info_body">Dieses Banner zeigt häufige Gründe, warum Zeitpläne unzuverlässig auslösen können (Akku-Optimierung, exakte Alarme, erforderliche Berechtigungen und Status des Accessibility-Dienstes).</string>
+    <string name="schedules_health_action_title">Empfohlene Aktion</string>
+    <string name="schedules_health_action_permissions">Berechtigungen beheben</string>
+    <string name="schedules_health_action_toggle_options">Umschaltoptionen öffnen</string>
+    <string name="schedules_health_battery_title">Akkueinstellungen</string>
+    <string name="schedules_health_battery_max_available_body">Dein Gerät bietet möglicherweise keine höhere Akku-Berechtigungsstufe wie „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, kannst du diesen Schritt als erledigt markieren.</string>
+    <string name="schedules_health_action_mark_battery_done">Höchste verfügbare Stufe bereits aktiviert</string>
+    <string name="schedules_health_last_exec_never">nie</string>
+    <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
+    <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>
+    <string name="schedules_dialog_nfc_lock_hint">NFC-Sperre aktiv: Diese Aktion kann den Switchly-Status erst nach dem Entsperren per NFC/QR ändern.</string>
+    <string name="schedules_nfc_lock_add_dialog_hint">NFC-Sperre ist aktiv. Derzeit werden nur Aktionen angezeigt, die Switchly nicht deaktivieren.</string>
+    <string name="schedules_dialog_nfc_lock_filtered_hint">NFC-Sperre ist aktiv. Konfliktierende Deaktivierungs-/Umschaltaktionen sind ausgeblendet.</string>
+    <plurals name="delete_schedules_confirm">
+        <item quantity="one">%1$d Zeitplan löschen?</item>
+        <item quantity="other">%1$d Zeitpläne löschen?</item>
+    </plurals>
+    <string name="schedules_disabled_title">Zeitpläne sind deaktiviert</string>
+    <string name="schedules_disabled_body">Der aktuelle Steuerungsmodus erlaubt keine Zeitplan-Automationen. Bestehende Zeitpläne bleiben sichtbar, werden aber erst ausgeführt, wenn du den Zeitplan-Modus aktivierst oder im gemischten Modus den Zeitplan-Kanal erlaubst.</string>
+    <string name="schedules_disabled_footer_mode">Aktueller Steuerungsmodus: %1$s</string>
+    <string name="schedules_disabled_footer_mixed_off">Aktueller Steuerungsmodus: %1$s - Zeitplan-Kanal: aus</string>
+    <string name="schedules_disabled_action_open_controls">Schutzsteuerung öffnen</string>
+    <string name="schedules_disabled_read_only_toast">Zeitpläne sind schreibgeschützt, bis der aktuelle Steuerungsmodus Zeitplan-Automationen erlaubt.</string>
+    <string name="schedules_locked_title">Zeitpläne sind gesperrt, solange Switchly aktiv ist</string>
+    <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst.</string>
+    <string name="schedules_locked_footer">Aktueller Steuerungsmodus: %1$s - Zeitplan-Bearbeitung: gesperrt</string>
+    <string name="schedules_locked_action_open_controls">Schutzsteuerung öffnen</string>
+    <string name="schedules_locked_read_only_toast">Deaktiviere Switchly, um Zeitpläne zu ändern.</string>
+    <string name="schedules_subtitle_fmt">%1$s - %2$s</string>
+    <string name="schedules_label_value_fmt">%1$s: %2$s</string>
+    <string name="schedules_label_value_multiline_fmt">%1$s\n%2$s</string>
+    <string name="schedules_once_range_fmt">Einmalig - %1$s-%2$s</string>
+
+    <!-- ====================================================== -->
+    <!-- Schedule actions and info -->
     <!-- ====================================================== -->
     <string name="schedules_type_time">Zeitplan nach Uhrzeit</string>
     <string name="schedules_type_wifi">WLAN-Zeitplan</string>
     <string name="schedules_type_bt">Bluetooth-Zeitplan</string>
     <string name="schedules_type_location">Standort-Zeitplan</string>
-    <string name="schedules_field_action">Das tun</string>
     <string name="schedules_action_enable">Aktivieren</string>
     <string name="schedules_action_disable">Deaktivieren</string>
     <string name="schedules_action_toggle">Umschalten</string>
@@ -37,41 +123,14 @@
     <string name="schedules_action_info_tip">Tipp: Wenn sich Zeitpläne überschneiden, hat die zuletzt ausgeführte Aktion Vorrang.</string>
 
     <!-- ====================================================== -->
-    <!-- Title, notes and profile fields -->
+    <!-- Schedule days and groups -->
     <!-- ====================================================== -->
-    <string name="schedules_field_profile">Profil</string>
-    <string name="schedules_field_title_hint">Titel (optional)</string>
-    <string name="schedules_field_note_hint">Notizen (optional)</string>
-
-    <!-- ====================================================== -->
-    <!-- Time and date configuration -->
-    <!-- ====================================================== -->
-    <string name="schedules_time_mode">Zeitmodus</string>
-    <string name="schedules_time_mode_single">Einzelzeit</string>
-    <string name="schedules_time_mode_range">Zeitspanne</string>
-    <string name="schedules_time_mode_date_range">Datumsbereich</string>
-    <string name="schedules_days">Tage</string>
-    <string name="schedules_start_time">Startzeit</string>
-    <string name="schedules_end_time">Endzeit</string>
-    <string name="schedules_start_date">Startdatum</string>
-    <string name="schedules_end_date">Enddatum</string>
-    <string name="schedules_date_range">Datumsbereich</string>
-    <string name="schedules_date_not_set">Nicht festgelegt</string>
-    <string name="schedules_quick_groups">Schnellauswahl</string>
     <string name="schedules_group_today">Heute</string>
     <string name="schedules_group_weekdays">Wochentage</string>
     <string name="schedules_group_weekend">Wochenende</string>
-    <string name="day_short_mon">Mo</string>
-    <string name="day_short_tue">Di</string>
-    <string name="day_short_wed">Mi</string>
-    <string name="day_short_thu">Do</string>
-    <string name="day_short_fri">Fr</string>
-    <string name="day_short_sat">Sa</string>
-    <string name="day_short_sun">So</string>
-    <string name="schedules_time_range_fmt">%1$s-%2$s</string>
 
     <!-- ====================================================== -->
-    <!-- Connection subtitles -->
+    <!-- Wi-Fi and Bluetooth triggers -->
     <!-- ====================================================== -->
     <string name="schedules_conn_time_all_day">Ganztägig aktiv</string>
     <string name="schedules_conn_time_window">Auf Zeitfenster begrenzen (optional)</string>
@@ -81,7 +140,7 @@
     <string name="schedules_conn_location_fmt">Ort: %1$s</string>
 
     <!-- ====================================================== -->
-    <!-- Location schedule setup -->
+    <!-- Location triggers -->
     <!-- ====================================================== -->
     <string name="schedules_location_label_hint">Ortsname (optional)</string>
     <string name="schedules_location_trigger_title">Standort-Auslöser</string>
@@ -128,7 +187,7 @@
     <string name="schedules_location_map_picker_load_failed">Die Karte braucht länger als erwartet zum Laden. Bitte prüfe deine Internetverbindung, Private DNS, VPN- oder Adblocker-Einstellungen. Du kannst weiterhin Suche oder aktuellen Standort verwenden.</string>
 
     <!-- ====================================================== -->
-    <!-- Validation errors -->
+    <!-- Schedule status and errors -->
     <!-- ====================================================== -->
     <string name="schedules_error_no_profile">Bitte wähle ein Profil aus.</string>
     <string name="schedules_error_no_days">Bitte wähle mindestens einen Tag aus.</string>
@@ -138,81 +197,5 @@
     <string name="schedules_error_wifi_required">Bitte gib eine WLAN-SSID ein.</string>
     <string name="schedules_error_bt_required">Bitte gib einen Bluetooth-Gerätenamen ein.</string>
     <string name="schedules_error_location_required">Bitte wähle zuerst einen Standort aus.</string>
-
-    <!-- ====================================================== -->
-    <!-- Bluetooth schedule setup -->
-    <!-- ====================================================== -->
-    <string name="schedules_bt_enable_bt">Bitte schalte zuerst Bluetooth ein.</string>
-    <string name="schedules_bt_name_hint">Bluetooth-Gerätename (exakt)</string>
-    <string name="schedules_bt_pick_paired">Gekoppeltes Gerät auswählen</string>
-    <string name="schedules_bt_use_connected">Verbundenes Gerät verwenden</string>
-    <string name="schedules_bt_no_paired">Keine gekoppelten Bluetooth-Geräte gefunden.</string>
-    <string name="schedules_bt_no_connected">Kein verbundenes Bluetooth-Gerät gefunden.</string>
-
-    <!-- ====================================================== -->
-    <!-- Wi-Fi schedule setup -->
-    <!-- ====================================================== -->
-    <string name="schedules_wifi_enable_wifi">Bitte schalte zuerst WLAN ein.</string>
-    <string name="schedules_wifi_location_required">Der Standort muss aktiviert sein, um die WLAN-SSID zu lesen.</string>
-    <string name="schedules_wifi_location_hint">WLAN-Zeitpläne benötigen Zugriff auf WLAN, um die aktuelle SSID zu lesen. Ab Android 13 muss zusätzlich „Geräte in der Nähe“ erlaubt sein. Aktiviere außerdem den Standort in den Schnelleinstellungen.</string>
-    <string name="schedules_wifi_fix_message">Switchly kann WLAN-Namen nur lesen, wenn du mit WLAN verbunden bist und der Standort aktiviert ist (Android 10+). Wenn du dich gerade erst verbunden hast, kehre zurück und tippe erneut auf „Aktuelles WLAN verwenden“.</string>
-    <string name="schedules_wifi_open_picker">WLAN-Auswahl öffnen</string>
-    <string name="schedules_wifi_pick_title">WLAN-Netzwerk auswählen</string>
-    <string name="schedules_wifi_retry_scan">Scan wiederholen</string>
-    <string name="schedules_wifi_scanning">Suche läuft…</string>
-    <string name="schedules_wifi_scan_empty">Keine WLAN-Netzwerke gefunden.</string>
-    <string name="schedules_wifi_scan_empty_hint">Das WLAN-Scannen ist auf manchen Geräten eingeschränkt. Verbinde dich zuerst mit dem Netzwerk und tippe dann auf „Aktuelles WLAN verwenden“, oder gib die SSID manuell ein.</string>
-    <string name="schedules_wifi_ssid_hint">WLAN-SSID (exakt)</string>
-    <string name="schedules_wifi_enter_manually">Manuell eingeben</string>
-    <string name="schedules_wifi_pick_action">WLAN auswählen</string>
-
-    <!-- ====================================================== -->
-    <!-- Schedule health diagnostics -->
-    <!-- ====================================================== -->
-    <string name="schedules_health_info_title">Zeitplan-Status</string>
-    <string name="schedules_health_info_body">Dieses Banner zeigt häufige Gründe, warum Zeitpläne unzuverlässig auslösen können (Akku-Optimierung, exakte Alarme, erforderliche Berechtigungen und Status des Accessibility-Dienstes).</string>
-    <string name="schedules_health_action_title">Empfohlene Aktion</string>
-    <string name="schedules_health_action_permissions">Berechtigungen beheben</string>
-    <string name="schedules_health_action_toggle_options">Umschaltoptionen öffnen</string>
-    <string name="schedules_health_battery_title">Akkueinstellungen</string>
-    <string name="schedules_health_battery_max_available_body">Dein Gerät bietet möglicherweise keine höhere Akku-Berechtigungsstufe wie „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, kannst du diesen Schritt als erledigt markieren.</string>
-    <string name="schedules_health_action_mark_battery_done">Höchste verfügbare Stufe bereits aktiviert</string>
-    <string name="schedules_health_last_exec_never">nie</string>
-    <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
-    <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>
-
-    <!-- ====================================================== -->
-    <!-- NFC lock hints -->
-    <!-- ====================================================== -->
-    <string name="schedules_dialog_nfc_lock_hint">NFC-Sperre aktiv: Diese Aktion kann den Switchly-Status erst nach dem Entsperren per NFC/QR ändern.</string>
-    <string name="schedules_nfc_lock_add_dialog_hint">NFC-Sperre ist aktiv. Derzeit werden nur Aktionen angezeigt, die Switchly nicht deaktivieren.</string>
-    <string name="schedules_dialog_nfc_lock_filtered_hint">NFC-Sperre ist aktiv. Konfliktierende Deaktivierungs-/Umschaltaktionen sind ausgeblendet.</string>
-
-    <!-- ====================================================== -->
-    <!-- Delete and disabled/locked states -->
-    <!-- ====================================================== -->
-    <plurals name="delete_schedules_confirm">
-            <item quantity="one">%1$d Zeitplan löschen?</item>
-            <item quantity="other">%1$d Zeitpläne löschen?</item>
-        </plurals>
-    <string name="schedules_disabled_title">Zeitpläne sind deaktiviert</string>
-    <string name="schedules_disabled_body">Der aktuelle Steuerungsmodus erlaubt keine Zeitplan-Automationen. Bestehende Zeitpläne bleiben sichtbar, werden aber erst ausgeführt, wenn du den Zeitplan-Modus aktivierst oder im gemischten Modus den Zeitplan-Kanal erlaubst.</string>
-    <string name="schedules_disabled_footer_mode">Aktueller Steuerungsmodus: %1$s</string>
-    <string name="schedules_disabled_footer_mixed_off">Aktueller Steuerungsmodus: %1$s - Zeitplan-Kanal: aus</string>
-    <string name="schedules_disabled_action_open_controls">Schutzsteuerung öffnen</string>
-    <string name="schedules_disabled_read_only_toast">Zeitpläne sind schreibgeschützt, bis der aktuelle Steuerungsmodus Zeitplan-Automationen erlaubt.</string>
-    <string name="schedules_locked_title">Zeitpläne sind gesperrt, solange Switchly aktiv ist</string>
-    <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst.</string>
-    <string name="schedules_locked_footer">Aktueller Steuerungsmodus: %1$s - Zeitplan-Bearbeitung: gesperrt</string>
-    <string name="schedules_locked_action_open_controls">Schutzsteuerung öffnen</string>
-    <string name="schedules_locked_read_only_toast">Deaktiviere Switchly, um Zeitpläne zu ändern.</string>
-
-    <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
-    <!-- ====================================================== -->
-    <string name="schedules_subtitle_fmt">%1$s - %2$s</string>
-    <string name="schedules_label_value_fmt">%1$s: %2$s</string>
-    <string name="schedules_label_value_multiline_fmt">%1$s\n%2$s</string>
-    <string name="schedules_once_range_fmt">Einmalig - %1$s-%2$s</string>
 
 </resources>

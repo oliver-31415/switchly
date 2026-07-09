@@ -8,30 +8,50 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
 
         <TextView
-            android:id="@+id/tvUid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:alpha="0.78"
-            android:fontFamily="monospace"
-            android:text="@string/paired_tag_uid_placeholder"
-            android:textSize="13sp" />
+            android:layout_marginTop="4dp"
+            android:text="@string/dialog_section_details"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilTagUid"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="@string/paired_tag_uid_label"
+            android:enabled="false"
+            app:endIconMode="none"
+            app:startIconDrawable="@drawable/nfc_24">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etTagUid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:fontFamily="monospace"
+                android:inputType="none"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilTagName"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
             android:hint="@string/paired_tag_name_hint"
             app:boxStrokeColor="?attr/colorPrimary"
             app:endIconMode="none"
-            app:hintTextColor="?attr/colorPrimary">
+            app:startIconDrawable="@drawable/nfc_24">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etTagName"
@@ -52,7 +72,7 @@
             android:hint="@string/paired_tag_note_hint"
             app:boxStrokeColor="?attr/colorPrimary"
             app:endIconMode="none"
-            app:hintTextColor="?attr/colorPrimary">
+            app:startIconDrawable="@drawable/info_24">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etTagNote"
@@ -61,7 +81,7 @@
                 android:autofillHints="none"
                 android:importantForAutofill="yes"
                 android:inputType="textCapSentences|textMultiLine"
-                android:maxLines="4"
+                android:maxLines="3"
                 android:minLines="2" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -79,14 +99,6 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/paired_tag_readonly_action_section_hint"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp" />
-
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
@@ -95,7 +107,7 @@
                 android:hint="@string/paired_tag_readonly_action_label"
                 app:boxStrokeColor="?attr/colorPrimary"
                 app:endIconMode="dropdown_menu"
-                app:hintTextColor="?attr/colorPrimary">
+                app:startIconDrawable="@drawable/play_arrow_24">
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/acReadOnlyAction"
@@ -113,24 +125,15 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/paired_tag_limits_section_hint"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="12sp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -140,7 +143,7 @@
                     android:hint="@string/paired_tag_daily_limit_label"
                     app:boxStrokeColor="?attr/colorPrimary"
                     app:endIconMode="none"
-                    app:hintTextColor="?attr/colorPrimary">
+                    app:startIconDrawable="@drawable/bar_chart_24">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etTagDailyLimit"
@@ -159,13 +162,12 @@
             </LinearLayout>
 
             <Space
-                android:layout_width="12dp"
-                android:layout_height="1dp" />
+                android:layout_width="1dp"
+                android:layout_height="10dp" />
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -175,7 +177,7 @@
                     android:hint="@string/paired_tag_cooldown_label"
                     app:boxStrokeColor="?attr/colorPrimary"
                     app:endIconMode="none"
-                    app:hintTextColor="?attr/colorPrimary">
+                    app:startIconDrawable="@drawable/alarm_24">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etTagCooldownMinutes"
@@ -199,7 +201,7 @@
             android:id="@+id/rowButtons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="12dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 

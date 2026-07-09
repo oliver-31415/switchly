@@ -40,8 +40,10 @@ import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
+import at.saltyy.switchly.data.prefs.UsageLimitResetStore
 import at.saltyy.switchly.databinding.ActivityScreenTimeDashboardBinding
 import at.saltyy.switchly.feature.premium.PremiumInfoActivity
 import at.saltyy.switchly.feature.settings.AccessibilityDisclosure
@@ -52,7 +54,6 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.PermissionUtils
-import at.saltyy.switchly.util.SystemBarColorCompat
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +61,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ScreenTimeDashboardActivity : AppCompatActivity() {
+    private fun readableOnColor(color: Int): Int {
+        return if (ColorUtils.calculateLuminance(color) > 0.45) Color.BLACK else Color.WHITE
+    }
+
+    private fun showStatisticsInfo() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.statistics_usage_info_title)
+            .setMessage(R.string.statistics_usage_info_body)
+            .setPositiveButton(android.R.string.ok, null)
+            .showAccented()
+    }
 
     private enum class Range { TODAY, WEEK, MONTH, YEAR, OVERALL }
     private enum class Filter { ALL_APPS, BLOCKED_ONLY }
@@ -95,10 +107,11 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         // Ensure the nav icon is treated as an "up" affordance and always works.
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         b.toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        b.btnStatsInfo.setOnClickListener { showStatisticsInfo() }
+        val accent = AccentColor.getAccentColorInt(this)
+        b.fabSortFilter.imageTintList = ColorStateList.valueOf(readableOnColor(accent))
 
         // Keep system bars dark for readability (matches Stats/Schedules).
-        SystemBarColorCompat.setStatusBarColor(window, ContextCompat.getColor(this, android.R.color.black))
-        SystemBarColorCompat.setNavigationBarColor(window, ContextCompat.getColor(this, android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 
@@ -152,28 +165,9 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
                         label = item.label
                     ) { refresh() }
                 }
-            }
-            ,
-            limitBadgeProvider = limitBadgeProvider@{ item ->
-                if (isWebMode) {
-                    val d = DomainBlockStore.normalize(item.packageName) ?: item.packageName
-                    val always = DomainBlockStore.getDomains(this).contains(d)
-                    val min = DomainLimitStore.getLimitMinutes(this, d)
-                    when {
-                        always -> getString(R.string.rule_block_always)
-                        min > 0 -> getString(R.string.daily_limit_value_format, min)
-                        else -> null
-                    }
-                } else {
-                    val profile = ProfileStore.getCurrent(this)
-                    if (profile.isNullOrBlank()) return@limitBadgeProvider null
-                    val t = UsageLimitStore.getLimitMinutes(this, profile, item.packageName)
-                    val a = AttemptLimitStore.getLimitAttempts(this, profile, item.packageName)
-                    val parts = mutableListOf<String>()
-                    if (t > 0) parts += getString(R.string.daily_limit_value_format, t)
-                    if (a > 0) parts += resources.getQuantityString(R.plurals.daily_attempt_limit_value_format, a, a)
-                    if (parts.isEmpty()) null else parts.joinToString(" • ")
-                }
+            },
+            limitBadgeProvider = { item ->
+                if (isWebMode) websiteLimitBadge(item) else appLimitBadge(item)
             }
         )
 
@@ -231,6 +225,52 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             .showAccented()
     }
 
+    private fun websiteLimitBadge(item: AppUsage): String? {
+        val domain = DomainBlockStore.normalize(item.packageName) ?: item.packageName
+        val alwaysBlocked = DomainBlockStore.getDomains(this).contains(domain)
+        val allowMode = ProfileStore.getCurrent(this)
+            ?.let { ProfileRuleModeStore.isAllowMode(this, it) } == true
+        val dailyLimitMinutes = DomainLimitStore.getLimitMinutes(this, domain)
+
+        return when {
+            alwaysBlocked -> getString(
+                if (allowMode) R.string.rule_allowed_always else R.string.rule_block_always
+            )
+            dailyLimitMinutes > 0 -> getString(R.string.daily_limit_value_format, dailyLimitMinutes)
+            else -> null
+        }
+    }
+
+    private fun appLimitBadge(item: AppUsage): String? {
+        val profile = ProfileStore.getCurrent(this)?.takeIf { it.isNotBlank() } ?: return null
+        return appLimitBadgeParts(profile, item.packageName).takeIf { it.isNotEmpty() }?.joinToString(" • ")
+    }
+
+    private fun appLimitBadgeParts(profile: String, packageName: String): List<String> {
+        val timeLimitMinutes = UsageLimitStore.getLimitMinutes(this, profile, packageName)
+        val attemptLimit = AttemptLimitStore.getLimitAttempts(this, profile, packageName)
+
+        return buildList {
+            if (timeLimitMinutes > 0) {
+                add(formatTimeLimitBadge(profile, packageName, timeLimitMinutes))
+            }
+
+            if (attemptLimit > 0) {
+                add(resources.getQuantityString(R.plurals.daily_attempt_limit_value_format, attemptLimit, attemptLimit))
+            }
+        }
+    }
+
+    private fun formatTimeLimitBadge(profile: String, packageName: String, minutes: Int): String {
+        val resetMode = UsageLimitResetStore.getMode(this, profile, packageName)
+        val formatRes = if (resetMode == UsageLimitResetStore.MODE_SESSION) {
+            R.string.session_reset_limit_value_format
+        } else {
+            R.string.daily_limit_value_format
+        }
+        return getString(formatRes, minutes)
+    }
+
     override fun onResume() {
         super.onResume()
         applyAccentUi()
@@ -248,8 +288,13 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
         val bg = AccentColor.getToolbarColor(this)
         val navTint = if (MaterialColors.isColorLight(bg)) Color.BLACK else Color.WHITE
         b.toolbar.navigationIcon?.mutate()?.setTint(navTint)
+        b.btnStatsInfo.imageTintList = ColorStateList.valueOf(navTint)
         // Keep labels neutral (text-colored). Accent stays on toggles + progress bars.
         b.btnOpenSettings.backgroundTintList = accentTint
+        b.totalTime.setTextColor(accent)
+        b.cardUsageTotal.setCardBackgroundColor(ContextCompat.getColor(this, R.color.switchly_card_bg))
+        b.cardUsageTotal.strokeColor = ContextCompat.getColor(this, R.color.switchly_card_stroke)
+        b.cardUsageTotal.strokeWidth = resources.displayMetrics.density.toInt().coerceAtLeast(1)
 
         // Only style the Apps/Web toggle buttons here.
         listOf(b.btnApps, b.btnWeb).forEach { btn ->
@@ -289,6 +334,8 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             val active = chip.id == activeChipId
             chip.isChecked = active
             chip.isCheckable = true
+            chip.isCheckedIconVisible = false
+            chip.checkedIcon = null
             chip.isClickable = true
             chip.isPressed = false
             chip.isSelected = false
@@ -328,6 +375,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             b.rowTapHint.text = getString(R.string.usage_row_tap_hint_website)
             b.toolbar.title = getString(R.string.statistics_usage_title)
             b.toolbar.subtitle = null
+            b.statsPageSubtitle.text = getString(R.string.statistics_usage_subtitle_web)
         val summary = when (range) {
                 Range.TODAY -> WebUsageRepo.getTodaySummary(this)
                 Range.WEEK -> WebUsageRepo.getLastNDaysSummary(this, 7)
@@ -372,8 +420,10 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
 
         adapter.setDetailsCtaEnabled(true)
         b.toolbar.title = getString(R.string.statistics_usage_title)
+        b.toolbar.subtitle = null
         // Make it obvious that limits (time/attempts) are profile-bound.
-        b.toolbar.subtitle = ProfileStore.getCurrent(this)?.let { getString(R.string.profile_active_fmt, it) }
+        val activeProfileLabel = ProfileStore.getCurrent(this)?.let { getString(R.string.profile_active_fmt, it) } ?: getString(R.string.usage_apps_tab)
+        b.statsPageSubtitle.text = getString(R.string.statistics_usage_subtitle_apps, activeProfileLabel)
         b.rowTapHint.text = getString(R.string.usage_row_tap_hint_app)
 
         val hasA11y = PermissionUtils.isAccessibilityServiceEnabled(this, SwitchlyAccessibilityService::class.java)
@@ -397,7 +447,7 @@ class ScreenTimeDashboardActivity : AppCompatActivity() {
             emptySet()
         } else {
             buildSet {
-                addAll(ProfileStore.getBlockedForProfile(this@ScreenTimeDashboardActivity, profile))
+                addAll(ProfileStore.getSelectedForProfileMode(this@ScreenTimeDashboardActivity, profile))
                 addAll(UsageLimitStore.getAllLimitedPackages(this@ScreenTimeDashboardActivity, profile))
                 addAll(SessionLimitStore.getAllLimitedPackages(this@ScreenTimeDashboardActivity, profile))
                 addAll(AttemptLimitStore.getAllLimitedPackages(this@ScreenTimeDashboardActivity, profile))

@@ -28,6 +28,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.Menu
@@ -41,6 +43,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
@@ -63,12 +66,12 @@ import at.saltyy.switchly.data.prefs.SwitchlyRuntimeStore
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.receiver.DPMReceiver
+import at.saltyy.switchly.security.PlayIntegrityRuntime
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.BatteryOptimizationCompat
-import at.saltyy.switchly.util.SystemBarColorCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -96,16 +99,20 @@ class SupportActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
-
-        SystemBarColorCompat.setStatusBarColor(window, getColor(android.R.color.black))
+        val toolbarIconColor = toolbarForegroundColor()
+        toolbar.navigationIcon?.mutate()?.setTint(toolbarIconColor)
+        toolbar.setTitleTextColor(toolbarIconColor)
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
 
         val email = getString(R.string.about_mail_address)
         findViewById<TextView>(R.id.tvSupportEmail).text = email
 
-        findViewById<ImageButton>(R.id.btnCopyEmailInline).setOnClickListener {
-            copyToClipboard(label = getString(R.string.support_copy_email), text = email)
-            Toast.makeText(this, getString(R.string.support_copied), Toast.LENGTH_SHORT).show()
+        findViewById<ImageButton>(R.id.btnCopyEmailInline).apply {
+            ImageViewCompat.setImageTintList(this, AccentColor.getActiveColor(this@SupportActivity))
+            setOnClickListener {
+                copyToClipboard(label = getString(R.string.support_copy_email), text = email)
+                Toast.makeText(this@SupportActivity, getString(R.string.support_copied), Toast.LENGTH_SHORT).show()
+            }
         }
 
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
@@ -182,6 +189,7 @@ class SupportActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_support, menu)
+        menu.findItem(R.id.action_info)?.icon?.mutate()?.setTint(toolbarForegroundColor())
         return true
     }
 
@@ -260,7 +268,7 @@ class SupportActivity : AppCompatActivity() {
         section("Switchly state")
         val currentProfile = runCatching { ProfileStore.getCurrent(this@SupportActivity) }.getOrNull().orEmpty()
         val blockedCurrentProfile = if (currentProfile.isNotBlank()) {
-            runCatching { ProfileStore.getBlockedForProfile(this@SupportActivity, currentProfile).size }.getOrDefault(0)
+            runCatching { ProfileStore.getSelectedForProfileMode(this@SupportActivity, currentProfile).size }.getOrDefault(0)
         } else {
             0
         }
@@ -281,6 +289,11 @@ class SupportActivity : AppCompatActivity() {
         line("Profiles count", runCatching { ProfileStore.getProfiles(this@SupportActivity).size }.getOrDefault(0))
         line("Active profile", if (currentProfile.isBlank()) "-" else currentProfile)
         line("Blocked apps (active profile)", blockedCurrentProfile)
+        line(
+            "Time limits with session reset",
+            this@SupportActivity.getSharedPreferences("switchly_prefs", MODE_PRIVATE)
+                .all.keys.count { it.startsWith("usage_limit_reset__") }
+        )
 
         line("NFC required to disable", SwitchModeStore.isNfcRequiredForDisable(this@SupportActivity))
         line("NFC paired tags", runCatching { NfcUidPairingStore.getPairedUidsHex(this@SupportActivity).size }.getOrDefault(0))
@@ -383,6 +396,17 @@ class SupportActivity : AppCompatActivity() {
         line("Battery max confirmed", batteryMaxConfirmed)
         line("Exact alarms allowed", canScheduleExactAlarmsCompat())
         line("Maps API key configured", BuildConfig.SWITCHLY_HAS_MAPS_API_KEY)
+
+        section("Play Integrity")
+        val integrity = PlayIntegrityRuntime.snapshot(this@SupportActivity)
+        line("Soft checks enabled", integrity.enabled)
+        line("SDK available", integrity.sdkAvailable)
+        line("Last status", integrity.lastStatus)
+        line("Last reason", integrity.lastReason)
+        line("Last request", formatDateTime(integrity.lastRequestMs))
+        line("Last success", formatDateTime(integrity.lastSuccessMs))
+        line("Last token length", integrity.lastTokenLength)
+        line("Last error", integrity.lastError.ifBlank { "-" })
 
         section("Schedules")
         val schedules = runCatching { ScheduleStore.getAll(this@SupportActivity) }.getOrDefault(emptyList())
@@ -527,5 +551,11 @@ class SupportActivity : AppCompatActivity() {
         return runCatching {
             SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.GERMANY).format(Date(ms))
         }.getOrDefault("-")
+    }
+
+    private fun toolbarForegroundColor(): Int {
+        val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        return if (night) Color.WHITE else Color.BLACK
     }
 }

@@ -31,6 +31,8 @@ object ProfileStore {
     private const val KEY_CURRENT = "current_profile"  // String
 
     private fun keyBlocked(profile: String) = "blocked_apps_$profile" // Set<String>
+    private fun keyAllowed(profile: String) = "allowed_apps_$profile" // Set<String>
+    private fun keyDescription(profile: String) = "profile_description_$profile" // String
     private fun keyAutoBlockNewApps(profile: String) = "auto_block_new_apps_$profile" // Boolean
     private fun keyAutoBlockKnownApps(profile: String) = "auto_block_known_apps_$profile" // Set<String>
 
@@ -88,9 +90,16 @@ object ProfileStore {
             }
 
             remove(keyBlocked(name))
+            remove(keyAllowed(name))
+            remove(keyDescription(name))
         }
 
+        DomainBlockStore.onProfileRemoved(context, name)
         DomainLimitStore.onProfileRemoved(context, name)
+        InAppLimitStore.onProfileRemoved(context, name)
+        SurfaceLimitStore.onProfileRemoved(context, name)
+        InAppRuleStore.onProfileRemoved(context, name)
+        ProfileRuleModeStore.onProfileRemoved(context, name)
     }
 
     // Renames a profile.
@@ -106,6 +115,12 @@ object ProfileStore {
         } catch (_: ClassCastException) {
             emptySet()
         }
+        val oldAllowed = try {
+            sp.getStringSet(keyAllowed(old), emptySet()) ?: emptySet()
+        } catch (_: ClassCastException) {
+            emptySet()
+        }
+        val oldDescription = sp.getString(keyDescription(old), "").orEmpty()
 
         set.remove(old)
         set.add(new)
@@ -113,14 +128,44 @@ object ProfileStore {
         sp.edit {
             putStringSet(KEY_PROFILES, set)
             putStringSet(keyBlocked(new), oldBlocked)
+            putStringSet(keyAllowed(new), oldAllowed)
+            if (oldDescription.isBlank()) {
+                remove(keyDescription(new))
+            } else {
+                putString(keyDescription(new), oldDescription)
+            }
             remove(keyBlocked(old))
+            remove(keyAllowed(old))
+            remove(keyDescription(old))
             if (getCurrent(context) == old) {
                 putString(KEY_CURRENT, new)
             }
         }
 
+        DomainBlockStore.onProfileRenamed(context, old, new)
         DomainLimitStore.onProfileRenamed(context, old, new)
+        InAppLimitStore.onProfileRenamed(context, old, new)
+        SurfaceLimitStore.onProfileRenamed(context, old, new)
+        InAppRuleStore.onProfileRenamed(context, old, new)
+        ProfileRuleModeStore.onProfileRenamed(context, old, new)
         return true
+    }
+
+    fun getDescription(context: Context, profile: String): String {
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return sp.getString(keyDescription(profile), "").orEmpty()
+    }
+
+    fun setDescription(context: Context, profile: String, description: String) {
+        val cleaned = description.trim()
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit {
+            if (cleaned.isBlank()) {
+                remove(keyDescription(profile))
+            } else {
+                putString(keyDescription(profile), cleaned)
+            }
+        }
     }
 
     // Returns the currently active profile (creates one if missing).
@@ -168,6 +213,53 @@ object ProfileStore {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val sanitized = AppBlockSafety.sanitizeManagedPackages(context, pkgs)
         sp.edit { putStringSet(keyBlocked(profile), sanitized) }
+    }
+
+    // Returns all allowed package names for a specific profile.
+    fun getAllowedForProfile(context: Context, profile: String): Set<String> {
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val raw = try {
+            sp.getStringSet(keyAllowed(profile), emptySet()) ?: emptySet()
+        } catch (_: ClassCastException) {
+            sp.edit { remove(keyAllowed(profile)) }
+            emptySet()
+        }
+
+        val cleaned = raw
+            .filterTo(linkedSetOf()) { it.isNotBlank() }
+            .let { AppBlockSafety.sanitizeManagedPackages(context, it) }
+
+        // In allow-list mode, apps with active in-app rules must stay allowed.
+        // Otherwise a configured rule like “block YouTube Shorts” would be hidden by the whole-app allow list and the entire app would be blocked instead.
+        if (!ProfileRuleModeStore.isAllowMode(context, profile)) return cleaned
+
+        val requiredForInAppRules = InAppRuleStore.getPackagesWithEnabledRules(context, profile)
+        if (requiredForInAppRules.isEmpty()) return cleaned
+
+        return AppBlockSafety.sanitizeManagedPackages(context, cleaned + requiredForInAppRules)
+    }
+
+    // Updates the allow-app list for the given profile.
+    fun setAllowedForProfile(context: Context, profile: String, pkgs: Set<String>) {
+        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val sanitized = AppBlockSafety.sanitizeManagedPackages(context, pkgs)
+        sp.edit { putStringSet(keyAllowed(profile), sanitized) }
+    }
+
+    fun getSelectedForProfileMode(context: Context, profile: String): Set<String> {
+        return if (ProfileRuleModeStore.isAllowMode(context, profile)) {
+            getAllowedForProfile(context, profile)
+        } else {
+            getBlockedForProfile(context, profile)
+        }
+    }
+
+    fun setSelectedForProfileMode(context: Context, profile: String, pkgs: Set<String>) {
+        if (ProfileRuleModeStore.isAllowMode(context, profile)) {
+            setAllowedForProfile(context, profile, pkgs)
+        } else {
+            setBlockedForProfile(context, profile, pkgs)
+        }
     }
 
     fun isAutoBlockNewAppsEnabled(context: Context, profile: String): Boolean {
@@ -223,7 +315,6 @@ object ProfileStore {
         // Do not call getInstalledApplications() here. 
         // Android package visibility can make it incomplete and lint warns about it.
         // Saved package names are resolved individually where needed instead of treating "not in launcher query" as unavailable.
-
         return packages.filterTo(linkedSetOf()) { it.isNotBlank() && it != context.packageName }
     }
 
@@ -232,6 +323,7 @@ object ProfileStore {
         var changed = 0
         getProfiles(context).forEach { profile ->
             if (!isAutoBlockNewAppsEnabled(context, profile)) return@forEach
+            if (ProfileRuleModeStore.isAllowMode(context, profile)) return@forEach
             val current = getBlockedForProfile(context, profile)
             if (pkg in current) return@forEach
 
@@ -257,6 +349,7 @@ object ProfileStore {
         var changed = 0
         getProfiles(context).forEach { profile ->
             if (!isAutoBlockNewAppsEnabled(context, profile)) return@forEach
+            if (ProfileRuleModeStore.isAllowMode(context, profile)) return@forEach
 
             val known = getAutoBlockKnownPackages(context, profile)
             if (known.isEmpty()) {

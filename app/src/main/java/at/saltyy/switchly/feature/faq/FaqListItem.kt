@@ -20,7 +20,16 @@
 package at.saltyy.switchly.feature.faq
 
 sealed class FaqListItem {
+    data class Folder(
+        val id: String,
+        val title: String,
+        val subtitle: String,
+        val articleCount: Int,
+        val iconRes: Int? = null
+    ) : FaqListItem()
+
     data class Header(val title: String) : FaqListItem()
+
     data class Item(
         val question: String,
         val answer: String,

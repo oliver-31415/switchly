@@ -21,7 +21,10 @@ package at.saltyy.switchly.nfc
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
@@ -35,8 +38,10 @@ import android.text.InputType
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.StyleSpan
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
@@ -77,6 +82,7 @@ import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 class NfcWriterActivity : AppCompatActivity() {
@@ -151,6 +157,10 @@ class NfcWriterActivity : AppCompatActivity() {
     private lateinit var statusProgress: ProgressBar
 
     private val handler = Handler(Looper.getMainLooper())
+
+    private companion object {
+        const val TEMP_ASK_WHEN_SCANNED_VALUE = "ask"
+    }
 
     private fun buildActionLabels(): List<String> {
         val labels = mutableListOf(
@@ -317,7 +327,7 @@ class NfcWriterActivity : AppCompatActivity() {
         )
 
         val bg = MaterialShapeDrawable(shapeModel).apply {
-            fillColor = android.content.res.ColorStateList.valueOf(fill)
+            fillColor = ColorStateList.valueOf(fill)
             setStroke(strokeWidth, stroke)
             elevation = 2f * density
         }
@@ -402,38 +412,33 @@ class NfcWriterActivity : AppCompatActivity() {
         val isPremium = PremiumManager.isPremium(this)
 
         val entries = mutableListOf<String>()
-        val values = mutableListOf<Int>()
+        val values = mutableListOf<String>()
+
+        entries += listOf(
+            getString(R.string.nfc_time_5_min),
+            getString(R.string.nfc_time_10_min),
+            getString(R.string.nfc_time_15_min),
+            getString(R.string.nfc_time_20_min),
+            getString(R.string.nfc_time_25_min),
+            getString(R.string.nfc_time_30_min),
+        )
+        values += listOf("5", "10", "15", "20", "25", "30")
 
         if (isPremium) {
-            entries += listOf(
-                getString(R.string.nfc_time_5_min),
-                getString(R.string.nfc_time_10_min),
-                getString(R.string.nfc_time_15_min),
-                getString(R.string.nfc_time_20_min),
-                getString(R.string.nfc_time_25_min),
-                getString(R.string.nfc_time_30_min),
-                getString(R.string.nfc_time_custom)
-            )
-            values += listOf(5, 10, 15, 20, 25, 30, -1)
-        } else {
-            entries += listOf(
-                getString(R.string.nfc_time_5_min),
-                getString(R.string.nfc_time_10_min),
-                getString(R.string.nfc_time_15_min),
-                getString(R.string.nfc_time_20_min),
-                getString(R.string.nfc_time_25_min),
-                getString(R.string.nfc_time_30_min),
-            )
-            values += listOf(5, 10, 15, 20, 25, 30)
+            entries += getString(R.string.nfc_time_custom)
+            values += "custom"
+            entries += getString(R.string.nfc_time_ask_when_scanned)
+            values += TEMP_ASK_WHEN_SCANNED_VALUE
         }
 
         ddTime.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, entries))
 
-        val saved = prefs.getString("pref_nfc_unlock_minutes", "10")?.toIntOrNull() ?: 10
-        val idx = values.indexOf(saved)
+        val savedRaw = prefs.getString("pref_nfc_unlock_minutes", "10").orEmpty()
+        val idx = values.indexOf(savedRaw)
         if (idx >= 0) {
             ddTime.setText(entries[idx], false)
         } else {
+            val saved = savedRaw.toIntOrNull() ?: 10
             ddTime.setText(
                 resources.getQuantityString(R.plurals.nfc_time_custom_label, saved, saved),
                 false
@@ -441,11 +446,11 @@ class NfcWriterActivity : AppCompatActivity() {
         }
 
         ddTime.setOnItemClickListener { _, _, position, _ ->
-            if (isPremium && position == entries.lastIndex) {
+            val selected = values.getOrNull(position) ?: return@setOnItemClickListener
+            if (isPremium && selected == "custom") {
                 showCustomTimeDialog()
             } else {
-                val mins = values[position]
-                prefs.edit { putString("pref_nfc_unlock_minutes", mins.toString()) }
+                prefs.edit { putString("pref_nfc_unlock_minutes", selected) }
                 val selectedAction = ddAction.text?.toString().orEmpty()
                 updateTimeVisibilityForAction(selectedAction)
                 updateActionHintForSelection(selectedAction)
@@ -455,52 +460,116 @@ class NfcWriterActivity : AppCompatActivity() {
 
     private fun showCustomTimeDialog() {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val savedMinutes = prefs.getString("pref_nfc_unlock_minutes", "10")
+            ?.toIntOrNull()
+            ?.takeIf { it in 1..1440 }
 
+        val accent = AccentColor.getAccentColorInt(this)
         val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
-            hint = getString(R.string.nfc_time_custom_placeholder)
+            hint = getString(R.string.temp_enable_duration_custom_hint)
+            isSingleLine = true
+            savedMinutes?.let { setText(String.format(Locale.ROOT, "%d", it)) }
+            setSelectAllOnFocus(true)
+            backgroundTintList = ColorStateList.valueOf(accent)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        fun presetPill(minutes: Int): TextView {
+            return TextView(this).apply {
+                text = getString(R.string.temp_duration_preset_minutes, minutes)
+                textSize = 14f
+                gravity = Gravity.CENTER
+                setTextColor(accent)
+                setPadding(dp(9), dp(6), dp(9), dp(6))
+                background = GradientDrawable().apply {
+                    cornerRadius = dp(18).toFloat()
+                    setColor(Color.TRANSPARENT)
+                    setStroke(dp(1), accent)
+                }
+                setOnClickListener {
+                    input.setText(String.format(Locale.getDefault(), "%d", minutes))
+                    input.setSelection(input.text?.length ?: 0)
+                }
+            }
+        }
+
+        val presetRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        listOf(5, 10, 15, 30, 60).forEachIndexed { index, minutes ->
+            presetRow.addView(
+                presetPill(minutes),
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (index > 0) marginStart = dp(4)
+                }
+            )
         }
 
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            val padding = (16 * resources.displayMetrics.density).toInt()
-            setPadding(padding, padding / 2, padding, 0)
-            addView(
-                input,
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            )
+            setPadding(dp(24), 0, dp(24), 0)
+            addView(TextView(this@NfcWriterActivity).apply {
+                text = getString(R.string.nfc_time_custom_message)
+                textSize = 14f
+                setLineSpacing(0f, 1.15f)
+            })
+            addView(TextView(this@NfcWriterActivity).apply {
+                text = getString(R.string.temp_duration_quick_presets)
+                textSize = 12.5f
+                alpha = 0.74f
+                setPadding(0, dp(9), 0, dp(4))
+            })
+            addView(presetRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            addView(input, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                topMargin = dp(8)
+            })
         }
 
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.nfc_time_custom_title)
             .setView(container)
             .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                val mins = input.text?.toString()?.trim()?.toIntOrNull()
-                if (mins == null || mins < 1 || mins > 120) {
-                    Toast.makeText(this, R.string.nfc_time_custom_invalid, Toast.LENGTH_SHORT).show()
-                } else {
-                    prefs.edit { putString("pref_nfc_unlock_minutes", mins.toString()) }
-                    ddTime.setText(
-                        resources.getQuantityString(R.plurals.nfc_time_custom_label, mins, mins),
-                        false
-                    )
-                    val selectedAction = ddAction.text?.toString().orEmpty()
-                    updateTimeVisibilityForAction(selectedAction)
-                    updateActionHintForSelection(selectedAction)
-                }
-            }
+            .setPositiveButton(R.string.ok, null)
             .showAccented()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val mins = input.text?.toString()?.trim()?.toIntOrNull()
+            if (mins == null || mins !in 1..1440) {
+                Toast.makeText(this, R.string.nfc_time_custom_invalid, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            prefs.edit { putString("pref_nfc_unlock_minutes", mins.toString()) }
+            ddTime.setText(
+                resources.getQuantityString(R.plurals.nfc_time_custom_label, mins, mins),
+                false
+            )
+            val selectedAction = ddAction.text?.toString().orEmpty()
+            updateTimeVisibilityForAction(selectedAction)
+            updateActionHintForSelection(selectedAction)
+            dialog.dismiss()
+        }
     }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
 
     private fun updateTimeVisibilityForAction(selectedActionLabel: String) {
         val isTempDisable = selectedActionLabel == getString(R.string.nfc_action_temp_disable)
         val isTempEnable = selectedActionLabel == getString(R.string.nfc_action_temp_enable)
         val isReentry = selectedActionLabel == getString(R.string.nfc_action_reentry)
         val isTemp = isTempDisable || isTempEnable || isReentry
+
+        if (isReentry && isAskWhenScannedSelected()) {
+            PreferenceManager.getDefaultSharedPreferences(this).edit {
+                putString("pref_nfc_unlock_minutes", "10")
+            }
+            ddTime.setText(getString(R.string.nfc_time_10_min), false)
+        }
 
         tilTime.isVisible = isTemp
     }
@@ -516,17 +585,25 @@ class NfcWriterActivity : AppCompatActivity() {
             getString(R.string.nfc_action_disable) -> getString(R.string.nfc_action_desc_disable)
             getString(R.string.nfc_action_toggle) -> getString(R.string.nfc_action_desc_toggle)
             getString(R.string.nfc_action_temp_disable) ->
-                resources.getQuantityString(
-                    R.plurals.nfc_action_desc_temp_disable,
-                    tempMinutes,
-                    tempMinutes
-                )
+                if (isAskWhenScannedSelected()) {
+                    getString(R.string.nfc_action_desc_temp_disable_ask)
+                } else {
+                    resources.getQuantityString(
+                        R.plurals.nfc_action_desc_temp_disable,
+                        tempMinutes,
+                        tempMinutes
+                    )
+                }
             getString(R.string.nfc_action_temp_enable) ->
-                resources.getQuantityString(
-                    R.plurals.nfc_action_desc_temp_enable,
-                    tempMinutes,
-                    tempMinutes
-                )
+                if (isAskWhenScannedSelected()) {
+                    getString(R.string.nfc_action_desc_temp_enable_ask)
+                } else {
+                    resources.getQuantityString(
+                        R.plurals.nfc_action_desc_temp_enable,
+                        tempMinutes,
+                        tempMinutes
+                    )
+                }
             getString(R.string.nfc_action_reentry) ->
                 resources.getQuantityString(
                     R.plurals.nfc_action_desc_reentry,
@@ -548,9 +625,14 @@ class NfcWriterActivity : AppCompatActivity() {
         tvActionHint.text = getString(R.string.nfc_action_hint_with_profile, base, profileLine)
     }
 
+    private fun isAskWhenScannedSelected(): Boolean {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        return prefs.getString("pref_nfc_unlock_minutes", "10") == TEMP_ASK_WHEN_SCANNED_VALUE
+    }
+
     private fun selectedTempMinutes(): Int {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        return prefs.getString("pref_nfc_unlock_minutes", "10")?.toIntOrNull()?.coerceIn(1, 120) ?: 10
+        return prefs.getString("pref_nfc_unlock_minutes", "10")?.toIntOrNull()?.coerceIn(1, 1440) ?: 10
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -581,9 +663,9 @@ class NfcWriterActivity : AppCompatActivity() {
             setPadding(padH, padV, padH, padV)
             addView(
                 bodyView,
-                android.view.ViewGroup.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                 )
             )
         }
@@ -630,7 +712,7 @@ class NfcWriterActivity : AppCompatActivity() {
                 R.plurals.nfc_action_desc_temp_disable,
                 sampleMinutes,
                 sampleMinutes,
-            ),
+            ) + "\n" + getString(R.string.nfc_action_desc_temp_disable_ask),
         )
         addItem(
             getString(R.string.nfc_action_temp_enable),
@@ -638,7 +720,7 @@ class NfcWriterActivity : AppCompatActivity() {
                 R.plurals.nfc_action_desc_temp_enable,
                 sampleMinutes,
                 sampleMinutes,
-            ),
+            ) + "\n" + getString(R.string.nfc_action_desc_temp_enable_ask),
         )
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
@@ -681,22 +763,26 @@ class NfcWriterActivity : AppCompatActivity() {
         val noneLabel = getString(R.string.nfc_profile_none)
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val tempMinutesRaw = prefs.getString("pref_nfc_unlock_minutes", "10").orEmpty()
+        val askWhenScanned = tempMinutesRaw == TEMP_ASK_WHEN_SCANNED_VALUE
         val tempMinutes: Int? =
             if (
                 selectedActionLabel == getString(R.string.nfc_action_temp_disable) ||
                 selectedActionLabel == getString(R.string.nfc_action_temp_enable) ||
                 selectedActionLabel == getString(R.string.nfc_action_reentry)
             ) {
-                prefs.getString("pref_nfc_unlock_minutes", "10")?.toIntOrNull()
+                tempMinutesRaw.toIntOrNull()
             } else null
 
         val actionVerb = when {
             selectedActionLabel == getString(R.string.nfc_action_enable) -> "enable"
             selectedActionLabel == getString(R.string.nfc_action_disable) -> "disable"
             selectedActionLabel == getString(R.string.nfc_action_toggle) -> "toggle"
-            selectedActionLabel == getString(R.string.nfc_action_temp_disable) -> "temp_disable${(tempMinutes ?: 10).coerceIn(1, 120)}"
-            selectedActionLabel == getString(R.string.nfc_action_temp_enable) -> "temp_enable${(tempMinutes ?: 10).coerceIn(1, 120)}"
-            selectedActionLabel == getString(R.string.nfc_action_reentry) -> "reentry${(tempMinutes ?: 10).coerceIn(1, 120)}"
+            selectedActionLabel == getString(R.string.nfc_action_temp_disable) && askWhenScanned -> "temp_disable"
+            selectedActionLabel == getString(R.string.nfc_action_temp_disable) -> "temp_disable${(tempMinutes ?: 10).coerceIn(1, 1440)}"
+            selectedActionLabel == getString(R.string.nfc_action_temp_enable) && askWhenScanned -> "temp_enable"
+            selectedActionLabel == getString(R.string.nfc_action_temp_enable) -> "temp_enable${(tempMinutes ?: 10).coerceIn(1, 1440)}"
+            selectedActionLabel == getString(R.string.nfc_action_reentry) -> "reentry${(tempMinutes ?: 10).coerceIn(1, 1440)}"
             else -> "toggle"
         }
 
@@ -761,7 +847,9 @@ class NfcWriterActivity : AppCompatActivity() {
         var formatable: NdefFormatable? = null
         return try {
             val uriRecord = NdefRecord.createUri(uriString)
-            val message = NdefMessage(arrayOf(uriRecord))
+            val appRecord = NdefRecord.createApplicationRecord(packageName)
+            val uriOnlyMessage = NdefMessage(arrayOf(uriRecord))
+            val preferredMessage = NdefMessage(arrayOf(uriRecord, appRecord))
 
             val ndefTech = Ndef.get(tag)
             if (ndefTech != null) {
@@ -772,8 +860,10 @@ class NfcWriterActivity : AppCompatActivity() {
                     return WriteResult.NOT_WRITABLE
                 }
 
-                if (message.toByteArray().size > ndef.maxSize) {
-                    return WriteResult.TOO_SMALL
+                val message = when {
+                    preferredMessage.toByteArray().size <= ndef.maxSize -> preferredMessage
+                    uriOnlyMessage.toByteArray().size <= ndef.maxSize -> uriOnlyMessage
+                    else -> return WriteResult.TOO_SMALL
                 }
 
                 ndef.writeNdefMessage(message)
@@ -782,7 +872,13 @@ class NfcWriterActivity : AppCompatActivity() {
                 val formatableTech = NdefFormatable.get(tag) ?: return WriteResult.FAILED
                 formatable = formatableTech
                 formatable.connect()
-                formatable.format(message)
+
+                runCatching {
+                    formatable.format(preferredMessage)
+                }.recoverCatching {
+                    formatable.format(uriOnlyMessage)
+                }.getOrThrow()
+
                 WriteResult.OK
             }
         } catch (_: Throwable) {

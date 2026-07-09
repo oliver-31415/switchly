@@ -31,7 +31,9 @@ import at.saltyy.switchly.data.prefs.BlockedInboxStore
 import at.saltyy.switchly.data.prefs.BlockedNotificationEvent
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.widget.BlockedNotificationsWidgetProvider
 
 /**
@@ -45,6 +47,8 @@ class NotificationBlockerService : NotificationListenerService() {
     @Volatile private var cachedEnabled: Boolean = true
     @Volatile private var cachedProfile: String? = null
     @Volatile private var cachedBlockedPrefixes: List<String> = emptyList()
+    @Volatile private var cachedAllowMode: Boolean = false
+    @Volatile private var cachedAllowEssentials: Boolean = true
     @Volatile private var dirty: Boolean = true
 
     // Reduce repeated SharedPreferences reads for chatty apps.
@@ -66,7 +70,7 @@ class NotificationBlockerService : NotificationListenerService() {
             key == KEY_CURRENT_PROFILE -> {
                 dirty = true
             }
-            key.startsWith(KEY_BLOCKED_PREFIX) -> {
+            key.startsWith(KEY_BLOCKED_PREFIX) || key.startsWith(KEY_RULE_MODE_PREFIX) || key.startsWith(KEY_ALLOW_ESSENTIALS_PREFIX) -> {
                 dirty = true
             }
             key.startsWith(KEY_TEMP_ALLOW_PREFIX) -> {
@@ -101,17 +105,25 @@ class NotificationBlockerService : NotificationListenerService() {
         if (!dirty) return
 
         val profile = ProfileStore.getCurrent(this)
-        val blocked = if (profile.isNullOrBlank()) {
+        val allowMode = profile?.let { ProfileRuleModeStore.isAllowMode(this, it) } == true
+        val selected = if (profile.isNullOrBlank()) {
             emptyList()
         } else {
-            ProfileStore.getBlockedForProfile(this, profile)
+            val packages = if (allowMode) {
+                ProfileStore.getAllowedForProfile(this, profile)
+            } else {
+                ProfileStore.getBlockedForProfile(this, profile)
+            }
+            packages
                 .asSequence()
                 .filter { it.isNotBlank() }
                 .toList()
         }
 
         cachedProfile = profile
-        cachedBlockedPrefixes = blocked
+        cachedBlockedPrefixes = selected
+        cachedAllowMode = allowMode
+        cachedAllowEssentials = profile?.let { ProfileRuleModeStore.shouldAllowEssentialSystemApps(this, it) } ?: true
         dirty = false
     }
 
@@ -154,8 +166,15 @@ class NotificationBlockerService : NotificationListenerService() {
         if (isTempAllowedCached(pkg)) return
 
         refreshPolicyIfNeeded()
-        val blocked = cachedBlockedPrefixes
-        if (blocked.any { pkg.startsWith(it) }) {
+        val selected = cachedBlockedPrefixes.any { pkg.startsWith(it) }
+        val essentialAllowed = cachedAllowMode && cachedAllowEssentials && AppBlockSafety.isHardExcluded(this, pkg)
+        val shouldBlockNotification = if (cachedAllowMode) {
+            !selected && !essentialAllowed
+        } else {
+            selected
+        }
+
+        if (shouldBlockNotification) {
             // Remove the notification right away.
             // Note: some devices may still briefly show a heads-up before it disappears.
             safelyCancelNotification(sbn.key, pkg)
@@ -224,6 +243,8 @@ class NotificationBlockerService : NotificationListenerService() {
         private const val KEY_NOTIF_ENABLED = "block_notifications_enabled"
         private const val KEY_CURRENT_PROFILE = "current_profile"
         private const val KEY_BLOCKED_PREFIX = "blocked_apps_"
+        private const val KEY_RULE_MODE_PREFIX = "profile_rule_mode__"
+        private const val KEY_ALLOW_ESSENTIALS_PREFIX = "profile_rule_allow_essentials__"
         private const val KEY_TEMP_ALLOW_PREFIX = "temp_allow_"
     }
 }

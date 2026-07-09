@@ -41,6 +41,7 @@ import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.QrScanCountStore
 import at.saltyy.switchly.data.prefs.QrTempActionLimiterStore
 import at.saltyy.switchly.data.prefs.ScanCodeStore
+import at.saltyy.switchly.nfc.InternalScanDispatchGuard
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -234,9 +235,12 @@ class QrScanActivity : AppCompatActivity() {
 
     private fun dispatchActionUri(rawUri: String) {
         val uri = rawUri.toUri()
+        val source = ScanCodeStore.Kind.QR.raw
+        val token = InternalScanDispatchGuard.issue(this, source)
         startActivity(
             Intent(Intent.ACTION_VIEW, uri)
-                .putExtra(EXTRA_SCAN_SOURCE, ScanCodeStore.Kind.QR.raw)
+                .putExtra(EXTRA_SCAN_SOURCE, source)
+                .putExtra(InternalScanDispatchGuard.EXTRA_TOKEN, token)
                 .setClass(this, NfcEntryActivity::class.java)
         )
         finish()

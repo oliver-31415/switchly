@@ -4,40 +4,13 @@
     <!-- ====================================================== -->
     <!-- FAQ search and screen chrome -->
     <!-- ====================================================== -->
-    <string name="faq_screen_title">FAQ</string>
+    <string name="faq_screen_title">Help Center</string>
     <string name="faq_search_hint">Search questions…</string>
     <string name="faq_expand_description">Expand or collapse answer</string>
     <string name="faq_icon_description">FAQ icon</string>
     <string name="faq_empty_title">No matching FAQ found</string>
     <string name="faq_empty_body">Try a different keyword like NFC, QR, schedule, profile or emergency unlock.</string>
     <string name="faq_clear_search">Clear search</string>
-
-    <!-- ====================================================== -->
-    <!-- FAQ category headers -->
-    <!-- ====================================================== -->
-    <string name="faq_header_popular">Top questions</string>
-    <string name="faq_header_general">Basics</string>
-    <string name="faq_header_profiles">Profiles</string>
-    <string name="faq_header_modes">Protection modes</string>
-    <string name="faq_header_qr_nfc">NFC &amp; QR Details</string>
-    <string name="faq_header_schedules">Schedules</string>
-    <string name="faq_header_limits_usage">Limits &amp; Usage</string>
-    <string name="faq_header_premium">Premium &amp; Analytics</string>
-    <string name="faq_header_contact">Contact</string>
-    <string name="faq_header_support">Donations</string>
-
-    <!-- ====================================================== -->
-    <!-- FAQ section labels/popular chips -->
-    <!-- ====================================================== -->
-    <string name="faq_section_switchly_60">Getting started</string>
-    <string name="faq_section_idiot_safe">Quick start</string>
-    <string name="faq_section_features">Core features</string>
-    <string name="faq_section_gray">Common issues</string>
-    <string name="faq_section_backup_restore">Account &amp; data</string>
-    <string name="faq_section_quick_nfc">NFC guide</string>
-    <string name="faq_section_quick_qr">QR guide</string>
-    <string name="faq_section_nfc_qr_together">NFC + QR flow</string>
-    <string name="faq_section_tags">NFC tags</string>
 
     <!-- ====================================================== -->
     <!-- Getting started and general app behavior -->
@@ -48,30 +21,16 @@
     <string name="faq_a_nutshell">Switchly helps you stay focused by blocking apps, websites, and specific in-app areas (like Shorts/Reels). You choose rules per profile, then Switchly enforces them while it is enabled.</string>
     <string name="faq_q_tutorial_what">What does the tutorial do?</string>
     <string name="faq_a_tutorial_what">The tutorial reopens the setup walkthrough: permissions, profile basics, and core features (NFC/QR, schedules, limits). It does not delete your data; it only guides you through setup again.</string>
-    <string name="faq_q_languages">Can I change the app language?</string>
-    <string name="faq_a_languages">Yes. Go to Settings → General → Language.\nThe app restarts for the change to take effect.</string>
-    <string name="faq_q_theme">Does Switchly support dark mode?</string>
-    <string name="faq_a_theme">Yes. Choose Light, Dark, or System in Settings → General → Theme.\nPremium unlocks additional colors and a custom color picker.</string>
-
-    <!-- ====================================================== -->
-    <!-- Simple mode/idiot-safe explanations -->
-    <!-- ====================================================== -->
-    <string name="faq_q_idiot_nutshell">How do I use Switchly in a nutshell?</string>
-    <string name="faq_a_idiot_nutshell">Create one profile, choose what should be blocked, enable Switchly, done. If you want extra friction, enable NFC/QR unlock so you cannot disable it too easily in weak moments.</string>
     <string name="faq_q_idiot_features">What features does Switchly have?</string>
     <string name="faq_a_idiot_features">Core features: app blocking, website blocking, in-app blocking (like Shorts/Reels/Explore), blocked notifications inbox, profiles, schedules, app/website limits, usage stats, QR/barcode/NFC actions, Quick Settings tiles, widgets, launcher shortcuts, and backup/restore.</string>
     <string name="faq_q_idiot_gray">Why are some settings grayed out?</string>
     <string name="faq_a_idiot_gray">Because protection is active. If Switchly is enabled/locked (especially with NFC/QR unlock), critical settings are intentionally disabled to prevent bypassing. Unlock/disable first, then edit.</string>
-    <string name="faq_q_idiot_both">How do I use NFC + QR together?</string>
-    <string name="faq_a_idiot_both">Use NFC as your main method and QR as backup. Keep the QR less convenient (e.g., in a drawer or wallet) so it still helps against impulsive disabling.</string>
     <string name="faq_q_idiot_nfc_how">How does NFC work with Switchly?</string>
-    <string name="faq_a_idiot_nfc_how">Switchly reads an NFC tag trigger. You write or pair a tag once, then scanning that tag can perform protected actions (for example unlock or disable, depending on your setup). UID-only mode accepts only paired tag IDs for extra security.</string>
+    <string name="faq_a_idiot_nfc_how">Switchly reads an NFC tag trigger. You normally write a Switchly action to the tag, then scanning it can perform actions such as enable, disable, toggle, or temporary mode. Pair UID is only needed for read-only/UID-only tags or per-tag limits.</string>
     <string name="faq_q_idiot_nfc">How to use Switchly with NFC (step by step)</string>
-    <string name="faq_a_idiot_nfc">1. Open the NFC writer.\n2. Hold the tag to your phone and write it.\n3. Optional: use “Pair UID” if you want UID-only security.\n4. If you want only paired tags to work, enable “Enable paired NFC tags” in Toggle Options.</string>
+    <string name="faq_a_idiot_nfc">1. Open the NFC writer.\n2. Choose the Switchly action.\n3. Hold the tag to your phone and write it.\n4. Scan the written tag to run its action.\n\nOptional: use “Pair UID” only for read-only/UID-only tags or per-tag limits.</string>
     <string name="faq_q_idiot_qr">How to use Switchly with QR (step by step)</string>
     <string name="faq_a_idiot_qr">1. Create a QR trigger in Switchly.\n2. Print it or keep it on another device/location.\n3. Enable QR control/QR unlock if you want QR to be required.\n4. Scan this QR code when you need to unlock, toggle, enable, disable, or switch profile.\n\nYou can scan with Switchly’s internal scanner or, on supported devices, with an external camera/QR scanner app.</string>
-    <string name="faq_q_idiot_tags">Which NFC tags are recommended?</string>
-    <string name="faq_a_idiot_tags">Recommended: NTAG213, NTAG215, NTAG216 (best compatibility). NTAG213 is enough for most users. Buy from a reliable seller and avoid random ultra-cheap no-name packs.</string>
     <string name="faq_q_idiot_save_data">How do I save my data (backup/restore)?</string>
     <string name="faq_a_idiot_save_data">Sign in first, then open Settings → Account/Cloud backup and create a backup. On a new device (or after reset), sign in with the same account and use Restore to load a backup.</string>
     <string name="faq_q_idiot_delete_account">How do I delete my account?</string>
@@ -92,12 +51,6 @@
     <!-- ====================================================== -->
     <string name="faq_q_profiles">What are profiles for?</string>
     <string name="faq_a_profiles">Profiles contain app selections and blocking rules, e.g., “Work”, “Study”, or “Sleep”.\nYou can create, rename, duplicate, or delete profiles.\nThe active profile is always shown at the top.</string>
-    <string name="faq_q_profile_nfc_sync">Why did my NFC tag stop working after renaming a profile?</string>
-    <string name="faq_a_profile_nfc_sync">NFC tags store the profile name in plain text.\nIf you rename or delete that profile, the tag no longer matches.\n\nRewrite the NFC tag with the updated name to fix this.</string>
-    <string name="faq_q_temp_disable">What is the difference between “Temporary disable” and “Emergency unlock”?</string>
-    <string name="faq_a_temp_disable">Temporary disable pauses blocking for a short time (e.g., 10 minutes) and then enables it again automatically. You can use it as often as you want.\n\nEmergency unlock disables all restrictions for a fixed time (e.g., 15 minutes) and can only be used once per calendar day to prevent overuse.\nBoth timers are shown on the main screen.</string>
-    <string name="faq_q_temp_enable">What is “Temporary enable”?</string>
-    <string name="faq_a_temp_enable">This lets you enable blocking for a limited time. When the timer ends, Switchly automatically restores the previous state.</string>
     <string name="faq_q_reentry">What is “Temporary settings unlock” in NFC write?</string>
     <string name="faq_a_reentry">Temporary settings unlock writes an NFC action that temporarily unlocks Switchly settings for the selected duration (for example 10 minutes).\n\nAfter the timer ends, the previous protection state is restored automatically.\n\nTo show this action in the NFC writer, enable it in Toggle Options.</string>
 
@@ -126,30 +79,20 @@
     <!-- ====================================================== -->
     <string name="faq_q_nfc_and_qr">Using NFC + QR together</string>
     <string name="faq_a_nfc_and_qr">You can enable both. This means disabling Switchly requires the allowed method(s) you configured. Pick what fits your setup (e.g., NFC at home + QR as backup).</string>
-    <string name="faq_q_nfc">How do NFC tags work with Switchly?</string>
-    <string name="faq_a_nfc">Switchly can write NFC tags that trigger actions instantly:\n\n• Global actions: enable, disable, toggle, or temporarily disable (e.g., 10 minutes)\n• Profile actions: activate a specific profile and then enable, disable, or toggle\n\nIf the profile on a tag no longer exists, Switchly shows a toast and does nothing.\nMost standard NDEF-compatible tags are supported; only proprietary formats may fail.</string>
-    <string name="faq_q_nfc_basic">How to use Switchly with NFC</string>
-    <string name="faq_a_nfc_basic">Open the NFC writer and write a Switchly trigger to an NFC tag. If NFC-required unlock is enabled, you will need to scan a valid tag to disable Switchly.</string>
-    <string name="faq_q_nfc_pairing">What is “paired tags/UID-only”?</string>
-    <string name="faq_a_nfc_pairing">If enabled, Switchly will only accept NFC tags whose UID you paired. This prevents bypassing with random tags.\n\nRead-only paired tags work as a global NFC trigger only. They cannot target a specific profile, because no Switchly action can be written to the card itself.\n\nTo manage paired tags, open Manage → Paired NFC tags.</string>
     <string name="faq_q_nfc_paired_tags">NFC pairing/UID-only mode</string>
-    <string name="faq_a_nfc_paired_tags">UID-only mode is a security feature: when enabled, Switchly only accepts NFC tags whose UID you paired.\nIf you accidentally paired a transit card or another tag UID, other tags may be rejected with “Wrong NFC tag (paired UID required)”.\nTo remove or rename paired tags, open Manage → Paired NFC tags.\nPairing is done by scanning a tag in the NFC writer and choosing “Pair UID”.</string>
+    <string name="faq_a_nfc_paired_tags">UID-only mode is optional for tags that do not contain a written Switchly action. Normal written Switchly NFC action tags work without pairing as long as NFC control is enabled.\nUse paired tags for read-only/UID-only tags or per-tag temporary-disable limits.\nTo remove or rename paired tags, open Manage → Paired NFC tags. Pairing is done by scanning a tag in the NFC writer and choosing “Pair UID”.</string>
     <string name="faq_q_nfc_uid_pair">What does “Pair tag (UID only)” do?</string>
-    <string name="faq_a_nfc_uid_pair">“Pair tag (UID only)” does not write anything to the NFC tag.\nInstead, Switchly only reads the tag UID (hardware ID) and stores it inside the app.\n\nIf UID pairing is enabled, only that exact paired tag can be used to toggle or unlock Switchly without a written action. Unpaired blank tags are ignored.\nThis is useful for read-only tags or if you do not want the tag to contain a readable action.</string>
-    <string name="faq_q_nfc_auto_pairing">Why was my NFC tag paired automatically after writing it?</string>
-    <string name="faq_a_nfc_auto_pairing">By default, writing a tag should not automatically pair it. Pairing normally happens only through Manage Paired Tags or an explicit pairing action inside the app.\n\nIf you want writing a tag to also pair its UID, enable “Pair NFC tag when writing” in Toggle Options.\n\nIf a freshly written tag already appears as paired while that toggle is off, treat that as unintended behavior and re-check it from Manage Paired Tags.</string>
+    <string name="faq_a_nfc_uid_pair">“Pair tag (UID only)” does not write anything to the NFC tag.\nInstead, Switchly only reads the tag UID and stores it inside the app.\n\nA paired UID-only tag can be used as a global action when the tag has no written Switchly action. Unpaired blank tags are ignored. Written Switchly action tags do not need pairing.\nThis is useful for read-only tags or if you do not want the tag to contain a readable action.</string>
     <string name="faq_q_nfc_tag_types">Which NFC tag types work?</string>
     <string name="faq_a_nfc_tag_types">Best compatibility: NTAG213, NTAG215, NTAG216 (NFC Forum Type 2). In general, most writable NDEF-capable tags work. Avoid locked read-only tags for writing. UID-only pairing also works with tags you cannot write to.</string>
-    <string name="faq_q_qr_what">What are QR actions?</string>
-    <string name="faq_a_qr_what">Switchly can save actions (e.g., switching profiles or toggling modes) as a QR code. You can share or print it.</string>
-    <string name="faq_q_qr_generate">How do I create a QR code?</string>
-    <string name="faq_a_qr_generate">Open the QR screen, choose the action/profile, then tap “Create”. You can save or share the code afterward.</string>
-    <string name="faq_q_qr_scan">How do I scan a QR code?</string>
-    <string name="faq_a_qr_scan">Use the internal QR scanner for the most reliable flow. You can open it from Quick Actions on the Home screen, from Blocking/Manage Keys when QR tools are enabled, from the QR launcher shortcut, from widgets, or from the optional QR Quick Settings tile.\n\nExternal camera/QR scanner apps can also open Switchly QR action links on supported devices. If Android routes the link through Switchly, the app may show a confirmation step before applying the action.</string>
-    <string name="faq_q_qr_basic">How to use Switchly with QR</string>
-    <string name="faq_a_qr_basic">Create a QR trigger in Switchly, then print it, save it, or keep it on another device. If QR control is required, you must scan an allowed QR code to disable or change Switchly.\n\nInternal scanner: use the QR scanner entry in Quick Actions, Blocking/Manage Keys, widgets, launcher shortcuts, or the optional QR Quick Settings tile.\nExternal scanner: supported camera/QR apps can open Switchly action links too. Switchly may show a confirmation screen before applying external deep-link actions.</string>
-    <string name="faq_q_barcode_what">What are barcode actions?</string>
-    <string name="faq_a_barcode_what">Barcode actions work like QR actions, but with regular barcodes. You can map a scanned barcode value to a Switchly action and use printed or physical codes as triggers.</string>
+    <string name="faq_q_own_nfc_tag">Can I use my own NFC tag?</string>
+    <string name="faq_a_own_nfc_tag">Yes. Use a writable, NDEF-capable NFC tag and open Switchly → NFC tag writer. Choose the action, then hold the tag to your phone until Android confirms the write.\n\nRecommended tags: NTAG213, NTAG215, or NTAG216. NTAG213 is usually enough for simple actions. Use NTAG215/216 if you want longer profile names or extra data.\n\nIf the tag is read-only, locked, too small, or cannot store NDEF data, Switchly may not be able to write an action to it. In that case you can use Pair UID instead, but the action is then stored inside Switchly and not on the tag itself.</string>
+    <string name="faq_q_nfc_tag_write_fails">Why does writing an NFC tag fail?</string>
+    <string name="faq_a_nfc_tag_write_fails">Common reasons:\n\n• The tag is locked or read-only.\n• The tag is too small for the action URI.\n• The tag is not NDEF-formatted or not compatible with normal Android NFC writing.\n• The phone moved away before the write finished.\n• Another app or the system claimed the tag first.\n\nTry holding the tag still on the NFC antenna area, use a blank NTAG213/215/216 tag, or shorten the profile name. If writing is not possible, pair the tag by UID instead.</string>
+    <string name="faq_q_nfc_action_examples">Which actions can I write to NFC tags?</string>
+    <string name="faq_a_nfc_action_examples">Switchly can write these action tags:\n\n• Toggle: switchly://toggle\n• Enable: switchly://enable\n• Disable: switchly://disable\n• Temporary enable: switchly://temp_enable?duration=30\n• Temporary disable: switchly://temp_disable?duration=15\n• Ask duration: switchly://temp_disable?duration=ask\n• Profile action: switchly://temp_enable?profile=Work&amp;duration=30\n\nIf profile is missing, the action is universal/global. If duration=ask is used, Switchly asks for the duration when the tag is scanned.</string>
+    <string name="faq_q_custom_action_uri">Can I create my own NFC, QR or barcode action?</string>
+    <string name="faq_a_custom_action_uri">Yes. Switchly writes short readable action URIs so you can also create your own QR codes or barcodes manually.\n\nRecommended format:\n• switchly://toggle\n• switchly://enable\n• switchly://disable\n• switchly://temp_enable?duration=30\n• switchly://temp_disable?duration=ask\n• switchly://temp_enable?profile=Work&amp;duration=30\n\nParameters:\n• duration=minutes or duration=ask\n• profile=Profile name is optional. If no profile is set, the action is universal/global.\n\nAlso accepted for compatibility:\n• Readable legacy: switchly://action?type=temp_enable&amp;duration=30\n• Compact alias: switchly://a?t=te&amp;d=30\n• Older tags: switchly://switch/… and switchly://profile/…</string>
     <string name="faq_q_barcode_setup">How do I use barcodes?</string>
     <string name="faq_a_barcode_setup">Open Manage barcodes, add a barcode by scanning it or entering it manually, then choose the Switchly action it should trigger. Later, scan the same barcode in Switchly to run that action.</string>
 
@@ -170,16 +113,6 @@
     <string name="faq_a_schedules_location">Location schedules use geofences: you choose a place, a radius, and whether the action should run on enter, on exit, or both.\n\nTo work reliably, Switchly needs precise location. If the trigger should also work while the app is not open, background location (“Allow all the time”) is needed on Android 10 and newer. Android can still delay geofence events a little to save battery, so triggers are usually not truly instant.\n\nTip: you can pre-enable the needed location permission in Switchly → Permissions before creating the schedule.</string>
     <string name="faq_q_control_mode">What are protection controls/control mode?</string>
     <string name="faq_a_control_mode">Protection controls decide which paths are allowed to enable or disable Switchly.\n\nDepending on the selected control mode, Switchly can accept changes from schedules, NFC tags, QR actions, or manual controls like the home toggle button and Quick Settings tile.\n\nThis is not just about unlocking. It defines which control channels are trusted at all.</string>
-    <string name="faq_q_mode_schedule">What is Schedule mode?</string>
-    <string name="faq_a_mode_schedule">Schedule mode focuses on automatic routines.\nOnly schedules are allowed to control Switchly automatically.\nNFC and QR actions are ignored while this mode is active.\n\nUse this when your setup should follow time, Wi-Fi, Bluetooth, or location conditions instead of physical tags or QR codes.</string>
-    <string name="faq_q_mode_nfc">What is NFC mode?</string>
-    <string name="faq_a_mode_nfc">NFC mode focuses on physical friction.\nOnly NFC actions are accepted for automation.\nSchedules and QR actions are ignored while this mode is active.\n\nThis is useful if you want a physical tag to be the main control method.</string>
-    <string name="faq_q_mode_qr">What is QR mode?</string>
-    <string name="faq_a_mode_qr">QR mode focuses on QR-based workflows.\nOnly QR actions are accepted for automation.\nSchedules and NFC actions are ignored while this mode is active.\n\nUse this if your unlock or toggle flow should depend on scanning a QR code.</string>
-    <string name="faq_q_mode_mixed">What is Mixed mode?</string>
-    <string name="faq_a_mode_mixed">Mixed mode is the flexible option.\nInstead of allowing only one control path, you can choose exactly which channels are allowed.\n\nThat means you can allow any combination of schedules, NFC, QR, and manual controls.\nFor example, you could allow schedules and NFC, but block QR and manual buttons.</string>
-    <string name="faq_q_manual_controls">What are manual controls?</string>
-    <string name="faq_a_manual_controls">Manual controls are direct controls inside Switchly or Android’s system UI.\nThis includes the Home toggle/button, temporary enable/disable actions, Quick Actions, launcher shortcuts, widgets, and Quick Settings tiles.\n\nIf manual controls are not allowed by your current Blocking Controls setup, those actions may be disabled, ignored, or show a warning instead of changing Switchly.</string>
 
     <!-- ====================================================== -->
     <!-- Usage limits and statistics -->
@@ -195,25 +128,19 @@
     <string name="faq_q_usage_access">Why does Switchly need Accessibility?</string>
     <string name="faq_a_usage_access">Switchly uses an Accessibility service to detect when you open a blocked app (window/app changes). It only reacts to those events to enforce your profiles. No keystrokes are recorded, and Switchly does not store your screen contents.</string>
     <string name="faq_q_usage_stats">Where does usage data come from?</string>
-    <string name="faq_a_usage_stats">Switchly primarily uses its Accessibility service to detect foreground app changes and record usage time. Usage Access may still be used as a fallback or for compatibility on some screens, but Accessibility is the main source of truth for current tracking.</string>
+    <string name="faq_a_usage_stats">Switchly primarily uses its Accessibility service to detect foreground app changes and record usage time. Usage Access may still be used as a fallback or for compatibility on some screens. Switchly statistics focus on blocking activity and limit-related usage, so allowed or temporarily unlocked usage may not always appear and the stats are not a full Digital Wellbeing replacement.</string>
 
     <!-- ====================================================== -->
     <!-- Reliability and Android/OEM behavior -->
     <!-- ====================================================== -->
     <string name="faq_q_overlay">Do I need the overlay permission?</string>
     <string name="faq_a_overlay">No. Newer versions of Switchly do not require overlay permission. Blocking is handled via Accessibility and a full-screen blocker. If you granted overlay in an older version, you can safely revoke it in system settings.</string>
-    <string name="faq_q_oem_limits">Why does Switchly behave differently on my device?</string>
-    <string name="faq_a_oem_limits">Some manufacturers restrict APIs that affect overlays, background services, or Quick Settings tiles.\nSwitchly uses only official APIs — behavior still depends on your device/ROM settings.</string>
     <string name="faq_q_xiaomi_background">Why does Switchly sometimes stop working on Xiaomi/Redmi/POCO devices?</string>
     <string name="faq_a_xiaomi_background">On some Xiaomi, Redmi, and POCO devices, MIUI or HyperOS can stop Accessibility or restrict background behavior very aggressively to save battery. This can make blocking or statistics stop even if Android still shows Accessibility as enabled. In some cases the Accessibility toggle stays on in settings, but the service is no longer really running in the background.\n\nTry this:\n\n• Enable Autostart for Switchly\n• Set battery mode to No restrictions/Don’t optimize if available\n• Lock Switchly in the Recents screen so the system does not clear it as aggressively\n• If available, allow background activity for Switchly\n• If you use Wi-Fi triggers, allow Location and on Android 13+ also Nearby Wi-Fi devices\n• Turn the Accessibility toggle off and on again once\n\nAfter changing these settings, also open Switchly → Troubleshoot and check whether Accessibility, notifications, usage access, and Wi-Fi-related permissions are all shown as active.</string>
     <string name="faq_q_battery">Does Switchly use a lot of battery?</string>
     <string name="faq_a_battery">Switchly is event-based: the Accessibility service reacts when apps change, so there is no constant polling. Battery impact is typically low. If you use Wi-Fi, Bluetooth, or location schedules, Android may show an ongoing notification because those features require foreground services on many devices.</string>
     <string name="faq_q_battery_permission_still_needed">Battery permission still shows as needed — what should I do?</string>
     <string name="faq_a_battery_permission_still_needed">If Switchly still shows that battery/background permission is needed, open Switchly → Permissions &amp; Reliability and use the Battery Optimization button if your device shows it.\n\nIf your device does not show that shortcut, do it manually:\n\n• Open Android Battery Optimization settings\n• Search for Switchly\n• Open the Switchly entry\n• If available, enable Allow background usage\n• Set the battery/background mode to Unrestricted\n\nSome devices use different wording such as No restrictions or Don’t optimize. If Unrestricted does not exist on your device, select the highest background access level available.</string>
-    <string name="faq_q_tile">How do I add the Quick Settings tile?</string>
-    <string name="faq_a_tile">Open Switchly → Blocking Controls/Toggle Options and enable the tile rows you want. Then open Android’s Quick Settings editor and add the tiles.\n\nSwitchly can expose separate Quick Settings tiles for the main Switchly toggle, the QR scanner, and the barcode scanner. On some devices, newly added tiles or labels may appear with a slight delay.</string>
-    <string name="faq_q_tile_why_missing">Why is the Quick Settings tile missing?</string>
-    <string name="faq_a_tile_why_missing">First enable the related tile option in Switchly, then add it from Android’s Quick Settings edit screen.\n\nSome OEMs only show tiles after the app has been opened once, after a short delay, or after restarting the launcher/System UI. If a QR/barcode tile is missing, also make sure QR/barcode tools are enabled in Switchly.</string>
 
     <!-- ====================================================== -->
     <!-- Privacy, backup and premium -->
@@ -224,20 +151,6 @@
     <string name="faq_a_premium_overview">Switchly Premium adds optional features, while core blocking stays free.\n\nYou get:\n• More accent colors and a custom color picker\n• Custom temporary lock and unlock durations\n• Additional Wi-Fi and Bluetooth schedules\n• Enhanced insights and statistics</string>
     <string name="faq_q_premium_how">How do I get Premium?</string>
     <string name="faq_a_premium_how">Open Settings → Premium. There you can view features and unlock Premium.\n\nPlay Store build: Premium uses Google Play Billing.\nDirect/Firebase build: Premium can use the direct checkout/restore flow or a Switchly Premium code from selected Salt Tag bundles/direct purchases.\nOffline build: online purchases are not available; supported Offline builds can unlock with an offline code.\n\nGoogle Play promo codes must be redeemed through Google Play, not through the Switchly code field.</string>
-    <string name="faq_q_analytics">What about usage statistics or analytics?</string>
-    <string name="faq_a_analytics">Some analytics may be part of Premium — optional and privacy-friendly.\nThey help you understand habits and improve the app.\nNo tracking across other apps or services.</string>
-
-    <!-- ====================================================== -->
-    <!-- Developer mode, scanners and Android entry points -->
-    <!-- ====================================================== -->
-    <string name="faq_q_developer_mode_logging">What is the Developer mode logging screen?</string>
-    <string name="faq_a_developer_mode_logging">Developer mode → Logging shows the latest internal Switchly app logs live. It is useful for debugging without opening an email draft every time.\n\nYou can refresh, copy the visible logs, or enable/disable internal logging there. Logs are stored locally and are meant for troubleshooting. They may include package names, schedule decisions, blocking decisions, scanner actions, and permission state changes. They are only shared if you copy them or send a support report.</string>
-    <string name="faq_q_qr_internal_external">Should I use the internal QR scanner or my camera app?</string>
-    <string name="faq_a_qr_internal_external">The internal Switchly scanner is the safest and most predictable option because it opens Switchly directly and avoids Android app-link routing problems.\n\nExternal camera/QR scanner apps can work too when Android routes the Switchly action link correctly. For safety, external QR/deep-link actions may show a confirmation step before Switchly applies them.</string>
-    <string name="faq_q_quick_actions_tiles_widgets">What are Quick Actions, tiles, widgets and shortcuts?</string>
-    <string name="faq_a_quick_actions_tiles_widgets">They are different ways to open or trigger Switchly actions:\n\n• Quick Actions: cards inside Switchly, usually on the Home screen. Tap opens the main action, long press can open manage/options screens.\n• Quick Settings tiles: Android pull-down tiles, such as Switchly, QR scanner, and barcode scanner.\n• Launcher shortcuts: long-press the Switchly app icon on your launcher to open actions like Focus Now, QR scanner, or barcode scanner.\n• Widgets: home-screen widgets for quick actions, scanners, pause/focus actions, blocked notifications, and next schedule info.\n\nWhich actions are accepted still depends on your current Blocking Controls setup.</string>
-    <string name="faq_q_shortcuts_widgets">Where do I find the widgets and launcher shortcuts?</string>
-    <string name="faq_a_shortcuts_widgets">Launcher shortcuts are available by long-pressing the Switchly app icon on your home screen/launcher. Depending on the launcher, you can also drag those shortcuts onto the home screen.\n\nWidgets are added through Android’s normal widget picker: long-press an empty home-screen area, choose Widgets, then look for Switchly. Available widgets can include QR scan, barcode scan, NFC write, Focus Now, pause actions, blocked notifications, and next schedule.</string>
 
     <!-- ====================================================== -->
     <!-- Troubleshooting and support diagnostics -->
@@ -246,8 +159,6 @@
     <string name="faq_a_troubleshooting_first_steps">Start with the basics:\n\n• Make sure Switchly itself is enabled.\n• Check that you are editing/testing the currently active profile.\n• Open Switchly → Permissions &amp; Reliability and check Accessibility, Usage Access, notifications, battery/background access, and schedule-related permissions.\n• Check Blocking Controls: button, tile, QR, barcode, NFC and schedule actions are separate control channels.\n• Reproduce the issue once, then send a support report immediately afterwards so the recent logs still show what happened.\n\nFor schedule/location issues, also check battery/background settings and whether the phone has location services enabled.</string>
     <string name="faq_q_switchly_disabled_no_blocking">Why is nothing blocked when Switchly is disabled?</string>
     <string name="faq_a_switchly_disabled_no_blocking">The normal Switchly on/off toggle is a full disable. While Switchly is disabled, app and website blocking are not enforced until you enable it again or an allowed schedule/action enables it.\n\nIf you only want a short break, use Temporary Disable instead. Temporary Disable pauses blocking for the chosen time and then enables Switchly again automatically.</string>
-    <string name="faq_q_control_channel_still_works">Why can I still enable/disable Switchly with a button, tile, QR, barcode or NFC?</string>
-    <string name="faq_a_control_channel_still_works">Switchly uses separate control channels. The in-app button, Quick Settings tile, schedules, NFC tags, QR codes and barcodes can each be allowed or blocked independently.\n\nIf a channel is allowed in Blocking Controls, Switchly may still accept actions from it. If you want stricter protection, disable the channels you do not want to trust while blocking is active.</string>
     <string name="faq_q_location_schedules_reliability">Why do location schedules sometimes fire late or not at all?</string>
     <string name="faq_a_location_schedules_reliability">Location schedules use Android geofences. Android may delay geofence events to save battery, especially when the phone is idle, battery-restricted, freshly rebooted, or has weak GPS/network location.\n\nFor best results:\n\n• Allow precise location.\n• Allow background location/“Allow all the time” where Android offers it.\n• Set Switchly to unrestricted/not optimized battery usage.\n• Keep location services enabled.\n• Use a radius that is not too small.\n\nSwitchly also performs an initial location check when registering geofences, but the actual enter/exit events are still controlled by Android.</string>
     <string name="faq_q_maps_empty_gray">Why is the map empty or gray?</string>
@@ -261,11 +172,39 @@
     <string name="faq_q_contact">How can I contact the developer?</string>
     <string name="faq_a_contact">Join the community Discord server for feedback and support:\n\nhttps://discord.gg/PC5zn2NeCg\n\nFor direct support, use the support contact shown in the About/Support screen.</string>
     <string name="faq_q_donate">Can I donate to support Switchly?</string>
-    <string name="faq_a_donate">Premium is intentionally priced very low. If you still want to support development, you can buy Premium as a “tip” or contact me to donate.\nI plan to make Switchly open source once I have a small buffer, so I can continue development without stress and without someone immediately copying it 1:1.\n\nDonation link:\nhttps://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY</string>
     <string name="faq_a_donate_clean">Switchly is already very low-priced. If you still want to support development, you can use Premium as a tip or donate directly via PayPal: https://www.paypal.com/donate/?hosted_button_id=4CMENNDQCXWZY</string>
-    <string name="faq_q_switchly_lite">Is there a simpler version of Switchly too?</string>
-    <string name="faq_a_switchly_lite">Yep, there is also Switchly Lite as a lighter option for simple blocking flows like NFC, button actions, and timed schedules. Think of it as a more stripped-back version of Switchly with fewer advanced features.</string>
-    <string name="faq_q_issue_board">Where can I track known issues or planned fixes?</string>
-    <string name="faq_a_issue_board">You can check the public issue board for known issues, planned fixes, and current progress:\n\nhttps://gitlab.com/Saltyy/switchly-public/-/boards/10076025</string>
+    <!-- Help Center categories -->
+    <plurals name="faq_category_articles_count">
+        <item quantity="one">%1$d article</item>
+        <item quantity="other">%1$d articles</item>
+    </plurals>
+    <string name="faq_category_getting_started">Switchly Basics</string>
+    <string name="faq_category_getting_started_summary">Learn the basics and set up your first profile</string>
+    <string name="faq_category_background_access">Background access</string>
+    <string name="faq_category_background_access_summary">Battery, background activity, OEM settings and reliability</string>
+    <string name="faq_category_blocking">App &amp; website blocking</string>
+    <string name="faq_category_blocking_summary">Blocked apps, websites, in-app rules and common blocking issues</string>
+    <string name="faq_category_notifications">Blocked notifications &amp; stats</string>
+    <string name="faq_category_notifications_summary">Notification hiding, inbox, usage stats and troubleshooting</string>
+    <string name="faq_category_nfc_qr">NFC, QR &amp; barcodes</string>
+    <string name="faq_category_nfc_qr_summary">Set up tags, QR codes, barcodes and fallback unlocks</string>
+    <string name="faq_category_schedules_limits">Schedules &amp; limits</string>
+    <string name="faq_category_schedules_limits_summary">Automations, Wi‑Fi, Bluetooth, location and usage limits</string>
+    <string name="faq_category_advanced">Advanced protection</string>
+    <string name="faq_category_advanced_summary">Hard mode, uninstall friction, re-entry and stricter settings</string>
+    <string name="faq_category_account_support">Account, backup &amp; support</string>
+    <string name="faq_category_account_support_summary">Backups, privacy, Premium, support reports and contact</string>
+
+    <!-- ====================================================== -->
+    <!-- Background access FAQ -->
+    <!-- ====================================================== -->
+    <string name="faq_q_background_access_checklist">What should I enable for reliable background access?</string>
+    <string name="faq_a_background_access_checklist">For best reliability, open Switchly → Permissions &amp; Reliability and check these items:\n\n• Accessibility enabled\n• Usage Access enabled\n• Notifications allowed\n• Notification access enabled if you use blocked notifications\n• Battery usage set to Unrestricted/Not optimized where available\n• Auto-start allowed on aggressive manufacturers\n• Exact alarms allowed on Android 12+ if schedules are used\n• Location set to precise + “Allow all the time” if Wi-Fi/location schedules are used\n\nThe exact names differ by Android version and manufacturer.</string>
+
+    <string name="faq_q_dontkillmyapp">Where can I find device-specific background steps?</string>
+    <string name="faq_a_dontkillmyapp">Some manufacturers aggressively stop apps in the background. A good external checklist is:\n\nhttps://dontkillmyapp.com/\n\nOpen your manufacturer there and apply the relevant Battery/Background activity/Auto-start steps for Switchly. The wording can differ by Android version, but the goal is the same: Switchly should not be optimized, restricted, or prevented from starting in the background.</string>
+
+    <string name="faq_q_android_battery_popup">Why does Switchly show an Android “allow in background” popup?</string>
+    <string name="faq_a_android_battery_popup">On supported Android versions, Switchly can ask Android to exclude it from battery optimization. If Android shows the popup and you allow it, Switchly should move closer to Unrestricted/Not optimized battery behavior.\n\nSome devices ignore this popup, hide it, or still require extra OEM settings afterwards. If schedules or blocking feel delayed, also check the Background access guide and your manufacturer steps.</string>
 
 </resources>

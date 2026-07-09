@@ -27,13 +27,103 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <TextView
+        <LinearLayout
+            android:id="@+id/filterSortChipRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="10dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAppFilterChip"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:minHeight="44dp"
+                android:singleLine="true"
+                android:text="@string/blocked_inbox_filter_all_apps"
+                android:textAlignment="center"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                app:icon="@drawable/apps_24"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSortChip"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:minHeight="44dp"
+                android:singleLine="true"
+                android:text="@string/blocked_inbox_sort_newest"
+                android:textAlignment="center"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                app:icon="@drawable/sort_24"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp" />
+        </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/tvEmpty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:text="@string/blocked_inbox_empty"
-            android:visibility="gone" />
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="18dp"
+            android:visibility="gone"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/status_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <ImageView
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:src="@drawable/notifications_24"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    app:tint="?attr/colorPrimary" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:text="@string/blocked_inbox_empty_title"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center"
+                    android:text="@string/blocked_inbox_empty_body"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerInbox"
@@ -45,9 +135,10 @@
 
     </LinearLayout>
 
-    <!-- Bottom-right filter action (icon-only) -->
+    <!-- Legacy filter FAB kept hidden; filters are now chips above the list. -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnFilter"
+        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"

@@ -28,12 +28,10 @@ import com.google.firebase.firestore.SetOptions
 
 /**
  * Syncs the user's premium state to Firestore.
- *
  * Stored under:
  *   switchly_users/<uid>:
  *     hasPremium            : Boolean
  *     premiumLastSyncedAt   : Long (Unix timestamp in milliseconds)
- *
  * Notes:
  * - This is only a mirror for cloud-based features or remote diagnostics.
  * - Play builds use local Play Billing; external-payment builds can restore a verified backend entitlement.
@@ -47,7 +45,6 @@ object PremiumCloudRuntime {
 
     /**
      * Sends the user's current premium state to Firestore.
-     *
      * Requirements:
      *  - User must be logged in (Auth.uid() != null)
      *  - Premium state is determined locally by PremiumManager

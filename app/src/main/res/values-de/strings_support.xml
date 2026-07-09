@@ -49,7 +49,6 @@
     <string name="troubleshooting_info_location">Android benötigt die Berechtigung für den genauen Standort, um den aktuellen WLAN-Namen (SSID) zu lesen. Für die beste Zuverlässigkeit bei WLAN-Triggern sollte zusätzlich Hintergrundstandort erlaubt sein.</string>
     <string name="troubleshooting_info_bluetooth">Android 12+ benötigt die Berechtigung „Geräte in der Nähe“ bzw. Bluetooth für Bluetooth-basierte Zeitpläne.</string>
     <string name="troubleshooting_xiaomi_note">Xiaomi-/Redmi-/POCO-Hinweis:\n\n• Aktiviere zusätzlich Autostart für Switchly\n• Stelle den Akku-Modus auf Uneingeschränkt/Nicht optimieren, falls verfügbar\n• Sperre die App nach Möglichkeit in den letzten Apps\n• Wenn vorhanden, erlaube Hintergrundaktivität für Switchly\n• Schalte die Bedienungshilfe einmal aus und wieder ein, falls sie als aktiv angezeigt wird, Switchly aber nicht reagiert</string>
-    <string name="troubleshooting_pref_summary">Häufige Probleme &amp; Lösungen prüfen</string>
 
     <!-- ====================================================== -->
     <!-- Tutorial link -->

@@ -10,7 +10,8 @@
     <string name="premium_active_header">Active premium features</string>
     <string name="premium_status_active">Active</string>
     <string name="premium_source_note">Premium active via %1$s.</string>
-    <string name="premium_status_inactive">Premium is not active yet</string>
+    <string name="premium_status_inactive">Not active</string>
+    <string name="premium_needed_note">Premium needed for advanced features.</string>
     <string name="premium_already_owned">You already have Premium</string>
     <string name="premium_checking_purchases">Checking purchases…</string>
 
@@ -18,6 +19,12 @@
     <!-- Purchase and restore buttons -->
     <!-- ====================================================== -->
     <string name="premium_button_buy">Buy Premium</string>
+    <string name="premium_price_label">Price: %1$s</string>
+    <string name="premium_price_loading">Loading price from Google Play…</string>
+    <string name="premium_price_google_play_fallback">Price shown by Google Play before purchase.</string>
+    <string name="premium_button_buy_with_price">Buy Premium • %1$s</string>
+    <string name="premium_purchase_error_generic">Could not open Google Play purchase. Please try again or contact support.</string>
+    <string name="premium_button_opening">Opening Google Play…</string>
     <string name="premium_button_restore">Restore purchases</string>
     <string name="premium_button_thanks">Thanks for your support!</string>
     <string name="premium_button_buy_external">Buy Premium (%1$s)</string>
@@ -35,6 +42,7 @@
     <string name="premium_external_portal_not_configured">External purchase management is not configured for this build.</string>
     <string name="premium_external_invalid_url">The external payment URL is invalid.</string>
     <string name="premium_external_no_browser">No browser app could open the payment page.</string>
+    <string name="premium_external_checkout_not_opened">Could not open the external checkout. Please sign in, check your browser, or contact support.</string>
     <string name="premium_external_entitlement_active">Premium restored successfully.</string>
     <string name="premium_external_entitlement_missing">No external Premium entitlement was found for this account yet.</string>
     <string name="premium_external_sign_in_to_buy">Sign in with E-mail/Password first, then buy Premium.</string>

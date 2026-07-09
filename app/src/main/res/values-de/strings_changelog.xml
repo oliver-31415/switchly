@@ -19,17 +19,17 @@
     <string name="changelog_latest_fmt">Neueste: %1$s</string>
     <string name="changelog_highlights">Highlights</string>
     <plurals name="changelog_more_changes_fmt">
-            <item quantity="one">+%1$d weitere Änderung</item>
-            <item quantity="other">+%1$d weitere Änderungen</item>
-        </plurals>
+        <item quantity="one">+%1$d weitere Änderung</item>
+        <item quantity="other">+%1$d weitere Änderungen</item>
+    </plurals>
     <plurals name="changelog_date_count_fmt">
-            <item quantity="one">%1$s • %2$d Änderung</item>
-            <item quantity="other">%1$s • %2$d Änderungen</item>
-        </plurals>
+        <item quantity="one">%1$s • %2$d Änderung</item>
+        <item quantity="other">%1$s • %2$d Änderungen</item>
+    </plurals>
     <plurals name="changelog_count_only_fmt">
-            <item quantity="one">%1$d Änderung</item>
-            <item quantity="other">%1$d Änderungen</item>
-        </plurals>
+        <item quantity="one">%1$d Änderung</item>
+        <item quantity="other">%1$d Änderungen</item>
+    </plurals>
     <string name="changelog_section_added">Neu</string>
     <string name="changelog_section_changed">Geändert</string>
     <string name="changelog_section_improved">Verbessert</string>

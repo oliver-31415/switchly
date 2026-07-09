@@ -27,6 +27,7 @@ import android.provider.Settings
 import android.telecom.TelecomManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.EmergencyPinStore
 
 object AppBlockSafety {
 
@@ -375,6 +376,18 @@ object AppBlockSafety {
     fun isHardExcluded(context: Context, pkg: String): Boolean =
         resolve(context, pkg, collectResolvedDefaults(context, includeSlowPackageManagerLookups = false)).level == Level.HARD_EXCLUDED
 
+    fun isAllowModeEssential(context: Context, pkg: String): Boolean {
+        val normalized = pkg.trim()
+        if (normalized.isBlank()) return false
+
+        // Switchly itself must never be blocked in Allow selected mode, otherwise the user can lock themselves out of the recovery UI.
+        if (normalized == context.packageName) return true
+
+        // Allow mode is a safety-critical path. 
+        // Use the full cached default-app resolver here so the active launcher, keyboard, dialer, permission controller, installer, and similar hard exclusions remain reachable even if the fast cache has not been warmed yet.
+        return resolve(context, normalized, collectResolvedDefaults(context, includeSlowPackageManagerLookups = true)).level == Level.HARD_EXCLUDED
+    }
+
     fun sanitizeManagedPackages(context: Context, pkgs: Set<String>): Set<String> {
         if (pkgs.isEmpty()) return emptySet()
 
@@ -402,9 +415,7 @@ object AppBlockSafety {
     }
 
     fun hasEmergencyRecoveryConfigured(context: Context): Boolean {
-        val sp = context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
-        val hasPin = !sp.getString(KEY_EMERGENCY_PIN, null).isNullOrBlank()
-        return hasPin && EmergencyBypassStore.isFeatureEnabled(context)
+        return EmergencyPinStore.hasPin(context) && EmergencyBypassStore.isFeatureEnabled(context)
     }
 
     fun canAllowStrictModeBlocking(context: Context, pkg: String): Boolean {
@@ -571,6 +582,10 @@ object AppBlockSafety {
         val cached = cachedResolvedDefaults
         val cachedIsFresh = cached != null && now - cachedResolvedDefaultsAtMs <= RESOLVED_DEFAULTS_CACHE_TTL_MS
 
+        if (includeSlowPackageManagerLookups && cachedIsFresh && cached != null) {
+            return cached
+        }
+
         if (!includeSlowPackageManagerLookups) {
             // Hot paths such as AccessibilityService/package sanitizing must not run launcher, dialer, settings, or PackageManager resolver calls. 
             // Reuse the last slow snapshot  when available, while still refreshing cheap Settings.Secure values.
@@ -614,7 +629,6 @@ object AppBlockSafety {
 
     private const val APP_PREFS = "switchly_prefs"
     private const val KEY_DEV_UNLOCKED = "pref_dev_unlocked"
-    private const val KEY_EMERGENCY_PIN = "pref_emergency_pin"
 
     private val knownSettingsPackages = setOf(
         "com.android.settings"

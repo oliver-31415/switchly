@@ -49,7 +49,6 @@
     <string name="troubleshooting_info_location">Android requires precise location permission to read the current Wi‑Fi name (SSID). For best reliability with Wi‑Fi triggers, background location should also be allowed. On Android 13 and newer, some devices also require Nearby Wi‑Fi devices.</string>
     <string name="troubleshooting_info_bluetooth">Android 12+ requires the Nearby devices/Bluetooth permission for Bluetooth-based schedules.</string>
     <string name="troubleshooting_xiaomi_note">Xiaomi/Redmi/POCO note:\n\n• Also enable Autostart for Switchly\n• Set battery mode to No restrictions if that option exists\n• Lock the app in Recents if possible\n• If available, allow background activity for Switchly\n• Toggle Accessibility off and on again if Android shows it as enabled but Switchly is not responding</string>
-    <string name="troubleshooting_pref_summary">Check common issues &amp; fixes</string>
 
     <!-- ====================================================== -->
     <!-- Tutorial link -->

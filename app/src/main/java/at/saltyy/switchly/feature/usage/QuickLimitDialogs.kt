@@ -24,6 +24,7 @@ import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -34,15 +35,18 @@ import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
-import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
+import at.saltyy.switchly.data.prefs.UsageLimitResetStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.applySwitchlyDialogWidth
 import at.saltyy.switchly.util.AppBlockSafety
+import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
@@ -50,7 +54,6 @@ import com.google.android.material.textfield.TextInputLayout
 
 /**
  * Quick-edit dialogs for app/website limits.
- *
  * Goal: one consistent entry point (icon) to set either a time limit or an open-attempt limit.
  */
 object QuickLimitDialogs {
@@ -97,8 +100,8 @@ object QuickLimitDialogs {
         startOnAttempts: Boolean? = null,
         onChanged: (() -> Unit)? = null
     ) {
-        if (SwitchModeStore.isEnabled(activity)) {
-            Toast.makeText(activity, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+        if (EditingLockGuard.isLocked(activity)) {
+            EditingLockGuard.showLockedDialog(activity, R.string.toast_disable_switchly_to_edit_app_limits)
             return
         }
 
@@ -110,6 +113,7 @@ object QuickLimitDialogs {
 
         val currentTime = UsageLimitStore.getLimitMinutes(activity, profile, pkg)
         val currentAttempts = AttemptLimitStore.getLimitAttempts(activity, profile, pkg)
+        val currentResetMode = UsageLimitResetStore.getMode(activity, profile, pkg)
 
         val initialMode = when (startOnAttempts) {
             true -> MODE_ATTEMPTS
@@ -117,11 +121,10 @@ object QuickLimitDialogs {
             else -> if (currentAttempts > 0 && currentTime == 0) MODE_ATTEMPTS else MODE_TIME
         }
 
-        val titled = "$label · ${activity.getString(R.string.profile_active_fmt, profile)}"
-
         showCompactLimitDialog(
             activity = activity,
-            title = titled,
+            title = activity.getString(R.string.edit_limits),
+            subtitle = "$label\n${activity.getString(R.string.profile_active_fmt, profile)}",
             supportedModes = intArrayOf(MODE_TIME, MODE_ATTEMPTS),
             initialMode = initialMode,
             initialValueProvider = { mode ->
@@ -129,15 +132,22 @@ object QuickLimitDialogs {
                     MODE_ATTEMPTS -> currentAttempts
                     else -> currentTime
                 }
-            }
-        ) { mode, value ->
+            },
+            showTimeResetMode = true,
+            initialResetMode = currentResetMode
+        ) { mode, value, resetMode ->
             when (mode) {
                 MODE_TIME -> {
                     val m = value.coerceAtLeast(0)
                     UsageLimitStore.setLimitMinutes(activity, profile, pkg, m)
                     LimitReachedStore.clearToday(activity, pkg)
-                    if (m > 0) ensureManaged(activity, profile, pkg)
-                    if (m == 0) UsageStore.setUsageMsToday(activity, pkg, 0L)
+                    if (m > 0) {
+                        UsageLimitResetStore.setMode(activity, profile, pkg, resetMode ?: UsageLimitResetStore.MODE_DAY)
+                        ensureManaged(activity, profile, pkg)
+                    } else {
+                        UsageLimitResetStore.clearMode(activity, profile, pkg)
+                        UsageStore.setUsageMsToday(activity, pkg, 0L)
+                    }
                 }
                 MODE_ATTEMPTS -> {
                     val n = value.coerceAtLeast(0)
@@ -152,23 +162,25 @@ object QuickLimitDialogs {
     }
 
     fun showForWebsite(activity: AppCompatActivity, domain: String, label: String, onChanged: (() -> Unit)? = null) {
-        if (SwitchModeStore.isEnabled(activity)) {
-            Toast.makeText(activity, R.string.toast_disable_switchly_to_edit_websites, Toast.LENGTH_SHORT).show()
+        if (EditingLockGuard.isLocked(activity)) {
+            EditingLockGuard.showLockedDialog(activity, R.string.toast_disable_switchly_to_edit_websites)
             return
         }
 
         // Websites support: time limit OR always-block rule.
         val normalized = DomainBlockStore.normalize(domain) ?: domain
+        val isAllowMode = ProfileStore.getCurrent(activity)?.let { ProfileRuleModeStore.isAllowMode(activity, it) } == true
         val isAlways = DomainBlockStore.getDomains(activity).contains(normalized)
         val current = DomainLimitStore.getLimitMinutes(activity, normalized)
 
         showCompactLimitDialog(
             activity = activity,
-            title = label,
+            title = activity.getString(R.string.edit_limits),
+            subtitle = label,
             supportedModes = intArrayOf(MODE_TIME, MODE_ALWAYS_BLOCK),
             initialMode = if (isAlways) MODE_ALWAYS_BLOCK else MODE_TIME,
             initialValueProvider = { current }
-        ) { mode, value ->
+        ) { mode, value, _ ->
             when (mode) {
                 MODE_ALWAYS_BLOCK -> {
                     if (value > 0) {
@@ -186,7 +198,11 @@ object QuickLimitDialogs {
                         DomainLimitStore.clear(activity, normalized)
                         DomainBlockStore.removeDomain(activity, normalized)
                     } else {
-                        DomainBlockStore.removeDomain(activity, normalized)
+                        if (isAllowMode) {
+                            DomainBlockStore.addDomain(activity, normalized)
+                        } else {
+                            DomainBlockStore.removeDomain(activity, normalized)
+                        }
                         DomainLimitStore.setLimitMinutes(activity, normalized, m)
                     }
                 }
@@ -199,26 +215,33 @@ object QuickLimitDialogs {
 
     private fun ensureManaged(activity: AppCompatActivity, profile: String, pkg: String) {
         if (AppBlockSafety.isHardExcluded(activity, pkg)) return
-        val blocked = ProfileStore.getBlockedForProfile(activity, profile).toMutableSet()
-        if (!blocked.contains(pkg)) {
-            blocked.add(pkg)
-            ProfileStore.setBlockedForProfile(activity, profile, blocked)
+        val selected = ProfileStore.getSelectedForProfileMode(activity, profile).toMutableSet()
+        if (!selected.contains(pkg)) {
+            selected.add(pkg)
+            ProfileStore.setSelectedForProfileMode(activity, profile, selected)
         }
     }
 
     private fun showCompactLimitDialog(
         activity: AppCompatActivity,
         title: String,
+        subtitle: CharSequence? = null,
         supportedModes: IntArray,
         initialMode: Int,
         initialValueProvider: (mode: Int) -> Int,
-        onApply: (mode: Int, value: Int) -> Unit
+        showTimeResetMode: Boolean = false,
+        initialResetMode: String = UsageLimitResetStore.MODE_DAY,
+        onApply: (mode: Int, value: Int, resetMode: String?) -> Unit
     ) {
         val v = LayoutInflater.from(activity).inflate(R.layout.dialog_quick_limit_compact, null)
         val tilType = v.findViewById<TextInputLayout>(R.id.tilType)
+        val tvSubtitle = v.findViewById<TextView>(R.id.tvLimitSubtitle)
+        val tvModeSummary = v.findViewById<TextView>(R.id.tvLimitModeSummary)
         val etType = v.findViewById<MaterialAutoCompleteTextView>(R.id.etType)
         val tilValue = v.findViewById<TextInputLayout>(R.id.tilValue)
         val etValue = v.findViewById<TextInputEditText>(R.id.etValue)
+        val tilResetMode = v.findViewById<TextInputLayout>(R.id.tilResetMode)
+        val etResetMode = v.findViewById<MaterialAutoCompleteTextView>(R.id.etResetMode)
 
         // Ensure the dialog matches the currently selected accent (including custom colors).
         val accent = AccentColor.getAccentColorInt(activity)
@@ -233,8 +256,15 @@ object QuickLimitDialogs {
             tilType.hintTextColor = accentList
             tilType.defaultHintTextColor = accentList
             tilType.setEndIconTintList(accentList)
+
+            tilResetMode.boxStrokeColor = accent
+            tilResetMode.hintTextColor = accentList
+            tilResetMode.defaultHintTextColor = accentList
+            tilResetMode.setEndIconTintList(accentList)
         }
         accentInputs()
+        tvSubtitle.text = subtitle?.toString() ?: ""
+        tvSubtitle.visibility = if (subtitle.isNullOrBlank()) View.GONE else View.VISIBLE
 
         val modeLabels = supportedModes.map { mode ->
             when (mode) {
@@ -242,6 +272,23 @@ object QuickLimitDialogs {
                 MODE_ALWAYS_BLOCK -> activity.getString(R.string.rule_block_always)
                 else -> activity.getString(R.string.limit_time_action)
             }
+        }
+
+        val resetModes = listOf(UsageLimitResetStore.MODE_DAY, UsageLimitResetStore.MODE_SESSION)
+        val resetLabels = listOf(
+            activity.getString(R.string.limit_reset_per_day),
+            activity.getString(R.string.limit_reset_per_session)
+        )
+        val activeResetMode = arrayOf(
+            when (initialResetMode) {
+                UsageLimitResetStore.MODE_SESSION -> UsageLimitResetStore.MODE_SESSION
+                else -> UsageLimitResetStore.MODE_DAY
+            }
+        )
+        etResetMode.setAdapter(ArrayAdapter(activity, android.R.layout.simple_list_item_1, resetLabels))
+        etResetMode.setText(resetLabels[resetModes.indexOf(activeResetMode[0]).coerceAtLeast(0)], false)
+        etResetMode.setOnItemClickListener { _, _, position, _ ->
+            activeResetMode[0] = resetModes.getOrNull(position) ?: UsageLimitResetStore.MODE_DAY
         }
 
         etType.setAdapter(ArrayAdapter(activity, android.R.layout.simple_list_item_1, modeLabels))
@@ -254,11 +301,20 @@ object QuickLimitDialogs {
 
             if (mode == MODE_ALWAYS_BLOCK) {
                 tilValue.visibility = View.GONE
+                tilResetMode.visibility = View.GONE
                 etValue.setText("")
+                tvModeSummary.setText(R.string.limit_always_block_action_summary)
                 return
             }
 
             tilValue.visibility = View.VISIBLE
+            tilResetMode.visibility = if (showTimeResetMode && mode == MODE_TIME) View.VISIBLE else View.GONE
+            tvModeSummary.setText(
+                when (mode) {
+                    MODE_ATTEMPTS -> R.string.limit_attempts_action_summary
+                    else -> R.string.limit_time_action_summary
+                }
+            )
             tilValue.hint = when (mode) {
                 MODE_ATTEMPTS -> activity.getString(R.string.opens_hint)
                 else -> activity.getString(R.string.minutes_hint_day)
@@ -293,12 +349,16 @@ object QuickLimitDialogs {
         // - Cancel/Clear = text-only accent
         val onAccent = if (androidx.core.graphics.ColorUtils.calculateLuminance(accent) > 0.5) android.graphics.Color.BLACK else android.graphics.Color.WHITE
 
-        listOf(btnClear, btnCancel).forEach {
-            it.setTextColor(accent)
-            it.isAllCaps = false
-            it.backgroundTintList = null
-            runCatching { it.setBackgroundColor(android.graphics.Color.TRANSPARENT) }
-        }
+        btnCancel.setTextColor(accent)
+        btnCancel.isAllCaps = false
+        btnCancel.backgroundTintList = null
+        runCatching { btnCancel.setBackgroundColor(android.graphics.Color.TRANSPARENT) }
+
+        val error = android.graphics.Color.rgb(186, 26, 26)
+        btnClear.setTextColor(error)
+        btnClear.isAllCaps = false
+        btnClear.backgroundTintList = null
+        runCatching { btnClear.setBackgroundColor(android.graphics.Color.TRANSPARENT) }
 
         btnOk.setTextColor(onAccent)
         btnOk.isAllCaps = false
@@ -306,14 +366,14 @@ object QuickLimitDialogs {
         btnOk.backgroundTintList = AccentColor.getActiveColor(activity)
 
         btnClear.setOnClickListener {
-            onApply(activeMode[0], 0)
+            onApply(activeMode[0], 0, activeResetMode[0])
             dlg.dismiss()
         }
         btnCancel.setOnClickListener { dlg.dismiss() }
         btnOk.setOnClickListener {
             if (activeMode[0] == MODE_ALWAYS_BLOCK) {
                 // Pass a non-zero sentinel to mean "enable always block".
-                onApply(activeMode[0], 1)
+                onApply(activeMode[0], 1, activeResetMode[0])
                 dlg.dismiss()
                 return@setOnClickListener
             }
@@ -328,11 +388,12 @@ object QuickLimitDialogs {
                 Toast.makeText(activity, R.string.invalid_value, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            onApply(activeMode[0], n)
+            onApply(activeMode[0], n, activeResetMode[0])
             dlg.dismiss()
         }
 
         dlg.setOnShowListener {
+            dlg.applySwitchlyDialogWidth(0.94f)
             // Retint in CUSTOM accent mode so the dialog matches the rest of the app.
             runCatching { CustomAccentApplier.applyToDialog(dlg) }
         }

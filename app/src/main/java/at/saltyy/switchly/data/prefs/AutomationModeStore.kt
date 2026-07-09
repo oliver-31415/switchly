@@ -25,7 +25,6 @@ import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 
 /**
  * Selects which control channel is allowed to change Switchly automatically.
- *
  * Modes:
  * - SCHEDULE: only schedules can auto-change state
  * - NFC: only NFC can auto-change state

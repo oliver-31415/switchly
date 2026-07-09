@@ -24,7 +24,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.Typeface
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -37,10 +43,12 @@ import android.util.Patterns
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -72,6 +80,9 @@ import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.SchedulePlanner
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.data.sync.BackupCategory
+import at.saltyy.switchly.data.sync.BackupSelection
+import at.saltyy.switchly.data.sync.BackupSelectionStore
 import at.saltyy.switchly.data.sync.CloudSyncRuntime
 import at.saltyy.switchly.data.sync.FileBackupRuntime
 import at.saltyy.switchly.feature.about.AppInfoActivity
@@ -92,6 +103,10 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.showDestructiveAccented
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
+import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
@@ -137,6 +152,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("pref_blocked_inbox")?.isVisible = true
     }
 
+    private fun refreshHomeModeAppearancePrefs() {
+        val ctx = context ?: return
+        val currentMode = HomeModeDialogHelper.currentHomeLayoutMode(ctx)
+        val modeLabel = HomeModeDialogHelper.homeLayoutModeLabel(ctx, currentMode)
+        findPreference<Preference>("pref_home_mode_appearance")?.summary = modeLabel
+        findPreference<Preference>("pref_customize_home_appearance")?.isVisible = currentMode == ToggleOptionsActivity.HOME_MODE_CUSTOM
+    }
+
     private fun refreshDeveloperModePreference() {
         findPreference<Preference>("pref_developer_mode")?.isVisible = AdvancedModeStore.isEnabled(requireContext())
     }
@@ -144,11 +167,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private var nextChangedReceiver: BroadcastReceiver? = null
     private var lastNestedNavKey: String? = null
     private var lastNestedNavAtMs: Long = 0L
+    private var pendingFileBackupSelection: BackupSelection? = null
 
     private val createBackupFileLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri: Uri? ->
-        uri ?: return@registerForActivityResult
+        if (uri == null) {
+            pendingFileBackupSelection = null
+            return@registerForActivityResult
+        }
         writeBackupFile(uri)
     }
 
@@ -159,7 +186,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         restoreBackupFile(uri)
     }
 
-    private data class IconActionItem(val title: String, val iconRes: Int)
+    private data class IconActionItem(val title: String, val iconRes: Int, val tintIcon: Boolean = true)
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         // If we are navigating into a nested PreferenceScreen (Help/Account/...), we pass the target root via fragment arguments.
@@ -379,6 +406,21 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
+        findPreference<Preference>("pref_home_mode_appearance")?.setOnPreferenceClickListener {
+            HomeModeDialogHelper.showHomeLayoutModeDialog(requireContext()) {
+                refreshHomeModeAppearancePrefs()
+            }
+            true
+        }
+
+        findPreference<Preference>("pref_customize_home_appearance")?.setOnPreferenceClickListener {
+            HomeModeDialogHelper.showCustomizeHomeDialog(requireContext()) {
+                refreshHomeModeAppearancePrefs()
+            }
+            true
+        }
+        refreshHomeModeAppearancePrefs()
+
         // Troubleshooting
         findPreference<Preference>("pref_troubleshooting")?.setOnPreferenceClickListener {
             startActivity(Intent(requireContext(), TroubleshootingActivity::class.java))
@@ -410,7 +452,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             }.onFailure {
                 // Fallback: App details
-                val uri = android.net.Uri.fromParts("package", requireContext().packageName, null)
+                val uri = Uri.fromParts("package", requireContext().packageName, null)
                 startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri))
             }
             true
@@ -475,25 +517,31 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Backup as standalone prefs
         findPreference<Preference>("pref_cloud_backup")?.apply {
             setOnPreferenceClickListener {
-                confirmAction(
-                    title = getString(R.string.settings_confirm_backup_title),
-                    message = getString(R.string.settings_confirm_backup_message),
-                    positiveText = getString(R.string.settings_confirm_backup_title),
-                ) {
-                    CloudSyncRuntime.pushLocalState(requireContext()) { ok, err ->
-                        val c = context ?: return@pushLocalState
-                        if (!isAdded) return@pushLocalState
-                        val msg = if (ok) {
-                            PreferenceManager.getDefaultSharedPreferences(c).edit {
-                                putLong("pref_last_backup_epoch_ms", System.currentTimeMillis())
+                showBackupSelectionFlow { selection ->
+                    confirmAction(
+                        title = getString(R.string.settings_confirm_backup_title),
+                        message = backupConfirmMessage(
+                            selection = selection,
+                            fullMessageRes = R.string.settings_confirm_backup_message_with_categories,
+                            includedOnlyMessageRes = R.string.settings_confirm_backup_message_with_included_categories,
+                        ),
+                        positiveText = getString(R.string.settings_confirm_backup_title),
+                    ) {
+                        CloudSyncRuntime.pushLocalState(requireContext(), selection) { ok, err ->
+                            val c = context ?: return@pushLocalState
+                            if (!isAdded) return@pushLocalState
+                            val msg = if (ok) {
+                                PreferenceManager.getDefaultSharedPreferences(c).edit {
+                                    putLong("pref_last_backup_epoch_ms", System.currentTimeMillis())
+                                }
+                                updateGooglePrefSummary()
+                                updateCloudPrefVisibility()
+                                getString(R.string.cloud_backup_ok)
+                            } else {
+                                getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown))
                             }
-                            updateGooglePrefSummary()
-                            updateCloudPrefVisibility()
-                            getString(R.string.cloud_backup_ok)
-                        } else {
-                            getString(R.string.cloud_error_fmt, err ?: getString(R.string.error_unknown))
+                            Toast.makeText(c, msg, Toast.LENGTH_SHORT).show()
                         }
-                        Toast.makeText(c, msg, Toast.LENGTH_SHORT).show()
                     }
                 }
                 true
@@ -516,12 +564,19 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         findPreference<Preference>("pref_file_backup")?.apply {
             setOnPreferenceClickListener {
-                confirmAction(
-                    title = getString(R.string.settings_confirm_file_backup_title),
-                    message = getString(R.string.settings_confirm_file_backup_message),
-                    positiveText = getString(R.string.settings_confirm_file_backup_title),
-                ) {
-                    createBackupFileLauncher.launch(defaultBackupFileName())
+                showBackupSelectionFlow { selection ->
+                    confirmAction(
+                        title = getString(R.string.settings_confirm_file_backup_title),
+                        message = backupConfirmMessage(
+                            selection = selection,
+                            fullMessageRes = R.string.settings_confirm_file_backup_message_with_categories,
+                            includedOnlyMessageRes = R.string.settings_confirm_file_backup_message_with_included_categories,
+                        ),
+                        positiveText = getString(R.string.settings_confirm_file_backup_title),
+                    ) {
+                        pendingFileBackupSelection = selection
+                        createBackupFileLauncher.launch(defaultBackupFileName())
+                    }
                 }
                 true
             }
@@ -740,6 +795,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         updateGooglePrefSummary()
         updateCloudPrefVisibility()
         refreshBlockedInboxPreferenceState()
+        refreshHomeModeAppearancePrefs()
         refreshDeveloperModePreference()
         CustomAccentApplier.applyIfNeeded(requireActivity())
         tintCategories()
@@ -860,10 +916,22 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         val checked = values.indexOf(current).let { idx -> if (idx >= 0) idx else 0 }
 
+        val summaries = arrayOf(
+            getString(R.string.pref_language_system_summary),
+            getString(R.string.pref_language_en_summary),
+            getString(R.string.pref_language_de_summary)
+        )
+
         showSingleSelectCheckboxDialog(
             title = getString(R.string.pref_language_title),
             entries = entries,
             checkedIndex = checked,
+            summaries = summaries,
+            iconDrawables = arrayOf<Drawable?>(
+                badgeDrawable("AUTO"),
+                badgeDrawable("EN"),
+                badgeDrawable("DE")
+            ),
         ) { which, dialog ->
             val selected = values[which]
             prefs.edit { putString("pref_language", selected) }
@@ -882,19 +950,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
             getString(R.string.pref_theme_color_title)
         )
 
-        val dialog = MaterialAlertDialogBuilder(ctx)
-            .setTitle(getString(R.string.pref_theme_title))
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> showThemeModeDialog()
-                    1 -> showThemeColorDialog()
-                }
+        ctx.showSwitchlyOptionDialog(
+            title = getString(R.string.pref_theme_title),
+            options = items.map { SwitchlyDialogOption(title = it) }
+        ) { which ->
+            when (which) {
+                0 -> showThemeModeDialog()
+                1 -> showThemeColorDialog()
             }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
+        }
     }
 
     private fun showThemeModeDialog() {
@@ -910,10 +974,22 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val values = arrayOf("system", "light", "dark")
         val checked = values.indexOf(current).coerceAtLeast(0)
 
+        val summaries = arrayOf(
+            getString(R.string.pref_theme_mode_system_summary),
+            getString(R.string.pref_theme_mode_light_summary),
+            getString(R.string.pref_theme_mode_dark_summary)
+        )
+
         showSingleSelectCheckboxDialog(
             title = getString(R.string.pref_theme_mode_title),
             entries = entries,
             checkedIndex = checked,
+            summaries = summaries,
+            iconRes = arrayOf<Int?>(
+                R.drawable.tune_24,
+                R.drawable.light_mode_24,
+                R.drawable.dark_mode_24
+            ),
         ) { which, dialog ->
             val selected = values[which]
             prefs.edit { putString("pref_theme_mode", selected) }
@@ -940,10 +1016,22 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val values = arrayOf("system", "24h", "12h")
         val checked = values.indexOf(current).coerceAtLeast(0)
 
+        val summaries = arrayOf(
+            getString(R.string.pref_time_format_system_summary),
+            getString(R.string.pref_time_format_24h_summary),
+            getString(R.string.pref_time_format_12h_summary)
+        )
+
         showSingleSelectCheckboxDialog(
             title = getString(R.string.pref_time_format_title),
             entries = entries,
             checkedIndex = checked,
+            summaries = summaries,
+            iconDrawables = arrayOf<Drawable?>(
+                badgeDrawable("AUTO"),
+                badgeDrawable("24"),
+                badgeDrawable("12")
+            ),
         ) { which, dialog ->
             TimeFormatPrefs.setMode(ctx, values[which])
             updateTimeFormatSummary(findPreference("pref_time_format"))
@@ -975,10 +1063,29 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         val checked = values.indexOf(current).let { idx -> if (idx >= 0) idx else 0 }
 
+        val summaries = values.map { value ->
+            when (value) {
+                "default" -> getString(R.string.pref_accent_default_summary)
+                "blue" -> getString(R.string.pref_accent_blue_summary)
+                "orange" -> getString(R.string.pref_accent_orange_summary)
+                "purple" -> getString(R.string.pref_accent_purple_summary)
+                "pink" -> getString(R.string.pref_accent_pink_summary)
+                "teal" -> getString(R.string.pref_accent_teal_summary)
+                "red" -> getString(R.string.pref_accent_red_summary)
+                "amber" -> getString(R.string.pref_accent_amber_summary)
+                "gray" -> getString(R.string.pref_accent_gray_summary)
+                "custom" -> getString(R.string.pref_accent_custom_summary)
+                else -> getString(R.string.pref_theme_color_summary)
+            }
+        }.toTypedArray()
+
         showSingleSelectCheckboxDialog(
             title = getString(R.string.pref_theme_color_title),
+            dialogSubtitle = getString(R.string.pref_theme_color_summary),
             entries = entries,
             checkedIndex = checked,
+            summaries = summaries,
+            iconDrawables = values.map { colorPreviewDrawable(accentColorForValue(ctx, it)) as Drawable? }.toTypedArray(),
         ) { which, dialog ->
             val selected = values[which]
             if (selected == "custom") {
@@ -994,36 +1101,112 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     /**
-     * Custom single-select dialog that uses MaterialCheckBox items.
-     * This avoids OEM/framework-tinted single-choice list checkmarks that stay green in custom accent mode.
+     * Shared single-select card dialog.
+     * Selection is shown with accent border/background only — no radio/checkmark bubbles.
      */
     private fun showSingleSelectCheckboxDialog(
         title: String,
+        dialogSubtitle: String? = null,
         entries: Array<String>,
         checkedIndex: Int,
+        summaries: Array<String>? = null,
+        iconRes: Array<Int?>? = null,
+        iconDrawables: Array<Drawable?>? = null,
         onSelected: (index: Int, dialog: AlertDialog) -> Unit,
     ) {
-        val ctx = requireContext()
-        val content = layoutInflater.inflate(R.layout.dialog_single_select_list, null)
-        val recycler = content.findViewById<RecyclerView>(R.id.recycler)
-        recycler.layoutManager = LinearLayoutManager(ctx)
-
-        val dialog = MaterialAlertDialogBuilder(ctx)
-            .setTitle(title)
-            .setView(content)
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        val adapter = SingleSelectCheckboxAdapter(
-            entries = entries.toList(),
-            initialSelected = checkedIndex,
+        lateinit var dialog: AlertDialog
+        dialog = requireContext().showSwitchlyOptionDialog(
+            title = title,
+            subtitle = dialogSubtitle,
+            options = entries.mapIndexed { index, label ->
+                SwitchlyDialogOption(
+                    title = label,
+                    summary = summaries?.getOrNull(index),
+                    iconRes = iconRes?.getOrNull(index),
+                    iconDrawable = iconDrawables?.getOrNull(index),
+                    selected = index == checkedIndex
+                )
+            }
         ) { which ->
             onSelected(which, dialog)
         }
-        recycler.adapter = adapter
+    }
 
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
+    private fun colorPreviewDrawable(color: Int): Drawable {
+        val outline = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorOutline, 0x33000000)
+        return GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(color)
+            setStroke(dp(2), outline)
+            setSize(dp(28), dp(28))
+        }
+    }
+
+    private fun badgeDrawable(text: String): Drawable {
+        val accent = getCurrentAccentColor(requireContext())
+        val onAccent = if (androidx.core.graphics.ColorUtils.calculateContrast(Color.BLACK, accent) >=
+            androidx.core.graphics.ColorUtils.calculateContrast(Color.WHITE, accent)
+        ) Color.BLACK else Color.WHITE
+        return TextBadgeDrawable(text, accent, onAccent)
+    }
+
+    private fun accentColorForValue(ctx: Context, value: String): Int {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        return when (value) {
+            "blue" -> ContextCompat.getColor(ctx, R.color.accent_blue)
+            "orange" -> ContextCompat.getColor(ctx, R.color.accent_orange)
+            "purple" -> ContextCompat.getColor(ctx, R.color.accent_purple)
+            "pink" -> ContextCompat.getColor(ctx, R.color.accent_pink)
+            "teal" -> ContextCompat.getColor(ctx, R.color.accent_teal)
+            "red" -> ContextCompat.getColor(ctx, R.color.accent_red)
+            "amber" -> ContextCompat.getColor(ctx, R.color.accent_amber)
+            "gray" -> ContextCompat.getColor(ctx, R.color.accent_gray)
+            "custom" -> runCatching {
+                (prefs.getString("pref_accent_custom", "#2E8B57") ?: "#2E8B57").toColorInt()
+            }.getOrDefault(ContextCompat.getColor(ctx, R.color.accent_green))
+            else -> ContextCompat.getColor(ctx, R.color.accent_green)
+        }
+    }
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density + 0.5f).toInt()
+
+    private class TextBadgeDrawable(
+        private val text: String,
+        private val backgroundColor: Int,
+        private val foregroundColor: Int
+    ) : Drawable() {
+        private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = backgroundColor
+        }
+        private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = foregroundColor
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+
+        override fun draw(canvas: Canvas) {
+            val b = bounds
+            val radius = b.width().coerceAtMost(b.height()) / 2f
+            canvas.drawCircle(b.exactCenterX(), b.exactCenterY(), radius, bgPaint)
+            textPaint.textSize = b.height() * if (text.length > 2) 0.28f else 0.42f
+            val y = b.exactCenterY() - (textPaint.descent() + textPaint.ascent()) / 2f
+            canvas.drawText(text, b.exactCenterX(), y, textPaint)
+        }
+
+        override fun setAlpha(alpha: Int) {
+            bgPaint.alpha = alpha
+            textPaint.alpha = alpha
+        }
+
+        override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {
+            bgPaint.colorFilter = colorFilter
+            textPaint.colorFilter = colorFilter
+        }
+
+        override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
     }
 
     private class SingleSelectCheckboxAdapter(
@@ -1218,19 +1401,29 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 IconActionItem(getString(R.string.settings_account_action_create), R.drawable.account_box_24)
             )
 
-            val dialog = AlertDialog.Builder(ctx)
-                .setTitle(getString(R.string.settings_account_dialog_title))
-                .setAdapter(makeIconAdapter(items)) { _, which ->
-                    when (which) {
-                        0 -> showAccountSignInDialog()
-                        1 -> showAccountCreateDialog()
-                    }
+            ctx.showSwitchlyOptionDialog(
+                title = getString(R.string.settings_account_dialog_title),
+                options = listOf(
+                    SwitchlyDialogOption(
+                        title = getString(R.string.settings_account_action_sign_in),
+                        summary = getString(R.string.settings_account_sign_in_summary),
+                        iconRes = R.drawable.login_24
+                    ),
+                    SwitchlyDialogOption(
+                        title = getString(R.string.settings_account_action_create),
+                        summary = getString(R.string.settings_account_create_summary),
+                        iconRes = R.drawable.account_box_24
+                    )
+                ),
+                compact = false,
+                showCancelButton = false,
+                widthFraction = 0.94f
+            ) { which ->
+                when (which) {
+                    0 -> showAccountSignInDialog()
+                    1 -> showAccountCreateDialog()
                 }
-                .setNegativeButton(getString(R.string.cancel), null)
-                .create()
-
-            dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-            dialog.show()
+            }
             return
         }
 
@@ -1239,85 +1432,95 @@ class SettingsFragment : PreferenceFragmentCompat() {
             IconActionItem(getString(R.string.settings_account_action_delete), R.drawable.delete_24)
         )
 
-        val dialog = AlertDialog.Builder(ctx)
-            .setTitle(getString(R.string.settings_account_dialog_title))
-            .setAdapter(makeIconAdapter(items)) { _, which ->
-                when (which) {
-                    0 -> confirmAction(
-                        title = getString(R.string.sign_out),
-                        message = getString(R.string.settings_confirm_sign_out_message),
-                        positiveText = getString(R.string.sign_out),
-                    ) {
-                        at.saltyy.switchly.auth.Auth.signOut(ctx) {
-                            PreferenceManager.getDefaultSharedPreferences(ctx).edit {
-                                remove("pref_last_backup_epoch_ms")
-                            }
-                            updateGooglePrefSummary()
-                            updateCloudPrefVisibility()
-                            Toast.makeText(ctx, getString(R.string.settings_signed_out), Toast.LENGTH_SHORT).show()
+        ctx.showSwitchlyOptionDialog(
+            title = getString(R.string.settings_account_dialog_title),
+            options = items.map { SwitchlyDialogOption(title = it.title, iconRes = it.iconRes, destructive = it.iconRes == R.drawable.delete_24) }
+        ) { which ->
+            when (which) {
+                0 -> confirmAction(
+                    title = getString(R.string.sign_out),
+                    message = getString(R.string.settings_confirm_sign_out_message),
+                    positiveText = getString(R.string.sign_out),
+                ) {
+                    at.saltyy.switchly.auth.Auth.signOut(ctx) {
+                        PreferenceManager.getDefaultSharedPreferences(ctx).edit {
+                            remove("pref_last_backup_epoch_ms")
                         }
-                    }
-
-                    1 -> confirmAction(
-                        title = getString(R.string.settings_account_delete_confirm_title),
-                        message = getString(R.string.settings_account_delete_confirm_message),
-                        positiveText = getString(R.string.delete),
-                    ) {
-                        AccountDeletion.deleteAccount(requireActivity())
+                        updateGooglePrefSummary()
+                        updateCloudPrefVisibility()
+                        Toast.makeText(ctx, getString(R.string.settings_signed_out), Toast.LENGTH_SHORT).show()
                     }
                 }
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
 
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
+                1 -> confirmAction(
+                    title = getString(R.string.settings_account_delete_confirm_title),
+                    message = getString(R.string.settings_account_delete_confirm_message),
+                    positiveText = getString(R.string.delete),
+                ) {
+                    AccountDeletion.deleteAccount(requireActivity())
+                }
+            }
+        }
     }
 
     private fun showAccountSignInDialog() {
         val ctx = requireContext()
         val googleAvailable = at.saltyy.switchly.auth.AuthRuntime.isGoogleSignInAvailable(ctx)
         val items = buildList {
-            if (googleAvailable) add(IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.login_24))
+            if (googleAvailable) add(IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.google_24, tintIcon = false))
             add(IconActionItem(getString(R.string.settings_account_sign_in_email), R.drawable.mail_24))
         }
 
-        val dialog = AlertDialog.Builder(ctx)
-            .setTitle(getString(R.string.settings_account_action_sign_in))
-            .setAdapter(makeIconAdapter(items)) { _, which ->
-                when {
-                    googleAvailable && which == 0 -> startGoogleAccountSignIn()
-                    else -> showEmailPasswordDialog(createAccount = false)
-                }
+        ctx.showSwitchlyOptionDialog(
+            title = getString(R.string.settings_account_action_sign_in),
+            options = items.map { item ->
+                val isGoogle = item.iconRes == R.drawable.google_24
+                SwitchlyDialogOption(
+                    title = item.title,
+                    summary = getString(if (isGoogle) R.string.settings_account_google_summary else R.string.settings_account_email_sign_in_summary),
+                    iconRes = if (item.tintIcon) item.iconRes else null,
+                    iconDrawable = if (item.tintIcon) null else ContextCompat.getDrawable(ctx, item.iconRes)
+                )
+            },
+            compact = false,
+            showCancelButton = false,
+            widthFraction = 0.94f
+        ) { which ->
+            when {
+                googleAvailable && which == 0 -> startGoogleAccountSignIn()
+                else -> showEmailPasswordDialog(createAccount = false)
             }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
+        }
     }
 
     private fun showAccountCreateDialog() {
         val ctx = requireContext()
         val googleAvailable = at.saltyy.switchly.auth.AuthRuntime.isGoogleSignInAvailable(ctx)
         val items = buildList {
-            if (googleAvailable) add(IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.login_24))
+            if (googleAvailable) add(IconActionItem(getString(R.string.settings_account_continue_google), R.drawable.google_24, tintIcon = false))
             add(IconActionItem(getString(R.string.settings_account_create_email), R.drawable.mail_24))
         }
 
-        val dialog = AlertDialog.Builder(ctx)
-            .setTitle(getString(R.string.settings_account_action_create))
-            .setAdapter(makeIconAdapter(items)) { _, which ->
-                when {
-                    googleAvailable && which == 0 -> startGoogleAccountSignIn()
-                    else -> showEmailPasswordDialog(createAccount = true)
-                }
+        ctx.showSwitchlyOptionDialog(
+            title = getString(R.string.settings_account_action_create),
+            options = items.map { item ->
+                val isGoogle = item.iconRes == R.drawable.google_24
+                SwitchlyDialogOption(
+                    title = item.title,
+                    summary = getString(if (isGoogle) R.string.settings_account_google_summary else R.string.settings_account_email_create_summary),
+                    iconRes = if (item.tintIcon) item.iconRes else null,
+                    iconDrawable = if (item.tintIcon) null else ContextCompat.getDrawable(ctx, item.iconRes)
+                )
+            },
+            compact = false,
+            showCancelButton = false,
+            widthFraction = 0.94f
+        ) { which ->
+            when {
+                googleAvailable && which == 0 -> startGoogleAccountSignIn()
+                else -> showEmailPasswordDialog(createAccount = true)
             }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
+        }
     }
 
     private fun startGoogleAccountSignIn() {
@@ -1489,6 +1692,102 @@ class SettingsFragment : PreferenceFragmentCompat() {
         dialog.show()
     }
 
+    private fun backupConfirmMessage(
+        selection: BackupSelection,
+        fullMessageRes: Int,
+        includedOnlyMessageRes: Int,
+    ): String {
+        return if (selection.hasExcludedCategories()) {
+            getString(fullMessageRes, selection.includedNames(), selection.excludedNames())
+        } else {
+            getString(includedOnlyMessageRes, selection.includedNames())
+        }
+    }
+
+    private fun showBackupSelectionFlow(onSelected: (BackupSelection) -> Unit) {
+        val ctx = context ?: return
+        val presets = listOf(
+            Triple(getString(R.string.backup_preset_full), getString(R.string.backup_preset_full_summary), BackupSelection.full()),
+            Triple(getString(R.string.backup_preset_privacy), getString(R.string.backup_preset_privacy_summary), BackupSelection.privacyFocused()),
+            Triple(getString(R.string.backup_preset_profiles_only), getString(R.string.backup_preset_profiles_only_summary), BackupSelection.profilesOnly()),
+            Triple(getString(R.string.backup_preset_manual_custom), getString(R.string.backup_preset_manual_custom_summary), BackupSelectionStore.load(ctx)),
+        )
+
+        ctx.showSwitchlyOptionDialog(
+            title = getString(R.string.backup_select_preset_title),
+            options = presets.mapIndexed { index, preset ->
+                SwitchlyDialogOption(
+                    title = preset.first,
+                    summary = preset.second,
+                    iconRes = when (index) {
+                        0 -> R.drawable.cloud_upload_24
+                        1 -> R.drawable.security_24
+                        2 -> R.drawable.switch_account_24
+                        else -> R.drawable.tune_24
+                    },
+                )
+            },
+            compact = false,
+            showCancelButton = true,
+            widthFraction = 0.94f,
+        ) { index ->
+            showBackupCategoryDialog(presets[index].third, onSelected)
+        }
+    }
+
+    private fun showBackupCategoryDialog(initial: BackupSelection, onSelected: (BackupSelection) -> Unit) {
+        val ctx = context ?: return
+        val categories = BackupCategory.values()
+        val checked = categories.map { it.id in initial.categoryIds }.toBooleanArray()
+        val options = categories.map { category ->
+            val suffix = if (category.sensitive) getString(R.string.backup_category_sensitive_suffix) else ""
+            SwitchlyDialogOption(
+                title = "${category.displayName}$suffix",
+                summary = category.description,
+                iconRes = backupCategoryIconRes(category)
+            )
+        }
+
+        ctx.showSwitchlyMultiChoiceDialog(
+            title = getString(R.string.backup_select_categories_title),
+            options = options,
+            checked = checked,
+            positiveTextRes = R.string.backup_create_with_selection,
+            compact = false,
+            widthFraction = 0.94f,
+        ) { states ->
+            val selected = categories
+                .filterIndexed { index, _ -> states.getOrNull(index) == true }
+                .map { it.id }
+                .toSet()
+            val selection = BackupSelection.fromIds(selected)
+            if (selection.categoryIds.isEmpty()) {
+                Toast.makeText(ctx, getString(R.string.backup_select_at_least_one), Toast.LENGTH_SHORT).show()
+                return@showSwitchlyMultiChoiceDialog
+            }
+            BackupSelectionStore.save(ctx, selection)
+            onSelected(selection)
+        }
+    }
+
+    private fun backupCategoryIconRes(category: BackupCategory): Int = when (category) {
+        BackupCategory.PROFILES -> R.drawable.switch_account_24
+        BackupCategory.BLOCKED_APPS -> R.drawable.apps_24
+        BackupCategory.WEBSITE_RULES,
+        BackupCategory.WEBSITE_BROWSER_SETTINGS -> R.drawable.language_24
+        BackupCategory.NOTIFICATION_BLOCKING -> R.drawable.notifications_24
+        BackupCategory.IN_APP_BLOCKING -> R.drawable.app_blocking_black_24
+        BackupCategory.SCHEDULES -> R.drawable.schedule_24
+        BackupCategory.LOCATION_SCHEDULES -> R.drawable.location_on_24
+        BackupCategory.WIFI_SCHEDULES -> R.drawable.wifi_24
+        BackupCategory.BLUETOOTH_SCHEDULES -> R.drawable.bluetooth_24
+        BackupCategory.KEYS -> R.drawable.nfc_24
+        BackupCategory.CONTROL_SETTINGS -> R.drawable.tune_24
+        BackupCategory.STRICT_PROTECTION -> R.drawable.lock_24
+        BackupCategory.STATISTICS -> R.drawable.bar_chart_24
+        BackupCategory.APP_PREFERENCES -> R.drawable.account_box_24
+    }
+
     private fun defaultBackupFileName(): String {
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
         return "switchly-backup-$stamp.json"
@@ -1496,7 +1795,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun writeBackupFile(uri: Uri) {
         val activeCtx = context ?: return
-        val result = FileBackupRuntime.writeLocalBackupToUri(activeCtx, uri)
+        val selection = pendingFileBackupSelection ?: BackupSelectionStore.load(activeCtx)
+        pendingFileBackupSelection = null
+        val result = FileBackupRuntime.writeLocalBackupToUri(activeCtx, uri, selection)
         val msg = result.fold(
             onSuccess = {
                 PreferenceManager.getDefaultSharedPreferences(activeCtx).edit {
@@ -1573,33 +1874,34 @@ class SettingsFragment : PreferenceFragmentCompat() {
             val df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
             val labels = list.map { meta -> df.format(Date(meta.createdAt)) }.toTypedArray()
 
-            val dialog = AlertDialog.Builder(activeCtx)
-                .setTitle(getString(R.string.settings_restore_choose_title))
-                .setItems(labels) { _, which ->
-                    val meta = list[which]
-                    CloudSyncRuntime.pullBackup(activeCtx, meta.id) { ok3, err3 ->
-                        val restoreCtx = context ?: return@pullBackup
-                        if (!isAdded) return@pullBackup
-                        if (ok3) {
-                            Toast.makeText(restoreCtx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
-                            restartAppTask()
-                        } else {
-                            Toast.makeText(
-                                restoreCtx,
-                                getString(R.string.cloud_error_fmt, err3 ?: getString(R.string.error_unknown)),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
+            activeCtx.showSwitchlyOptionDialog(
+                title = getString(R.string.settings_restore_choose_title),
+                options = labels.map { SwitchlyDialogOption(title = it) } + SwitchlyDialogOption(
+                    title = getString(R.string.settings_delete_backups_title),
+                    destructive = true
+                )
+            ) { which ->
+                if (which == labels.size) {
+                    showDeleteBackupsDialog(activeCtx, list)
+                    return@showSwitchlyOptionDialog
+                }
+
+                val meta = list[which]
+                CloudSyncRuntime.pullBackup(activeCtx, meta.id) { ok3, err3 ->
+                    val restoreCtx = context ?: return@pullBackup
+                    if (!isAdded) return@pullBackup
+                    if (ok3) {
+                        Toast.makeText(restoreCtx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
+                        restartAppTask()
+                    } else {
+                        Toast.makeText(
+                            restoreCtx,
+                            getString(R.string.cloud_error_fmt, err3 ?: getString(R.string.error_unknown)),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
-                .setNeutralButton(getString(R.string.delete)) { _, _ ->
-                    showDeleteBackupsDialog(activeCtx, list)
-                }
-                .setNegativeButton(getString(R.string.cancel), null)
-                .create()
-
-	            dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-            dialog.show()
+            }
         }
     }
 
@@ -1848,53 +2150,54 @@ class SettingsFragment : PreferenceFragmentCompat() {
             )
         }
 
-        val dialog = AlertDialog.Builder(ctx)
-            .setTitle(title)
-            .setItems(actions.toTypedArray()) { _, which ->
-                if (active) {
-                    when (which) {
-                        0 -> {
-                            val ok = EmergencyBypassStore.pause(ctx)
-                            if (ok) {
-                                SwitchModeStore.clearTemporary(ctx)
-                                AppLogStore.append(ctx, "Emergency", "Emergency mode paused from Settings")
-                                Toast.makeText(ctx, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                        1 -> {
-                            AppLogStore.append(ctx, "Emergency", "Emergency mode ended from Settings")
-                            EmergencyBypassStore.cancel(ctx)
+        ctx.showSwitchlyOptionDialog(
+            title = title,
+            options = actions.mapIndexed { index, label ->
+                SwitchlyDialogOption(
+                    title = label,
+                    destructive = index == 1
+                )
+            }
+        ) { which ->
+            if (active) {
+                when (which) {
+                    0 -> {
+                        val ok = EmergencyBypassStore.pause(ctx)
+                        if (ok) {
                             SwitchModeStore.clearTemporary(ctx)
-                            Toast.makeText(ctx, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
+                            AppLogStore.append(ctx, "Emergency", "Emergency mode paused from Settings")
+                            Toast.makeText(ctx, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
                         }
                     }
-                } else {
-                    when (which) {
-                        0 -> {
-                            val ok = EmergencyBypassStore.resume(ctx)
-                            if (ok) {
-                                val remaining = EmergencyBypassStore.minutesRemaining(ctx).coerceAtLeast(1)
-                                SwitchModeStore.setTemporarilyDisabled(ctx, remaining * 60_000L)
-                                AppLogStore.append(ctx, "Emergency", "Emergency mode resumed from Settings with ${remaining}m remaining")
-                                Toast.makeText(ctx, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                        1 -> {
-                            EmergencyBypassStore.cancel(ctx)
-                            SwitchModeStore.clearTemporary(ctx)
-                            Toast.makeText(ctx, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
-                        }
+                    1 -> {
+                        AppLogStore.append(ctx, "Emergency", "Emergency mode ended from Settings")
+                        EmergencyBypassStore.cancel(ctx)
+                        SwitchModeStore.clearTemporary(ctx)
+                        Toast.makeText(ctx, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
                     }
                 }
-
-                BlockingRuntime.ensureRunning(ctx)
-                refreshEmergencyPref()
+            } else {
+                when (which) {
+                    0 -> {
+                        val ok = EmergencyBypassStore.resume(ctx)
+                        if (ok) {
+                            val remaining = EmergencyBypassStore.minutesRemaining(ctx).coerceAtLeast(1)
+                            SwitchModeStore.setTemporarilyDisabled(ctx, remaining * 60_000L)
+                            AppLogStore.append(ctx, "Emergency", "Emergency mode resumed from Settings with ${remaining}m remaining")
+                            Toast.makeText(ctx, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    1 -> {
+                        EmergencyBypassStore.cancel(ctx)
+                        SwitchModeStore.clearTemporary(ctx)
+                        Toast.makeText(ctx, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
 
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
+            BlockingRuntime.ensureRunning(ctx)
+            refreshEmergencyPref()
+        }
     }
 
     private fun showEmergencyUnlockStartDialog() {
@@ -2049,25 +2352,22 @@ class SettingsFragment : PreferenceFragmentCompat() {
             val labels = list.map { df.format(Date(it.createdAt)) }.toTypedArray()
             val checked = BooleanArray(labels.size)
 
-            val dialog = AlertDialog.Builder(activeCtx)
-                .setTitle(getString(R.string.settings_delete_backups_title))
-                .setMultiChoiceItems(labels, checked) { _, which, isChecked -> checked[which] = isChecked }
-                .setPositiveButton(getString(R.string.delete)) { _, _ ->
-                    val ids = list.indices.filter { checked[it] }.map { list[it].id }
-                    if (ids.isEmpty()) return@setPositiveButton
-                    // delete sequentially if API supports it; otherwise ignore
-                    ids.forEach { id ->
-                        runCatching {
-                            CloudSyncRuntime.deleteBackup(activeCtx, id) { _, _ -> }
-                        }
+            activeCtx.showSwitchlyMultiChoiceDialog(
+                title = getString(R.string.settings_delete_backups_title),
+                options = labels.map { SwitchlyDialogOption(title = it, destructive = true) },
+                checked = checked,
+                positiveTextRes = R.string.delete
+            ) { result ->
+                val ids = list.indices.filter { result[it] }.map { list[it].id }
+                if (ids.isEmpty()) return@showSwitchlyMultiChoiceDialog
+                // delete sequentially if API supports it; otherwise ignore
+                ids.forEach { id ->
+                    runCatching {
+                        CloudSyncRuntime.deleteBackup(activeCtx, id) { _, _ -> }
                     }
-                    Toast.makeText(activeCtx, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
                 }
-                .setNegativeButton(getString(R.string.cancel), null)
-                .create()
-
-            dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-            dialog.show()
+                Toast.makeText(activeCtx, getString(R.string.deleted), Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -2075,12 +2375,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val ctx = requireContext()
         MaterialAlertDialogBuilder(ctx)
             .setTitle(getString(R.string.pref_reset_app_data_confirm_title))
-            .setMessage(getString(R.string.pref_reset_app_data_confirm_message))
+            .setMessage(getString(R.string.pref_reset_app_data_confirm_message) + "\n\n" + getString(R.string.destructive_cannot_be_undone))
             .setPositiveButton(getString(R.string.delete)) { _, _ ->
                 resetAllAppDataNow()
             }
             .setNegativeButton(getString(R.string.cancel), null)
-            .showAccented()
+            .showDestructiveAccented()
     }
 
     private fun resetAllAppDataNow() {

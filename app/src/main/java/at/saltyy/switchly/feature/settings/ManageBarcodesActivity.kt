@@ -20,6 +20,8 @@
 package at.saltyy.switchly.feature.settings
 
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -33,6 +35,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
@@ -49,10 +53,17 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.showDestructiveAccented
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.applySwitchlyDialogWidth
+import at.saltyy.switchly.ui.dialog.styleSwitchlyFormButtons
 import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -62,8 +73,12 @@ import java.util.Locale
 
 class ManageBarcodesActivity : AppCompatActivity() {
 
+    private companion object {
+        private const val DEFAULT_MINUTES = 10
+    }
+
     private lateinit var recycler: RecyclerView
-    private lateinit var empty: TextView
+    private lateinit var empty: View
     private lateinit var adapter: CodeAdapter
     private var fabAdd: FloatingActionButton? = null
     private val selectedRawValues: MutableSet<String> = linkedSetOf()
@@ -162,6 +177,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         fabAdd?.setOnClickListener {
             if (!selectionMode) showAddChoiceDialog()
         }
+        findViewById<View>(R.id.btnEmptyAddBarcode)?.setOnClickListener { showAddChoiceDialog() }
     }
 
     override fun onResume() {
@@ -176,6 +192,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         fabAdd?.isVisible = !selectionMode
+        menu.findItem(R.id.action_info)?.isVisible = !selectionMode
         menu.findItem(R.id.action_cancel_select)?.isVisible = selectionMode
         menu.findItem(R.id.action_select)?.isVisible = !selectionMode && adapter.itemCount > 0
         menu.findItem(R.id.action_delete_selected)?.isVisible = selectionMode
@@ -194,6 +211,10 @@ class ManageBarcodesActivity : AppCompatActivity() {
                     true
                 }
             }
+            R.id.action_info -> {
+                showBarcodeInfoDialog()
+                true
+            }
             R.id.action_cancel_select -> {
                 exitSelectionMode()
                 true
@@ -211,6 +232,14 @@ class ManageBarcodesActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showBarcodeInfoDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.manage_barcodes_info_title)
+            .setMessage(R.string.manage_barcodes_info_body)
+            .setPositiveButton(R.string.ok, null)
+            .showAccented()
     }
 
     private fun refresh() {
@@ -260,7 +289,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
                     R.plurals.manage_barcodes_delete_selected_confirm_fmt,
                     selectedRawValues.size,
                     selectedRawValues.size,
-                )
+                ) + "\n\n" + getString(R.string.destructive_cannot_be_undone)
             )
             .setPositiveButton(R.string.delete) { _, _ ->
                 selectedRawValues.toList().forEach { rawValue ->
@@ -270,7 +299,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
                 refresh()
             }
             .setNegativeButton(R.string.cancel, null)
-            .showAccented()
+            .showDestructiveAccented()
     }
 
     private fun showAddChoiceDialog() {
@@ -281,6 +310,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         showSimpleChoiceDialog(
             title = getString(R.string.manage_barcodes_add_title),
             entries = items,
+            icons = listOf(R.drawable.qr_code_24, R.drawable.edit_24),
         ) { which, dialog ->
             when (which) {
                 0 -> launchPicker()
@@ -293,24 +323,18 @@ class ManageBarcodesActivity : AppCompatActivity() {
     private fun showSimpleChoiceDialog(
         title: String,
         entries: List<String>,
+        icons: List<Int?>? = null,
         onSelected: (index: Int, dialog: AlertDialog) -> Unit,
     ) {
-        val content = layoutInflater.inflate(R.layout.dialog_single_select_list, null)
-        val rv = content.findViewById<RecyclerView>(R.id.recycler)
-        rv.layoutManager = LinearLayoutManager(this)
-
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setView(content)
-            .setNegativeButton(R.string.cancel, null)
-            .create()
-
-        rv.adapter = SimpleChoiceAdapter(entries) { which ->
+        lateinit var dialog: AlertDialog
+        dialog = showSwitchlyOptionDialog(
+            title = title,
+            options = entries.mapIndexed { index, label ->
+                SwitchlyDialogOption(title = label, iconRes = icons?.getOrNull(index))
+            }
+        ) { which ->
             onSelected(which, dialog)
         }
-
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
     }
 
     private fun launchPicker() {
@@ -324,6 +348,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
         prefilledRaw: String? = null,
     ) {
         val view = layoutInflater.inflate(R.layout.dialog_barcode_edit, null)
+        runCatching { CustomAccentApplier.applyToView(view, this) }
         val etRaw = view.findViewById<TextInputEditText>(R.id.etRawValue)
         val etName = view.findViewById<TextInputEditText>(R.id.etCodeName)
         val etNote = view.findViewById<TextInputEditText>(R.id.etCodeNote)
@@ -333,6 +358,9 @@ class ManageBarcodesActivity : AppCompatActivity() {
         val acAction = view.findViewById<MaterialAutoCompleteTextView>(R.id.acAction)
         val acMinutes = view.findViewById<MaterialAutoCompleteTextView>(R.id.acMinutes)
         val tilMinutes = view.findViewById<View>(R.id.tilMinutes)
+        val btnSave = view.findViewById<MaterialButton>(R.id.btnSave)
+        val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
+        val btnDelete = view.findViewById<MaterialButton>(R.id.btnDelete)
 
         val actionLabels = actions.map { getString(it.labelRes) }
         acAction.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, actionLabels))
@@ -341,8 +369,20 @@ class ManageBarcodesActivity : AppCompatActivity() {
             ProfileStore.getProfiles(this).toList().sorted()
         acProfile.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, profiles))
 
-        val minutePresets = listOf("5", "10", "30", "60", "120")
-        acMinutes.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, minutePresets))
+        fun minutePresetsFor(action: ActionSpec): List<String> {
+            val presets = mutableListOf("5", "10", "30", "60", "120")
+            if (action.id == "temp_enable" || action.id == "temp_disable") {
+                presets += getString(R.string.qr_minutes_ask_when_scanned)
+            }
+            return presets
+        }
+
+        fun applyMinutePresets(action: ActionSpec) {
+            acMinutes.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, minutePresetsFor(action)))
+            if (action.id !in setOf("temp_enable", "temp_disable") && acMinutes.text?.toString() == getString(R.string.qr_minutes_ask_when_scanned)) {
+                acMinutes.setText(String.format(Locale.ROOT, "%d", DEFAULT_MINUTES), false)
+            }
+        }
 
         val initial = parseExisting(existing)
         etRaw.setText(prefilledRaw ?: existing?.rawValue.orEmpty())
@@ -354,61 +394,96 @@ class ManageBarcodesActivity : AppCompatActivity() {
         val initialAction = initial?.action ?: defaultAction()
         acProfile.setText(initial?.profile ?: getString(R.string.manage_barcodes_profile_universal), false)
         acAction.setText(getString(initialAction.labelRes), false)
-        acMinutes.setText(formatLong(initial?.minutes ?: 10L), false)
+        applyMinutePresets(initialAction)
+        val initialMinutesText = if (initialAction.id in setOf("temp_enable", "temp_disable") && initial?.minutes == null && existing != null) {
+            getString(R.string.qr_minutes_ask_when_scanned)
+        } else {
+            formatLong(initial?.minutes ?: 10L)
+        }
+        acMinutes.setText(initialMinutesText, false)
 
         fun updateVisibility() {
             val action = actions.firstOrNull {
                 getString(it.labelRes) == acAction.text?.toString().orEmpty()
             } ?: defaultAction()
             tilMinutes.visibility = if (action.supportsMinutes) View.VISIBLE else View.GONE
+            applyMinutePresets(action)
         }
         updateVisibility()
         acAction.setOnItemClickListener { _, _, _, _ -> updateVisibility() }
 
-        MaterialAlertDialogBuilder(this)
+        // Use the same in-view button row as the paired-tag editor so both edit dialogs feel identical.
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(if (existing == null) R.string.manage_barcodes_add_title else R.string.manage_barcodes_edit_title)
             .setView(view)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.save) { _, _ -> }
-            .showAccented()
-            .also { dialog ->
-                val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                positive.setOnClickListener {
-                    val form = readForm(
-                        rawValue = etRaw.text?.toString().orEmpty(),
-                        name = etName.text?.toString(),
-                        note = etNote.text?.toString(),
-                        dailyLimitText = etDailyLimit.text?.toString(),
-                        cooldownText = etCooldown.text?.toString(),
-                        actionLabel = acAction.text?.toString().orEmpty(),
-                        profile = acProfile.text?.toString(),
-                        minutesText = acMinutes.text?.toString(),
-                    )
-                    if (form == null) {
-                        Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
+            .create()
+        dialog.setOnShowListener {
+            dialog.applySwitchlyDialogWidth(0.94f)
+            runCatching { CustomAccentApplier.applyToDialog(dialog) }
+            longArrayOf(0L, 120L, 360L, 720L).forEach { delay ->
+                view.postDelayed({ runCatching { CustomAccentApplier.applyToView(view, this) } }, delay)
+            }
+        }
+        dialog.show()
 
-                    if (existing != null && existing.rawValue != form.rawValue) {
-                        ScanCodeStore.remove(this, ScanCodeStore.Kind.BARCODE, existing.rawValue)
-                    }
-                    ScanCodeStore.upsert(
-                        this,
-                        ScanCodeStore.Entry(
-                            kind = ScanCodeStore.Kind.BARCODE,
-                            rawValue = form.rawValue,
-                            actionUri = buildActionUri(form),
-                            name = form.name,
-                            note = form.note,
-                            dailyLimit = form.dailyLimit,
-                            cooldownMinutes = form.cooldownMinutes,
-                            addedAtMillis = existing?.addedAtMillis ?: System.currentTimeMillis(),
-                        )
-                    )
+        styleSwitchlyFormButtons(
+            deleteButton = btnDelete,
+            cancelButton = btnCancel,
+            saveButton = btnSave,
+            destructiveButtonVisible = existing != null,
+            saveIsAdd = existing == null
+        )
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnDelete.setOnClickListener {
+            val current = existing ?: return@setOnClickListener
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.manage_barcodes_delete_single_title)
+                .setMessage(R.string.manage_barcodes_delete_single_message)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.delete) { _, _ ->
+                    ScanCodeStore.remove(this, ScanCodeStore.Kind.BARCODE, current.rawValue)
                     refresh()
                     dialog.dismiss()
                 }
+                .showDestructiveAccented()
+        }
+
+        btnSave.setOnClickListener {
+            val form = readForm(
+                rawValue = etRaw.text?.toString().orEmpty(),
+                name = etName.text?.toString(),
+                note = etNote.text?.toString(),
+                dailyLimitText = etDailyLimit.text?.toString(),
+                cooldownText = etCooldown.text?.toString(),
+                actionLabel = acAction.text?.toString().orEmpty(),
+                profile = acProfile.text?.toString(),
+                minutesText = acMinutes.text?.toString(),
+            )
+            if (form == null) {
+                Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+
+            if (existing != null && existing.rawValue != form.rawValue) {
+                ScanCodeStore.remove(this, ScanCodeStore.Kind.BARCODE, existing.rawValue)
+            }
+            ScanCodeStore.upsert(
+                this,
+                ScanCodeStore.Entry(
+                    kind = ScanCodeStore.Kind.BARCODE,
+                    rawValue = form.rawValue,
+                    actionUri = buildActionUri(form),
+                    name = form.name,
+                    note = form.note,
+                    dailyLimit = form.dailyLimit,
+                    cooldownMinutes = form.cooldownMinutes,
+                    addedAtMillis = existing?.addedAtMillis ?: System.currentTimeMillis(),
+                )
+            )
+            refresh()
+            dialog.dismiss()
+        }
     }
 
     private fun readForm(
@@ -424,8 +499,10 @@ class ManageBarcodesActivity : AppCompatActivity() {
         val cleanRaw = rawValue.trim()
         val action = actions.firstOrNull { getString(it.labelRes) == actionLabel } ?: return null
         if (cleanRaw.isBlank()) return null
-        val minutes = minutesText?.trim()?.takeIf { it.isNotBlank() }?.toLongOrNull()
-        if (action.supportsMinutes && (minutes == null || minutes <= 0L)) return null
+        val cleanMinutesText = minutesText?.trim().orEmpty()
+        val askWhenScanned = action.id in setOf("temp_enable", "temp_disable") && cleanMinutesText == getString(R.string.qr_minutes_ask_when_scanned)
+        val minutes = if (askWhenScanned) null else cleanMinutesText.takeIf { it.isNotBlank() }?.toLongOrNull()
+        if (action.supportsMinutes && !askWhenScanned && (minutes == null || minutes <= 0L)) return null
         val universal = getString(R.string.manage_barcodes_profile_universal)
         val cleanProfile = profile?.trim()?.takeIf { it.isNotBlank() && !it.equals(universal, ignoreCase = true) }
         val dailyLimit = dailyLimitText?.trim()?.takeIf { it.isNotBlank() }?.toIntOrNull()
@@ -446,7 +523,11 @@ class ManageBarcodesActivity : AppCompatActivity() {
 
     private fun buildActionUri(form: ActionForm): String {
         val finalAction = if (form.action.supportsMinutes) {
-            form.action.id + (form.minutes ?: 10L).coerceIn(1L, 120L)
+            if (form.action.id in setOf("temp_enable", "temp_disable") && form.minutes == null) {
+                form.action.id
+            } else {
+                form.action.id + (form.minutes ?: 10L).coerceIn(1L, 1440L)
+            }
         } else {
             form.action.id
         }
@@ -468,8 +549,12 @@ class ManageBarcodesActivity : AppCompatActivity() {
         val label = getString(parsed.action.labelRes)
         val profileLabel = parsed.profile ?: getString(R.string.manage_barcodes_profile_universal)
         val actionLabel = if (parsed.action.supportsMinutes) {
-            label + " (" + ((parsed.minutes ?: 10L).coerceAtLeast(1L)) + " " +
-                getString(R.string.qr_minutes).lowercase(Locale.getDefault()) + ")"
+            if (parsed.action.id in setOf("temp_enable", "temp_disable") && parsed.minutes == null) {
+                label + " (" + getString(R.string.qr_minutes_ask_when_scanned) + ")"
+            } else {
+                label + " (" + ((parsed.minutes ?: 10L).coerceAtLeast(1L)) + " " +
+                    getString(R.string.qr_minutes).lowercase(Locale.getDefault()) + ")"
+            }
         } else {
             label
         }
@@ -493,29 +578,13 @@ class ManageBarcodesActivity : AppCompatActivity() {
     private fun parseExisting(entry: ScanCodeStore.Entry?): ParsedExisting? {
         entry ?: return null
         val uri = runCatching { entry.actionUri.toUri() }.getOrNull() ?: return null
-        val host = uri.host?.lowercase(Locale.ROOT) ?: return null
-        val segs = uri.pathSegments ?: emptyList()
-        return when (host) {
-            NfcSchema.HOST_SWITCH -> {
-                val actionStr = segs.getOrNull(0)?.lowercase(Locale.ROOT).orEmpty()
-                when {
-                    actionStr.startsWith("temp_disable") -> ParsedExisting(actions.first { it.id == "temp_disable" }, null, actionStr.removePrefix("temp_disable").toLongOrNull())
-                    actionStr.startsWith("temp_enable") -> ParsedExisting(actions.first { it.id == "temp_enable" }, null, actionStr.removePrefix("temp_enable").toLongOrNull())
-                    else -> actions.firstOrNull { it.id == actionStr }?.let { ParsedExisting(it, null, null) }
-                }
-            }
-
-            NfcSchema.HOST_PROFILE -> {
-                val profile = segs.getOrNull(0)
-                val actionStr = segs.getOrNull(1)?.lowercase(Locale.ROOT).orEmpty()
-                when {
-                    actionStr.startsWith("temp_disable") -> ParsedExisting(actions.first { it.id == "temp_disable" }, profile, actionStr.removePrefix("temp_disable").toLongOrNull())
-                    actionStr.startsWith("temp_enable") -> ParsedExisting(actions.first { it.id == "temp_enable" }, profile, actionStr.removePrefix("temp_enable").toLongOrNull())
-                    else -> actions.firstOrNull { it.id == actionStr }?.let { ParsedExisting(it, profile, null) }
-                }
-            }
-
-            else -> null
+        val command = NfcSchema.parseCommandUri(uri) ?: return null
+        val actionStr = command.action.lowercase(Locale.ROOT)
+        val profile = (command as? NfcSchema.ProfileCommand)?.profile
+        return when {
+            actionStr.startsWith("temp_disable") -> ParsedExisting(actions.first { it.id == "temp_disable" }, profile, actionStr.removePrefix("temp_disable").toLongOrNull())
+            actionStr.startsWith("temp_enable") -> ParsedExisting(actions.first { it.id == "temp_enable" }, profile, actionStr.removePrefix("temp_enable").toLongOrNull())
+            else -> actions.firstOrNull { it.id == actionStr }?.let { ParsedExisting(it, profile, null) }
         }
     }
 
@@ -596,12 +665,23 @@ class ManageBarcodesActivity : AppCompatActivity() {
                 ivIcon.setImageResource(R.drawable.barcode_24)
                 tvName.text = item.name ?: getString(R.string.manage_barcodes_kind_barcode)
                 tvRaw.text = item.rawValue
-                tvAction.text = formatActionSummary(item)
-                val meta = buildMetaSummary(item)
-                tvMeta.visibility = if (meta.isBlank()) View.GONE else View.VISIBLE
-                tvMeta.text = meta
+                // Keep the list compact: name + barcode ID only. Details stay available in the edit dialog.
+                tvAction.visibility = View.GONE
+                tvAction.text = ""
+                tvMeta.visibility = View.GONE
+                tvMeta.text = ""
+                val selected = isSelectionMode() && isSelected(item)
                 cbSelect.isVisible = isSelectionMode()
-                cbSelect.isChecked = isSelected(item)
+                cbSelect.isChecked = selected
+                (itemView as? MaterialCardView)?.let { card ->
+                    val accent = AccentColor.getAccentColorInt(itemView.context)
+                    card.strokeWidth = if (selected) (2 * itemView.resources.displayMetrics.density).toInt().coerceAtLeast(1) else 0
+                    card.strokeColor = if (selected) accent else Color.TRANSPARENT
+                    card.setCardBackgroundColor(
+                        if (selected) ColorUtils.setAlphaComponent(accent, 0x14)
+                        else com.google.android.material.color.MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorSurface)
+                    )
+                }
                 itemView.setOnClickListener { onRowClick(item) }
                 itemView.setOnLongClickListener { onRowLongPress(item) }
             }

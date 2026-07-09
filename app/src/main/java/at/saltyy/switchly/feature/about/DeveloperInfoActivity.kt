@@ -29,13 +29,34 @@ class DeveloperInfoActivity : TilesInfoActivity() {
 
     override fun tiles(): List<Tile> {
         val name = getString(R.string.dev_name_line).removePrefix("Developer: ").trim().ifBlank { getString(R.string.about_developer_name) }
-        val website = getString(R.string.about_website_url)
+        val website = getString(R.string.about_developer_website_url)
         val email = getString(R.string.dev_contact_email)
 
         return listOf(
-            Tile(getString(R.string.about_dev_name_label), name),
-            Tile(getString(R.string.about_website_label), website, onClick = { openUrl(website) }),
-            Tile(getString(R.string.about_email_label), email, onClick = { openMail(email) }, showCopyButton = true, copiedToast = getString(R.string.about_mail_copied)),
+            Tile(
+                getString(R.string.about_dev_name_label),
+                name,
+                sectionTitle = getString(R.string.about_section_contact),
+                iconRes = R.drawable.account_box_24
+            ),
+            Tile(
+                getString(R.string.about_website_label),
+                displayUrl(website),
+                sectionTitle = getString(R.string.about_section_contact),
+                onClick = { openUrl(website) },
+                copyValue = website,
+                showOpenButton = true,
+                iconRes = R.drawable.language_24
+            ),
+            Tile(
+                getString(R.string.about_email_label),
+                email,
+                sectionTitle = getString(R.string.about_section_contact),
+                onClick = { openMail(email) },
+                showCopyButton = true,
+                iconRes = R.drawable.mail_24,
+                copiedToast = getString(R.string.about_mail_copied)
+            ),
         )
     }
 
@@ -48,4 +69,9 @@ class DeveloperInfoActivity : TilesInfoActivity() {
         val i = Intent(Intent.ACTION_SENDTO).apply { data = "mailto:$email".toUri() }
         runCatching { startActivity(Intent.createChooser(i, getString(R.string.about_mail))) }
     }
+
+    private fun displayUrl(url: String): String =
+        url.removePrefix("https://")
+            .removePrefix("http://")
+            .removeSuffix("/")
 }

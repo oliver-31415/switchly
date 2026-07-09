@@ -30,27 +30,65 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.AccentColor
-import com.google.android.material.color.MaterialColors
+import com.google.android.material.card.MaterialCardView
 
 class FaqAdapter(
-    private val items: List<FaqListItem>
-) : RecyclerView.Adapter<FaqAdapter.VH>() {
+    private val items: List<FaqListItem>,
+    private val onFolderClick: (FaqListItem.Folder) -> Unit = {}
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var expanded = RecyclerView.NO_POSITION
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val v = LayoutInflater.from(parent.context)
-            .inflate(R.layout.row_faq, parent, false)
-        return VH(v)
+    override fun getItemViewType(position: Int): Int = when (items[position]) {
+        is FaqListItem.Folder -> VIEW_TYPE_FOLDER
+        else -> VIEW_TYPE_FAQ
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == VIEW_TYPE_FOLDER) {
+            FolderVH(inflater.inflate(R.layout.row_faq_folder, parent, false))
+        } else {
+            FaqVH(inflater.inflate(R.layout.row_faq, parent, false))
+        }
     }
 
     override fun getItemCount() = items.size
 
-    override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.bind(items[position], position)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (val item = items[position]) {
+            is FaqListItem.Folder -> (holder as FolderVH).bind(item)
+            else -> (holder as FaqVH).bind(item, position)
+        }
     }
 
-    inner class VH(v: View) : RecyclerView.ViewHolder(v) {
+    inner class FolderVH(v: View) : RecyclerView.ViewHolder(v) {
+        private val card: MaterialCardView = v.findViewById(R.id.cardFaqFolder)
+        private val iconCard: MaterialCardView = v.findViewById(R.id.cardFaqFolderIcon)
+        private val icon: ImageView = v.findViewById(R.id.ivFaqFolderIcon)
+        private val title: TextView = v.findViewById(R.id.tvFaqFolderTitle)
+        private val subtitle: TextView = v.findViewById(R.id.tvFaqFolderSubtitle)
+        private val count: TextView = v.findViewById(R.id.tvFaqFolderCount)
+
+        fun bind(item: FaqListItem.Folder) {
+            val ctx = itemView.context
+            val accent = AccentColor.getAccentColorInt(ctx)
+            title.text = item.title
+            subtitle.text = item.subtitle
+            count.text = ctx.resources.getQuantityString(
+                R.plurals.faq_category_articles_count,
+                item.articleCount,
+                item.articleCount
+            )
+            icon.setImageResource(item.iconRes ?: R.drawable.folder_24)
+            icon.imageTintList = ColorStateList.valueOf(accent)
+            val softAccent = (accent and 0x00FFFFFF) or (0x1E shl 24)
+            iconCard.setCardBackgroundColor(softAccent)
+            card.setOnClickListener { onFolderClick(item) }
+        }
+    }
+
+    inner class FaqVH(v: View) : RecyclerView.ViewHolder(v) {
 
         private val tvHeader: TextView = v.findViewById(R.id.tvHeader)
         private val questionRow: View = v.findViewById(R.id.questionRow)
@@ -63,6 +101,7 @@ class FaqAdapter(
             val ctx = itemView.context
             val accent = AccentColor.getAccentColorInt(ctx)
             val default = tvQuestion.currentTextColor
+            val mutedAccent = (accent and 0x00FFFFFF) or (0xCC shl 24)
 
             when (item) {
                 is FaqListItem.Header -> {
@@ -91,7 +130,7 @@ class FaqAdapter(
 
                     val isOpen = pos == expanded
 
-                    ivIcon.setColorFilter(default)
+                    ivIcon.setColorFilter(mutedAccent)
                     ivArrow.setColorFilter(default)
 
                     if (isOpen) {
@@ -110,7 +149,14 @@ class FaqAdapter(
                         notifyItemChanged(pos)
                     }
                 }
+
+                is FaqListItem.Folder -> Unit
             }
         }
+    }
+
+    companion object {
+        private const val VIEW_TYPE_FAQ = 0
+        private const val VIEW_TYPE_FOLDER = 1
     }
 }

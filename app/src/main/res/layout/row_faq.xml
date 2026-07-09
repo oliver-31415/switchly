@@ -1,12 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/root"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardFaqItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
+    android:layout_marginHorizontal="2dp"
+    android:layout_marginVertical="5dp"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardUseCompatPadding="true"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="1dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/switchly_card_stroke"
+    app:cardBackgroundColor="@color/switchly_card_bg">
+
+    <LinearLayout
+        android:id="@+id/root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="11dp"
+        android:paddingBottom="12dp">
 
     <!-- HEADER -->
     <TextView
@@ -25,8 +43,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingTop="6dp">
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/ivIcon"
@@ -66,4 +83,5 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
-</LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

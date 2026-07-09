@@ -6,10 +6,14 @@
     android:fillViewport="true">
 
     <LinearLayout
+        android:id="@+id/pageContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp"
-        android:gravity="center"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="24dp"
+        android:gravity="top|center_horizontal"
         android:orientation="vertical">
 
         <com.google.android.material.card.MaterialCardView
@@ -67,6 +71,14 @@
             android:text="@string/onb_page_desc_placeholder"
             android:gravity="center"
             android:textAlignment="center" />
+
+        <LinearLayout
+            android:id="@+id/detailsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_action"

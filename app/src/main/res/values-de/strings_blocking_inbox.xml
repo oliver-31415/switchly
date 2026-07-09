@@ -8,12 +8,6 @@
     <string name="blocked_inbox_detail_title">Blockierte Benachrichtigung</string>
     <string name="blocked_inbox_empty">Noch keine blockierten Benachrichtigungen ✅</string>
     <string name="blocked_inbox_content_unknown">Keine Vorschau verfügbar</string>
-
-    <!-- ====================================================== -->
-    <!-- Notification fields -->
-    <!-- ====================================================== -->
-    <string name="blocked_inbox_field_time">Zeit</string>
-    <string name="blocked_inbox_field_app">App</string>
     <string name="blocked_inbox_field_profile">Profil</string>
     <string name="blocked_inbox_field_reason">Grund</string>
     <string name="blocked_inbox_field_title">Titel</string>
@@ -39,19 +33,22 @@
     <!-- ====================================================== -->
     <string name="blocked_inbox_delete_title">Blockierte Benachrichtigungen löschen</string>
     <plurals name="blocked_inbox_delete_selected_confirm_fmt">
-            <item quantity="one">%1$d ausgewählte Benachrichtigung löschen?</item>
-            <item quantity="other">%1$d ausgewählte Benachrichtigungen löschen?</item>
-        </plurals>
+        <item quantity="one">%1$d ausgewählte Benachrichtigung löschen?</item>
+        <item quantity="other">%1$d ausgewählte Benachrichtigungen löschen?</item>
+    </plurals>
     <string name="blocked_inbox_select_mode_subtitle">Benachrichtigungen auswählen</string>
     <plurals name="blocked_inbox_select_count_fmt">
-            <item quantity="one">%1$d ausgewählt</item>
-            <item quantity="other">%1$d ausgewählt</item>
-        </plurals>
+        <item quantity="one">%1$d ausgewählt</item>
+        <item quantity="other">%1$d ausgewählt</item>
+    </plurals>
     <string name="select">Auswählen</string>
 
     <!-- ====================================================== -->
     <!-- Compact subtitles -->
     <!-- ====================================================== -->
     <string name="blocked_inbox_subtitle_compact_fmt">%1$s%2$s</string>
+    <string name="blocked_inbox_empty_title">Noch keine blockierten Benachrichtigungen</string>
+    <string name="blocked_inbox_empty_body">Blockierte Benachrichtigungen erscheinen hier, während Benachrichtigungsblockierung aktiv ist.</string>
+    <string name="blocked_inbox_chip_all_apps">Alle Apps</string>
 
 </resources>

@@ -1,143 +1,183 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rowRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp">
-
-    <CheckBox
-        android:id="@+id/cbSelect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="10dp" />
-
-    <!-- App icon -->
-    <ImageView
-        android:id="@+id/ivAppIcon"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginEnd="12dp"
-        android:contentDescription="@string/app_icon"
-        android:src="@android:drawable/sym_def_app_icon" />
+    android:layout_marginTop="3dp"
+    android:layout_marginBottom="3dp"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardUseCompatPadding="false"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="1dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/switchly_card_stroke"
+    app:cardBackgroundColor="@color/switchly_card_bg">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="10dp">
+
+        <CheckBox
+            android:id="@+id/cbSelect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp" />
+
+        <!-- App icon -->
+        <ImageView
+            android:id="@+id/ivAppIcon"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="10dp"
+            android:contentDescription="@string/app_icon"
+            android:src="@android:drawable/sym_def_app_icon" />
 
         <LinearLayout
-            android:id="@+id/labelRow"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/labelRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <TextView
+                    android:id="@+id/tvUnavailableChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:text="@string/unavailable_app_state"
+                    android:textColor="@color/unavailable_chip_text"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvLabel"
-                android:layout_width="0dp"
+                android:id="@+id/tvPkg"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:layout_marginTop="1dp"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
-                android:id="@+id/tvUnavailableChip"
-                android:layout_width="wrap_content"
+                android:id="@+id/tvUnavailableHint"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="2dp"
-                android:text="@string/unavailable_app_state"
-                android:textColor="@color/unavailable_chip_text"
-                android:textSize="11sp"
-                android:textStyle="bold"
+                android:layout_marginTop="3dp"
+                android:text="@string/unavailable_app_remove_hint"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
                 android:visibility="gone" />
+
+            <!-- LIMIT ROW: icon + state + "Daily limit: Xm" -->
+            <LinearLayout
+                android:id="@+id/limitRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/ivTimer"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginEnd="6dp"
+                    android:src="@drawable/schedule_24"
+                    android:contentDescription="@string/set_daily_limit"
+                    app:tint="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/tvState"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:text="@string/limit_set" />
+
+                <TextView
+                    android:id="@+id/tvMetaSeparator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:textSize="12sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:text="@string/common_bullet" />
+
+                <TextView
+                    android:id="@+id/tvLimit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:text="@string/daily_limit_10" />
+            </LinearLayout>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvPkg"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:textSize="12sp"
-            android:textColor="?android:attr/textColorSecondary" />
+        <ImageButton
+            android:id="@+id/btnWebsiteRules"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/app_picker_open_website_rules"
+            android:padding="7dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/language_24"
+            app:tint="?attr/colorPrimary" />
 
-        <TextView
-            android:id="@+id/tvUnavailableHint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="@string/unavailable_app_remove_hint"
-            android:textSize="12sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:visibility="gone" />
+        <ImageButton
+            android:id="@+id/btnInAppRules"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/app_picker_open_in_app_rules"
+            android:padding="7dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/tune_24"
+            app:tint="?attr/colorPrimary" />
 
-        <!-- LIMIT ROW: icon + state + "Daily limit: Xm" -->
-        <LinearLayout
-            android:id="@+id/limitRow"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:visibility="gone">
-
-            <ImageView
-                android:id="@+id/ivTimer"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginEnd="6dp"
-                android:src="@drawable/schedule_24"
-                android:contentDescription="@string/set_daily_limit"
-                app:tint="?attr/colorOnSurface" />
-
-            <TextView
-                android:id="@+id/tvState"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary"
-                android:text="@string/limit_set" />
-
-            <TextView
-                android:id="@+id/tvMetaSeparator"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary"
-                android:text="@string/common_bullet" />
-
-            <TextView
-                android:id="@+id/tvLimit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary"
-                android:text="@string/daily_limit_10" />
-        </LinearLayout>
-
+        <ImageButton
+            android:id="@+id/btnLimit"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/set_daily_limit"
+            app:srcCompat="@drawable/schedule_24"
+            app:tint="?attr/colorOnSurface" />
     </LinearLayout>
 
-    <ImageButton
-        android:id="@+id/btnLimit"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/set_daily_limit"
-        app:srcCompat="@drawable/schedule_24"
-        app:tint="?attr/colorOnSurface" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -34,9 +34,11 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardUseCompatPadding="true"
+            app:cardUseCompatPadding="false"
+            app:cardCornerRadius="18dp"
             app:cardElevation="0dp"
-            app:cardBackgroundColor="?android:attr/colorBackground">
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="@android:color/transparent">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"

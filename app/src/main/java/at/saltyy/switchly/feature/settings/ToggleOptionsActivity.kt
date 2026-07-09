@@ -20,27 +20,40 @@
 package at.saltyy.switchly.feature.settings
 
 import android.content.Context
+import android.content.ComponentName
+import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.ContextThemeWrapper
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.CheckBox
+import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.content.withStyledAttributes
 import androidx.core.graphics.ColorUtils
 import androidx.core.widget.ImageViewCompat
+import androidx.core.widget.CompoundButtonCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
+import at.saltyy.switchly.widget.QrScanWidgetProvider
+import at.saltyy.switchly.widget.NextScheduleWidgetProvider
+import at.saltyy.switchly.widget.BlockedNotificationsWidgetProvider
+import at.saltyy.switchly.widget.BarcodeScanWidgetProvider
+import at.saltyy.switchly.feature.widget.ActiveTimerWidgetProvider
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.AutostartStore
@@ -55,6 +68,8 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
@@ -198,7 +213,9 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val switchEmergency = findViewById<SwitchMaterial>(R.id.switchEmergency)
         val switchShowQuickActions = findViewById<SwitchMaterial>(R.id.switchShowQuickActions)
         val switchShowTemporaryMode = findViewById<SwitchMaterial>(R.id.switchShowTemporaryMode)
+        val switchShowActiveDuration = findViewById<SwitchMaterial>(R.id.switchShowActiveDuration)
         val switchShowEmergencyUnlock = findViewById<SwitchMaterial>(R.id.switchShowEmergencyUnlock)
+        val tvHomeLayoutModeValue = findViewById<TextView>(R.id.tvHomeLayoutModeValue)
 
         // --- Switches (In-app)
         val switchEnablePairedUids = findViewById<SwitchMaterial>(R.id.switchEnablePairedUids)
@@ -239,12 +256,67 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val rowAutostart = findViewById<View>(R.id.rowAutostart)
 
         val rowEmergency = findViewById<View>(R.id.rowEmergency)
-        val dividerAfterEmergency = findViewById<View>(R.id.dividerAfterEmergency)
+        val dividerBeforeEmergency = findViewById<View>(R.id.dividerAfterAutostart)
         val rowShowQuickActions = findViewById<View>(R.id.rowShowQuickActions)
         val rowShowTemporaryMode = findViewById<View>(R.id.rowShowTemporaryMode)
         val rowShowEmergencyUnlock = findViewById<View>(R.id.rowShowEmergencyUnlock)
+        val rowHomeLayoutDetailed = findViewById<View>(R.id.rowHomeLayoutDetailed)
+        val dividerAfterHomeLayoutDetailed = findViewById<View>(R.id.dividerAfterHomeLayoutDetailed)
+        val rowHomeLayoutCustom = findViewById<View>(R.id.rowHomeLayoutCustom)
+        val dividerAfterHomeLayoutCustom = findViewById<View>(R.id.dividerAfterHomeLayoutCustom)
+        val showHomeModeRowsInControls = false
+        rowHomeLayoutDetailed.visibility = if (showHomeModeRowsInControls) View.VISIBLE else View.GONE
+        dividerAfterHomeLayoutDetailed.visibility = if (showHomeModeRowsInControls) View.VISIBLE else View.GONE
+        val rowWidgetBarcode = findViewById<View>(R.id.rowWidgetBarcode)
+        val rowWidgetQr = findViewById<View>(R.id.rowWidgetQr)
+        val rowWidgetNextSchedule = findViewById<View>(R.id.rowWidgetNextSchedule)
+        val rowWidgetActiveTimer = findViewById<View>(R.id.rowWidgetActiveTimer)
+        val rowWidgetBlockedNotifications = findViewById<View>(R.id.rowWidgetBlockedNotifications)
         val rowEnablePairedUids = findViewById<View>(R.id.rowEnablePairedUids)
         val rowAutoPairOnWrite = findViewById<View>(R.id.rowAutoPairOnWrite)
+        val accent = AccentColor.getAccentColorInt(this)
+        val green = ContextCompat.getColor(this, R.color.accent_green)
+        val blue = ContextCompat.getColor(this, R.color.accent_blue)
+        val teal = ContextCompat.getColor(this, R.color.accent_teal)
+        val purple = ContextCompat.getColor(this, R.color.accent_purple)
+        val orange = ContextCompat.getColor(this, R.color.accent_orange)
+        val amber = ContextCompat.getColor(this, R.color.accent_amber)
+        val gray = ContextCompat.getColor(this, R.color.accent_gray)
+        tintLeadingIcon(rowModeSchedule, accent)
+        tintLeadingIcon(rowModeNfc, accent)
+        tintLeadingIcon(rowModeQr, accent)
+        tintLeadingIcon(rowModeBarcode, accent)
+        tintLeadingIcon(rowModeMixed, accent)
+        tintLeadingIcon(rowAllowButtonEnable, accent)
+        tintLeadingIcon(rowMixedAllowSchedule, accent)
+        tintLeadingIcon(rowMixedAllowNfc, accent)
+        tintLeadingIcon(rowMixedAllowQr, accent)
+        tintLeadingIcon(rowMixedAllowBarcode, accent)
+        tintLeadingIcon(rowMixedAllowButton, accent)
+        tintLeadingIcon(rowMixedAllowAppPicking, accent)
+        tintLeadingIcon(rowMixedAllowProfileSwitching, accent)
+        tintLeadingIcon(rowMixedAllowScheduleEditing, accent)
+        tintLeadingIcon(rowMixedAllowNfcTagWriting, accent)
+        tintLeadingIcon(rowLockSwitchlyAppAccess, accent)
+        tintLeadingIcon(rowRequireNfcUnlock, accent)
+        tintLeadingIcon(rowQuickTile, accent)
+        tintLeadingIcon(rowQrQuickTile, accent)
+        tintLeadingIcon(rowBarcodeQuickTile, accent)
+        tintLeadingIcon(rowBlockNotifs, accent)
+        tintLeadingIcon(rowAutostart, accent)
+        tintLeadingIcon(rowEmergency, accent)
+        tintLeadingIcon(rowShowQuickActions, accent)
+        tintLeadingIcon(rowShowTemporaryMode, accent)
+        tintLeadingIcon(rowShowEmergencyUnlock, accent)
+        tintLeadingIcon(rowHomeLayoutDetailed, accent)
+        tintLeadingIcon(rowHomeLayoutCustom, accent)
+        tintLeadingIcon(rowWidgetBarcode, accent)
+        tintLeadingIcon(rowWidgetQr, accent)
+        tintLeadingIcon(rowWidgetNextSchedule, accent)
+        tintLeadingIcon(rowWidgetActiveTimer, accent)
+        tintLeadingIcon(rowWidgetBlockedNotifications, accent)
+        tintLeadingIcon(rowEnablePairedUids, accent)
+        tintLeadingIcon(rowAutoPairOnWrite, accent)
 
         addInlineDetailsAction(
             row = rowModeSchedule,
@@ -424,6 +496,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             switchEmergency,
             switchShowQuickActions,
             switchShowTemporaryMode,
+            switchShowActiveDuration,
             switchShowEmergencyUnlock,
         )
         applySwitchAccentTints()
@@ -452,12 +525,251 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         switchEmergency.isChecked = EmergencyBypassStore.isFeatureEnabled(ctx)
         switchShowQuickActions.isChecked = sp.getBoolean(KEY_SHOW_QUICK_ACTIONS, true)
         switchShowTemporaryMode.isChecked = sp.getBoolean(KEY_SHOW_TEMPORARY_MODE, true)
+        switchShowActiveDuration.isChecked = sp.getBoolean(KEY_SHOW_ACTIVE_DURATION, true)
         switchShowEmergencyUnlock.isChecked = sp.getBoolean(KEY_SHOW_EMERGENCY_UNLOCK, true)
 
+        fun currentHomeLayoutMode(): String {
+            return when (sp.getString(KEY_HOME_LAYOUT_MODE, null)) {
+                HOME_MODE_DEFAULT -> HOME_MODE_DEFAULT
+                HOME_MODE_SIMPLE -> HOME_MODE_SIMPLE
+                HOME_MODE_ADVANCED -> HOME_MODE_ADVANCED
+                HOME_MODE_FOCUS -> HOME_MODE_SIMPLE
+                HOME_MODE_CUSTOM -> HOME_MODE_CUSTOM
+                else -> if (sp.contains(KEY_HOME_LAYOUT_DETAILED)) {
+                    if (sp.getBoolean(KEY_HOME_LAYOUT_DETAILED, true)) HOME_MODE_ADVANCED else HOME_MODE_SIMPLE
+                } else {
+                    HOME_MODE_DEFAULT
+                }
+            }
+        }
+
+        fun homeLayoutModeLabel(mode: String): String = when (mode) {
+            HOME_MODE_DEFAULT -> getString(R.string.home_layout_default)
+            HOME_MODE_SIMPLE -> getString(R.string.home_layout_minimal)
+            HOME_MODE_ADVANCED -> getString(R.string.home_layout_detailed)
+            HOME_MODE_CUSTOM -> getString(R.string.home_layout_custom)
+            else -> getString(R.string.home_layout_detailed)
+        }
+
+        fun refreshHomeLayoutModeValue() {
+            val mode = currentHomeLayoutMode()
+            tvHomeLayoutModeValue.text = homeLayoutModeLabel(mode)
+            val customVisible = showHomeModeRowsInControls && mode == HOME_MODE_CUSTOM
+            rowHomeLayoutDetailed.visibility = if (showHomeModeRowsInControls) View.VISIBLE else View.GONE
+            dividerAfterHomeLayoutDetailed.visibility = if (showHomeModeRowsInControls) View.VISIBLE else View.GONE
+            rowHomeLayoutCustom.visibility = if (customVisible) View.VISIBLE else View.GONE
+            dividerAfterHomeLayoutCustom.visibility = if (customVisible) View.VISIBLE else View.GONE
+        }
+        refreshHomeLayoutModeValue()
+
+        fun showCustomizeHomeDialog() {
+            data class CustomHomeOption(
+                val key: String,
+                val titleRes: Int,
+                val summaryRes: Int,
+                val iconRes: Int,
+                val defaultValue: Boolean
+            )
+
+            val options = listOf(
+                CustomHomeOption(KEY_HOME_CUSTOM_ACTIVE_TIMER, R.string.home_custom_active_timer, R.string.home_custom_active_timer_summary, R.drawable.schedule_24, true),
+                CustomHomeOption(KEY_HOME_CUSTOM_MAIN_BUTTON, R.string.home_custom_main_button, R.string.home_custom_main_button_summary, R.drawable.toggle_on_24, true),
+                CustomHomeOption(KEY_HOME_CUSTOM_ACTIVE_PROFILE, R.string.home_custom_active_profile, R.string.home_custom_active_profile_summary, R.drawable.account_box_24, true),
+                CustomHomeOption(KEY_HOME_CUSTOM_CONTROL_MODE, R.string.home_custom_control_mode, R.string.home_custom_control_mode_summary, R.drawable.tune_24, true),
+                CustomHomeOption(KEY_HOME_CUSTOM_PICK_APPS, R.string.home_custom_pick_apps, R.string.home_custom_pick_apps_summary, R.drawable.apps_24, true),
+                CustomHomeOption(KEY_HOME_CUSTOM_TEMPORARY, R.string.home_custom_temporary, R.string.home_custom_temporary_summary, R.drawable.alarm_24, false),
+                CustomHomeOption(KEY_HOME_CUSTOM_EMERGENCY, R.string.home_custom_emergency, R.string.home_custom_emergency_summary, R.drawable.lock_open_24, false),
+                CustomHomeOption(KEY_HOME_CUSTOM_QUICK_ACTIONS, R.string.home_custom_quick_actions, R.string.home_custom_quick_actions_summary, R.drawable.dashboard_24, false),
+                CustomHomeOption(KEY_HOME_CUSTOM_NEXT_SCHEDULE, R.string.home_custom_next_schedule, R.string.home_custom_next_schedule_summary, R.drawable.schedule_24, false),
+                CustomHomeOption(KEY_HOME_CUSTOM_BLOCKED_NOW, R.string.home_custom_blocked_now, R.string.home_custom_blocked_now_summary, R.drawable.info_24, false),
+                CustomHomeOption(KEY_HOME_CUSTOM_BLOCKED_APPS, R.string.home_custom_blocked_apps, R.string.home_custom_blocked_apps_summary, R.drawable.apps_24, false),
+                CustomHomeOption(KEY_HOME_CUSTOM_PROFILE_DROPDOWN, R.string.home_custom_profile_dropdown, R.string.home_custom_profile_dropdown_summary, R.drawable.switch_account_24, false)
+            )
+
+            val accent = AccentColor.getAccentColorInt(this)
+            val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.TRANSPARENT)
+            val surfaceVariant = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant, surface)
+            val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
+            val outline = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, ColorUtils.setAlphaComponent(onSurface, 0x44))
+            fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
+
+            val checked = BooleanArray(options.size) { index ->
+                sp.getBoolean(options[index].key, options[index].defaultValue)
+            }
+
+            lateinit var countText: TextView
+            val cards = mutableListOf<MaterialCardView>()
+
+            fun updateRowState(index: Int) {
+                val card = cards.getOrNull(index) ?: return
+                val isChecked = checked[index]
+                card.strokeWidth = dp(if (isChecked) 2 else 1)
+                card.strokeColor = if (isChecked) accent else outline
+                card.setCardBackgroundColor(if (isChecked) ColorUtils.setAlphaComponent(accent, 0x14) else surfaceVariant)
+                countText.text = resources.getQuantityString(R.plurals.pref_home_layout_custom_selected_count, options.size, checked.count { it }, options.size)
+            }
+
+            val content = ScrollView(this).apply {
+                isFillViewport = false
+                setPadding(dp(8), dp(10), dp(8), dp(2))
+            }
+
+            val list = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+            }
+            content.addView(
+                list,
+                ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            )
+
+            val intro = TextView(this).apply {
+                text = getString(R.string.pref_home_layout_custom_builder_intro)
+                setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xCC))
+                textSize = 14f
+                gravity = android.view.Gravity.CENTER_HORIZONTAL
+                setPadding(dp(8), 0, dp(8), dp(10))
+            }
+            list.addView(intro)
+
+            countText = TextView(this).apply {
+                setTextColor(accent)
+                textSize = 13f
+                gravity = android.view.Gravity.CENTER_HORIZONTAL
+                setPadding(dp(8), 0, dp(8), dp(10))
+            }
+            list.addView(countText)
+
+            options.forEachIndexed { index, option ->
+                val card = MaterialCardView(this).apply {
+                    radius = dp(18).toFloat()
+                    cardElevation = 0f
+                    useCompatPadding = true
+                    isClickable = true
+                    isFocusable = true
+                }
+
+                val row = LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                    setPadding(dp(14), dp(12), dp(10), dp(12))
+                }
+
+                val icon = ImageView(this).apply {
+                    setImageResource(option.iconRes)
+                    ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(accent))
+                }
+                row.addView(icon, LinearLayout.LayoutParams(dp(24), dp(24)))
+
+                val textColumn = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(dp(14), 0, dp(8), 0)
+                }
+
+                val title = TextView(this).apply {
+                    text = getString(option.titleRes)
+                    setTextColor(onSurface)
+                    textSize = 15f
+                }
+                val summary = TextView(this).apply {
+                    text = getString(option.summaryRes)
+                    setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xB0))
+                    textSize = 13f
+                    setPadding(0, dp(3), 0, 0)
+                }
+                textColumn.addView(title)
+                textColumn.addView(summary)
+                row.addView(textColumn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+
+                val check = CheckBox(this).apply {
+                    isChecked = checked[index]
+                    CompoundButtonCompat.setButtonTintList(this, ColorStateList.valueOf(accent))
+                    contentDescription = getString(option.titleRes)
+                }
+                row.addView(check)
+
+                card.setOnClickListener {
+                    checked[index] = !checked[index]
+                    check.isChecked = checked[index]
+                    updateRowState(index)
+                }
+                check.setOnClickListener {
+                    checked[index] = check.isChecked
+                    updateRowState(index)
+                }
+
+                card.addView(row)
+                cards += card
+                list.addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                updateRowState(index)
+            }
+
+            val dialog = MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.pref_home_layout_custom_title)
+                .setView(content)
+                .setPositiveButton(R.string.save) { _, _ ->
+                    sp.edit {
+                        options.forEachIndexed { index, option -> putBoolean(option.key, checked[index]) }
+                        putString(KEY_HOME_LAYOUT_MODE, HOME_MODE_CUSTOM)
+                        putBoolean(KEY_HOME_LAYOUT_DETAILED, false)
+                    }
+                    refreshHomeLayoutModeValue()
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+            dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)?.setTextColor(accent)
+            dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE)?.setTextColor(accent)
+            dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.98f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+
+        fun showHomeLayoutModeDialog() {
+            val modes = arrayOf(HOME_MODE_DEFAULT, HOME_MODE_SIMPLE, HOME_MODE_ADVANCED, HOME_MODE_CUSTOM)
+            val currentMode = currentHomeLayoutMode()
+            val options = modes.map { mode ->
+                val summaryRes = when (mode) {
+                    HOME_MODE_DEFAULT -> R.string.home_mode_default_card_summary
+                    HOME_MODE_SIMPLE -> R.string.home_mode_simple_card_summary
+                    HOME_MODE_ADVANCED -> R.string.home_mode_advanced_card_summary
+                    HOME_MODE_CUSTOM -> R.string.home_mode_custom_card_summary
+                    else -> R.string.pref_home_layout_mode_summary
+                }
+                SwitchlyDialogOption(
+                    title = homeLayoutModeLabel(mode),
+                    summary = getString(summaryRes),
+                    iconRes = when (mode) {
+                        HOME_MODE_DEFAULT -> R.drawable.dashboard_24
+                        HOME_MODE_SIMPLE -> R.drawable.toggle_on_24
+                        HOME_MODE_ADVANCED -> R.drawable.tune_24
+                        HOME_MODE_CUSTOM -> R.drawable.palette_24
+                        else -> R.drawable.dashboard_24
+                    },
+                    selected = mode == currentMode
+                )
+            }
+
+            showSwitchlyOptionDialog(
+                title = getString(R.string.pref_home_layout_mode_title),
+                options = options
+            ) { which ->
+                val mode = modes[which]
+                if (mode == HOME_MODE_CUSTOM) {
+                    sp.edit { putString(KEY_HOME_LAYOUT_MODE, HOME_MODE_CUSTOM) }
+                    refreshHomeLayoutModeValue()
+                    showCustomizeHomeDialog()
+                    return@showSwitchlyOptionDialog
+                }
+                sp.edit {
+                    putString(KEY_HOME_LAYOUT_MODE, mode)
+                    putBoolean(KEY_HOME_LAYOUT_DETAILED, mode == HOME_MODE_ADVANCED)
+                }
+                refreshHomeLayoutModeValue()
+            }
+        }
+
         fun refreshEmergencyFeatureVisibility() {
-            val visible = switchShowEmergencyUnlock.isChecked
-            rowEmergency.visibility = if (visible) View.VISIBLE else View.GONE
-            dividerAfterEmergency.visibility = if (visible) View.VISIBLE else View.GONE
+            // Emergency itself is a safety/feature option and should not be hidden by the
+            // Home shortcut visibility toggle.
+            rowEmergency.visibility = View.VISIBLE
+            dividerBeforeEmergency.visibility = View.VISIBLE
         }
         refreshEmergencyFeatureVisibility()
 
@@ -503,17 +815,17 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             cardMixedChannels.visibility = View.VISIBLE
             tvMixedChannelsSection.visibility = View.VISIBLE
             tvMixedChannelsSection.setText(
-                if (showAccessWhileActive && !showControlMethods) {
-                    R.string.toggle_section_additional_features
-                } else {
-                    R.string.toggle_section_mixed_channels
+                when {
+                    showAccessWhileActive && !showControlMethods -> R.string.toggle_section_additional_features
+                    showControlMethods && !showMixedOnly -> R.string.toggle_section_manual_controls
+                    else -> R.string.toggle_section_mixed_channels
                 }
             )
             tvMixedChannelsSectionSummary.setText(
-                if (showAccessWhileActive && !showControlMethods) {
-                    R.string.toggle_section_additional_features_summary
-                } else {
-                    R.string.toggle_section_mixed_channels_summary
+                when {
+                    showAccessWhileActive && !showControlMethods -> R.string.toggle_section_additional_features_summary
+                    showControlMethods && !showMixedOnly -> R.string.toggle_section_manual_controls_summary
+                    else -> R.string.toggle_section_mixed_channels_summary
                 }
             )
 
@@ -532,13 +844,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             // Access while active: what can still be edited while protection is on.
             rowMixedAllowAppPicking.visibility = if (showAccessWhileActive) View.VISIBLE else View.GONE
             rowMixedAllowProfileSwitching.visibility = if (showAccessWhileActive) View.VISIBLE else View.GONE
-            val qrTileVisible = showAccessWhileActive && AutomationModeStore.isQrChannelAllowed(ctx)
-            val barcodeTileVisible = showAccessWhileActive && AutomationModeStore.isBarcodeChannelAllowed(ctx)
-            dividerAfterMixedAllowProfileSwitching.visibility = if (qrTileVisible || barcodeTileVisible) View.VISIBLE else View.GONE
-            rowQrQuickTile.visibility = if (qrTileVisible) View.VISIBLE else View.GONE
-            dividerAfterQrQuickTile.visibility = if (qrTileVisible) View.VISIBLE else View.GONE
-            rowBarcodeQuickTile.visibility = if (barcodeTileVisible) View.VISIBLE else View.GONE
-            dividerAfterBarcodeQuickTile.visibility = if (barcodeTileVisible) View.VISIBLE else View.GONE
+            dividerAfterMixedAllowProfileSwitching.visibility = if (showAccessWhileActive) View.VISIBLE else View.GONE
             rowAllowButtonEnable.visibility =
                 if (showControlMethods && !switchMixedAllowButton.isChecked) View.VISIBLE else View.GONE
 
@@ -702,6 +1008,26 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             }
         }
 
+        fun requestPinWidget(providerClass: Class<*>) {
+            val manager = getSystemService(APPWIDGET_SERVICE) as? AppWidgetManager
+            if (manager?.isRequestPinAppWidgetSupported != true) {
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    getString(R.string.widget_pin_not_supported),
+                    Snackbar.LENGTH_LONG
+                ).show()
+                return
+            }
+
+            val provider = ComponentName(this, providerClass)
+            manager.requestPinAppWidget(provider, null, null)
+            Snackbar.make(
+                findViewById(android.R.id.content),
+                getString(R.string.widget_pin_requested),
+                Snackbar.LENGTH_SHORT
+            ).show()
+        }
+
         rowQuickTile.setOnClickListener {
             if (!isQuickSettingsTileMarkedAdded(KEY_QS_TILE_REQUESTED)) addQuickTile()
         }
@@ -712,6 +1038,12 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (!isQuickSettingsTileMarkedAdded(KEY_BARCODE_QS_TILE_REQUESTED)) requestBarcodeQuickTile()
         }
         refreshQuickSettingsTileRows()
+
+        rowWidgetBarcode.setOnClickListener { requestPinWidget(BarcodeScanWidgetProvider::class.java) }
+        rowWidgetQr.setOnClickListener { requestPinWidget(QrScanWidgetProvider::class.java) }
+        rowWidgetNextSchedule.setOnClickListener { requestPinWidget(NextScheduleWidgetProvider::class.java) }
+        rowWidgetActiveTimer.setOnClickListener { requestPinWidget(ActiveTimerWidgetProvider::class.java) }
+        rowWidgetBlockedNotifications.setOnClickListener { requestPinWidget(BlockedNotificationsWidgetProvider::class.java) }
 
         rowBlockNotifs.setOnClickListener { switchBlockNotifications.toggle() }
         rowAutostart.setOnClickListener {
@@ -724,8 +1056,20 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         rowShowTemporaryMode.setOnClickListener {
             if (canEditActiveAccess()) switchShowTemporaryMode.toggle()
         }
+        findViewById<View>(R.id.rowShowActiveDuration).setOnClickListener {
+            if (canEditActiveAccess()) switchShowActiveDuration.toggle()
+        }
         rowShowEmergencyUnlock.setOnClickListener {
             if (canEditActiveAccess()) switchShowEmergencyUnlock.toggle()
+        }
+        rowHomeLayoutDetailed.setOnClickListener {
+            showHomeLayoutModeDialog()
+        }
+        rowHomeLayoutCustom.setOnClickListener {
+            showCustomizeHomeDialog()
+        }
+        if (intent.getBooleanExtra(EXTRA_OPEN_HOME_MODE_DIALOG, false)) {
+            rowHomeLayoutDetailed.post { showHomeLayoutModeDialog() }
         }
 
         switchAllowButtonEnable.setOnCheckedChangeListener { buttonView, isChecked ->
@@ -909,6 +1253,13 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             }
             sp.edit { putBoolean(KEY_SHOW_TEMPORARY_MODE, isChecked) }
         }
+        switchShowActiveDuration.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (!canEditActiveAccess()) {
+                buttonView.isChecked = sp.getBoolean(KEY_SHOW_ACTIVE_DURATION, true)
+                return@setOnCheckedChangeListener
+            }
+            sp.edit { putBoolean(KEY_SHOW_ACTIVE_DURATION, isChecked) }
+        }
         switchShowEmergencyUnlock.setOnCheckedChangeListener { buttonView, isChecked ->
             if (!canEditActiveAccess()) {
                 buttonView.isChecked = sp.getBoolean(KEY_SHOW_EMERGENCY_UNLOCK, true)
@@ -1024,7 +1375,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             ),
             intArrayOf(
                 accent,
-                ColorUtils.blendARGB(onSurface, Color.WHITE, 0.65f)
+                Color.WHITE
             )
         )
 
@@ -1069,9 +1420,9 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             ) {
                 this@apply.background = getDrawable(0)
             }
-            setPadding(dp(10), dp(10), dp(10), dp(10))
-            layoutParams = LinearLayout.LayoutParams(dp(44), dp(44)).apply {
-                bottomMargin = dp(2)
+            setPadding(dp(7), dp(7), dp(7), dp(7))
+            layoutParams = LinearLayout.LayoutParams(dp(34), dp(34)).apply {
+                bottomMargin = dp(0)
             }
             tintInfoIcon(this)
             setOnClickListener {
@@ -1094,7 +1445,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    marginStart = dp(2)
+                    marginStart = dp(0)
                 }
             }
 
@@ -1104,7 +1455,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             ).apply {
                 gravity = android.view.Gravity.CENTER_HORIZONTAL
             }
-            switchView.translationX = -dp(2).toFloat()
+            switchView.translationX = 0f
 
             trailingStack.addView(detailsBtn)
             trailingStack.addView(switchView)
@@ -1258,18 +1609,8 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             if (showAccessWhileActive) View.VISIBLE else View.GONE
         findViewById<View>(R.id.rowMixedAllowProfileSwitching)?.visibility =
             if (showAccessWhileActive) View.VISIBLE else View.GONE
-        val qrTileVisible = showAccessWhileActive && AutomationModeStore.isQrChannelAllowed(this)
-        val barcodeTileVisible = showAccessWhileActive && AutomationModeStore.isBarcodeChannelAllowed(this)
         findViewById<View>(R.id.dividerAfterMixedAllowProfileSwitching)?.visibility =
-            if (qrTileVisible || barcodeTileVisible) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.rowQrQuickTile)?.visibility =
-            if (qrTileVisible) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.dividerAfterQrQuickTile)?.visibility =
-            if (qrTileVisible && barcodeTileVisible) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.rowBarcodeQuickTile)?.visibility =
-            if (barcodeTileVisible) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.dividerAfterBarcodeQuickTile)?.visibility =
-            if (barcodeTileVisible) View.VISIBLE else View.GONE
+            if (showAccessWhileActive) View.VISIBLE else View.GONE
         findViewById<View>(R.id.rowMixedAllowScheduleEditing)?.visibility =
             if (scheduleEditingVisible) View.VISIBLE else View.GONE
 
@@ -1319,6 +1660,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             R.id.rowAutostart,
             R.id.rowEmergency,
             R.id.rowShowTemporaryMode,
+            R.id.rowShowActiveDuration,
             R.id.rowShowEmergencyUnlock
         ).forEach {
             findViewById<View>(it)?.alpha = activeAccessRowAlpha
@@ -1333,6 +1675,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             R.id.switchAutostart,
             R.id.switchEmergency,
             R.id.switchShowTemporaryMode,
+            R.id.switchShowActiveDuration,
             R.id.switchShowEmergencyUnlock
         ).forEach {
             findViewById<SwitchMaterial>(it)?.apply {
@@ -1509,13 +1852,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             R.id.rowBarcodeQuickTile
         )
         setDividerAfter(
-            R.id.dividerAfterAutoPairOnWrite,
-            R.id.rowAutoPairOnWrite,
-            R.id.rowQuickTile,
-            R.id.rowQrQuickTile,
-            R.id.rowBarcodeQuickTile
-        )
-        setDividerAfter(
             R.id.dividerAfterQuickTile,
             R.id.rowQuickTile,
             R.id.rowQrQuickTile,
@@ -1580,7 +1916,15 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             R.id.cardSafetyControls,
             R.id.tvDisplayControlsSection,
             R.id.tvUiSectionSummary,
-            R.id.cardDisplayControls
+            R.id.tvDisplayHomeSection,
+            R.id.tvDisplayHomeSectionSummary,
+            R.id.cardDisplayHomeControls,
+            R.id.tvDisplayTilesSection,
+            R.id.tvDisplayTilesSectionSummary,
+            R.id.cardDisplayTileControls,
+            R.id.tvDisplayWidgetsSection,
+            R.id.tvDisplayWidgetsSectionSummary,
+            R.id.cardDisplayWidgetControls
         )
 
         val showIds = when (normalized) {
@@ -1605,9 +1949,15 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 R.id.cardSafetyControls
             )
             SECTION_DISPLAY -> setOf(
-                R.id.tvDisplayControlsSection,
-                R.id.tvUiSectionSummary,
-                R.id.cardDisplayControls
+                R.id.tvDisplayHomeSection,
+                R.id.tvDisplayHomeSectionSummary,
+                R.id.cardDisplayHomeControls,
+                R.id.tvDisplayTilesSection,
+                R.id.tvDisplayTilesSectionSummary,
+                R.id.cardDisplayTileControls,
+                R.id.tvDisplayWidgetsSection,
+                R.id.tvDisplayWidgetsSectionSummary,
+                R.id.cardDisplayWidgetControls
             )
             SECTION_OTHER -> setOf(
                 R.id.tvMixedChannelsSection,
@@ -1618,10 +1968,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 R.id.cardAdditionalFeatures,
                 R.id.tvSafetyControlsSection,
                 R.id.tvProtectionSectionSummary,
-                R.id.cardSafetyControls,
-                R.id.tvDisplayControlsSection,
-                R.id.tvUiSectionSummary,
-                R.id.cardDisplayControls
+                R.id.cardSafetyControls
             )
             else -> emptySet()
         }
@@ -1635,7 +1982,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             SECTION_BLOCKING -> R.id.tvControlModeSection
             SECTION_FEATURES -> R.id.tvAdditionalFeaturesSection
             SECTION_SAFETY -> R.id.tvSafetyControlsSection
-            SECTION_DISPLAY -> R.id.tvDisplayControlsSection
+            SECTION_DISPLAY -> R.id.tvDisplayHomeSection
             SECTION_OTHER -> R.id.tvMixedChannelsSection
             else -> null
         }
@@ -1648,7 +1995,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             }
         }
 
-        val scrollView = findViewById<android.widget.ScrollView>(R.id.scrollToggleOptions)
+        val scrollView = findViewById<ScrollView>(R.id.scrollToggleOptions)
         scrollView?.post {
             scrollView.scrollTo(0, 0)
         }
@@ -1658,13 +2005,13 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val anchorId = when (section) {
             SECTION_FEATURES -> R.id.tvAdditionalFeaturesSection
             SECTION_SAFETY -> R.id.tvSafetyControlsSection
-            SECTION_DISPLAY -> R.id.tvDisplayControlsSection
+            SECTION_DISPLAY -> R.id.tvDisplayHomeSection
             SECTION_BLOCKING -> R.id.tvControlModeSection
             SECTION_OTHER -> R.id.tvMixedChannelsSection
             else -> null
         } ?: return
 
-        val scroll = findViewById<android.widget.ScrollView>(R.id.scrollToggleOptions) ?: return
+        val scroll = findViewById<ScrollView>(R.id.scrollToggleOptions) ?: return
         val anchor = findViewById<View>(anchorId) ?: return
 
         scroll.post {
@@ -1686,8 +2033,28 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         ImageViewCompat.setImageTintList(button, ColorStateList.valueOf(accent))
     }
 
+    private fun tintLeadingIcon(row: View, color: Int) {
+        val group = row as? ViewGroup ?: return
+        fun tintFirstImage(viewGroup: ViewGroup): Boolean {
+            for (index in 0 until viewGroup.childCount) {
+                val child = viewGroup.getChildAt(index)
+                when (child) {
+                    is ImageButton -> Unit
+                    is ImageView -> {
+                        ImageViewCompat.setImageTintList(child, ColorStateList.valueOf(color))
+                        return true
+                    }
+                    is ViewGroup -> if (tintFirstImage(child)) return true
+                }
+            }
+            return false
+        }
+        tintFirstImage(group)
+    }
+
     companion object {
         const val EXTRA_SCROLL_TO_SECTION = "extra_scroll_to_section"
+        const val EXTRA_OPEN_HOME_MODE_DIALOG = "extra_open_home_mode_dialog"
         const val EXTRA_VIEW_SECTION = "extra_view_section"
         const val SECTION_BLOCKING = "blocking"
         const val SECTION_FEATURES = "features"
@@ -1698,7 +2065,27 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         const val KEY_SHOW_NEXT_SCHEDULE = "pref_show_next_schedule"
         const val KEY_SHOW_QUICK_ACTIONS = "pref_show_quick_actions"
         const val KEY_SHOW_TEMPORARY_MODE = "pref_show_temporary_mode"
+        const val KEY_SHOW_ACTIVE_DURATION = "pref_show_active_duration"
         const val KEY_SHOW_EMERGENCY_UNLOCK = "pref_show_emergency_unlock"
+        const val KEY_HOME_LAYOUT_DETAILED = "home_layout_detailed"
+        const val KEY_HOME_LAYOUT_MODE = "home_layout_mode"
+        const val HOME_MODE_DEFAULT = "default"
+        const val HOME_MODE_SIMPLE = "simple"
+        const val HOME_MODE_ADVANCED = "advanced"
+        const val HOME_MODE_FOCUS = "focus"
+        const val HOME_MODE_CUSTOM = "custom"
+        const val KEY_HOME_CUSTOM_ACTIVE_TIMER = "home_custom_active_timer"
+        const val KEY_HOME_CUSTOM_MAIN_BUTTON = "home_custom_main_button"
+        const val KEY_HOME_CUSTOM_ACTIVE_PROFILE = "home_custom_active_profile"
+        const val KEY_HOME_CUSTOM_CONTROL_MODE = "home_custom_control_mode"
+        const val KEY_HOME_CUSTOM_PICK_APPS = "home_custom_pick_apps"
+        const val KEY_HOME_CUSTOM_TEMPORARY = "home_custom_temporary"
+        const val KEY_HOME_CUSTOM_EMERGENCY = "home_custom_emergency"
+        const val KEY_HOME_CUSTOM_QUICK_ACTIONS = "home_custom_quick_actions"
+        const val KEY_HOME_CUSTOM_NEXT_SCHEDULE = "home_custom_next_schedule"
+        const val KEY_HOME_CUSTOM_BLOCKED_NOW = "home_custom_blocked_now"
+        const val KEY_HOME_CUSTOM_BLOCKED_APPS = "home_custom_blocked_apps"
+        const val KEY_HOME_CUSTOM_PROFILE_DROPDOWN = "home_custom_profile_dropdown"
         const val KEY_QS_TILE_REQUESTED = "pref_qs_tile_requested"
         const val KEY_QR_QS_TILE_REQUESTED = "pref_qr_qs_tile_requested"
         const val KEY_BARCODE_QS_TILE_REQUESTED = "pref_barcode_qs_tile_requested"

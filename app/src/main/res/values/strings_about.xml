@@ -10,8 +10,19 @@
     <string name="about_device_info_summary">Android version, model, and device</string>
     <string name="about_developer_info_title">Developer info</string>
     <string name="about_developer_info_summary">Developer and build details</string>
-    <string name="about_other_switchly_products_title">Other Switchly products</string>
-    <string name="about_other_switchly_products_summary">Switchly Lite, Launcher and future extras</string>
+    <string name="about_other_switchly_products_title">Other apps</string>
+    <string name="about_other_switchly_products_summary">Switchly Lite, Launcher, and related apps</string>
+    <string name="about_section_app">App</string>
+    <string name="about_section_build">Build</string>
+    <string name="about_section_install">Install</string>
+    <string name="about_section_links">Links</string>
+    <string name="about_section_system">System</string>
+    <string name="about_section_device">Device</string>
+    <string name="about_section_technical">Technical</string>
+    <string name="about_section_contact">Contact</string>
+    <string name="about_section_admin_status">Admin status</string>
+    <string name="about_section_adb_tools">ADB tools</string>
+    <string name="about_section_documentation">Documentation</string>
 
     <!-- ====================================================== -->
     <!-- Device and app info labels -->
@@ -48,10 +59,19 @@
     <string name="about_website_label">Website</string>
     <string name="about_mail">Email</string>
     <string name="about_developer_name" translatable="false">Saltyy (Andi S.)</string>
+    <string name="about_website_url" translatable="false">https://switchly.saltyy.at</string>
+    <string name="about_developer_website_url" translatable="false">https://saltyy.at</string>
+    <string name="dev_contact_email" translatable="false">support@saltyy.at</string>
+    <string name="about_mail_address" translatable="false">support@saltyy.at</string>
     <string name="about_discord_url" translatable="false">https://discord.gg/PC5zn2NeCg</string>
     <string name="about_gitlab_url" translatable="false">https://gitlab.com/Saltyy/switchly-public</string>
     <string name="about_discord_copied">Discord link copied</string>
     <string name="about_mail_copied">Email copied</string>
+
+    <!-- ====================================================== -->
+    <!-- Download links -->
+    <!-- ====================================================== -->
+    <string name="about_downloads_url" translatable="false">https://switchly.saltyy.at/downloads</string>
 
     <!-- ====================================================== -->
     <!-- Related Switchly products -->
@@ -65,9 +85,11 @@
     <string name="about_switchly_launcher_bonus">A simple and strong launcher made for a more minimal, distraction-free setup.</string>
     <string name="about_switchly_lite_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchly.lite</string>
     <string name="about_switchly_launcher_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchlylauncher</string>
+    <string name="about_other_apps_info_title">Other apps</string>
+    <string name="about_other_apps_info_body">Switchly Lite is the lighter app for simple NFC, button, and schedule setups.\n\nSwitchly Launcher is a minimal launcher for stricter, distraction-free phone setups.</string>
 
     <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
+    <!-- Developer labels and link feedback -->
     <!-- ====================================================== -->
     <string name="dev_name_line">Developer: Saltyy (Andi S.)</string>
     <string name="about_no_browser">No browser app found</string>

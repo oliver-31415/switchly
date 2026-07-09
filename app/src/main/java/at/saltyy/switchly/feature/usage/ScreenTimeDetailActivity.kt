@@ -19,9 +19,12 @@
 
 package at.saltyy.switchly.feature.usage
 
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
+import android.view.MenuItem
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -38,6 +41,8 @@ import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
+import at.saltyy.switchly.data.prefs.UsageLimitResetStore
+import at.saltyy.switchly.data.prefs.UsageLimitSessionRuntimeStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.databinding.ActivityScreenTimeDetailBinding
 import at.saltyy.switchly.feature.stats.StatsFormat
@@ -46,8 +51,11 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.AppBlockSafety
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
@@ -60,6 +68,31 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ScreenTimeDetailActivity : AppCompatActivity() {
+
+    private fun toolbarIconColor(): Int {
+        return if (MaterialColors.isColorLight(AccentColor.getToolbarColor(this))) Color.BLACK else Color.WHITE
+    }
+
+    private fun setupInfoAction() {
+        b.toolbar.menu.clear()
+        b.toolbar.menu.add(R.string.usage_details_info_title).apply {
+            setIcon(R.drawable.info_24)
+            icon?.mutate()?.setTint(toolbarIconColor())
+            setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+            setOnMenuItemClickListener {
+                showUsageDetailsInfo()
+                true
+            }
+        }
+    }
+
+    private fun showUsageDetailsInfo() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.usage_details_info_title)
+            .setMessage(R.string.usage_details_info_body)
+            .setPositiveButton(android.R.string.ok, null)
+            .showAccented()
+    }
 
     private fun syncLimitEditingUi() {
         val locked = SwitchModeStore.isEnabled(this)
@@ -93,7 +126,12 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         b = ActivityScreenTimeDetailBinding.inflate(layoutInflater)
         setContentView(b.root)
 
+        b.toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        b.toolbar.navigationIcon?.mutate()?.setTint(toolbarIconColor())
         b.toolbar.setNavigationOnClickListener { finish() }
+        EdgeToEdgeUtils.setupClassic(activity = this, toolbar = b.toolbar)
+        setupInfoAction()
+        b.tvLimitHint.visibility = View.GONE
 
         val pkg = intent.getStringExtra(EXTRA_PKG) ?: return
         val label = intent.getStringExtra(EXTRA_LABEL) ?: pkg
@@ -119,6 +157,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         // Limits (edited via the single "tune" icon)
         refreshDailyLimit(pkg)
         refreshAttemptLimit(pkg)
+        refreshSessionLimitGraph(pkg)
         syncLimitEditingUi()
 
         // Make it clear that limits are profile-bound.
@@ -136,6 +175,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             ) {
                 refreshDailyLimit(pkg)
                 refreshAttemptLimit(pkg)
+                refreshSessionLimitGraph(pkg)
             }
         }
         b.cardLimitAttempts.setOnClickListener {
@@ -147,6 +187,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             ) {
                 refreshDailyLimit(pkg)
                 refreshAttemptLimit(pkg)
+                refreshSessionLimitGraph(pkg)
             }
         }
 
@@ -158,6 +199,7 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             ) {
                 refreshDailyLimit(pkg)
                 refreshAttemptLimit(pkg)
+                refreshSessionLimitGraph(pkg)
             }
         }
 
@@ -640,7 +682,45 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
         val limitMin = UsageLimitStore.getLimitMinutes(this, profile, pkg)
         b.tvDailyLimitValue.text =
             if (limitMin <= 0) getString(R.string.no_limit)
-            else getString(R.string.daily_limit_value_format, limitMin)
+            else {
+                val resetMode = UsageLimitResetStore.getMode(this, profile, pkg)
+                getString(
+                    if (resetMode == UsageLimitResetStore.MODE_SESSION) R.string.session_reset_limit_value_format else R.string.daily_limit_value_format,
+                    limitMin
+                )
+            }
+        refreshSessionLimitGraph(pkg)
+    }
+
+    private fun refreshSessionLimitGraph(pkg: String) {
+        val profile = ProfileStore.getCurrent(this)
+        if (profile.isNullOrBlank()) {
+            b.sessionLimitContainer.visibility = View.GONE
+            return
+        }
+
+        val limitMin = UsageLimitStore.getLimitMinutes(this, profile, pkg)
+        val resetMode = UsageLimitResetStore.getMode(this, profile, pkg)
+        if (limitMin <= 0 || resetMode != UsageLimitResetStore.MODE_SESSION) {
+            b.sessionLimitContainer.visibility = View.GONE
+            return
+        }
+
+        val state = UsageLimitSessionRuntimeStore.get(this, profile, pkg)
+        val limitMs = state?.limitMs ?: TimeUnit.MINUTES.toMillis(limitMin.toLong())
+        val usedMs = state?.usedMs ?: 0L
+        val remainingMs = state?.remainingMs ?: limitMs
+
+        b.sessionLimitContainer.visibility = View.VISIBLE
+        b.sessionLimitSummary.text = getString(
+            R.string.session_limit_usage_summary,
+            StatsFormat.prettyMsWithSeconds(usedMs),
+            StatsFormat.prettyMsWithSeconds(limitMs),
+            StatsFormat.prettyMsWithSeconds(remainingMs)
+        )
+        b.sessionLimitProgress.progress =
+            if (limitMs <= 0L) 0 else ((usedMs * 100L) / limitMs).toInt().coerceIn(0, 100)
+        b.sessionLimitProgress.progressTintList = ColorStateList.valueOf(AccentColor.getAccentColorInt(this))
     }
 
     private fun refreshAttemptLimit(pkg: String) {
@@ -687,21 +767,24 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             else resources.getQuantityString(R.plurals.opens_format, it, it)
         } + getString(R.string.custom_value)
 
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.set_daily_attempt_limit_title, label))
-            .setSingleChoiceItems(items.toTypedArray(), presets.indexOf(current).takeIf { it >= 0 } ?: -1) { dialog, which ->
-                if (which == items.lastIndex) {
-                    dialog.dismiss()
-                    showCustomOpensInput(pkg, label)
-                    return@setSingleChoiceItems
-                }
-
-                val chosen = presets.getOrNull(which) ?: 0
-                applyAttemptLimit(profile, pkg, chosen)
-                dialog.dismiss()
+        showSwitchlyOptionDialog(
+            title = getString(R.string.set_daily_attempt_limit_title, label),
+            options = items.mapIndexed { index, item ->
+                SwitchlyDialogOption(
+                    title = item,
+                    iconRes = if (index == items.lastIndex) R.drawable.edit_24 else R.drawable.bar_chart_24,
+                    selected = index < presets.size && presets[index] == current
+                )
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .showAccented()
+        ) { which ->
+            if (which == items.lastIndex) {
+                showCustomOpensInput(pkg, label)
+                return@showSwitchlyOptionDialog
+            }
+
+            val chosen = presets.getOrNull(which) ?: 0
+            applyAttemptLimit(profile, pkg, chosen)
+        }
         }
     }
 
@@ -755,21 +838,24 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
             if (it == 0) getString(R.string.no_limit) else resources.getQuantityString(R.plurals.minutes_format, it, it)
         } + getString(R.string.custom_minutes)
 
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.set_daily_limit_title, label))
-            .setSingleChoiceItems(items.toTypedArray(), presets.indexOf(current).takeIf { it >= 0 } ?: -1) { dialog, which ->
-                if (which == items.lastIndex) {
-                    dialog.dismiss()
-                    showCustomMinutesInput(pkg, label)
-                    return@setSingleChoiceItems
-                }
-
-                val chosen = presets.getOrNull(which) ?: 0
-                applyDailyLimit(profile, pkg, chosen)
-                dialog.dismiss()
+        showSwitchlyOptionDialog(
+            title = getString(R.string.set_daily_limit_title, label),
+            options = items.mapIndexed { index, item ->
+                SwitchlyDialogOption(
+                    title = item,
+                    iconRes = if (index == items.lastIndex) R.drawable.edit_24 else R.drawable.alarm_24,
+                    selected = index < presets.size && presets[index] == current
+                )
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .showAccented()
+        ) { which ->
+            if (which == items.lastIndex) {
+                showCustomMinutesInput(pkg, label)
+                return@showSwitchlyOptionDialog
+            }
+
+            val chosen = presets.getOrNull(which) ?: 0
+            applyDailyLimit(profile, pkg, chosen)
+        }
         }
     }
 
@@ -809,10 +895,10 @@ class ScreenTimeDetailActivity : AppCompatActivity() {
 
         // If the limit is set, ensure the app is "managed" for the current profile.
         if (m > 0) {
-            val blocked = ProfileStore.getBlockedForProfile(this, profile).toMutableSet()
-            if (!blocked.contains(pkg)) {
-                blocked.add(pkg)
-                ProfileStore.setBlockedForProfile(this, profile, blocked)
+            val selected = ProfileStore.getSelectedForProfileMode(this, profile).toMutableSet()
+            if (!selected.contains(pkg)) {
+                selected.add(pkg)
+                ProfileStore.setSelectedForProfileMode(this, profile, selected)
             }
         }
 

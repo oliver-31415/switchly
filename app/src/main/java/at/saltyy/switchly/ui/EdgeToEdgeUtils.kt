@@ -20,6 +20,7 @@
 package at.saltyy.switchly.ui
 
 import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -30,7 +31,6 @@ import androidx.core.view.updatePadding
  * Switchly's UI is mostly "classic" (Toolbar + content below).
  * Edge-to-edge (decorFitsSystemWindows=false) made the toolbar look like a
  * "double topbar" (status bar area + toolbar area) and caused unreadable titles on some screens.
- *
  * We run edge-to-edge (decorFitsSystemWindows=false) but apply insets in a consistent way:
  * - Toolbar gets status-bar top inset as padding (so title/menu are clickable).
  * - BottomNav gets navigation-bar bottom inset.
@@ -47,6 +47,8 @@ object EdgeToEdgeUtils {
         toolbar: View? = null,
         bottomNav: View? = null
     ) {
+        activity.enableEdgeToEdge()
+
         // Let the system apply insets (toolbar below status bar, bottom nav above nav bar)
         WindowCompat.setDecorFitsSystemWindows(activity.window, true)
 
@@ -78,6 +80,8 @@ object EdgeToEdgeUtils {
         bottomNav: View? = null,
         contentRoot: View? = null
     ) {
+        activity.enableEdgeToEdge()
+
         // Edge-to-edge, but we apply insets manually.
         WindowCompat.setDecorFitsSystemWindows(activity.window, false)
 

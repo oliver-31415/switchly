@@ -26,9 +26,7 @@ import java.util.Locale
 
 /**
  * Per-profile rules for in-app "surfaces" (Shorts/Reels/Explore/Stories/etc).
- *
  * Stored as an Int per (profile, surfaceKey).
- *
  * Values:
  *  -1  => always block this surface (immediate)
  *   0  => no specific rule (falls back to global in-app limit if set)
@@ -86,6 +84,48 @@ object SurfaceLimitStore {
         if (surfaceKey.isBlank()) return
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         prefs.edit { remove(key(profile, surfaceKey)) }
+    }
+
+    fun onProfileRenamed(ctx: Context, oldProfile: String, newProfile: String) {
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val oldPrefix = PREFIX_RULE + sanitizeProfile(oldProfile) + "__"
+        val newPrefix = PREFIX_RULE + sanitizeProfile(newProfile) + "__"
+        val keys = prefs.all.keys.filter { it.startsWith(oldPrefix) }
+        if (keys.isEmpty()) return
+
+        prefs.edit {
+            keys.forEach { oldKey ->
+                val surface = oldKey.removePrefix(oldPrefix)
+                val newKey = newPrefix + surface
+                val value = readIntOrMigrate(prefs, oldKey)
+                putInt(newKey, value)
+                remove(oldKey)
+            }
+        }
+    }
+
+    fun onProfileRemoved(ctx: Context, profile: String) {
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val prefix = PREFIX_RULE + sanitizeProfile(profile) + "__"
+        val keys = prefs.all.keys.filter { it.startsWith(prefix) }
+        if (keys.isEmpty()) return
+        prefs.edit { keys.forEach { remove(it) } }
+    }
+
+    fun copyProfile(ctx: Context, fromProfile: String, toProfile: String) {
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val fromPrefix = PREFIX_RULE + sanitizeProfile(fromProfile) + "__"
+        val toPrefix = PREFIX_RULE + sanitizeProfile(toProfile) + "__"
+        val fromKeys = prefs.all.keys.filter { it.startsWith(fromPrefix) }
+        prefs.edit {
+            prefs.all.keys
+                .filter { it.startsWith(toPrefix) }
+                .forEach { remove(it) }
+            fromKeys.forEach { fromKey ->
+                val surface = fromKey.removePrefix(fromPrefix)
+                putInt(toPrefix + surface, readIntOrMigrate(prefs, fromKey))
+            }
+        }
     }
 
     /**

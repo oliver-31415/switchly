@@ -31,7 +31,6 @@ import at.saltyy.switchly.data.prefs.AppLogStore
 
 /**
  * External checkout entry point for APKs that are not distributed through Google Play.
- *
  * This intentionally does not contain Stripe/Adyen secret keys. 
  * The app opens a configured checkout/portal URL and your backend or payment provider handles the payment.
  * Premium activation must be verified server-side, via a webhook, account entitlement, or a signed license file.
@@ -53,16 +52,16 @@ object ExternalPaymentRuntime {
 
     fun hasCustomerPortalUrl(): Boolean = customerPortalUrl().isNotEmpty()
 
-    fun launchCheckout(activity: Activity) {
+    fun launchCheckout(activity: Activity): Boolean {
         if (!BuildConfig.SWITCHLY_EXTERNAL_PAYMENTS_ENABLED) {
             Toast.makeText(activity, R.string.premium_external_payments_disabled, Toast.LENGTH_SHORT).show()
-            return
+            return false
         }
 
         if (BuildConfig.SWITCHLY_FIREBASE_ENABLED && Auth.uid().isNullOrBlank()) {
             Toast.makeText(activity, R.string.premium_external_sign_in_to_buy, Toast.LENGTH_LONG).show()
             AppLogStore.append(activity, TAG, "Checkout needs signed-in Firebase user")
-            return
+            return false
         }
 
         val url = checkoutUrl()
@@ -73,20 +72,20 @@ object ExternalPaymentRuntime {
                 TAG,
                 "Checkout URL missing. variant=${BuildConfig.SWITCHLY_APK_VARIANT}, provider=${providerName()}"
             )
-            return
+            return false
         }
 
-        openUrl(
+        return openUrl(
             context = activity,
             rawUrl = url,
             action = "checkout"
         )
     }
 
-    fun openCustomerPortal(context: Context) {
+    fun openCustomerPortal(context: Context): Boolean {
         if (!BuildConfig.SWITCHLY_EXTERNAL_PAYMENTS_ENABLED) {
             Toast.makeText(context, R.string.premium_external_payments_disabled, Toast.LENGTH_SHORT).show()
-            return
+            return false
         }
 
         val portalUrl = customerPortalUrl()
@@ -97,17 +96,17 @@ object ExternalPaymentRuntime {
                 TAG,
                 "Customer portal URL missing. variant=${BuildConfig.SWITCHLY_APK_VARIANT}, provider=${providerName()}"
             )
-            return
+            return false
         }
 
-        openUrl(
+        return openUrl(
             context = context,
             rawUrl = portalUrl,
             action = "portal"
         )
     }
 
-    private fun openUrl(context: Context, rawUrl: String, action: String) {
+    private fun openUrl(context: Context, rawUrl: String, action: String): Boolean {
         val uri = runCatching {
             rawUrl.toUri().buildUpon()
                 .appendQueryParameter("app", BuildConfig.APPLICATION_ID)
@@ -123,7 +122,7 @@ object ExternalPaymentRuntime {
         }.getOrElse {
             Toast.makeText(context, R.string.premium_external_invalid_url, Toast.LENGTH_LONG).show()
             AppLogStore.append(context, TAG, "Invalid external payment URL", it)
-            return
+            return false
         }
 
         val intent = Intent(Intent.ACTION_VIEW, uri)
@@ -131,12 +130,14 @@ object ExternalPaymentRuntime {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
 
-        runCatching {
+        return runCatching {
             context.startActivity(intent)
             AppLogStore.append(context, TAG, "Opened $action URL via ${providerName()}")
-        }.onFailure {
+            true
+        }.getOrElse {
             Toast.makeText(context, R.string.premium_external_no_browser, Toast.LENGTH_LONG).show()
             AppLogStore.append(context, TAG, "Failed to open $action URL", it)
+            false
         }
     }
 }

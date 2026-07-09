@@ -2,7 +2,7 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Google auth result states -->
+    <!-- Authentication status -->
     <!-- ====================================================== -->
     <string name="auth_sign_in_success">Signed in with Google</string>
     <string name="auth_sign_in_cancelled">Sign-in canceled</string>
@@ -11,6 +11,8 @@
     <string name="auth_no_matching_google_accounts_found">No matching Google accounts found</string>
     <string name="auth_missing_google_server_client_id">Google sign-in is not available in this app build yet. Please update the app or contact support.</string>
     <string name="auth_firebase_not_configured">Cloud sign-in is not available in this app build yet. Please update the app or contact support.</string>
+    <string name="auth_email_sign_in_success">Signed in</string>
+    <string name="auth_email_create_success">Account created. Verification email sent.</string>
 
     <!-- ====================================================== -->
     <!-- Account deletion -->
@@ -25,7 +27,7 @@
     <string name="account_deleted">Account deleted</string>
 
     <!-- ====================================================== -->
-    <!-- Google account preferences -->
+    <!-- Account preferences -->
     <!-- ====================================================== -->
     <string name="pref_google_account_title">Account</string>
     <string name="pref_google_account_summary_logged_out">Not signed in</string>
@@ -55,7 +57,7 @@
     <string name="pref_cloud_delete_backups_summary">Remove selected backups from cloud history</string>
 
     <!-- ====================================================== -->
-    <!-- Local file backup and restore -->
+    <!-- File backup and restore -->
     <!-- ====================================================== -->
     <string name="pref_file_backup_title">Back up to file</string>
     <string name="pref_file_backup_summary">Export a local JSON backup without signing in. The file may contain personal blocking data.</string>
@@ -67,26 +69,31 @@
     <string name="file_restore_error_fmt">File restore failed: %1$s</string>
 
     <!-- ====================================================== -->
-    <!-- Backup/restore confirmation dialogs -->
+    <!-- Backup and restore dialogs -->
     <!-- ====================================================== -->
     <string name="settings_delete_backups_title">Delete backups</string>
     <string name="settings_restore_choose_title">Choose backup</string>
     <string name="settings_last_backup">Last backup: %1$s</string>
     <string name="settings_confirm_backup_title">Back up</string>
-    <string name="settings_confirm_backup_message">Back up current settings and profiles to the cloud?</string>
     <string name="settings_confirm_restore_title">Restore</string>
     <string name="settings_confirm_restore_message">Load a backup from the cloud and overwrite local settings?</string>
     <string name="settings_confirm_file_backup_title">Back up to file</string>
-    <string name="settings_confirm_file_backup_message">Create a local JSON backup of your Switchly settings, profiles, schedules, stats, paired tags, app/domain rules, and other personal blocking data. Store this file securely and do not share it publicly.</string>
     <string name="settings_confirm_file_restore_title">Restore from file</string>
     <string name="settings_confirm_file_restore_message">Restore a local JSON backup and overwrite current Switchly data? For safety, Switchly and active schedules will be disabled after restore.</string>
+    <string name="settings_confirm_backup_message_with_included_categories">Back up current data to the cloud?\n\nIncluded:\n%1$s</string>
+    <string name="settings_confirm_backup_message_with_categories">Back up current data to the cloud?\n\nIncluded:\n%1$s\n\nExcluded/kept on restore:\n%2$s</string>
+    <string name="settings_confirm_file_backup_message_with_included_categories">Create a local backup file?\n\nIncluded:\n%1$s</string>
+    <string name="settings_confirm_file_backup_message_with_categories">Create a local backup file?\n\nIncluded:\n%1$s\n\nExcluded/kept on restore:\n%2$s</string>
 
     <!-- ====================================================== -->
-    <!-- Email account auth flow -->
+    <!-- Password reset -->
     <!-- ====================================================== -->
-    <string name="auth_email_sign_in_success">Signed in</string>
-    <string name="auth_email_create_success">Account created. Verification email sent.</string>
     <string name="auth_password_reset_email_sent">Password reset email sent</string>
+    <string name="settings_account_action_reset_password">Reset password</string>
+
+    <!-- ====================================================== -->
+    <!-- Account dialogs -->
+    <!-- ====================================================== -->
     <string name="settings_account_dialog_title">Account</string>
     <string name="settings_account_logged_in">Signed in</string>
     <string name="settings_account_logged_in_as">Signed in as %1$s</string>
@@ -94,7 +101,11 @@
     <string name="settings_account_signing_in">Signing in…</string>
     <string name="settings_account_action_sign_in">Sign in</string>
     <string name="settings_account_action_create">Create account</string>
-    <string name="settings_account_action_reset_password">Reset password</string>
+    <string name="settings_account_sign_in_summary">Use your Switchly account to sync backups and restore Premium.</string>
+    <string name="settings_account_create_summary">Create a Switchly account for cloud backups and restore options.</string>
+    <string name="settings_account_google_summary">Use your Google account for a faster sign-in.</string>
+    <string name="settings_account_email_sign_in_summary">Sign in with your email address and password.</string>
+    <string name="settings_account_email_create_summary">Create an account with email and password.</string>
     <string name="settings_account_continue_google">Continue with Google</string>
     <string name="settings_account_sign_in_email">Sign in with Email</string>
     <string name="settings_account_create_email">Create account with Email</string>
@@ -110,7 +121,7 @@
     <string name="settings_account_reset_password_message">Enter your email address to receive a password reset link.</string>
 
     <!-- ====================================================== -->
-    <!-- Auth error mapping -->
+    <!-- Authentication errors -->
     <!-- ====================================================== -->
     <string name="auth_error_invalid_login">Invalid email or password</string>
     <string name="auth_error_no_account_for_email">No account found for this email address</string>
@@ -122,5 +133,22 @@
     <string name="auth_error_sign_in_generic">Could not sign in</string>
     <string name="auth_error_create_account_generic">Could not create account</string>
     <string name="auth_error_reset_password_generic">Could not send reset email</string>
+
+    <!-- ====================================================== -->
+    <!-- Backup category picker -->
+    <!-- ====================================================== -->
+    <string name="backup_select_preset_title">Choose backup type</string>
+    <string name="backup_preset_full">Full backup</string>
+    <string name="backup_preset_privacy">Privacy-focused backup</string>
+    <string name="backup_preset_profiles_only">Profiles only</string>
+    <string name="backup_preset_manual_custom">Manual/last selection</string>
+    <string name="backup_preset_full_summary">Everything, including rules, settings, keys, schedules, counters and preferences.</string>
+    <string name="backup_preset_privacy_summary">Core setup without usage/statistics counters.</string>
+    <string name="backup_preset_profiles_only_summary">Only profiles and selected app lists.</string>
+    <string name="backup_preset_manual_custom_summary">Review categories and reuse your last custom selection.</string>
+    <string name="backup_select_categories_title">Choose backup data</string>
+    <string name="backup_category_sensitive_suffix"> (sensitive)</string>
+    <string name="backup_create_with_selection">Create backup</string>
+    <string name="backup_select_at_least_one">Select at least one backup category</string>
 
 </resources>

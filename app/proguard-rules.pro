@@ -48,3 +48,8 @@
 # If you use deep links with reflection/custom class loading: not needed for your current setup
 ############################################
 # -keep class at.saltyy.switchly.** { *; }
+
+# Play Integrity is loaded reflectively for soft diagnostics, so keep the SDK API classes in minified release builds.
+-keep class com.google.android.play.core.integrity.** { *; }
+-keep class com.google.android.gms.tasks.OnSuccessListener { *; }
+-keep class com.google.android.gms.tasks.OnFailureListener { *; }

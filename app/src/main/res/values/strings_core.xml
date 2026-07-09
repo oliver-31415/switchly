@@ -29,12 +29,20 @@
     <string name="required">Required</string>
     <string name="invalid_value">Invalid value</string>
     <string name="state_enabled">Enabled</string>
+    <string name="state_temporarily_enabled">Temporarily enabled</string>
     <string name="state_disabled">Disabled</string>
 
     <!-- ====================================================== -->
     <!-- Formatting helpers -->
     <!-- ====================================================== -->
-    <string name="common_dash">—</string>
     <string name="common_bullet">•</string>
+
+    <!-- ====================================================== -->
+    <!-- UX polish/dialog consistency -->
+    <!-- ====================================================== -->
+    <string name="destructive_cannot_be_undone">This cannot be undone.</string>
+    <string name="edit_locked_currently_active_body">Turn off Switchly to edit this setting.</string>
+    <string name="edit_locked_currently_active_body_with_hint">%1$s</string>
+    <string name="dialog_section_details">Details</string>
 
 </resources>

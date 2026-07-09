@@ -37,6 +37,7 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -72,6 +73,7 @@ class BlockerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         suppressOpenActivityTransition()
         suppressLegacyPendingTransition()
         currentActivityRef = WeakReference(this)
@@ -325,7 +327,7 @@ class BlockerActivity : ComponentActivity() {
     }
 
     private fun pauseActiveMediaPlayback() {
-        val audio = getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
+        val audio = getSystemService(AUDIO_SERVICE) as? AudioManager ?: return
         val down = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
         val up = KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE)
         runCatching { audio.dispatchMediaKeyEvent(down) }
@@ -335,7 +337,7 @@ class BlockerActivity : ComponentActivity() {
     private fun killBackgroundPackage(context: Context, pkg: String) {
         if (pkg.isBlank()) return
         runCatching {
-            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return@runCatching
+            val am = context.getSystemService(ACTIVITY_SERVICE) as? ActivityManager ?: return@runCatching
             am.killBackgroundProcesses(pkg)
         }
     }
@@ -611,7 +613,7 @@ class BlockerActivity : ComponentActivity() {
             try {
                 context.startActivity(home)
             } catch (_: SecurityException) {
-                // Some OEMs can resolve ACTION_MAIN/CATEGORY_HOME to protected setup/update wrappers (for example Samsung FOTA setup wizard). 
+                // Some OEMs can resolve ACTION_MAIN/CATEGORY_HOME to protected setup/update wrappers (for example Samsung FOTA setup wizard).
                 // In that case, moving the current task back is safer than crashing the blocker UI.
                 (context as? Activity)?.moveTaskToBack(true)
             } catch (_: RuntimeException) {

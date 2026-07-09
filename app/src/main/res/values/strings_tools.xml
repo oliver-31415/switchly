@@ -14,7 +14,7 @@
     <!-- ====================================================== -->
     <string name="tools_schedules_title">Schedules</string>
     <string name="tools_schedules_summary">Create and manage automatic time, Wi-Fi, Bluetooth, and location actions</string>
-    <string name="tools_tags_codes_title">Manage keys</string>
+    <string name="tools_tags_codes_title">Keys &amp; codes</string>
     <string name="tools_tags_codes_summary">NFC tags, paired tags, QR codes, and barcodes</string>
     <string name="tools_tags_codes_write_nfc">Write NFC tag</string>
     <string name="tools_tags_codes_paired_tags">Manage paired tags</string>
@@ -27,7 +27,7 @@
     <!-- ====================================================== -->
     <!-- Management shortcuts -->
     <!-- ====================================================== -->
-    <string name="tools_keys_title">Manage keys</string>
+    <string name="tools_keys_title">Keys &amp; codes</string>
     <string name="tools_keys_section">NFC, QR, and barcode controls</string>
     <string name="tools_profiles_title">Manage profiles</string>
     <string name="tools_profiles_summary">Create, switch, and organize blocking profiles</string>
@@ -41,26 +41,28 @@
     <!-- ====================================================== -->
     <string name="tools_emergency_unlock_summary">Temporarily disable protection when you really need to</string>
     <string name="tools_insights_title">Usage &amp; insights</string>
-    <string name="tools_insights_summary">View usage, blocking, and related activity information</string>
+    <string name="tools_insights_summary">Usage statistics and active time</string>
     <string name="tools_blocked_notifications_summary">Review blocked notifications and related activity</string>
 
     <!-- ====================================================== -->
-    <!-- Blocking hub sections -->
+    <!-- Blocking hub -->
     <!-- ====================================================== -->
     <string name="blocking_hub_profiles_section">Profile</string>
     <string name="blocking_hub_blocked_content_section">Blocked content</string>
     <string name="blocking_hub_controls_section">Blocking controls</string>
-    <string name="blocking_hub_modes_title">Blocking controls</string>
-    <string name="blocking_hub_modes_summary">Choose how Switchly can be enabled and disabled</string>
-    <string name="blocking_hub_features_title">Allowed while blocking</string>
-    <string name="blocking_hub_features_summary">Control what can still be changed while protection is active</string>
+    <string name="blocking_hub_modes_title">Control modes</string>
+    <string name="blocking_hub_modes_summary">Choose how Switchly is enabled and disabled</string>
+    <string name="blocking_hub_features_title">Feature access</string>
+    <string name="blocking_hub_features_summary">Choose what can still be changed or used while Switchly is active</string>
+    <string name="blocking_hub_display_summary">Switchly Home display, Quick Settings tiles, and Android widgets</string>
+    <string name="blocking_hub_display_title">Display &amp; shortcuts</string>
     <string name="blocking_hub_title">Blocking</string>
     <string name="blocking_hub_apps_title">Manage apps</string>
     <string name="blocking_hub_apps_summary">Choose apps, limits, and blocked-app rules</string>
-    <string name="blocking_hub_websites_title">Manage websites</string>
-    <string name="blocking_hub_websites_summary">Add domains and website rules for supported browsers</string>
-    <string name="blocking_hub_inapp_title">In-app blocking</string>
-    <string name="blocking_hub_inapp_summary">Block specific app surfaces such as feeds, reels, shorts, or tabs</string>
+    <string name="blocking_hub_websites_title">Website rules</string>
+    <string name="blocking_hub_websites_summary">Manage website/domain rules for the active profile</string>
+    <string name="blocking_hub_inapp_title">In-app rules</string>
+    <string name="blocking_hub_inapp_summary">Manage supported in-app sections for the active profile</string>
     <string name="blocking_hub_scan_section">Scan</string>
     <string name="blocking_hub_scan_qr_title">Scan QR code</string>
     <string name="blocking_hub_scan_qr_summary">Open the Switchly QR scanner directly</string>
@@ -68,10 +70,23 @@
     <string name="blocking_hub_scan_barcode_summary">Open the Switchly barcode scanner directly</string>
 
     <!-- ====================================================== -->
-    <!-- Error states -->
+    <!-- Disabled states and errors -->
     <!-- ====================================================== -->
     <string name="error_open_manage_paired_tags">Could not open Manage paired tags. Please send debug logs if this keeps happening.</string>
+    <string name="toast_write_nfc_requires_enabled">Enable NFC control first.</string>
+    <string name="toast_manage_paired_tags_requires_enabled">Enable paired NFC tags first.</string>
+    <string name="toast_manage_qr_requires_enabled">Enable QR code control first.</string>
+    <string name="toast_manage_barcodes_requires_enabled">Enable barcode control first.</string>
+    <string name="toast_manage_schedules_requires_enabled">Enable schedule control first.</string>
 
-    <string name="toast_manage_paired_tags_requires_enabled">Enable paired NFC tags first in Blocking Controls/Allowed while blocking.</string>
-    <string name="toast_manage_barcodes_requires_enabled">Enable barcode control first in Blocking Controls.</string>
+    <!-- ====================================================== -->
+    <!-- Info dialogs -->
+    <!-- ====================================================== -->
+    <string name="qr_info_title">QR code actions</string>
+    <string name="qr_info_body">Create QR codes that run Switchly actions when scanned. QR codes can enable, disable, toggle, or temporarily change Switchly.\n\nFor stricter setups, keep only QR enabled in Control modes and disable the other channels you do not want to use.</string>
+    <string name="manage_barcodes_info_title">Barcode actions</string>
+    <string name="manage_barcodes_info_body">Saved barcodes turn printed or physical codes into Switchly actions. You can use them to enable, disable, toggle, or temporarily change Switchly without editing the app.\n\nFor stronger friction, place the barcode away from your phone and use Temporary Disable or Temporary Enable with “Ask when scanned”.</string>
+    <string name="paired_tags_info_title">Paired NFC tags</string>
+    <string name="paired_tags_info_body">Paired tags are for UID-only/read-only NFC tags or setups where you want per-tag limits. Writable Switchly action tags do not need to be paired.\n\nUse this page when the tag should be recognized by its NFC ID, when you want a default action for a read-only tag, or when you want daily-use/cooldown limits.</string>
+
 </resources>

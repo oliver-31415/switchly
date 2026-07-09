@@ -44,7 +44,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
-import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.nfc.NfcWriteWaitingActivity
@@ -53,11 +52,18 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.showDestructiveAccented
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.applySwitchlyDialogWidth
+import at.saltyy.switchly.ui.dialog.styleSwitchlyFormButtons
 import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.radiobutton.MaterialRadioButton
@@ -68,7 +74,7 @@ import java.text.NumberFormat
 class ManagePairedTagsActivity : AppCompatActivity() {
 
     private lateinit var recycler: RecyclerView
-    private lateinit var empty: TextView
+    private lateinit var empty: View
     private val selectedUids: MutableSet<String> = linkedSetOf()
     private var selectionMode: Boolean = false
     private var lastTags: List<NfcUidPairingStore.TagMeta> = emptyList()
@@ -170,15 +176,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val locked = EditingLockGuard.isLocked(this)
-        val pairedTagsEnabled = getSharedPreferences("switchly_prefs", MODE_PRIVATE)
-            .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-        AppLogStore.append(this, "NFC", "ManagePairedTagsActivity opened locked=$locked pairedTagsEnabled=$pairedTagsEnabled")
-        if (!pairedTagsEnabled) {
-            AppLogStore.append(this, "NFC", "ManagePairedTagsActivity blocked because paired tags are disabled")
-            Toast.makeText(this, R.string.toast_manage_paired_tags_requires_enabled, Toast.LENGTH_LONG).show()
-            finish()
-            return
-        }
+        AppLogStore.append(this, "NFC", "ManagePairedTagsActivity opened locked=$locked")
         if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_paired_tags)) {
             AppLogStore.append(this, "NFC", "ManagePairedTagsActivity blocked by editing lock")
             return
@@ -226,6 +224,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         fabAdd?.setOnClickListener {
             if (!selectionMode) showAddDialog()
         }
+        findViewById<View>(R.id.btnEmptyAddTag)?.setOnClickListener { showAddDialog() }
     }
 
     private fun notifySelectionUiChanged() {
@@ -273,6 +272,14 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         }
     }
 
+    private fun showPairedTagsInfoDialog() {
+        Dialogs.builder(this)
+            .setTitle(R.string.paired_tags_info_title)
+            .setMessage(R.string.paired_tags_info_body)
+            .setPositiveButton(R.string.ok, null)
+            .showAccented()
+    }
+
     private fun showSortDialog() {
         val modes = listOf(
             SortMode.NEW_OLD,
@@ -296,6 +303,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             title = getString(R.string.paired_tags_sort_title),
             entries = labels.toList(),
             checkedIndex = checked,
+            icons = listOf(R.drawable.schedule_24, R.drawable.schedule_24, R.drawable.tune_24, R.drawable.tune_24),
         ) { which, dialog ->
             val picked = modes.getOrNull(which) ?: SortMode.NAME_AZ
             setSortMode(picked)
@@ -313,6 +321,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         showSimpleChoiceDialog(
             title = getString(R.string.paired_tags_add_title),
             entries = entries,
+            icons = listOf(R.drawable.nfc_24, R.drawable.lock_open_24),
         ) { which, dialog ->
             when (which) {
                 0 -> startPairWritableFlow()
@@ -339,53 +348,40 @@ class ManagePairedTagsActivity : AppCompatActivity() {
     private fun showSimpleChoiceDialog(
         title: String,
         entries: List<String>,
+        icons: List<Int?>? = null,
         onSelected: (index: Int, dialog: AlertDialog) -> Unit,
     ) {
-        val content = layoutInflater.inflate(R.layout.dialog_single_select_list, null)
-        val rv = content.findViewById<RecyclerView>(R.id.recycler)
-        rv.layoutManager = LinearLayoutManager(this)
-
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setView(content)
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        val adapter = SimpleChoiceAdapter(entries) { which ->
+        lateinit var dialog: AlertDialog
+        dialog = showSwitchlyOptionDialog(
+            title = title,
+            options = entries.mapIndexed { index, label ->
+                SwitchlyDialogOption(title = label, iconRes = icons?.getOrNull(index))
+            }
+        ) { which ->
             onSelected(which, dialog)
         }
-        rv.adapter = adapter
-
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
     }
 
     private fun showSingleSelectRadioDialog(
         title: String,
         entries: List<String>,
         checkedIndex: Int,
+        icons: List<Int?>? = null,
         onSelected: (index: Int, dialog: AlertDialog) -> Unit,
     ) {
-        val content = layoutInflater.inflate(R.layout.dialog_single_select_list, null)
-        val rv = content.findViewById<RecyclerView>(R.id.recycler)
-        rv.layoutManager = LinearLayoutManager(this)
-
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setView(content)
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        val adapter = SingleSelectRadioAdapter(
-            entries = entries,
-            initialSelected = checkedIndex,
+        lateinit var dialog: AlertDialog
+        dialog = showSwitchlyOptionDialog(
+            title = title,
+            options = entries.mapIndexed { index, label ->
+                SwitchlyDialogOption(
+                    title = label,
+                    iconRes = icons?.getOrNull(index),
+                    selected = index == checkedIndex
+                )
+            }
         ) { which ->
             onSelected(which, dialog)
         }
-        rv.adapter = adapter
-
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
     }
 
     private fun toggleSelection(uid: String) {
@@ -412,18 +408,15 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         val etCooldown = content.findViewById<EditText>(R.id.etTagCooldownMinutes)
         val acReadOnlyAction = content.findViewById<MaterialAutoCompleteTextView>(R.id.acReadOnlyAction)
         val readOnlyActionGroup = content.findViewById<View>(R.id.readOnlyActionGroup)
-        val tvUid = content.findViewById<TextView>(R.id.tvUid)
+        val etUid = content.findViewById<EditText>(R.id.etTagUid)
 
         val btnSave = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSave)
         val btnCancel = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
         val btnDelete = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnDelete)
 
-        val tilName = content.findViewById<TextInputLayout>(R.id.tilTagName)
-        val tilNote = content.findViewById<TextInputLayout>(R.id.tilTagNote)
-
         val uidBucket = NfcTempDisableLimiterStore.bucketForUid(tag.uid)
 
-        tvUid.text = tag.uid
+        etUid.setText(tag.uid)
         etName.setText(tag.name.orEmpty())
         etNote.setText(tag.note.orEmpty())
 
@@ -454,26 +447,15 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         // Make sure inputs (cursor blink/selection) are already hooked before the dialog is shown.
         runCatching { CustomAccentApplier.applyToView(content, this) }
 
-        // Extra-hardening for paired-tag inputs: some OEM/Material combos keep the focused stroke/cursor in the system accent colour even after our global pass.
-        val accent = AccentColor.getAccentColorInt(this)
-        fun forceInputs() {
-            runCatching { forceTextInputAccent(tilName, accent) }
-            runCatching { forceTextInputAccent(tilNote, accent) }
-            runCatching { forceCursor(etName, accent) }
-            runCatching { forceCursor(etNote, accent) }
-        }
-
         // Use a custom button row inside the dialog view so spacing/tint is consistent.
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.paired_tag_edit_title))
             .setView(content)
             .create()
         dialog.setOnShowListener {
+            dialog.applySwitchlyDialogWidth(0.94f)
             // Retint inputs + any default Material accents when CUSTOM accent is selected.
             runCatching { CustomAccentApplier.applyToDialog(dialog) }
-
-            // Force stroke + cursor specifically for the paired-tag inputs.
-            forceInputs()
 
             // Some Material/OEM combos recreate focused stroke + cursor tint after show/focus.
             // Re-apply on the whole content view a few times so TextInputLayout focus state doesnt fall back to theme green
@@ -481,30 +463,17 @@ class ManagePairedTagsActivity : AppCompatActivity() {
                 content.postDelayed({ runCatching { CustomAccentApplier.applyToView(content, this) } }, d)
             }
 
-            // And re-force the critical parts (cursor/stroke) after those passes.
-            longArrayOf(120L, 360L, 720L, 1200L).forEach { d ->
-                content.postDelayed({ runCatching { forceInputs() } }, d)
-            }
         }
         dialog.show()
 
         // Keep cancel/delete as lightweight text buttons, but make save the primary filled action.
-        listOf(btnCancel, btnDelete).forEach { button ->
-            button.setTextColor(accent)
-            button.isAllCaps = false
-            button.strokeColor = null
-            button.backgroundTintList = null
-            runCatching { button.setBackgroundColor(android.graphics.Color.TRANSPARENT) }
-            button.iconTint = ColorStateList.valueOf(accent)
-            button.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x22))
-        }
-
-        btnSave.isAllCaps = false
-        btnSave.strokeColor = null
-        btnSave.backgroundTintList = ColorStateList.valueOf(accent)
-        btnSave.setTextColor(ContextCompat.getColor(this, R.color.font_white))
-        btnSave.iconTint = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.font_white))
-        btnSave.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x44))
+        styleSwitchlyFormButtons(
+            deleteButton = btnDelete,
+            cancelButton = btnCancel,
+            saveButton = btnSave,
+            destructiveButtonVisible = true,
+            saveIsAdd = false
+        )
 
         btnCancel.setOnClickListener { dialog.dismiss() }
         btnDelete.setOnClickListener {
@@ -639,13 +608,14 @@ class ManagePairedTagsActivity : AppCompatActivity() {
 
     private fun confirmRemove(uid: String) {
         AlertDialog.Builder(this)
-            .setMessage(getString(R.string.paired_tags_remove_confirm))
+            .setTitle(R.string.delete)
+            .setMessage(getString(R.string.paired_tags_remove_confirm) + "\n\n" + getString(R.string.destructive_cannot_be_undone))
             .setPositiveButton(getString(R.string.delete)) { _, _ ->
                 NfcUidPairingStore.removePairedUidHex(this, uid)
                 refresh()
             }
             .setNegativeButton(getString(R.string.cancel), null)
-            .showAccented()
+            .showDestructiveAccented()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -655,8 +625,8 @@ class ManagePairedTagsActivity : AppCompatActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         fabAdd?.isVisible = !selectionMode
+        menu.findItem(R.id.action_info)?.isVisible = !selectionMode
         menu.findItem(R.id.action_cancel_select)?.isVisible = selectionMode
-        menu.findItem(R.id.action_sort)?.isVisible = !selectionMode
         menu.findItem(R.id.action_select)?.isVisible = !selectionMode
         menu.findItem(R.id.action_delete_selected)?.isVisible = selectionMode
         menu.findItem(R.id.action_delete_selected)?.isEnabled = selectedUids.isNotEmpty()
@@ -677,8 +647,8 @@ class ManagePairedTagsActivity : AppCompatActivity() {
                 exitSelectionMode(); true
             }
 
-            R.id.action_sort -> {
-                showSortDialog(); true
+            R.id.action_info -> {
+                showPairedTagsInfoDialog(); true
             }
 
             R.id.action_select -> {
@@ -705,7 +675,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
 
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.paired_tag_delete_selected_title))
-            .setMessage(resources.getQuantityString(R.plurals.paired_tag_delete_selected_confirm_fmt, selectedUids.size, selectedUids.size))
+            .setMessage(resources.getQuantityString(R.plurals.paired_tag_delete_selected_confirm_fmt, selectedUids.size, selectedUids.size) + "\n\n" + getString(R.string.destructive_cannot_be_undone))
             .setPositiveButton(getString(R.string.delete)) { _, _ ->
                 selectedUids.toList().forEach { uid ->
                     NfcUidPairingStore.removePairedUidHex(this, uid)
@@ -714,7 +684,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
                 refresh()
             }
             .setNegativeButton(getString(R.string.cancel), null)
-            .showAccented()
+            .showDestructiveAccented()
     }
 
     /**
@@ -841,28 +811,24 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             holder.name.text = item.name ?: holder.itemView.context.getString(R.string.paired_tag_default_name)
             holder.uid.text = item.uid
 
-            val typeLabel = when (item.tagKind) {
-                NfcUidPairingStore.TagKind.WRITABLE -> holder.itemView.context.getString(R.string.paired_tag_type_writable)
-                NfcUidPairingStore.TagKind.READ_ONLY -> holder.itemView.context.getString(R.string.paired_tag_type_readonly)
-                NfcUidPairingStore.TagKind.UNKNOWN -> holder.itemView.context.getString(R.string.paired_tag_type_legacy)
-            }
-            val noteParts = mutableListOf(typeLabel)
-            if (item.supportsUidOnlyAction) {
-                val readOnlyActionLabel = when (item.readOnlyAction) {
-                    NfcUidPairingStore.ReadOnlyAction.TOGGLE -> holder.itemView.context.getString(R.string.paired_tag_readonly_action_toggle)
-                    NfcUidPairingStore.ReadOnlyAction.UNLOCK_ONLY -> holder.itemView.context.getString(R.string.paired_tag_readonly_action_unlock_only)
-                    NfcUidPairingStore.ReadOnlyAction.LOCK_ONLY -> holder.itemView.context.getString(R.string.paired_tag_readonly_action_lock_only)
-                }
-                noteParts.add(holder.itemView.context.getString(R.string.paired_tag_readonly_action_summary_fmt, readOnlyActionLabel))
-            }
-            item.note?.takeIf { it.isNotBlank() }?.let { noteParts.add(it) }
-            holder.note.visibility = View.VISIBLE
-            holder.note.text = noteParts.joinToString(" · ")
+            // Keep the list compact: name + NFC ID only. Details stay available in the edit dialog.
+            holder.note.visibility = View.GONE
+            holder.note.text = ""
 
             val sel = isSelectionMode.invoke()
             holder.cb.visibility = if (sel) View.VISIBLE else View.GONE
             holder.cb.setOnCheckedChangeListener(null)
-            holder.cb.isChecked = isSelected.invoke(item)
+            val selected = sel && isSelected.invoke(item)
+            holder.cb.isChecked = selected
+            (holder.itemView as? MaterialCardView)?.let { card ->
+                val accent = AccentColor.getAccentColorInt(holder.itemView.context)
+                card.strokeWidth = if (selected) (2 * holder.itemView.resources.displayMetrics.density).toInt().coerceAtLeast(1) else 0
+                card.strokeColor = if (selected) accent else android.graphics.Color.TRANSPARENT
+                card.setCardBackgroundColor(
+                    if (selected) ColorUtils.setAlphaComponent(accent, 0x14)
+                    else com.google.android.material.color.MaterialColors.getColor(holder.itemView, com.google.android.material.R.attr.colorSurface)
+                )
+            }
             // Prevent the checkbox from toggling only its visual state without updating selectedUids.
             // All selection changes should go through the row click handler.
             holder.cb.isClickable = false

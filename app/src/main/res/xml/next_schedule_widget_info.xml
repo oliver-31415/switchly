@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/widget_next_schedule"
-    android:minWidth="180dp"
-    android:minHeight="72dp"
+    android:initialKeyguardLayout="@layout/widget_next_schedule"
+    android:minWidth="140dp"
+    android:minHeight="140dp"
+    android:minResizeWidth="120dp"
+    android:minResizeHeight="120dp"
     android:resizeMode="horizontal|vertical"
+    android:description="@string/widget_next_schedule_desc"
+    android:previewImage="@drawable/widget_schedule_24"
     android:updatePeriodMillis="0"
     android:widgetCategory="home_screen" />

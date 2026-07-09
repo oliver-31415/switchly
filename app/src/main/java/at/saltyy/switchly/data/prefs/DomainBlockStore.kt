@@ -29,6 +29,9 @@ object DomainBlockStore {
 
     private const val KEY_ENABLED = "domain_block_enabled"
     private const val KEY_DOMAINS = "domain_block_domains"
+    private const val KEY_PROFILE_MIGRATION_DONE = "domain_block_domains_profile_migration_done"
+    private const val PREFIX_PROFILE_DOMAINS = "domain_block_domains__p__"
+    private const val PREFIX_PROFILE_ALLOWED_DOMAINS = "domain_allowed_domains__p__"
 
     fun isEnabled(ctx: Context): Boolean =
         PreferenceManager.getDefaultSharedPreferences(ctx).getBoolean(KEY_ENABLED, true)
@@ -37,23 +40,176 @@ object DomainBlockStore {
         PreferenceManager.getDefaultSharedPreferences(ctx).edit { putBoolean(KEY_ENABLED, enabled) }
     }
 
-    fun getDomains(ctx: Context): Set<String> =
-        PreferenceManager.getDefaultSharedPreferences(ctx).getStringSet(KEY_DOMAINS, emptySet()) ?: emptySet()
+    private fun prefs(ctx: Context) = PreferenceManager.getDefaultSharedPreferences(ctx)
 
-    fun addDomain(ctx: Context, raw: String): Boolean {
+    private fun sanitizeProfile(profile: String): String =
+        profile.trim().ifBlank { "default" }
+            .replace("_", "__")
+            .replace(":", "_")
+
+    private fun currentProfile(ctx: Context): String =
+        sanitizeProfile(ProfileStore.getCurrent(ctx) ?: "default")
+
+    private fun keyForProfile(profile: String): String =
+        PREFIX_PROFILE_DOMAINS + sanitizeProfile(profile)
+
+    private fun keyAllowedForProfile(profile: String): String =
+        PREFIX_PROFILE_ALLOWED_DOMAINS + sanitizeProfile(profile)
+
+    private fun migrateGlobalDomainsIfNeeded(ctx: Context, profile: String = currentProfile(ctx)) {
+        val sp = prefs(ctx)
+        if (sp.getBoolean(KEY_PROFILE_MIGRATION_DONE, false)) return
+
+        val legacy = try {
+            sp.getStringSet(KEY_DOMAINS, emptySet()) ?: emptySet()
+        } catch (_: ClassCastException) {
+            emptySet()
+        }
+            .mapNotNull { normalize(it) }
+            .toSet()
+
+        sp.edit {
+            if (legacy.isNotEmpty()) {
+                putStringSet(keyForProfile(profile), legacy)
+            }
+            remove(KEY_DOMAINS)
+            putBoolean(KEY_PROFILE_MIGRATION_DONE, true)
+        }
+    }
+
+    fun getDomains(ctx: Context): Set<String> {
+        val profile = ProfileStore.getCurrent(ctx) ?: "default"
+        return if (ProfileRuleModeStore.isAllowMode(ctx, profile)) {
+            getAllowedDomainsForProfile(ctx, profile)
+        } else {
+            getDomainsForProfile(ctx, profile)
+        }
+    }
+
+    fun getDomainsForProfile(ctx: Context, profile: String): Set<String> {
+        val scopedProfile = sanitizeProfile(profile)
+        migrateGlobalDomainsIfNeeded(ctx, scopedProfile)
+        return try {
+            prefs(ctx).getStringSet(keyForProfile(scopedProfile), emptySet()) ?: emptySet()
+        } catch (_: ClassCastException) {
+            prefs(ctx).edit { remove(keyForProfile(scopedProfile)) }
+            emptySet()
+        }
+            .mapNotNull { normalize(it) }
+            .toCollection(linkedSetOf())
+    }
+
+    fun setDomainsForProfile(ctx: Context, profile: String, domains: Set<String>) {
+        val clean = domains.mapNotNull { normalize(it) }.toCollection(linkedSetOf())
+        prefs(ctx).edit { putStringSet(keyForProfile(profile), clean) }
+    }
+
+    fun getAllowedDomainsForProfile(ctx: Context, profile: String): Set<String> {
+        val scopedProfile = sanitizeProfile(profile)
+        migrateGlobalDomainsIfNeeded(ctx, scopedProfile)
+        return try {
+            prefs(ctx).getStringSet(keyAllowedForProfile(scopedProfile), emptySet()) ?: emptySet()
+        } catch (_: ClassCastException) {
+            prefs(ctx).edit { remove(keyAllowedForProfile(scopedProfile)) }
+            emptySet()
+        }
+            .mapNotNull { normalize(it) }
+            .toCollection(linkedSetOf())
+    }
+
+    fun setAllowedDomainsForProfile(ctx: Context, profile: String, domains: Set<String>) {
+        val clean = domains.mapNotNull { normalize(it) }.toCollection(linkedSetOf())
+        prefs(ctx).edit { putStringSet(keyAllowedForProfile(profile), clean) }
+    }
+
+    private fun selectedDomainsForMode(ctx: Context, profile: String): Set<String> {
+        return if (ProfileRuleModeStore.isAllowMode(ctx, profile)) {
+            getAllowedDomainsForProfile(ctx, profile)
+        } else {
+            getDomainsForProfile(ctx, profile)
+        }
+    }
+
+    private fun setSelectedDomainsForMode(ctx: Context, profile: String, domains: Set<String>) {
+        if (ProfileRuleModeStore.isAllowMode(ctx, profile)) {
+            setAllowedDomainsForProfile(ctx, profile, domains)
+        } else {
+            setDomainsForProfile(ctx, profile, domains)
+        }
+    }
+
+    fun addDomain(ctx: Context, raw: String): Boolean =
+        addDomainForProfile(ctx, ProfileStore.getCurrent(ctx) ?: "default", raw)
+
+    fun addDomainForProfile(ctx: Context, profile: String, raw: String): Boolean {
         val d = normalize(raw) ?: return false
-        val sp = PreferenceManager.getDefaultSharedPreferences(ctx)
-        val cur = sp.getStringSet(KEY_DOMAINS, emptySet())?.toMutableSet() ?: mutableSetOf()
+        val cur = selectedDomainsForMode(ctx, profile).toMutableSet()
         val added = cur.add(d)
-        if (added) sp.edit { putStringSet(KEY_DOMAINS, cur) }
+        if (added) setSelectedDomainsForMode(ctx, profile, cur)
         return added
     }
 
     fun removeDomain(ctx: Context, domain: String) {
+        removeDomainForProfile(ctx, ProfileStore.getCurrent(ctx) ?: "default", domain)
+    }
+
+    fun removeDomainForProfile(ctx: Context, profile: String, domain: String) {
         val d = normalize(domain) ?: return
-        val sp = PreferenceManager.getDefaultSharedPreferences(ctx)
-        val cur = sp.getStringSet(KEY_DOMAINS, emptySet())?.toMutableSet() ?: mutableSetOf()
-        if (cur.remove(d)) sp.edit { putStringSet(KEY_DOMAINS, cur) }
+        val cur = selectedDomainsForMode(ctx, profile).toMutableSet()
+        if (cur.remove(d)) setSelectedDomainsForMode(ctx, profile, cur)
+    }
+
+    fun shouldBlockHost(ctx: Context, host: String): Boolean {
+        val profile = ProfileStore.getCurrent(ctx) ?: "default"
+        val allowMode = ProfileRuleModeStore.isAllowMode(ctx, profile)
+        val selected = if (allowMode) {
+            getAllowedDomainsForProfile(ctx, profile)
+        } else {
+            getDomainsForProfile(ctx, profile)
+        }
+        val matched = selected.any { matches(host, it) }
+        return if (allowMode) !matched else matched
+    }
+
+    fun isHostSelected(ctx: Context, host: String): Boolean {
+        val profile = ProfileStore.getCurrent(ctx) ?: "default"
+        return selectedDomainsForMode(ctx, profile).any { matches(host, it) }
+    }
+
+    fun onProfileRenamed(ctx: Context, oldProfile: String, newProfile: String) {
+        val sp = prefs(ctx)
+        val oldKey = keyForProfile(oldProfile)
+        val newKey = keyForProfile(newProfile)
+        val oldAllowedKey = keyAllowedForProfile(oldProfile)
+        val newAllowedKey = keyAllowedForProfile(newProfile)
+        val oldDomains = try {
+            sp.getStringSet(oldKey, emptySet()) ?: emptySet()
+        } catch (_: ClassCastException) {
+            emptySet()
+        }
+        val oldAllowedDomains = try {
+            sp.getStringSet(oldAllowedKey, emptySet()) ?: emptySet()
+        } catch (_: ClassCastException) {
+            emptySet()
+        }
+        sp.edit {
+            if (oldDomains.isNotEmpty()) putStringSet(newKey, oldDomains)
+            if (oldAllowedDomains.isNotEmpty()) putStringSet(newAllowedKey, oldAllowedDomains)
+            remove(oldKey)
+            remove(oldAllowedKey)
+        }
+    }
+
+    fun onProfileRemoved(ctx: Context, profile: String) {
+        prefs(ctx).edit {
+            remove(keyForProfile(profile))
+            remove(keyAllowedForProfile(profile))
+        }
+    }
+
+    fun copyProfile(ctx: Context, fromProfile: String, toProfile: String) {
+        setDomainsForProfile(ctx, toProfile, getDomainsForProfile(ctx, fromProfile))
+        setAllowedDomainsForProfile(ctx, toProfile, getAllowedDomainsForProfile(ctx, fromProfile))
     }
 
     fun normalize(raw: String?): String? {

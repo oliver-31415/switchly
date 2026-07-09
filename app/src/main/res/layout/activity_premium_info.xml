@@ -64,7 +64,7 @@
                         <ImageView
                             android:layout_width="44dp"
                             android:layout_height="44dp"
-                            android:layout_marginStart="2dp"
+                            android:layout_marginStart="8dp"
                             android:layout_marginEnd="14dp"
                             android:src="@drawable/star_24"
                             android:contentDescription="@string/premium_title"
@@ -77,7 +77,7 @@
                             android:orientation="vertical">
 
                             <TextView
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/premium_title"
                                 android:textStyle="bold"
@@ -94,7 +94,7 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Status row directly under the star block -->
+                    <!-- Status row directly under the hero row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -106,7 +106,7 @@
                                 android:id="@+id/tvPremiumStatus"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="2dp"
+                                android:layout_marginStart="0dp"
                                 android:text="@string/premium_status_inactive"
                                 android:textAllCaps="true"
                                 android:textStyle="bold"
@@ -127,24 +127,26 @@
                                 android:id="@+id/tvPremiumThanks"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
+                                android:layout_marginStart="6dp"
                                 android:layout_weight="1"
                                 android:text="@string/premium_support_note"
                                 android:textSize="13sp"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:maxLines="2"
                                 android:ellipsize="end"
-                                android:visibility="gone" />
+                                android:visibility="visible" />
 
                     </LinearLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRestorePurchases"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <TextView
+                        android:id="@+id/tvPremiumPrice"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="@string/premium_button_restore" />
+                        android:text="@string/premium_price_google_play_fallback"
+                        android:textSize="13sp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:visibility="gone" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRedeemPremiumCode"
@@ -176,7 +178,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 app:cardCornerRadius="12dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardElevation="1dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:cardBackgroundColor="@color/switchly_card_bg"
                 app:cardUseCompatPadding="true">
 
                 <LinearLayout
@@ -215,7 +220,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 app:cardCornerRadius="12dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardElevation="1dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:cardBackgroundColor="@color/switchly_card_bg"
                 app:cardUseCompatPadding="true">
 
                 <LinearLayout
@@ -254,7 +262,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 app:cardCornerRadius="12dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardElevation="1dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:cardBackgroundColor="@color/switchly_card_bg"
                 app:cardUseCompatPadding="true">
 
                 <LinearLayout
@@ -294,7 +305,10 @@
                 android:layout_marginTop="6dp"
                 app:cardCornerRadius="12dp"
                 app:cardUseCompatPadding="true"
-                app:cardBackgroundColor="?attr/colorSurface">
+                app:cardElevation="1dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:cardBackgroundColor="@color/switchly_card_bg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -337,6 +351,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/premium_button_buy" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRestorePurchases"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/premium_button_restore" />
 
             </LinearLayout>
 

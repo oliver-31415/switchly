@@ -27,7 +27,6 @@ import java.util.Calendar
  * Tracks how often an app has been opened today.
  * New key format (per profile):
  *   open_count_<yyyymmdd>__<profile>__<pkg> = Int
- *
  * The date is computed in the device's local timezone (Calendar.getInstance()).
  */
 object OpenCountStore {

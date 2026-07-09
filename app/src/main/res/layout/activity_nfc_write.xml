@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/write_nfc_tag"
+            app:title="@string/nfc_writer_title"
             app:navigationIcon="@drawable/arrow_back_ios_24"
             app:contentInsetStart="0dp"
             app:contentInsetStartWithNavigation="0dp"
@@ -46,6 +46,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
+                android:visibility="gone"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
@@ -135,23 +136,6 @@
                             android:inputType="none" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvActionHint"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/nfc_action_hint_default"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-
                     <!-- Temp disable duration (only visible when action = temp) -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilTime"
@@ -175,6 +159,23 @@
                             android:dropDownVerticalOffset="8dp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvActionHint"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/nfc_action_hint_default"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -186,6 +187,8 @@
                 android:layout_marginTop="16dp"
                 android:text="@string/nfc_arm_write"
                 app:icon="@drawable/nfc_24"
+                app:iconTint="@android:color/white"
+                android:textColor="@android:color/white"
                 app:iconPadding="10dp"
                 app:iconGravity="textStart" />
 

@@ -58,6 +58,27 @@ object InAppLimitStore {
         sharedPreferences.edit { putInt(key, safeMinutes) }
     }
 
+    fun onProfileRenamed(context: Context, oldProfile: String, newProfile: String) {
+        val sharedPreferences = prefs(context)
+        val oldKey = key(oldProfile)
+        val newKey = key(newProfile)
+        if (!sharedPreferences.contains(oldKey)) return
+        val value = readMinutesCompat(sharedPreferences, oldKey)
+        sharedPreferences.edit {
+            if (value > 0) putInt(newKey, value) else remove(newKey)
+            remove(oldKey)
+        }
+    }
+
+    fun onProfileRemoved(context: Context, profile: String) {
+        prefs(context).edit { remove(key(profile)) }
+    }
+
+    fun copyProfile(context: Context, fromProfile: String, toProfile: String) {
+        val value = getLimitMinutes(context, fromProfile)
+        setLimitMinutes(context, toProfile, value)
+    }
+
     private fun sanitizeProfile(profile: String): String {
         return profile.trim()
             .lowercase(Locale.getDefault())

@@ -49,24 +49,11 @@
                 android:paddingBottom="8dp"
                 android:textColor="?attr/colorOnSurface"/>
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card"
+            <LinearLayout
+                android:id="@+id/containerRows"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:strokeColor="@android:color/transparent"
-                app:cardBackgroundColor="?android:attr/colorBackground">
-
-                <LinearLayout
-                    android:id="@+id/containerRows"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp"/>
-            </com.google.android.material.card.MaterialCardView>
+                android:orientation="vertical" />
 
         </LinearLayout>
     </ScrollView>

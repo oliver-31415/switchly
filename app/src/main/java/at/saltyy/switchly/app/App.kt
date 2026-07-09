@@ -32,11 +32,19 @@ import at.saltyy.switchly.platform.receiver.bluetooth.BluetoothTriggerMonitor
 import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
 import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
 import at.saltyy.switchly.security.AppLockManager
+import at.saltyy.switchly.security.PlayIntegrityRuntime
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 import com.google.firebase.FirebaseApp
+import java.util.concurrent.Executors
 
 class App : Application() {
+    private val startupExecutor by lazy {
+        Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "SwitchlyStartup").apply { isDaemon = true }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
 
@@ -45,7 +53,6 @@ class App : Application() {
         if (BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
             runCatching { FirebaseApp.initializeApp(this) }
         }
-
 
         // language
         LocaleHelper.setLanguage(this, LocaleHelper.getSavedLanguage(this))
@@ -65,18 +72,27 @@ class App : Application() {
         LocationTriggerMonitor.ensureStarted(this)
 
         AppLockManager.register(this)
-        QuickShortcutRegistrar.refresh(this)
+        // ShortcutManagerCompat uses binder calls and can block on Android 16/OEM builds.
+        // Refresh shortcuts off the main thread to avoid app-start ANRs.
+        QuickShortcutRegistrar.refreshAsync(this)
 
         // One-time sanity cleanup for old inflated usage imports.
         runCatching { UsageStore.sanitizeImpossibleDailyTotals(this) }
 
         ManagedDevicePolicyHelper.syncSelfUninstallBlock(this)
 
-        // auto-start blocking runtime if enabled and Accessibility is available
-        val enabled = SwitchModeStore.isEnabled(this)
-        val canRun = BlockingRuntime.isAccessibilityActive(this)
-        if (enabled && canRun) {
-            SwitchlyCore.ensureRunning(this)
+        // Diagnostic-only Play Integrity probe. Never blocks users.
+        PlayIntegrityRuntime.requestSoftCheck(this, "app_start")
+
+        // Accessibility checks may call system services via binder.
+        // Keep them off the main Application startup path to avoid cold-start/background ANRs.
+        val appContext = applicationContext
+        startupExecutor.execute {
+            val enabled = SwitchModeStore.isEnabled(appContext)
+            val canRun = BlockingRuntime.isAccessibilityActive(appContext)
+            if (enabled && canRun) {
+                SwitchlyCore.ensureRunning(appContext)
+            }
         }
     }
 }

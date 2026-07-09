@@ -22,6 +22,8 @@ package at.saltyy.switchly.feature.settings
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -39,7 +41,9 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.InAppLimitStore
+import at.saltyy.switchly.data.prefs.InAppRuleStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.theme.AccentColor
@@ -47,6 +51,8 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -54,19 +60,32 @@ import java.util.Locale
 
 class InAppBlockingActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_FOCUS_PACKAGE = "extra_focus_package"
+    }
+
     private var contentReady = false
 
     private val prefs by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 
     private fun sanitizeProfile(profile: String): String {
         return profile.trim()
-            .lowercase(Locale.getDefault())
-            .replace(Regex("[^a-z0-9]+"), "_")
-            .trim('_')
+            .lowercase(Locale.US)
+            .replace(Regex("[^a-z0-9_.-]"), "_")
             .ifBlank { "default" }
     }
 
     private fun currentProfile(): String = ProfileStore.getCurrent(this) ?: "default"
+
+    private fun isLaunchableAppInstalled(packageName: String): Boolean {
+        return packageManager.getLaunchIntentForPackage(packageName) != null
+    }
+
+    private fun setVisibleIfInstalled(viewId: Int, packageName: String): Boolean {
+        val installed = isLaunchableAppInstalled(packageName)
+        findViewById<View>(viewId)?.visibility = if (installed) View.VISIBLE else View.GONE
+        return installed
+    }
 
     private fun scopedKey(baseKey: String): String {
         val p = sanitizeProfile(currentProfile())
@@ -91,6 +110,17 @@ class InAppBlockingActivity : AppCompatActivity() {
         prefs.edit { putBoolean(scopedKey(baseKey), value) }
     }
 
+    private fun keepAppAllowedForInAppRule(baseKey: String, enabled: Boolean) {
+        if (!enabled) return
+        val profile = currentProfile()
+        if (!ProfileRuleModeStore.isAllowMode(this, profile)) return
+        val pkg = InAppRuleStore.packageForRuleKey(baseKey) ?: return
+        val currentAllowed = ProfileStore.getAllowedForProfile(this, profile)
+        if (pkg !in currentAllowed) {
+            ProfileStore.setAllowedForProfile(this, profile, currentAllowed + pkg)
+        }
+    }
+
     private fun getInAppLimitMinutesForProfile(): Int {
         return InAppLimitStore.getLimitMinutes(this, currentProfile())
     }
@@ -101,6 +131,33 @@ class InAppBlockingActivity : AppCompatActivity() {
 
     private fun setSurfaceRule(surfaceKey: String, rule: Int) {
         SurfaceLimitStore.setRule(this, currentProfile(), surfaceKey, rule)
+    }
+
+    private fun normalizeDialogBreaks(text: String): String =
+        text.replace("/n", "\n").replace("\\n", "\n")
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_in_app_rules, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_in_app_info -> {
+                showInAppRulesInfo()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showInAppRulesInfo() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.in_app_rules_info_title)
+            .setMessage(normalizeDialogBreaks(getString(R.string.in_app_rules_info_body)))
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+            .styleSwitchlyDialogButtons()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -119,11 +176,20 @@ class InAppBlockingActivity : AppCompatActivity() {
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        toolbar.title = getString(R.string.in_app_blocking_title)
+        toolbar.subtitle = getString(R.string.in_app_rules_profile_subtitle)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
 
-        // Website blocking (global)
+        // Only show in-app blocking sections for apps that are actually installed.
+        // The underlying rules stay profile-scoped and are kept intact if the app is installed later.
+        setVisibleIfInstalled(R.id.cardYouTube, "com.google.android.youtube")
+        setVisibleIfInstalled(R.id.cardInstagram, "com.instagram.android")
+        setVisibleIfInstalled(R.id.cardX, "com.twitter.android")
+        setVisibleIfInstalled(R.id.cardSnapchat, "com.snapchat.android")
+
+        // Website blocking (profile-specific)
         // In-app limit (applies to timed in-app surfaces that are toggled on)
         val tvLimit = findViewById<TextView>(R.id.tvInAppLimitValue)
         val btnLimit = findViewById<Button>(R.id.btnInAppLimit)
@@ -134,6 +200,7 @@ class InAppBlockingActivity : AppCompatActivity() {
         // Global in-app master (same key as Toggle Options → Blocking controls)
         val rowInAppMaster = findViewById<View>(R.id.rowInAppMaster)
         val swInAppMaster = findViewById<SwitchCompat>(R.id.swInAppMaster)
+        CustomAccentApplier.tintSwitch(swInAppMaster)
         swInAppMaster.isChecked = readProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, true)
         rowInAppMaster.setOnClickListener { swInAppMaster.toggle() }
         swInAppMaster.setOnCheckedChangeListener { _, checked ->
@@ -263,6 +330,8 @@ class InAppBlockingActivity : AppCompatActivity() {
         bindExpand(R.id.headerX, R.id.contentX, R.id.arrowX)
         bindExpand(R.id.headerSnapchat, R.id.contentSnapchat, R.id.arrowSnapchat)
 
+        focusRequestedAppSection()
+
         refreshInAppLimit(tvLimit)
     }
 
@@ -280,11 +349,31 @@ class InAppBlockingActivity : AppCompatActivity() {
         masterSwitch?.isChecked = readProfileBool(BlockingToggleKeys.KEY_BLOCK_INAPP, true)
     }
 
+    private fun focusRequestedAppSection() {
+        val pkg = intent.getStringExtra(EXTRA_FOCUS_PACKAGE).orEmpty()
+        val target = when (pkg) {
+            "com.google.android.youtube" -> Triple(R.id.cardYouTube, R.id.contentYouTube, R.id.arrowYouTube)
+            "com.instagram.android" -> Triple(R.id.cardInstagram, R.id.contentInstagram, R.id.arrowInstagram)
+            "com.twitter.android" -> Triple(R.id.cardX, R.id.contentX, R.id.arrowX)
+            "com.snapchat.android" -> Triple(R.id.cardSnapchat, R.id.contentSnapchat, R.id.arrowSnapchat)
+            else -> null
+        } ?: return
+
+        val card = findViewById<View>(target.first) ?: return
+        if (card.visibility != View.VISIBLE) return
+
+        findViewById<View>(target.second)?.visibility = View.VISIBLE
+        findViewById<ImageView>(target.third)?.rotation = 180f
+        card.post { card.requestFocus() }
+    }
+
     private fun setupSwitch(switchId: Int, prefKey: String) {
         val sw = findViewById<SwitchCompat>(switchId)
+        CustomAccentApplier.tintSwitch(sw)
         sw.isChecked = readProfileBool(prefKey, false)
         sw.setOnCheckedChangeListener { _, checked ->
             writeProfileBool(prefKey, checked)
+            keepAppAllowedForInAppRule(prefKey, checked)
             // Make sure the service is alive, so changes feel instant.
             BlockingRuntime.ensureRunning(this)
         }
@@ -301,6 +390,7 @@ class InAppBlockingActivity : AppCompatActivity() {
         tvLimit: TextView
     ) {
         val sw = findViewById<SwitchCompat>(switchId)
+        CustomAccentApplier.tintSwitch(sw)
         sw.isChecked = readProfileBool(prefKey, false)
         if (sw.isChecked) {
             setSurfaceRule(surfaceKey, -1)
@@ -309,6 +399,7 @@ class InAppBlockingActivity : AppCompatActivity() {
         sw.setOnLongClickListener(null)
         sw.setOnCheckedChangeListener { _, checked ->
             writeProfileBool(prefKey, checked)
+            keepAppAllowedForInAppRule(prefKey, checked)
             if (checked) {
                 setSurfaceRule(surfaceKey, -1)
             } else {
@@ -354,19 +445,24 @@ class InAppBlockingActivity : AppCompatActivity() {
         options.add(getString(R.string.in_app_surface_custom))
         actions.add { showCustomSurfaceLimitDialog(surfaceKey, surfaceLabel, tvLimit) }
 
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.in_app_surface_rule_dialog_title, surfaceLabel))
-            .setItems(options.toTypedArray()) { _, which ->
-                actions.getOrNull(which)?.invoke()
-                BlockingRuntime.ensureRunning(this)
-                refreshInAppLimit(tvLimit)
-            }
-            .setNegativeButton(android.R.string.cancel) { _, _ -> onCancel?.invoke() }
-            .setOnCancelListener { onCancel?.invoke() }
-            .create()
-
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-        dialog.show()
+        showSwitchlyOptionDialog(
+            title = getString(R.string.in_app_surface_rule_dialog_title, surfaceLabel),
+            options = options.mapIndexed { index, label ->
+                SwitchlyDialogOption(
+                    title = label,
+                    iconRes = when (index) {
+                        0 -> R.drawable.close_24
+                        options.lastIndex -> R.drawable.edit_24
+                        else -> R.drawable.alarm_24
+                    }
+                )
+            },
+            onCancelled = onCancel
+        ) { which ->
+            actions.getOrNull(which)?.invoke()
+            BlockingRuntime.ensureRunning(this)
+            refreshInAppLimit(tvLimit)
+        }
     }
 
     private fun showCustomSurfaceLimitDialog(surfaceKey: String, surfaceLabel: String, tvLimit: TextView) {
@@ -408,7 +504,11 @@ class InAppBlockingActivity : AppCompatActivity() {
             .setNegativeButton(android.R.string.cancel, null)
             .create()
 
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            val error = android.graphics.Color.rgb(186, 26, 26)
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)?.setTextColor(error)
+        }
         dialog.show()
     }
 
@@ -474,7 +574,11 @@ class InAppBlockingActivity : AppCompatActivity() {
             }
             .create()
 
-        dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            val error = android.graphics.Color.rgb(186, 26, 26)
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)?.setTextColor(error)
+        }
         dialog.show()
     }
 }

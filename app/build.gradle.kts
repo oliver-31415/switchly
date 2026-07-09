@@ -10,8 +10,8 @@ plugins {
     id("com.google.firebase.crashlytics") apply false
 }
 
-val switchlyVersionCode = 215
-val switchlyVersionName = "2.1.5"
+val switchlyVersionCode = 220
+val switchlyVersionName = "2.2.0"
 
 val switchlySecretPropertiesFile = rootProject.file("signing.properties")
 val switchlySecretProperties = Properties().apply {
@@ -295,6 +295,7 @@ dependencies {
     // Play Billing + Play Store in-app updates
     add("implementation", "com.android.billingclient:billing-ktx:8.3.0")
     add("implementation", "com.google.android.play:app-update-ktx:2.1.0")
+    add("implementation", "com.google.android.play:integrity:1.6.0")
 
     // CameraX
     val camerax = "1.6.1"

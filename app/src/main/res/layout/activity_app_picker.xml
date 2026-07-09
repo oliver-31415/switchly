@@ -18,7 +18,19 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/pick_apps"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/arrow_back_ios_24">
+
+            <ImageButton
+                android:id="@+id/btnAppRulesInfo"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end|center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/app_rules_info_title"
+                android:padding="12dp"
+                android:src="@drawable/info_24"
+                app:tint="?attr/colorOnSurface" />
+        </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Content with search + list + save -->
@@ -32,12 +44,103 @@
         android:paddingBottom="12dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardPickerContext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:visibility="gone"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorPrimary">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <TextView
+                    android:id="@+id/tvPickerContextTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pick_blocked_apps"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvPickerContextProfile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/profile_label_default"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tvPickerContextDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/app_picker_blocked_list_description"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvPickerSelectedCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:text="@string/app_picker_selected_count_zero"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:id="@+id/pickThingsShortcuts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPickWebsites"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pick_websites_domains"
+                        app:icon="@drawable/language_24"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPickInAppRules"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/pick_in_app_sections"
+                        app:icon="@drawable/tune_24"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Search field in the same style as FAQ -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/searchBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
             app:endIconMode="clear_text">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -48,6 +151,49 @@
                 android:imeOptions="actionSearch"
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/tvProfileRuleModeTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/profile_rule_mode_title"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleProfileRuleMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBlockSelectedMode"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/profile_rule_mode_block" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAllowSelectedMode"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/profile_rule_mode_allow" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <TextView
+            android:id="@+id/tvProfileRuleModeSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/profile_rule_mode_block_summary"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp" />
 
         <LinearLayout
             android:id="@+id/bulkActionsRow"
@@ -74,21 +220,42 @@
                 android:text="@string/app_picker_clear_all" />
         </LinearLayout>
 
-        <CheckBox
-            android:id="@+id/cbAutoBlockNewApps"
+        <LinearLayout
+            android:id="@+id/rowAutoBlockNewApps"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/app_picker_auto_block_new_apps_title"
-            android:textColor="?android:attr/textColorPrimary" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <CheckBox
+                android:id="@+id/cbAutoBlockNewApps"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/app_picker_auto_block_new_apps_title"
+                android:textColor="?android:attr/textColorPrimary" />
+
+            <ImageButton
+                android:id="@+id/btnAutoBlockNewAppsInfo"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/app_picker_auto_block_new_apps_info_title"
+                android:padding="12dp"
+                android:src="@drawable/info_24"
+                app:tint="?attr/colorPrimary" />
+        </LinearLayout>
 
         <TextView
+            android:id="@+id/tvAutoBlockNewAppsSummary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/app_picker_auto_block_new_apps_summary"
             android:textColor="?android:attr/textColorSecondary"
-            android:textSize="13sp" />
+            android:textSize="13sp"
+            android:visibility="gone" />
 
         <!-- App list -->
         <androidx.recyclerview.widget.RecyclerView
@@ -96,7 +263,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:clipToPadding="false"
             android:paddingBottom="32dp" />
 

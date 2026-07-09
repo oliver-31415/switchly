@@ -2,25 +2,28 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Networking (Firebase Authentication + Cloud Sync) -->
+    <!-- Network access for Firebase authentication, cloud sync, and remote resources -->
+
+    <!-- Google Play Billing for Play Store Premium purchases -->
+    <uses-permission android:name="com.android.vending.BILLING" />
     <uses-permission android:name="android.permission.INTERNET" />
-    
-    <!-- Usage Access (Screen time stats) -->
+
+    <!-- Usage access for screen-time statistics and app blocking decisions -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
-    
-    <!-- Allows checking whether the device is online/offline (used by Firebase + sync logic) -->
+
+    <!-- Network-state checks for Firebase and sync logic -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Wifi Access -->
+    <!-- Wi-Fi state access for Wi-Fi schedules and triggers -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-    <!-- Android 13+ (Wi-Fi device scanning) -->
+    <!-- Android 13+ nearby Wi-Fi access without location derivation -->
     <uses-permission
         android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="33" />
 
-    <!-- Bluetooth -->
+    <!-- Legacy Bluetooth permissions for Android 11 and lower -->
     <uses-permission
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
@@ -28,17 +31,17 @@
         android:name="android.permission.BLUETOOTH_ADMIN"
         android:maxSdkVersion="30" />
 
-    <!-- Android 12+ -->
+    <!-- Android 12+ Bluetooth connection access -->
     <uses-permission
         android:name="android.permission.BLUETOOTH_CONNECT"
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="31" />
 
-    <!-- Location needed to read Wi-Fi SSID for Wi-Fi schedules -->
+    <!-- Location access needed to read Wi-Fi SSID and evaluate location schedules -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <!-- Exact alarm on Android 12+ (user toggle exists) -->
+    <!-- Exact alarms for schedules on Android 12+ -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <!-- Background location improves Wi‑Fi trigger reliability when the app is not in the foreground.
@@ -47,46 +50,55 @@
         android:name="android.permission.ACCESS_BACKGROUND_LOCATION"
         tools:targetApi="29" />
 
-    <!-- Autostart on device reboot (restart blocking service) -->
+    <!-- Restart blockers, schedules, and widgets after device reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- NFC requirements (unlock via NFC tag, tag writing) -->
+    <!-- NFC tag reading and writing -->
     <uses-permission android:name="android.permission.NFC" />
 
-    <!-- Notifications (Android 13+) -->
+    <!-- Notification runtime permission on Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Foreground services -->
+    <!-- Foreground services for blocking and trigger monitoring -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
-    <!-- Android 14+ for foregroundServiceType="connectedDevice" -->
+    <!-- Android 14+ permission for Bluetooth connected-device foreground service type -->
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
         tools:targetApi="34" />
 
-    <!-- Allows killing background processes -->
+    <!-- Optional direct Android popup for allowing unrestricted background/battery behavior. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" tools:ignore="BatteryLife" />
+
+    <!-- Optional background-process kill attempts for stronger blocking cleanup -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
 
-    <!-- Allows Camera for QR Code -->
+    <!-- Camera access for QR and barcode scanning -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Camera hardware is optional (ChromeOS/devices without camera) -->
+    <!-- Camera hardware is optional so Switchly can install on devices without a camera -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
 
-    <!-- NFC hardware is optional -->
+    <!-- NFC hardware is optional so Switchly can install on devices without NFC -->
     <uses-feature
         android:name="android.hardware.nfc"
         android:required="false" />
 
-    <!-- Needed so we can list launchable apps in the picker -->
+    <!-- Query launchable apps for the App rules picker -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+
+        <!-- Supported in-app blocking targets used for picker shortcuts and installation checks. -->
+        <package android:name="com.google.android.youtube" />
+        <package android:name="com.instagram.android" />
+        <package android:name="com.twitter.android" />
+        <package android:name="com.snapchat.android" />
     </queries>
 
     <application
@@ -108,12 +120,12 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <!-- Required by some Google Maps/Play Services dynamite modules on Android 9+.
-             Keep optional so installs are not blocked on devices where the legacy library is absent. -->
+        <!-- Optional legacy HTTP library required by some Google Maps/Play Services modules -->
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />
 
+        <!-- Device-admin receiver for Advanced Mode/strict protection -->
         <receiver
             android:name=".receiver.DPMReceiver"
             android:exported="true"
@@ -128,7 +140,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Main launcher -->
+        <!-- Main launcher activity -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true">
@@ -138,6 +150,7 @@
             </intent-filter>
         </activity>
 
+        <!-- Transparent entry point for QR, barcode, NFC-write, and blocked-notification shortcuts -->
         <activity
             android:name=".feature.entry.ScanLauncherActivity"
             android:exported="true"
@@ -155,26 +168,25 @@
             </intent-filter>
         </activity>
 
-
-        <!-- Settings -->
+        <!-- Settings root screen -->
         <activity
             android:name=".feature.settings.SettingsActivity"
             android:exported="false"
             android:label="@string/settings" />
 
-        <!-- Blocking hub -->
+        <!-- Blocking hub screen -->
         <activity
             android:name=".feature.tools.BlockingHubActivity"
             android:exported="false"
             android:label="@string/nav_blocking" />
 
-        <!-- Manage hub -->
+        <!-- Tools/manage hub screen -->
         <activity
             android:name=".feature.tools.ToolsHubActivity"
             android:exported="false"
             android:label="@string/nav_tools" />
 
-        <!-- Schedules screen -->
+        <!-- Schedule management screen -->
         <activity
             android:name=".feature.schedule.SchedulesActivity"
             android:exported="false"
@@ -185,6 +197,7 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
+        <!-- Map picker for location-based schedules -->
         <activity
             android:name=".feature.schedule.LocationMapPickerActivity"
             android:exported="false"
@@ -192,49 +205,74 @@
             android:label="@string/schedules_location_map_picker_title"
             android:parentActivityName=".feature.schedule.SchedulesActivity" />
 
-        <!-- Onboarding -->
+        <!-- First-run onboarding flow -->
         <activity
             android:name=".feature.onboarding.OnboardingActivity"
             android:exported="false"
             android:theme="@style/Theme.Switchly" />
 
-        <!-- Profiles -->
+        <!-- Profile management screen -->
         <activity
             android:name=".feature.profiles.ManageProfilesActivity"
             android:exported="false" />
 
-        <!-- App picker -->
+        <!-- App rules picker screen -->
         <activity
             android:name=".feature.picker.AppPickerActivity"
             android:exported="false" />
 
-        <!-- NFC writer -->
+        <!-- Key/code management hub -->
         <activity
             android:name=".feature.tools.ManageKeysActivity"
             android:exported="false" />
 
+        <!-- NFC action tag writer -->
         <activity
             android:name=".nfc.NfcWriterActivity"
             android:exported="false"
             android:theme="@style/Theme.Switchly" />
 
+        <!-- NFC write waiting screen -->
         <activity
             android:name=".nfc.NfcWriteWaitingActivity"
             android:exported="false"
             android:theme="@style/Theme.Switchly" />
 
-        <!-- NFC NDEF dispatch -->
+        <!-- NFC dispatch activity for Switchly NDEF and fallback tag scans -->
         <activity
             android:name=".nfc.NfcEntryActivity"
             android:exported="true"
             android:launchMode="singleTop">
 
-            <!-- NFC NDEF discovered pointing to switchly://... -->
+            <!-- Broad Switchly URI dispatch for OEM NFC launch pickers such as HyperOS. -->
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="switchly" android:host="switch" android:pathPattern=".*" />
-                <data android:scheme="switchly" android:host="profile" android:pathPattern=".*" />
+                <data android:scheme="switchly" />
+            </intent-filter>
+
+            <!-- NFC NDEF discovered pointing to readable/alias Switchly action tags. -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="switchly" />
+                <data android:host="action" />
+            </intent-filter>
+
+            <!-- NFC NDEF discovered pointing to legacy switchly://switch/... tags. -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="switchly" />
+                <data android:host="switch" />
+            </intent-filter>
+
+            <!-- NFC NDEF discovered pointing to legacy switchly://profile/... tags. -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="switchly" />
+                <data android:host="profile" />
             </intent-filter>
 
             <!-- Tech-discovered fallback for cards/tags that are claimed earlier than TAG_DISCOVERED for example IsoDep bank cards and some external/read-only tags). -->
@@ -253,46 +291,48 @@
             </intent-filter>
         </activity>
 
-        <!-- Blocker -->
+        <!-- Fullscreen blocker shown when a blocked app or website is opened -->
         <activity
             android:name=".feature.blocker.BlockerActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:launchMode="singleTask"
-            android:resizeableActivity="false"
             android:supportsPictureInPicture="false"
             android:theme="@style/Theme.Switchly.Blocker"
-            tools:ignore="DiscouragedApi,NonResizeableActivity" />
+            tools:ignore="DiscouragedApi" />
 
-        <!-- About/developer tools -->
+        <!-- Developer mode settings screen -->
         <activity
             android:name=".feature.about.DeveloperModeActivity"
             android:exported="false"
             android:label="@string/developer_mode_title" />
 
+        <!-- Developer log viewer -->
         <activity
             android:name=".feature.about.DeveloperLogActivity"
             android:exported="false"
             android:label="@string/developer_logging_title" />
 
+        <!-- Advanced mode information screen -->
         <activity
             android:name=".feature.about.AdvancedModeActivity"
             android:exported="false"
             android:label="@string/advanced_mode_title" />
 
-        <!-- FAQ -->
+        <!-- FAQ screen -->
         <activity
             android:name=".feature.faq.FaqActivity"
             android:exported="false"
             android:label="@string/faq_screen_title" />
 
-        <!-- Premium -->
+        <!-- Premium information screen -->
         <activity
             android:name=".feature.premium.PremiumInfoActivity"
             android:exported="false"
             android:label="@string/premium_title" />
 
+        <!-- Premium redeem-code screen -->
         <activity
             android:name=".feature.premium.PremiumRedeemActivity"
             android:exported="false"
@@ -303,7 +343,7 @@
                 android:value=".feature.premium.PremiumInfoActivity" />
         </activity>
 
-        <!-- Permissions screen -->
+        <!-- Permission setup screen -->
         <activity
             android:name=".feature.settings.PermissionsActivity"
             android:exported="false"
@@ -313,12 +353,12 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
-        <!-- Toggle screen -->
+        <!-- Home display/toggle options screen -->
         <activity
             android:name=".feature.settings.ToggleOptionsActivity"
             android:exported="false" />
 
-        <!-- Troubleshooting -->
+        <!-- Troubleshooting screen -->
         <activity
             android:name=".feature.settings.TroubleshootingActivity"
             android:exported="false"
@@ -329,6 +369,7 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
+        <!-- Blocking mode settings screen -->
         <activity
             android:name=".feature.settings.BlockingModesActivity"
             android:exported="false"
@@ -338,6 +379,7 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
+        <!-- Blocking feature settings screen -->
         <activity
             android:name=".feature.settings.BlockingFeaturesActivity"
             android:exported="false"
@@ -347,7 +389,7 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
-        <!-- Blocked notifications inbox -->
+        <!-- Blocked notification inbox -->
         <activity
             android:name=".feature.inbox.BlockedInboxActivity"
             android:exported="false"
@@ -358,7 +400,7 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
-        <!-- External QR/deep-link scanner entry point. Shows confirmation, then forwards as QR action. -->
+        <!-- External QR/deep-link confirmation entry point -->
         <activity
             android:name=".feature.qr.ExternalQrActionActivity"
             android:exported="true"
@@ -369,27 +411,47 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="switchly" android:host="switch" android:pathPattern=".*" />
-                <data android:scheme="switchly" android:host="profile" android:pathPattern=".*" />
+                <data android:scheme="switchly" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="switchly" />
+                <data android:host="action" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="switchly" />
+                <data android:host="switch" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="switchly" />
+                <data android:host="profile" />
             </intent-filter>
         </activity>
 
-        <!-- QR Scanner -->
+        <!-- QR scanner screen -->
         <activity
             android:name=".feature.qr.QrScanActivity"
             android:exported="false" />
 
-        <!-- Barcode Scanner -->
+        <!-- Barcode scanner screen -->
         <activity
             android:name=".feature.barcode.BarcodeScanActivity"
             android:exported="false" />
 
-        <!-- QR Generator -->
+        <!-- QR action generator screen -->
         <activity
             android:name=".feature.qr.QrGenerateActivity"
             android:exported="false" />
 
-        <!-- What's new (release notes) -->
+        <!-- What's new/release notes screen -->
         <activity
             android:name=".feature.about.WhatsNewActivity"
             android:exported="false"
@@ -400,7 +462,7 @@
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
 
-        <!-- Support -->
+        <!-- Support screen -->
         <activity
             android:name=".feature.support.SupportActivity"
             android:exported="false"
@@ -410,45 +472,63 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".feature.settings.SettingsActivity" />
         </activity>
-        
-        <!-- Screen Time Dashboard -->
+
+        <!-- Insights hub for Usage statistics and Active time -->
+        <activity
+            android:name=".feature.tools.ManageInsightsActivity"
+            android:exported="false" />
+
+        <!-- Active time statistics dashboard -->
+        <activity
+            android:name=".feature.usage.ActiveTimeStatsActivity"
+            android:exported="false" />
+
+        <!-- Active time detail screen for sessions and monthly totals -->
+        <activity
+            android:name=".feature.usage.ActiveTimeDetailActivity"
+            android:exported="false" />
+
+        <!-- Usage statistics dashboard -->
         <activity
             android:name=".feature.usage.ScreenTimeDashboardActivity"
             android:exported="false" />
 
-        <!-- Screen Time Detail -->
+        <!-- Usage statistics detail screen for apps -->
         <activity
             android:name=".feature.usage.ScreenTimeDetailActivity"
             android:exported="false" />
 
+        <!-- Usage statistics detail screen for websites -->
         <activity
             android:name=".feature.usage.WebsiteDetailActivity"
             android:exported="false" />
 
-        <!-- Manage Blocked Websites -->
+        <!-- Website rules management screen -->
         <activity
             android:name=".feature.settings.ManageBlockedWebsitesActivity"
             android:exported="false" />
 
-        <!-- InApp Blocking -->
+        <!-- In-app blocking setup screen -->
         <activity
             android:name=".feature.settings.InAppBlockingActivity"
             android:exported="false" />
 
-        <!-- Manage Paired Tags -->
+        <!-- Paired NFC tag management screen -->
         <activity
             android:name=".feature.settings.ManagePairedTagsActivity"
             android:exported="false" />
 
-        <!-- Manage barcodes -->
+        <!-- Barcode action management screen -->
         <activity
             android:name=".feature.settings.ManageBarcodesActivity"
             android:exported="false" />
 
+        <!-- App lock settings screen -->
         <activity
             android:name=".feature.settings.AppLockSettingsActivity"
             android:exported="false" />
 
+        <!-- App lock challenge screen -->
         <activity
             android:name=".feature.settings.AppLockActivity"
             android:exported="false"
@@ -456,25 +536,27 @@
             android:launchMode="singleTop"
             android:theme="@style/Theme.Switchly" />
 
-        <!-- App Info -->
+        <!-- App information screen -->
         <activity
             android:name=".feature.about.AppInfoActivity"
             android:exported="false" />
 
-        <!-- Device Info -->
+        <!-- Device information screen -->
         <activity
             android:name=".feature.about.DeviceInfoActivity"
             android:exported="false" />
-            
-        <!-- Developer Info -->
+
+        <!-- Other Switchly products screen -->
         <activity
             android:name=".feature.about.OtherSwitchlyProductsActivity"
             android:exported="false" />
+
+        <!-- Developer information screen -->
         <activity
             android:name=".feature.about.DeveloperInfoActivity"
             android:exported="false" />
 
-        <!-- Package Added Receiver -->
+        <!-- Package-added receiver to refresh app lists after installs -->
         <receiver
             android:name=".platform.receiver.apps.PackageAddedReceiver"
             android:exported="true">
@@ -484,7 +566,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- re-register watcher after app updates -->
+        <!-- Post-update receiver to re-register watchers after app updates -->
         <receiver
             android:name=".platform.receiver.system.PostUpdateReceiver"
             android:exported="false">
@@ -493,7 +575,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- restart watcher after device reboot -->
+        <!-- Boot receiver to restart blockers, schedules, and widgets -->
         <receiver
             android:name=".platform.receiver.system.BootCompletedReceiver"
             android:exported="true">
@@ -503,7 +585,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Replan schedules when system time/timezone changes -->
+        <!-- Time-change receiver to re-evaluate schedules -->
         <receiver
             android:name=".platform.receiver.system.TimeChangeReceiver"
             android:exported="true">
@@ -514,7 +596,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Reschedule exact alarms after the user grants the special access -->
+        <!-- Exact-alarm permission receiver to reschedule alarms after grant changes -->
         <receiver
             android:name=".platform.receiver.system.ExactAlarmPermissionReceiver"
             android:exported="true">
@@ -523,7 +605,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Re-evaluate schedules when device is unlocked/user becomes present -->
+        <!-- User-unlock receiver to re-evaluate schedules and blockers -->
         <receiver
             android:name=".platform.receiver.system.UserUnlockReceiver"
             android:exported="true">
@@ -533,18 +615,18 @@
             </intent-filter>
         </receiver>
 
-        <!-- Geofence receiver (location-based schedules) -->
+        <!-- Geofence receiver for location-based schedules -->
         <receiver
             android:name=".platform.receiver.location.LocationGeofenceReceiver"
             android:exported="false" />
 
-        <!-- Schedule receiver (triggered via explicit PendingIntent) -->
+        <!-- Schedule receiver triggered by explicit PendingIntents -->
         <receiver
             android:name=".platform.receiver.schedule.ScheduleReceiver"
             android:exported="false"
             android:enabled="true" />
 
-        <!-- QS tile -->
+        <!-- Quick Settings tile for toggling Switchly -->
         <service
             android:name=".platform.tile.SwitchlyTileService"
             android:exported="true"
@@ -556,7 +638,7 @@
             </intent-filter>
         </service>
 
-        <!-- Scanner Quick Settings tiles -->
+        <!-- Quick Settings tile for opening the QR scanner -->
         <service
             android:name=".platform.tile.QrScanTileService"
             android:exported="true"
@@ -568,6 +650,7 @@
             </intent-filter>
         </service>
 
+        <!-- Quick Settings tile for opening the barcode scanner -->
         <service
             android:name=".platform.tile.BarcodeScanTileService"
             android:exported="true"
@@ -579,10 +662,12 @@
             </intent-filter>
         </service>
 
+        <!-- Shared receiver for home-screen widget quick actions -->
         <receiver
             android:name=".widget.QuickActionReceiver"
             android:exported="false" />
 
+        <!-- Home-screen widget for scanner shortcuts -->
         <receiver
             android:name=".widget.ScannerWidgetProvider"
             android:exported="true"
@@ -596,6 +681,7 @@
                 android:resource="@xml/scanner_widget_info" />
         </receiver>
 
+        <!-- Home-screen widget for QR scanning -->
         <receiver
             android:name=".widget.QrScanWidgetProvider"
             android:exported="true"
@@ -609,6 +695,7 @@
                 android:resource="@xml/qr_scan_widget_info" />
         </receiver>
 
+        <!-- Home-screen widget for barcode scanning -->
         <receiver
             android:name=".widget.BarcodeScanWidgetProvider"
             android:exported="true"
@@ -622,6 +709,7 @@
                 android:resource="@xml/barcode_scan_widget_info" />
         </receiver>
 
+        <!-- Home-screen widget for NFC writing -->
         <receiver
             android:name=".widget.NfcWriteWidgetProvider"
             android:exported="true"
@@ -635,6 +723,7 @@
                 android:resource="@xml/nfc_write_widget_info" />
         </receiver>
 
+        <!-- Home-screen widget for focus-now/temporary mode -->
         <receiver
             android:name=".widget.FocusNowWidgetProvider"
             android:exported="true"
@@ -648,6 +737,7 @@
                 android:resource="@xml/focus_now_widget_info" />
         </receiver>
 
+        <!-- Home-screen widget for blocked notifications -->
         <receiver
             android:name=".widget.BlockedNotificationsWidgetProvider"
             android:exported="true"
@@ -661,6 +751,7 @@
                 android:resource="@xml/blocked_notifications_widget_info" />
         </receiver>
 
+        <!-- Home-screen widget for pausing the blocker -->
         <receiver
             android:name=".widget.PauseBlockerWidgetProvider"
             android:exported="true"
@@ -674,6 +765,7 @@
                 android:resource="@xml/pause_blocker_widget_info" />
         </receiver>
 
+        <!-- Home-screen widget for the next scheduled action -->
         <receiver
             android:name=".widget.NextScheduleWidgetProvider"
             android:exported="true"
@@ -691,7 +783,21 @@
                 android:resource="@xml/next_schedule_widget_info" />
         </receiver>
 
-        <!-- Accessibility based blocker -->
+        <!-- Home-screen widget showing the current active Switchly timer -->
+        <receiver
+            android:name=".feature.widget.ActiveTimerWidgetProvider"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/widget_active_timer_title">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_active_timer_info" />
+        </receiver>
+
+        <!-- Accessibility service used for app and website blocking -->
         <service
             android:name=".blocking.SwitchlyAccessibilityService"
             android:exported="false"
@@ -704,7 +810,7 @@
                 android:resource="@xml/switchly_accessibility_config" />
         </service>
 
-        <!-- Notification blocker (hides notifications from blocked apps; requires notification listener access) -->
+        <!-- Notification listener service used to hide notifications from blocked apps -->
         <service
             android:name=".blocking.NotificationBlockerService"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
@@ -714,19 +820,19 @@
             </intent-filter>
         </service>
 
-        <!-- Wi-Fi trigger service -->
+        <!-- Foreground service for Wi-Fi based profile triggers -->
         <service
             android:name=".platform.receiver.wifi.WifiTriggerService"
             android:exported="false"
             android:foregroundServiceType="location" />
 
-        <!-- Bluetooth trigger service -->
+        <!-- Foreground service for Bluetooth based profile triggers -->
         <service
             android:name=".platform.receiver.bluetooth.BluetoothTriggerService"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
 
-        <!-- Bluetooth based profile triggers -->
+        <!-- Bluetooth connection receiver for profile trigger updates -->
         <receiver
             android:name=".platform.receiver.bluetooth.BluetoothConnectionReceiver"
             android:exported="true">
@@ -738,6 +844,7 @@
             </intent-filter>
         </receiver>
 
+        <!-- FileProvider for sharing exported backups, logs, and support files -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -28,12 +28,22 @@ import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 object EditingLockGuard {
-    fun isLocked(ctx: Context): Boolean = SwitchModeStore.isEnabled(ctx)
+    fun isLocked(ctx: Context): Boolean =
+        SwitchModeStore.isEnabled(ctx) ||
+            SwitchModeStore.isBaseEnabled(ctx) ||
+            SwitchModeStore.hasActiveTemporaryOverride(ctx)
 
     fun showLockedDialog(ctx: Context, @StringRes messageRes: Int) {
+        val hint = runCatching { ctx.getString(messageRes) }.getOrDefault("").trim()
+        val body = if (hint.isBlank()) {
+            ctx.getString(R.string.edit_locked_currently_active_body)
+        } else {
+            ctx.getString(R.string.edit_locked_currently_active_body_with_hint, hint)
+        }
         MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.edit_locked_while_switchly_on_title)
-            .setMessage(messageRes)
+            .setMessage(body)
+            .setIcon(R.drawable.lock_24)
             .setPositiveButton(R.string.ok, null)
             .showAccented()
     }
@@ -41,9 +51,16 @@ object EditingLockGuard {
     fun blockWithDialog(activity: Activity, @StringRes messageRes: Int): Boolean {
         if (!isLocked(activity)) return false
 
+        val hint = runCatching { activity.getString(messageRes) }.getOrDefault("").trim()
+        val body = if (hint.isBlank()) {
+            activity.getString(R.string.edit_locked_currently_active_body)
+        } else {
+            activity.getString(R.string.edit_locked_currently_active_body_with_hint, hint)
+        }
         MaterialAlertDialogBuilder(activity)
             .setTitle(R.string.edit_locked_while_switchly_on_title)
-            .setMessage(messageRes)
+            .setMessage(body)
+            .setIcon(R.drawable.lock_24)
             .setPositiveButton(R.string.ok) { _, _ ->
                 activity.finish()
             }

@@ -10,7 +10,8 @@
     <string name="premium_active_header">Aktive Premium-Funktionen</string>
     <string name="premium_status_active">Aktiv</string>
     <string name="premium_source_note">Premium aktiv über %1$s.</string>
-    <string name="premium_status_inactive">Premium ist noch nicht aktiv</string>
+    <string name="premium_status_inactive">Nicht aktiv</string>
+    <string name="premium_needed_note">Premium wird für erweiterte Funktionen benötigt.</string>
     <string name="premium_already_owned">Du hast Premium bereits</string>
     <string name="premium_checking_purchases">Käufe werden geprüft…</string>
 
@@ -18,6 +19,12 @@
     <!-- Purchase and restore buttons -->
     <!-- ====================================================== -->
     <string name="premium_button_buy">Premium kaufen</string>
+    <string name="premium_price_label">Preis: %1$s</string>
+    <string name="premium_price_loading">Preis wird von Google Play geladen…</string>
+    <string name="premium_price_google_play_fallback">Preis wird vor dem Kauf von Google Play angezeigt.</string>
+    <string name="premium_button_buy_with_price">Premium kaufen • %1$s</string>
+    <string name="premium_purchase_error_generic">Google Play-Kauf konnte nicht geöffnet werden. Bitte versuche es erneut oder kontaktiere den Support.</string>
+    <string name="premium_button_opening">Google Play wird geöffnet…</string>
     <string name="premium_button_restore">Käufe wiederherstellen</string>
     <string name="premium_button_thanks">Danke für deine Unterstützung!</string>
     <string name="premium_button_buy_external">Premium kaufen (%1$s)</string>
@@ -35,6 +42,7 @@
     <string name="premium_external_portal_not_configured">Externe Kaufverwaltung ist für diesen Build nicht konfiguriert.</string>
     <string name="premium_external_invalid_url">Die externe Zahlungs-URL ist ungültig.</string>
     <string name="premium_external_no_browser">Keine Browser-App konnte die Zahlungsseite öffnen.</string>
+    <string name="premium_external_checkout_not_opened">Externer Checkout konnte nicht geöffnet werden. Bitte melde dich an, prüfe deinen Browser oder kontaktiere den Support.</string>
     <string name="premium_external_entitlement_active">Premium wurde erfolgreich wiederhergestellt.</string>
     <string name="premium_external_entitlement_missing">Für dieses Konto wurde noch keine externe Premium-Berechtigung gefunden.</string>
     <string name="premium_external_sign_in_to_buy">Melde dich zuerst mit E-Mail/Passwort an und kaufe dann Premium.</string>

@@ -6,9 +6,11 @@
     android:id="@+id/cardRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="6dp"
-    app:cardCornerRadius="12dp"
-    app:cardUseCompatPadding="true"
+    android:layout_marginTop="3dp"
+    android:layout_marginBottom="3dp"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardCornerRadius="18dp"
+    app:cardUseCompatPadding="false"
     app:cardElevation="1dp"
     app:strokeWidth="1dp"
     app:strokeColor="@color/switchly_card_stroke"
@@ -19,13 +21,16 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="8dp">
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="8dp">
 
         <ImageView
             android:id="@+id/appIcon"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginEnd="12dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginEnd="10dp"
             android:contentDescription="@string/app_icon"
             android:src="@android:drawable/sym_def_app_icon" />
 
@@ -96,11 +101,11 @@
                 android:id="@+id/tvRule"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:lineSpacingExtra="3dp"
+                android:layout_marginTop="2dp"
+                android:lineSpacingExtra="2dp"
                 android:textSize="12sp"
                 android:textColor="?android:attr/textColorSecondary"
-                android:maxLines="3"
+                android:maxLines="2"
                 android:ellipsize="end"
                 android:visibility="gone"
                 tools:text="15 min/day"
@@ -119,12 +124,12 @@
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/btnQuickEdit"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="6dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/edit"
-            android:padding="8dp"
+            android:padding="7dp"
             android:src="@drawable/edit_24"
             app:tint="?attr/colorOnSurface" />
 

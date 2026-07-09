@@ -12,50 +12,110 @@
     <string name="onb_next">Weiter</string>
     <string name="onb_skip">Überspringen</string>
     <string name="onb_open">Öffnen</string>
+    <string name="onb_permissions_action">Nächste Einstellung öffnen</string>
 
     <!-- ====================================================== -->
-    <!-- Required setup steps -->
+    <!-- Welcome/core concept -->
+    <!-- ====================================================== -->
+    <string name="onb_welcome_title">Willkommen bei Switchly</string>
+    <string name="onb_welcome_desc">Richte zuerst deine Blockierliste ein und entscheide danach, wie Switchly ein- oder ausgeschaltet werden soll.</string>
+    <string name="onb_core_point_lists">App- und Webseitenlisten entscheiden, was blockiert werden kann.</string>
+    <string name="onb_core_point_enabled_state">Der Switchly-Status entscheidet, wann die Blockierung aktiv ist.</string>
+    <string name="onb_core_point_controls">Zeitpläne, NFC, QR, Barcodes, Widgets, Kacheln und Buttons können diesen Status steuern.</string>
+
+    <!-- ====================================================== -->
+    <!-- Pick apps -->
+    <!-- ====================================================== -->
+    <string name="onb_pick_title">Apps zum Blockieren auswählen</string>
+    <string name="onb_pick_desc_required">Wähle mindestens eine App aus, bevor du fortfährst. Am Ende siehst du eine kurze Übersicht.</string>
+    <string name="onb_pick_action">Apps auswählen</string>
+    <string name="onb_apps_picked">Apps ausgewählt</string>
+    <string name="onb_required_pick_apps">Bitte wähle und speichere mindestens eine App, bevor du fortfährst.</string>
+
+    <!-- ====================================================== -->
+    <!-- Blocking controls -->
+    <!-- ====================================================== -->
+    <string name="onb_controls_title">Auswählen, wie blockiert wird</string>
+    <string name="onb_controls_desc">Lege fest, wie streng Switchly sein soll, während die Blockierung aktiv ist. Du kannst einfach starten und später strenger werden.</string>
+    <string name="onb_controls_action">Modus auswählen</string>
+    <string name="onb_controls_selected">Modus ausgewählt</string>
+    <string name="onb_required_controls">Bitte wähle zuerst aus, wie Switchly gesteuert werden soll.</string>
+    <string name="onb_controls_point_enable_disable">Wähle, welche Aktionen Switchly aktivieren oder deaktivieren dürfen.</string>
+    <string name="onb_controls_point_lock_edits">Schränke Profil-, Zeitplan- oder App-Listen-Änderungen während aktiver Blockierung ein.</string>
+
+    <!-- ====================================================== -->
+    <!-- Permissions overview -->
+    <!-- ====================================================== -->
+    <string name="onb_permissions_hub_title">Berechtigungsübersicht</string>
+    <string name="onb_permissions_hub_mode_desc">Richte die Berechtigungen für %1$s ein. Nur Bedienungshilfe ist zum Fortfahren erforderlich.</string>
+    <string name="onb_required_permissions_hub">Bitte aktiviere Bedienungshilfe, bevor du fortfährst. Die anderen Punkte kannst du jetzt oder später einrichten.</string>
+
+    <string name="onb_perm_accessibility_title">Bedienungshilfe</string>
+    <string name="onb_perm_accessibility_desc">Erforderlich für die App- und Webseitenblockierung.</string>
+    <string name="onb_perm_usage_title">Nutzungszugriff</string>
+    <string name="onb_perm_usage_desc">Optional für Insights und Diagnose.</string>
+    <string name="onb_perm_notifications_title">Benachrichtigungen</string>
+    <string name="onb_perm_notifications_desc">Nur nötig, wenn Benachrichtigungen blockiert werden sollen.</string>
+    <string name="onb_perm_battery_title">Akku uneingeschränkt</string>
+    <string name="onb_perm_battery_desc">Hilft Switchly, im Hintergrund zuverlässig zu bleiben.</string>
+    <string name="onb_perm_triggers_title">Standort, WLAN und Bluetooth</string>
+    <string name="onb_perm_triggers_desc">Nur nötig für Standort-, WLAN- oder Bluetooth-Zeitpläne.</string>
+    <string name="onb_perm_camera_title">Kamera</string>
+    <string name="onb_perm_camera_desc">Nur nötig für QR- und Barcode-Scanner.</string>
+    <string name="onb_perm_exact_alarm_title">Exakte Alarme</string>
+    <string name="onb_perm_exact_alarm_desc">Hilft, Zeitpläne zuverlässig auszuführen.</string>
+
+    <string name="onb_permission_status_ready">Bereit</string>
+    <string name="onb_permission_status_missing">Einrichten</string>
+
+    <!-- ====================================================== -->
+    <!-- Optional keys setup -->
+    <!-- ====================================================== -->
+    <string name="onb_keys_title_selected">Ausgewählte Schlüssel einrichten</string>
+    <string name="onb_keys_desc_selected">Du hast %1$s als Steuerung gewählt. Richte es jetzt ein oder überspringe den Schritt.</string>
+    <string name="onb_keys_action">Schlüssel verwalten öffnen</string>
+    <string name="onb_keys_point_actions">NFC, QR und Barcodes können Switchly aktivieren, deaktivieren oder umschalten.</string>
+    <string name="onb_keys_point_manage">Unter Schlüssel verwalten werden deine NFC-, QR- und Barcode-Elemente gespeichert.</string>
+
+    <!-- ====================================================== -->
+    <!-- Optional schedule setup -->
+    <!-- ====================================================== -->
+    <string name="onb_schedule_title_selected">Zeitplan einrichten</string>
+    <string name="onb_schedule_desc_selected">Du hast Zeitpläne als Steuerung gewählt. Erstelle jetzt deinen ersten Zeitplan oder überspringe den Schritt.</string>
+    <string name="onb_schedule_action">Zeitpläne öffnen</string>
+    <string name="onb_schedule_added">Zeitplan hinzugefügt</string>
+    <string name="onb_schedule_point_actions">Zeitpläne können Switchly automatisch aktivieren oder deaktivieren.</string>
+    <string name="onb_schedule_point_permissions">Zeit-, Standort-, WLAN- und Bluetooth-Zeitpläne benötigen ggf. zusätzliche Berechtigungen.</string>
+
+    <!-- ====================================================== -->
+    <!-- Ready to start/review -->
+    <!-- ====================================================== -->
+    <string name="onb_start_title">Bereit zum Start</string>
+    <string name="onb_start_desc_clean">Prüfe dein Setup kurz, bevor du Switchly aktivierst.</string>
+    <string name="onb_start_test_action">Switchly jetzt aktivieren</string>
+    <string name="onb_start_test_toast">Switchly aktiviert. Öffne eine blockierte App, um es zu testen.</string>
+
+    <string name="onb_review_blocked_mode_label">Blockierte App-Liste</string>
+    <string name="onb_review_allowed_mode_label">Erlaubte App-Liste</string>
+    <string name="onb_review_profile_title">Profil</string>
+    <string name="onb_review_mode_title">Modus</string>
+    <string name="onb_review_app_list_subtitle">Tippen, um alle ausgewählten Apps zu sehen.</string>
+    <string name="onb_review_no_apps">Keine Apps ausgewählt.</string>
+
+    <plurals name="onb_review_app_list_title">
+        <item quantity="one">%1$s: %2$d App</item>
+        <item quantity="other">%1$s: %2$d Apps</item>
+    </plurals>
+
+    <plurals name="onb_review_apps_dialog_title">
+        <item quantity="one">%1$s (%2$d App)</item>
+        <item quantity="other">%1$s (%2$d Apps)</item>
+    </plurals>
+
+    <!-- ====================================================== -->
+    <!-- Generic fallback/required state -->
     <!-- ====================================================== -->
     <string name="onb_required_step">Dieser Schritt ist erforderlich, um fortzufahren.</string>
-    <string name="onb_permissions_hub_title">Berechtigungsübersicht</string>
-    <string name="onb_permissions_hub_streamlined_desc">Öffne eine gemeinsame Checkliste für Bedienungshilfe und Nutzungszugriff. Akku-Optimierung wird dringend empfohlen und bleibt als Warnung sichtbar, falls sie nicht erlaubt ist.</string>
-    <string name="onb_required_permissions_hub">Bitte schließe zuerst die Kernberechtigungen ab, bevor du fortfährst.</string>
-
-    <!-- ====================================================== -->
-    <!-- Profile and app selection -->
-    <!-- ====================================================== -->
-    <string name="onb_profile_title">Profil erstellen</string>
-    <string name="onb_profile_desc">Erstelle ein Profil mit den Apps, die du blockieren möchtest.</string>
-    <string name="onb_pick_title">Zu blockierende Apps auswählen</string>
-    <string name="onb_pick_desc">Wähle Apps für dein aktives Profil. Das kannst du jederzeit ändern.</string>
-
-    <!-- ====================================================== -->
-    <!-- Start and optional setup -->
-    <!-- ====================================================== -->
-    <string name="onb_start_title">Switchly starten</string>
-    <string name="onb_start_desc">Aktiviere die Blockierung, dann bist du bereit.</string>
-    <string name="onb_optional_features_title">Optionale Funktionen</string>
-    <string name="onb_quick_setup_title">Schnellstart in 3 Schritten</string>
-    <string name="onb_quick_setup_desc">
-            &lt;b&gt;Schritt 1&lt;/b&gt;&lt;br/&gt;Öffne die Berechtigungs-Checkliste&lt;br/&gt;&lt;br/&gt;
-            &lt;b&gt;Schritt 2&lt;/b&gt;&lt;br/&gt;Profil erstellen oder auswählen&lt;br/&gt;&lt;br/&gt;
-            &lt;b&gt;Schritt 3&lt;/b&gt;&lt;br/&gt;Apps zum Blockieren auswählen&lt;br/&gt;&lt;br/&gt;
-            &lt;b&gt;Tipp:&lt;/b&gt;&lt;br/&gt;Erweiterte Optionen kannst du jederzeit in den Einstellungen ändern.
-        </string>
-    <string name="onb_advanced_setup_title">Erweiterte Einrichtung</string>
-    <string name="onb_advanced_setup_desc">Optional: Steuerungsmodus, Notfall-Entsperrung, Schnellaktionen und weitere Schutzfunktionen konfigurieren.</string>
-
-    <!-- ====================================================== -->
-    <!-- Summary and usage preview -->
-    <!-- ====================================================== -->
-    <string name="onb_quick_summary_title">Kurze Zusammenfassung</string>
-    <string name="onb_quick_summary_desc">Werfen wir einen kurzen Blick auf deine App-Nutzungsstatistiken der letzten 7 Tage.</string>
-    <string name="onb_top_apps_7d">Am häufigsten genutzte Apps (7 Tage)</string>
-    <string name="onb_usage_trend_title">Top-App-Trend (7 Tage)</string>
-
-    <!-- ====================================================== -->
-    <!-- Placeholders -->
-    <!-- ====================================================== -->
     <string name="onb_page_title_placeholder">Titel</string>
     <string name="onb_page_desc_placeholder">Beschreibung</string>
 

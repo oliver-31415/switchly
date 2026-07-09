@@ -4,12 +4,11 @@
     <!-- ====================================================== -->
     <!-- In-app blocking overview -->
     <!-- ====================================================== -->
-    <string name="in_app_blocking_title">In-App-Blockierung</string>
-    <string name="in_app_blocking_limitations_note">In-App-Blockierung ist Best-Effort und funktioniert nur, solange Switchly aktiv ist. Aktivierte Bereiche werden direkt blockiert. Shorts/Reels können meist in ihren eigenen Tabs blockiert werden, Empfehlungen im normalen Home-Feed können aber weiterhin sichtbar sein.</string>
+    <string name="in_app_blocking_title">In-App-Regeln</string>
 
-    <!-- ====================================================== -->
-    <!-- Supported apps -->
-    <!-- ====================================================== -->
+    <string name="in_app_rules_info_title">In-App-Regeln</string>
+    <string name="in_app_rules_info_body">In-App-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nMit dem Hauptschalter kannst du alle In-App-Regeln für dieses Profil vorübergehend deaktivieren, ohne einzelne Bereichsregeln zu löschen.\n\nUnterstützt werden z. B. YouTube Shorts, Instagram Reels/Explore/Suche, X-Tabs und Snapchat-Bereiche. Die Erkennung nutzt die Bedienungshilfe, daher können UI-Änderungen der Apps die Zuverlässigkeit beeinflussen.</string>
+    <string name="in_app_rules_profile_subtitle">Regeln für das aktive Profil.</string>
     <string name="in_app_blocking_youtube">YouTube</string>
     <string name="in_app_blocking_instagram">Instagram</string>
     <string name="in_app_blocking_x">X/Twitter</string>
@@ -29,17 +28,9 @@
     <string name="in_app_blocking_block_following">Following blockieren</string>
     <string name="in_app_blocking_block_comments">Kommentare blockieren</string>
     <string name="in_app_blocking_block_pip">Bild-im-Bild-Modus blockieren</string>
-
-    <!-- ====================================================== -->
-    <!-- Global limit controls -->
-    <!-- ====================================================== -->
     <string name="in_app_blocking_limit_title">In-App-Blockierungslimit</string>
     <string name="in_app_limit_label">In-App-Limit</string>
     <string name="in_app_blocking_limit_desc">Tägliches Zeitlimit über alle aktivierten In-App-Bereiche.\nWenn kein Limit gesetzt ist, werden aktivierte Bereiche sofort blockiert.</string>
-
-    <!-- ====================================================== -->
-    <!-- Surface labels -->
-    <!-- ====================================================== -->
     <string name="in_app_surface_shorts_label">Shorts</string>
     <string name="in_app_surface_subscriptions_label">Abos</string>
     <string name="in_app_surface_you_label">Du</string>
@@ -61,18 +52,18 @@
     <string name="in_app_surface_daily_limit_title">%1$s: tägliches Limit</string>
 
     <!-- ====================================================== -->
-    <!-- Rule dialog and options -->
+    <!-- Shared actions and blocking messages -->
     <!-- ====================================================== -->
     <string name="edit">Bearbeiten</string>
+    <string name="blocking_in_app_limit_reached_title">In-App-Limit erreicht!</string>
+    <string name="blocking_instagram_comments_blocked_message">Instagram-Kommentare werden von Switchly blockiert.</string>
+    <string name="blocking_daily_limit_duration_fmt">Tägliches Limit: %1$s</string>
 
     <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
+    <!-- Surface limits and messages -->
     <!-- ====================================================== -->
-    <string name="blocking_in_app_limit_reached_title">In-App-Limit erreicht!</string>
     <string name="blocking_surface_blocked_title">%1$s ist blockiert!</string>
     <string name="blocking_comments_blocked_title">Kommentare sind blockiert!</string>
-    <string name="blocking_instagram_comments_blocked_message">Instagram-Kommentare werden von Switchly blockiert.</string>
     <string name="blocking_surface_base_message">Du kannst diese App-Funktion nicht nutzen, solange Switchly aktiv ist.</string>
-    <string name="blocking_daily_limit_duration_fmt">Tägliches Limit: %1$s</string>
 
 </resources>

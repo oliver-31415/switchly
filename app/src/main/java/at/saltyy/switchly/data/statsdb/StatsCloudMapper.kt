@@ -26,7 +26,6 @@ import kotlinx.coroutines.runBlocking
 
 /**
  * Simple Firestore mapping for daily aggregates.
- *
  * We intentionally sync *daily aggregates* instead of raw event logs:
  * - much smaller payload
  * - stable over time

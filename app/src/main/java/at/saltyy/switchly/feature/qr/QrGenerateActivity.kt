@@ -23,10 +23,18 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Toast
@@ -86,15 +94,19 @@ class QrGenerateActivity : AppCompatActivity() {
     private fun defaultAction(): Action =
         actions.firstOrNull { it.mode == Mode.GLOBAL && it.id == "toggle" } ?: actions.first()
 
-    private val minutePresets by lazy {
-        listOf(
+    private fun minutePresetsFor(action: Action): List<String> {
+        val presets = mutableListOf(
             getString(R.string.qr_minutes_5),
             getString(R.string.qr_minutes_10),
             getString(R.string.qr_minutes_30),
             getString(R.string.qr_minutes_60),
             getString(R.string.qr_minutes_120),
-            getString(R.string.qr_minutes_custom)
         )
+        presets += getString(R.string.qr_minutes_custom)
+        if (action.id == "temp_enable" || action.id == "temp_disable") {
+            presets += getString(R.string.qr_minutes_ask_when_scanned)
+        }
+        return presets
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -130,7 +142,7 @@ class QrGenerateActivity : AppCompatActivity() {
 
         // Minutes dropdown
         b.minutesDropdown.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, minutePresets)
+            ArrayAdapter(this, android.R.layout.simple_list_item_1, minutePresetsFor(defaultAction))
         )
         b.minutesDropdown.setText(getString(R.string.qr_minutes_default), false)
 
@@ -146,7 +158,9 @@ class QrGenerateActivity : AppCompatActivity() {
         }
 
         b.minutesDropdown.setOnItemClickListener { _, _, pos, _ ->
-            val v = minutePresets.getOrNull(pos) ?: return@setOnItemClickListener
+            val actionLabel = b.actionDropdown.text?.toString().orEmpty()
+            val action = actions.firstOrNull { getString(it.labelRes) == actionLabel } ?: defaultAction()
+            val v = minutePresetsFor(action).getOrNull(pos) ?: return@setOnItemClickListener
             if (v == getString(R.string.qr_minutes_custom)) {
                 showCustomMinutesDialog()
             } else {
@@ -195,6 +209,29 @@ class QrGenerateActivity : AppCompatActivity() {
         )
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_qr_generate, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_info -> {
+                showQrInfoDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showQrInfoDialog() {
+        Dialogs.builder(this)
+            .setTitle(R.string.qr_info_title)
+            .setMessage(R.string.qr_info_body)
+            .setPositiveButton(R.string.ok, null)
+            .showAccented()
+    }
+
     private fun refreshProfiles() {
         val profiles = ProfileStore.getProfiles(this).toList().sorted()
         b.profileDropdown.setAdapter(
@@ -206,15 +243,66 @@ class QrGenerateActivity : AppCompatActivity() {
         b.profileDropdown.setText(pick, false)
     }
 
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
+
     private fun showCustomMinutesDialog() {
+        val accent = AccentColor.getAccentColorInt(this)
         val input = EditText(this).apply {
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
             hint = getString(R.string.qr_minutes_hint)
+            isSingleLine = true
+            backgroundTintList = ColorStateList.valueOf(accent)
+        }
+
+        fun presetChip(minutes: Long): TextView {
+            return TextView(this).apply {
+                text = getString(R.string.temp_duration_preset_minutes, minutes)
+                textSize = 14f
+                gravity = android.view.Gravity.CENTER
+                setTextColor(accent)
+                setPadding(dp(9), dp(6), dp(9), dp(6))
+                background = GradientDrawable().apply {
+                    cornerRadius = dp(18).toFloat()
+                    setColor(Color.TRANSPARENT)
+                    setStroke(dp(1), accent)
+                }
+                setOnClickListener {
+                    input.setText(String.format(Locale.getDefault(), "%d", minutes))
+                    input.setSelection(input.text?.length ?: 0)
+                }
+            }
+        }
+
+        val presetRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        listOf(5L, 10L, 15L, 30L, 60L).forEachIndexed { index, minutes ->
+            presetRow.addView(
+                presetChip(minutes),
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (index > 0) marginStart = dp(4)
+                }
+            )
+        }
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24), 0, dp(24), 0)
+            addView(TextView(this@QrGenerateActivity).apply {
+                text = getString(R.string.temp_duration_quick_presets)
+                textSize = 12.5f
+                alpha = 0.74f
+                setPadding(0, 0, 0, dp(4))
+            })
+            addView(presetRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            addView(input, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                topMargin = dp(8)
+            })
         }
 
         Dialogs.builder(this)
             .setTitle(getString(R.string.qr_minutes_custom_title))
-            .setView(input)
+            .setView(content)
             .setNegativeButton(getString(R.string.cancel), null)
             .setPositiveButton(getString(R.string.ok)) { _, _ ->
                 val m = input.text?.toString()?.trim()?.toLongOrNull()
@@ -234,6 +322,15 @@ class QrGenerateActivity : AppCompatActivity() {
         val isProfile = action.mode == Mode.PROFILE
         b.tilProfile.visibility = if (isProfile) View.VISIBLE else View.GONE
         b.tilMinutes.visibility = if (action.supportsMinutes) View.VISIBLE else View.GONE
+
+        if (action.supportsMinutes) {
+            val presets = minutePresetsFor(action)
+            b.minutesDropdown.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, presets))
+            val current = b.minutesDropdown.text?.toString().orEmpty()
+            if (current == getString(R.string.qr_minutes_ask_when_scanned) && action.id !in setOf("temp_enable", "temp_disable")) {
+                b.minutesDropdown.setText(getString(R.string.qr_minutes_default), false)
+            }
+        }
     }
 
     private fun regenerate() {
@@ -250,10 +347,15 @@ class QrGenerateActivity : AppCompatActivity() {
 
     private fun buildSwitchlyUri(action: Action): String {
         return if (action.mode == Mode.GLOBAL) {
+            val minutesText = b.minutesDropdown.text?.toString().orEmpty()
             val minutesSuffix = if (action.supportsMinutes) {
-                val minutes = parseMinutes(b.minutesDropdown.text?.toString())
-                val clamped = (minutes ?: 0L).coerceIn(1L, 120L)
-                clamped.toString()
+                if ((action.id == "temp_enable" || action.id == "temp_disable") && minutesText == getString(R.string.qr_minutes_ask_when_scanned)) {
+                    ""
+                } else {
+                    val minutes = parseMinutes(minutesText)
+                    val clamped = (minutes ?: 10L).coerceIn(1L, 1440L)
+                    clamped.toString()
+                }
             } else ""
 
             val finalAction = if (action.supportsMinutes) (action.id + minutesSuffix) else action.id

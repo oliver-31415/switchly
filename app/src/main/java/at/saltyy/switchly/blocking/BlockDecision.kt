@@ -37,14 +37,32 @@ internal fun resolveAppBlockDecision(
     effectiveUsageMsToday: Long,
     lockActive: Boolean,
     highRisk: Boolean,
-    force: Boolean
+    force: Boolean,
+    allowMode: Boolean = false,
+    essentialAllowed: Boolean = false,
+    allowModeListed: Boolean = false
 ): AppBlockDecision {
-    // Same precedence rule as open counting: only hard-block when no limits are configured.
-    val hardBlocked = isManagedPackage(pkg, blockedPackages) && limitMinutes <= 0 && attemptLimit <= 0
+    val selected = isManagedPackage(pkg, blockedPackages)
+    val hasLimit = limitMinutes > 0 || attemptLimit > 0
+
+    // In blocklist mode, selected apps are hard-blocked unless they have a limit.
+    // In allow-selected mode, the picker list is the boundary:
+    // - listed + selected => allowed/exempted
+    // - listed + unselected => blocked
+    // - not listed in the picker => allowed, because the user cannot select it
+    val hardBlocked = if (allowMode) {
+        allowModeListed && !selected && !hasLimit && !essentialAllowed
+    } else {
+        selected && !hasLimit
+    }
 
     // Enforcement should apply either when the app is hard-blocked OR when it has a daily/attempt limit.
-    // Users can set a limit without adding the app to the hard-block list.
-    val managed = isManagedPackage(pkg, blockedPackages) || limitMinutes > 0 || attemptLimit > 0
+    // In allow-selected mode, apps outside the picker list are unmanaged/allowed unless another limit applies.
+    val managed = if (allowMode) {
+        hardBlocked || selected || hasLimit
+    } else {
+        hardBlocked || selected || hasLimit
+    }
     if (!managed) return AppBlockDecision.Allow
 
     if (lockActive && highRisk) {
@@ -60,8 +78,7 @@ internal fun resolveAppBlockDecision(
     return AppBlockDecision(
         shouldBlock = true,
         // Once a daily time limit is reached, treat it like an immediate block too.
-        // This keeps the time-limit path aligned with direct/attempt blocking and improves
-        // blocker Activity launch reliability on OEM devices that are sensitive to delayed launches.
+        // This keeps the time-limit path aligned with direct/attempt blocking and improves  blocker Activity launch reliability on OEM devices that are sensitive to delayed launches.
         immediate = hardBlocked || opensExceeded || timeLimitReached || force
     )
 }

@@ -29,11 +29,14 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
+import at.saltyy.switchly.data.prefs.NotificationBlockStore
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
@@ -46,15 +49,16 @@ import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
 import at.saltyy.switchly.data.onboarding.OnboardingPage
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
+import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.onboarding.adapters.OnboardingPagerAdapter
 import at.saltyy.switchly.feature.picker.AppPickerActivity
-import at.saltyy.switchly.feature.premium.PremiumInfoActivity
-import at.saltyy.switchly.feature.profiles.ManageProfilesActivity
-import at.saltyy.switchly.feature.settings.PermissionsActivity
+import at.saltyy.switchly.feature.schedule.SchedulesActivity
+import at.saltyy.switchly.feature.settings.AccessibilityDisclosure
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
+import at.saltyy.switchly.feature.tools.ManageKeysActivity
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
-import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
@@ -63,7 +67,6 @@ import at.saltyy.switchly.util.PermissionUtils
 import at.saltyy.switchly.util.getIntCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.switchmaterial.SwitchMaterial
 
 class OnboardingActivity : ComponentActivity() {
 
@@ -71,20 +74,21 @@ class OnboardingActivity : ComponentActivity() {
         private const val PREFS = "switchly_prefs"
         private const val KEY_DONE = "onboarding_done"
         private const val KEY_VERSION = "onboarding_version"
-        private const val KEY_TILE_INFO = "onboard_enable_tile"
+        private const val KEY_CONTROLS_VISITED = "onboard_controls_visited"
         const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
         const val EXTRA_FORCE = "extra_force_tutorial"
         /**
          * Bump this whenever the onboarding flow changes in a way that requires existing users to go through it again.
+         * From 220 on, the version is identical to the release number.
          * v1: initial release
          * v2: change app blocking core permission to Accessibility.
          * v3: add required Usage Access step + 7-day usage summary.
          * v4: previously made battery optimization required + improved permission completion states.
          * v5: hide quick summary until Usage Access is granted + add second opt-in confirm for NFC-required optional toggle.
          * v6: onboarding optional-features NFC toggle now shows the same immediate confirm popup as Settings.
+         * v220: rework oneboardinhg flow to multiple pages + add new required steps for notification blocking and schedule permissions.
          */
-        const val ONBOARDING_VERSION = 8
-
+        const val ONBOARDING_VERSION = 220
     }
 
     private var forced: Boolean = false
@@ -92,6 +96,8 @@ class OnboardingActivity : ComponentActivity() {
     private lateinit var pager: ViewPager2
     private lateinit var pages: List<OnboardingPage>
     private lateinit var pagerAdapter: OnboardingPagerAdapter
+    private lateinit var btnNext: MaterialButton
+    private lateinit var btnSkip: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
@@ -116,27 +122,14 @@ class OnboardingActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         pager = findViewById(R.id.viewPager)
-        val btnNext = findViewById<MaterialButton>(R.id.btn_next)
-        val btnSkip = findViewById<MaterialButton>(R.id.btn_skip)
+        btnNext = findViewById(R.id.btn_next)
+        btnSkip = findViewById(R.id.btn_skip)
 
         applyFooterButtonAccent(btnSkip, btnNext)
 
         pages = buildPages()
         pagerAdapter = OnboardingPagerAdapter(activity = this, pages = pages)
         pager.adapter = pagerAdapter
-
-        // Start at the first incomplete required step (e.g. missing permissions)
-        val firstIncompleteRequired = pages.indexOfFirst {
-            it.level == OnboardingPage.Level.REQUIRED && it.completionCheck != null && !it.completionCheck.invoke(this)
-        }
-        if (firstIncompleteRequired >= 0) {
-            pager.setCurrentItem(firstIncompleteRequired, false)
-        }
-
-        fun updateButtons(pos: Int) {
-            val last = pos == pages.lastIndex
-            btnNext.text = if (last) getString(R.string.onb_done) else getString(R.string.onb_next)
-        }
 
         updateButtons(pager.currentItem)
 
@@ -194,6 +187,17 @@ class OnboardingActivity : ComponentActivity() {
         }
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (::pager.isInitialized && ::pagerAdapter.isInitialized) {
+            pagerAdapter.notifyItemChanged(pager.currentItem)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         findViewById<MaterialButton>(R.id.btn_skip)?.let { skip ->
@@ -202,33 +206,24 @@ class OnboardingActivity : ComponentActivity() {
             }
         }
 
-        // Rebuild pages if Usage Access changed so Quick Summary is only shown when permission is granted.
-        val shouldShowSummary = UsageStatsRepo.hasUsageAccess(this)
-        val hasSummaryPage = pages.any { it.type == OnboardingPage.Type.USAGE_SUMMARY }
-        if (shouldShowSummary != hasSummaryPage) {
-            val oldPos = pager.currentItem
-            val oldPage = pages.getOrNull(oldPos)
+        if (!::pager.isInitialized || !::pages.isInitialized) return
 
-            pages = buildPages()
-            pagerAdapter = OnboardingPagerAdapter(activity = this, pages = pages)
-            pager.adapter = pagerAdapter
+        // Rebuild lightweight text pages when the user returns from App Picker, permissions or setup screens.
+        // This keeps the final blocked-app summary up to date without forcing a full activity restart.
+        val oldPos = pager.currentItem.coerceIn(0, pages.lastIndex)
+        val oldTitle = pages.getOrNull(oldPos)?.title
+        pages = buildPages()
+        pagerAdapter = OnboardingPagerAdapter(activity = this, pages = pages)
+        pager.adapter = pagerAdapter
+        val target = oldTitle?.let { title -> pages.indexOfFirst { it.title == title }.takeIf { it >= 0 } }
+            ?: oldPos.coerceIn(0, pages.lastIndex)
+        pager.setCurrentItem(target.coerceIn(0, pages.lastIndex), false)
 
-            val target = oldPage?.let { previous ->
-                pages.indexOfFirst { now -> now.type == previous.type && now.title == previous.title }
-                    .takeIf { it >= 0 }
-            } ?: oldPos.coerceIn(0, pages.lastIndex)
-            pager.setCurrentItem(target, false)
-        }
-
-        // Refresh current page (permission states can change in Settings)
         val pos = pager.currentItem.coerceIn(0, pages.lastIndex)
+        updateButtons(pos)
         pagerAdapter.notifyItemChanged(pos)
 
-        // Refresh usage summary page when it exists.
-        val summaryIdx = pages.indexOfFirst { it.type == OnboardingPage.Type.USAGE_SUMMARY }
-        if (summaryIdx >= 0) pagerAdapter.notifyItemChanged(summaryIdx)
-
-        // If the current page was a required permission step and it is now complete, auto-advance once.
+        // If the current page was a required setup step and it is now complete, auto-advance once.
         val page = pages.getOrNull(pos) ?: return
         if (page.level == OnboardingPage.Level.REQUIRED && page.completionCheck?.invoke(this) == true) {
             if (pos < pages.lastIndex) {
@@ -237,76 +232,39 @@ class OnboardingActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Onboarding dialog: configure BOTH toggles directly
-     * - Require NFC to unlock (Hard Lock)
-     * - Show QR Button (Top bar)
-     */
-    private fun showOptionalFeaturesDialog() {
-        val view = layoutInflater.inflate(R.layout.dialog_onboarding_optional_features, null)
-        val swNfc = view.findViewById<SwitchMaterial>(R.id.swRequireNfcUnlock)
-
-        val initialNfcRequired = SwitchModeStore.isNfcRequiredForDisable(this)
-        var ignoreNfcListener = false
-        var nfcEnableConfirmedInDialog = initialNfcRequired
-
-        // current values
-        swNfc.isChecked = initialNfcRequired
-
-        // Onboarding should have the same explicit opt-in safety confirmation as Settings.
-        swNfc.setOnCheckedChangeListener { _, isChecked ->
-            if (ignoreNfcListener) return@setOnCheckedChangeListener
-
-            if (isChecked && !nfcEnableConfirmedInDialog) {
-                MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.nfc_required_confirm_title)
-                    .setMessage(R.string.nfc_required_confirm_enable_msg)
-                    .setPositiveButton(R.string.nfc_action_enable) { _, _ ->
-                        nfcEnableConfirmedInDialog = true
-                    }
-                    .setNegativeButton(R.string.cancel) { _, _ ->
-                        ignoreNfcListener = true
-                        swNfc.isChecked = false
-                        ignoreNfcListener = false
-                    }
-                    .setOnCancelListener {
-                        ignoreNfcListener = true
-                        swNfc.isChecked = false
-                        ignoreNfcListener = false
-                    }
-                    .showAccented()
-            }
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.onb_optional_features_title))
-            .setView(view)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val requestedNfc = swNfc.isChecked
-
-                if (requestedNfc && !nfcEnableConfirmedInDialog) {
-                    applyOptionalFeatureSelection(requestedNfc = false)
-                } else {
-                    applyOptionalFeatureSelection(requestedNfc = requestedNfc)
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .showAccented()
+    private fun updateButtons(pos: Int) {
+        val last = pos == pages.lastIndex
+        btnNext.text = if (last) getString(R.string.onb_done) else getString(R.string.onb_next)
+        renderPageIndicator(pos)
     }
 
-    private fun applyOptionalFeatureSelection(requestedNfc: Boolean) {
+    private fun renderPageIndicator(activePosition: Int) {
+        val container = findViewById<LinearLayout>(R.id.pageIndicator) ?: return
+        container.removeAllViews()
 
-        // If Switchly is enabled, do NOT allow disabling the NFC requirement
-        val enabled = SwitchModeStore.isEnabled(this)
-        val emergencyActive = EmergencyBypassStore.isActive(this)
-        val finalNfc = if (enabled && !requestedNfc && !emergencyActive) {
-            Toast.makeText(this, R.string.toast_disable_requires_nfc, Toast.LENGTH_SHORT).show()
-            true
-        } else {
-            requestedNfc
+        val density = resources.displayMetrics.density
+        fun dp(value: Float): Int = (value * density).toInt()
+
+        val accent = AccentColor.getAccentColorInt(this)
+        val activeColor = accent
+        val inactiveColor = ColorUtils.setAlphaComponent(accent, 88)
+
+        pages.forEachIndexed { index, _ ->
+            val dot = View(this)
+            val size = if (index == activePosition) dp(18f) else dp(7f)
+            val params = LinearLayout.LayoutParams(size, dp(7f)).apply {
+                marginStart = dp(3f)
+                marginEnd = dp(3f)
+            }
+            dot.layoutParams = params
+            dot.background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                cornerRadius = dp(4f).toFloat()
+                setColor(if (index == activePosition) activeColor else inactiveColor)
+            }
+            dot.alpha = if (index == activePosition) 1f else 0.7f
+            container.addView(dot)
         }
-
-        SwitchModeStore.setNfcRequiredForDisable(this, finalNfc)
     }
 
     private fun applyFooterButtonAccent(btnSkip: MaterialButton, btnNext: MaterialButton) {
@@ -346,100 +304,361 @@ class OnboardingActivity : ComponentActivity() {
         return true
     }
 
-    private fun isQuickTileRequested(ctx: Context): Boolean {
-        return ctx.getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_TILE_INFO, false)
+    private fun isNotificationBlockingSetupReady(ctx: Context): Boolean {
+        return areNotificationsAllowed(ctx) && NotificationBlockStore.hasListenerAccess(ctx)
     }
 
     private fun isCorePermissionsReady(ctx: Context): Boolean {
-        val accessibility = PermissionUtils.isAccessibilityServiceEnabled(ctx, SwitchlyAccessibilityService::class.java)
-        val usageAccess = UsageStatsRepo.hasUsageAccess(ctx)
-        // Battery optimization is still strongly recommended and shown in the permissions checklist, but it should not block onboarding.
-        // Some Android/OEM settings screens are inconsistent and can leave users stuck even after they tried to allow it.
-        return accessibility && usageAccess
+        // Accessibility is the only hard requirement for the core blocker.
+        // Usage Access stays recommended for fallback diagnostics, usage insights and some edge-case foreground detection, but users should not be blocked from finishing onboarding without it.
+        return PermissionUtils.isAccessibilityServiceEnabled(ctx, SwitchlyAccessibilityService::class.java)
     }
 
-    private fun buildPages(): List<OnboardingPage> = listOfNotNull(
-        // 1) Quick setup overview (scan-friendly)
-        OnboardingPage(
-            iconRes = R.drawable.schedule_24,
-            title = getString(R.string.onb_quick_setup_title),
-            desc = getString(R.string.onb_quick_setup_desc),
-            level = OnboardingPage.Level.INFO,
-            actionLabel = null,
-            action = null
-        ),
+    private fun ensureOnboardingProfile(ctx: Context): String {
+        val current = ProfileStore.getCurrent(ctx)
+        if (!current.isNullOrBlank()) return current
 
-        // 2) Core permissions in one hub (required)
-        OnboardingPage(
-            iconRes = R.drawable.security_24,
-            title = getString(R.string.onb_permissions_hub_title),
-            desc = getString(R.string.onb_permissions_hub_streamlined_desc),
-            level = OnboardingPage.Level.REQUIRED,
-            actionLabel = getString(R.string.onb_open),
-            action = { act ->
-                act.startActivity(
-                    Intent(act, PermissionsActivity::class.java)
-                        .putExtra(PermissionsActivity.EXTRA_FROM_ONBOARDING, true)
-                )
-            },
-            completionCheck = { ctx -> isCorePermissionsReady(ctx) },
-            requiredMessage = getString(R.string.onb_required_permissions_hub)
-        ),
+        val fallback = "Default"
+        ProfileStore.addProfile(ctx, fallback)
+        ProfileStore.setCurrent(ctx, fallback)
+        return fallback
+    }
 
-        // 3) Create profile
-        OnboardingPage(
-            iconRes = R.drawable.account_box_24,
-            title = getString(R.string.onb_profile_title),
-            desc = getString(R.string.onb_profile_desc),
-            level = OnboardingPage.Level.RECOMMENDED,
-            actionLabel = getString(R.string.onb_open),
-            action = { act ->
-                val profiles = ProfileStore.getProfiles(act).toMutableSet()
-                if (profiles.isEmpty()) {
-                    ProfileStore.addProfile(act, "Default")
-                    ProfileStore.setCurrent(act, "Default")
-                }
-                act.startActivity(Intent(act, ManageProfilesActivity::class.java))
+    private fun selectedAppsForActiveProfile(ctx: Context): Set<String> {
+        val profile = ensureOnboardingProfile(ctx)
+        return ProfileStore.getSelectedForProfileMode(ctx, profile)
+    }
+
+    private fun hasPickedApps(ctx: Context): Boolean {
+        return selectedAppsForActiveProfile(ctx).isNotEmpty()
+    }
+
+    private fun appLabelForPackage(ctx: Context, packageName: String): String {
+        val pm = ctx.packageManager
+        return runCatching {
+            val ai = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
+            } else {
+                pm.getApplicationInfo(packageName, 0)
             }
-        ),
+            pm.getApplicationLabel(ai).toString()
+        }.getOrNull()?.takeIf { it.isNotBlank() } ?: packageName
+    }
 
-        // 4) Pick apps to block
-        OnboardingPage(
+    private fun openFirstMissingPermissionSetting() {
+        when {
+            !PermissionUtils.isAccessibilityServiceEnabled(this, SwitchlyAccessibilityService::class.java) -> {
+                AccessibilityDisclosure.openSettingsWithDisclosure(this, forceShow = true)
+            }
+            NotificationBlockStore.isEnabled(this) && !isNotificationBlockingSetupReady(this) -> {
+                openNotificationSetupFromOnboarding()
+            }
+            isSchedulePermissionRelevant(this) && !isBatteryOptimizationIgnored(this) -> {
+                requestIgnoreBatteryOptimizationFromOnboarding()
+            }
+            isSchedulePermissionRelevant(this) && !ExactAlarmPermissionSync.canScheduleExactAlarms(this) -> {
+                openExactAlarmSetupFromOnboarding()
+            }
+            isSchedulePermissionRelevant(this) && !areTriggerPermissionsReady(this) -> {
+                openTriggerPermissionSetupFromOnboarding()
+            }
+            isScanPermissionRelevant(this) && !isCameraPermissionReady(this) -> {
+                requestCameraPermissionFromOnboarding()
+            }
+            !UsageStatsRepo.hasUsageAccess(this) -> {
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            }
+            else -> {
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = "package:$packageName".toUri()
+                })
+            }
+        }
+    }
+
+    private fun openNotificationSetupFromOnboarding() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9201)
+            return
+        }
+
+        if (!NotificationBlockStore.hasListenerAccess(this)) {
+            if (safeStart(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) return
+        }
+
+        if (!safeStart(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            })) {
+            safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = "package:$packageName".toUri()
+            })
+        }
+    }
+
+    private fun requestIgnoreBatteryOptimizationFromOnboarding() {
+        val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            data = "package:$packageName".toUri()
+        }
+        if (safeStart(direct)) return
+
+        if (!safeStart(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) {
+            safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = "package:$packageName".toUri()
+            })
+        }
+    }
+
+    private fun safeStart(intent: Intent): Boolean {
+        return runCatching {
+            startActivity(intent)
+            true
+        }.getOrDefault(false)
+    }
+
+    private fun hasVisitedControlSetup(ctx: Context): Boolean {
+        return ctx.getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_CONTROLS_VISITED, false)
+    }
+
+    private fun shouldOfferKeySetup(ctx: Context): Boolean {
+        return hasVisitedControlSetup(ctx) && (
+            AutomationModeStore.isNfcAllowed(ctx) ||
+                AutomationModeStore.isQrChannelAllowed(ctx) ||
+                AutomationModeStore.isBarcodeChannelAllowed(ctx)
+        )
+    }
+
+    private fun shouldOfferScheduleSetup(ctx: Context): Boolean {
+        return hasVisitedControlSetup(ctx) && AutomationModeStore.isScheduleAllowed(ctx)
+    }
+
+    private fun hasAddedSchedule(ctx: Context): Boolean {
+        return runCatching { ScheduleStore.getAll(ctx).isNotEmpty() }.getOrDefault(false)
+    }
+
+    private fun selectedKeyChannelLabels(ctx: Context): String {
+        val labels = mutableListOf<String>()
+        if (AutomationModeStore.isNfcAllowed(ctx)) labels += getString(R.string.pref_mode_nfc_title)
+        if (AutomationModeStore.isQrChannelAllowed(ctx)) labels += getString(R.string.pref_mode_qr_title)
+        if (AutomationModeStore.isBarcodeChannelAllowed(ctx)) labels += getString(R.string.pref_mode_barcode_title)
+        return labels.joinToString(" / ")
+    }
+
+    private fun selectedControlModeLabel(ctx: Context): String {
+        return when (AutomationModeStore.getMode(ctx)) {
+            AutomationModeStore.Mode.SCHEDULE -> getString(R.string.pref_mode_schedule_title)
+            AutomationModeStore.Mode.NFC -> getString(R.string.pref_mode_nfc_title)
+            AutomationModeStore.Mode.QR -> getString(R.string.pref_mode_qr_title)
+            AutomationModeStore.Mode.BARCODE -> getString(R.string.pref_mode_barcode_title)
+            AutomationModeStore.Mode.MIXED -> getString(R.string.pref_mode_mixed_title)
+        }
+    }
+
+    private fun isScanPermissionRelevant(ctx: Context): Boolean {
+        return AutomationModeStore.isQrChannelAllowed(ctx) || AutomationModeStore.isBarcodeChannelAllowed(ctx)
+    }
+
+    private fun isSchedulePermissionRelevant(ctx: Context): Boolean {
+        return AutomationModeStore.isScheduleAllowed(ctx)
+    }
+
+    private fun isCameraPermissionReady(ctx: Context): Boolean {
+        return ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestCameraPermissionFromOnboarding() {
+        requestPermissions(arrayOf(Manifest.permission.CAMERA), 9202)
+    }
+
+    private fun areTriggerPermissionsReady(ctx: Context): Boolean {
+        val location = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val bluetooth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+        return location && bluetooth
+    }
+
+    private fun openTriggerPermissionSetupFromOnboarding() {
+        val needsLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        if (needsLocation) {
+            requestPermissions(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                9203
+            )
+            return
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), 9204)
+            return
+        }
+
+        safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = "package:$packageName".toUri()
+        })
+    }
+
+    private fun openExactAlarmSetupFromOnboarding() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                data = "package:$packageName".toUri()
+            }
+            if (safeStart(intent)) return
+        }
+        safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = "package:$packageName".toUri()
+        })
+    }
+
+    private fun permissionOverviewDescription(ctx: Context): String {
+        val parts = mutableListOf<String>()
+        if (isSchedulePermissionRelevant(ctx)) parts += getString(R.string.pref_mode_schedule_title)
+        if (AutomationModeStore.isNfcAllowed(ctx)) parts += getString(R.string.pref_mode_nfc_title)
+        if (AutomationModeStore.isQrChannelAllowed(ctx)) parts += getString(R.string.pref_mode_qr_title)
+        if (AutomationModeStore.isBarcodeChannelAllowed(ctx)) parts += getString(R.string.pref_mode_barcode_title)
+        val channels = parts.takeIf { it.isNotEmpty() }?.joinToString(" / ") ?: selectedControlModeLabel(ctx)
+        return getString(R.string.onb_permissions_hub_mode_desc, channels)
+    }
+
+    private fun buildPages(): List<OnboardingPage> {
+        val result = mutableListOf<OnboardingPage>()
+
+        result += OnboardingPage(
+            iconRes = R.drawable.play_arrow_24,
+            title = getString(R.string.onb_welcome_title),
+            desc = getString(R.string.onb_welcome_desc),
+            detailRows = listOf(
+                getString(R.string.onb_core_point_lists),
+                getString(R.string.onb_core_point_enabled_state),
+                getString(R.string.onb_core_point_controls)
+            ),
+            level = OnboardingPage.Level.INFO
+        )
+
+        result += OnboardingPage(
             iconRes = R.drawable.apps_24,
             title = getString(R.string.onb_pick_title),
-            desc = getString(R.string.onb_pick_desc),
-            level = OnboardingPage.Level.RECOMMENDED,
-            actionLabel = getString(R.string.onb_open),
+            desc = getString(R.string.onb_pick_desc_required),
+            level = OnboardingPage.Level.REQUIRED,
+            actionLabel = getString(R.string.onb_pick_action),
             action = { act ->
+                val profile = ensureOnboardingProfile(act)
                 act.startActivity(
                     Intent(act, AppPickerActivity::class.java)
                         .putExtra(EXTRA_FROM_ONBOARDING, true)
+                        .putExtra(AppPickerActivity.EXTRA_PROFILE_NAME, profile)
                 )
-            }
-        ),
+            },
+            completionCheck = { ctx -> hasPickedApps(ctx) },
+            completedLabel = getString(R.string.onb_apps_picked),
+            keepActionEnabledWhenCompleted = true,
+            requiredMessage = getString(R.string.onb_required_pick_apps)
+        )
 
-        // 5) Advanced settings (single door)
-        OnboardingPage(
-            iconRes = R.drawable.dashboard_24,
-            title = getString(R.string.onb_advanced_setup_title),
-            desc = getString(R.string.onb_advanced_setup_desc),
-            level = OnboardingPage.Level.OPTIONAL,
-            actionLabel = getString(R.string.onb_open),
+        result += OnboardingPage(
+            iconRes = R.drawable.tune_24,
+            title = getString(R.string.onb_controls_title),
+            desc = getString(R.string.onb_controls_desc),
+            detailRows = listOf(
+                getString(R.string.onb_controls_point_enable_disable),
+                getString(R.string.onb_controls_point_lock_edits)
+            ),
+            level = OnboardingPage.Level.REQUIRED,
+            actionLabel = getString(R.string.onb_controls_action),
             action = { act ->
-                act.startActivity(Intent(act, ToggleOptionsActivity::class.java))
-            }
-        ),
+                act.getSharedPreferences(PREFS, MODE_PRIVATE).edit {
+                    putBoolean(KEY_CONTROLS_VISITED, true)
+                }
+                act.startActivity(
+                    Intent(act, ToggleOptionsActivity::class.java)
+                        .putExtra(ToggleOptionsActivity.EXTRA_VIEW_SECTION, ToggleOptionsActivity.SECTION_BLOCKING)
+                )
+            },
+            completionCheck = { ctx -> hasVisitedControlSetup(ctx) },
+            completedLabel = getString(R.string.onb_controls_selected),
+            keepActionEnabledWhenCompleted = true,
+            requiredMessage = getString(R.string.onb_required_controls)
+        )
 
-        // 6) Finish
-        OnboardingPage(
+        if (shouldOfferKeySetup(this)) {
+            val channels = selectedKeyChannelLabels(this)
+            result += OnboardingPage(
+                iconRes = R.drawable.qr_code_24,
+                title = getString(R.string.onb_keys_title_selected),
+                desc = getString(R.string.onb_keys_desc_selected, channels),
+                detailRows = listOf(
+                    getString(R.string.onb_keys_point_actions),
+                    getString(R.string.onb_keys_point_manage)
+                ),
+                level = OnboardingPage.Level.OPTIONAL,
+                actionLabel = getString(R.string.onb_keys_action),
+                action = { act ->
+                    act.startActivity(
+                        Intent(act, ManageKeysActivity::class.java)
+                            .putExtra(ManageKeysActivity.EXTRA_FILTER_FROM_ONBOARDING, true)
+                            .putExtra(ManageKeysActivity.EXTRA_SHOW_NFC, AutomationModeStore.isNfcAllowed(act))
+                            .putExtra(ManageKeysActivity.EXTRA_SHOW_QR, AutomationModeStore.isQrChannelAllowed(act))
+                            .putExtra(ManageKeysActivity.EXTRA_SHOW_BARCODE, AutomationModeStore.isBarcodeChannelAllowed(act))
+                    )
+                }
+            )
+        }
+
+        if (shouldOfferScheduleSetup(this)) {
+            result += OnboardingPage(
+                iconRes = R.drawable.schedule_24,
+                title = getString(R.string.onb_schedule_title_selected),
+                desc = getString(R.string.onb_schedule_desc_selected),
+                detailRows = listOf(
+                    getString(R.string.onb_schedule_point_actions),
+                    getString(R.string.onb_schedule_point_permissions)
+                ),
+                level = OnboardingPage.Level.RECOMMENDED,
+                actionLabel = getString(R.string.onb_schedule_action),
+                action = { act ->
+                    act.startActivity(Intent(act, SchedulesActivity::class.java))
+                },
+                completionCheck = { ctx -> hasAddedSchedule(ctx) },
+                completedLabel = getString(R.string.onb_schedule_added),
+                keepActionEnabledWhenCompleted = true
+            )
+        }
+
+        result += OnboardingPage(
+            type = OnboardingPage.Type.PERMISSION_OVERVIEW,
+            iconRes = R.drawable.security_24,
+            title = getString(R.string.onb_permissions_hub_title),
+            desc = permissionOverviewDescription(this),
+            level = OnboardingPage.Level.REQUIRED,
+            actionLabel = getString(R.string.onb_permissions_action),
+            action = { act -> (act as? OnboardingActivity)?.openFirstMissingPermissionSetting() },
+            completionCheck = { ctx -> isCorePermissionsReady(ctx) },
+            requiredMessage = getString(R.string.onb_required_permissions_hub)
+        )
+
+        result += OnboardingPage(
+            type = OnboardingPage.Type.REVIEW,
             iconRes = R.drawable.play_arrow_24,
             title = getString(R.string.onb_start_title),
-            desc = getString(R.string.onb_start_desc),
+            desc = getString(R.string.onb_start_desc_clean),
             level = OnboardingPage.Level.INFO,
-            actionLabel = null,
-            action = null
+            actionLabel = getString(R.string.onb_start_test_action),
+            action = { act ->
+                SwitchModeStore.setEnabled(act, true)
+                Toast.makeText(act, R.string.onb_start_test_toast, Toast.LENGTH_LONG).show()
+            }
         )
-    )
+
+        return result
+    }
 
     private fun markDone() {
         getSharedPreferences(PREFS, MODE_PRIVATE).edit {

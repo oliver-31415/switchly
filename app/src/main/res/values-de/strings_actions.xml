@@ -2,7 +2,7 @@
 <resources>
 
     <!-- ====================================================== -->
-    <!-- Control mode labels -->
+    <!-- Control sources -->
     <!-- ====================================================== -->
     <string name="switch_mode_label">Switch-Modus: %1$s</string>
     <string name="control_manual">Manuell</string>
@@ -22,7 +22,7 @@
     <string name="paired_tags_sort_name_za">Name Z → A</string>
 
     <!-- ====================================================== -->
-    <!-- Quick Settings tile setup -->
+    <!-- Quick Settings tiles -->
     <!-- ====================================================== -->
     <string name="qs_label_on">Switchly EIN</string>
     <string name="qs_label_off">Switchly AUS</string>
@@ -34,7 +34,7 @@
     <string name="barcode_qs_tile_add_hint">Schnelleinstellungen öffnen → Bearbeiten → „Barcode scannen“ zu den aktiven Kacheln ziehen</string>
 
     <!-- ====================================================== -->
-    <!-- App update prompt -->
+    <!-- Updates -->
     <!-- ====================================================== -->
     <string name="update_available_title">Update verfügbar</string>
     <string name="update_available_message">Eine neue Switchly-Version ist im Google Play Store verfügbar.</string>
@@ -42,7 +42,7 @@
     <string name="switchly_update_up_to_date">Du bist bereits auf dem neuesten Stand</string>
 
     <!-- ====================================================== -->
-    <!-- Accent names and channels -->
+    <!-- Accent colors -->
     <!-- ====================================================== -->
     <string name="accent_default">Standard (Grün)</string>
     <string name="accent_blue">Blau</string>
@@ -58,20 +58,24 @@
     <string name="color_channel_b">B</string>
 
     <!-- ====================================================== -->
-    <!-- QR/barcode sharing and shortcuts -->
+    <!-- QR and barcode sharing -->
     <!-- ====================================================== -->
     <string name="qr_share_failed">QR-Code konnte nicht geteilt werden.</string>
-    <string name="shortcut_qr_short">QR scannen</string>
-    <string name="shortcut_qr_long">QR-Scan starten</string>
-    <string name="shortcut_barcode_short">Barcode scannen</string>
-    <string name="shortcut_barcode_long">Barcode-Scan starten</string>
 
     <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
+    <!-- Shortcuts -->
     <!-- ====================================================== -->
+    <string name="shortcut_qr_short">QR-Scan</string>
+    <string name="shortcut_qr_long">QR-Scan</string>
+    <string name="shortcut_barcode_short">Barcode-Scan</string>
+    <string name="shortcut_barcode_long">Barcode-Scan</string>
     <string name="shortcut_nfc_short">NFC schreiben</string>
     <string name="shortcut_focus_now_short">Fokus jetzt</string>
     <string name="shortcut_focus_now_long">Switchly jetzt aktivieren</string>
+
+    <!-- ====================================================== -->
+    <!-- Widgets -->
+    <!-- ====================================================== -->
     <string name="widget_scanner_name">Switchly Hub</string>
     <string name="widget_scanner_title">Switchly Hub</string>
     <string name="widget_scanner_open_app">App öffnen</string>
@@ -86,18 +90,32 @@
     <string name="widget_pause_30">30 Min</string>
     <string name="widget_pause_60">1 Stunde</string>
     <plurals name="widget_pause_applied_fmt">
-            <item quantity="one">Switchly für %1$d Minute pausiert.</item>
-            <item quantity="other">Switchly für %1$d Minuten pausiert.</item>
-        </plurals>
+        <item quantity="one">Switchly für %1$d Minute pausiert.</item>
+        <item quantity="other">Switchly für %1$d Minuten pausiert.</item>
+    </plurals>
     <string name="widget_pause_already_disabled">Switchly ist bereits deaktiviert.</string>
     <string name="widget_next_schedule_open">Zeitpläne öffnen</string>
     <string name="widget_qr_name">QR-Scanner</string>
     <string name="widget_barcode_name">Barcode-Scanner</string>
     <string name="widget_nfc_name">NFC-Schreiber</string>
     <string name="widget_blocked_notifications_name">Blockierte Benachrichtigungen</string>
-    <string name="widget_pause_blocker_name">Blocker pausieren</string>
+    <string name="widget_pause_blocker_name">Switchly pausieren</string>
     <string name="widget_next_schedule_name">Nächster Zeitplan</string>
-    <string name="experimental_notice_title">Feedback zu Switchly 2.1.5</string>
-    <string name="experimental_notice_body">Einige Bereiche in dieser Version sind noch experimentell und brauchen extra Feedback. Bitte sende Logs, wenn dir etwas auffällt bei Split-Screen-/Pop-up-Blocking, In-App-Blocking für YouTube, Instagram und Snapchat, Akkuwarnungen/Berechtigungsstatus-Konsistenz, Developer-Mode-Logging, Feedback zur Support-Änderung, FAQ-Formulierungen und Troubleshooting-Klarheit oder deutscher/englischer Textqualität. Multi-Window und In-App-Blocking sind Best-Effort und können je nach Gerät und App-Version unterschiedlich reagieren. Für diese Bereiche ist bereits ein Folge-Update geplant, daher sind Reports besonders hilfreich.</string>
+    <string name="widget_scanner_desc">Schnellzugriff auf Switchly, QR, Barcode, NFC, Fokus und blockierte Benachrichtigungen.</string>
+    <string name="widget_qr_desc">Öffnet den Switchly QR-Scanner.</string>
+    <string name="widget_barcode_desc">Öffnet den Switchly Barcode-Scanner.</string>
+    <string name="widget_nfc_desc">Öffnet den Switchly NFC-Schreiber.</string>
+    <string name="widget_focus_now_desc">Aktiviert Switchly direkt vom Homescreen.</string>
+    <string name="widget_blocked_notifications_desc">Zeigt zuletzt blockierte Benachrichtigungen.</string>
+    <string name="widget_pause_blocker_desc">Pausiert Switchly temporär für 15, 30 oder 60 Minuten.</string>
+    <string name="widget_next_schedule_desc">Zeigt die nächste geplante Switchly-Zeitplanänderung.</string>
+    <string name="widget_next_schedule_preview_time">Heute · 18:00</string>
+    <string name="widget_blocked_notifications_preview_row">Letzte blockierte Hinweise</string>
+
+    <!-- ====================================================== -->
+    <!-- Experimental features -->
+    <!-- ====================================================== -->
+    <string name="experimental_notice_title">Feedback zu Switchly 2.2.0</string>
+    <string name="experimental_notice_body">Switchly 2.2.0 ist ein großes Update, daher ist Feedback besonders hilfreich.\n\nBitte sende Logs oder Feedback, wenn etwas komisch wirkt bei:\n• dem neuen Onboarding\n• Permissions und Background Access\n• dem neuen Usage Timer, Session Limits und Usage Insights\n• dem neuen Help Center/FAQ\n• Home Display Modes und Customize Home\n• Block selected/Allow selected App- und Website-Listen\n• App Picker, Profilen, Zeitplänen, NFC, QR, Barcodes und Manage Keys\n• Blocked Notifications, Filter/Sort, Dialogen und Disabled-State-Meldungen\n• Premium, Google Play Billing, Redeem Codes, Backup oder Restore\n\nDas Update berührt viele Setup-Wege, daher sind auch kleine UX-Probleme hilfreich.</string>
 
 </resources>

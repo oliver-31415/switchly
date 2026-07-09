@@ -35,8 +35,14 @@ import at.saltyy.switchly.theme.AccentColor
 class AppUsageAdapter(
     private val onClick: ((AppUsage) -> Unit)? = null,
     private val onEditLimits: ((AppUsage) -> Unit)? = null,
-    private val limitBadgeProvider: ((AppUsage) -> String?)? = null
+    private val limitBadgeProvider: ((AppUsage) -> String?)? = null,
+    private val sessionUsageProvider: ((AppUsage) -> SessionUsageGraph?)? = null
 ) : RecyclerView.Adapter<AppUsageAdapter.VH>() {
+
+    data class SessionUsageGraph(
+        val summary: String,
+        val progressPercent: Int
+    )
 
     private var items: List<AppUsage> = emptyList()
     private var detailsCtaEnabled: Boolean = true
@@ -67,7 +73,7 @@ class AppUsageAdapter(
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.bind(items[position], onClick, onEditLimits, detailsCtaEnabled, limitBadgeProvider)
+        holder.bind(items[position], onClick, onEditLimits, detailsCtaEnabled, limitBadgeProvider, sessionUsageProvider)
     }
 
     override fun getItemCount(): Int = items.size
@@ -81,13 +87,17 @@ class AppUsageAdapter(
         private val progress = v.findViewById<ProgressBar>(R.id.progress)
         private val btnEditLimits = v.findViewById<ImageView>(R.id.btnEditLimits)
         private val limitBadge = v.findViewById<TextView>(R.id.limitBadge)
+        private val sessionUsageContainer = v.findViewById<View>(R.id.sessionUsageContainer)
+        private val sessionUsageText = v.findViewById<TextView>(R.id.sessionUsageText)
+        private val sessionProgress = v.findViewById<ProgressBar>(R.id.sessionProgress)
 
         fun bind(
             item: AppUsage,
             onClick: ((AppUsage) -> Unit)?,
             onEditLimits: ((AppUsage) -> Unit)?,
             detailsCtaEnabled: Boolean,
-            limitBadgeProvider: ((AppUsage) -> String?)?
+            limitBadgeProvider: ((AppUsage) -> String?)?,
+            sessionUsageProvider: ((AppUsage) -> SessionUsageGraph?)?
         ) {
             val ctx = itemView.context
 
@@ -101,12 +111,21 @@ class AppUsageAdapter(
             val accent = AccentColor.getAccentColorInt(ctx)
             progress.progressTintList = ColorStateList.valueOf(accent)
             details.setTextColor(accent)
+            btnEditLimits.imageTintList = ColorStateList.valueOf(accent)
 
             val badge = limitBadgeProvider?.invoke(item)?.trim().orEmpty()
             limitBadge.isVisible = badge.isNotBlank()
             limitBadge.text = badge
             if (badge.isNotBlank()) {
                 limitBadge.setTextColor(accent)
+            }
+
+            val sessionGraph = sessionUsageProvider?.invoke(item)
+            sessionUsageContainer.isVisible = sessionGraph != null
+            if (sessionGraph != null) {
+                sessionUsageText.text = sessionGraph.summary
+                sessionProgress.progress = sessionGraph.progressPercent.coerceIn(0, 100)
+                sessionProgress.progressTintList = ColorStateList.valueOf(accent)
             }
 
             val clickable = detailsCtaEnabled && onClick != null

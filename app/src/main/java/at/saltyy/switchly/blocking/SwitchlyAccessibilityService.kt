@@ -55,6 +55,7 @@ import at.saltyy.switchly.data.prefs.InAppLimitStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.ProfileUsageStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
@@ -62,10 +63,11 @@ import at.saltyy.switchly.data.prefs.SurfaceUsageStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.TempAllowStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
+import at.saltyy.switchly.data.prefs.UsageLimitResetStore
+import at.saltyy.switchly.data.prefs.UsageLimitSessionRuntimeStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.feature.blocker.BlockerActivity
-import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.util.AppUsageToday
@@ -129,6 +131,15 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private val usageInternalAtEnterByPkg = HashMap<String, Long>()
     private val usageSystemAtEnterByPkg = HashMap<String, Long>()
 
+    // Optional time-limit reset mode: per active Switchly/profile session.
+    // Existing limits stay daily by default.
+    // Session counters are intentionally runtime-scoped: they reset when Switchly/profile enters a new active session, and they do not touch daily stats.
+    private var activeLimitSessionProfile: String? = null
+    private var activeLimitSessionGeneration: Long = -1L
+    private var activeLimitSessionStartedAt: Long = 0L
+    private val sessionLimitUsageMsByKey = HashMap<String, Long>()
+    private val sessionLimitReachedKeys = HashSet<String>()
+
     // Debounce block/attempt stats + blocker UI launches.
     private val lastAttemptAt = HashMap<String, Long>()
     private val lastBlockShownAt = HashMap<String, Long>()
@@ -154,7 +165,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     private val suppressedBlockingUntilByPkg = HashMap<String, Long>()
 
     private val ATTEMPT_COOLDOWN_MS = 1_200L
-    // Count an "open" once per foreground session. 
+    // Count an "open" once per foreground session.
     // Apps such as Gmail and Instagram can emit multiple ACTIVITY_RESUMED events while the user is still inside the same app,  so a short cooldown alone would incorrectly count one real open many times.
     private val OPEN_COUNT_COOLDOWN_MS = 800L
     private val BLOCK_SHOWN_COOLDOWN_MS = 800L
@@ -898,30 +909,48 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (delta <= 0L) return
 
         // Only count usage while Switchly is enabled and screen is interactive.
-        if (!pm.isInteractive) return
-        if (km?.isKeyguardLocked == true) return
-        if (!SwitchModeStore.isEnabled(this)) return
-        if (EmergencyBypassStore.isActive(this)) return
-        if (TempAllowStore.isAllowed(this, pkg)) return
+        if (!pm.isInteractive) {
+            clearActiveLimitSession()
+            return
+        }
+        if (km?.isKeyguardLocked == true) {
+            clearActiveLimitSession()
+            return
+        }
+        if (!SwitchModeStore.isEnabled(this)) {
+            clearActiveLimitSession()
+            return
+        }
+        if (EmergencyBypassStore.isActive(this)) {
+            clearActiveLimitSession()
+            return
+        }
 
         val nowForCache = now
-        val profile = getCurrentProfileCached(nowForCache)
+        val profile = getCurrentProfileCached(nowForCache)?.takeIf { it.isNotBlank() } ?: run {
+            clearActiveLimitSession()
+            return
+        }
+        ensureActiveLimitSession(profile, nowForCache)
+
+        if (TempAllowStore.isAllowed(this, pkg)) return
 
         // Track app usage for Today statistics even when no daily limit is configured.
         // Limit enforcement still happens below and continues to depend on the active profile + limit.
         UsageStore.addUsageMsToday(this, pkg, delta)
 
-        if (!profile.isNullOrBlank()) {
-            // App limits are profile-specific. 
-            // Keep a separate per-profile counter so switching from a hard-blocked profile into a limited profile does not immediately inherit stale/over-counted usage from a different profile.
-            ProfileUsageStore.addUsageMsToday(this, profile, pkg, delta)
+        // App limits are profile-specific.
+        // Keep a separate per-profile counter so switching from a hard-blocked profile into a limited profile does not immediately inherit stale/over-counted usage from a different profile.
+        ProfileUsageStore.addUsageMsToday(this, profile, pkg, delta)
+        if (UsageLimitResetStore.isSessionMode(this, profile, pkg)) {
+            addSessionLimitUsageMs(profile, pkg, delta)
+        }
 
-            // "Blocked time" should reflect how long apps are configured as blocked while Switchly is enabled (not how long the blocker UI is shown). Track it here, once per tick.
-            val blockedSet = getBlockedAppsCached(profile, nowForCache)
-            if (blockedSet.isNotEmpty()) {
-                for (blockedPkg in blockedSet) {
-                    BlockedTimeStore.addBlockedMsToday(this, blockedPkg, delta)
-                }
+        // "Blocked time" should reflect how long apps are configured as blocked while Switchly is enabled (not how long the blocker UI is shown). Track it here, once per tick.
+        val blockedSet = getBlockedAppsCached(profile, nowForCache)
+        if (blockedSet.isNotEmpty()) {
+            for (blockedPkg in blockedSet) {
+                BlockedTimeStore.addBlockedMsToday(this, blockedPkg, delta)
             }
         }
 
@@ -948,7 +977,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
         }
 
-        val safeProfile = profile ?: return
+        val safeProfile = profile
 
         // Usage limits should work even if the app isn't in the "blocked apps" list.
         // (Users can set a daily limit without hard-blocking the app.)
@@ -957,8 +986,12 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         // Enforce app limits using usage accumulated while the current profile is active.
         // The overall usage dashboard may show a different value because it is intentionally not profile-scoped.
-        val usedMs = getProfileLimitUsageMsToday(safeProfile, pkg)
+        val usedMs = getEnforcedLimitUsageMs(safeProfile, pkg)
         val limitMs = limitMin * 60_000L
+        val sessionMode = UsageLimitResetStore.isSessionMode(this, safeProfile, pkg)
+        if (sessionMode) {
+            publishSessionLimitState(safeProfile, pkg, limitMin, usedMs, reached = usedMs >= limitMs)
+        }
         if (usedMs >= limitMs) {
             appendBlockingLog(
                 category = "app_limit_reached",
@@ -966,14 +999,17 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 message = "profile=$safeProfile pkg=$pkg limitMin=$limitMin usageMs=$usedMs limitMs=$limitMs",
                 throttleMs = 2_000L
             )
-            LimitReachedStore.markReachedToday(this, safeProfile, pkg)
+            markLimitReached(safeProfile, pkg)
+            if (sessionMode) {
+                publishSessionLimitState(safeProfile, pkg, limitMin, usedMs, reached = true)
+            }
             maybeBlockNow(pkg, force = true)
         }
     }
 
-    private fun getSystemUsageMsToday(pkg: String, now: Long): Long {
+    private fun getSystemUsageMsToday(pkg: String, _now: Long): Long {
         return try {
-            UsageStatsRepo.getTodayMsForPackage(this, pkg, now)
+            UsageStore.getUsageMsToday(this, pkg)
         } catch (_: Throwable) {
             0L
         }
@@ -982,7 +1018,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     /**
      * Returns the "today" app usage used for user-facing app timers.
      *
-     * We prefer the system-reported value when Usage Access is granted so Switchly stays aligned with Android's own screen-time numbers. 
+     * We prefer the system-reported value when Usage Access is granted so Switchly stays aligned with Android's own screen-time numbers.
      * If Usage Access is missing, we fall back to Switchly's internal counter.
      */
     private fun getEffectiveUsageMsToday(pkg: String, now: Long): Long {
@@ -991,11 +1027,81 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     /**
      * Usage used for enforcing profile-specific app limits.
-     * The public usage dashboard can show overall daily usage, but limits configured inside a profile should be evaluated against usage accumulated while that profile is active.
-     * This avoids false early blocks after switching from a hard-blocking profile to a limited profile.
+     *
+     * Default behavior stays per day/profile. If a limit is configured as "per active session", the runtime-scoped session counter is used instead.
      */
-    private fun getProfileLimitUsageMsToday(profile: String, pkg: String): Long {
-        return ProfileUsageStore.getUsageMsToday(this, profile, pkg)
+    private fun getEnforcedLimitUsageMs(profile: String, pkg: String): Long {
+        return if (UsageLimitResetStore.isSessionMode(this, profile, pkg)) {
+            sessionLimitUsageMsByKey[limitSessionKey(profile, pkg)] ?: 0L
+        } else {
+            ProfileUsageStore.getUsageMsToday(this, profile, pkg)
+        }
+    }
+
+    private fun ensureActiveLimitSession(profile: String, now: Long) {
+        val generation = SwitchModeStore.getLimitSessionGeneration(this)
+        if (activeLimitSessionProfile == profile && activeLimitSessionGeneration == generation && activeLimitSessionStartedAt > 0L) return
+        activeLimitSessionProfile = profile
+        activeLimitSessionGeneration = generation
+        activeLimitSessionStartedAt = now
+        sessionLimitUsageMsByKey.clear()
+        sessionLimitReachedKeys.clear()
+        UsageLimitSessionRuntimeStore.clearAll(this)
+        appendBlockingLog(
+            category = "limit_session",
+            key = "limit-session-start|$profile|$generation",
+            message = "profile=$profile generation=$generation startedAt=$activeLimitSessionStartedAt",
+            throttleMs = 1_500L
+        )
+    }
+
+    private fun clearActiveLimitSession() {
+        activeLimitSessionProfile = null
+        activeLimitSessionGeneration = -1L
+        activeLimitSessionStartedAt = 0L
+        sessionLimitUsageMsByKey.clear()
+        sessionLimitReachedKeys.clear()
+        UsageLimitSessionRuntimeStore.clearAll(this)
+    }
+
+    private fun limitSessionKey(profile: String, pkg: String): String = "$profile|$pkg"
+
+    private fun publishSessionLimitState(profile: String, pkg: String, limitMinutes: Int, usedMs: Long, reached: Boolean) {
+        if (limitMinutes <= 0) return
+        UsageLimitSessionRuntimeStore.update(
+            context = this,
+            profile = profile,
+            pkg = pkg,
+            generation = activeLimitSessionGeneration.takeIf { it >= 0L } ?: SwitchModeStore.getLimitSessionGeneration(this),
+            startedAt = activeLimitSessionStartedAt,
+            usedMs = usedMs,
+            limitMs = limitMinutes.toLong() * 60_000L,
+            reached = reached
+        )
+    }
+
+    private fun addSessionLimitUsageMs(profile: String, pkg: String, deltaMs: Long) {
+        if (deltaMs <= 0L) return
+        val key = limitSessionKey(profile, pkg)
+        sessionLimitUsageMsByKey[key] = (sessionLimitUsageMsByKey[key] ?: 0L) + deltaMs
+    }
+
+    private fun isLimitReached(profile: String, pkg: String, limitMinutes: Int): Boolean {
+        if (limitMinutes <= 0) return false
+        return if (UsageLimitResetStore.isSessionMode(this, profile, pkg)) {
+            sessionLimitReachedKeys.contains(limitSessionKey(profile, pkg)) ||
+                getEnforcedLimitUsageMs(profile, pkg) >= limitMinutes * 60_000L
+        } else {
+            LimitReachedStore.isReachedToday(this, profile, pkg)
+        }
+    }
+
+    private fun markLimitReached(profile: String, pkg: String) {
+        if (UsageLimitResetStore.isSessionMode(this, profile, pkg)) {
+            sessionLimitReachedKeys.add(limitSessionKey(profile, pkg))
+        } else {
+            LimitReachedStore.markReachedToday(this, profile, pkg)
+        }
     }
 
     /**
@@ -1061,7 +1167,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     /**
      * Scans UsageEvents for ACTIVITY_RESUMED to count app opens reliably.
      *
-     * Some OEMs (and some navigation flows) do not emit consistent accessibility transition events when leaving/returning to apps (especially via Recents). 
+     * Some OEMs (and some navigation flows) do not emit consistent accessibility transition events when leaving/returning to apps (especially via Recents).
      * UsageEvents is the most reliable cross-device signal for "app became foreground".
      * This is only used when the user has configured at least one attempt limit.
      */
@@ -1117,7 +1223,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         lastOpenSessionAt = now
 
         if (sameForegroundSession) {
-            // Still inside the same app session. 
+            // Still inside the same app session.
             // Do not count repeated ACTIVITY_RESUMED events from internal activity changes, tab switches, notification updates, or OEM foreground flaps.
             return
         }
@@ -1139,7 +1245,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         // Treat an app as *hard blocked* only when it has no limits configured.
         // If the user sets a time/attempt limit for an app that is in the blocked list, the limit should take precedence (otherwise it looks "broken").
         val hardBlocked = isManagedPackage(pkg, blocked) && timeLimitMin <= 0 && attemptLimit <= 0
-        val timeBlocked = timeLimitMin > 0 && LimitReachedStore.isReachedToday(this, profile, pkg)
+        val timeBlocked = timeLimitMin > 0 && isLimitReached(profile, pkg, timeLimitMin)
         if (hardBlocked || timeBlocked) return
 
         val last = lastOpenCountAt[pkg] ?: 0L
@@ -1171,7 +1277,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
         val now = System.currentTimeMillis()
 
-        // Strict-mode lockout fallback: when Settings or another strict recovery surface is temporarily allowed, do not let loop-protection suppression immediately bounce it back home again. 
+        // Strict-mode lockout fallback: when Settings or another strict recovery surface is temporarily allowed, do not let loop-protection suppression immediately bounce it back home again.
         // This keeps the short recovery window real instead of only showing a toast while the activity is still closed.
         if (AppBlockSafety.requiresStrictModeForBlocking(this, pkg) && TempAllowStore.isAllowed(this, pkg)) {
             markRuntimeBlockCheck("strict_lockout_recovery_allowed")
@@ -1226,15 +1332,24 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val profile = getCurrentProfileCached(nowForCache)
         if (profile == null) {
             markRuntimeBlockCheck("no_active_profile")
+            clearActiveLimitSession()
             return
         }
-        val blocked = getBlockedAppsCached(profile, nowForCache)
+        ensureActiveLimitSession(profile, nowForCache)
+        val allowMode = ProfileRuleModeStore.isAllowMode(this, profile)
+        val blocked = if (allowMode) {
+            ProfileStore.getAllowedForProfile(this, profile)
+        } else {
+            getBlockedAppsCached(profile, nowForCache)
+        }
+        val allowModeListed = allowMode && pkg in ProfileStore.getLaunchablePackages(this)
+        val essentialAllowed = allowMode && AppBlockSafety.isAllowModeEssential(this, pkg)
         val lockActive = SwitchModeStore.isNfcRequiredForDisable(this)
         val limitMin = getUsageLimitCached(profile, pkg, nowForCache)
         val attemptLimit = getAttemptLimitCached(profile, pkg, nowForCache)
 
         val opensExceeded = attemptLimit > 0 && OpenCountStore.getToday(this, profile, pkg) > attemptLimit
-        val effectiveUsageMsToday = getProfileLimitUsageMsToday(profile, pkg)
+        val effectiveUsageMsToday = getEnforcedLimitUsageMs(profile, pkg)
         val decision = resolveAppBlockDecision(
             pkg = pkg,
             blockedPackages = blocked,
@@ -1244,26 +1359,29 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             effectiveUsageMsToday = effectiveUsageMsToday,
             lockActive = lockActive,
             highRisk = isHighRiskBlockTarget(this, pkg),
-            force = force
+            force = force,
+            allowMode = allowMode,
+            essentialAllowed = essentialAllowed,
+            allowModeListed = allowModeListed
         )
 
         if (limitMin > 0 || attemptLimit > 0) {
             val limitMs = limitMin * 60_000L
-            val hardBlocked = isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0
+            val hardBlocked = if (allowMode) allowModeListed && !isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0 && !essentialAllowed else isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0
             appendBlockingLog(
                 category = "app_limit_decision",
                 key = "app-limit-decision|$profile|$pkg",
-                message = "profile=$profile pkg=$pkg hardBlocked=$hardBlocked limitMin=$limitMin profileUsageMs=$effectiveUsageMsToday globalUsageMs=${getEffectiveUsageMsToday(pkg, System.currentTimeMillis())} limitMs=$limitMs attemptLimit=$attemptLimit opensExceeded=$opensExceeded force=$force shouldBlock=${decision.shouldBlock}",
+                message = "profile=$profile mode=${if (allowMode) "allow" else "block"} pkg=$pkg hardBlocked=$hardBlocked allowModeListed=$allowModeListed essentialAllowed=$essentialAllowed limitMin=$limitMin limitUsageMs=$effectiveUsageMsToday globalUsageMs=${getEffectiveUsageMsToday(pkg, System.currentTimeMillis())} limitMs=$limitMs attemptLimit=$attemptLimit opensExceeded=$opensExceeded force=$force shouldBlock=${decision.shouldBlock}",
                 throttleMs = 2_000L
             )
         }
 
         if (!decision.shouldBlock) {
-            val managed = isManagedPackage(pkg, blocked) || limitMin > 0 || attemptLimit > 0
-            val hardBlocked = isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0
+            val hardBlocked = if (allowMode) allowModeListed && !isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0 && !essentialAllowed else isManagedPackage(pkg, blocked) && limitMin <= 0 && attemptLimit <= 0
+            val managed = hardBlocked || isManagedPackage(pkg, blocked) || limitMin > 0 || attemptLimit > 0
             markRuntimeBlockCheck(
                 reason = if (managed) "decision_allow" else "not_managed_for_profile",
-                details = "profile=$profile blockedCount=${blocked.size} hardBlocked=$hardBlocked limitMin=$limitMin attemptLimit=$attemptLimit opensExceeded=$opensExceeded profileUsageMs=$effectiveUsageMsToday force=$force event=${eventTypeLabel(event)}"
+                details = "profile=$profile blockedCount=${blocked.size} hardBlocked=$hardBlocked allowModeListed=$allowModeListed essentialAllowed=$essentialAllowed limitMin=$limitMin attemptLimit=$attemptLimit opensExceeded=$opensExceeded limitUsageMs=$effectiveUsageMsToday force=$force event=${eventTypeLabel(event)}"
             )
             return
         }
@@ -1421,7 +1539,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         if (prePopupPhoneHome) {
             // Move the user to the phone launcher before showing the feedback popup.
-            // This is intentionally only used for surfaces where the launcher should remain visible behind the popup. 
+            // This is intentionally only used for surfaces where the launcher should remain visible behind the popup.
             // YouTube Shorts no longer uses this path because the expected UX is YouTube Home behind the popup.
             blockLaunchController.postHome(delayMs = 60L)
         }
@@ -1482,7 +1600,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             }
         }, showDelay)
     }
-
 
     private fun homeThenBlockSurface(
         pkg: String,
@@ -2252,11 +2369,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         }
 
         val cd = event.contentDescription?.toString()?.lowercase(Locale.getDefault()).orEmpty()
-        if (cd.contains("address") || cd.contains("search or enter") || cd.contains("search") || cd.contains("url")) {
-            return true
-        }
-
-        return false
+        return cd.contains("address") || cd.contains("search or enter") || cd.contains("search") || cd.contains("url")
     }
 
     private fun isBrowserAddressEditing(
@@ -2840,8 +2953,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         if (!blockWebsitesEnabled) return
 
-        val blockedDomains = blockedDomainsList
-        val hardBlocked = blockedDomains.any { DomainBlockStore.matches(host, it) }
+        val selectedDomains = blockedDomainsList
+        val hardBlocked = DomainBlockStore.shouldBlockHost(this, host)
 
         val limitMin = DomainLimitStore.getLimitMinutes(this, host)
         val usageMs = if (limitMin > 0) WebUsageStore.getUsageMsToday(this, host) else 0L
@@ -2863,7 +2976,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val title = if (hardBlocked) getString(R.string.blocking_website_blocked_title) else getString(R.string.blocking_website_limit_reached_title)
         val msg = domainUsageLine(host, limitMin)
 
-        // Prefer redirecting the current browser task to a safe page so the browser stays open without dropping the user out of the whole app. 
+        // Prefer redirecting the current browser task to a safe page so the browser stays open without dropping the user out of the whole app.
         // Fall back to a single BACK only if the redirect is not supported by the current browser build.
         val redirected = tryRedirectBrowserToSafePage(pkg)
         appendBlockingLog(
@@ -2914,7 +3027,8 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         if (!isRootFromPackage(root, pkg)) return
 
         val blockedDomains = DomainBlockStore.getDomains(this).toList()
-        if (blockedDomains.isEmpty()) return
+        val allowWebsiteMode = ProfileStore.getCurrent(this)?.let { ProfileRuleModeStore.isAllowMode(this, it) } == true
+        if (blockedDomains.isEmpty() && !allowWebsiteMode) return
 
         val visibleHost = tryExtractDomainFromBrowserUrlViews(root, pkg)
             ?: inferFirefoxDomainFromTexts(root, null, blockedDomains)
@@ -2922,7 +3036,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             ?: browserWebsiteState.currentTrackedDomain(pkg, System.currentTimeMillis(), isFirefox = true)
             ?: return
 
-        val hardBlocked = blockedDomains.any { DomainBlockStore.matches(visibleHost, it) }
+        val hardBlocked = DomainBlockStore.shouldBlockHost(this, visibleHost)
         val limitMin = DomainLimitStore.getLimitMinutes(this, visibleHost)
         val limitReached = limitMin > 0 && WebUsageStore.getUsageMsToday(this, visibleHost) >= limitMin.toLong() * 60_000L
         if (!hardBlocked && !limitReached) return
@@ -2959,7 +3073,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         message: String,
         redirected: Boolean
     ) {
-        // Some Chromium/OEM combinations can restore the blocked tab immediately after our safe-page redirect. 
+        // Some Chromium/OEM combinations can restore the blocked tab immediately after our safe-page redirect.
         // Re-check shortly after a successful website block and enforce once more if the same blocked host is still visible.
         val now = System.currentTimeMillis()
         val key = "$pkg|$host"
@@ -2992,8 +3106,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             ?: tryExtractDomainFromBrowser(root, pkg, null)
             ?: return
 
-        val stillBlocked = DomainBlockStore.matches(visibleHost, host) ||
-            DomainBlockStore.getDomains(this).any { DomainBlockStore.matches(visibleHost, it) }
+        val stillBlocked = DomainBlockStore.shouldBlockHost(this, visibleHost)
         val limitMin = DomainLimitStore.getLimitMinutes(this, visibleHost)
         val limitReached = limitMin > 0 && WebUsageStore.getUsageMsToday(this, visibleHost) >= limitMin.toLong() * 60_000L
 
@@ -3830,7 +3943,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
                 val appLabel = safeAppLabel(pkg)
 
                 if (surfaceKey == "yt:shorts" || surfaceKey == "yt:subscriptions") {
-                    // Pause before the surface redirect. 
+                    // Pause before the surface redirect.
                     // Shorts uses a very fast in-app Home tap followed immediately by the popup, so the Home animation should be hidden underneath the blocker instead of appearing first.
                     runCatching { blockLaunchController.pauseActiveMediaPlayback() }
                     if (surfaceKey == "yt:shorts") {
@@ -4568,7 +4681,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun isInstagramSearchScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
-        // Keep Search detection strict. 
+        // Keep Search detection strict.
         // Instagram Direct/Messages also contains a search field, so generic root text matching would incorrectly block DMs.
         if (isInstagramMessagesScreen(root, event) || isInstagramStoriesViewer(root, event)) return false
 
@@ -4612,7 +4725,6 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
         return false
     }
-
 
     private fun instagramBottomSurfaceFromCenterX(centerX: Float): String? {
         // Typical Instagram bottom nav: Home | Search/Explore | Create | Reels | Profile.
@@ -4700,7 +4812,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun isInstagramMessagesScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
-        // Keep this deliberately strict. 
+        // Keep this deliberately strict.
         // The normal Instagram Home/Explore/Reels screens often expose a "Messages"/DM icon somewhere in the root tree, which must not suppress all in-app blocking.
         val eventLabels = listOf(
             "messages",
@@ -4732,7 +4844,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
     }
 
     private fun isInstagramProfileScreen(root: AccessibilityNodeInfo, event: AccessibilityEvent? = null): Boolean {
-        // Keep profile detection narrow. 
+        // Keep profile detection narrow.
         // Words like "followers", "following" or "posts" can appear in normal feeds/search results and would otherwise disable all Instagram surface blocking.
         return hasSelectedLabel(root, listOf("profile", "profil")) ||
             nodeTextMatches(root, listOf("edit profile", "profil bearbeiten", "professional dashboard", "dashboard für professionelle")) ||

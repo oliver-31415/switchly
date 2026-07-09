@@ -4,13 +4,12 @@
     <!-- ====================================================== -->
     <!-- Website blocking overview -->
     <!-- ====================================================== -->
-    <string name="block_websites">Block websites</string>
-    <string name="block_websites_desc">Block specific domains in supported browsers.\nYou can also set a daily time limit.</string>
-    <string name="blocked_websites_title">Blocked websites</string>
-    <string name="blocked_websites_empty">No blocked websites yet. Tap + to add one.</string>
+    <string name="website_rules_title">Website rules</string>
+    <string name="block_websites">Website rules</string>
+    <string name="blocked_websites_empty">No blocked websites yet.\n\nTap + to add a website this profile should block.</string>
+    <string name="website_rules_info_title">Website rules</string>
+    <string name="website_rules_info_body">Website rules are profile-specific and apply only while this profile is active.\n\nUse the master switch to temporarily disable website rules without removing your domains. In Block selected mode, selected domains are blocked. In Allow selected mode, selected domains are allowed.\n\nWebsite blocking reads the visible URL from supported browsers through Accessibility. Supported/tested browsers include Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo, and Ecosia. Support can still vary by browser version and device.</string>
     <string name="blocked_websites_add_title">Add website</string>
-    <string name="website_supported_browsers_title">Supported browsers</string>
-    <string name="website_supported_browsers_message">Website blocking works by reading the visible URL from supported browsers through Accessibility.\nCurrently supported/tested browsers include Chrome, Brave (stable, beta, nightly), Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo, and Ecosia.\nSupport can still vary by browser version and device. If website blocking does not work in one browser, try Chrome or Firefox, or block the browser app itself.</string>
 
     <!-- ====================================================== -->
     <!-- Rule editor -->
@@ -39,11 +38,16 @@
     <string name="blocking_website_limit_reached_title">Website limit reached!</string>
 
     <!-- ====================================================== -->
-    <!-- Other/fallback resources -->
+    <!-- Allow mode, deletion and session limits -->
     <!-- ====================================================== -->
     <plurals name="delete_websites_confirm">
         <item quantity="one">Delete this website rule?</item>
         <item quantity="other">Delete %1$d website rules?</item>
     </plurals>
 
+    <string name="session_reset_limit_value_format">%1$d min/session</string>
+    <string name="allowed_websites_empty">No allowed websites yet.\n\nAdd websites that should stay available while this profile is in Allow selected mode.</string>
+    <string name="blocked_websites_profile_subtitle">Rules for the active profile.</string>
+    <string name="rule_allowed">Allowed</string>
+    <string name="rule_allowed_always">Allowed always</string>
 </resources>

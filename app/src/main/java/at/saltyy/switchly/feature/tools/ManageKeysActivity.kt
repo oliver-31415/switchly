@@ -7,6 +7,14 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 package at.saltyy.switchly.feature.tools
@@ -18,6 +26,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
@@ -32,7 +41,6 @@ import at.saltyy.switchly.ui.LockedUi
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
-import at.saltyy.switchly.util.SystemBarColorCompat
 import com.google.android.material.appbar.MaterialToolbar
 
 class ManageKeysActivity : AppCompatActivity() {
@@ -50,8 +58,6 @@ class ManageKeysActivity : AppCompatActivity() {
 
         toolbar = findViewById(R.id.toolbar)
         EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar, bottomNav = null)
-        SystemBarColorCompat.setStatusBarColor(window, androidx.core.content.ContextCompat.getColor(this, android.R.color.black))
-        SystemBarColorCompat.setNavigationBarColor(window, androidx.core.content.ContextCompat.getColor(this, android.R.color.black))
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 
@@ -61,6 +67,7 @@ class ManageKeysActivity : AppCompatActivity() {
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
         setupCards()
+        applyOnboardingFilterIfNeeded()
         syncLockedCardState()
     }
 
@@ -69,12 +76,26 @@ class ManageKeysActivity : AppCompatActivity() {
         syncLockedCardState()
     }
 
+    private fun applyOnboardingFilterIfNeeded() {
+        if (!intent.getBooleanExtra(EXTRA_FILTER_FROM_ONBOARDING, false)) return
+
+        val showNfc = intent.getBooleanExtra(EXTRA_SHOW_NFC, false)
+        val showQr = intent.getBooleanExtra(EXTRA_SHOW_QR, false)
+        val showBarcode = intent.getBooleanExtra(EXTRA_SHOW_BARCODE, false)
+
+        // In onboarding we only show the key types the user selected in Blocking Controls.
+        findViewById<View>(R.id.cardWriteNfc).visibility = if (showNfc) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardPairedTags).visibility = if (showNfc) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardGenerateQr).visibility = if (showQr) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.cardManageBarcodes).visibility = if (showBarcode) View.VISIBLE else View.GONE
+    }
+
     private fun setupCards() {
         findViewById<View>(R.id.cardWriteNfc).setOnClickListener {
-            if (isNfcTagWritingLocked()) {
-                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_write_nfc_tags)
-            } else {
-                startActivity(Intent(this, NfcWriterActivity::class.java))
+            when {
+                !AutomationModeStore.isNfcAllowed(this) -> showFeatureDisabledToast(R.string.toast_write_nfc_requires_enabled)
+                isNfcTagWritingLocked() -> EditingLockGuard.showLockedDialog(this, R.string.edit_locked_write_nfc_tags)
+                else -> startActivity(Intent(this, NfcWriterActivity::class.java))
             }
         }
 
@@ -87,6 +108,7 @@ class ManageKeysActivity : AppCompatActivity() {
                 "Manage Paired Tags clicked from Manage Keys locked=$locked pairedTagsEnabled=$pairedTagsEnabled"
             )
             when {
+                !AutomationModeStore.isNfcAllowed(this) -> showFeatureDisabledToast(R.string.toast_write_nfc_requires_enabled)
                 !pairedTagsEnabled -> showFeatureDisabledToast(R.string.toast_manage_paired_tags_requires_enabled)
                 locked -> EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_paired_tags)
                 else -> openManagePairedTags()
@@ -94,7 +116,17 @@ class ManageKeysActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.cardGenerateQr).setOnClickListener {
-            startActivity(Intent(this, QrGenerateActivity::class.java))
+            val qrEnabled = AutomationModeStore.shouldShowQrTools(this)
+            AppLogStore.append(
+                this,
+                "QR",
+                "Manage QR clicked from Manage Keys qrEnabled=$qrEnabled"
+            )
+            if (!qrEnabled) {
+                showFeatureDisabledToast(R.string.toast_manage_qr_requires_enabled)
+            } else {
+                startActivity(Intent(this, QrGenerateActivity::class.java))
+            }
         }
 
         findViewById<View>(R.id.cardManageBarcodes).setOnClickListener {
@@ -115,7 +147,7 @@ class ManageKeysActivity : AppCompatActivity() {
     }
 
     private fun arePairedTagsEnabled(): Boolean {
-        return getSharedPreferences("switchly_prefs", MODE_PRIVATE)
+        return PreferenceManager.getDefaultSharedPreferences(this)
             .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
     }
 
@@ -136,8 +168,10 @@ class ManageKeysActivity : AppCompatActivity() {
     private fun syncLockedCardState() {
         val editLocked = EditingLockGuard.isLocked(this)
         val barcodeSetupFallback = AutomationModeStore.isBarcodeSetupMissing(this)
-        applyLockedCardState(findViewById(R.id.cardWriteNfc), isNfcTagWritingLocked())
-        applyLockedCardState(findViewById(R.id.cardPairedTags), editLocked || !arePairedTagsEnabled())
+        val nfcAllowed = AutomationModeStore.isNfcAllowed(this)
+        applyLockedCardState(findViewById(R.id.cardWriteNfc), !nfcAllowed || isNfcTagWritingLocked())
+        applyLockedCardState(findViewById(R.id.cardPairedTags), !nfcAllowed || editLocked || !arePairedTagsEnabled())
+        applyLockedCardState(findViewById(R.id.cardGenerateQr), !AutomationModeStore.shouldShowQrTools(this))
         applyLockedCardState(
             findViewById(R.id.cardManageBarcodes),
             !AutomationModeStore.shouldShowBarcodeTools(this) || (editLocked && !barcodeSetupFallback)
@@ -155,4 +189,12 @@ class ManageKeysActivity : AppCompatActivity() {
     private fun isNfcTagWritingLocked(): Boolean {
         return EditingLockGuard.isLocked(this)
     }
+
+    companion object {
+        const val EXTRA_FILTER_FROM_ONBOARDING = "extra_filter_from_onboarding"
+        const val EXTRA_SHOW_NFC = "extra_show_nfc"
+        const val EXTRA_SHOW_QR = "extra_show_qr"
+        const val EXTRA_SHOW_BARCODE = "extra_show_barcode"
+    }
+
 }

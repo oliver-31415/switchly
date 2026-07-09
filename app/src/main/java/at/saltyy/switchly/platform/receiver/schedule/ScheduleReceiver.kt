@@ -639,7 +639,12 @@ class ScheduleReceiver : BroadcastReceiver() {
         if (profileChanged) {
             ProfileStore.setCurrent(ctx, s.profile)
         } else if (tempOverrideActive && currentProfile != s.profile) {
-            dbg("Temporary override active -> skip schedule profile switch (id=${s.id}, source=$source, target=${s.profile})")
+            if (SwitchModeStore.hasActiveTemporaryEnable(ctx)) {
+                SwitchModeStore.setTemporaryEnableRestoreProfileFromSchedule(ctx, s.profile)
+                dbg("Temporary enable active -> queue schedule profile restore (id=${s.id}, source=$source, target=${s.profile})")
+            } else {
+                dbg("Temporary override active -> skip schedule profile switch (id=${s.id}, source=$source, target=${s.profile})")
+            }
         }
 
         if (profileChanged || (stateActuallyChanged && baseEnabledAfter)) {
@@ -712,7 +717,6 @@ class ScheduleReceiver : BroadcastReceiver() {
         ScheduleStore.Action.ENABLE_AND_DISABLE,
         ScheduleStore.Action.DISABLE_AND_ENABLE -> 0
     }
-
 
     private fun bluetoothScheduleMatches(
         scheduleName: String?,

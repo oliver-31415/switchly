@@ -30,9 +30,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
-import androidx.core.content.edit
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.EmergencyPinStore
 import at.saltyy.switchly.security.AppLockStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -225,7 +225,7 @@ class AppLockSettingsActivity : AppCompatActivity() {
                     Toast.makeText(this, R.string.emergency_pin_too_short, Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                getSharedPreferences(PREFS, MODE_PRIVATE).edit { putString(KEY_EMERGENCY_PIN, pin) }
+                EmergencyPinStore.setPin(this, pin)
                 Toast.makeText(this, R.string.emergency_pin_changed, Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
@@ -236,10 +236,5 @@ class AppLockSettingsActivity : AppCompatActivity() {
     private fun isBiometricAvailable(): Boolean {
         val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
         return BiometricManager.from(this).canAuthenticate(authenticators) == BiometricManager.BIOMETRIC_SUCCESS
-    }
-
-    companion object {
-        private const val PREFS = "switchly_prefs"
-        private const val KEY_EMERGENCY_PIN = "pref_emergency_pin"
     }
 }

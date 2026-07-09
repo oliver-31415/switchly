@@ -29,12 +29,12 @@
     <string name="required">Erforderlich</string>
     <string name="invalid_value">Ungültiger Wert</string>
     <string name="state_enabled">Aktiviert</string>
+    <string name="state_temporarily_enabled">Temporär aktiv</string>
     <string name="state_disabled">Deaktiviert</string>
-
-    <!-- ====================================================== -->
-    <!-- Formatting helpers -->
-    <!-- ====================================================== -->
-    <string name="common_dash">—</string>
     <string name="common_bullet">•</string>
+    <string name="destructive_cannot_be_undone">Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="edit_locked_currently_active_body">Deaktiviere Switchly, um diese Einstellung zu bearbeiten.</string>
+    <string name="edit_locked_currently_active_body_with_hint">%1$s</string>
+    <string name="dialog_section_details">Details</string>
 
 </resources>

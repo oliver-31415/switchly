@@ -28,7 +28,6 @@ import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 
 /**
  * Keeps the app in sync with the current exact-alarm special access state.
- *
  * Android only broadcasts grants for SCHEDULE_EXACT_ALARM, not revocations.
  * We therefore also re-check on app resume and reschedule alarms when the state changes.
  */
