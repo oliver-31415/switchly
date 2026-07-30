@@ -44,7 +44,9 @@ object BlockAttemptStore {
     }
 
     fun incrementToday(ctx: Context, pkg: String, delta: Int = 1) {
-        if (pkg.isBlank() || delta <= 0) return
+        if (pkg.isBlank() || delta <= 0) {
+            return
+        }
         val ymd = todayYmdInt()
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = key(ymd, pkg)
@@ -53,13 +55,17 @@ object BlockAttemptStore {
     }
 
     fun getToday(ctx: Context, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return readIntCompat(sp, key(todayYmdInt(), pkg))
     }
 
     fun getForLastNDays(ctx: Context, pkg: String, days: Int): Int {
-        if (pkg.isBlank() || days <= 0) return 0
+        if (pkg.isBlank() || days <= 0) {
+            return 0
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val cal = Calendar.getInstance()
         var sum = 0
@@ -71,7 +77,9 @@ object BlockAttemptStore {
     }
 
     fun getForMonth(ctx: Context, pkg: String, year: Int, month1Based: Int): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val cal = Calendar.getInstance().apply {
             set(Calendar.YEAR, year)
@@ -92,7 +100,9 @@ object BlockAttemptStore {
     }
 
     fun getForYear(ctx: Context, pkg: String, year: Int): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val cal = Calendar.getInstance().apply {
             set(Calendar.YEAR, year)
@@ -112,7 +122,9 @@ object BlockAttemptStore {
     }
 
     fun getForCurrentWeek(ctx: Context, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val now = Calendar.getInstance()
         val currentDow = now.get(Calendar.DAY_OF_WEEK)
         val firstDow = now.firstDayOfWeek
@@ -131,7 +143,9 @@ object BlockAttemptStore {
     }
 
     fun getOverall(ctx: Context, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         var sum = 0L
         val suffix = "_" + pkg
@@ -152,7 +166,9 @@ object BlockAttemptStore {
     fun getTodayTotal(ctx: Context): Int = getForYmdTotal(ctx, todayYmdInt())
 
     fun getForLastNDaysTotal(ctx: Context, days: Int): Int {
-        if (days <= 0) return 0
+        if (days <= 0) {
+            return 0
+        }
         val cal = Calendar.getInstance()
         var sum = 0
         for (i in 0 until days) {

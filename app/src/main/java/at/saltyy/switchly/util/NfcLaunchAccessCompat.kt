@@ -21,6 +21,7 @@ package at.saltyy.switchly.util
 
 import android.content.Context
 import android.nfc.NfcAdapter
+import android.os.Build
 
 object NfcLaunchAccessCompat {
     enum class State {
@@ -31,7 +32,18 @@ object NfcLaunchAccessCompat {
 
     fun state(context: Context): State {
         val adapter = runCatching { NfcAdapter.getDefaultAdapter(context) }.getOrNull() ?: return State.UNKNOWN
-        if (!runCatching { adapter.isEnabled }.getOrDefault(false)) return State.NOT_ALLOWED
+        if (!runCatching { adapter.isEnabled }.getOrDefault(false)) {
+            return State.NOT_ALLOWED
+        }
+        if (Build.VERSION.SDK_INT >= 36) {
+            return runCatching {
+                if (adapter.isTagIntentAllowed) {
+                    State.ALLOWED
+                } else {
+                    State.NOT_ALLOWED
+                }
+            }.getOrDefault(State.UNKNOWN)
+        }
         return readTagIntentPreference(context, adapter) ?: State.ALLOWED
     }
 
@@ -43,7 +55,9 @@ object NfcLaunchAccessCompat {
             val supported = adapter.javaClass.methods
                 .firstOrNull { method -> method.name == "isTagIntentAppPreferenceSupported" && method.parameterTypes.isEmpty() }
                 ?.invoke(adapter) as? Boolean
-            if (supported == false) return null
+            if (supported == false) {
+                return null
+            }
         }
 
         return runCatching {

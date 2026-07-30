@@ -18,6 +18,7 @@
     <string name="permissions_status_disabled">Disabled</string>
     <string name="permissions_status_location_approx">Approximate (Precise required)</string>
     <string name="permissions_status_location_background_missing">Only while app is in use (Wi-Fi may be less reliable; location schedules need “Allow all the time”)</string>
+    <string name="permissions_status_nearby_wifi_missing">Nearby Wi-Fi devices permission missing</string>
 
     <!-- ====================================================== -->
     <!-- Core permissions -->
@@ -37,7 +38,7 @@
     <string name="permissions_exact_alarms_not_allowed">Not allowed</string>
     <string name="permissions_nfc_title">Launch via NFC</string>
     <string name="permissions_nfc_status_manual">Check manually</string>
-    <string name="permissions_nfc_desc">Some Android versions show a separate “Launch via NFC” entry under Special app access. Allow Switchly there so written NFC tags can open Switchly when scanned. Also make sure the system “Use NFC” toggle is enabled. Android normally requires the device to be unlocked before passive NFC tags are dispatched to apps.</string>
+    <string name="permissions_nfc_desc">Some Android versions show a separate “Launch via NFC” entry under Special app access. Allow Switchly there so written NFC tags can open Switchly when scanned. Also make sure the system “Use NFC” toggle is enabled. NFC does not use a normal runtime permission popup, so this row checks the system NFC state and Android tag-launch access instead. Android normally requires the device to be unlocked before passive NFC tags are dispatched to apps.</string>
 
     <!-- ====================================================== -->
     <!-- Trigger and notification permissions -->
@@ -98,7 +99,7 @@
     <!-- Protection inactive state -->
     <!-- ====================================================== -->
     <string name="protection_inactive_title">Protection inactive</string>
-    <string name="protection_inactive_text">Switchly is enabled, but the Accessibility service is disabled. Tap to enable it.</string>
+    <string name="protection_inactive_text">Switchly is enabled, but the Accessibility service is not currently active. Tap to check its status.</string>
 
     <!-- ====================================================== -->
     <!-- Permission health diagnostics -->

@@ -15,6 +15,8 @@ app/src/main/java/at/saltyy/switchly
 Icons are based on **Material Symbols**:
 [https://fonts.google.com/icons](https://fonts.google.com/icons)
 
+UI, navigation, icon, accessibility, and interaction rules are documented in [`docs/UI_CONVENTIONS.md`](./docs/UI_CONVENTIONS.md).
+
 ---
 
 ## Localization/i18n
@@ -38,10 +40,10 @@ Switchly supports three direct APK configurations plus one Play Store AAB.
 | ---------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
 | `full`           | `fullRelease`          | Google sign-in, Firebase email/password, Firebase cloud backup, file backup, Google Play Billing  |
 | `firebase-email` | `firebaseEmailRelease` | Firebase email/password, Firebase cloud backup, file backup, external checkout URL for Premium    |
-| `offline`        | `offlineRelease`       | File backup only; Firebase is not initialized; Premium can be unlocked through local offline redeem codes |
+| `offline`        | `offlineRelease`       | File backup only; Firebase is not initialized; optional offline redeem can be configured privately at build time |
 | `full-playstore` | `fullRelease` AAB      | Google Play Store build using Google Play Billing; custom redeem-code UI stays hidden              |
 
-Build all APK options plus the full Play Store AAB with Gradle:
+Build and lint all official signed APK options plus the full Play Store AAB with Gradle:
 ```bash
 ./gradlew :app:release-apk
 ```
@@ -51,7 +53,14 @@ Equivalent alias:
 ./gradlew :app:releaseApk
 ```
 
-Outputs are written to `dist/` using website-friendly names:
+The official task requires the maintainer's private Firebase and signing inputs. Public clones can always validate the offline release without any secrets:
+```bash
+./gradlew :app:public-release-apk
+```
+
+Without a signing key, the public task writes `Switchly-<version>-offline-unsigned.apk` so the artifact cannot be mistaken for an official release.
+
+Official outputs are written to `dist/` using website-friendly names:
 ```text
 Switchly-<version>-full.apk
 Switchly-<version>-firebase-email.apk
@@ -108,7 +117,7 @@ You can still override any of those via `-P...` or environment variables, for ex
 
 Notes:
 * Firebase config is not required for `assembleOfflineRelease`
-* The offline flavor sets `BuildConfig.SWITCHLY_FIREBASE_ENABLED=false`, skips Firebase initialization at runtime, disables online purchase/restore, and supports local offline Premium redeem codes
+* The offline flavor sets `BuildConfig.SWITCHLY_FIREBASE_ENABLED=false`, skips Firebase initialization at runtime, disables online purchase/restore, and enables local Premium redeem only when a private build-time allowlist is supplied
 * The Firebase email/password APK supports online Switchly Premium redeem codes and external/direct payment links
 * The Play Store/full build keeps custom Premium redeem hidden so Google Play Billing remains unchanged
 * Current offline builds still include common Google/Firebase dependencies where shared source files reference them; a dependency-free FOSS flavor requires moving those implementations into flavor-specific source sets
@@ -123,8 +132,7 @@ Official builds can compile public website/contact links through `signing.proper
 ```properties
 SWITCHLY_WEBSITE_URL=https://your-domain.example
 SWITCHLY_DOWNLOADS_URL=https://your-domain.example/pages/download
-SWITCHLY_SUPPORT_EMAIL=support@example.com
-SWITCHLY_DEV_EMAIL=dev@example.com
+SWITCHLY_DEV_EMAIL=support@example.com
 ```
 
 These values are public and safe to compile into the APK.
@@ -145,7 +153,7 @@ These URLs are public and safe to compile into the APK. Stripe/Firebase secrets 
 Payment behavior by build:
 * `full`/Play Store AAB uses Google Play Billing
 * `firebase-email` can use the configured external checkout URL and restores Premium through Firebase entitlements
-* `offline` has no online Premium purchase/restore flow; Premium can be unlocked through the compiled local offline code allowlist
+* `offline` has no online Premium purchase/restore flow; local redeem is enabled only when a private `SWITCHLY_OFFLINE_REDEEM_CODE_ALLOWLIST` containing `SALT-OFFLINE-XXXX-XXXX` codes is supplied at build time
 
 ---
 

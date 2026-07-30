@@ -20,7 +20,7 @@
 package at.saltyy.switchly.feature.settings
 
 import android.Manifest
-import android.app.AlarmManager
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -33,10 +33,10 @@ import android.provider.Settings
 import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -47,6 +47,7 @@ import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppPreferences
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
+import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.data.prefs.NotificationBlockStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
@@ -59,6 +60,7 @@ import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.NfcLaunchAccessCompat
+import at.saltyy.switchly.util.PermissionSetupChecks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -80,6 +82,7 @@ class PermissionsActivity : AppCompatActivity() {
         OK,
         APPROX_ONLY,
         BACKGROUND_MISSING,
+        NEARBY_WIFI_MISSING,
         MISSING
     }
 
@@ -360,6 +363,7 @@ class PermissionsActivity : AppCompatActivity() {
         }
 
         updateUi()
+        focusRequestedSection()
 
         if (intent.getBooleanExtra(EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE, false)) {
             findViewById<View>(R.id.root).post {
@@ -376,9 +380,11 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun updateUi(forceHeartbeat: Boolean = false) {
-        val notificationsEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled()
         val postNotifGranted = hasPostNotificationsPermission()
-        val notificationsOk = notificationsEnabled && postNotifGranted
+        val notificationsOk = PermissionSetupChecks.notificationsReady(
+            this,
+            requireListenerAccess = false
+        )
         val notificationAccessGranted = NotificationBlockStore.hasListenerAccess(this)
         val notificationBlockingEnabled = NotificationBlockStore.isEnabled(this)
 
@@ -405,6 +411,10 @@ class PermissionsActivity : AppCompatActivity() {
         val exactAlarmsRelevant = hasEnabledSchedules && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
         val permissionsLocked = SwitchModeStore.isEnabled(this) && SwitchModeStore.isNfcRequiredForDisable(this)
+        val nfcState = NfcLaunchAccessCompat.state(this)
+        val nfcRelevant = AutomationModeStore.isNfcAllowed(this) ||
+            runCatching { NfcUidPairingStore.getPairedUidsHex(this).isNotEmpty() }.getOrDefault(false)
+        val nfcMissing = nfcRelevant && nfcState == NfcLaunchAccessCompat.State.NOT_ALLOWED
 
         applyStatus(tvNotificationsStatus, notificationsOk)
         applyStatus(tvNotificationAccessStatus, notificationAccessGranted)
@@ -431,6 +441,7 @@ class PermissionsActivity : AppCompatActivity() {
             LocationState.MISSING -> getString(R.string.permissions_btn_set_permission)
             LocationState.APPROX_ONLY -> getString(R.string.permissions_btn_enable_precise)
             LocationState.BACKGROUND_MISSING -> getString(R.string.permissions_btn_enable_all_the_time)
+            LocationState.NEARBY_WIFI_MISSING -> getString(R.string.permissions_btn_set_permission)
             LocationState.OK -> getString(R.string.permissions_status_enabled)
         }
 
@@ -490,7 +501,8 @@ class PermissionsActivity : AppCompatActivity() {
             (locationNeeded && !locationOk),
             (bluetoothNeeded && !btGranted),
             (batteryRelevant && !batteryOk),
-            (exactAlarmsRelevant && !exactAlarmsOk)
+            (exactAlarmsRelevant && !exactAlarmsOk),
+            nfcMissing
         ).count { it }
 
         lastMissingPermissionCount = missingCount
@@ -687,32 +699,26 @@ class PermissionsActivity : AppCompatActivity() {
                 tvLocationStatus.text = getString(R.string.permissions_status_location_background_missing)
                 tvLocationStatus.setTextColor(red)
             }
+
+            LocationState.NEARBY_WIFI_MISSING -> {
+                val red = ContextCompat.getColor(this, R.color.status_error)
+                tvLocationStatus.text = getString(R.string.permissions_status_nearby_wifi_missing)
+                tvLocationStatus.setTextColor(red)
+            }
         }
     }
 
     // LOCATION
     private fun hasCoarseLocationPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        return PermissionSetupChecks.hasCoarseLocation(this)
     }
 
     private fun hasFineLocationPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        return PermissionSetupChecks.hasFineLocation(this)
     }
 
     private fun hasBackgroundLocationPermission(): Boolean {
-        // On Android 9 and below there is no separate background location permission.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
-
-        return ContextCompat.checkSelfPermission(
-            this,
-            ACCESS_BACKGROUND_LOCATION_PERMISSION
-        ) == PackageManager.PERMISSION_GRANTED
+        return PermissionSetupChecks.hasBackgroundLocation(this)
     }
 
     /**
@@ -725,13 +731,19 @@ class PermissionsActivity : AppCompatActivity() {
         val coarse = hasCoarseLocationPermission()
 
         if (!fine) {
-            return if (coarse) LocationState.APPROX_ONLY else LocationState.MISSING
+            return if (coarse) {
+                LocationState.APPROX_ONLY
+            } else {
+                LocationState.MISSING
+            }
         }
 
-        // For best reliability, especially when Wi‑Fi triggers run in the background,
-        // guide users to "Allow all the time" (ACCESS_BACKGROUND_LOCATION).
+        // For best reliability, especially when Wi‑Fi triggers run in the background, guide users to "Allow all the time" (ACCESS_BACKGROUND_LOCATION).
         if (!hasBackgroundLocationPermission()) {
             return LocationState.BACKGROUND_MISSING
+        }
+        if (!PermissionSetupChecks.hasNearbyWifiDevices(this)) {
+            return LocationState.NEARBY_WIFI_MISSING
         }
         return LocationState.OK
     }
@@ -760,12 +772,7 @@ class PermissionsActivity : AppCompatActivity() {
 
         // Optional Android 13+ permission for some Wi‑Fi access paths
         if (Build.VERSION.SDK_INT >= 33) {
-            val nearbyGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.NEARBY_WIFI_DEVICES
-            ) == PackageManager.PERMISSION_GRANTED
-
-            if (!nearbyGranted) {
+            if (!PermissionSetupChecks.hasNearbyWifiDevices(this)) {
                 requestPermissions(
                     arrayOf(Manifest.permission.NEARBY_WIFI_DEVICES),
                     REQ_NEARBY_WIFI
@@ -829,17 +836,16 @@ class PermissionsActivity : AppCompatActivity() {
 
     // BLUETOOTH
     private fun hasBluetoothPermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) == PackageManager.PERMISSION_GRANTED
-        } else true
+        return PermissionSetupChecks.bluetoothTriggersReady(this)
     }
 
     private fun requestBluetoothPermissionIfMissing() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-        if (hasBluetoothPermission()) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return
+        }
+        if (hasBluetoothPermission()) {
+            return
+        }
         requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQ_BT)
     }
 
@@ -848,18 +854,21 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun isBatteryOptimizationEffectivelyOk(): Boolean {
-        return BatteryOptimizationCompat.isEffectivelyOk(this)
+        return PermissionSetupChecks.batteryOptimizationReady(this)
     }
 
+    @SuppressLint("BatteryLife")
     private fun requestIgnoreBatteryOptimizationsSystemPopup() {
-        // Open the Android battery optimization settings. The direct ignore-battery-optimization popup is Play-policy sensitive.
-        // Some OEMs still require their own Unrestricted/Autostart/Background activity settings afterwards.
         val alreadyAllowed = runCatching {
             getSystemService(PowerManager::class.java)
                 ?.isIgnoringBatteryOptimizations(packageName) == true
         }.getOrDefault(false)
 
-        if (!alreadyAllowed && safeStart(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) return
+        if (!alreadyAllowed && safeStart(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = "package:$packageName".toUri()
+            })) {
+            return
+        }
         openBatteryOptimizationSettingsPages()
     }
 
@@ -869,7 +878,9 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun openExactAlarmSettings() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return
+        }
         runCatching {
             startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                 data = "package:$packageName".toUri()
@@ -886,7 +897,9 @@ class PermissionsActivity : AppCompatActivity() {
             }
         )
         for (intent in intents) {
-            if (safeStart(intent)) return
+            if (safeStart(intent)) {
+                return
+            }
         }
     }
 
@@ -942,7 +955,9 @@ class PermissionsActivity : AppCompatActivity() {
             }
         )
         for (i in intents) {
-            if (safeStart(i)) return
+            if (safeStart(i)) {
+                return
+            }
         }
     }
 
@@ -985,7 +1000,9 @@ class PermissionsActivity : AppCompatActivity() {
         )
 
         for (i in intents) {
-            if (safeStart(i)) return
+            if (safeStart(i)) {
+                return
+            }
         }
     }
 
@@ -1046,6 +1063,21 @@ class PermissionsActivity : AppCompatActivity() {
         }
     }
 
+    private fun focusRequestedSection() {
+        val targetId = when (intent.getStringExtra(EXTRA_FOCUS_SECTION)) {
+            SECTION_CORE -> R.id.sectionCore
+            SECTION_NOTIFICATIONS -> R.id.sectionNotifications
+            SECTION_TRIGGERS -> R.id.sectionTriggers
+            SECTION_BATTERY -> R.id.sectionBattery
+            else -> return
+        }
+        val scroll = findViewById<ScrollView>(R.id.permissionsScroll)
+        val target = findViewById<View>(targetId)
+        scroll.post {
+            scroll.smoothScrollTo(0, (target.top - resources.displayMetrics.density * 8f).toInt().coerceAtLeast(0))
+        }
+    }
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true
@@ -1054,7 +1086,11 @@ class PermissionsActivity : AppCompatActivity() {
     private fun toolbarForegroundColor(): Int {
         val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
-        return if (night) Color.WHITE else Color.BLACK
+        return if (night) {
+            Color.WHITE
+        } else {
+            Color.BLACK
+        }
     }
 
     companion object {
@@ -1075,5 +1111,11 @@ class PermissionsActivity : AppCompatActivity() {
         const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
         const val EXTRA_FROM_TUTORIAL = "extra_from_tutorial"
         const val EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE = "extra_show_accessibility_disclosure"
+        const val EXTRA_FOCUS_SECTION = "extra_focus_section"
+
+        const val SECTION_CORE = "core"
+        const val SECTION_NOTIFICATIONS = "notifications"
+        const val SECTION_TRIGGERS = "triggers"
+        const val SECTION_BATTERY = "battery"
     }
 }

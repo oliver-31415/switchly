@@ -24,9 +24,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.Calendar
 
-/**
- * Counts how often a limit was reached (first hit per app per day).
- */
+// Counts how often a limit was reached (first hit per app per day).
 object LimitHitCountStore {
     private const val PREFS = "switchly_prefs"
     private const val PREFIX = "limit_hit_count_" // limit_hit_count_yyyymmdd
@@ -41,7 +39,9 @@ object LimitHitCountStore {
     }
 
     fun getForLastNDays(context: Context, days: Int): Int {
-        if (days <= 0) return 0
+        if (days <= 0) {
+            return 0
+        }
 
         val sharedPreferences = prefs(context)
         val calendar = Calendar.getInstance()
@@ -114,7 +114,9 @@ object LimitHitCountStore {
     }
 
     fun incrementToday(context: Context, delta: Int = 1) {
-        if (delta <= 0) return
+        if (delta <= 0) {
+            return
+        }
 
         val sharedPreferences = prefs(context)
         val key = key(todayYmdInt())

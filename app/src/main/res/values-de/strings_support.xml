@@ -4,13 +4,13 @@
     <!-- ====================================================== -->
     <!-- Support contact flow -->
     <!-- ====================================================== -->
-    <string name="support_title">Support</string>
+    <string name="support_title">Kontakt &amp; Support</string>
     <string name="support_desc">Brauchst du Hilfe oder hast einen Fehler gefunden?\nSende eine E-Mail und füge nach Möglichkeit Debug-Infos sowie eine kurze Beschreibung hinzu.</string>
     <string name="support_email_subject">Switchly-Support</string>
-    <string name="support_open_email">E-Mail öffnen</string>
+    <string name="support_open_email">Support-E-Mail erstellen</string>
     <string name="support_copy_email">E-Mail kopieren</string>
     <string name="support_copied">E-Mail kopiert</string>
-    <string name="support_copy_latest_logs">Logs kopieren</string>
+    <string name="support_copy_latest_logs">Neueste Logs kopieren</string>
     <string name="support_logs_copied">Neueste Logs kopiert</string>
     <string name="support_choose_report_data">Report-Daten auswählen</string>
     <string name="support_include_debug">Debug-Infos anhängen</string>
@@ -62,5 +62,15 @@
     <!-- ====================================================== -->
     <string name="pref_tutorial_title">Onboarding</string>
     <string name="pref_tutorial_summary">Einrichtungsschritte, Berechtigungen und Funktionen erneut ansehen</string>
+
+    <!-- ====================================================== -->
+    <!-- Contact page layout -->
+    <!-- ====================================================== -->
+    <string name="support_email_label">Support-E-Mail</string>
+    <string name="support_actions_section">Weitere Optionen</string>
+    <string name="support_report_card_title">Supportbericht senden</string>
+    <string name="support_report_card_desc">Wähle vor dem Öffnen deiner E-Mail-App aus, welche Logs, Gerätedaten und Setup-Informationen angehängt werden.</string>
+    <string name="support_logs_card_title">Neueste Logs kopieren</string>
+    <string name="support_logs_card_desc">Kopiere aktuelle Switchly-Ereignisse, um sie in eine bestehende Nachricht oder ein Issue einzufügen.</string>
 
 </resources>

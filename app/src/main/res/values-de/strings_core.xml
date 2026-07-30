@@ -29,6 +29,7 @@
     <string name="required">Erforderlich</string>
     <string name="invalid_value">Ungültiger Wert</string>
     <string name="state_enabled">Aktiviert</string>
+    <string name="state_temporarily_paused">Temporär pausiert</string>
     <string name="state_temporarily_enabled">Temporär aktiv</string>
     <string name="state_disabled">Deaktiviert</string>
     <string name="common_bullet">•</string>

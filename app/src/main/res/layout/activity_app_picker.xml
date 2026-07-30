@@ -17,8 +17,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/pick_apps"
-            app:navigationIcon="@drawable/arrow_back_ios_24">
+            app:title="@string/app_rules_title"
+            app:navigationIcon="@drawable/keyboard_arrow_left_24">
 
             <ImageButton
                 android:id="@+id/btnAppRulesInfo"
@@ -43,97 +43,6 @@
         android:paddingEnd="12dp"
         android:paddingBottom="12dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardPickerContext"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:visibility="gone"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="?attr/colorPrimary">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="10dp">
-
-                <TextView
-                    android:id="@+id/tvPickerContextTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/pick_blocked_apps"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvPickerContextProfile"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:text="@string/profile_label_default"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/tvPickerContextDescription"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/app_picker_blocked_list_description"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="12sp"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/tvPickerSelectedCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:paddingTop="5dp"
-                    android:paddingBottom="5dp"
-                    android:text="@string/app_picker_selected_count_zero"
-                    android:textColor="?attr/colorPrimary"
-                    android:textStyle="bold"
-                    android:textSize="12sp" />
-
-                <LinearLayout
-                    android:id="@+id/pickThingsShortcuts"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnPickWebsites"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/pick_websites_domains"
-                        app:icon="@drawable/language_24"
-                        app:iconGravity="textStart"
-                        app:iconPadding="8dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnPickInAppRules"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/pick_in_app_sections"
-                        app:icon="@drawable/tune_24"
-                        app:iconGravity="textStart"
-                        app:iconPadding="8dp" />
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
         <!-- Search field in the same style as FAQ -->
         <com.google.android.material.textfield.TextInputLayout
@@ -171,19 +80,21 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnBlockSelectedMode"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:minHeight="48dp"
                 android:layout_weight="1"
-                android:text="@string/profile_rule_mode_block" />
+                android:text="@string/profile_rule_mode_block"
+                app:cornerRadius="4dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAllowSelectedMode"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:minHeight="48dp"
                 android:layout_weight="1"
-                android:text="@string/profile_rule_mode_allow" />
+                android:text="@string/profile_rule_mode_allow"
+                app:cornerRadius="4dp" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <TextView
@@ -246,16 +157,6 @@
                 android:src="@drawable/info_24"
                 app:tint="?attr/colorPrimary" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvAutoBlockNewAppsSummary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="@string/app_picker_auto_block_new_apps_summary"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="13sp"
-            android:visibility="gone" />
 
         <!-- App list -->
         <androidx.recyclerview.widget.RecyclerView

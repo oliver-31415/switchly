@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 
+// Persists and retrieves blocked inbox state.
 private const val PREFS = "switchly_prefs"
 private const val KEY_BLOCKED_EVENTS = "blocked_inbox_events"
 private const val KEY_BLOCKED_EVENTS_UPDATED_AT = "blocked_inbox_events_updated_at"
@@ -65,7 +66,9 @@ object BlockedInboxStore {
     fun getAll(ctx: Context): List<BlockedNotificationEvent> {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val raw = sp.getString(KEY_BLOCKED_EVENTS, "").orEmpty()
-        if (raw.isBlank()) return emptyList()
+        if (raw.isBlank()) {
+            return emptyList()
+        }
 
         return raw.split(RS)
             .asSequence()
@@ -89,7 +92,9 @@ object BlockedInboxStore {
     fun remove(ctx: Context, event: BlockedNotificationEvent) {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val all = getAll(ctx)
-        if (all.isEmpty()) return
+        if (all.isEmpty()) {
+            return
+        }
 
         val remaining = all.filterNot { e ->
             e.timeMillis == event.timeMillis &&
@@ -126,11 +131,15 @@ object BlockedInboxStore {
 
     private fun deserializeLine(line: String): BlockedNotificationEvent? {
         val parts = line.split(FS)
-        if (parts.size < 2) return null
+        if (parts.size < 2) {
+            return null
+        }
 
         val t = parts.getOrNull(0)?.toLongOrNull() ?: 0L
         val pkg = denorm(parts.getOrNull(1))
-        if (pkg.isBlank()) return null
+        if (pkg.isBlank()) {
+            return null
+        }
 
         return BlockedNotificationEvent(
             timeMillis = t,

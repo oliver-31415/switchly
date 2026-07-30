@@ -44,7 +44,6 @@ class PremiumInfoActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var statusTextView: TextView
     private lateinit var thanksTextView: TextView
-    private lateinit var priceTextView: TextView
     private lateinit var purchaseButton: MaterialButton
     private lateinit var restoreButton: MaterialButton
     private lateinit var redeemButton: MaterialButton
@@ -53,6 +52,21 @@ class PremiumInfoActivity : AppCompatActivity() {
     private var premiumPriceLoading: Boolean = false
     private var premiumPriceLoaded: Boolean = false
     private var purchaseFlowOpening: Boolean = false
+    private var purchaseFlowLeftActivity: Boolean = false
+    private var activityResumed: Boolean = false
+
+    private val purchaseLaunchWatchdog = Runnable {
+        if (!purchaseFlowOpening || !activityResumed || purchaseFlowLeftActivity) {
+            return@Runnable
+        }
+
+        PremiumManager.cancelPendingPurchaseLaunch()
+        purchaseFlowOpening = false
+        renderState()
+        val message = getString(R.string.premium_purchase_open_timeout)
+        statusTextView.text = message
+        statusTextView.visibility = View.VISIBLE
+    }
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -72,11 +86,28 @@ class PremiumInfoActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (purchaseFlowOpening) {
+        activityResumed = true
+        if (purchaseFlowOpening && purchaseFlowLeftActivity) {
+            purchaseButton.removeCallbacks(purchaseLaunchWatchdog)
+            PremiumManager.cancelPendingPurchaseLaunch()
             purchaseFlowOpening = false
+            purchaseFlowLeftActivity = false
         }
         renderState()
         loadPremiumPriceIfNeeded()
+    }
+
+    override fun onPause() {
+        if (purchaseFlowOpening) {
+            purchaseFlowLeftActivity = true
+        }
+        activityResumed = false
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        purchaseButton.removeCallbacks(purchaseLaunchWatchdog)
+        super.onDestroy()
     }
 
     private fun setupToolbar() {
@@ -91,7 +122,6 @@ class PremiumInfoActivity : AppCompatActivity() {
     private fun setupViews() {
         statusTextView = findViewById(R.id.tvPremiumStatus)
         thanksTextView = findViewById(R.id.tvPremiumThanks)
-        priceTextView = findViewById(R.id.tvPremiumPrice)
         purchaseButton = findViewById(R.id.btnPurchasePremium)
         restoreButton = findViewById(R.id.btnRestorePurchases)
         redeemButton = findViewById(R.id.btnRedeemPremiumCode)
@@ -118,19 +148,23 @@ class PremiumInfoActivity : AppCompatActivity() {
                 ).show()
             } else {
                 purchaseFlowOpening = true
+                purchaseFlowLeftActivity = false
                 purchaseButton.isEnabled = false
                 purchaseButton.text = getString(R.string.premium_button_opening)
+                purchaseButton.removeCallbacks(purchaseLaunchWatchdog)
+                purchaseButton.postDelayed(purchaseLaunchWatchdog, PURCHASE_UI_OPEN_TIMEOUT_MS)
                 PremiumManager.launchPurchase(this, "premium_upgrade") { started, message ->
                     runOnUiThread {
                         if (!started) {
+                            purchaseButton.removeCallbacks(purchaseLaunchWatchdog)
                             purchaseFlowOpening = false
+                            purchaseFlowLeftActivity = false
                             purchaseButton.isEnabled = true
                             renderState()
                             val fallback = getString(R.string.premium_purchase_error_generic)
                             val shownMessage = message?.takeIf { it.isNotBlank() } ?: fallback
                             statusTextView.text = shownMessage
                             statusTextView.visibility = View.VISIBLE
-                            Toast.makeText(this, shownMessage, Toast.LENGTH_LONG).show()
                         }
                     }
                 }
@@ -147,12 +181,17 @@ class PremiumInfoActivity : AppCompatActivity() {
     }
 
     private fun loadPremiumPriceIfNeeded() {
-        if (PremiumManager.isPremium(this)) return
-        if (!BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) return
-        if (premiumPriceLoaded || premiumPriceLoading) return
+        if (PremiumManager.isPremium(this)) {
+            return
+        }
+        if (!BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) {
+            return
+        }
+        if (premiumPriceLoaded || premiumPriceLoading) {
+            return
+        }
 
         premiumPriceLoading = true
-        updatePriceText(isPremium = false)
 
         PremiumManager.loadLocalizedPremiumPrice(this) { price ->
             runOnUiThread {
@@ -164,27 +203,10 @@ class PremiumInfoActivity : AppCompatActivity() {
         }
     }
 
-    private fun updatePriceText(isPremium: Boolean) {
-        val showPlayPrice = !isPremium && BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED
-        // The price is already shown in the purchase button, so keep the hero clean.
-        priceTextView.isVisible = false
-        if (!showPlayPrice) return
-
-        priceTextView.text = when {
-            !localizedPremiumPrice.isNullOrBlank() ->
-                getString(R.string.premium_price_label, localizedPremiumPrice)
-            premiumPriceLoading ->
-                getString(R.string.premium_price_loading)
-            else ->
-                getString(R.string.premium_price_google_play_fallback)
-        }
-    }
-
     private fun renderState() {
         val isPremium = PremiumManager.isPremium(this)
 
         if (isPremium) {
-            updatePriceText(isPremium = true)
             statusTextView.text = getString(R.string.premium_status_active)
             thanksTextView.text = getString(R.string.premium_source_note, PremiumManager.premiumSourceLabel(this))
             thanksTextView.isVisible = true
@@ -198,7 +220,6 @@ class PremiumInfoActivity : AppCompatActivity() {
             }
             redeemButton.isVisible = false
         } else {
-            updatePriceText(isPremium = false)
             statusTextView.text = getString(R.string.premium_status_inactive)
             thanksTextView.text = getString(R.string.premium_needed_note)
             thanksTextView.isVisible = true
@@ -242,5 +263,9 @@ class PremiumInfoActivity : AppCompatActivity() {
                 getString(R.string.premium_button_restore)
             }
         }
+    }
+
+    private companion object {
+        const val PURCHASE_UI_OPEN_TIMEOUT_MS = 15_000L
     }
 }

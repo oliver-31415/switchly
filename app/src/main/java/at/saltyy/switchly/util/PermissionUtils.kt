@@ -44,7 +44,9 @@ object PermissionUtils {
                     id.equals(expectedLong, ignoreCase = true) ||
                         id.equals(expectedShort, ignoreCase = true)
                 } == true
-            if (enabledByManager) return true
+            if (enabledByManager) {
+                return true
+            }
 
             val enabled = Settings.Secure.getInt(
                 context.contentResolver,
@@ -52,7 +54,9 @@ object PermissionUtils {
                 0
             ) == 1
 
-            if (!enabled) return false
+            if (!enabled) {
+                return false
+            }
 
             val enabledServices = Settings.Secure.getString(
                 context.contentResolver,

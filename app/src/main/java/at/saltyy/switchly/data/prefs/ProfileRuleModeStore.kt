@@ -23,9 +23,9 @@ import android.content.Context
 import androidx.core.content.edit
 
 /**
- * Per-profile rule mode.
- * BLOCK_SELECTED: selected apps/domains are blocked.
- * ALLOW_SELECTED: within the picker/listed app set, selected apps/domains are allowed/exempted and unselected listed apps/domains are blocked. Apps that are not listed in the picker are treated as allowed.
+ * Per-profile app rule mode.
+ * BLOCK_SELECTED: selected apps are blocked.
+ * ALLOW_SELECTED: within the picker/listed app set, selected apps are allowed and unselected listed apps are blocked. Apps that are not listed in the picker are treated as allowed.
  */
 object ProfileRuleModeStore {
     const val MODE_BLOCK_SELECTED = "block_selected"
@@ -49,7 +49,11 @@ object ProfileRuleModeStore {
 
     fun getMode(context: Context, profile: String): String {
         val value = prefs(context).getString(keyMode(profile), MODE_BLOCK_SELECTED)
-        return if (value == MODE_ALLOW_SELECTED) MODE_ALLOW_SELECTED else MODE_BLOCK_SELECTED
+        return if (value == MODE_ALLOW_SELECTED) {
+            MODE_ALLOW_SELECTED
+        } else {
+            MODE_BLOCK_SELECTED
+        }
     }
 
     fun isAllowMode(context: Context, profile: String): Boolean =

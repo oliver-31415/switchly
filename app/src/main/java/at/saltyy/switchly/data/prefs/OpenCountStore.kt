@@ -39,11 +39,11 @@ object OpenCountStore {
     private fun profilelessKey(ymd: Int, pkg: String): String =
         PREFIX + ymd.toString() + "_" + pkg
 
-    /**
-     * Returns today's open count for [pkg] in [profile].
-     */
+    // Returns today's open count for [pkg] in [profile].
     fun getToday(ctx: Context, profile: String, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val safeProfile = profile.ifBlank { ProfileStore.getCurrent(ctx) ?: "default" }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val ymd = todayYmdInt()
@@ -69,7 +69,9 @@ object OpenCountStore {
     }
 
     fun setToday(ctx: Context, profile: String, pkg: String, count: Int) {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         val safeProfile = profile.ifBlank { ProfileStore.getCurrent(ctx) ?: "default" }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val ymd = todayYmdInt()
@@ -88,7 +90,9 @@ object OpenCountStore {
     }
 
     fun incrementToday(ctx: Context, profile: String, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val safeProfile = profile.ifBlank { ProfileStore.getCurrent(ctx) ?: "default" }
         val current = getToday(ctx, safeProfile, pkg)
         val next = (current + 1).coerceAtLeast(0)
@@ -97,7 +101,9 @@ object OpenCountStore {
     }
 
     fun getForLastNDays(ctx: Context, profile: String, pkg: String, days: Int): Int {
-        if (pkg.isBlank() || days <= 0) return 0
+        if (pkg.isBlank() || days <= 0) {
+            return 0
+        }
         val safeProfile = profile.ifBlank { ProfileStore.getCurrent(ctx) ?: "default" }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val cal = Calendar.getInstance()
@@ -111,7 +117,9 @@ object OpenCountStore {
     }
 
     fun getForMonth(ctx: Context, profile: String, pkg: String, year: Int, month1Based: Int): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val safeProfile = profile.ifBlank { ProfileStore.getCurrent(ctx) ?: "default" }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val cal = Calendar.getInstance().apply {
@@ -134,7 +142,9 @@ object OpenCountStore {
     }
 
     fun getForYear(ctx: Context, profile: String, pkg: String, year: Int): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val safeProfile = profile.ifBlank { ProfileStore.getCurrent(ctx) ?: "default" }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val cal = Calendar.getInstance().apply {
@@ -156,7 +166,9 @@ object OpenCountStore {
     }
 
     fun getOverall(ctx: Context, profile: String, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val safeProfile = profile.ifBlank { ProfileStore.getCurrent(ctx) ?: "default" }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         var sum = 0
@@ -191,7 +203,9 @@ object OpenCountStore {
     }
 
     fun getForLastNDaysAllProfiles(ctx: Context, pkg: String, days: Int): Int {
-        if (pkg.isBlank() || days <= 0) return 0
+        if (pkg.isBlank() || days <= 0) {
+            return 0
+        }
         val cal = Calendar.getInstance()
         var sum = 0
         repeat(days) {
@@ -218,7 +232,9 @@ object OpenCountStore {
     }
 
     fun getForMonthAllProfiles(ctx: Context, pkg: String, year: Int, month1Based: Int): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val cal = Calendar.getInstance().apply {
             set(Calendar.YEAR, year)
             set(Calendar.MONTH, (month1Based - 1).coerceIn(0, 11))
@@ -238,7 +254,9 @@ object OpenCountStore {
     }
 
     fun getForYearAllProfiles(ctx: Context, pkg: String, year: Int): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val cal = Calendar.getInstance().apply {
             set(Calendar.YEAR, year)
             set(Calendar.MONTH, Calendar.JANUARY)
@@ -257,7 +275,9 @@ object OpenCountStore {
     }
 
     fun getOverallAllProfiles(ctx: Context, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         var sum = 0
         val profilelessSuffix = '_' + pkg
@@ -273,7 +293,9 @@ object OpenCountStore {
     }
 
     private fun getForDayAllProfiles(ctx: Context, ymd: Int, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         var sum = 0
         var foundNew = false
@@ -292,12 +314,16 @@ object OpenCountStore {
     }
 
     fun mergeProfilelessForDay(ctx: Context, ymd: Int, pkg: String, count: Int) {
-        if (pkg.isBlank() || count <= 0) return
+        if (pkg.isBlank() || count <= 0) {
+            return
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = profilelessKey(ymd, pkg)
         val cur = if (sp.contains(k)) readIntWithLongMigration(sp, k) else 0
         val merged = maxOf(cur, count.coerceAtLeast(0))
-        if (merged == cur) return
+        if (merged == cur) {
+            return
+        }
         sp.edit { putInt(k, merged) }
     }
 

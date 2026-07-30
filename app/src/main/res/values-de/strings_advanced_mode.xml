@@ -7,10 +7,10 @@
     <string name="advanced_mode_title">ADB-Tools</string>
     <string name="advanced_mode_admin_label">Switchly</string>
     <string name="advanced_mode_admin_description">Gibt Switchly die nötige Kontrolle für optionale erweiterte Geräteadmin- und Managed-Device-Funktionen.</string>
-    <string name="advanced_mode_disable_warning">Wenn du den Switchly-Geräteadmin deaktivierst, werden die erweiterten Managed-Device-Hooks entfernt. Auf normalen persönlichen Geräten ist das nur eine erweiterte Hilfe und keine echte Deinstallationssperre.</string>
-    <string name="advanced_mode_summary_body">Erweiterte ADB-Einrichtung für Device Admin, Profile Owner und Device Owner Tests.</string>
-    <string name="advanced_mode_recommendation_body">Für die meisten Nutzer ist normale Deinstallations-Reibung richtig. Nutze ADB-Tools nur, wenn du die Voraussetzungen kennst.</string>
-    <string name="advanced_mode_constraints_body">Device Owner braucht meist ein frisch eingerichtetes Gerät. Profile Owner hat eigene Grenzen. Device Admin ist eingeschränkt.</string>
+    <string name="advanced_mode_disable_warning">Wenn du Switchly-Geräteadmin deaktivierst, wird der Deinstallationsschutz ausgeschaltet. Direkte Deinstallationsversuche können danach wieder funktionieren.</string>
+    <string name="advanced_mode_summary_body">Erweiterte ADB-Einrichtung für Device Admin, Profile Owner und Device Owner Schutz. Nutze das nur auf deinem eigenen Gerät und erst nach den Setup-Hinweisen.</string>
+    <string name="advanced_mode_recommendation_body">Für die meisten Nutzer bietet der Deinstallationsschutz mit Geräteadmin die beste Balance. Device Owner kann eine stärkere Systemrichtlinie erzwingen, benötigt aber ein technisches Bereitstellungs-Setup und lässt sich später schwerer rückgängig machen.</string>
+    <string name="advanced_mode_constraints_body">Device Owner braucht meist ein frisch eingerichtetes Gerät ohne bestehende Accounts. Profile Owner hat eigene Grenzen. Device Admin ist leichter zu aktivieren, aber nicht dasselbe wie vollständiger Managed-Device-Schutz.</string>
 
     <!-- ====================================================== -->
     <!-- Advanced mode tiles -->
@@ -30,11 +30,11 @@
     <!-- Advanced mode status and commands -->
     <!-- ====================================================== -->
     <string name="advanced_mode_status_standard">Normaler App-Modus. Keine Managed-Device-Eigentümerschaft ist aktiv.</string>
-    <string name="advanced_mode_status_device_admin">Die alte Geräteadmin-Aktivierung ist aktiv.</string>
+    <string name="advanced_mode_status_device_admin">Der Deinstallationsschutz ist aktiv.</string>
     <string name="advanced_mode_status_profile_owner">Profile Owner ist aktiv.</string>
     <string name="advanced_mode_status_device_owner">Device Owner ist aktiv.</string>
     <string name="advanced_mode_status_updated_toast">Managed-Device-Status aktualisiert</string>
-    <string name="advanced_mode_add_admin_explanation">Das aktiviert nur Switchlys optionalen erweiterten Admin-Receiver.\nAuf einem normalen persönlichen Gerät garantiert das keine Deinstallationssperre.</string>
+    <string name="advanced_mode_add_admin_explanation">Aktiviert Switchly-Geräteadmin für den Deinstallationsschutz. Direkte Deinstallationsversuche schlagen dann fehl, Android erlaubt jedoch weiterhin das Deaktivieren von Geräteadmin in den Systemeinstellungen.</string>
     <string name="advanced_mode_open_admin_failed">Android-Geräteadmin-Bildschirm konnte nicht geöffnet werden</string>
     <string name="advanced_mode_command_copied">Befehl kopiert</string>
     <string name="advanced_mode_component_copied">Komponente kopiert</string>
@@ -43,7 +43,7 @@
     <!-- ====================================================== -->
     <!-- Developer mode -->
     <!-- ====================================================== -->
-    <string name="developer_mode_title">Developer</string>
+    <string name="developer_mode_title">Developer-Tools</string>
     <string name="developer_mode_info_title">Developer-Tools</string>
     <string name="developer_mode_info_body">Developer-Tools sind in normalen Einstellungen versteckt. Du kannst sie hier wieder ausschalten oder später durch langes Drücken auf die Versions-Zeile erneut freischalten.</string>
     <string name="developer_mode_unlocked_toast">Developer-Modus freigeschaltet</string>
@@ -52,8 +52,7 @@
     <string name="developer_mode_tile_adb_body">ADB-Befehle für Device Admin, Profile Owner und Device Owner Tests.</string>
     <string name="developer_mode_tile_logging">Logging</string>
     <string name="developer_mode_tile_logging_body">Zeigt die letzten 250 internen App-Log-Zeilen live an und erlaubt das Kopieren zur Fehlersuche.</string>
-    <string name="developer_mode_tile_disable">Ausschalten</string>
-    <string name="developer_mode_disable_body">Blendet Developer-Tools wieder aus. Später per langem Drücken auf die Versions-Zeile erneut freischalten.</string>
+    <string name="developer_mode_tile_disable">Developer-Modus ausschalten</string>
     <string name="developer_mode_disabled_toast">Developer-Modus ausgeschaltet</string>
 
     <!-- ====================================================== -->

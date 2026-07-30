@@ -126,7 +126,9 @@ class QuickActionReceiver : BroadcastReceiver() {
         }
 
         private fun ensureProtectionReady(context: Context): Boolean {
-            if (BlockingRuntime.isAccessibilityActive(context)) return true
+            if (BlockingRuntime.isAccessibilityActive(context)) {
+                return true
+            }
 
             Toast.makeText(context, context.getString(R.string.widget_action_requires_permissions), Toast.LENGTH_SHORT).show()
             runCatching {

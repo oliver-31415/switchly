@@ -131,7 +131,9 @@ class BluetoothConnectionReceiver : BroadcastReceiver() {
             Manifest.permission.BLUETOOTH_CONNECT
         ) == PackageManager.PERMISSION_GRANTED
 
-        if (!granted) return fallback
+        if (!granted) {
+            return fallback
+        }
 
         return try {
             device.name ?: fallback

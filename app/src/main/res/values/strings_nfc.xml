@@ -5,8 +5,8 @@
     <!-- NFC writer screen -->
     <!-- ====================================================== -->
     <string name="nfc_writer_title">NFC tag writer</string>
-    <string name="nfc_write_intro_title">Choose the action and tap Write selected action. Then hold a writable NFC tag to your phone.</string>
-    <string name="nfc_write_onboarding_message">Writable tags store the action directly. Read-only UID-only tags can be added from Manage paired tags.</string>
+    <string name="nfc_write_intro_title">Writing NFC action tags</string>
+    <string name="nfc_write_onboarding_message">Choose Toggle, Enable, Disable, or a temporary action, then write it to a writable NFC tag. After writing, scan the tag once while the phone is unlocked. If Android asks which app should open it, choose Switchly and Always. UID pairing is only for read-only tags or per-tag limits and does not write an action to the tag.</string>
     <string name="nfc_profile_hint">Profile</string>
     <string name="nfc_profile_none">Universal</string>
     <string name="nfc_duration_hint">Temporary duration</string>
@@ -24,6 +24,8 @@
     <string name="nfc_write_locked_status">Disable Switchly to write or pair a new NFC tag, or allow NFC tag writing in Mixed mode.</string>
     <string name="nfc_write_locked_button">NFC tag writing locked</string>
     <string name="nfc_not_available">NFC is not available on this device</string>
+    <string name="nfc_system_disabled_button">Enable system NFC</string>
+    <string name="nfc_system_disabled_status">System NFC is disabled. Enable “Use NFC” in Android settings, then return here and write/scan the tag again.</string>
 
     <!-- ====================================================== -->
     <!-- NFC action labels -->
@@ -35,7 +37,6 @@
     <string name="nfc_action_toggle">Toggle</string>
     <string name="nfc_action_temp_enable">Temporary enable</string>
     <string name="nfc_action_temp_disable">Temporary disable</string>
-    <string name="nfc_action_reentry">Temporary settings unlock</string>
     <string name="nfc_action_pair_uid">Pair tag by UID</string>
     <string name="nfc_action_hint_with_profile">%1$s\n%2$s</string>
     <string name="nfc_action_info_title">NFC actions explained</string>
@@ -56,11 +57,7 @@
     </plurals>
     <string name="nfc_action_desc_temp_disable_ask">Use “Ask when scanned” if you want to choose the break length each time. Great for short intentional unlocks without creating many tags.</string>
     <string name="nfc_action_desc_temp_enable_ask">Use “Ask when scanned” if you want to choose the blocking length each time. When the timer ends, Switchly restores the state from before the scan.</string>
-    <plurals name="nfc_action_desc_reentry">
-        <item quantity="one">Writes a Temporary settings unlock tag that unlocks Switchly settings for %1$d minute, then restores the previous state.</item>
-        <item quantity="other">Writes a Temporary settings unlock tag that unlocks Switchly settings for %1$d minutes, then restores the previous state.</item>
-    </plurals>
-    <string name="nfc_action_desc_pair_uid">Use this NFC tag as a toggle without writing anything to it.</string>
+    <string name="nfc_action_desc_pair_uid">Advanced: pair this tag by UID without writing anything to it. Use this for read-only tags or per-tag limits, not for normal writable toggle/disable tags.</string>
     <string name="nfc_action_desc_pair_uid_disabled">Pair tag is disabled. Enable paired NFC tags in Blocking &amp; control toggles, then scan a tag to add its UID.</string>
     <string name="nfc_action_desc_profile_selected">Selected profile: %1$s</string>
     <string name="nfc_action_desc_profile_none">Profile: Universal (global action)</string>
@@ -98,11 +95,11 @@
     <!-- ====================================================== -->
     <string name="paired_tags_title">Paired tags</string>
     <string name="paired_tags_add_title">Add NFC tag</string>
-    <string name="paired_tags_add_writable_title">Add writable tag</string>
-    <string name="paired_tags_add_readonly_title">Add read-only tag</string>
+    <string name="paired_tags_add_writable_title">Pair writable tag UID</string>
+    <string name="paired_tags_add_readonly_title">Pair read-only / UID-only tag</string>
     <string name="paired_tags_add_fab_desc">Add paired NFC tag</string>
     <string name="paired_tags_empty_title">No paired tags yet</string>
-    <string name="paired_tags_empty_body">Tap + to pair your first NFC tag.</string>
+    <string name="paired_tags_empty_body">Pair a read-only or writable NFC tag to choose its scan action and configure per-tag limits.</string>
     <string name="empty_action_add_first_tag">Pair first tag</string>
     <string name="paired_tags_remove_confirm">Remove this paired tag?</string>
     <string name="paired_tag_delete_selected_title">Delete paired tags</string>
@@ -126,32 +123,29 @@
     <!-- Paired tag pairing prompt -->
     <!-- ====================================================== -->
     <string name="paired_tag_pair_prompt_title">Name this tag</string>
-    <string name="paired_tag_pair_prompt_message">Optional, but helps you recognize it later. Read-only cards can be paired by UID, but they do not store a Switchly action on the card itself. Only paired tags added here can be used that way.</string>
+    <string name="paired_tag_pair_prompt_message">Optional, but helps you recognize it later. Paired read-only tags use their selected UID action. Paired writable tags can keep their written action or override it in Manage paired tags.</string>
     <string name="paired_tag_pair_prompt_save">Save</string>
     <string name="paired_tag_pair_prompt_skip">Skip</string>
 
     <!-- ====================================================== -->
-    <!-- Read-only paired tag action -->
+    <!-- Paired tag action -->
     <!-- ====================================================== -->
-    <string name="paired_tag_readonly_action_section_title">Read-only tag action</string>
-    <string name="paired_tag_readonly_action_label">Action for read-only scans</string>
-    <string name="paired_tag_readonly_action_toggle">Toggle</string>
-    <string name="paired_tag_readonly_action_disable">Disable</string>
-    <string name="paired_tag_readonly_action_enable">Enable</string>
-    <string name="paired_tag_readonly_action_temp_disable">Temporary disable</string>
-    <string name="paired_tag_readonly_action_temp_enable">Temporary enable</string>
+    <string name="paired_tag_use_written_helper">Uses the profile, action and duration stored on this NFC tag.</string>
+    <string name="paired_tag_action_use_written">Use written action</string>
+    <string name="paired_tag_action_toggle">Toggle</string>
+    <string name="paired_tag_action_disable">Disable</string>
+    <string name="paired_tag_action_enable">Enable</string>
+    <string name="paired_tag_action_temp_disable">Temporary disable</string>
+    <string name="paired_tag_action_temp_enable">Temporary enable</string>
 
     <!-- ====================================================== -->
     <!-- Paired tag usage settings -->
     <!-- ====================================================== -->
-    <string name="paired_tag_usage_settings_section_title">Tag usage settings</string>
-    <string name="paired_tag_duration_label">Duration (min)</string>
-    <string name="paired_tag_duration_helper">Enter minutes. Max 24h. Default is 1 min for read-only temporary actions.</string>
     <string name="paired_tag_duration_invalid">Enter minutes, max 24h.</string>
     <string name="paired_tag_daily_limit_label">Daily uses</string>
-    <string name="paired_tag_daily_limit_helper">Optional. Limits how often this tag can be used per day.</string>
+    <string name="paired_tag_daily_limit_helper">Optional. Limits how often this tag can unlock or pause protection each day.</string>
     <string name="paired_tag_cooldown_label">Cooldown (min)</string>
-    <string name="paired_tag_cooldown_helper">Optional. Wait time before this same tag can be used again.</string>
+    <string name="paired_tag_cooldown_helper">Optional. Wait time before this tag can unlock or pause protection again.</string>
     <string name="paired_tag_daily_limit_invalid">Enter 1–50 uses, or leave empty.</string>
     <string name="paired_tag_cooldown_invalid">Enter minutes, max 24h, or leave empty.</string>
     <string name="nfc_temp_disable_limiter_cooldown">Try this tag again in %1$d min.</string>
@@ -165,11 +159,11 @@
     <!-- ====================================================== -->
     <!-- Pairing runtime feedback -->
     <!-- ====================================================== -->
-    <string name="nfc_pair_waiting_readonly">Tap an NFC tag to pair its UID for toggle/disable use</string>
-    <string name="nfc_pair_waiting_writable">Tap a writable NFC tag to pair its UID</string>
+    <string name="nfc_pair_waiting_readonly">Tap a read-only or UID-only NFC tag to pair its UID</string>
+    <string name="nfc_pair_waiting_writable">Tap a writable NFC tag to pair its UID only</string>
     <string name="nfc_pair_ok">Tag paired</string>
     <string name="nfc_pair_ok_with_uid">Tag paired: %1$s</string>
-    <string name="nfc_pair_ok_with_uid_explained">Tag paired: %1$s. UID pairing authorizes this tag, but does not write a disable action to the card.</string>
+    <string name="nfc_pair_ok_with_uid_explained">Tag paired: %1$s. UID pairing authorizes this tag, but does not write a Toggle/Disable action to the card.</string>
     <string name="nfc_pair_already_added">Tag already added</string>
     <string name="nfc_pair_already_added_open_writer">Tag already added. Opening action writer…</string>
     <string name="nfc_pair_writable_requires_writable_tag">Read-only tag. Add it as read-only.</string>
@@ -180,13 +174,12 @@
     <!-- ====================================================== -->
     <string name="nfc_feedback_started">%1$s enabled</string>
     <string name="nfc_feedback_stopped">%1$s disabled</string>
-    <string name="nfc_feedback_already_started">%1$s is already enabled</string>
     <string name="nfc_feedback_already_stopped">%1$s is already disabled</string>
     <string name="nfc_temp_hint_profile_disable_toast">Profile must be active for temp disable.</string>
     <string name="nfc_temp_hint_profile_enable_toast">Temporary enable switches to this profile.</string>
     <string name="toast_disable_requires_nfc">Switchly can currently only be disabled via NFC tag.</string>
     <string name="toast_cannot_disable_while_locked">Switchly is locked. Use your NFC tag to disable it.</string>
-    <string name="toast_cannot_change_profile_while_locked">Profiles are locked. Use your NFC tag to switch Switchly or disable it.</string>
+    <string name="toast_cannot_change_profile_while_locked">Fully disable Switchly to change profiles.</string>
 
     <!-- ====================================================== -->
     <!-- NFC URI and scan errors -->

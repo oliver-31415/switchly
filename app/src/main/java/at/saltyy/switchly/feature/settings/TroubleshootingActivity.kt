@@ -26,7 +26,6 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.widget.ImageView
@@ -266,7 +265,9 @@ class TroubleshootingActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
     private fun hasBackgroundLocationPermission(): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return true
+        }
         return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
@@ -279,8 +280,16 @@ class TroubleshootingActivity : AppCompatActivity() {
     private fun getLocationPermissionState(): LocationPermissionState {
         val fine = hasFineLocationPermission()
         val coarse = hasCoarseLocationPermission()
-        if (!fine) return if (coarse) LocationPermissionState.APPROX_ONLY else LocationPermissionState.MISSING
-        if (!hasBackgroundLocationPermission()) return LocationPermissionState.BACKGROUND_MISSING
+        if (!fine) {
+            return if (coarse) {
+                LocationPermissionState.APPROX_ONLY
+            } else {
+                LocationPermissionState.MISSING
+            }
+        }
+        if (!hasBackgroundLocationPermission()) {
+            return LocationPermissionState.BACKGROUND_MISSING
+        }
         return LocationPermissionState.OK
     }
 

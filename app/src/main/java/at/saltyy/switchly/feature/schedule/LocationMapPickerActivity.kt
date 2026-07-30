@@ -19,7 +19,6 @@
 
 package at.saltyy.switchly.feature.schedule
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.location.Address
@@ -32,7 +31,6 @@ import android.os.Looper
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
@@ -47,6 +45,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
@@ -97,11 +96,7 @@ class LocationMapPickerActivity : AppCompatActivity() {
 
     private val mapLoadTimeout = Runnable {
         if (!mapLoaded && !isFinishing && !isDestroyed) {
-            Toast.makeText(
-                this,
-                getString(R.string.schedules_location_map_picker_load_failed),
-                Toast.LENGTH_LONG
-            ).show()
+            showMapUnavailableMessage()
         }
     }
 
@@ -163,11 +158,7 @@ class LocationMapPickerActivity : AppCompatActivity() {
             .findFragmentById(R.id.mapFragment) as? SupportMapFragment
 
         if (mapFragment == null) {
-            Toast.makeText(
-                this,
-                getString(R.string.schedules_location_map_picker_load_failed),
-                Toast.LENGTH_LONG
-            ).show()
+            showMapUnavailableMessage()
             return
         }
 
@@ -202,6 +193,15 @@ class LocationMapPickerActivity : AppCompatActivity() {
                 renderMarker(point)
             }
         }
+    }
+
+    private fun showMapUnavailableMessage() {
+        val root = findViewById<android.view.View>(R.id.locationMapPickerContent)
+        Snackbar.make(
+            root,
+            R.string.schedules_location_map_picker_load_failed,
+            Snackbar.LENGTH_LONG,
+        ).show()
     }
 
     private fun runSearch() {
@@ -374,7 +374,9 @@ class LocationMapPickerActivity : AppCompatActivity() {
 
     private fun formatGeocoderLabel(address: Address): String? {
         val line = address.getAddressLine(0)
-        if (!line.isNullOrBlank()) return line
+        if (!line.isNullOrBlank()) {
+            return line
+        }
 
         return listOfNotNull(
             address.featureName,

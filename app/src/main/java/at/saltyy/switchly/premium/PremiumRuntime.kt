@@ -66,116 +66,222 @@ object PremiumRuntime : PurchasesUpdatedListener {
     @Volatile
     private var purchaseLaunchInProgress: Boolean = false
 
-    private var pendingLaunchRequest: (() -> Unit)? = null
+    @Volatile
+    private var lastAutomaticRefreshAttemptAt: Long = 0L
 
-    private var pendingLaunchError: ((String) -> Unit)? = null
+    private data class ConnectionCallback(
+        val onReady: () -> Unit,
+        val onError: (String) -> Unit,
+    )
+
+    private val connectionLock = Any()
+    private val pendingConnectionCallbacks = mutableListOf<ConnectionCallback>()
+    private var connectingClient: BillingClient? = null
+
+    private var purchaseLaunchStartedAt: Long = 0L
+    private var purchaseLaunchGeneration: Long = 0L
+
+    private const val AUTO_REFRESH_MIN_INTERVAL_MS = 15 * 60_000L
+    private const val BILLING_FAILURE_LOG_WINDOW_MS = 6 * 60 * 60_000L
+    private const val PURCHASE_LAUNCH_STALE_AFTER_MS = 30_000L
 
     // Setup & connection
     private fun ensureClient(context: Context, onReady: () -> Unit, onError: (String) -> Unit = {}) {
         appContext = context.applicationContext
 
-        val existing = billingClient
-        if (existing != null && existing.isReady) {
+        var readyImmediately = false
+        var clientToConnect: BillingClient? = null
+
+        synchronized(connectionLock) {
+            val existing = billingClient
+            if (existing != null && existing.isReady) {
+                readyImmediately = true
+            } else {
+                pendingConnectionCallbacks += ConnectionCallback(onReady, onError)
+                if (!isConnecting) {
+                    isConnecting = true
+                    clientToConnect = BillingClient.newBuilder(context.applicationContext)
+                        .setListener(this)
+                        .enablePendingPurchases(
+                            PendingPurchasesParams.newBuilder()
+                                .enableOneTimeProducts()
+                                .build()
+                        )
+                        .build()
+                    billingClient = clientToConnect
+                    connectingClient = clientToConnect
+                }
+            }
+        }
+
+        if (readyImmediately) {
             onReady()
             return
         }
 
-        if (isConnecting) {
-            // If a connection is already in progress, just store the callback
-            pendingLaunchRequest = onReady
-            pendingLaunchError = onError
-            return
-        }
-
-        isConnecting = true
-
-        val client = BillingClient.newBuilder(context)
-            .setListener(this)
-            .enablePendingPurchases(
-                PendingPurchasesParams.newBuilder()
-                    .enableOneTimeProducts()
-                    .build()
-            )
-            .build()
-
-        billingClient = client
-
+        val client = clientToConnect ?: return
         client.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
-                isConnecting = false
+                val callbacks = synchronized(connectionLock) {
+                    if (connectingClient !== client) {
+                        emptyList()
+                    } else {
+                        connectingClient = null
+                        isConnecting = false
+                        pendingConnectionCallbacks.toList().also { pendingConnectionCallbacks.clear() }
+                    }
+                }
+                if (callbacks.isEmpty() && billingClient !== client) {
+                    return
+                }
+
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     if (BuildConfig.DEBUG) Log.d(TAG, "Billing service connected")
-                    val req = pendingLaunchRequest
-                    pendingLaunchRequest = null
-                    pendingLaunchError = null
-                    if (req != null) {
-                        req()
-                    } else {
-                        // No pending callback – still refresh premium state from Play
-                        appContext?.let { refreshFromPlay(it) }
-                    }
+                    callbacks.forEach { callback -> callback.onReady() }
                 } else {
                     val message = "Google Play Billing setup failed: ${result.debugMessage.ifBlank { result.responseCode.toString() }}"
                     Log.e(TAG, message)
-                    val err = pendingLaunchError
-                    pendingLaunchRequest = null
-                    pendingLaunchError = null
-                    err?.invoke(message)
-                    appContext?.let { AppLogStore.append(it, "Billing", "Restore failed reason=billing_setup_failed code=${result.responseCode}") }
+                    synchronized(connectionLock) {
+                        if (billingClient === client) {
+                            billingClient = null
+                        }
+                    }
+                    runCatching { client.endConnection() }
+                    callbacks.forEach { callback -> callback.onError(message) }
                 }
             }
 
             override fun onBillingServiceDisconnected() {
-                isConnecting = false
-                billingClient = null
-                Log.w(TAG, "Billing service disconnected")
+                var handledCurrentClient = false
+                val callbacks = synchronized(connectionLock) {
+                    if (billingClient === client || connectingClient === client) {
+                        handledCurrentClient = true
+                        billingClient = null
+                        connectingClient = null
+                        isConnecting = false
+                        pendingConnectionCallbacks.toList().also { pendingConnectionCallbacks.clear() }
+                    } else {
+                        emptyList()
+                    }
+                }
+                if (!handledCurrentClient) {
+                    return
+                }
+                val message = "Google Play Billing service disconnected."
+                Log.w(TAG, message)
+                callbacks.forEach { callback -> callback.onError(message) }
             }
         })
     }
 
     private fun resetClient() {
-        val old = billingClient
-        billingClient = null
-        isConnecting = false
-        pendingLaunchRequest = null
-        pendingLaunchError = null
+        val old = synchronized(connectionLock) {
+            val current = billingClient
+            billingClient = null
+            connectingClient = null
+            isConnecting = false
+            pendingConnectionCallbacks.clear()
+            current
+        }
         runCatching { old?.endConnection() }
     }
 
-    // Refreshes the premium state by querying existing purchases. Typically called on app start.
-    fun refreshFromPlay(context: Context) {
-        PlayIntegrityRuntime.requestSoftCheck(context, "play_purchase_restore")
+    @Synchronized
+    private fun beginPurchaseLaunch(): Long? {
+        val now = System.currentTimeMillis()
+        val launchStillActive = purchaseLaunchInProgress &&
+            now - purchaseLaunchStartedAt < PURCHASE_LAUNCH_STALE_AFTER_MS
+        if (launchStillActive) {
+            return null
+        }
 
+        purchaseLaunchGeneration += 1L
+        purchaseLaunchInProgress = true
+        purchaseLaunchStartedAt = now
+        return purchaseLaunchGeneration
+    }
+
+    @Synchronized
+    private fun isCurrentPurchaseLaunch(generation: Long): Boolean {
+        return purchaseLaunchInProgress && purchaseLaunchGeneration == generation
+    }
+
+    @Synchronized
+    private fun clearPurchaseLaunch(generation: Long? = null) {
+        if (generation != null && generation != purchaseLaunchGeneration) {
+            return
+        }
+        purchaseLaunchInProgress = false
+        purchaseLaunchStartedAt = 0L
+        if (generation == null) {
+            purchaseLaunchGeneration += 1L
+        }
+    }
+
+    fun cancelPendingPurchaseLaunch() {
+        clearPurchaseLaunch()
+    }
+
+    // Refreshes the premium state by querying existing purchases. Typically called on app start.
+    fun refreshFromPlay(context: Context, force: Boolean = false) {
         if (!BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) {
             if (BuildConfig.DEBUG) Log.d(TAG, "Play Billing disabled for this build; skipping refresh")
             return
         }
 
-        ensureClient(context, onReady = {
-            val client = billingClient ?: return@ensureClient
+        val now = System.currentTimeMillis()
+        if (!force && now - lastAutomaticRefreshAttemptAt < AUTO_REFRESH_MIN_INTERVAL_MS) {
+            return
+        }
+        if (!force) {
+            lastAutomaticRefreshAttemptAt = now
+        }
 
-            val params = QueryPurchasesParams.newBuilder()
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build()
+        PlayIntegrityRuntime.requestSoftCheck(context, "play_purchase_restore")
+        val applicationContext = context.applicationContext
+        ensureClient(
+            context,
+            onReady = {
+                val client = billingClient ?: return@ensureClient
 
-            client.queryPurchasesAsync(params, object : PurchasesResponseListener {
-                override fun onQueryPurchasesResponse(
-                    result: BillingResult,
-                    purchasesList: MutableList<Purchase>
-                ) {
-                    if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-                        Log.e(TAG, "queryPurchasesAsync failed: ${result.debugMessage}")
-                        return
+                val params = QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
+
+                client.queryPurchasesAsync(params, object : PurchasesResponseListener {
+                    override fun onQueryPurchasesResponse(
+                        result: BillingResult,
+                        purchasesList: MutableList<Purchase>
+                    ) {
+                        if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                            Log.e(TAG, "queryPurchasesAsync failed: ${result.debugMessage}")
+                            AppLogStore.appendRateLimited(
+                                applicationContext,
+                                "Billing",
+                                "Premium purchase check unavailable code=${result.responseCode}",
+                                windowMs = BILLING_FAILURE_LOG_WINDOW_MS,
+                            )
+                            return
+                        }
+
+                        val hasPremium = purchasesList.any { purchase ->
+                            purchase.products.contains(PRODUCT_ID) && purchase.purchaseState == Purchase.PurchaseState.PURCHASED
+                        }
+
+                        PremiumManager.setPremiumFromPlay(applicationContext, hasPremium)
                     }
-
-                    val hasPremium = purchasesList.any { purchase ->
-                        purchase.products.contains(PRODUCT_ID) && purchase.purchaseState == Purchase.PurchaseState.PURCHASED
-                    }
-
-                    appContext?.let { PremiumManager.setPremiumFromPlay(it, hasPremium) }
-                }
-            })
-        })
+                })
+            },
+            onError = { message ->
+                AppLogStore.appendRateLimited(
+                    applicationContext,
+                    "Billing",
+                    "Premium purchase check unavailable",
+                    IllegalStateException(message),
+                    BILLING_FAILURE_LOG_WINDOW_MS,
+                )
+            },
+        )
     }
 
     fun queryPremiumPrice(
@@ -196,7 +302,12 @@ object PremiumRuntime : PurchasesUpdatedListener {
 
         fun fail(message: String) {
             Log.w(TAG, message)
-            AppLogStore.append(context.applicationContext, "Billing", message)
+            AppLogStore.appendRateLimited(
+                context.applicationContext,
+                "Billing",
+                message,
+                windowMs = BILLING_FAILURE_LOG_WINDOW_MS,
+            )
             onResult(null)
         }
 
@@ -266,121 +377,158 @@ object PremiumRuntime : PurchasesUpdatedListener {
             return
         }
 
+        val launchGeneration = beginPurchaseLaunch()
+        if (launchGeneration == null) {
+            val message = "Google Play purchase is already opening. Please wait a moment."
+            AppLogStore.append(activity.applicationContext, "Billing", "Purchase ignored reason=launch_already_in_progress")
+            activity.runOnUiThread { onResult?.invoke(false, message) }
+            return
+        }
+
         fun fail(message: String) {
-            purchaseLaunchInProgress = false
+            clearPurchaseLaunch(launchGeneration)
             Log.e(TAG, message)
             AppLogStore.append(activity.applicationContext, "Billing", message)
             activity.runOnUiThread { onResult?.invoke(false, message) }
         }
 
         fun restoreOwnedPurchase(message: String) {
-            purchaseLaunchInProgress = false
+            clearPurchaseLaunch(launchGeneration)
             AppLogStore.append(activity.applicationContext, "Billing", message)
-            refreshFromPlay(activity.applicationContext)
+            refreshFromPlay(activity.applicationContext, force = true)
             activity.runOnUiThread { onResult?.invoke(false, message) }
         }
 
-        fun isDuplicateQuickAttempt(result: BillingResult): Boolean =
-            result.responseCode == BillingClient.BillingResponseCode.DEVELOPER_ERROR &&
+        fun isDuplicateQuickAttempt(result: BillingResult): Boolean {
+            return result.responseCode == BillingClient.BillingResponseCode.DEVELOPER_ERROR &&
                 result.debugMessage.contains("duplicate", ignoreCase = true)
-
-        if (purchaseLaunchInProgress) {
-            val message = "Google Play purchase is already opening. Please wait a moment."
-            AppLogStore.append(activity.applicationContext, "Billing", "Purchase ignored reason=launch_already_in_progress")
-            activity.runOnUiThread { onResult?.invoke(false, message) }
-            return
         }
-        purchaseLaunchInProgress = true
 
         ensureClient(
             activity,
             onReady = {
-            val client = billingClient ?: run {
-                purchaseLaunchInProgress = false
-                return@ensureClient
-            }
-
-            queryOwnedPremium(client) { alreadyOwned ->
-                if (alreadyOwned) {
-                    restoreOwnedPurchase("Google Play purchase already exists; restoring Premium.")
-                    return@queryOwnedPremium
+                if (!isCurrentPurchaseLaunch(launchGeneration)) {
+                    return@ensureClient
                 }
 
-                val productList = listOf(
-                    QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(productId)
-                        .setProductType(BillingClient.ProductType.INAPP)
+                val client = billingClient
+                if (client == null || !client.isReady) {
+                    fail("Google Play Billing was not ready when opening the purchase.")
+                    return@ensureClient
+                }
+
+                queryOwnedPremium(client) { alreadyOwned ->
+                    if (!isCurrentPurchaseLaunch(launchGeneration)) {
+                        return@queryOwnedPremium
+                    }
+                    if (alreadyOwned) {
+                        restoreOwnedPurchase("Google Play purchase already exists; restoring Premium.")
+                        return@queryOwnedPremium
+                    }
+
+                    val productList = listOf(
+                        QueryProductDetailsParams.Product.newBuilder()
+                            .setProductId(productId)
+                            .setProductType(BillingClient.ProductType.INAPP)
+                            .build()
+                    )
+
+                    val params = QueryProductDetailsParams.newBuilder()
+                        .setProductList(productList)
                         .build()
-                )
 
-                val params = QueryProductDetailsParams.newBuilder()
-                    .setProductList(productList)
-                    .build()
+                    client.queryProductDetailsAsync(
+                        params,
+                        object : ProductDetailsResponseListener {
+                            override fun onProductDetailsResponse(
+                                billingResult: BillingResult,
+                                result: QueryProductDetailsResult
+                            ) {
+                                if (!isCurrentPurchaseLaunch(launchGeneration)) {
+                                    return
+                                }
+                                if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                                    fail("Google Play product query failed: ${billingResult.responseCode} ${billingResult.debugMessage}")
+                                    return
+                                }
 
-                client.queryProductDetailsAsync(
-                    params,
-                    object : ProductDetailsResponseListener {
-                        override fun onProductDetailsResponse(
-                            billingResult: BillingResult,
-                            result: QueryProductDetailsResult
-                        ) {
-                            if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                                fail("Google Play product query failed: ${billingResult.responseCode} ${billingResult.debugMessage}")
-                                return
-                            }
+                                val details = result.productDetailsList.firstOrNull()
+                                if (details == null) {
+                                    fail("Google Play returned no product details for '$productId'. Check the in-app product ID and Play Console activation.")
+                                    return
+                                }
 
-                            val details = result.productDetailsList.firstOrNull()
-                            if (details == null) {
-                                fail("Google Play returned no product details for '$productId'. Check the in-app product ID and Play Console activation.")
-                                return
-                            }
+                                val productDetailsParams = listOf(
+                                    BillingFlowParams.ProductDetailsParams.newBuilder()
+                                        .setProductDetails(details)
+                                        .build()
+                                )
 
-                            val productDetailsParams = listOf(
-                                BillingFlowParams.ProductDetailsParams.newBuilder()
-                                    .setProductDetails(details)
+                                val flowParams = BillingFlowParams.newBuilder()
+                                    .setProductDetailsParamsList(productDetailsParams)
                                     .build()
-                            )
 
-                            val flowParams = BillingFlowParams.newBuilder()
-                                .setProductDetailsParamsList(productDetailsParams)
-                                .build()
+                                activity.runOnUiThread {
+                                    if (!isCurrentPurchaseLaunch(launchGeneration)) {
+                                        return@runOnUiThread
+                                    }
+                                    if (activity.isFinishing || activity.isDestroyed) {
+                                        fail("Google Play purchase flow could not open because the Premium screen was closing.")
+                                        return@runOnUiThread
+                                    }
 
-                            runCatching {
-                                val res = client.launchBillingFlow(activity, flowParams)
-                                if (BuildConfig.DEBUG) Log.d(TAG, "launchBillingFlow result: ${res.responseCode} ${res.debugMessage}")
-                                when (res.responseCode) {
-                                    BillingClient.BillingResponseCode.OK -> {
-                                        // Keep the guard active until Play Billing calls onPurchasesUpdated.
-                                        activity.runOnUiThread { onResult?.invoke(true, null) }
-                                    }
-                                    BillingClient.BillingResponseCode.SERVICE_DISCONNECTED -> {
-                                        if (retryAfterDisconnect) {
-                                            AppLogStore.append(activity.applicationContext, "Billing", "Purchase flow disconnected; retrying once")
-                                            resetClient()
-                                            purchaseLaunchInProgress = false
-                                            launchPurchaseInternal(activity, productId, retryAfterDisconnect = false, onResult = onResult)
-                                        } else {
-                                            fail("Google Play purchase flow did not open: ${res.responseCode} ${res.debugMessage}")
+                                    runCatching {
+                                        val response = client.launchBillingFlow(activity, flowParams)
+                                        if (BuildConfig.DEBUG) {
+                                            Log.d(TAG, "launchBillingFlow result: ${response.responseCode} ${response.debugMessage}")
                                         }
-                                    }
-                                    BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                                        restoreOwnedPurchase("Google Play reports Premium is already owned; restoring purchase.")
-                                    }
-                                    else -> {
-                                        if (isDuplicateQuickAttempt(res)) {
-                                            restoreOwnedPurchase("Google Play is still processing the previous purchase attempt. Checking existing purchases.")
-                                        } else {
-                                            fail("Google Play purchase flow did not open: ${res.responseCode} ${res.debugMessage}")
+                                        when (response.responseCode) {
+                                            BillingClient.BillingResponseCode.OK -> {
+                                                // Keep the guard active until Play Billing calls onPurchasesUpdated
+                                                // or the Premium screen resumes after the billing UI closes.
+                                                onResult?.invoke(true, null)
+                                            }
+
+                                            BillingClient.BillingResponseCode.SERVICE_DISCONNECTED -> {
+                                                if (retryAfterDisconnect) {
+                                                    AppLogStore.append(
+                                                        activity.applicationContext,
+                                                        "Billing",
+                                                        "Purchase flow disconnected; retrying once"
+                                                    )
+                                                    resetClient()
+                                                    clearPurchaseLaunch(launchGeneration)
+                                                    launchPurchaseInternal(
+                                                        activity,
+                                                        productId,
+                                                        retryAfterDisconnect = false,
+                                                        onResult = onResult,
+                                                    )
+                                                } else {
+                                                    fail("Google Play purchase flow did not open: ${response.responseCode} ${response.debugMessage}")
+                                                }
+                                            }
+
+                                            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
+                                                restoreOwnedPurchase("Google Play reports Premium is already owned; restoring purchase.")
+                                            }
+
+                                            else -> {
+                                                if (isDuplicateQuickAttempt(response)) {
+                                                    restoreOwnedPurchase("Google Play is still processing the previous purchase attempt. Checking existing purchases.")
+                                                } else {
+                                                    fail("Google Play purchase flow did not open: ${response.responseCode} ${response.debugMessage}")
+                                                }
+                                            }
                                         }
+                                    }.onFailure { throwable ->
+                                        fail("Google Play purchase flow crashed: ${throwable.message ?: throwable::class.java.simpleName}")
                                     }
                                 }
-                            }.onFailure { t ->
-                                fail("Google Play purchase flow crashed: ${t.message ?: t::class.java.simpleName}")
                             }
                         }
-                    }
-                )
-            }
+                    )
+                }
             },
             onError = { message -> fail(message) }
         )
@@ -409,13 +557,13 @@ object PremiumRuntime : PurchasesUpdatedListener {
         billingResult: BillingResult,
         purchases: MutableList<Purchase>?
     ) {
-        purchaseLaunchInProgress = false
+        clearPurchaseLaunch()
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
             handlePurchases(purchases)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
             if (BuildConfig.DEBUG) Log.d(TAG, "Purchase canceled by user")
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
-            appContext?.let { refreshFromPlay(it) }
+            appContext?.let { refreshFromPlay(it, force = true) }
         } else {
             Log.e(TAG, "onPurchasesUpdated error: ${billingResult.responseCode} ${billingResult.debugMessage}")
         }

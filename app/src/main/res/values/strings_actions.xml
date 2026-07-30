@@ -4,22 +4,8 @@
     <!-- ====================================================== -->
     <!-- Control sources -->
     <!-- ====================================================== -->
-    <string name="switch_mode_label">Switch mode: %1$s</string>
-    <string name="control_manual">Manual</string>
-    <string name="control_nfc">NFC</string>
-    <string name="control_schedules">Schedules</string>
-    <string name="control_qr">QR</string>
-    <string name="control_barcode">Barcode</string>
-    <string name="switch_mode_status_placeholder">Switch mode: …</string>
-
-    <!-- ====================================================== -->
-    <!-- Paired tag sorting -->
-    <!-- ====================================================== -->
-    <string name="paired_tags_sort_title">Sort paired tags</string>
-    <string name="paired_tags_sort_new_old">New → old</string>
-    <string name="paired_tags_sort_old_new">Old → new</string>
-    <string name="paired_tags_sort_name_az">Name A → Z</string>
-    <string name="paired_tags_sort_name_za">Name Z → A</string>
+    <string name="protection_status_label">Protection status: %1$s</string>
+    <string name="protection_status_placeholder">Protection status: …</string>
 
     <!-- ====================================================== -->
     <!-- Quick Settings tiles -->
@@ -115,7 +101,7 @@
     <!-- ====================================================== -->
     <!-- Experimental features -->
     <!-- ====================================================== -->
-    <string name="experimental_notice_title">Switchly 2.2.1 feedback</string>
-    <string name="experimental_notice_body">This build includes the 2.2.1 beta cleanup and release-candidate changes.\n\nThe app structure changed: Rules now contains profile-based app, website/domain, in-app and schedule rules. Activity contains usage, app launches, screen unlocks, history and blocked notifications. NFC, QR, barcodes and paired tags moved to Settings → Keys &amp; codes.\n\nPlease send feedback or a support report if something feels off around:\n• the new Rules / Activity / Settings navigation\n• profile-based website/domain rules and migrated domains\n• profile-based in-app rules and Block selected / Allow selected modes\n• YouTube, Instagram, X or Snapchat in-app blocking\n• schedules, backup/restore, Premium or billing status\n• Home customization, widgets, tiles and statistics\n\nIn-app blocking is still experimental because social apps can change their UI at any time. Small UI issues, unclear wording and edge cases are useful too.</string>
+    <string name="experimental_notice_title">Switchly 2.2.2 feedback</string>
+    <string name="experimental_notice_body">Switchly 2.2.2 includes the latest cleanup, uninstall-protection guidance, onboarding polish, and reliability changes.\n\nThe app structure changed: Rules now contains profile-based app, website/domain, in-app and schedule rules. Activity contains usage, app launches, screen unlocks, history and blocked notifications. NFC writing, QR creation, barcode mappings and paired tags moved to Settings → Keys &amp; codes. QR and barcode scanners remain directly available from Home so they still work while Settings is locked.\n\nPlease send feedback or a support report if something feels off around:\n• the new Rules / Activity / Settings navigation\n• Emergency unlock access while settings are locked\n• profile-based website/domain rules and migrated domains\n• profile-based in-app rules and Block selected / Allow selected modes\n• YouTube, Instagram, X or Snapchat in-app blocking\n• schedules, repeated schedule checks, backup/restore, Premium or billing status\n• NFC writing, paired tags, Launch via NFC and tag-scan diagnostics\n• Home customization, widgets, tiles and statistics\n• App lock, uninstall protection, Device Admin or ADB / Device Owner setup\n\nIn-app blocking is still experimental because social apps can change their UI at any time. Small UI issues, unclear wording and edge cases are useful too.</string>
 
 </resources>

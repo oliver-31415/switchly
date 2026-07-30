@@ -23,6 +23,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
+import at.saltyy.switchly.feature.usage.StatsArchiveSync
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Lightweight watchdog on unlock/present events.
@@ -33,6 +36,9 @@ class UserUnlockReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         val action = intent?.action ?: return
+        if (action != Intent.ACTION_USER_PRESENT && action != Intent.ACTION_USER_UNLOCKED) {
+            return
+        }
         val ctx = context.applicationContext
 
         runCatching {
@@ -43,6 +49,39 @@ class UserUnlockReceiver : BroadcastReceiver() {
                     putExtra("alarm_reason", "unlock_watchdog")
                 }
             )
+        }
+
+        if (action == Intent.ACTION_USER_PRESENT) {
+            scheduleArchiveSync(ctx)
+        }
+    }
+
+    private fun scheduleArchiveSync(context: Context) {
+        val pendingResult = goAsync()
+        if (!archiveSyncRunning.compareAndSet(false, true)) {
+            pendingResult.finish()
+            return
+        }
+
+        runCatching {
+            archiveExecutor.execute {
+                try {
+                    StatsArchiveSync.sync(context)
+                } finally {
+                    archiveSyncRunning.set(false)
+                    pendingResult.finish()
+                }
+            }
+        }.onFailure {
+            archiveSyncRunning.set(false)
+            pendingResult.finish()
+        }
+    }
+
+    companion object {
+        private val archiveSyncRunning = AtomicBoolean(false)
+        private val archiveExecutor = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "SwitchlyStatsArchive").apply { isDaemon = true }
         }
     }
 }

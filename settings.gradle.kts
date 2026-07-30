@@ -12,11 +12,10 @@ pluginManagement {
 
         // Kotlin
         id("org.jetbrains.kotlin.android") version "2.2.21"
-        id("org.jetbrains.kotlin.kapt") version "2.2.21"
 
         // KSP
-        id("com.google.devtools.ksp") version "2.2.21-2.0.4"
-
+        id("com.google.devtools.ksp") version "2.2.21-2.0.5"
+        
         // Firebase/Google Services (available, but optionally applied in :app)
         id("com.google.gms.google-services") version "4.4.4"
         id("com.google.firebase.crashlytics") version "3.0.6"

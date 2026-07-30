@@ -22,14 +22,18 @@ package at.saltyy.switchly.feature.usage
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import at.saltyy.switchly.data.prefs.AppLaunchCountStore
 import at.saltyy.switchly.data.prefs.BlockAttemptStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
+import at.saltyy.switchly.data.prefs.ScreenUnlockHistoryStore
 import at.saltyy.switchly.data.prefs.WebUsageStore
+import at.saltyy.switchly.data.statistics.StatsPersistence
 import at.saltyy.switchly.util.AppBlockSafety
 import at.saltyy.switchly.util.PackageLaunchIntentCompat
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
+// Loads and transforms usage timeline data.
 object UsageTimelineRepo {
     private const val EVENT_ACTIVITY_RESUMED = 1
     private const val EVENT_ACTIVITY_PAUSED = 2
@@ -37,22 +41,6 @@ object UsageTimelineRepo {
     private const val EVENT_KEYGUARD_SHOWN = 17
     private const val EVENT_KEYGUARD_HIDDEN = 18
     private const val SESSION_TIMEOUT_MS = 30_000L
-
-    private val hiddenUsagePackages = setOf(
-        "com.android.systemui",
-        "com.android.settings",
-        "com.google.android.apps.nexuslauncher",
-        "com.sec.android.app.launcher"
-    )
-
-    private val hiddenUsagePrefixes = listOf(
-        "com.android.launcher",
-        "com.google.android.apps.tvlauncher",
-        "com.miui.home",
-        "com.huawei.android.launcher",
-        "com.oppo.launcher",
-        "com.oneplus.launcher"
-    )
 
     data class AppSession(
         val packageName: String,
@@ -110,7 +98,38 @@ object UsageTimelineRepo {
     }
 
     fun appSessions(ctx: Context, packageName: String, fromMs: Long, toMs: Long, limit: Int = 80): List<AppSession> {
-        if (!UsageStatsRepo.hasUsageAccess(ctx) || packageName.isBlank() || toMs <= fromMs) return emptyList()
+        if (packageName.isBlank() || toMs <= fromMs || UsageInsightsAppFilter.shouldHide(ctx, packageName)) {
+            return emptyList()
+        }
+        val archived = StatsPersistence.appSessionsForRange(ctx, packageName, fromMs, toMs).map { session ->
+            AppSession(session.packageName, session.startMs, session.endMs)
+        }
+        val live = systemAppSessions(ctx, packageName, fromMs, toMs, limit = 0)
+        if (live.isNotEmpty()) {
+            StatsPersistence.archiveAppSessions(ctx, live.map { session ->
+                StatsPersistence.AppSession(session.packageName, session.startMs, session.endMs)
+            })
+        }
+        return (archived + live)
+            .filterNot { session -> UsageInsightsAppFilter.shouldHide(ctx, session.packageName) }
+            .groupBy { session -> session.packageName to session.startMs }
+            .values
+            .map { matches -> matches.maxBy(AppSession::endMs) }
+            .sortedBy(AppSession::startMs)
+            .mergeTinyGaps()
+            .limitLatest(limit)
+    }
+
+    fun systemAppSessions(
+        ctx: Context,
+        packageName: String,
+        fromMs: Long,
+        toMs: Long,
+        limit: Int = 80,
+    ): List<AppSession> {
+        if (!UsageStatsRepo.hasUsageAccess(ctx) || packageName.isBlank() || toMs <= fromMs) {
+            return emptyList()
+        }
         val events = queryEvents(ctx, fromMs, toMs) ?: return emptyList()
         val out = mutableListOf<AppSession>()
         var activeStart: Long? = null
@@ -153,7 +172,37 @@ object UsageTimelineRepo {
     }
 
     fun allAppSessions(ctx: Context, fromMs: Long, toMs: Long, limit: Int = 500): List<AppSession> {
-        if (!UsageStatsRepo.hasUsageAccess(ctx) || toMs <= fromMs) return emptyList()
+        if (toMs <= fromMs) {
+            return emptyList()
+        }
+        val archived = StatsPersistence.appSessionsForRange(ctx, null, fromMs, toMs).map { session ->
+            AppSession(session.packageName, session.startMs, session.endMs)
+        }
+        val live = systemAllAppSessions(ctx, fromMs, toMs, limit = 0)
+        if (live.isNotEmpty()) {
+            StatsPersistence.archiveAppSessions(ctx, live.map { session ->
+                StatsPersistence.AppSession(session.packageName, session.startMs, session.endMs)
+            })
+        }
+        return (archived + live)
+            .filterNot { session -> UsageInsightsAppFilter.shouldHide(ctx, session.packageName) }
+            .groupBy { session -> session.packageName to session.startMs }
+            .values
+            .map { matches -> matches.maxBy(AppSession::endMs) }
+            .sortedBy(AppSession::startMs)
+            .mergeTinyGaps()
+            .limitLatest(limit)
+    }
+
+    fun systemAllAppSessions(
+        ctx: Context,
+        fromMs: Long,
+        toMs: Long,
+        limit: Int = 500,
+    ): List<AppSession> {
+        if (!UsageStatsRepo.hasUsageAccess(ctx) || toMs <= fromMs) {
+            return emptyList()
+        }
         val events = queryEvents(ctx, fromMs, toMs) ?: return emptyList()
         val activeStarts = linkedMapOf<String, Long>()
         val out = mutableListOf<AppSession>()
@@ -163,7 +212,7 @@ object UsageTimelineRepo {
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
             val pkg = event.packageName ?: continue
-            if (!visiblePackage.getOrPut(pkg) { isUsageInsightPackage(ctx, pkg) }) continue
+            if (!visiblePackage.getOrPut(pkg) { isCollectableUsagePackage(ctx, pkg) }) continue
 
             when (event.eventType) {
                 EVENT_ACTIVITY_RESUMED -> {
@@ -187,7 +236,9 @@ object UsageTimelineRepo {
     }
 
     fun combinedUsageSessions(ctx: Context, fromMs: Long, toMs: Long, limit: Int = 500): List<UsageTimelineSession> {
-        if (toMs <= fromMs) return emptyList()
+        if (toMs <= fromMs) {
+            return emptyList()
+        }
         val apps = allAppSessions(ctx, fromMs, toMs, limit = 0).map {
             UsageTimelineSession(
                 source = TimelineSource.APP,
@@ -213,7 +264,10 @@ object UsageTimelineRepo {
 
     fun launchSummary(ctx: Context, packageName: String, rangeName: String): LaunchSummary {
         val (from, to) = windowForRange(rangeName)
-        val launches = launchCount(ctx, packageName, from, to)
+        val launches = maxOf(
+            launchCount(ctx, packageName, from, to),
+            AppLaunchCountStore.getForDateRange(ctx, packageName, from, to),
+        )
         val protectedOpens = when (rangeName) {
             "today" -> OpenCountStore.getTodayAllProfiles(ctx, packageName)
             "week" -> OpenCountStore.getForCurrentWeekAllProfiles(ctx, packageName)
@@ -232,7 +286,6 @@ object UsageTimelineRepo {
     }
 
     fun screenUnlockSummary(ctx: Context): UnlockSummary {
-        if (!UsageStatsRepo.hasUsageAccess(ctx)) return UnlockSummary(0, 0, 0)
         val now = System.currentTimeMillis()
         val todayStart = startOfToday()
         val weekStart = startOfWeek()
@@ -245,19 +298,27 @@ object UsageTimelineRepo {
     }
 
     fun screenUnlockCount(ctx: Context, fromMs: Long, toMs: Long): Int {
-        if (!UsageStatsRepo.hasUsageAccess(ctx) || toMs <= fromMs) return 0
-        val events = queryEvents(ctx, fromMs, toMs) ?: return 0
+        if (toMs <= fromMs) {
+            return 0
+        }
+        val archivedCount = ScreenUnlockHistoryStore.sessionsForRange(ctx, fromMs, toMs).size
+        if (!UsageStatsRepo.hasUsageAccess(ctx)) {
+            return archivedCount
+        }
+        val events = queryEvents(ctx, fromMs, toMs) ?: return archivedCount
         val event = UsageEvents.Event()
-        var count = 0
+        var liveCount = 0
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            if (event.eventType == EVENT_KEYGUARD_HIDDEN) count++
+            if (event.eventType == EVENT_KEYGUARD_HIDDEN) liveCount++
         }
-        return count
+        return maxOf(archivedCount, liveCount)
     }
 
     fun screenUnlockSessions(ctx: Context, fromMs: Long, toMs: Long, limit: Int = 120): List<UnlockSession> {
-        if (!UsageStatsRepo.hasUsageAccess(ctx) || toMs <= fromMs) return emptyList()
+        if (!UsageStatsRepo.hasUsageAccess(ctx) || toMs <= fromMs) {
+            return emptyList()
+        }
         val events = queryEvents(ctx, fromMs, toMs) ?: return emptyList()
         val out = mutableListOf<UnlockSession>()
         val event = UsageEvents.Event()
@@ -284,11 +345,31 @@ object UsageTimelineRepo {
     }
 
     fun isUsageInsightPackage(ctx: Context, packageName: String): Boolean {
-        if (packageName.isBlank()) return false
-        if (packageName == ctx.packageName) return false
-        if (packageName in hiddenUsagePackages) return false
-        if (hiddenUsagePrefixes.any { packageName.startsWith(it) }) return false
-        if (AppBlockSafety.isHardExcluded(ctx, packageName)) return false
+        if (packageName.isBlank()) {
+            return false
+        }
+        if (UsageInsightsAppFilter.shouldHide(ctx, packageName)) {
+            return false
+        }
+        if (packageName == ctx.packageName) {
+            return true
+        }
+        if (AppBlockSafety.isAlwaysExcluded(ctx, packageName)) {
+            return false
+        }
+        return PackageLaunchIntentCompat.isLaunchable(ctx, packageName)
+    }
+
+    private fun isCollectableUsagePackage(ctx: Context, packageName: String): Boolean {
+        if (UsageInsightsAppFilter.shouldAlwaysHide(packageName)) {
+            return false
+        }
+        if (packageName == ctx.packageName) {
+            return true
+        }
+        if (AppBlockSafety.isAlwaysExcluded(ctx, packageName)) {
+            return false
+        }
         return PackageLaunchIntentCompat.isLaunchable(ctx, packageName)
     }
 
@@ -320,7 +401,9 @@ object UsageTimelineRepo {
     }
 
     private fun List<AppSession>.mergeTinyGaps(): List<AppSession> {
-        if (isEmpty()) return emptyList()
+        if (isEmpty()) {
+            return emptyList()
+        }
         val merged = mutableListOf<AppSession>()
         for (session in sortedBy { it.startMs }) {
             val last = merged.lastOrNull()
@@ -334,7 +417,9 @@ object UsageTimelineRepo {
     }
 
     private fun <T> List<T>.limitLatest(limit: Int): List<T> {
-        if (limit <= 0 || size <= limit) return this
+        if (limit <= 0 || size <= limit) {
+            return this
+        }
         return asReversed().take(limit).asReversed()
     }
 }

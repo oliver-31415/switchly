@@ -72,13 +72,15 @@ object QuickLimitDialogs {
     ) {
         val safety = AppBlockSafety.resolve(activity, pkg)
         when (safety.level) {
-            AppBlockSafety.Level.HARD_EXCLUDED -> {
-                Toast.makeText(
-                    activity,
-                    safety.hint ?: activity.getString(R.string.app_picker_protected_generic_hint),
-                    Toast.LENGTH_LONG
-                ).show()
-                return
+            AppBlockSafety.Level.PROTECTED -> {
+                AlertDialog.Builder(activity)
+                    .setTitle(safety.warningTitle ?: activity.getString(R.string.app_picker_protected_warning_title))
+                    .setMessage(safety.warningMessage ?: activity.getString(R.string.app_picker_protected_warning_message))
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.app_picker_block_protected_confirm) { _, _ ->
+                        showForAppInternal(activity, pkg, label, startOnAttempts, onChanged)
+                    }
+                    .showAccented()
             }
             AppBlockSafety.Level.SOFT_WARNING -> {
                 AlertDialog.Builder(activity)
@@ -215,7 +217,9 @@ object QuickLimitDialogs {
     }
 
     private fun ensureManaged(activity: AppCompatActivity, profile: String, pkg: String) {
-        if (AppBlockSafety.isHardExcluded(activity, pkg)) return
+        if (AppBlockSafety.isAlwaysExcluded(activity, pkg)) {
+            return
+        }
         val selected = ProfileStore.getSelectedForProfileMode(activity, profile).toMutableSet()
         if (!selected.contains(pkg)) {
             selected.add(pkg)

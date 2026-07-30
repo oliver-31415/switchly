@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/qr_generate_title"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -33,7 +33,7 @@
             android:orientation="vertical"
             android:padding="16dp"
             android:paddingBottom="24dp">
-            
+
             <!-- QR Image -->
             <ImageView
                 android:id="@+id/ivQr"
@@ -120,7 +120,10 @@
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="@string/action_copy" />
+                    android:text="@string/action_copy"
+                    app:icon="@drawable/content_copy_24"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp" />
 
                 <Space
                     android:layout_width="8dp"
@@ -132,7 +135,10 @@
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="@string/share" />
+                    android:text="@string/share"
+                    app:icon="@drawable/share_24"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp" />
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

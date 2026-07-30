@@ -48,7 +48,7 @@ import at.saltyy.switchly.ui.MainActivity
 class WifiTriggerService : Service() {
 
     private lateinit var cm: ConnectivityManager
-    private lateinit var wifi: WifiManager
+    private var wifi: WifiManager? = null
     private var cb: ConnectivityManager.NetworkCallback? = null
     private val handler = Handler(Looper.getMainLooper())
     private var retryCount = 0
@@ -58,9 +58,17 @@ class WifiTriggerService : Service() {
 
         // We are started via ContextCompat.startForegroundService().
         // If we don't call startForeground() fast enough (or it throws), Android will crash the app.
-        if (!ensureForegroundOrStop()) return
+        if (!ensureForegroundOrStop()) {
+            return
+        }
 
-        cm = getSystemService(ConnectivityManager::class.java)
+        val connectivityManager = getSystemService(ConnectivityManager::class.java)
+        if (connectivityManager == null) {
+            Log.e(TAG, "ConnectivityManager unavailable. Stopping trigger service.")
+            stopSelf()
+            return
+        }
+        cm = connectivityManager
         wifi = applicationContext.getSystemService(WifiManager::class.java)
 
         // Android 12+ may redact Wi‑Fi SSID/BSSID unless the callback explicitly requests location-sensitive transport info.
@@ -69,37 +77,49 @@ class WifiTriggerService : Service() {
                 FLAG_INCLUDE_LOCATION_INFO
             ) {
                 override fun onAvailable(network: Network) {
-                    handleWifiAvailable("available")
+                    runWifiCallback("available") {
+                        handleWifiAvailable("available")
+                    }
                 }
 
                 override fun onLost(network: Network) {
-                    handleWifiLost("lost")
+                    runWifiCallback("lost") {
+                        handleWifiLost("lost")
+                    }
                 }
 
                 override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
-                    if (!cacheWifiFromCaps(caps, "capabilitiesChanged")) {
-                        cacheWifiFromActiveNetwork("capabilitiesChangedFallback")
+                    runWifiCallback("capabilitiesChanged") {
+                        if (!cacheWifiFromCaps(caps, "capabilitiesChanged")) {
+                            cacheWifiFromActiveNetwork("capabilitiesChangedFallback")
+                        }
+                        sendTick("capabilitiesChanged")
+                        scheduleWifiRetryIfNeeded("capabilitiesChanged")
                     }
-                    sendTick("capabilitiesChanged")
-                    scheduleWifiRetryIfNeeded("capabilitiesChanged")
                 }
             }
         } else {
             object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    handleWifiAvailable("available")
+                    runWifiCallback("available") {
+                        handleWifiAvailable("available")
+                    }
                 }
 
                 override fun onLost(network: Network) {
-                    handleWifiLost("lost")
+                    runWifiCallback("lost") {
+                        handleWifiLost("lost")
+                    }
                 }
 
                 override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
-                    if (!cacheWifiFromCaps(caps, "capabilitiesChanged")) {
-                        cacheWifiFromActiveNetwork("capabilitiesChangedFallback")
+                    runWifiCallback("capabilitiesChanged") {
+                        if (!cacheWifiFromCaps(caps, "capabilitiesChanged")) {
+                            cacheWifiFromActiveNetwork("capabilitiesChangedFallback")
+                        }
+                        sendTick("capabilitiesChanged")
+                        scheduleWifiRetryIfNeeded("capabilitiesChanged")
                     }
-                    sendTick("capabilitiesChanged")
-                    scheduleWifiRetryIfNeeded("capabilitiesChanged")
                 }
             }
         }
@@ -108,8 +128,30 @@ class WifiTriggerService : Service() {
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
             .build()
 
-        cm.registerNetworkCallback(req, cb!!)
-        refreshWifiStateAndTick("serviceStart")
+        val callback = cb
+        if (callback == null) {
+            Log.e(TAG, "Wi-Fi callback was not created. Stopping trigger service.")
+            stopSelf()
+            return
+        }
+
+        val registered = runCatching {
+            cm.registerNetworkCallback(req, callback)
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to register Wi-Fi network callback", error)
+        }.isSuccess
+
+        if (!registered) {
+            stopSelf()
+            return
+        }
+
+        runCatching {
+            refreshWifiStateAndTick("serviceStart")
+        }.onFailure { error ->
+            Log.e(TAG, "Initial Wi-Fi trigger refresh failed", error)
+            stopSelf()
+        }
     }
 
     override fun onDestroy() {
@@ -125,10 +167,16 @@ class WifiTriggerService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val ok = ensureForegroundOrStop()
-        if (ok && this::cm.isInitialized && this::wifi.isInitialized) {
-            refreshWifiStateAndTick("serviceCommand")
+        if (ok && this::cm.isInitialized) {
+            runWifiCallback("serviceCommand") {
+                refreshWifiStateAndTick("serviceCommand")
+            }
         }
-        return if (ok) START_STICKY else START_NOT_STICKY
+        return if (ok) {
+            START_STICKY
+        } else {
+            START_NOT_STICKY
+        }
     }
 
     /**
@@ -139,7 +187,9 @@ class WifiTriggerService : Service() {
     private var foregroundStarted = false
 
     private fun ensureForegroundOrStop(): Boolean {
-        if (foregroundStarted) return true
+        if (foregroundStarted) {
+            return true
+        }
 
         val nm = getSystemService(NotificationManager::class.java)
 
@@ -209,6 +259,13 @@ class WifiTriggerService : Service() {
             .build()
     }
 
+    private fun runWifiCallback(reason: String, action: () -> Unit) {
+        runCatching(action).onFailure { error ->
+            Log.e(TAG, "Wi-Fi trigger callback failed: $reason", error)
+            stopSelf()
+        }
+    }
+
     private fun sendTick(reason: String) {
         dbg("wifi tick: $reason")
         sendBroadcast(
@@ -239,13 +296,15 @@ class WifiTriggerService : Service() {
         // During Wi‑Fi roaming/reconnect Android can deliver onLost for the previous Wi‑Fi network after a new Wi‑Fi network is already available.
         // Clearing the SSID too early can make Wi‑Fi schedules wait forever for a new SSID event.
         handler.postDelayed({
-            val stillOnWifi = cacheWifiFromAnyWifiNetwork("${reason}Verify")
-            if (stillOnWifi) {
-                sendTick("${reason}_still_connected")
-                scheduleWifiRetryIfNeeded("${reason}Verify")
-            } else {
-                clearCachedWifi(reason)
-                sendTick(reason)
+            runWifiCallback("${reason}Verify") {
+                val stillOnWifi = cacheWifiFromAnyWifiNetwork("${reason}Verify")
+                if (stillOnWifi) {
+                    sendTick("${reason}_still_connected")
+                    scheduleWifiRetryIfNeeded("${reason}Verify")
+                } else {
+                    clearCachedWifi(reason)
+                    sendTick(reason)
+                }
             }
         }, WIFI_LOST_VERIFY_DELAY_MS)
     }
@@ -256,7 +315,9 @@ class WifiTriggerService : Service() {
         val net = cm.activeNetwork
         if (net != null) {
             val caps = cm.getNetworkCapabilities(net)
-            if (caps != null && cacheWifiFromCaps(caps, reason)) return true
+            if (caps != null && cacheWifiFromCaps(caps, reason)) {
+                return true
+            }
         }
         return cacheWifiFromAnyWifiNetwork(reason)
     }
@@ -266,7 +327,9 @@ class WifiTriggerService : Service() {
         for (n in nets) {
             val caps = cm.getNetworkCapabilities(n) ?: continue
             if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) continue
-            if (cacheWifiFromCaps(caps, "$reason(allNetworks)")) return true
+            if (cacheWifiFromCaps(caps, "$reason(allNetworks)")) {
+                return true
+            }
         }
         return false
     }
@@ -279,7 +342,9 @@ class WifiTriggerService : Service() {
     }
 
     private fun cacheWifiFromCaps(caps: NetworkCapabilities, reason: String): Boolean {
-        if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return false
+        if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+            return false
+        }
 
         var ssid: String? = null
         var bssid: String? = null
@@ -321,7 +386,9 @@ class WifiTriggerService : Service() {
                 b.isNotBlank() && !b.equals("02:00:00:00:00:00", ignoreCase = true)
             }
 
-        if (cleanSsid == null && cleanBssid == null) return false
+        if (cleanSsid == null && cleanBssid == null) {
+            return false
+        }
 
         getSharedPreferences(PREFS_WIFI, MODE_PRIVATE).edit {
             if (cleanSsid != null) putString(KEY_LAST_SSID, cleanSsid) else remove(KEY_LAST_SSID)
@@ -335,8 +402,9 @@ class WifiTriggerService : Service() {
     }
 
     private fun readWifiInfoCompat(): WifiInfo? {
+        val wifiManager = wifi ?: return null
         return try {
-            wifiConnectionInfoCompat(wifi)
+            wifiConnectionInfoCompat(wifiManager)
         } catch (_: SecurityException) {
             null
         } catch (_: Throwable) {
@@ -352,12 +420,16 @@ class WifiTriggerService : Service() {
     private fun scheduleWifiRetryIfNeeded(reason: String) {
         val hasWifiSchedules = at.saltyy.switchly.data.prefs.ScheduleStore
             .hasEnabledWifiSchedules(applicationContext)
-        if (!hasWifiSchedules) return
+        if (!hasWifiSchedules) {
+            return
+        }
 
         val prefs = getSharedPreferences(PREFS_WIFI, MODE_PRIVATE)
         val alreadySsid = prefs.getString(KEY_LAST_SSID, null)
         val alreadyBssid = prefs.getString(KEY_LAST_BSSID, null)
-        if (!alreadySsid.isNullOrBlank() || !alreadyBssid.isNullOrBlank()) return
+        if (!alreadySsid.isNullOrBlank() || !alreadyBssid.isNullOrBlank()) {
+            return
+        }
 
         if (retryCount >= 5) {
             Log.w(TAG, "Wi-Fi info still null after retries ($reason). Likely Location OFF/no Precise/permission.")
@@ -372,8 +444,10 @@ class WifiTriggerService : Service() {
         retryCount++
 
         handler.postDelayed({
-            cacheWifiFromActiveNetwork("retry#$retryCount")
-            sendTick("retry")
+            runWifiCallback("retry") {
+                cacheWifiFromActiveNetwork("retry#$retryCount")
+                sendTick("retry")
+            }
         }, delay)
 
         dbg("scheduled Wi-Fi retry in ${delay}ms ($reason)")

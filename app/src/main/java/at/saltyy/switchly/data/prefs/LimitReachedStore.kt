@@ -39,19 +39,25 @@ object LimitReachedStore {
         PREFIX + ymd + "_" + profile.safeKeyPart() + "_" + pkg.safeKeyPart()
 
     fun isReachedToday(context: Context, pkg: String): Boolean {
-        if (pkg.isBlank()) return false
+        if (pkg.isBlank()) {
+            return false
+        }
         return prefs(context).getBoolean(key(todayYmdInt(), pkg), false)
     }
 
     fun isReachedToday(context: Context, profile: String, pkg: String): Boolean {
-        if (profile.isBlank() || pkg.isBlank()) return false
+        if (profile.isBlank() || pkg.isBlank()) {
+            return false
+        }
         val sp = prefs(context)
         val ymd = todayYmdInt()
         return sp.getBoolean(key(ymd, profile, pkg), false)
     }
 
     fun markReachedToday(context: Context, pkg: String) {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
 
         val sharedPreferences = prefs(context)
         val key = key(todayYmdInt(), pkg)
@@ -65,7 +71,9 @@ object LimitReachedStore {
     }
 
     fun markReachedToday(context: Context, profile: String, pkg: String) {
-        if (profile.isBlank() || pkg.isBlank()) return
+        if (profile.isBlank() || pkg.isBlank()) {
+            return
+        }
 
         val sharedPreferences = prefs(context)
         val key = key(todayYmdInt(), profile, pkg)
@@ -79,7 +87,9 @@ object LimitReachedStore {
     }
 
     fun clearToday(context: Context, pkg: String) {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         val ymd = todayYmdInt()
         val prefix = PREFIX + ymd + "_"
         val suffix = "_" + pkg.safeKeyPart()
@@ -92,7 +102,9 @@ object LimitReachedStore {
     }
 
     fun clearToday(context: Context, profile: String, pkg: String) {
-        if (profile.isBlank() || pkg.isBlank()) return
+        if (profile.isBlank() || pkg.isBlank()) {
+            return
+        }
         prefs(context).edit { remove(key(todayYmdInt(), profile, pkg)) }
     }
 

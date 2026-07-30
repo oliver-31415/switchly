@@ -14,12 +14,12 @@
     <!-- ====================================================== -->
     <!-- Profile rule mode -->
     <!-- ====================================================== -->
-    <string name="profile_rule_mode_title">Profil-Verhalten</string>
+    <string name="profile_rule_mode_title">App-Regelmodus</string>
     <string name="profile_rule_mode_block">Ausgewählte blockieren</string>
     <string name="profile_rule_mode_allow">Ausgewählte erlauben</string>
-    <string name="profile_rule_mode_block_summary">Ausgewählte Apps und Websites werden blockiert, solange dieses Profil aktiv ist.</string>
-    <string name="profile_rule_mode_allow_summary">Nur ausgewählte Apps und Websites aus dieser Picker-Liste sind erlaubt, solange dieses Profil aktiv ist. Apps, die hier nicht angezeigt werden, gelten als erlaubt.</string>
-    <string name="profile_name_mode_format">%1$s · %2$s</string>
+    <string name="profile_rule_mode_block_summary">Ausgewählte Apps werden blockiert, solange dieses Profil aktiv ist.</string>
+    <string name="profile_rule_mode_allow_summary">Nur ausgewählte Apps aus dieser Picker-Liste sind erlaubt, solange dieses Profil aktiv ist. Apps, die hier nicht angezeigt werden, gelten als erlaubt.</string>
+    <string name="profile_name_mode_format">%1$s · Apps: %2$s</string>
 
     <!-- ====================================================== -->
     <!-- Picker titles and descriptions -->
@@ -27,22 +27,10 @@
     <string name="pick_apps">Apps auswählen</string>
     <string name="pick_allowed_apps">Erlaubte App-Liste</string>
     <string name="pick_blocked_apps">Blockierte App-Liste</string>
-    <string name="pick_things_to_block">Apps blockieren</string>
-    <string name="pick_things_to_allow">Apps erlauben</string>
-    <string name="app_picker_header_editing_profile">Bearbeitet: %1$s</string>
-    <string name="app_picker_blocked_list_description">Wähle die Apps aus, die in diesem Profil blockiert werden.</string>
-    <string name="app_picker_allowed_list_description">Wähle die Apps aus, die in diesem Profil verfügbar bleiben.</string>
-    <string name="pick_websites_domains">Website-/Domain-Regeln</string>
-    <string name="pick_in_app_sections">In-App-Bereiche</string>
 
     <!-- ====================================================== -->
-    <!-- Selection counts and bulk actions -->
+    <!-- Bulk actions -->
     <!-- ====================================================== -->
-    <string name="app_picker_selected_count_zero">0 ausgewählt</string>
-    <plurals name="app_picker_selected_count_fmt">
-        <item quantity="one">%1$d ausgewählt</item>
-        <item quantity="other">%1$d ausgewählt</item>
-    </plurals>
     <string name="app_picker_select_all">Alle auswählen</string>
     <string name="app_picker_clear_all">Auswahl löschen</string>
     <string name="app_picker_clear_unavailable">Nicht verfügbare löschen</string>
@@ -60,10 +48,23 @@
     <!-- ====================================================== -->
     <string name="app_picker_protected_chip">Geschützt</string>
     <string name="app_picker_caution_chip">Achtung</string>
-    <string name="app_picker_protected_generic_hint">Diese App ist aus Gerätesicherheitsgründen geschützt.</string>
-    <string name="app_picker_protected_keyboard_hint">Deine aktuelle Tastatur wird vom Blockieren ausgeschlossen, damit du dich nicht vom Tippen aussperrst.</string>
-    <string name="app_picker_protected_launcher_hint">Dein aktueller Launcher wird vom Blockieren ausgeschlossen, damit du dich nicht vom Homescreen aussperrst.</string>
+    <string name="app_picker_protected_generic_hint">Diese App ist geschützt, weil Android oder dein Gerät davon abhängig sein könnte. Du kannst sie nach ausdrücklicher Bestätigung des Risikos trotzdem einzeln auswählen.</string>
+    <string name="app_picker_protected_keyboard_hint">Deine aktuelle Tastatur ist geschützt, weil du dich durch das Blockieren vom Tippen aussperren kannst.</string>
+    <string name="app_picker_protected_launcher_hint">Dein aktueller Launcher ist geschützt, weil das Blockieren eine Sperrschleife verursachen oder den Homescreen unbenutzbar machen kann.</string>
     <string name="app_picker_protected_caution_title">Diese App ist sicherheitsrelevant</string>
+    <string name="app_picker_protected_warning_title">Geschützte App trotzdem blockieren?</string>
+    <string name="app_picker_protected_warning_message">Android oder dein Gerät könnte von dieser App abhängig sein. Das Blockieren kann Sperrschleifen verursachen, Homescreen, Tastatur, Anrufe, Berechtigungen, Einrichtung oder Wiederherstellung beschädigen und das Gerät schwer benutzbar machen. Switchly kann nicht garantieren, dass dein Gerät danach wiederherstellbar bleibt. Fahre nur fort, wenn du das Risiko verstehst und akzeptierst.</string>
+    <string name="app_picker_block_protected_confirm">Trotzdem blockieren</string>
+    <string name="app_picker_keyboard_warning_title">Aktuelle Tastatur trotzdem blockieren?</string>
+    <string name="app_picker_keyboard_warning_message">Das Blockieren deiner aktuellen Tastatur kann Tippen, Passworteingaben, Suche oder die Wiederherstellung von Switchly verhindern. Stelle sicher, dass eine andere Tastatur und die Notfall-Entsperrung verfügbar sind.</string>
+    <string name="app_picker_launcher_warning_title">Aktuellen Launcher trotzdem blockieren?</string>
+    <string name="app_picker_launcher_warning_message">Das Blockieren deines aktuellen Launchers kann eine dauernde Homescreen-Sperrschleife verursachen oder dich ohne nutzbaren Homescreen zurücklassen. Stelle sicher, dass ein anderer Launcher und die Notfall-Entsperrung verfügbar sind.</string>
+    <string name="app_picker_assistant_hint">Google- oder Assistent-Apps können tief in Launcher-Suche, Sprachassistenz und Systemstart-Abläufe integriert sein.</string>
+    <string name="app_picker_assistant_warning_title">Google- oder Assistent-App trotzdem blockieren?</string>
+    <string name="app_picker_assistant_warning_message">Diese App kann für Launcher-Suche, Sprachassistenz, Systemdienste oder Startabläufe verwendet werden. Das Blockieren kann auf manchen Geräten Sperrschleifen verursachen oder Gerätefunktionen beschädigen.</string>
+    <string name="app_picker_system_ui_hint">System UI steuert zentrale Android-Bereiche wie Statusleiste, Navigation, Benachrichtigungen und Sperrbildschirm.</string>
+    <string name="app_picker_system_ui_warning_title">System UI trotzdem blockieren?</string>
+    <string name="app_picker_system_ui_warning_message">Das Blockieren von System UI kann Navigation, Benachrichtigungen, Statusleiste, Sperrbildschirm oder grundlegende Wiederherstellung beschädigen. Das ist extrem riskant.</string>
 
     <!-- ====================================================== -->
     <!-- Safety-sensitive app warnings -->
@@ -107,10 +108,6 @@
     <!-- ====================================================== -->
     <!-- Cleanup notices -->
     <!-- ====================================================== -->
-    <plurals name="app_picker_removed_protected_notice">
-        <item quantity="one">%d geschützte App wurde aus diesem Profil aus Sicherheitsgründen entfernt.</item>
-        <item quantity="other">%d geschützte Apps wurden aus diesem Profil aus Sicherheitsgründen entfernt.</item>
-    </plurals>
     <plurals name="unavailable_apps_cleared_notice">
         <item quantity="one">%1$d nicht verfügbarer App-Eintrag wurde entfernt. Tippe auf Speichern, um die Bereinigung zu behalten.</item>
         <item quantity="other">%1$d nicht verfügbare App-Einträge wurden entfernt. Tippe auf Speichern, um die Bereinigung zu behalten.</item>
@@ -119,8 +116,10 @@
     <!-- ====================================================== -->
     <!-- App rules info and allow mode warnings -->
     <!-- ====================================================== -->
+    <string name="app_rules_title">App-Regeln</string>
+    <string name="app_rules_profile_subtitle">Regeln für: %1$s</string>
     <string name="app_rules_info_title">App-Regeln</string>
-    <string name="app_rules_info_body">App-Regeln:\n• Apps, Website-/Domain-Regeln und In-App-Bereiche werden pro Profil verwaltet.\n• Nutze die App-Liste unten für komplette Apps.\n• Nutze Website-/Domain-Regeln für Browser-Regeln im aktiven Profil.\n• Nutze In-App-Bereiche für unterstützte installierte Apps wie YouTube, Instagram, X und Snapchat.\n\nAusgewählte blockieren:\n• Ausgewählte Apps und Website-Regeln werden blockiert, solange dieses Profil aktiv ist.\n• Nicht ausgewählte Apps sind erlaubt, außer ein anderes Limit blockiert sie.\n\nAusgewählte erlauben:\n• Apps in dieser Picker-Liste sind nur erlaubt, wenn sie ausgewählt sind.\n• Apps in dieser Picker-Liste, die nicht ausgewählt sind, werden blockiert.\n• Apps, die im Picker nicht angezeigt werden, gelten als erlaubt, weil sie hier nicht auswählbar sind.\n\nNeu installierte Apps automatisch blockieren:\n• Nur im Block selected Modus verfügbar.\n• Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt.\n• Alle auswählen aktiviert das auch für zukünftige Installationen.</string>
+    <string name="app_rules_info_body">App-Regeln:\n• Apps, Website-/Domain-Regeln und In-App-Bereiche werden pro Profil verwaltet und besitzen jeweils einen eigenen Block-selected-/Allow-selected-Modus.\n• Nutze die App-Liste unten für komplette Apps.\n• Nutze Website-/Domain-Regeln für Browser-Regeln im aktiven Profil.\n• Nutze In-App-Bereiche für unterstützte installierte Apps wie YouTube, Instagram, X und Snapchat.\n\nWelche Apps verfügbar sind:\n• Die normale Liste zeigt Apps, die aktuell auf diesem Gerät installiert sind und von Android mit einem normalen Launcher-Eintrag bereitgestellt werden. Switchly kann dadurch die meisten normal startbaren Apps verwalten; die Liste ist kein Katalog aller Android-Apps.\n• Apps ohne Launcher-Eintrag, versteckte Systemkomponenten und nicht installierte Apps werden normalerweise nicht angezeigt. Eine zuvor ausgewählte und später entfernte App kann weiterhin als Nicht verfügbar erscheinen.\n• Switchly selbst bleibt ausgeschlossen. Sicherheitsrelevante Apps wie aktiver Launcher, Tastatur, Telefon-App, Google-App, Paketinstallation, Berechtigungsverwaltung und System UI sind als Geschützt markiert. Alle auswählen überspringt sie, sie können aber einzeln nach einer deutlichen Risikowarnung ausgewählt werden.\n• Die genaue Liste kann je nach Android-Version, Hersteller, Arbeitsprofil und Package-Visibility-Einschränkungen leicht abweichen.\n\nAusgewählte blockieren:\n• Ausgewählte Apps werden blockiert, solange dieses Profil aktiv ist.\n• Nicht ausgewählte Apps sind erlaubt, außer ein anderes Limit blockiert sie.\n\nAusgewählte erlauben:\n• Apps in dieser Picker-Liste sind nur erlaubt, wenn sie ausgewählt sind.\n• Apps in dieser Picker-Liste, die nicht ausgewählt sind, werden blockiert.\n• Apps, die im Picker nicht angezeigt werden, gelten als erlaubt, weil sie hier nicht auswählbar sind.\n\nNeu installierte Apps automatisch blockieren:\n• Nur im Block selected Modus verfügbar.\n• Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt.\n• Alle auswählen aktiviert das auch für zukünftige Installationen.</string>
     <string name="allow_mode_empty_save_title">Keine erlaubten Apps ausgewählt?</string>
     <string name="allow_mode_empty_save_message">Dieses Profil ist im Allow Mode, aber es sind keine Apps ausgewählt. Gelistete Picker-Apps können blockiert werden, aber Apps, die im Picker nicht angezeigt werden, gelten als erlaubt.</string>
     <string name="allow_mode_empty_save_confirm">Trotzdem speichern</string>
@@ -128,9 +127,7 @@
     <!-- ====================================================== -->
     <!-- Website and in-app shortcuts -->
     <!-- ====================================================== -->
-    <string name="app_picker_open_website_rules">Website-Regeln</string>
     <string name="app_picker_open_website_rules_for">Website-Regeln für %1$s</string>
-    <string name="app_picker_open_in_app_rules">In-App-Regeln</string>
     <string name="app_picker_open_in_app_rules_for">In-App-Regeln für %1$s</string>
     <string name="app_picker_in_app_rules_chip">In-App</string>
     <string name="app_picker_in_app_rules_pinned_hint">Ausgewählt, weil In-App-Regeln aktiv sind.\nEntferne zuerst die In-App-Regeln, um diese App auszuschalten.</string>

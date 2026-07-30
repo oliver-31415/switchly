@@ -23,22 +23,46 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 
 /**
- * Defensive SharedPreferences accessors.
- * Firestore/JSON/etc. can occasionally rehydrate integral values as Long (or String).
- * SharedPreferences is type-strict and will throw ClassCastException if you call getInt() when the stored type is not Int.
- * These helpers avoid crashes and "heal" the stored value back to the expected type.
+ * Defensive numeric SharedPreferences accessors.
+ *
+ * Restores and older backup formats can rehydrate integral values with a different
+ * storage type. Android's typed getters throw ClassCastException in that case, so
+ * these helpers preserve the value and heal it back to the expected type.
  */
-fun SharedPreferences.getIntCompat(key: String, def: Int = 0): Int {
+fun SharedPreferences.getIntCompat(key: String, defaultValue: Int = 0): Int {
     return try {
-        getInt(key, def)
+        getInt(key, defaultValue)
     } catch (_: ClassCastException) {
-        val v = when (val any = all[key]) {
-            is Long -> any.toInt()
-            is Int -> any
-            is String -> any.toIntOrNull() ?: def
-            else -> def
-        }
-        edit { putInt(key, v) }
-        v
+        val value = coerceIntCompatValue(all[key], defaultValue)
+        edit { putInt(key, value) }
+        value
     }
+}
+
+fun SharedPreferences.getLongCompat(key: String, defaultValue: Long = 0L): Long {
+    return try {
+        getLong(key, defaultValue)
+    } catch (_: ClassCastException) {
+        val value = coerceLongCompatValue(all[key], defaultValue)
+        edit { putLong(key, value) }
+        value
+    }
+}
+
+internal fun coerceIntCompatValue(raw: Any?, defaultValue: Int): Int {
+    val value = when (raw) {
+        is Int -> raw.toLong()
+        is Number -> raw.toLong()
+        is String -> raw.toLongOrNull()
+        else -> null
+    } ?: return defaultValue
+
+    return value.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
+}
+
+internal fun coerceLongCompatValue(raw: Any?, defaultValue: Long): Long = when (raw) {
+    is Long -> raw
+    is Number -> raw.toLong()
+    is String -> raw.toLongOrNull() ?: defaultValue
+    else -> defaultValue
 }

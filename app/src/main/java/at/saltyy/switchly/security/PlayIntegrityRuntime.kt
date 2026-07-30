@@ -99,8 +99,12 @@ object PlayIntegrityRuntime {
 
         val now = System.currentTimeMillis()
         val lastRequest = prefs.getLong(KEY_LAST_REQUEST_MS, 0L)
-        if (!force && now - lastRequest < APP_START_THROTTLE_MS) return
-        if (requestRunning) return
+        if (!force && now - lastRequest < APP_START_THROTTLE_MS) {
+            return
+        }
+        if (requestRunning) {
+            return
+        }
 
         requestRunning = true
         val cleanReason = reason.cleanReason()

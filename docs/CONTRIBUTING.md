@@ -26,8 +26,10 @@ Firebase/Google builds may require private configuration such as `google-service
 
 For release validation of the public/offline build:
 ```bash
-./gradlew :app:lintOfflineRelease :app:assembleOfflineRelease
+./gradlew :app:public-release-apk
 ```
+
+This task needs no signing key and names unsigned output explicitly.
 
 ## Firebase and Google builds
 Firebase/Google configuration is only needed for features related to:
@@ -45,14 +47,12 @@ To set it up locally:
 
 `google-services.json`, `signing.properties`, keystores, secrets, tokens, and generated build outputs must not be committed.
 
-Maintainer/full release validation may include:
+Maintainer/full release validation and packaging:
 ```bash
-./gradlew :app:lint \
-  :app:assembleOfflineRelease \
-  :app:assembleFirebaseEmailRelease \
-  :app:assembleFullRelease \
-  :app:bundleFullRelease
+./gradlew :app:release-apk
 ```
+
+This task validates all published release flavors and requires the private Firebase/signing configuration.
 
 ## Translation rules
 All user-facing strings must live in Android resources.
@@ -70,6 +70,8 @@ Be extra careful with:
 - support/debug report contents
 
 For changes touching Accessibility, schedules, Premium, billing, backup/restore, NFC/QR/barcode actions, blocking logic, or background services, test the affected flavor on a real device when possible.
+
+Before changing navigation, icons, dialogs, selection controls, or security-sensitive management screens, read [`UI_CONVENTIONS.md`](./UI_CONVENTIONS.md).
 
 ## Guidelines
 - Keep changes focused and easy to review

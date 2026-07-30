@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 
+// Persists and retrieves temp allow state.
 object TempAllowStore {
     private const val PREFS = "switchly_prefs"
     private const val KEY_PREFIX = "temp_allow_"
@@ -40,7 +41,9 @@ object TempAllowStore {
         val sharedPreferences = prefs(context)
         val key = key(pkg)
         val until = sharedPreferences.getLong(key, 0L)
-        if (until == 0L) return false
+        if (until == 0L) {
+            return false
+        }
 
         if (System.currentTimeMillis() > until) {
             sharedPreferences.edit { remove(key) }

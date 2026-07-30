@@ -32,7 +32,6 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.text.InputType
@@ -42,13 +41,10 @@ import android.text.style.ForegroundColorSpan
 import android.util.Patterns
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -67,13 +63,12 @@ import androidx.preference.PreferenceGroup
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import at.saltyy.switchly.auth.AccountDeletion
 import at.saltyy.switchly.blocking.BlockingRuntime
-import at.saltyy.switchly.data.prefs.AdvancedModeStore
+import at.saltyy.switchly.data.prefs.ActivityHistoryLogStore
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
@@ -85,11 +80,11 @@ import at.saltyy.switchly.data.sync.BackupCategory
 import at.saltyy.switchly.data.sync.BackupCategoryFilter
 import at.saltyy.switchly.data.sync.BackupSelection
 import at.saltyy.switchly.data.sync.BackupSelectionStore
+import at.saltyy.switchly.data.statistics.StatsPersistence
 import at.saltyy.switchly.data.sync.CloudSyncRuntime
 import at.saltyy.switchly.data.sync.FileBackupRuntime
 import at.saltyy.switchly.feature.about.AppInfoActivity
 import at.saltyy.switchly.feature.about.DeveloperInfoActivity
-import at.saltyy.switchly.feature.about.DeveloperModeActivity
 import at.saltyy.switchly.feature.about.DeviceInfoActivity
 import at.saltyy.switchly.feature.about.OtherSwitchlyProductsActivity
 import at.saltyy.switchly.feature.about.PrivacyReportActivity
@@ -105,7 +100,6 @@ import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.MainActivity
-import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.showDestructiveAccented
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
@@ -113,7 +107,6 @@ import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
-import at.saltyy.switchly.util.PlayStoreUpdatePrompt
 import at.saltyy.switchly.util.TimeFormatPrefs
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -140,7 +133,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     fun currentScreenTitle(): String {
         val t = preferenceScreen?.title?.toString()
-        return if (!t.isNullOrBlank()) t else getString(R.string.settings)
+        return if (!t.isNullOrBlank()) {
+            t
+        } else {
+            getString(R.string.settings)
+        }
     }
 
     fun scrollToTop() {
@@ -165,14 +162,28 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("pref_customize_home_appearance")?.isVisible = currentMode == ToggleOptionsActivity.HOME_MODE_CUSTOM
     }
 
-    private fun refreshDeveloperModePreference() {
-        findPreference<Preference>("pref_developer_mode")?.isVisible = AdvancedModeStore.isEnabled(requireContext())
-    }
     private var authListener: FirebaseAuth.AuthStateListener? = null
     private var nextChangedReceiver: BroadcastReceiver? = null
     private var lastNestedNavKey: String? = null
     private var lastNestedNavAtMs: Long = 0L
     private var pendingFileBackupSelection: BackupSelection? = null
+
+    private fun isRestrictedSettingsAccess(): Boolean {
+        return (activity as? SettingsActivity)?.isRestrictedAccessActive() == true
+    }
+
+    private fun applyRestrictedAccountDataState() {
+        val restricted = isRestrictedSettingsAccess()
+        val restrictedKeys = listOf(
+            "screen_backup_restore",
+            "pref_cloud_restore",
+            "pref_file_restore",
+            "pref_reset_app_data"
+        )
+        restrictedKeys.forEach { key ->
+            findPreference<Preference>(key)?.isEnabled = !restricted
+        }
+    }
 
     private val createBackupFileLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -331,15 +342,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 val emergencyActive = EmergencyBypassStore.isActive(ctx)
                 val emergencyPaused = EmergencyBypassStore.isPaused(ctx)
                 val requireNfc = SwitchModeStore.isNfcRequiredForDisable(ctx)
-                val profileLocked = if (!enabled && !emergencyActive) {
-                    false
-                } else if (requireNfc || emergencyActive || (enabled && emergencyPaused)) {
-                    true
-                } else {
-                    !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(ctx)
+                val profileLocked = when {
+                    emergencyActive -> false
+                    !enabled -> false
+                    requireNfc || emergencyPaused -> true
+                    else -> !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(ctx)
                 }
                 if (profileLocked) {
-                    val msgRes = if (enabled && !requireNfc && !emergencyActive && !emergencyPaused) {
+                    val msgRes = if (enabled && !requireNfc && !emergencyPaused) {
                         R.string.edit_locked_manage_profiles
                     } else {
                         R.string.toast_cannot_change_profile_while_locked
@@ -492,11 +502,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
             startActivity(Intent(requireContext(), DeveloperInfoActivity::class.java))
             true
         }
-        refreshDeveloperModePreference()
-        findPreference<Preference>("pref_developer_mode")?.setOnPreferenceClickListener {
-            startActivity(Intent(requireContext(), DeveloperModeActivity::class.java))
-            true
-        }
         findPreference<Preference>("pref_about_other_switchly_products")?.setOnPreferenceClickListener {
             startActivity(Intent(requireContext(), OtherSwitchlyProductsActivity::class.java))
             true
@@ -576,6 +581,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Restore as standalone prefs
         findPreference<Preference>("pref_cloud_restore")?.apply {
             setOnPreferenceClickListener {
+                if (isRestrictedSettingsAccess()) {
+                    Toast.makeText(requireContext(), R.string.settings_restricted_action_unavailable, Toast.LENGTH_SHORT).show()
+                    return@setOnPreferenceClickListener true
+                }
                 confirmAction(
                     title = getString(R.string.settings_confirm_restore_title),
                     message = getString(R.string.settings_confirm_restore_message),
@@ -609,6 +618,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         findPreference<Preference>("pref_file_restore")?.apply {
             setOnPreferenceClickListener {
+                if (isRestrictedSettingsAccess()) {
+                    Toast.makeText(requireContext(), R.string.settings_restricted_action_unavailable, Toast.LENGTH_SHORT).show()
+                    return@setOnPreferenceClickListener true
+                }
                 confirmAction(
                     title = getString(R.string.settings_confirm_file_restore_title),
                     message = getString(R.string.settings_confirm_file_restore_message),
@@ -637,6 +650,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         // Local in-app reset (clear ALL app data)
         findPreference<Preference>("pref_reset_app_data")?.setOnPreferenceClickListener {
+            if (isRestrictedSettingsAccess()) {
+                Toast.makeText(requireContext(), R.string.settings_restricted_action_unavailable, Toast.LENGTH_SHORT).show()
+                return@setOnPreferenceClickListener true
+            }
             showResetAllDataDialog()
             true
         }
@@ -656,6 +673,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         updateCloudPrefVisibility()
         refreshEmergencyPref()
         refreshLockUi()
+        applyRestrictedAccountDataState()
 
         // Live updates from SwitchModeStore
         SwitchModeStore.ensureInit(ctx)
@@ -684,11 +702,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    /**
-     * Navigate nested PreferenceScreens (Help/Account/...). Some setups do not automatically open nested screens, so we handle it explicitly.
-     */
+    // Navigate nested PreferenceScreens (Help/Account/...). Some setups do not automatically open nested screens, so we handle it explicitly.
     private fun openNestedPreferenceScreen(screenKey: String): Boolean {
-        if (screenKey.isBlank()) return false
+        if (screenKey.isBlank()) {
+            return false
+        }
 
         // Some AndroidX/device combinations can dispatch both callbacks for one tap.
         // Debounce identical navigation to avoid double back-stack entries ("back needs 2 taps").
@@ -700,7 +718,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
         lastNestedNavAtMs = now
 
         val currentRoot = arguments?.getString(ARG_PREFERENCE_ROOT)
-        if (currentRoot == screenKey) return true
+        if (currentRoot == screenKey) {
+            return true
+        }
 
         val fragment = SettingsFragment().apply {
             arguments = Bundle().apply {
@@ -745,7 +765,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun tintCategoryViewsInList() {
         val list = listView ?: return
-        if (categoryTitles.isEmpty()) return
+        if (categoryTitles.isEmpty()) {
+            return
+        }
         val accent = getCurrentAccentColor(requireContext())
 
         fun tintInView(v: View) {
@@ -793,7 +815,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val sp = PreferenceManager.getDefaultSharedPreferences(ctx)
         val show = sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_NEXT_SCHEDULE, false)
         pref.isVisible = show
-        if (!show) return
+        if (!show) {
+            return
+        }
 
         if (!AutomationModeStore.isScheduleAllowed(ctx)) {
             pref.summary = getString(R.string.schedules_next_inactive_control_mode)
@@ -824,9 +848,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
         updateNextScheduleIndicator()
         updateGooglePrefSummary()
         updateCloudPrefVisibility()
+        applyRestrictedAccountDataState()
         refreshBlockedInboxPreferenceState()
         refreshHomeModeAppearancePrefs()
-        refreshDeveloperModePreference()
         CustomAccentApplier.applyIfNeeded(requireActivity())
         tintCategories()
         ensureDeveloperInfoIconAccent()
@@ -973,24 +997,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     // Theme Dialog (Mode + Color)
-    private fun showThemeDialog() {
-        val ctx = requireContext()
-        val items = arrayOf(
-            getString(R.string.pref_theme_mode_title),
-            getString(R.string.pref_theme_color_title)
-        )
-
-        ctx.showSwitchlyOptionDialog(
-            title = getString(R.string.pref_theme_title),
-            options = items.map { SwitchlyDialogOption(title = it) }
-        ) { which ->
-            when (which) {
-                0 -> showThemeModeDialog()
-                1 -> showThemeColorDialog()
-            }
-        }
-    }
-
     private fun showThemeModeDialog() {
         val ctx = requireContext()
         val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
@@ -1284,7 +1290,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 // Avoid any adapter update churn here (can race with dialog dismissal on some OEMs).
                 // Do not treat "position" as stable; view holders can be rebound.
                 val p = holder.bindingAdapterPosition
-                if (p == RecyclerView.NO_POSITION) return
+                if (p == RecyclerView.NO_POSITION) {
+                    return
+                }
                 selectedIndex = p
                 onSelected(p)
             }
@@ -1392,37 +1400,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         pref.summary = "$base\n" + getString(R.string.settings_last_backup, formatted)
     }
 
-    private fun makeIconAdapter(items: List<IconActionItem>): ArrayAdapter<IconActionItem> {
-        val ctx = requireContext()
-        return object : ArrayAdapter<IconActionItem>(ctx, android.R.layout.select_dialog_item, items) {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val v = super.getView(position, convertView, parent)
-                val tv = v.findViewById<TextView>(android.R.id.text1)
-                val item = getItem(position) ?: return v
-
-                tv.text = item.title
-                tv.compoundDrawablePadding = (12 * ctx.resources.displayMetrics.density).toInt()
-
-                val normalColor = MaterialColors.getColor(tv, com.google.android.material.R.attr.colorOnSurface)
-                val dangerColor = ContextCompat.getColor(ctx, R.color.status_error)
-                val isDelete = item.iconRes == R.drawable.delete_24
-                val textColor = if (isDelete) dangerColor else normalColor
-                tv.setTextColor(textColor)
-
-                val d = ContextCompat.getDrawable(ctx, item.iconRes)
-                if (d != null) {
-                    val wrap = DrawableCompat.wrap(d.mutate())
-                    DrawableCompat.setTint(wrap, textColor)
-                    tv.setCompoundDrawablesWithIntrinsicBounds(wrap, null, null, null)
-                } else {
-                    tv.setCompoundDrawablesWithIntrinsicBounds(item.iconRes, 0, 0, 0)
-                }
-
-                return v
-            }
-        }
-    }
-
     private fun showGoogleAccountDialog() {
         val ctx = requireContext()
         val loggedIn = at.saltyy.switchly.auth.Auth.uid() != null
@@ -1459,14 +1436,23 @@ class SettingsFragment : PreferenceFragmentCompat() {
             return
         }
 
-        val items = listOf(
-            IconActionItem(getString(R.string.sign_out), R.drawable.logout_24),
-            IconActionItem(getString(R.string.settings_account_action_delete), R.drawable.delete_24)
-        )
+        val restricted = isRestrictedSettingsAccess()
+        val items = buildList {
+            add(IconActionItem(getString(R.string.sign_out), R.drawable.logout_24))
+            if (!restricted) {
+                add(IconActionItem(getString(R.string.settings_account_action_delete), R.drawable.delete_24))
+            }
+        }
 
         ctx.showSwitchlyOptionDialog(
             title = getString(R.string.settings_account_dialog_title),
-            options = items.map { SwitchlyDialogOption(title = it.title, iconRes = it.iconRes, destructive = it.iconRes == R.drawable.delete_24) }
+            options = items.map {
+                SwitchlyDialogOption(
+                    title = it.title,
+                    iconRes = it.iconRes,
+                    destructive = it.iconRes == R.drawable.delete_24
+                )
+            }
         ) { which ->
             when (which) {
                 0 -> confirmAction(
@@ -1484,12 +1470,18 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
 
-                1 -> confirmAction(
-                    title = getString(R.string.settings_account_delete_confirm_title),
-                    message = getString(R.string.settings_account_delete_confirm_message),
-                    positiveText = getString(R.string.delete),
-                ) {
-                    AccountDeletion.deleteAccount(requireActivity())
+                1 -> {
+                    if (isRestrictedSettingsAccess()) {
+                        Toast.makeText(ctx, R.string.settings_restricted_action_unavailable, Toast.LENGTH_SHORT).show()
+                    } else {
+                        confirmAction(
+                            title = getString(R.string.settings_account_delete_confirm_title),
+                            message = getString(R.string.settings_account_delete_confirm_message),
+                            positiveText = getString(R.string.delete),
+                        ) {
+                            AccountDeletion.deleteAccount(requireActivity())
+                        }
+                    }
                 }
             }
         }
@@ -1858,30 +1850,66 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun restoreBackupFile(uri: Uri) {
         val activeCtx = context ?: return
-        val payloadResult = FileBackupRuntime.readBackupPayloadFromUri(activeCtx, uri)
-        payloadResult
-            .onFailure { e ->
-                Toast.makeText(
-                    activeCtx,
-                    getString(R.string.file_restore_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown)),
-                    Toast.LENGTH_SHORT
-                ).show()
+        val loadingDialog = showProgressDialog(
+            activeCtx,
+            R.string.settings_confirm_file_restore_title,
+            R.string.file_restore_loading,
+        )
+        lifecycleScope.launch {
+            val payloadResult = withContext(Dispatchers.IO) {
+                FileBackupRuntime.readBackupPayloadFromUri(activeCtx, uri)
             }
-            .onSuccess { payload ->
-                showRestoreSelectionDialog(activeCtx, payload) { selectedPayload ->
-                    val result = FileBackupRuntime.restoreBackupPayload(activeCtx, selectedPayload)
-                    val msg = result.fold(
-                        onSuccess = { getString(R.string.file_restore_ok_restart) },
-                        onFailure = { e ->
-                            getString(R.string.file_restore_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown))
+            if (loadingDialog.isShowing) {
+                loadingDialog.dismiss()
+            }
+            if (!isAdded) {
+                return@launch
+            }
+            payloadResult
+                .onFailure { error ->
+                    Toast.makeText(
+                        activeCtx,
+                        getString(
+                            R.string.file_restore_error_fmt,
+                            error.localizedMessage ?: getString(R.string.error_unknown),
+                        ),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+                .onSuccess { payload ->
+                    showRestoreSelectionDialog(activeCtx, payload) { selectedPayload ->
+                        val restoreDialog = showProgressDialog(
+                            activeCtx,
+                            R.string.settings_confirm_file_restore_title,
+                            R.string.restore_applying,
+                        )
+                        lifecycleScope.launch {
+                            val result = withContext(Dispatchers.IO) {
+                                FileBackupRuntime.restoreBackupPayload(activeCtx, selectedPayload)
+                            }
+                            if (restoreDialog.isShowing) {
+                                restoreDialog.dismiss()
+                            }
+                            if (!isAdded) {
+                                return@launch
+                            }
+                            val message = result.fold(
+                                onSuccess = { getString(R.string.file_restore_ok_restart) },
+                                onFailure = { error ->
+                                    getString(
+                                        R.string.file_restore_error_fmt,
+                                        error.localizedMessage ?: getString(R.string.error_unknown),
+                                    )
+                                },
+                            )
+                            Toast.makeText(activeCtx, message, Toast.LENGTH_SHORT).show()
+                            if (result.isSuccess) {
+                                restartAppTask()
+                            }
                         }
-                    )
-                    Toast.makeText(activeCtx, msg, Toast.LENGTH_SHORT).show()
-                    if (result.isSuccess) {
-                        restartAppTask()
                     }
                 }
-            }
+        }
     }
 
     private fun startRestoreFlowWithChoice() {
@@ -1948,21 +1976,39 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     }
 
                     showRestoreSelectionDialog(restoreCtx, payload) { selectedPayload ->
-                        runCatching {
-                            CloudSyncRuntime.applyBackupPayload(restoreCtx, selectedPayload)
-                        }.fold(
-                            onSuccess = {
-                                Toast.makeText(restoreCtx, getString(R.string.cloud_restore_ok_restart), Toast.LENGTH_SHORT).show()
-                                restartAppTask()
-                            },
-                            onFailure = { e ->
-                                Toast.makeText(
-                                    restoreCtx,
-                                    getString(R.string.cloud_error_fmt, e.localizedMessage ?: getString(R.string.error_unknown)),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                        val restoreDialog = showProgressDialog(
+                            restoreCtx,
+                            R.string.settings_confirm_restore_title,
+                            R.string.restore_applying,
                         )
+                        CloudSyncRuntime.applyBackupPayloadAsync(restoreCtx, selectedPayload) { result ->
+                            if (restoreDialog.isShowing) {
+                                restoreDialog.dismiss()
+                            }
+                            if (!isAdded) {
+                                return@applyBackupPayloadAsync
+                            }
+                            result.fold(
+                                onSuccess = {
+                                    Toast.makeText(
+                                        restoreCtx,
+                                        getString(R.string.cloud_restore_ok_restart),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    restartAppTask()
+                                },
+                                onFailure = { error ->
+                                    Toast.makeText(
+                                        restoreCtx,
+                                        getString(
+                                            R.string.cloud_error_fmt,
+                                            error.localizedMessage ?: getString(R.string.error_unknown),
+                                        ),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -2500,10 +2546,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
                         if (!err.isNullOrBlank()) lastError = err
                     }
                     remaining -= 1
-                    if (remaining > 0) return
+                    if (remaining > 0) {
+                        return
+                    }
 
                     val ctx = context ?: return
-                    if (!isAdded) return
+                    if (!isAdded) {
+                        return
+                    }
                     if (deleteDialog.isShowing) deleteDialog.dismiss()
                     val message = if (failed == 0) {
                         getString(R.string.deleted)
@@ -2548,12 +2598,21 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (!ok) {
             // Fallback for OEMs where clearApplicationUserData may fail silently.
             runCatching {
-                PreferenceManager.getDefaultSharedPreferences(ctx).edit { clear() }
-                ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { clear() }
-                ctx.getSharedPreferences("switchly_prefs_schedules", Context.MODE_PRIVATE).edit { clear() }
-                ctx.deleteDatabase("switchly_db")
-                ctx.cacheDir?.deleteRecursively()
-                ctx.filesDir?.listFiles()?.forEach { it.deleteRecursively() }
+                StatsPersistence.prepareForFullDataDeletion(ctx)
+                try {
+                    PreferenceManager.getDefaultSharedPreferences(ctx).edit(commit = true) { clear() }
+                    ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit(commit = true) { clear() }
+                    ctx.getSharedPreferences("switchly_prefs_schedules", Context.MODE_PRIVATE).edit(commit = true) { clear() }
+                    ctx.getSharedPreferences("switchly_ui_hints", Context.MODE_PRIVATE).edit(commit = true) { clear() }
+                    ctx.getSharedPreferences(ActivityHistoryLogStore.PREFS_NAME, Context.MODE_PRIVATE).edit(commit = true) { clear() }
+                    ctx.databaseList().forEach { databaseName ->
+                        ctx.deleteDatabase(databaseName)
+                    }
+                    ctx.cacheDir?.deleteRecursively()
+                    ctx.filesDir?.listFiles()?.forEach { it.deleteRecursively() }
+                } finally {
+                    StatsPersistence.resumeAfterFullDataDeletion(ctx)
+                }
             }
             Toast.makeText(ctx, getString(R.string.pref_reset_app_data_done), Toast.LENGTH_LONG).show()
             restartAppTask()

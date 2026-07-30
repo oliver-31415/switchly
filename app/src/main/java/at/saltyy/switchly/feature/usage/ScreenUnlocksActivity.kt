@@ -41,6 +41,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
+import at.saltyy.switchly.data.prefs.ScreenUnlockHistoryStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
@@ -109,8 +110,8 @@ class ScreenUnlocksActivity : AppCompatActivity() {
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         toolbar = MaterialToolbar(this).apply {
             minimumHeight = actionBarSize()
-            title = getString(R.string.insights_screen_unlocks)
-            setNavigationIcon(R.drawable.arrow_back_ios_24)
+            title = getString(R.string.activity_entry_screen_unlocks)
+            setNavigationIcon(R.drawable.keyboard_arrow_left_24)
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@ScreenUnlocksActivity))
         }
@@ -169,29 +170,34 @@ class ScreenUnlocksActivity : AppCompatActivity() {
     private fun load() {
         content.removeAllViews()
         addRangeChips()
-        if (!UsageStatsRepo.hasUsageAccess(this)) {
-            content.addView(messageCard(getString(R.string.screen_unlocks_permission_needed)).apply {
-                setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
-            })
-            return
-        }
-
         content.addView(messageCard(getString(R.string.usage_timeline_loading)))
         val ctx = applicationContext
         val range = currentRange
         val scope = currentScope
+        val hasUsageAccess = UsageStatsRepo.hasUsageAccess(this)
         val profilePackages = if (scope == Scope.CURRENT_PROFILE) currentProfilePackages() else emptySet()
         Thread {
             val (from, to) = windowForRange(range)
-            val profileAppSessions = if (scope == Scope.CURRENT_PROFILE && profilePackages.isNotEmpty()) {
+            if (hasUsageAccess) {
+                runCatching { StatsArchiveSync.sync(ctx) }
+            }
+            val profileAppSessions = if (hasUsageAccess && scope == Scope.CURRENT_PROFILE && profilePackages.isNotEmpty()) {
                 UsageTimelineRepo.allAppSessions(ctx, from, to, limit = 0)
                     .filter { it.packageName in profilePackages }
             } else {
                 emptyList()
             }
-            val sessions = UsageTimelineRepo.screenUnlockSessions(ctx, from, to, limit = 0)
+            val archived = ScreenUnlockHistoryStore.sessionsForRange(ctx, from, to)
+                .map { UsageTimelineRepo.UnlockSession(it.startMs, it.endMs) }
+            val live = if (hasUsageAccess) UsageTimelineRepo.screenUnlockSessions(ctx, from, to, limit = 0) else emptyList()
+            if (live.isNotEmpty()) {
+                ScreenUnlockHistoryStore.mergeSessions(ctx, live.map { ScreenUnlockHistoryStore.Session(it.startMs, it.endMs) })
+            }
+            val sessions = (archived + live)
+                .groupBy { it.startMs }
+                .map { (_, sameStart) -> sameStart.maxByOrNull { it.endMs } ?: sameStart.first() }
                 .let { list ->
-                    if (scope == Scope.CURRENT_PROFILE) {
+                    if (scope == Scope.CURRENT_PROFILE && hasUsageAccess) {
                         list.filter { unlock ->
                             profileAppSessions.any { app ->
                                 app.endMs > unlock.startMs && app.startMs < unlock.endMs
@@ -214,7 +220,15 @@ class ScreenUnlocksActivity : AppCompatActivity() {
                 if (isFinishing || isDestroyed) return@runOnUiThread
                 if (range != currentRange) return@runOnUiThread
                 if (scope != currentScope) return@runOnUiThread
-                render(sessions)
+                if (sessions.isEmpty() && !hasUsageAccess) {
+                    content.removeAllViews()
+                    addRangeChips()
+                    content.addView(messageCard(getString(R.string.screen_unlocks_permission_needed)).apply {
+                        setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+                    })
+                } else {
+                    render(sessions)
+                }
             }
         }.start()
     }
@@ -335,7 +349,7 @@ class ScreenUnlocksActivity : AppCompatActivity() {
             })
         })
         row.addView(ImageView(this).apply {
-            setImageResource(R.drawable.arrow_forward_ios_24)
+            setImageResource(R.drawable.keyboard_arrow_right_24)
             setColorFilter(ContextCompat.getColor(this@ScreenUnlocksActivity, android.R.color.darker_gray))
             layoutParams = LinearLayout.LayoutParams(dp(18), dp(18))
         })
@@ -368,6 +382,7 @@ class ScreenUnlocksActivity : AppCompatActivity() {
                     contentDescription = getString(R.string.activity_history_range_custom)
                     icon = ContextCompat.getDrawable(this@ScreenUnlocksActivity, R.drawable.calendar_month_24)
                     iconPadding = 0
+                    iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
                     setPadding(dp(8), 0, dp(8), 0)
                     gravity = Gravity.CENTER
                 }
@@ -411,13 +426,17 @@ class ScreenUnlocksActivity : AppCompatActivity() {
     }
 
     private fun ensureRangeAllowed(range: Range): Boolean {
-        if (range == Range.TODAY || StatsPremiumGate.canUseExtendedStats(this)) return true
+        if (range == Range.TODAY || StatsPremiumGate.canUseExtendedStats(this)) {
+            return true
+        }
         StatsPremiumGate.show(this)
         return false
     }
 
     private fun addCustomRangeSummary() {
-        if (currentRange != Range.CUSTOM) return
+        if (currentRange != Range.CUSTOM) {
+            return
+        }
         val start = customRangeStartMillis ?: return
         val end = customRangeEndMillis ?: return
         val fmt = DateFormat.getDateInstance(DateFormat.SHORT)
@@ -483,7 +502,9 @@ class ScreenUnlocksActivity : AppCompatActivity() {
             load()
             return
         }
-        if (customRangePickerShowing || supportFragmentManager.isStateSaved) return
+        if (customRangePickerShowing || supportFragmentManager.isStateSaved) {
+            return
+        }
         customRangePickerShowing = true
         val now = System.currentTimeMillis()
         val currentStart = customRangeStartMillis ?: startOfTodayMillis()

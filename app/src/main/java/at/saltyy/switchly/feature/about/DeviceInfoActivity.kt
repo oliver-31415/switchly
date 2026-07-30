@@ -49,9 +49,6 @@ class DeviceInfoActivity : TilesInfoActivity() {
             if (!brand.equals(manufacturer, ignoreCase = true)) {
                 add(Tile(getString(R.string.about_brand_label), brand.ifBlank { "-" }, sectionTitle = getString(R.string.about_section_device), iconRes = R.drawable.layers_24))
             }
-            // Tile(getString(R.string.about_device_label), device),
-            // Tile(getString(R.string.about_product_label), product.ifBlank { "-" }),
-            // Tile(getString(R.string.about_hardware_label), hardware.ifBlank { "-" }),
             add(Tile(getString(R.string.about_abi_label), abi, sectionTitle = getString(R.string.about_section_technical), iconRes = R.drawable.tune_24))
             add(Tile(getString(R.string.about_locale_label), locale.ifBlank { "-" }, sectionTitle = getString(R.string.about_section_technical), iconRes = R.drawable.language_24))
             add(Tile(getString(R.string.about_fingerprint_label), fingerprint.ifBlank { "-" }, sectionTitle = getString(R.string.about_section_technical), showCopyButton = true, iconRes = R.drawable.content_copy_24))

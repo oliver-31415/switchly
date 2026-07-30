@@ -19,7 +19,7 @@
     <!-- ====================================================== -->
     <!-- Activity hub shortcut -->
     <!-- ====================================================== -->
-    <string name="tools_blocked_notifications_summary">Benachrichtigungen ansehen, die Switchly blockiert hat</string>
+    <string name="activity_blocked_notifications_summary">Benachrichtigungen ansehen, die Switchly blockiert hat</string>
 
     <!-- ====================================================== -->
     <!-- Filter and sort -->

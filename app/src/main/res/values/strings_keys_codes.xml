@@ -4,32 +4,23 @@
     <!-- ====================================================== -->
     <!-- Keys & codes hub -->
     <!-- ====================================================== -->
-    <string name="tools_keys_title">Keys &amp; codes</string>
-    <string name="tools_keys_section">NFC, QR, and barcode controls</string>
-    <string name="tools_tags_codes_write_nfc">Write NFC tag</string>
-    <string name="tools_nfc_write_summary">Write enable, disable, temporary, and other actions to writable NFC tags</string>
-    <string name="tools_tags_codes_paired_tags">Manage paired tags</string>
-    <string name="tools_paired_tags_summary">Add, rename, and manage paired NFC tags, including cooldown or daily-use limits</string>
-    <string name="tools_tags_codes_generate_qr">Manage QR codes</string>
-    <string name="tools_manage_qr_summary">Create a Switchly QR code</string>
-    <string name="tools_tags_codes_manage_barcodes">Manage barcodes</string>
-    <string name="tools_manage_barcodes_summary">Map physical barcodes to Switchly actions</string>
-
-    <!-- ====================================================== -->
-    <!-- Scanner shortcuts -->
-    <!-- ====================================================== -->
-    <string name="blocking_hub_scan_section">Quick scan</string>
-    <string name="blocking_hub_scan_qr_title">Scan QR code</string>
-    <string name="blocking_hub_scan_qr_summary">Open the Switchly QR scanner directly</string>
-    <string name="blocking_hub_scan_barcode_title">Scan barcode</string>
-    <string name="blocking_hub_scan_barcode_summary">Open the Switchly barcode scanner directly</string>
+    <string name="keys_codes_title">Keys &amp; codes</string>
+    <string name="keys_codes_section">NFC, QR, and barcode controls</string>
+    <string name="keys_codes_write_nfc_title">Write NFC tag</string>
+    <string name="keys_codes_write_nfc_summary">Write enable, disable, temporary, and other actions to writable NFC tags</string>
+    <string name="keys_codes_paired_tags_title">Manage paired tags</string>
+    <string name="keys_codes_paired_tags_summary">Pair UID-only/read-only tags and configure per-tag limits</string>
+    <string name="keys_codes_manage_qr_title">Manage QR codes</string>
+    <string name="keys_codes_manage_qr_summary">Create a Switchly QR code</string>
+    <string name="keys_codes_manage_barcodes_title">Manage barcodes</string>
+    <string name="keys_codes_manage_barcodes_summary">Map physical barcodes to Switchly actions</string>
 
     <!-- ====================================================== -->
     <!-- Locked or disabled states -->
     <!-- ====================================================== -->
-    <string name="error_open_manage_paired_tags">Could not open Manage paired tags. Please send debug logs if this keeps happening.</string>
+    <string name="error_open_manage_paired_tags">Could not open Paired NFC tags. Try again.</string>
     <string name="toast_write_nfc_requires_enabled">Enable NFC control first.</string>
-    <string name="toast_manage_paired_tags_requires_enabled">Enable paired NFC tags first.</string>
+    <string name="toast_manage_paired_tags_requires_enabled">Enable paired NFC tags first. For normal toggle/disable tags, use Write NFC tag instead.</string>
     <string name="toast_manage_qr_requires_enabled">Enable QR code control first.</string>
     <string name="toast_manage_barcodes_requires_enabled">Enable barcode control first.</string>
 
@@ -41,6 +32,6 @@
     <string name="manage_barcodes_info_title">Barcode actions</string>
     <string name="manage_barcodes_info_body">Saved barcodes turn printed or physical codes into Switchly actions. You can use them to enable, disable, toggle, or temporarily change Switchly without editing the app.\n\nFor stronger friction, place the barcode away from your phone and use Temporary Disable or Temporary Enable with “Ask when scanned”.</string>
     <string name="paired_tags_info_title">Paired NFC tags</string>
-    <string name="paired_tags_info_body">Paired tags are for UID-only/read-only NFC tags or setups where you want per-tag limits. Writable Switchly action tags do not need to be paired.\n\nUse this page when the tag should be recognized by its NFC ID, when you want a default action for a read-only tag, or when you want daily-use/cooldown limits.</string>
+    <string name="paired_tags_info_body">Paired tags let Switchly recognize an NFC tag by its UID. Read-only tags use the selected profile and action directly. Writable tags can keep the profile, action and duration stored on the tag or override them with a custom setup.\n\nDaily-use and cooldown limits apply to actual unlock or protection-pausing actions for both tag types.</string>
 
 </resources>

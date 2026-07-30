@@ -6,7 +6,6 @@
     <!-- ====================================================== -->
     <string name="dashboard_active_profile_fmt">Aktives Profil: %1$s</string>
     <string name="dashboard_active_profile_unknown">Aktives Profil: —</string>
-    <string name="dashboard_unavailable_hint_short">Auf diesem Gerät nicht installiert.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Nicht auf diesem Gerät installiert.\nÖffne „App rules“, um den Eintrag zu entfernen.</string>
 
     <!-- ====================================================== -->
@@ -67,20 +66,11 @@
         <item quantity="other">Aktiviere diese Punkte, damit die Blockierung zuverlässig funktioniert.</item>
     </plurals>
     <string name="dashboard_setup_desc">Schließe die erforderlichen Berechtigungen ab, damit Switchly Apps zuverlässig blockieren kann.</string>
-    <string name="dashboard_setup_missing_label">Noch fehlend</string>
     <string name="dashboard_setup_cta">Einrichtung abschließen</string>
     <string name="dashboard_blocked_now_title">Gerade blockiert</string>
-    <string name="dashboard_blocked_now_off">Switchly ist AUS — nichts ist blockiert</string>
-    <string name="dashboard_blocked_now_all_allowed">Alles erlaubt ✅</string>
-    <string name="dashboard_blocked_now_emergency">Notfall-Entsperrung aktiv — alles erlaubt</string>
     <string name="dashboard_blocked_now_reason_profile">Durch Profil blockiert</string>
     <string name="dashboard_blocked_now_reason_limit">Limit erreicht</string>
     <string name="dashboard_blocked_now_reason_attempts">Öffnen-Limit erreicht</string>
-    <plurals name="dashboard_blocked_now_more">
-        <item quantity="one">+%1$d weitere</item>
-        <item quantity="other">+%1$d weitere</item>
-    </plurals>
-    <string name="dashboard_blocked_now_more_preview">+3 weitere</string>
     <plurals name="dashboard_badge_missing">
         <item quantity="one">%1$d fehlt</item>
         <item quantity="other">%1$d fehlen</item>
@@ -92,16 +82,19 @@
     <!-- ====================================================== -->
     <!-- Temporary mode -->
     <!-- ====================================================== -->
-    <string name="dashboard_temp_chip">TEMP</string>
     <string name="dashboard_temp_remaining_fmt">Verbleibend: %1$s</string>
     <string name="dashboard_temp_remaining_placeholder">Verbleibend: 00:00</string>
     <string name="dashboard_temp_status_enabled">Vorübergehend aktiviert • noch %1$s</string>
     <string name="dashboard_temp_status_disabled">Temporär pausiert • noch %1$s</string>
     <string name="dashboard_temp_sheet_sub_enable">Blockierung für kurze Zeit aktivieren</string>
+    <string name="dashboard_temp_sheet_sub_enable_profile">%1$s für kurze Zeit aktivieren</string>
     <string name="dashboard_temp_sheet_sub_disable">Switchly kurz pausieren</string>
     <string name="dashboard_temp_sheet_sub_disable_locked">Temporäres Deaktivieren ist gesperrt (NFC-Sperre ist aktiv). Nutze bei Bedarf die Notfall-Entsperrung.</string>
     <string name="dashboard_temp_sheet_cancel_timer">Timer abbrechen</string>
     <string name="dashboard_temp_hint">Temporärer Modus - Aktion wählen</string>
+    <string name="dashboard_temp_hint_enable">Temporär aktivieren - Dauer wählen</string>
+    <string name="dashboard_temp_hint_enable_profile">%1$s temporär aktivieren</string>
+    <string name="dashboard_temp_hint_disable">Temporär pausieren - Dauer wählen</string>
     <string name="dashboard_temp_hint_locked_nfc">Temporärer Modus ist nicht verfügbar, solange „NFC erforderlich“ aktiv ist.</string>
     <string name="dashboard_temp_nudge">Tipp: Nutze den temporären Modus für schnelle 5–60-Minuten-Sessions.</string>
     <string name="dashboard_temp_discovery_done">Temporärer Modus ist bereit. Öffne ihn jederzeit über die Statuskarte.</string>
@@ -122,8 +115,6 @@
     <string name="dashboard_tile_profiles_sub">Erstellen &amp; bearbeiten</string>
     <string name="dashboard_tile_blocked_websites">Website-Regeln</string>
     <string name="dashboard_tile_blocked_websites_sub">Domains für dieses Profil</string>
-    <string name="dashboard_tile_usage">Aktivität</string>
-    <string name="dashboard_tile_usage_sub">Nutzung, Starts, Entsperrungen und Verlauf</string>
     <string name="dashboard_tile_in_app">In-App-Blocking</string>
     <string name="dashboard_tile_in_app_sub">Feeds &amp; Oberflächen</string>
     <string name="dashboard_quick_actions_edit">Schnellaktionen bearbeiten</string>
@@ -136,13 +127,15 @@
     <string name="dashboard_tile_write_nfc_sub">Schreiben oder gepaarte Tags verwalten</string>
     <string name="dashboard_tile_blocked_notifications">Blockierte Benachrichtigungen</string>
     <string name="dashboard_tile_blocked_notifications_sub">Postfach &amp; Aktivität</string>
-    <string name="dashboard_quick_actions_toggle">Schnellaktionen umschalten</string>
     <string name="dashboard_quick_actions_expand">Schnellaktionen ausklappen</string>
     <string name="dashboard_quick_actions_collapse">Schnellaktionen einklappen</string>
+    <string name="dashboard_blocked_apps_expand">App-Liste ausklappen</string>
+    <string name="dashboard_blocked_apps_collapse">App-Liste einklappen</string>
 
     <!-- ====================================================== -->
     <!-- Development notice and Home modes -->
     <!-- ====================================================== -->
+    <string name="scanner_choice_title">Code scannen</string>
     <string name="main_info_title">Noch in Entwicklung</string>
     <string name="main_info_contact_action">Kontakt</string>
     <string name="main_info_older_versions_action">Downloads</string>

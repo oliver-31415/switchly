@@ -126,13 +126,17 @@ class TimeSeriesLineChartView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
-        if (values.isEmpty() || onPointSelectedListener == null) return super.onTouchEvent(event)
+        if (values.isEmpty() || onPointSelectedListener == null) {
+            return super.onTouchEvent(event)
+        }
 
         val w = width.toFloat().takeIf { it > 0f } ?: return true
         val left = 10f * resources.displayMetrics.density
         val right = w - left
         val n = values.size
-        if (n <= 0) return true
+        if (n <= 0) {
+            return true
+        }
 
         val idx = if (n == 1) 0 else {
             val dx = (right - left)/(n - 1).toFloat()
@@ -200,7 +204,9 @@ class TimeSeriesLineChartView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (values.isEmpty()) return
+        if (values.isEmpty()) {
+            return
+        }
 
         val w = width.toFloat()
         val h = height.toFloat()

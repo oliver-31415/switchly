@@ -21,6 +21,7 @@
     <string name="settings_account_delete_confirm_title">Delete Switchly account?</string>
     <string name="settings_account_delete_confirm_message">This will delete your Switchly cloud data, backups, and local settings. This cannot be undone.</string>
     <string name="account_delete_recent_login_required">For security reasons, please sign in again, then try deleting the account again.</string>
+    <string name="account_delete_recent_login_title">Sign in again</string>
     <string name="account_delete_failed_delete_account_fmt">Failed to delete account: %1$s</string>
     <string name="account_delete_failed_delete_cloud_data_fmt">Failed to delete cloud data: %1$s</string>
     <string name="account_delete_failed_delete_backups_fmt">Failed to delete backups: %1$s</string>
@@ -68,6 +69,8 @@
     <string name="file_backup_ok">File backup saved</string>
     <string name="file_restore_ok_restart">File restore completed — restarting app…</string>
     <string name="file_backup_loading">Creating backup file…</string>
+    <string name="file_restore_loading">Reading backup file…</string>
+    <string name="restore_applying">Restoring data…</string>
     <string name="file_backup_error_fmt">File backup failed: %1$s</string>
     <string name="file_restore_error_fmt">File restore failed: %1$s</string>
 

@@ -101,7 +101,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -159,13 +159,13 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardSettingsToolsAutomation"
+                android:id="@+id/cardSettingsKeysCodes"
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -185,7 +185,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="@string/settings_tools_automation_title"
+                        android:contentDescription="@string/settings_keys_codes_title"
                         android:src="@drawable/nfc_24"
                         app:tint="?attr/colorPrimary" />
 
@@ -199,7 +199,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/settings_tools_automation_title"
+                            android:text="@string/settings_keys_codes_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -207,7 +207,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/settings_tools_automation_summary"
+                            android:text="@string/settings_keys_codes_summary"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -217,7 +217,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -284,7 +284,67 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
+                        app:tint="?android:attr/textColorSecondary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSettingsIgnoredApps"
+                style="@style/Switchly.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="72dp"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@string/ignored_usage_apps_title"
+                        android:src="@drawable/visibility_off_24"
+                        app:tint="?attr/colorPrimary" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ignored_usage_apps_title"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="@string/ignored_usage_apps_summary"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:alpha="0.7"
+                        android:contentDescription="@string/open"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -310,7 +370,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="@string/blocking_hub_display_title"
+                        android:contentDescription="@string/settings_display_shortcuts_title"
                         android:src="@drawable/dashboard_24"
                         app:tint="?attr/colorPrimary" />
 
@@ -324,7 +384,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/blocking_hub_display_title"
+                            android:text="@string/settings_display_shortcuts_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -332,7 +392,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/blocking_hub_display_summary"
+                            android:text="@string/settings_display_shortcuts_summary"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -342,7 +402,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -409,7 +469,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -467,11 +527,10 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSettingsEmergencyUnlock"
@@ -526,7 +585,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -593,7 +652,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -651,7 +710,77 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
+                        app:tint="?android:attr/textColorSecondary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvSettingsDeveloperSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/settings_section_developer"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSettingsDeveloper"
+                style="@style/Switchly.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="72dp"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@string/developer_mode_info_title"
+                        android:src="@drawable/tune_24"
+                        app:tint="?attr/colorPrimary" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/developer_mode_info_title"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="@string/developer_mode_settings_summary"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:alpha="0.7"
+                        android:contentDescription="@string/open"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -718,7 +847,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

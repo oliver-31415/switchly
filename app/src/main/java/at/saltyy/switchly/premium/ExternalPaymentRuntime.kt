@@ -31,7 +31,7 @@ import at.saltyy.switchly.data.prefs.AppLogStore
 
 /**
  * External checkout entry point for APKs that are not distributed through Google Play.
- * This intentionally does not contain Stripe/Adyen secret keys. 
+ * This intentionally does not contain Stripe/Adyen secret keys.
  * The app opens a configured checkout/portal URL and your backend or payment provider handles the payment.
  * Premium activation must be verified server-side, via a webhook, account entitlement, or a signed license file.
  */

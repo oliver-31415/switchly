@@ -21,7 +21,11 @@ GOOGLE_SERVICES_JSON_PATH=C:/dev/secrets/switchly/google-services.json
 # If left empty, Gradle reads the Web client ID from google-services.json (oauth_client.client_type=3).
 GOOGLE_WEB_CLIENT_ID=
 
-# Gradle release task:
+# Public repository validation (no Firebase config or signing key required):
+# ./gradlew :app:public-release-apk
+# Creates dist/Switchly-<version>-offline-unsigned.apk when signing is unavailable.
+#
+# Official maintainer release task (private Firebase/signing inputs required):
 # ./gradlew :app:release-apk
 #
 # Creates:
@@ -34,8 +38,7 @@ GOOGLE_WEB_CLIENT_ID=
 # Forks can set their own values or keep them empty.
 SWITCHLY_WEBSITE_URL=https://your-domain.example
 SWITCHLY_DOWNLOADS_URL=https://your-domain.example/pages/download
-SWITCHLY_SUPPORT_EMAIL=support@example.com
-SWITCHLY_DEV_EMAIL=developer@example.com
+SWITCHLY_DEV_EMAIL=support@example.com
 
 # External payments for the non-Play Firebase email APK. Offline builds keep in-app payments disabled.
 # Keep Play Store/full AAB on Google Play Billing only.
@@ -43,6 +46,11 @@ SWITCHLY_DEV_EMAIL=developer@example.com
 SWITCHLY_EXTERNAL_PAYMENT_PROVIDER=stripe
 SWITCHLY_EXTERNAL_CHECKOUT_URL=https://your-domain.example/pages/pay/checkout/
 SWITCHLY_EXTERNAL_CUSTOMER_PORTAL_URL=https://your-domain.example/pages/pay/customer-portal/
+
+# Optional offline-build Premium codes. Keep the real list private and never commit it.
+# Use SALT-OFFLINE-XXXX-XXXX values separated by commas or semicolons. When empty, offline redeem UI is disabled.
+# Note: local allowlists can still be extracted from a distributed APK; use signed licenses for stronger protection.
+SWITCHLY_OFFLINE_REDEEM_CODE_ALLOWLIST=
 
 # Premium redeem-code API for direct/Firebase builds.
 # Production:

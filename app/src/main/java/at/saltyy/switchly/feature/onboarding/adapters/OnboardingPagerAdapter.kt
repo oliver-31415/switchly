@@ -20,6 +20,7 @@
 package at.saltyy.switchly.feature.onboarding.adapters
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -27,43 +28,51 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import androidx.core.content.getSystemService
 import androidx.core.graphics.ColorUtils
 import androidx.core.text.HtmlCompat
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.SwitchlyAccessibilityService
 import at.saltyy.switchly.data.onboarding.OnboardingPage
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
+import at.saltyy.switchly.data.prefs.IgnoredUsageAppsStore
 import at.saltyy.switchly.data.prefs.NotificationBlockStore
-import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
+import at.saltyy.switchly.feature.onboarding.OnboardingUsagePreviewRenderer
+import at.saltyy.switchly.feature.faq.FaqActivity
 import at.saltyy.switchly.feature.settings.AccessibilityDisclosure
+import at.saltyy.switchly.feature.settings.PermissionsActivity
+import at.saltyy.switchly.feature.settings.HomeModeDialogHelper
+import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
+import at.saltyy.switchly.feature.usage.IgnoredUsageAppsActivity
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
+import at.saltyy.switchly.security.AppLockStore
 import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.util.PackageManagerApiCompat
+import at.saltyy.switchly.util.PermissionSetupChecks
 import at.saltyy.switchly.util.PermissionUtils
 import at.saltyy.switchly.util.NfcLaunchAccessCompat
-import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 class OnboardingPagerAdapter(
     private val activity: Activity,
@@ -105,7 +114,9 @@ class OnboardingPagerAdapter(
             desc.setLineSpacing(0f, 1.0f)
             desc.includeFontPadding = true
 
-            if (page.iconRes != null) {
+            val showHero = page.type != OnboardingPage.Type.USAGE_PREVIEW
+            iconCard.isVisible = showHero
+            if (showHero && page.iconRes != null) {
                 icon.isVisible = true
                 icon.setImageResource(page.iconRes)
             } else {
@@ -113,6 +124,7 @@ class OnboardingPagerAdapter(
             }
 
             badge.text = when (page.level) {
+                OnboardingPage.Level.START -> activity.getString(R.string.onb_badge_start)
                 OnboardingPage.Level.REQUIRED -> activity.getString(R.string.onb_badge_required)
                 OnboardingPage.Level.RECOMMENDED -> activity.getString(R.string.onb_badge_recommended)
                 OnboardingPage.Level.OPTIONAL -> activity.getString(R.string.onb_badge_optional)
@@ -130,10 +142,15 @@ class OnboardingPagerAdapter(
             icon.imageTintList = ColorStateList.valueOf(heroIconTint)
             icon.setColorFilter(heroIconTint)
 
+            placeActionButton(page)
             renderDetails(activity, page, accent)
             applyPageSpacing(page)
 
-            if (page.type == OnboardingPage.Type.PERMISSION_OVERVIEW) {
+            if (
+                page.type == OnboardingPage.Type.PERMISSION_OVERVIEW ||
+                page.type == OnboardingPage.Type.USAGE_PERMISSION ||
+                page.type == OnboardingPage.Type.USAGE_PREVIEW
+            ) {
                 btn.isVisible = false
                 btn.isEnabled = false
                 btn.setOnClickListener(null)
@@ -141,6 +158,20 @@ class OnboardingPagerAdapter(
             }
 
             val hasAction = page.action != null && !page.actionLabel.isNullOrBlank()
+            btn.updateLayoutParams<LinearLayout.LayoutParams> {
+                width = if (page.type == OnboardingPage.Type.REVIEW) {
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                } else {
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                }
+            }
+            if (page.type == OnboardingPage.Type.REVIEW && hasAction) {
+                btn.setIconResource(R.drawable.keyboard_arrow_right_24)
+                btn.iconGravity = MaterialButton.ICON_GRAVITY_TEXT_END
+                btn.iconPadding = (8 * itemView.resources.displayMetrics.density).toInt()
+            } else {
+                btn.icon = null
+            }
             val completedButStillEditable = completed && hasAction && page.keepActionEnabledWhenCompleted
             btn.isVisible = hasAction || completed
 
@@ -150,7 +181,7 @@ class OnboardingPagerAdapter(
                 btn.alpha = 1f
                 btn.backgroundTintList = ColorStateList.valueOf(accent)
                 btn.setTextColor(onAccent)
-                btn.setOnClickListener { page.action?.invoke(activity) }
+                btn.setOnClickListener { runPageAction(activity, page, accent) }
             } else if (completed) {
                 btn.text = page.completedLabel ?: activity.getString(R.string.onb_granted)
                 btn.isEnabled = false
@@ -164,10 +195,37 @@ class OnboardingPagerAdapter(
                 btn.alpha = 1f
                 btn.backgroundTintList = ColorStateList.valueOf(accent)
                 btn.setTextColor(onAccent)
-                btn.setOnClickListener { page.action?.invoke(activity) }
+                btn.setOnClickListener { runPageAction(activity, page, accent) }
             } else {
                 btn.setOnClickListener(null)
                 btn.isEnabled = false
+            }
+        }
+
+        private fun runPageAction(activity: Activity, page: OnboardingPage, accent: Int) {
+            if (page.optionalPreview == OnboardingPage.OptionalPreview.HOME_MODES) {
+                HomeModeDialogHelper.showHomeLayoutModeDialog(activity) {
+                    detailsContainer.removeAllViews()
+                    addCompactHomeModeGrid(activity, accent)
+                }
+            } else {
+                page.action?.invoke(activity)
+            }
+        }
+
+        private fun placeActionButton(page: OnboardingPage) {
+            val detailsIndex = pageContent.indexOfChild(detailsContainer)
+            val buttonIndex = pageContent.indexOfChild(btn)
+            if (detailsIndex < 0 || buttonIndex < 0) return
+
+            val shouldBeBeforeDetails =
+                page.type == OnboardingPage.Type.HOME_CUSTOMIZATION
+            if (shouldBeBeforeDetails && buttonIndex > detailsIndex) {
+                pageContent.removeView(btn)
+                pageContent.addView(btn, pageContent.indexOfChild(detailsContainer))
+            } else if (!shouldBeBeforeDetails && buttonIndex < detailsIndex) {
+                pageContent.removeView(btn)
+                pageContent.addView(btn, pageContent.indexOfChild(detailsContainer) + 1)
             }
         }
 
@@ -176,16 +234,28 @@ class OnboardingPagerAdapter(
             fun dp(value: Float): Int = (value * density).toInt()
 
             val isPermissionOverview = page.type == OnboardingPage.Type.PERMISSION_OVERVIEW
+            val isUsagePreview = page.type == OnboardingPage.Type.USAGE_PREVIEW
+            val isHomeModes = page.optionalPreview == OnboardingPage.OptionalPreview.HOME_MODES
 
             fun applyCenteredScrollSpacing() {
-                // All onboarding pages should feel like the permission page: start lower/near the visual middle, then let the user scroll down through the content.
-                // Do not rely on LinearLayout vertical gravity, because long pages snap back to the top.
-                val viewportHeight = itemView.height.takeIf { it > 0 } ?: itemView.resources.displayMetrics.heightPixels
-                val dynamicTop = (viewportHeight * 0.24f).toInt()
-                    .coerceIn(dp(130f), dp(205f))
-                val dynamicBottom = if (isPermissionOverview) dp(48f) else dp(56f)
+                val viewportHeight = itemView.height.takeIf { it > 0 }
+                    ?: itemView.resources.displayMetrics.heightPixels
+                val sharedHeroTop = (viewportHeight * 0.075f).toInt()
+                    .coerceIn(dp(40f), dp(68f))
+                val dynamicTop = if (isUsagePreview) dp(18f) else sharedHeroTop
+                val dynamicBottom = if (isPermissionOverview) dp(32f) else dp(24f)
                 pageContent.setPadding(dp(24f), dynamicTop, dp(24f), dynamicBottom)
                 pageContent.gravity = android.view.Gravity.CENTER_HORIZONTAL
+
+                // Every standard onboarding page uses the same hero and icon dimensions so the visual anchor does not jump vertically while swiping between steps.
+                iconCard.updateLayoutParams<ViewGroup.LayoutParams> {
+                    width = dp(144f)
+                    height = dp(144f)
+                }
+                icon.updateLayoutParams<ViewGroup.LayoutParams> {
+                    width = dp(84f)
+                    height = dp(84f)
+                }
             }
 
             applyCenteredScrollSpacing()
@@ -193,7 +263,12 @@ class OnboardingPagerAdapter(
 
             val lp = detailsContainer.layoutParams as? ViewGroup.MarginLayoutParams
             if (lp != null) {
-                lp.topMargin = if (isPermissionOverview) dp(18f) else dp(16f)
+                lp.topMargin = when {
+                    isUsagePreview -> dp(8f)
+                    isPermissionOverview -> dp(18f)
+                    isHomeModes -> dp(10f)
+                    else -> dp(16f)
+                }
                 detailsContainer.layoutParams = lp
             }
             detailsContainer.setPadding(0, if (isPermissionOverview) dp(2f) else 0, 0, 0)
@@ -203,8 +278,67 @@ class OnboardingPagerAdapter(
             detailsContainer.removeAllViews()
             detailsContainer.isVisible = false
 
+            if (page.type == OnboardingPage.Type.USAGE_PERMISSION) {
+                detailsContainer.isVisible = true
+                val usageAccessReady = UsageStatsRepo.hasUsageAccess(activity)
+                addUnifiedOnboardingRow(
+                    activity = activity,
+                    title = activity.getString(R.string.onb_usage_report_private_title),
+                    iconRes = R.drawable.lock_24,
+                    info = activity.getString(R.string.onb_usage_report_private_desc),
+                    status = activity.getString(R.string.onb_usage_report_private_status),
+                    highlighted = false,
+                    accent = accent,
+                    clickable = false,
+                    onClick = null,
+                    fixedHeightDp = 100f
+                )
+                addPermissionOptionRow(
+                    activity = activity,
+                    title = activity.getString(R.string.onb_perm_usage_title),
+                    iconRes = R.drawable.bar_chart_24,
+                    info = activity.getString(R.string.onb_perm_usage_desc),
+                    status = activity.getString(
+                        if (usageAccessReady) {
+                            R.string.onb_usage_permission_status_ready
+                        } else {
+                            R.string.onb_usage_permission_status_optional
+                        }
+                    ),
+                    checked = usageAccessReady,
+                    accent = accent,
+                    onClick = { activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+                )
+                return
+            }
+
+            if (page.type == OnboardingPage.Type.USAGE_PREVIEW) {
+                detailsContainer.isVisible = true
+                OnboardingUsagePreviewRenderer.render(
+                    activity = activity,
+                    container = detailsContainer,
+                    accent = accent
+                )
+                return
+            }
+
+            if (page.type == OnboardingPage.Type.APP_SELECTION) {
+                renderAppSelectionDetails(activity, page, accent)
+                return
+            }
+
+            if (page.type == OnboardingPage.Type.HOME_CUSTOMIZATION) {
+                renderHomeCustomizationDetails(activity, accent)
+                return
+            }
+
             if (page.type == OnboardingPage.Type.REVIEW) {
-                renderReviewDetails(activity, accent)
+                renderReviewDetails(activity, page, accent)
+                return
+            }
+
+            if (page.type == OnboardingPage.Type.OPTIONAL_SETUP && page.optionalPreview != null) {
+                renderOptionalSetupDetails(activity, page, accent)
                 return
             }
 
@@ -217,7 +351,7 @@ class OnboardingPagerAdapter(
                     AutomationModeStore.isBarcodeChannelAllowed(activity)
                 val notificationBlockingSelected = NotificationBlockStore.isEnabled(activity)
 
-                // Always show the core blocker permission. This is the only hard requirement.
+                // Core permissions are always visible and required, regardless of selected modes.
                 addPermissionRow(
                     activity,
                     title = activity.getString(R.string.onb_perm_accessibility_title),
@@ -229,13 +363,27 @@ class OnboardingPagerAdapter(
                     onClick = { AccessibilityDisclosure.openSettingsWithDisclosure(activity, forceShow = true) }
                 )
 
+                addPermissionRow(
+                    activity,
+                    title = activity.getString(R.string.onb_perm_usage_title),
+                    iconRes = R.drawable.bar_chart_24,
+                    subtitle = activity.getString(R.string.onb_perm_usage_desc),
+                    checked = UsageStatsRepo.hasUsageAccess(activity),
+                    required = true,
+                    accent = accent,
+                    onClick = { activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+                )
+
                 if (notificationBlockingSelected) {
                     addPermissionRow(
                         activity,
                         title = activity.getString(R.string.onb_perm_notifications_title),
                         iconRes = R.drawable.notifications_24,
                         subtitle = activity.getString(R.string.onb_perm_notifications_desc),
-                        checked = notificationsReady(activity),
+                        checked = PermissionSetupChecks.notificationsReady(
+                            activity,
+                            requireListenerAccess = true
+                        ),
                         required = false,
                         accent = accent,
                         onClick = { openNotificationsSetup(activity) }
@@ -248,7 +396,7 @@ class OnboardingPagerAdapter(
                         title = activity.getString(R.string.onb_perm_battery_title),
                         iconRes = R.drawable.battery_24,
                         subtitle = activity.getString(R.string.onb_perm_battery_desc),
-                        checked = batteryReady(activity),
+                        checked = PermissionSetupChecks.batteryOptimizationReady(activity),
                         required = false,
                         accent = accent,
                         onClick = { openBatterySetup(activity) }
@@ -268,7 +416,7 @@ class OnboardingPagerAdapter(
                         title = activity.getString(R.string.onb_perm_triggers_title),
                         iconRes = R.drawable.location_on_24,
                         subtitle = activity.getString(R.string.onb_perm_triggers_desc),
-                        checked = triggerPermissionsReady(activity),
+                        checked = PermissionSetupChecks.scheduleTriggerPermissionsReady(activity),
                         required = false,
                         accent = accent,
                         onClick = { openTriggerPermissionSetup(activity) }
@@ -299,24 +447,12 @@ class OnboardingPagerAdapter(
                         title = activity.getString(R.string.onb_perm_camera_title),
                         iconRes = R.drawable.qr_code_24,
                         subtitle = activity.getString(R.string.onb_perm_camera_desc),
-                        checked = cameraReady(activity),
+                        checked = PermissionSetupChecks.cameraReady(activity),
                         required = false,
                         accent = accent,
                         onClick = { openCameraSetup(activity) }
                     )
                 }
-
-                // Usage Access is not required, but it helps insights and fallback diagnostics. Keep it last so mode-specific setup stays first.
-                addPermissionRow(
-                    activity,
-                    title = activity.getString(R.string.onb_perm_usage_title),
-                    iconRes = R.drawable.bar_chart_24,
-                    subtitle = activity.getString(R.string.onb_perm_usage_desc),
-                    checked = UsageStatsRepo.hasUsageAccess(activity),
-                    required = false,
-                    accent = accent,
-                    onClick = { activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
-                )
 
                 return
             }
@@ -327,18 +463,562 @@ class OnboardingPagerAdapter(
             }
         }
 
-        private fun renderReviewDetails(activity: Activity, accent: Int) {
+        private fun renderOptionalSetupDetails(
+            activity: Activity,
+            page: OnboardingPage,
+            accent: Int
+        ) {
             detailsContainer.removeAllViews()
             detailsContainer.isVisible = true
 
-            val profile = ProfileStore.getCurrent(activity)?.takeIf { it.isNotBlank() } ?: "Default"
-            val selected = ProfileStore.getSelectedForProfileMode(activity, profile).toList().sorted()
-            val appLabels = selected.map { pkg -> appLabelForPackage(activity, pkg) }.sortedBy { it.lowercase() }
-            val listLabel = if (ProfileRuleModeStore.isAllowMode(activity, profile)) {
-                activity.getString(R.string.onb_review_allowed_mode_label)
-            } else {
-                activity.getString(R.string.onb_review_blocked_mode_label)
+            when (page.optionalPreview) {
+                OnboardingPage.OptionalPreview.HIDDEN_APPS -> {
+                    val usageHidden = IgnoredUsageAppsStore.getIgnoredPackages(activity).size
+                    val pickerHidden = IgnoredUsageAppsStore.getAppPickerHiddenPackages(activity).size
+                    val openUsageHiddenApps: () -> Unit = {
+                        activity.startActivity(IgnoredUsageAppsActivity.intent(activity, showAppPickers = false))
+                    }
+                    val openAppPickerHiddenApps: () -> Unit = {
+                        activity.startActivity(IgnoredUsageAppsActivity.intent(activity, showAppPickers = true))
+                    }
+
+                    addUnifiedOnboardingRow(
+                        activity = activity,
+                        title = activity.getString(R.string.onb_optional_hidden_usage_row_title),
+                        iconRes = R.drawable.bar_chart_24,
+                        info = activity.getString(R.string.onb_optional_hidden_usage_row_desc),
+                        status = activity.getString(R.string.onb_optional_hidden_count, usageHidden),
+                        highlighted = usageHidden > 0,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openUsageHiddenApps,
+                        fixedHeightDp = 96f
+                    )
+                    addUnifiedOnboardingRow(
+                        activity = activity,
+                        title = activity.getString(R.string.onb_optional_hidden_picker_row_title),
+                        iconRes = R.drawable.visibility_off_24,
+                        info = activity.getString(R.string.onb_optional_hidden_picker_row_desc),
+                        status = activity.getString(R.string.onb_optional_hidden_count, pickerHidden),
+                        highlighted = pickerHidden > 0,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openAppPickerHiddenApps,
+                        fixedHeightDp = 96f
+                    )
+                }
+
+                OnboardingPage.OptionalPreview.HOME_MODES -> {
+                    addCompactHomeModeGrid(activity, accent)
+                }
+
+                OnboardingPage.OptionalPreview.DISPLAY -> {
+                    val openTiles: () -> Unit = {
+                        activity.startActivity(
+                            Intent(activity, ToggleOptionsActivity::class.java)
+                                .putExtra(
+                                    ToggleOptionsActivity.EXTRA_VIEW_SECTION,
+                                    ToggleOptionsActivity.SECTION_DISPLAY
+                                )
+                                .putExtra(
+                                    ToggleOptionsActivity.EXTRA_DISPLAY_TARGET,
+                                    ToggleOptionsActivity.DISPLAY_TARGET_TILES
+                                )
+                        )
+                    }
+                    val openWidgets: () -> Unit = {
+                        activity.startActivity(
+                            Intent(activity, ToggleOptionsActivity::class.java)
+                                .putExtra(
+                                    ToggleOptionsActivity.EXTRA_VIEW_SECTION,
+                                    ToggleOptionsActivity.SECTION_DISPLAY
+                                )
+                                .putExtra(
+                                    ToggleOptionsActivity.EXTRA_DISPLAY_TARGET,
+                                    ToggleOptionsActivity.DISPLAY_TARGET_WIDGETS
+                                )
+                        )
+                    }
+
+                    addOptionRow(
+                        activity = activity,
+                        iconRes = R.drawable.tune_24,
+                        title = activity.getString(R.string.onb_optional_display_tiles_title),
+                        subtitle = activity.getString(R.string.onb_optional_display_tiles_desc),
+                        leadingColored = false,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openTiles,
+                        fixedHeightDp = 92f
+                    )
+                    addOptionRow(
+                        activity = activity,
+                        iconRes = R.drawable.widget_apps_24,
+                        title = activity.getString(R.string.onb_optional_display_widgets_title),
+                        subtitle = activity.getString(R.string.onb_optional_display_widgets_desc),
+                        leadingColored = false,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openWidgets,
+                        fixedHeightDp = 92f
+                    )
+                }
+
+                OnboardingPage.OptionalPreview.APP_LOCK -> {
+                    val appLockEnabled = AppLockStore.isEnabled(activity)
+                    val uninstallProtectionEnabled = AppLockStore.isStrictProtectionEnabled(activity)
+                    val openAppLock: () -> Unit = {
+                        page.action?.invoke(activity)
+                        Unit
+                    }
+
+                    addUnifiedOnboardingRow(
+                        activity = activity,
+                        title = activity.getString(R.string.onb_optional_app_lock_row_title),
+                        iconRes = R.drawable.lock_24,
+                        info = activity.getString(R.string.onb_optional_app_lock_row_desc),
+                        status = activity.getString(if (appLockEnabled) R.string.state_enabled else R.string.state_disabled),
+                        highlighted = appLockEnabled,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openAppLock,
+                        fixedHeightDp = 96f
+                    )
+                    addUnifiedOnboardingRow(
+                        activity = activity,
+                        title = activity.getString(R.string.onb_optional_uninstall_row_title),
+                        iconRes = R.drawable.security_24,
+                        info = activity.getString(R.string.onb_optional_uninstall_row_desc),
+                        status = activity.getString(if (uninstallProtectionEnabled) R.string.state_enabled else R.string.state_disabled),
+                        highlighted = uninstallProtectionEnabled,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openAppLock,
+                        fixedHeightDp = 96f
+                    )
+                }
+
+                OnboardingPage.OptionalPreview.FEATURE_ACCESS -> {
+                    addToggleOptionRow(
+                        activity = activity,
+                        title = activity.getString(R.string.pref_mixed_allow_app_picking_title),
+                        subtitle = activity.getString(R.string.pref_mixed_allow_app_picking_summary),
+                        iconRes = R.drawable.apps_24,
+                        checked = AutomationModeStore.isAppPickerAllowedWhileEnabled(activity),
+                        accent = accent,
+                        onCheckedChanged = { enabled ->
+                            AutomationModeStore.setMixedAllowAppPicking(activity, enabled)
+                        }
+                    )
+                    addToggleOptionRow(
+                        activity = activity,
+                        title = activity.getString(R.string.pref_mixed_allow_profile_switching_title),
+                        subtitle = activity.getString(R.string.pref_mixed_allow_profile_switching_summary),
+                        iconRes = R.drawable.account_box_24,
+                        checked = AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(activity),
+                        accent = accent,
+                        onCheckedChanged = { enabled ->
+                            AutomationModeStore.setMixedAllowProfileSwitching(activity, enabled)
+                        }
+                    )
+                }
+
+                OnboardingPage.OptionalPreview.FAQ -> {
+                    val openBackgroundChecklist: () -> Unit = {
+                        activity.startActivity(
+                            FaqActivity.intent(
+                                context = activity,
+                                category = FaqActivity.CATEGORY_BACKGROUND_ACCESS,
+                                questionResId = R.string.faq_q_background_access_checklist
+                            )
+                        )
+                    }
+                    val openDeviceSpecificSteps: () -> Unit = {
+                        activity.startActivity(
+                            FaqActivity.intent(
+                                context = activity,
+                                category = FaqActivity.CATEGORY_BACKGROUND_ACCESS,
+                                questionResId = R.string.faq_q_dontkillmyapp
+                            )
+                        )
+                    }
+                    addOptionRow(
+                        activity = activity,
+                        iconRes = R.drawable.battery_24,
+                        title = activity.getString(R.string.onb_optional_faq_background_title),
+                        subtitle = activity.getString(R.string.onb_optional_faq_background_desc),
+                        leadingColored = false,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openBackgroundChecklist,
+                        fixedHeightDp = 92f
+                    )
+                    addOptionRow(
+                        activity = activity,
+                        iconRes = R.drawable.language_24,
+                        title = activity.getString(R.string.onb_optional_faq_device_steps_title),
+                        subtitle = activity.getString(R.string.onb_optional_faq_device_steps_desc),
+                        leadingColored = false,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openDeviceSpecificSteps,
+                        fixedHeightDp = 92f
+                    )
+                }
+
+                OnboardingPage.OptionalPreview.SUPPORT -> {
+                    val openSupport: () -> Unit = {
+                        page.action?.invoke(activity)
+                        Unit
+                    }
+                    addOptionRow(
+                        activity = activity,
+                        iconRes = R.drawable.info_24,
+                        title = activity.getString(R.string.onb_optional_support_report_title),
+                        subtitle = activity.getString(R.string.onb_optional_support_report_desc),
+                        leadingColored = false,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openSupport,
+                        fixedHeightDp = 92f
+                    )
+                    addOptionRow(
+                        activity = activity,
+                        iconRes = R.drawable.mail_24,
+                        title = activity.getString(R.string.onb_optional_support_feedback_title),
+                        subtitle = activity.getString(R.string.onb_optional_support_feedback_desc),
+                        leadingColored = false,
+                        accent = accent,
+                        clickable = true,
+                        onClick = openSupport,
+                        fixedHeightDp = 92f
+                    )
+                }
+
+                null -> detailsContainer.isVisible = false
             }
+        }
+
+        private fun addCompactHomeModeGrid(activity: Activity, accent: Int) {
+            val density = itemView.resources.displayMetrics.density
+            fun dp(value: Float): Int = (value * density).toInt()
+
+            val surface = ContextCompat.getColor(activity, R.color.switchly_card_bg)
+            val outline = ContextCompat.getColor(activity, R.color.switchly_card_stroke)
+            val onSurface = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorOnSurface)
+            val choices = HomeModeDialogHelper.homeLayoutModeChoices(activity)
+
+            choices.chunked(2).forEachIndexed { rowIndex, pair ->
+                val row = LinearLayout(activity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                }
+
+                pair.forEachIndexed { index, choice ->
+                    val selected = choice.selected
+                    val card = MaterialCardView(activity).apply {
+                        layoutParams = LinearLayout.LayoutParams(0, dp(110f), 1f).apply {
+                            topMargin = if (rowIndex == 0) dp(8f) else dp(10f)
+                            if (index == 0) marginEnd = dp(5f) else marginStart = dp(5f)
+                        }
+                        radius = dp(17f).toFloat()
+                        cardElevation = 0f
+                        strokeWidth = dp(if (selected) 2f else 1f)
+                        strokeColor = if (selected) accent else outline
+                        setCardBackgroundColor(
+                            if (selected) ColorUtils.setAlphaComponent(accent, 22) else surface
+                        )
+                        isClickable = true
+                        isFocusable = true
+                    }
+
+                    val content = LinearLayout(activity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        gravity = android.view.Gravity.CENTER
+                        setPadding(dp(10f), dp(10f), dp(10f), dp(8f))
+                    }
+                    content.addView(ImageView(activity).apply {
+                        setImageResource(choice.iconRes)
+                        imageTintList = ColorStateList.valueOf(accent)
+                        contentDescription = null
+                    }, LinearLayout.LayoutParams(dp(30f), dp(30f)))
+                    content.addView(TextView(activity).apply {
+                        text = choice.title
+                        textSize = 13.5f
+                        typeface = android.graphics.Typeface.DEFAULT_BOLD
+                        setTextColor(onSurface)
+                        gravity = android.view.Gravity.CENTER
+                        maxLines = 1
+                        setPadding(0, dp(7f), 0, 0)
+                    })
+                    content.addView(TextView(activity).apply {
+                        text = activity.getString(
+                            if (selected) R.string.onb_home_mode_selected else R.string.onb_optional_home_mode_tap
+                        )
+                        textSize = 11.5f
+                        setTextColor(if (selected) accent else ColorUtils.setAlphaComponent(onSurface, 150))
+                        gravity = android.view.Gravity.CENTER
+                        maxLines = 1
+                        setPadding(0, dp(4f), 0, 0)
+                    })
+
+                    card.addView(content)
+                    card.setOnClickListener {
+                        HomeModeDialogHelper.setHomeLayoutMode(activity, choice.mode) {
+                            detailsContainer.removeAllViews()
+                            addCompactHomeModeGrid(activity, accent)
+                        }
+                    }
+                    row.addView(card)
+                }
+
+                if (pair.size == 1) {
+                    row.addView(View(activity), LinearLayout.LayoutParams(0, dp(104f), 1f).apply {
+                        topMargin = if (rowIndex == 0) dp(8f) else dp(10f)
+                        marginStart = dp(5f)
+                    })
+                }
+                detailsContainer.addView(row)
+            }
+        }
+
+        private fun addToggleOptionRow(
+            activity: Activity,
+            title: String,
+            subtitle: String,
+            iconRes: Int,
+            checked: Boolean,
+            accent: Int,
+            onCheckedChanged: (Boolean) -> Unit
+        ) {
+            val density = itemView.resources.displayMetrics.density
+            fun dp(value: Float): Int = (value * density).toInt()
+
+            val surface = ContextCompat.getColor(activity, R.color.switchly_card_bg)
+            val outline = ContextCompat.getColor(activity, R.color.switchly_card_stroke)
+            val onSurface = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorOnSurface)
+
+            val card = MaterialCardView(activity).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp(8f) }
+                minimumHeight = dp(92f)
+                radius = dp(16f).toFloat()
+                cardElevation = 0f
+                isClickable = true
+                isFocusable = true
+            }
+
+            val row = LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                minimumHeight = dp(92f)
+                setPadding(dp(16f), dp(10f), dp(10f), dp(10f))
+            }
+
+            row.addView(ImageView(activity).apply {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(14f).toFloat()
+                    setColor(ColorUtils.setAlphaComponent(accent, 18))
+                }
+                setPadding(dp(8f), dp(8f), dp(8f), dp(8f))
+                setImageResource(iconRes)
+                imageTintList = ColorStateList.valueOf(accent)
+                contentDescription = null
+            }, LinearLayout.LayoutParams(dp(38f), dp(38f)).apply { marginEnd = dp(13f) })
+
+            val texts = LinearLayout(activity).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+            texts.addView(TextView(activity).apply {
+                text = title
+                textSize = 14.8f
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                setTextColor(onSurface)
+                maxLines = 2
+                includeFontPadding = false
+            })
+            texts.addView(TextView(activity).apply {
+                text = subtitle
+                textSize = 12.3f
+                setTextColor(ColorUtils.setAlphaComponent(onSurface, 175))
+                setPadding(0, dp(4f), 0, 0)
+                maxLines = 2
+                includeFontPadding = false
+            })
+            row.addView(texts, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+
+            val toggle = SwitchMaterial(activity).apply {
+                isChecked = checked
+                contentDescription = title
+                thumbTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                    intArrayOf(accent, ColorUtils.setAlphaComponent(onSurface, 150))
+                )
+                trackTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                    intArrayOf(ColorUtils.setAlphaComponent(accent, 105), ColorUtils.setAlphaComponent(onSurface, 45))
+                )
+            }
+            row.addView(toggle, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { marginStart = dp(10f) })
+
+            fun refreshCard(enabled: Boolean) {
+                card.strokeWidth = dp(if (enabled) 2f else 1f)
+                card.strokeColor = if (enabled) accent else outline
+                card.setCardBackgroundColor(
+                    if (enabled) ColorUtils.setAlphaComponent(accent, 18) else surface
+                )
+            }
+            refreshCard(checked)
+
+            toggle.setOnCheckedChangeListener { _, enabled ->
+                onCheckedChanged(enabled)
+                refreshCard(enabled)
+            }
+            card.setOnClickListener { toggle.toggle() }
+            card.addView(row)
+            detailsContainer.addView(card)
+        }
+
+        private data class SelectedAppEntry(
+            val packageName: String,
+            val label: String,
+            val icon: Drawable
+        )
+
+        private fun renderAppSelectionDetails(
+            activity: Activity,
+            page: OnboardingPage,
+            accent: Int
+        ) {
+            detailsContainer.removeAllViews()
+            detailsContainer.isVisible = page.detailRows.isNotEmpty()
+            page.detailRows.forEachIndexed { index, row ->
+                addDetailRow(activity, row, accent, iconForDetailRow(page, index))
+            }
+        }
+
+        private fun renderHomeCustomizationDetails(activity: Activity, accent: Int) {
+            detailsContainer.removeAllViews()
+            detailsContainer.isVisible = true
+            HomeModeDialogHelper.homeLayoutModeChoices(activity).forEach { choice ->
+                addHomeModeRow(activity, choice, accent)
+            }
+        }
+
+        private fun addHomeModeRow(
+            activity: Activity,
+            choice: HomeModeDialogHelper.HomeLayoutModeChoice,
+            accent: Int,
+        ) {
+            val density = itemView.resources.displayMetrics.density
+            fun dp(value: Float): Int = (value * density).toInt()
+
+            val surface = ContextCompat.getColor(activity, R.color.switchly_card_bg)
+            val onSurface = MaterialColors.getColor(
+                itemView,
+                com.google.android.material.R.attr.colorOnSurface
+            )
+            val outline = ContextCompat.getColor(activity, R.color.switchly_card_stroke)
+            val card = MaterialCardView(activity).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp(8f) }
+                radius = dp(16f).toFloat()
+                cardElevation = 0f
+                strokeWidth = dp(if (choice.selected) 2f else 1f)
+                strokeColor = if (choice.selected) accent else outline
+                setCardBackgroundColor(
+                    if (choice.selected) ColorUtils.setAlphaComponent(accent, 0x12) else surface
+                )
+                isClickable = true
+                isFocusable = true
+            }
+            val row = LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                minimumHeight = dp(82f)
+                setPadding(dp(14f), dp(10f), dp(14f), dp(10f))
+            }
+            row.addView(ImageView(activity).apply {
+                setImageResource(choice.iconRes)
+                imageTintList = ColorStateList.valueOf(accent)
+                contentDescription = null
+            }, LinearLayout.LayoutParams(dp(28f), dp(28f)))
+
+            val textColumn = LinearLayout(activity).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(14f), 0, dp(8f), 0)
+            }
+            textColumn.addView(TextView(activity).apply {
+                text = choice.title
+                setTextColor(onSurface)
+                textSize = 15f
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+            })
+            textColumn.addView(TextView(activity).apply {
+                text = choice.summary
+                setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xA8))
+                textSize = 12.5f
+                maxLines = 2
+                setPadding(0, dp(2f), 0, 0)
+            })
+            if (choice.selected) {
+                textColumn.addView(TextView(activity).apply {
+                    text = activity.getString(
+                        if (choice.mode == ToggleOptionsActivity.HOME_MODE_CUSTOM) {
+                            R.string.onb_home_custom_selected_hint
+                        } else {
+                            R.string.onb_home_mode_selected
+                        }
+                    )
+                    setTextColor(accent)
+                    textSize = 12f
+                    typeface = android.graphics.Typeface.DEFAULT_BOLD
+                    setPadding(0, dp(4f), 0, 0)
+                })
+            }
+            row.addView(
+                textColumn,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            )
+
+            if (choice.selected) {
+                row.addView(ImageView(activity).apply {
+                    setImageResource(R.drawable.keyboard_arrow_right_24)
+                    imageTintList = ColorStateList.valueOf(accent)
+                    contentDescription = null
+                    isVisible = choice.mode == ToggleOptionsActivity.HOME_MODE_CUSTOM
+                }, LinearLayout.LayoutParams(dp(28f), dp(28f)))
+            }
+
+            card.addView(row)
+            card.setOnClickListener {
+                HomeModeDialogHelper.setHomeLayoutMode(activity, choice.mode) {
+                    renderHomeCustomizationDetails(activity, accent)
+                }
+                if (choice.mode == ToggleOptionsActivity.HOME_MODE_CUSTOM) {
+                    HomeModeDialogHelper.showCustomizeHomeDialog(activity) {
+                        renderHomeCustomizationDetails(activity, accent)
+                    }
+                }
+            }
+            detailsContainer.addView(card)
+        }
+
+        private fun renderReviewDetails(activity: Activity, page: OnboardingPage, accent: Int) {
+            detailsContainer.removeAllViews()
+            detailsContainer.isVisible = true
+
+            val profile = activeProfile(activity)
+            val selectedApps = selectedAppEntries(activity, profile)
 
             addOptionRow(
                 activity = activity,
@@ -349,7 +1029,7 @@ class OnboardingPagerAdapter(
                 accent = accent,
                 clickable = false,
                 onClick = null,
-                fixedHeightDp = 88f
+                fixedHeightDp = 76f
             )
 
             addOptionRow(
@@ -361,51 +1041,174 @@ class OnboardingPagerAdapter(
                 accent = accent,
                 clickable = false,
                 onClick = null,
-                fixedHeightDp = 88f
+                fixedHeightDp = 76f
             )
 
-            addOptionRow(
-                activity = activity,
-                iconRes = R.drawable.apps_24,
-                title = activity.resources.getQuantityString(R.plurals.onb_review_app_list_title, selected.size, listLabel, selected.size),
-                subtitle = activity.getString(R.string.onb_review_app_list_subtitle),
-                leadingColored = true,
-                accent = accent,
-                clickable = selected.isNotEmpty(),
-                onClick = {
-                    showSelectedAppsDialog(activity, listLabel, appLabels)
-                },
-                fixedHeightDp = 96f
-            )
-        }
-
-        private fun showSelectedAppsDialog(activity: Activity, listLabel: String, appLabels: List<String>) {
-            if (appLabels.isEmpty()) {
-                MaterialAlertDialogBuilder(activity)
-                    .setTitle(listLabel)
-                    .setMessage(activity.getString(R.string.onb_review_no_apps))
-                    .setPositiveButton(android.R.string.ok, null)
-                    .showAccented()
-                return
+            if (selectedApps.isEmpty()) {
+                addEmptyAppsState(activity, accent)
+            } else {
+                addReviewAppsSummaryCard(
+                    activity = activity,
+                    page = page,
+                    apps = selectedApps,
+                    accent = accent
+                )
             }
 
-            MaterialAlertDialogBuilder(activity)
-                .setTitle(activity.resources.getQuantityString(R.plurals.onb_review_apps_dialog_title, appLabels.size, listLabel, appLabels.size))
-                .setItems(appLabels.toTypedArray(), null)
-                .setPositiveButton(android.R.string.ok, null)
-                .showAccented()
         }
 
-        private fun appLabelForPackage(ctx: Context, packageName: String): String {
-            val pm = ctx.packageManager
-            return runCatching {
-                val ai = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
-                } else {
-                    pm.getApplicationInfo(packageName, 0)
+        private fun addReviewAppsSummaryCard(
+            activity: Activity,
+            page: OnboardingPage,
+            apps: List<SelectedAppEntry>,
+            accent: Int
+        ) {
+            val density = itemView.resources.displayMetrics.density
+            fun dp(value: Float): Int = (value * density).toInt()
+            val surface = ContextCompat.getColor(activity, R.color.switchly_card_bg)
+            val outline = ContextCompat.getColor(activity, R.color.switchly_card_stroke)
+            val onSurface = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorOnSurface)
+
+            val card = MaterialCardView(activity).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp(14f) }
+                minimumHeight = dp(118f)
+                radius = dp(18f).toFloat()
+                cardElevation = 0f
+                strokeWidth = dp(1.5f)
+                strokeColor = ColorUtils.blendARGB(outline, accent, 0.68f)
+                setCardBackgroundColor(ColorUtils.blendARGB(surface, accent, 0.07f))
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    (activity as? at.saltyy.switchly.feature.onboarding.OnboardingActivity)
+                        ?.showReviewAppsDialog()
                 }
-                pm.getApplicationLabel(ai).toString()
-            }.getOrNull()?.takeIf { it.isNotBlank() } ?: packageName
+            }
+
+            val row = LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                minimumHeight = dp(118f)
+                setPadding(dp(14f), dp(14f), dp(12f), dp(14f))
+            }
+
+            val iconCluster = FrameLayout(activity).apply {
+                layoutParams = LinearLayout.LayoutParams(dp(106f), dp(72f)).apply {
+                    marginEnd = dp(14f)
+                }
+            }
+            apps.take(4).forEachIndexed { index, app ->
+                val size = dp(46f)
+                val iconCard = MaterialCardView(activity).apply {
+                    layoutParams = FrameLayout.LayoutParams(size, size).apply {
+                        leftMargin = dp(index * 20f)
+                        topMargin = if (index % 2 == 0) 0 else dp(20f)
+                    }
+                    radius = dp(13f).toFloat()
+                    strokeWidth = dp(2f)
+                    strokeColor = surface
+                    cardElevation = dp(2f).toFloat()
+                    setCardBackgroundColor(surface)
+                }
+                iconCard.addView(ImageView(activity).apply {
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                    )
+                    setPadding(dp(5f), dp(5f), dp(5f), dp(5f))
+                    setImageDrawable(app.icon)
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    contentDescription = null
+                })
+                iconCluster.addView(iconCard)
+            }
+            row.addView(iconCluster)
+
+            val labels = LinearLayout(activity).apply {
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                orientation = LinearLayout.VERTICAL
+            }
+            labels.addView(TextView(activity).apply {
+                text = activity.getString(R.string.onb_review_apps_card_title)
+                textSize = 15.5f
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                setTextColor(onSurface)
+                includeFontPadding = false
+            })
+            labels.addView(TextView(activity).apply {
+                text = activity.resources.getQuantityString(
+                    R.plurals.onb_review_apps_card_subtitle,
+                    apps.size,
+                    apps.size
+                )
+                textSize = 12.5f
+                setTextColor(ColorUtils.setAlphaComponent(onSurface, 170))
+                setPadding(0, dp(5f), 0, 0)
+                maxLines = 2
+                includeFontPadding = false
+            })
+            row.addView(labels)
+
+            row.addView(MaterialCheckBox(activity).apply {
+                layoutParams = LinearLayout.LayoutParams(dp(48f), dp(48f)).apply { marginStart = dp(8f) }
+                isChecked = true
+                isClickable = false
+                isFocusable = false
+                buttonTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                    intArrayOf(accent, ColorUtils.setAlphaComponent(onSurface, 110))
+                )
+                contentDescription = null
+            })
+
+            card.addView(row)
+            detailsContainer.addView(card)
+        }
+
+        private fun activeProfile(activity: Activity): String =
+            ProfileStore.getCurrent(activity)?.takeIf { it.isNotBlank() } ?: "Default"
+
+        private fun selectedAppEntries(activity: Activity, profile: String): List<SelectedAppEntry> {
+            val pm = activity.packageManager
+            return ProfileStore.getSelectedForProfileMode(activity, profile)
+                .map { packageName ->
+                    runCatching {
+                        val appInfo = PackageManagerApiCompat.getApplicationInfo(
+                            packageManager = pm,
+                            packageName = packageName,
+                        )
+                        SelectedAppEntry(
+                            packageName = packageName,
+                            label = pm.getApplicationLabel(appInfo).toString().ifBlank { packageName },
+                            icon = pm.getApplicationIcon(appInfo)
+                        )
+                    }.getOrElse {
+                        SelectedAppEntry(
+                            packageName = packageName,
+                            label = packageName.substringAfterLast('.').replaceFirstChar { ch -> ch.uppercase() },
+                            icon = pm.defaultActivityIcon
+                        )
+                    }
+                }
+                .sortedBy { it.label.lowercase() }
+        }
+
+        private fun addEmptyAppsState(activity: Activity, accent: Int) {
+            addUnifiedOnboardingRow(
+                activity = activity,
+                title = activity.getString(R.string.onb_pick_empty_title),
+                iconRes = R.drawable.apps_24,
+                info = activity.getString(R.string.onb_pick_empty_desc),
+                status = activity.getString(R.string.onb_pick_empty_status),
+                highlighted = false,
+                accent = accent,
+                clickable = false,
+                onClick = null,
+                fixedHeightDp = 96f
+            )
         }
 
         private fun selectedControlModeLabel(ctx: Context): String {
@@ -423,6 +1226,11 @@ class OnboardingPagerAdapter(
                 R.drawable.play_arrow_24 -> when (index) {
                     0 -> R.drawable.apps_24
                     1 -> R.drawable.toggle_on_24
+                    else -> R.drawable.tune_24
+                }
+                R.drawable.apps_24 -> when (index) {
+                    0 -> R.drawable.apps_24
+                    1 -> R.drawable.security_24
                     else -> R.drawable.tune_24
                 }
                 R.drawable.tune_24 -> if (index == 0) R.drawable.toggle_on_24 else R.drawable.lock_24
@@ -548,7 +1356,7 @@ class OnboardingPagerAdapter(
 
             val hasInfo = !info.isNullOrBlank()
             val hasStatus = !status.isNullOrBlank()
-            val rowHeight = fixedHeightDp?.let { dp(it) } ?: when {
+            val rowMinHeight = fixedHeightDp?.let { dp(it) } ?: when {
                 hasInfo && hasStatus -> dp(100f)
                 hasInfo -> dp(88f)
                 else -> dp(76f)
@@ -557,8 +1365,9 @@ class OnboardingPagerAdapter(
             val card = MaterialCardView(activity).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    rowHeight
+                    LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply { topMargin = dp(8f) }
+                minimumHeight = rowMinHeight
                 radius = dp(16f).toFloat()
                 cardElevation = 0f
                 strokeWidth = dp(1f)
@@ -572,8 +1381,9 @@ class OnboardingPagerAdapter(
             val row = LinearLayout(activity).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT
+                    LinearLayout.LayoutParams.WRAP_CONTENT
                 )
+                minimumHeight = rowMinHeight
                 orientation = LinearLayout.HORIZONTAL
                 gravity = android.view.Gravity.CENTER_VERTICAL
                 setPadding(dp(16f), dp(10f), dp(12f), dp(10f))
@@ -607,7 +1417,7 @@ class OnboardingPagerAdapter(
                 textSize = 14.8f
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
                 setTextColor(onSurface)
-                maxLines = if (hasInfo || hasStatus) 1 else 2
+                maxLines = 2
                 ellipsize = android.text.TextUtils.TruncateAt.END
                 includeFontPadding = false
             }
@@ -620,7 +1430,7 @@ class OnboardingPagerAdapter(
                     alpha = 0.78f
                     setTextColor(onSurface)
                     setPadding(0, dp(5f), 0, 0)
-                    maxLines = 1
+                    maxLines = 3
                     ellipsize = android.text.TextUtils.TruncateAt.END
                     includeFontPadding = false
                 }
@@ -634,7 +1444,7 @@ class OnboardingPagerAdapter(
                     typeface = android.graphics.Typeface.DEFAULT_BOLD
                     setTextColor(if (highlighted) accent else ColorUtils.setAlphaComponent(onSurface, 185))
                     setPadding(0, dp(7f), 0, 0)
-                    maxLines = 1
+                    maxLines = 2
                     ellipsize = android.text.TextUtils.TruncateAt.END
                     includeFontPadding = false
                 }
@@ -646,7 +1456,7 @@ class OnboardingPagerAdapter(
             if (clickable) {
                 val arrow = ImageView(activity).apply {
                     layoutParams = LinearLayout.LayoutParams(dp(22f), dp(22f)).apply { marginStart = dp(12f) }
-                    setImageResource(R.drawable.arrow_forward_ios_24)
+                    setImageResource(R.drawable.keyboard_arrow_right_24)
                     imageTintList = ColorStateList.valueOf(ColorUtils.setAlphaComponent(if (highlighted) accent else onSurface, if (highlighted) 210 else 130))
                     contentDescription = null
                 }
@@ -657,54 +1467,18 @@ class OnboardingPagerAdapter(
             detailsContainer.addView(card)
         }
 
-        private fun notificationsReady(ctx: Context): Boolean {
-            if (!NotificationManagerCompat.from(ctx).areNotificationsEnabled()) return false
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-            ) {
-                return false
-            }
-            return !NotificationBlockStore.isEnabled(ctx) || NotificationBlockStore.hasListenerAccess(ctx)
-        }
-
         private fun openNotificationsSetup(activity: Activity) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-            ) {
-                activity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9211)
-                return
-            }
-
-            if (!NotificationBlockStore.hasListenerAccess(activity)) {
-                runCatching { activity.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
-                    .onFailure { openAppDetails(activity) }
-                return
-            }
-
-            runCatching {
-                activity.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                    putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
-                })
-            }.onFailure { openAppDetails(activity) }
+            openPermissionsScreen(activity, PermissionsActivity.SECTION_NOTIFICATIONS)
         }
 
+        @SuppressLint("BatteryLife")
         private fun openBatterySetup(activity: Activity) {
-            val alreadyAllowed = runCatching {
-                activity.getSystemService(PowerManager::class.java)
-                    ?.isIgnoringBatteryOptimizations(activity.packageName) == true
-            }.getOrDefault(false)
-
-            val settingsIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-            if (!alreadyAllowed && safeStart(activity, settingsIntent)) {
+            if (safeStart(activity, Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = "package:${activity.packageName}".toUri()
+                })) {
                 return
             }
-            if (!safeStart(activity, settingsIntent)) {
-                openAppDetails(activity)
-            }
-        }
-
-        private fun cameraReady(ctx: Context): Boolean {
-            return ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            openPermissionsScreen(activity, PermissionsActivity.SECTION_BATTERY)
         }
 
         private fun openCameraSetup(activity: Activity) {
@@ -720,13 +1494,7 @@ class OnboardingPagerAdapter(
         }
 
         private fun openExactAlarmSetup(activity: Activity) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                    data = "package:${activity.packageName}".toUri()
-                }
-                if (safeStart(activity, intent)) return
-            }
-            openAppDetails(activity)
+            openPermissionsScreen(activity, PermissionsActivity.SECTION_TRIGGERS)
         }
 
         private fun openNfcLaunchSetup(activity: Activity) {
@@ -738,29 +1506,21 @@ class OnboardingPagerAdapter(
                 }
             )
             for (intent in intents) {
-                if (safeStart(activity, intent)) return
+                if (safeStart(activity, intent)) {
+                    return
+                }
             }
         }
 
         private fun openTriggerPermissionSetup(activity: Activity) {
-            val needsLocation = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
-            if (needsLocation) {
-                activity.requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                    9212
-                )
-                return
-            }
+            openPermissionsScreen(activity, PermissionsActivity.SECTION_TRIGGERS)
+        }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                ContextCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
-            ) {
-                activity.requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), 9213)
-                return
-            }
-
-            openAppDetails(activity)
+        private fun openPermissionsScreen(activity: Activity, section: String) {
+            safeStart(activity, Intent(activity, PermissionsActivity::class.java).apply {
+                putExtra(PermissionsActivity.EXTRA_FROM_ONBOARDING, true)
+                putExtra(PermissionsActivity.EXTRA_FOCUS_SECTION, section)
+            })
         }
 
         private fun openAppDetails(activity: Activity) {
@@ -776,33 +1536,25 @@ class OnboardingPagerAdapter(
             }.getOrDefault(false)
         }
 
-        private fun batteryReady(ctx: Context): Boolean {
-            val pm = ctx.getSystemService<PowerManager>() ?: return false
-            return runCatching { pm.isIgnoringBatteryOptimizations(ctx.packageName) }.getOrDefault(false)
-        }
-
-        private fun triggerPermissionsReady(ctx: Context): Boolean {
-            val location = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            val bluetooth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ContextCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
-            } else {
-                true
-            }
-            return location && bluetooth
-        }
     }
 }
 
 private fun readableOnColor(color: Int): Int {
     val black = ColorUtils.calculateContrast(Color.BLACK, color)
     val white = ColorUtils.calculateContrast(Color.WHITE, color)
-    return if (black >= white) Color.BLACK else Color.WHITE
+    return if (black >= white) {
+        Color.BLACK
+    } else {
+        Color.WHITE
+    }
 }
 
 private fun onboardingHeroIconTint(context: Context): Int {
     val isNight = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
         Configuration.UI_MODE_NIGHT_YES
-    return if (isNight) Color.WHITE else Color.rgb(24, 32, 28)
+    return if (isNight) {
+        Color.WHITE
+    } else {
+        Color.rgb(24, 32, 28)
+    }
 }

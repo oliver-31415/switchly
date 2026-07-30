@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingTop="8dp"
-        android:paddingBottom="136dp"/>
+        android:paddingBottom="0dp" />
 
     <!-- Bottom action bar -->
     <com.google.android.material.card.MaterialCardView
@@ -19,19 +19,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_margin="16dp"
-        app:cardBackgroundColor="?android:attr/colorBackground"
-        app:cardUseCompatPadding="true"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="8dp">
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="4dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardUseCompatPadding="false"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="12dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:orientation="vertical">
 
             <LinearLayout
@@ -41,6 +44,20 @@
                 android:layout_marginBottom="8dp"
                 android:gravity="center"
                 android:orientation="horizontal" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_optional_setup"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/onb_optional_setup_action"
+                android:textAllCaps="false"
+                android:textSize="15sp"
+                android:visibility="gone"
+                app:icon="@drawable/keyboard_arrow_right_24"
+                app:iconGravity="textEnd"
+                app:iconPadding="8dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -59,6 +76,7 @@
                     android:textSize="16sp" />
 
                 <View
+                    android:id="@+id/onboardingButtonSpacer"
                     android:layout_width="12dp"
                     android:layout_height="0dp" />
 
@@ -83,7 +101,7 @@
                         android:layout_height="24dp"
                         android:layout_gravity="end|center_vertical"
                         android:layout_marginEnd="16dp"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="@android:color/white"
                         android:alpha="0.9"
                         android:contentDescription="@null"

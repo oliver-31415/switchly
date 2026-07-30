@@ -34,7 +34,9 @@ object BatteryOptimizationCompat {
     }
 
     fun isBackgroundRestricted(context: Context): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            return false
+        }
         val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return false
         return runCatching { am.isBackgroundRestricted }.getOrDefault(false)
     }
@@ -45,7 +47,7 @@ object BatteryOptimizationCompat {
     }
 
     fun isEffectivelyOk(context: Context): Boolean {
-        // Be strict: Android "Optimized" can still delay schedules, geofences, receivers and Accessibility-related reliability. 
+        // Be strict: Android "Optimized" can still delay schedules, geofences, receivers and Accessibility-related reliability.
         // Treat the setup as OK only when the app is truly excluded from battery optimization, or when the user manually confirmed the best available OEM/autostart setup.
         return isIgnoringBatteryOptimizations(context) || isUserConfirmedMaxAvailable(context)
     }

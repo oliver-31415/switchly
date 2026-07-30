@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 
+// Persists and retrieves last block reason state.
 object LastBlockReasonStore {
 
     private const val PREFS = "switchly_last_block_reason"
@@ -84,7 +85,9 @@ object LastBlockReasonStore {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val time = sp.getLong(KEY_TIME, 0L)
         val pkg = sp.getString(KEY_PKG, null).orEmpty()
-        if (time <= 0L || pkg.isBlank()) return null
+        if (time <= 0L || pkg.isBlank()) {
+            return null
+        }
         return Snapshot(
             timeMillis = time,
             pkg = pkg,
@@ -101,7 +104,9 @@ object LastBlockReasonStore {
 
     fun debugLines(context: Context, maxAgeMs: Long = Long.MAX_VALUE): List<String> {
         val s = snapshot(context) ?: return emptyList()
-        if (maxAgeMs != Long.MAX_VALUE && !s.isFresh(maxAgeMs)) return emptyList()
+        if (maxAgeMs != Long.MAX_VALUE && !s.isFresh(maxAgeMs)) {
+            return emptyList()
+        }
         return buildList {
             add("Blocked by:")
             if (s.profile.isNotBlank()) add("Profile: ${s.profile}")

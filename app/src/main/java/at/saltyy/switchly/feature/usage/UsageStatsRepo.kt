@@ -23,15 +23,13 @@ import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Looper
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.UsageStore
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
+// Loads and transforms usage stats data.
 object UsageStatsRepo {
 
     // UsageEvents.Event ACTIVITY_* numeric values.
@@ -62,7 +60,9 @@ object UsageStatsRepo {
     private fun isDayAligned(timeMs: Long): Boolean = startOfDayLocal(timeMs) == timeMs
 
     private fun isSingleLocalDayWindow(from: Long, to: Long): Boolean {
-        if (!isDayAligned(from) || to <= from) return false
+        if (!isDayAligned(from) || to <= from) {
+            return false
+        }
         val nextDay = Calendar.getInstance().apply {
             timeInMillis = from
             add(Calendar.DAY_OF_YEAR, 1)
@@ -78,7 +78,9 @@ object UsageStatsRepo {
         now: Long = System.currentTimeMillis()
     ): List<Long> {
         val total = UsageStore.getUsageMsToday(ctx, packageName).coerceAtLeast(0L)
-        if (total <= 0L) return List(24) { 0L }
+        if (total <= 0L) {
+            return List(24) { 0L }
+        }
         val buckets = LongArray(24)
         val dayStart = startOfDayLocal(now)
         val hourIndex = (((now - dayStart) / TimeUnit.HOURS.toMillis(1)).toInt()).coerceIn(0, 23)
@@ -145,11 +147,10 @@ object UsageStatsRepo {
             return getSummary(ctx, startOfTodayLocal(), System.currentTimeMillis(), topN)
         }
 
-        val homePkgs = getHomePackages(ctx)
         val it = byPkg.keys.iterator()
         while (it.hasNext()) {
             val pkg = it.next()
-            if (shouldExcludePackage(ctx, pkg, homePkgs) || !isInstalled(ctx, pkg)) {
+            if (shouldExcludePackage(ctx, pkg) || !isInstalled(ctx, pkg)) {
                 it.remove()
             }
         }
@@ -183,8 +184,12 @@ object UsageStatsRepo {
         packageName: String,
         now: Long = System.currentTimeMillis()
     ): List<Long> {
-        if (packageName.isBlank()) return List(24) { 0L }
-        if (isMainThread()) return buildTodayHourlyFallback(ctx, packageName, now)
+        if (packageName.isBlank()) {
+            return List(24) { 0L }
+        }
+        if (isMainThread()) {
+            return buildTodayHourlyFallback(ctx, packageName, now)
+        }
 
         val safeNow = now.coerceAtMost(System.currentTimeMillis())
         val dayStart = startOfTodayLocal()
@@ -238,7 +243,9 @@ object UsageStatsRepo {
     }
 
     fun getSessionsToday(ctx: Context, packageName: String): Int {
-        if (isMainThread()) return OpenCountStore.getTodayAllProfiles(ctx, packageName)
+        if (isMainThread()) {
+            return OpenCountStore.getTodayAllProfiles(ctx, packageName)
+        }
         val now = System.currentTimeMillis()
         val start = startOfTodayLocal()
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -262,7 +269,9 @@ object UsageStatsRepo {
     ): Long {
         val safeTo = to.coerceAtMost(System.currentTimeMillis())
         val windowMs = (safeTo - from).coerceAtLeast(0L)
-        if (packageName.isBlank() || windowMs <= 0L) return 0L
+        if (packageName.isBlank() || windowMs <= 0L) {
+            return 0L
+        }
         val reported = getSummary(ctx, from, safeTo, topN = 1, onlyPackage = packageName).totalTimeMs
         // A single package cannot physically be in the foreground longer than the
         // queried window itself. Some OEMs over-report package usage in bucketed
@@ -280,7 +289,9 @@ object UsageStatsRepo {
 
     fun getSessionsForWindow(ctx: Context, from: Long, to: Long, packageName: String): Int {
         val safeTo = to.coerceAtMost(System.currentTimeMillis())
-        if (packageName.isBlank() || safeTo <= from) return 0
+        if (packageName.isBlank() || safeTo <= from) {
+            return 0
+        }
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val events = try {
             usm.queryEvents(from, safeTo)
@@ -386,10 +397,11 @@ object UsageStatsRepo {
      * Returns the earliest timestamp (ms) that the system actually reports usage for within the window.
      * Useful for showing a UI banner like: "Data available since ..." on devices that retain only ~1 week.
      */
-
     fun getSingleDayUsageMapForImport(ctx: Context, dayStart: Long, dayEnd: Long): Map<String, Long> {
         val safeEnd = dayEnd.coerceAtMost(System.currentTimeMillis())
-        if (safeEnd <= dayStart) return emptyMap()
+        if (safeEnd <= dayStart) {
+            return emptyMap()
+        }
         val windowMs = (safeEnd - dayStart).coerceAtLeast(0L)
 
         // Import existing app-open data conservatively.
@@ -402,10 +414,9 @@ object UsageStatsRepo {
             onlyPackage = null
         )
 
-        val homePkgs = getHomePackages(ctx)
         val out = linkedMapOf<String, Long>()
         for ((pkg, rawMs) in byPkg) {
-            if (shouldExcludePackage(ctx, pkg, homePkgs)) continue
+            if (UsageInsightsAppFilter.shouldAlwaysHide(pkg)) continue
             if (!isInstalled(ctx, pkg)) continue
             val ms = rawMs.coerceIn(0L, windowMs)
             if (ms > 0L) out[pkg] = ms
@@ -414,9 +425,13 @@ object UsageStatsRepo {
     }
 
     fun getSessionCountMapForWindow(ctx: Context, from: Long, to: Long): Map<String, Int> {
-        if (isMainThread()) return emptyMap()
+        if (isMainThread()) {
+            return emptyMap()
+        }
         val safeTo = to.coerceAtMost(System.currentTimeMillis())
-        if (safeTo <= from) return emptyMap()
+        if (safeTo <= from) {
+            return emptyMap()
+        }
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val events = try {
             usm.queryEvents(from, safeTo)
@@ -425,13 +440,12 @@ object UsageStatsRepo {
         } catch (_: Throwable) {
             return emptyMap()
         }
-        val homePkgs = getHomePackages(ctx)
         val out = linkedMapOf<String, Int>()
         val e = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
             val pkg = e.packageName ?: continue
-            if (shouldExcludePackage(ctx, pkg, homePkgs)) continue
+            if (UsageInsightsAppFilter.shouldAlwaysHide(pkg)) continue
             if (!isInstalled(ctx, pkg)) continue
             if (e.eventType == EVENT_ACTIVITY_RESUMED) {
                 out[pkg] = (out[pkg] ?: 0) + 1
@@ -441,7 +455,9 @@ object UsageStatsRepo {
     }
 
     fun getEarliestAvailableUsageMs(ctx: Context, from: Long, to: Long): Long? {
-        if (isMainThread()) return null
+        if (isMainThread()) {
+            return null
+        }
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val stats = try {
             usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
@@ -450,55 +466,14 @@ object UsageStatsRepo {
         } catch (_: Throwable) {
             emptyList()
         }
-        if (stats.isNullOrEmpty()) return null
+        if (stats.isNullOrEmpty()) {
+            return null
+        }
         return stats.minOfOrNull { it.firstTimeStamp }
     }
 
-    private fun getHomePackages(ctx: Context): Set<String> {
-        val pm = ctx.packageManager
-        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-        return try {
-            val list = if (Build.VERSION.SDK_INT >= 33) {
-                pm.queryIntentActivities(intent, PackageManager.ResolveInfoFlags.of(0))
-            } else {
-                pm.queryIntentActivities(intent, 0)
-            }
-            list.mapNotNull { it.activityInfo?.packageName }.toSet()
-        } catch (_: Throwable) {
-            emptySet()
-        }
-    }
-
-    private fun shouldExcludePackage(ctx: Context, pkg: String, homePkgs: Set<String>): Boolean {
-        val p = pkg.lowercase()
-        if (pkg == ctx.packageName) return true
-        if (pkg in homePkgs) return true
-        if (p == "android") return true
-        if (p == "com.android.systemui") return true
-        if (p == "com.android.permissioncontroller") return true
-        if (p == "com.google.android.permissioncontroller") return true
-        if (p == "com.samsung.android.permissioncontroller") return true
-        if (p == "com.android.packageinstaller") return true
-        if (p == "com.google.android.packageinstaller") return true
-        if (p == "com.samsung.android.packageinstaller") return true
-
-        val known = setOf(
-            "com.google.android.apps.nexuslauncher",
-            "com.android.launcher3",
-            "com.google.android.launcher",
-            "com.miui.home",
-            "com.oneplus.launcher",
-            "com.sec.android.app.launcher",
-            "com.huawei.android.launcher",
-            "com.oppo.launcher",
-            "com.vivo.launcher",
-            "com.android.quickstep"
-        )
-        if (p in known) return true
-        if (p.contains("launcher")) return true
-        if (p.contains("quickstep")) return true
-
-        return false
+    private fun shouldExcludePackage(ctx: Context, pkg: String): Boolean {
+        return UsageInsightsAppFilter.shouldHide(ctx, pkg)
     }
 
     private fun getSummary(
@@ -509,7 +484,9 @@ object UsageStatsRepo {
         onlyPackage: String? = null
     ): UsageSummary {
         val safeTo = to.coerceAtMost(System.currentTimeMillis())
-        if (safeTo <= from) return UsageSummary(totalTimeMs = 0L, topApps = emptyList())
+        if (safeTo <= from) {
+            return UsageSummary(totalTimeMs = 0L, topApps = emptyList())
+        }
 
         val byPkg = if (isSingleLocalDayWindow(from, safeTo)) {
             getSingleDayUsageByPackage(ctx, from, safeTo, onlyPackage)
@@ -518,11 +495,10 @@ object UsageStatsRepo {
         }
 
         if (onlyPackage == null) {
-            val homePkgs = getHomePackages(ctx)
             val it = byPkg.keys.iterator()
             while (it.hasNext()) {
                 val pkg = it.next()
-                if (shouldExcludePackage(ctx, pkg, homePkgs)) {
+                if (shouldExcludePackage(ctx, pkg)) {
                     it.remove()
                 }
             }
@@ -606,7 +582,9 @@ object UsageStatsRepo {
         to: Long,
         onlyPackage: String?
     ): Map<String, Long> {
-        if (isMainThread()) return emptyMap()
+        if (isMainThread()) {
+            return emptyMap()
+        }
         val out = HashMap<String, Long>()
         val aggregated = try {
             usm.queryAndAggregateUsageStats(from, to)
@@ -629,7 +607,9 @@ object UsageStatsRepo {
         to: Long,
         onlyPackage: String?
     ): Map<String, Long> {
-        if (isMainThread()) return emptyMap()
+        if (isMainThread()) {
+            return emptyMap()
+        }
         val out = HashMap<String, Long>()
         val stats = try {
             usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)
@@ -655,7 +635,9 @@ object UsageStatsRepo {
         to: Long,
         onlyPackage: String?
     ): Map<String, Long> {
-        if (isMainThread()) return emptyMap()
+        if (isMainThread()) {
+            return emptyMap()
+        }
         val events = try {
             usm.queryEvents(from, to)
         } catch (_: SecurityException) {
@@ -707,7 +689,9 @@ object UsageStatsRepo {
     ) {
         val safeStart = startMs.coerceAtLeast(dayStart)
         val safeEnd = endMs.coerceAtLeast(safeStart)
-        if (safeEnd <= safeStart) return
+        if (safeEnd <= safeStart) {
+            return
+        }
 
         val hourMs = TimeUnit.HOURS.toMillis(1)
         var cursor = safeStart
@@ -725,7 +709,9 @@ object UsageStatsRepo {
         to: Long,
         onlyPackage: String?
     ): HashMap<String, Long> {
-        if (isMainThread()) return HashMap()
+        if (isMainThread()) {
+            return HashMap()
+        }
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val stats = try {
             usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, from, to)

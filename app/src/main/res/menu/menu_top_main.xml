@@ -1,25 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <item
-        android:id="@+id/action_qr_header"
-        android:title="@string/qr_scan_title"
-        android:icon="@drawable/qr_code_24"
+        android:id="@+id/action_scanner_header"
+        android:title="@string/scanner_choice_title"
+        android:icon="@drawable/photo_camera_24"
         android:visible="false"
-        app:showAsAction="always" />
-
-    <item
-        android:id="@+id/action_barcode_header"
-        android:title="@string/barcode_scan_title"
-        android:icon="@drawable/barcode_24"
-        android:visible="false"
-        app:showAsAction="always" />
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction" />
 
     <item
         android:id="@+id/action_info"
         android:title="@string/main_info_title"
         android:icon="@drawable/info_24"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction" />
 
 </menu>

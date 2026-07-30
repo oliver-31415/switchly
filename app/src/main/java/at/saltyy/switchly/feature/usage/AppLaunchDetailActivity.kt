@@ -34,6 +34,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLaunchCountStore
+import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
@@ -70,7 +72,7 @@ class AppLaunchDetailActivity : AppCompatActivity() {
         val toolbar = MaterialToolbar(this).apply {
             minimumHeight = actionBarSize()
             title = label
-            setNavigationIcon(R.drawable.arrow_back_ios_24)
+            setNavigationIcon(R.drawable.keyboard_arrow_left_24)
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@AppLaunchDetailActivity))
         }
@@ -98,38 +100,51 @@ class AppLaunchDetailActivity : AppCompatActivity() {
 
     private fun load() {
         content.removeAllViews()
-        if (!UsageStatsRepo.hasUsageAccess(this)) {
-            content.addView(messageCard(getString(R.string.usage_timeline_permission_needed)).apply {
-                setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
-            })
-            return
-        }
         content.addView(messageCard(getString(R.string.usage_timeline_loading)))
         val ctx = applicationContext
         val pkg = packageName
         val range = rangeName
+        val hasUsageAccess = UsageStatsRepo.hasUsageAccess(this)
         Thread {
             val (from, to) = if (range == "custom" && customEndMs > customStartMs) {
                 customStartMs to customEndMs
             } else {
                 UsageTimelineRepo.windowForRange(range)
             }
+            if (hasUsageAccess) {
+                runCatching { StatsArchiveSync.sync(ctx) }
+            }
             val sessions = UsageTimelineRepo.appSessions(ctx, pkg, from, to, limit = 0)
+            val storedLaunches = AppLaunchCountStore.getForDateRange(ctx, pkg, from, to)
+            val storedUsage = UsageStore.getUsageMsSeriesForDateRange(ctx, pkg, from, to).sum()
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
-                render(sessions, sessions.size)
+                render(sessions, storedLaunches, storedUsage, hasUsageAccess)
             }
         }.start()
     }
 
-    private fun render(sessions: List<UsageTimelineRepo.AppSession>, launchCount: Int) {
+    private fun render(
+        sessions: List<UsageTimelineRepo.AppSession>,
+        launchCount: Int,
+        totalMs: Long,
+        hasUsageAccess: Boolean,
+    ) {
         content.removeAllViews()
-        if (sessions.isEmpty()) {
-            content.addView(messageCard(getString(R.string.usage_timeline_empty)))
+        val effectiveLaunches = launchCount.takeIf { it > 0 } ?: sessions.size
+        val effectiveTotal = totalMs.takeIf { it > 0L } ?: sessions.sumOf { it.durationMs }
+        if (effectiveLaunches <= 0 && effectiveTotal <= 0L) {
+            val message = if (hasUsageAccess) R.string.usage_timeline_empty else R.string.usage_timeline_permission_needed
+            content.addView(messageCard(getString(message)).apply {
+                if (!hasUsageAccess) setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+            })
             return
         }
-        val total = sessions.sumOf { it.durationMs }
-        content.addView(headerCard(launchCount.takeIf { it > 0 } ?: sessions.size, total))
+        content.addView(headerCard(effectiveLaunches, effectiveTotal))
+        if (sessions.isEmpty()) {
+            content.addView(messageCard(getString(R.string.usage_timeline_recent_details_unavailable)))
+            return
+        }
         content.addView(sectionTitle(getString(R.string.usage_timeline_title)))
 
         val grouped = sessions.asReversed().groupBy { DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(it.startMs)) }

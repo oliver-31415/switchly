@@ -21,6 +21,7 @@ package at.saltyy.switchly.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import at.saltyy.switchly.util.getLongCompat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -90,7 +91,9 @@ object ActiveDurationStore {
     }
 
     private fun addFinishedRange(ctx: Context, startMs: Long, endMs: Long) {
-        if (startMs <= 0L || endMs <= startMs) return
+        if (startMs <= 0L || endMs <= startMs) {
+            return
+        }
 
         val sp = prefs(ctx)
         var cursor = startMs
@@ -115,22 +118,25 @@ object ActiveDurationStore {
             cursor = segmentEnd
         }
 
-        if (total <= 0L) return
+        if (total <= 0L) {
+            return
+        }
 
         sp.edit {
             increments.forEach { (key, delta) ->
-                putLong(key, sp.getLong(key, 0L) + delta)
+                putLong(key, sp.getLongCompat(key, 0L) + delta)
             }
             sessionSegments.forEach { (key, segments) ->
                 putStringSet(key, segments)
             }
-            putLong(KEY_OVERALL_MS, sp.getLong(KEY_OVERALL_MS, 0L) + total)
+            putLong(KEY_OVERALL_MS, sp.getLongCompat(KEY_OVERALL_MS, 0L) + total)
         }
     }
 
+    @Synchronized
     fun syncEffectiveState(ctx: Context, enabledNow: Boolean) {
         val sp = prefs(ctx)
-        val currentSince = sp.getLong(KEY_ACTIVE_SINCE_MS, 0L)
+        val currentSince = sp.getLongCompat(KEY_ACTIVE_SINCE_MS, 0L)
         val now = System.currentTimeMillis()
 
         when {
@@ -144,25 +150,46 @@ object ActiveDurationStore {
         }
     }
 
+    // Persists the elapsed part of an active session without changing the effective state.
+    @Synchronized
+    fun checkpointForBackup(ctx: Context) {
+        val sp = prefs(ctx)
+        val since = sp.getLongCompat(KEY_ACTIVE_SINCE_MS, 0L)
+        if (since <= 0L) {
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        if (now <= since) {
+            return
+        }
+        addFinishedRange(ctx, since, now)
+        sp.edit { putLong(KEY_ACTIVE_SINCE_MS, now) }
+    }
+
     fun getActiveSinceMillis(ctx: Context): Long =
-        prefs(ctx).getLong(KEY_ACTIVE_SINCE_MS, 0L)
+        prefs(ctx).getLongCompat(KEY_ACTIVE_SINCE_MS, 0L)
 
     fun getActiveDurationMillis(ctx: Context): Long {
         val since = getActiveSinceMillis(ctx)
-        if (since <= 0L) return 0L
+        if (since <= 0L) {
+            return 0L
+        }
         return (System.currentTimeMillis() - since).coerceAtLeast(0L)
     }
 
     private fun ongoingOverlapMs(ctx: Context, rangeStart: Long, rangeEnd: Long = System.currentTimeMillis()): Long {
         val since = getActiveSinceMillis(ctx)
-        if (since <= 0L) return 0L
+        if (since <= 0L) {
+            return 0L
+        }
         val start = maxOf(since, rangeStart)
         val end = minOf(System.currentTimeMillis(), rangeEnd)
         return (end - start).coerceAtLeast(0L)
     }
 
     private fun storedDayMs(ctx: Context, timeMillis: Long): Long =
-        prefs(ctx).getLong(PREFIX_DAY_MS + dayKey(timeMillis), 0L)
+        prefs(ctx).getLongCompat(PREFIX_DAY_MS + dayKey(timeMillis), 0L)
 
     fun dayTotalMs(ctx: Context, timeMillis: Long): Long {
         val start = startOfDay(timeMillis)
@@ -213,7 +240,9 @@ object ActiveDurationStore {
     }
 
     fun rangeMs(ctx: Context, startMs: Long, endMs: Long): Long {
-        if (endMs <= startMs) return 0L
+        if (endMs <= startMs) {
+            return 0L
+        }
         val cal = Calendar.getInstance()
         cal.timeInMillis = startOfDay(startMs)
         var total = 0L
@@ -225,7 +254,7 @@ object ActiveDurationStore {
     }
 
     fun overallMs(ctx: Context): Long =
-        prefs(ctx).getLong(KEY_OVERALL_MS, 0L) + getActiveDurationMillis(ctx)
+        prefs(ctx).getLongCompat(KEY_OVERALL_MS, 0L) + getActiveDurationMillis(ctx)
 
     data class SessionSegment(
         val startMs: Long,
@@ -280,7 +309,9 @@ object ActiveDurationStore {
     }
 
     fun dailyBucketsForRange(ctx: Context, startMs: Long, endMs: Long): List<Bucket> {
-        if (endMs <= startMs) return emptyList()
+        if (endMs <= startMs) {
+            return emptyList()
+        }
         val fmt = SimpleDateFormat("EEE, d MMM", Locale.getDefault())
         val cal = Calendar.getInstance()
         cal.timeInMillis = startOfDay(startMs)
@@ -320,7 +351,7 @@ object ActiveDurationStore {
                 val parsed = runCatching {
                     dayFormatter().parse(day)?.time
                 }.getOrNull()
-                parsed?.let { it to sp.getLong(key, 0L) }
+                parsed?.let { it to sp.getLongCompat(key, 0L) }
             }
             .sortedBy { it.first }
             .forEach { (dayMs, valueMs) ->

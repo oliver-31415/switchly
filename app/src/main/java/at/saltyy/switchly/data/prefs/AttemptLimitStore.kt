@@ -49,7 +49,9 @@ object AttemptLimitStore {
     private fun key(profile: String, pkg: String) = PREFIX_LIMIT + profile + "__" + pkg
 
     fun setLimitAttempts(ctx: Context, profile: String, pkg: String, attempts: Int) {
-        if (profile.isBlank() || pkg.isBlank()) return
+        if (profile.isBlank() || pkg.isBlank()) {
+            return
+        }
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = key(profile, pkg)
 
@@ -66,15 +68,21 @@ object AttemptLimitStore {
     }
 
     fun getLimitAttempts(ctx: Context, profile: String, pkg: String): Int {
-        if (profile.isBlank() || pkg.isBlank()) return 0
+        if (profile.isBlank() || pkg.isBlank()) {
+            return 0
+        }
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = key(profile, pkg)
-        if (!prefs.contains(k)) return 0
+        if (!prefs.contains(k)) {
+            return 0
+        }
         return readIntOrLongAndMigrate(prefs, k).coerceAtLeast(0)
     }
 
     fun getAllLimitedPackages(ctx: Context, profile: String): List<String> {
-        if (profile.isBlank()) return emptyList()
+        if (profile.isBlank()) {
+            return emptyList()
+        }
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val prefix = PREFIX_LIMIT + profile + "__"
 
@@ -92,9 +100,7 @@ object AttemptLimitStore {
         return prefs.all.keys.any { it.startsWith(PREFIX_LIMIT) }
     }
 
-    /**
-     * Returns all packages that had an attempt limit set at least once (even if removed now).
-     */
+    // Returns all packages that had an attempt limit set at least once (even if removed now).
     fun getAllEverLimitedPackages(ctx: Context): List<String> {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return prefs.all.keys.asSequence()
@@ -111,7 +117,9 @@ object AttemptLimitStore {
      * If key doesn't exist or type is something else -> returns 0.
      */
     private fun readIntOrLongAndMigrate(prefs: SharedPreferences, key: String): Int {
-        if (!prefs.contains(key)) return 0
+        if (!prefs.contains(key)) {
+            return 0
+        }
 
         return try {
             prefs.getInt(key, 0)

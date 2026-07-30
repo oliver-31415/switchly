@@ -24,8 +24,11 @@ import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import at.saltyy.switchly.data.prefs.AppLogStore
-import at.saltyy.switchly.feature.settings.AppLockActivity
+import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
 import at.saltyy.switchly.feature.blocker.BlockerActivity
+import at.saltyy.switchly.feature.entry.ScanLauncherActivity
+import at.saltyy.switchly.feature.qr.QrScanActivity
+import at.saltyy.switchly.feature.settings.AppLockActivity
 import at.saltyy.switchly.nfc.NfcEntryActivity
 import at.saltyy.switchly.util.ActivityTransitionCompat
 import java.lang.ref.WeakReference
@@ -72,10 +75,18 @@ object AppLockManager {
 
     fun maybeRequestUnlock(activity: Activity): Boolean {
         lastPromptActivityRef = WeakReference(activity)
-        if (!shouldProtect(activity)) return false
-        if (!AppLockStore.isEnabled(activity)) return false
-        if (sessionUnlocked.get()) return false
-        if (!promptShowing.compareAndSet(false, true)) return true
+        if (!shouldProtect(activity)) {
+            return false
+        }
+        if (!AppLockStore.isEnabled(activity)) {
+            return false
+        }
+        if (sessionUnlocked.get()) {
+            return false
+        }
+        if (!promptShowing.compareAndSet(false, true)) {
+            return true
+        }
 
         AppLogStore.append(activity, "AppLock", "Lock triggered package=${activity.javaClass.simpleName}")
         activity.startActivity(
@@ -97,6 +108,21 @@ object AppLockManager {
     }
 
     private fun shouldProtect(activity: Activity): Boolean {
-        return activity !is AppLockActivity && activity !is NfcEntryActivity && activity !is BlockerActivity
+        return when (activity) {
+            is AppLockActivity,
+            is NfcEntryActivity,
+            is BlockerActivity -> false
+
+            // Direct scanner shortcuts must stay usable as physical unlock controls even when the rest of Switchly is PIN-protected.
+            is QrScanActivity -> !activity.intent.getBooleanExtra(QrScanActivity.EXTRA_ALLOW_DIRECT_OPEN, false)
+            is BarcodeScanActivity -> !activity.intent.getBooleanExtra(BarcodeScanActivity.EXTRA_ALLOW_DIRECT_OPEN, false)
+            is ScanLauncherActivity -> activity.intent?.action !in DIRECT_SCANNER_ACTIONS
+            else -> true
+        }
     }
+
+    private val DIRECT_SCANNER_ACTIONS = setOf(
+        ScanLauncherActivity.ACTION_OPEN_QR_SCAN,
+        ScanLauncherActivity.ACTION_OPEN_BARCODE_SCAN,
+    )
 }

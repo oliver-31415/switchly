@@ -111,10 +111,13 @@ object BlockingRuntime {
             putBoolean(KEY_A11Y_CONNECTED, true)
             putLong(KEY_A11Y_LAST_HEARTBEAT_MS, now)
         }
+        runCatching { at.saltyy.switchly.util.ProtectionStatusNotifier.onAccessibilityHeartbeat(ctx) }
     }
 
     fun markAccessibilityEvent(ctx: Context, pkg: String, eventType: Int) {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         prefs(ctx).edit {
             putLong(KEY_A11Y_LAST_EVENT_WALL_MS, System.currentTimeMillis())
             putString(KEY_A11Y_LAST_EVENT_PKG, pkg)
@@ -123,7 +126,9 @@ object BlockingRuntime {
     }
 
     fun markForegroundPackage(ctx: Context, pkg: String, source: String) {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         prefs(ctx).edit {
             putLong(KEY_FOREGROUND_LAST_WALL_MS, System.currentTimeMillis())
             putString(KEY_FOREGROUND_LAST_PKG, pkg)
@@ -140,7 +145,9 @@ object BlockingRuntime {
     }
 
     fun markBlockingCheck(ctx: Context, pkg: String, reason: String, details: String = "") {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         prefs(ctx).edit {
             putLong(KEY_BLOCK_CHECK_LAST_WALL_MS, System.currentTimeMillis())
             putString(KEY_BLOCK_CHECK_LAST_PKG, pkg)
@@ -150,7 +157,9 @@ object BlockingRuntime {
     }
 
     fun markBlockShown(ctx: Context, pkg: String, details: String = "") {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         prefs(ctx).edit {
             putLong(KEY_BLOCK_SHOWN_LAST_WALL_MS, System.currentTimeMillis())
             putString(KEY_BLOCK_SHOWN_LAST_PKG, pkg)
@@ -159,7 +168,9 @@ object BlockingRuntime {
     }
 
     fun markBlockerLaunchRequested(ctx: Context, pkg: String, details: String = "") {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         prefs(ctx).edit {
             putLong(KEY_BLOCKER_LAUNCH_LAST_WALL_MS, System.currentTimeMillis())
             putString(KEY_BLOCKER_LAUNCH_LAST_PKG, pkg)
@@ -168,7 +179,9 @@ object BlockingRuntime {
     }
 
     fun markBlockerVerify(ctx: Context, pkg: String, details: String = "") {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         prefs(ctx).edit {
             putLong(KEY_BLOCKER_VERIFY_LAST_WALL_MS, System.currentTimeMillis())
             putString(KEY_BLOCKER_VERIFY_LAST_PKG, pkg)
@@ -185,7 +198,9 @@ object BlockingRuntime {
     }
 
     fun markMultiWindowBlock(ctx: Context, pkg: String, details: String = "") {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         prefs(ctx).edit {
             putLong(KEY_MULTIWINDOW_BLOCK_LAST_WALL_MS, System.currentTimeMillis())
             putString(KEY_MULTIWINDOW_BLOCK_LAST_PKG, pkg)
@@ -209,12 +224,16 @@ object BlockingRuntime {
     fun isAccessibilityActive(ctx: Context): Boolean {
         // Accessibility must be enabled in Settings AND service heartbeat must be fresh.
         // This catches force-stop/OEM kill cases where the toggle may still look enabled, but blocking is currently not enforced.
-        if (!isAccessibilityEnabledInSettings(ctx)) return false
+        if (!isAccessibilityEnabledInSettings(ctx)) {
+            return false
+        }
 
         val p = prefs(ctx)
         val connected = p.getBoolean(KEY_A11Y_CONNECTED, false)
         val last = p.getLong(KEY_A11Y_LAST_HEARTBEAT_MS, 0L)
-        if (!connected || last <= 0L) return false
+        if (!connected || last <= 0L) {
+            return false
+        }
 
         val age = SystemClock.elapsedRealtime() - last
         return age in 0..A11Y_HEARTBEAT_STALE_MS

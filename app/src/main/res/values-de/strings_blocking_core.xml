@@ -4,31 +4,21 @@
     <!-- ====================================================== -->
     <!-- Rules hub -->
     <!-- ====================================================== -->
-    <string name="blocking_hub_title">Regeln</string>
-    <string name="blocking_hub_profiles_section">Profile</string>
-    <string name="blocking_hub_blocked_content_section">Regeln für dieses Profil</string>
-    <string name="blocking_hub_apps_title">App-Regeln</string>
-    <string name="blocking_hub_apps_summary">Blockierte oder erlaubte Apps, Limits und App-Regeln auswählen</string>
-    <string name="blocking_hub_websites_title">Website-Regeln</string>
-    <string name="blocking_hub_websites_summary">Blockierte oder erlaubte Website-/Domain-Regeln für das aktive Profil auswählen</string>
-    <string name="blocking_hub_inapp_title">In-App-Regeln</string>
-    <string name="blocking_hub_inapp_summary">Blockierte oder erlaubte Shorts, Reels, Feeds und andere unterstützte In-App-Bereiche auswählen</string>
-
-    <!-- ====================================================== -->
-    <!-- Rules hub compatibility controls -->
-    <!-- ====================================================== -->
-    <string name="blocking_hub_controls_section">Switchly-Steuerung</string>
-    <string name="blocking_hub_modes_title">Kontrollmodi</string>
-    <string name="blocking_hub_modes_summary">Wähle, wie Switchly aktiviert und deaktiviert wird</string>
-    <string name="blocking_hub_features_title">Funktionszugriff</string>
-    <string name="blocking_hub_features_summary">Wähle, was noch geändert oder genutzt werden darf, während der Schutz aktiv ist</string>
+    <string name="rules_hub_title">Regeln</string>
+    <string name="rules_hub_profiles_section">Profile</string>
+    <string name="rules_hub_categories_section">Regeln für dieses Profil</string>
+    <string name="rules_apps_title">App-Regeln</string>
+    <string name="rules_apps_summary">Blockierte oder erlaubte Apps, Limits und App-Regeln auswählen</string>
+    <string name="rules_websites_title">Website-Regeln</string>
+    <string name="rules_websites_summary">Blockierte oder erlaubte Website-/Domain-Regeln für das aktive Profil auswählen</string>
+    <string name="rules_inapp_title">In-App-Regeln</string>
+    <string name="rules_inapp_summary">Blockierte oder erlaubte Shorts, Reels, Feeds und andere unterstützte In-App-Bereiche auswählen</string>
 
     <!-- ====================================================== -->
     <!-- Automatic blocking -->
     <!-- ====================================================== -->
     <string name="app_picker_auto_block_new_apps_title">Neu installierte Apps automatisch blockieren</string>
-    <string name="app_picker_auto_block_new_apps_summary">Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt. „Alle auswählen“ aktiviert das auch für zukünftige Installationen.</string>
     <string name="app_picker_auto_block_new_apps_info_title">Neu installierte Apps automatisch blockieren</string>
-    <string name="app_picker_auto_block_new_apps_info_body">Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt.\n\n„Alle auswählen“ aktiviert das auch für zukünftige Installationen.</string>
+    <string name="app_picker_auto_block_new_apps_info_body">Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt. Geschützte und sicherheitsrelevante Apps werden übersprungen und müssen einzeln bestätigt werden.\n\n„Alle auswählen“ aktiviert das auch für zukünftige Installationen.</string>
 
 </resources>

@@ -4,13 +4,13 @@
     <!-- ====================================================== -->
     <!-- Support contact flow -->
     <!-- ====================================================== -->
-    <string name="support_title">Support</string>
+    <string name="support_title">Contact &amp; support</string>
     <string name="support_desc">Need help or found a bug?\nSend an email and, if possible, include debug info and a short description.</string>
     <string name="support_email_subject">Switchly Support</string>
-    <string name="support_open_email">Open email</string>
+    <string name="support_open_email">Create support email</string>
     <string name="support_copy_email">Copy email</string>
     <string name="support_copied">Email copied</string>
-    <string name="support_copy_latest_logs">Copy logs</string>
+    <string name="support_copy_latest_logs">Copy latest logs</string>
     <string name="support_logs_copied">Latest logs copied</string>
     <string name="support_choose_report_data">Choose report data</string>
     <string name="support_include_debug">Include debug info</string>
@@ -62,5 +62,15 @@
     <!-- ====================================================== -->
     <string name="pref_tutorial_title">Onboarding</string>
     <string name="pref_tutorial_summary">Review setup steps, permissions, and features</string>
+
+    <!-- ====================================================== -->
+    <!-- Contact page layout -->
+    <!-- ====================================================== -->
+    <string name="support_email_label">Support email</string>
+    <string name="support_actions_section">Other options</string>
+    <string name="support_report_card_title">Send a support report</string>
+    <string name="support_report_card_desc">Choose which logs, device details and setup information should be added before opening your email app.</string>
+    <string name="support_logs_card_title">Copy the latest logs</string>
+    <string name="support_logs_card_desc">Copy recent Switchly events when you want to paste them into an existing message or issue.</string>
 
 </resources>

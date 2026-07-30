@@ -6,7 +6,6 @@
     <!-- ====================================================== -->
     <string name="dashboard_active_profile_fmt">Active profile: %1$s</string>
     <string name="dashboard_active_profile_unknown">Active profile: —</string>
-    <string name="dashboard_unavailable_hint_short">Not installed on this device.</string>
     <string name="dashboard_unavailable_hint_pick_apps">Not installed on this device.\nOpen “App rules” to remove.</string>
 
     <!-- ====================================================== -->
@@ -67,21 +66,11 @@
         <item quantity="other">Enable these items so blocking works reliably.</item>
     </plurals>
     <string name="dashboard_setup_desc">Finish the required permissions so Switchly can block apps reliably.</string>
-    <string name="dashboard_setup_missing_label">Still missing</string>
     <string name="dashboard_setup_cta">Finish setup</string>
     <string name="dashboard_blocked_now_title">Blocked right now</string>
-    <string name="dashboard_blocked_now_off">Switchly is OFF — nothing is blocked</string>
-    <string name="dashboard_blocked_now_all_allowed">Everything allowed ✅</string>
-    <string name="dashboard_blocked_now_emergency">Emergency unlock active — everything allowed</string>
     <string name="dashboard_blocked_now_reason_profile">Blocked by profile</string>
     <string name="dashboard_blocked_now_reason_limit">Limit reached</string>
     <string name="dashboard_blocked_now_reason_attempts">Open limit reached</string>
-    <plurals name="dashboard_blocked_now_more">
-        <item quantity="one">+%1$d more</item>
-        <item quantity="other">+%1$d more</item>
-    </plurals>
-    <string name="dashboard_blocked_now_more_preview">+3 more</string>
-    <string name="dashboard_badge_default_count" translatable="false">2</string>
     <plurals name="dashboard_badge_missing">
         <item quantity="one">%1$d missing</item>
         <item quantity="other">%1$d missing</item>
@@ -93,16 +82,19 @@
     <!-- ====================================================== -->
     <!-- Temporary mode -->
     <!-- ====================================================== -->
-    <string name="dashboard_temp_chip">TEMP</string>
     <string name="dashboard_temp_remaining_fmt">Remaining: %1$s</string>
     <string name="dashboard_temp_remaining_placeholder">Remaining: 00:00</string>
     <string name="dashboard_temp_status_enabled">Temporarily enabled • %1$s left</string>
     <string name="dashboard_temp_status_disabled">Temporarily paused • %1$s left</string>
     <string name="dashboard_temp_sheet_sub_enable">Enable blocking for a short time</string>
+    <string name="dashboard_temp_sheet_sub_enable_profile">Enable %1$s for a short time</string>
     <string name="dashboard_temp_sheet_sub_disable">Pause Switchly for a short time</string>
     <string name="dashboard_temp_sheet_sub_disable_locked">Temporary disable is locked (NFC lock is active). Use Emergency Unlock if needed.</string>
     <string name="dashboard_temp_sheet_cancel_timer">Cancel timer</string>
     <string name="dashboard_temp_hint">Temporary mode - choose action</string>
+    <string name="dashboard_temp_hint_enable">Temporary enable - choose duration</string>
+    <string name="dashboard_temp_hint_enable_profile">Temporarily enable %1$s</string>
+    <string name="dashboard_temp_hint_disable">Temporary pause - choose duration</string>
     <string name="dashboard_temp_hint_locked_nfc">Temporary mode unavailable while NFC-required unlock is enabled.</string>
     <string name="dashboard_temp_nudge">Tip: Use temporary mode for quick 5–60 minute sessions.</string>
     <string name="dashboard_temp_discovery_done">Temporary mode is ready. Open it from the status card anytime.</string>
@@ -123,8 +115,6 @@
     <string name="dashboard_tile_profiles_sub">Create &amp; edit</string>
     <string name="dashboard_tile_blocked_websites">Website rules</string>
     <string name="dashboard_tile_blocked_websites_sub">Domains for this profile</string>
-    <string name="dashboard_tile_usage">Activity</string>
-    <string name="dashboard_tile_usage_sub">Usage, launches, unlocks, and history</string>
     <string name="dashboard_tile_in_app">In-app blocking</string>
     <string name="dashboard_tile_in_app_sub">Feeds &amp; surfaces</string>
     <string name="dashboard_quick_actions_edit">Edit quick actions</string>
@@ -137,13 +127,15 @@
     <string name="dashboard_tile_write_nfc_sub">Write or manage paired tags</string>
     <string name="dashboard_tile_blocked_notifications">Blocked notifications</string>
     <string name="dashboard_tile_blocked_notifications_sub">Inbox &amp; activity</string>
-    <string name="dashboard_quick_actions_toggle">Toggle quick actions</string>
     <string name="dashboard_quick_actions_expand">Expand quick actions</string>
     <string name="dashboard_quick_actions_collapse">Collapse quick actions</string>
+    <string name="dashboard_blocked_apps_expand">Expand app list</string>
+    <string name="dashboard_blocked_apps_collapse">Collapse app list</string>
 
     <!-- ====================================================== -->
     <!-- Development notice and Home modes -->
     <!-- ====================================================== -->
+    <string name="scanner_choice_title">Scan a code</string>
     <string name="main_info_title">Still in development</string>
     <string name="main_info_contact_action">Contact</string>
     <string name="main_info_older_versions_action">Downloads</string>

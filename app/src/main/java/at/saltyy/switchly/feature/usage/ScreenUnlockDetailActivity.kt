@@ -64,7 +64,7 @@ class ScreenUnlockDetailActivity : AppCompatActivity() {
         val toolbar = MaterialToolbar(this).apply {
             minimumHeight = actionBarSize()
             title = getString(R.string.screen_unlocks_detail_title)
-            setNavigationIcon(R.drawable.arrow_back_ios_24)
+            setNavigationIcon(R.drawable.keyboard_arrow_left_24)
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@ScreenUnlockDetailActivity))
         }

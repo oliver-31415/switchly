@@ -73,7 +73,7 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
         val toolbar = MaterialToolbar(this).apply {
             minimumHeight = actionBarSize()
             title = label.ifBlank { getString(R.string.active_time_title) }
-            setNavigationIcon(R.drawable.arrow_back_ios_24)
+            setNavigationIcon(R.drawable.keyboard_arrow_left_24)
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@ActiveTimeDetailActivity))
         }
@@ -142,7 +142,7 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
         }
 
         content.addView(sectionHeader(getString(R.string.active_time_activity_history_title)))
-        val historyEntries = SwitchlyActivityHistory.entriesForDay(this, timeMillis)
+        val historyEntries = ActivityHistoryRepository.entriesForDay(this, timeMillis)
         if (historyEntries.isEmpty()) {
             content.addView(emptyText(getString(R.string.active_time_activity_history_empty)))
         } else {
@@ -190,7 +190,7 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
                 value = StatsFormat.prettyMs(day.valueMs),
                 iconRes = R.drawable.bar_chart_24,
                 onClick = {
-                    startActivity(ActiveTimeDetailActivity.intent(this, day.label, day.timeMillis, isMonth = false))
+                    startActivity(intent(this, day.label, day.timeMillis, isMonth = false))
                 }
             ))
         }

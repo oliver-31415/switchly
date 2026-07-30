@@ -21,7 +21,6 @@ package at.saltyy.switchly.blocking
 
 import android.app.Notification
 import android.content.SharedPreferences
-import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -102,7 +101,9 @@ class NotificationBlockerService : NotificationListenerService() {
     }
 
     private fun refreshPolicyIfNeeded() {
-        if (!dirty) return
+        if (!dirty) {
+            return
+        }
 
         val profile = ProfileStore.getCurrent(this)
         val allowMode = profile?.let { ProfileRuleModeStore.isAllowMode(this, it) } == true
@@ -133,7 +134,9 @@ class NotificationBlockerService : NotificationListenerService() {
         synchronized(tempAllowCache) {
             val cachedUntil = tempAllowCache.get(pkg)
             if (cachedUntil != null) {
-                if (cachedUntil > now) return true
+                if (cachedUntil > now) {
+                    return true
+                }
                 tempAllowCache.remove(pkg)
             }
         }
@@ -158,16 +161,24 @@ class NotificationBlockerService : NotificationListenerService() {
         val pkg = sbn.packageName ?: return
 
         // Global toggle (cached + refreshed via prefs listener)
-        if (!cachedEnabled) return
+        if (!cachedEnabled) {
+            return
+        }
 
         // Dynamic policy checks (time-based): must be evaluated live.
-        if (EmergencyBypassStore.isActive(this)) return
-        if (!SwitchModeStore.isEnabled(this)) return
-        if (isTempAllowedCached(pkg)) return
+        if (EmergencyBypassStore.isActive(this)) {
+            return
+        }
+        if (!SwitchModeStore.isEnabled(this)) {
+            return
+        }
+        if (isTempAllowedCached(pkg)) {
+            return
+        }
 
         refreshPolicyIfNeeded()
         val selected = cachedBlockedPrefixes.any { pkg.startsWith(it) }
-        val essentialAllowed = cachedAllowMode && cachedAllowEssentials && AppBlockSafety.isHardExcluded(this, pkg)
+        val essentialAllowed = cachedAllowMode && cachedAllowEssentials && AppBlockSafety.isProtected(this, pkg)
         val shouldBlockNotification = if (cachedAllowMode) {
             !selected && !essentialAllowed
         } else {
@@ -185,7 +196,7 @@ class NotificationBlockerService : NotificationListenerService() {
                 val last = inboxThrottle.get(pkg) ?: 0L
                 if (now - last > 15_000L) {
                     inboxThrottle.put(pkg, now)
-                    
+
                     val n = sbn.notification
                     val extras = n.extras
                     val t = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim()
@@ -199,8 +210,14 @@ class NotificationBlockerService : NotificationListenerService() {
 
                     fun clip(s: String?, max: Int): String? {
                         val v = s?.replace("\n", " ")?.trim().orEmpty()
-                        if (v.isBlank()) return null
-                        return if (v.length > max) v.take(max) + "…" else v
+                        if (v.isBlank()) {
+                            return null
+                        }
+                        return if (v.length > max) {
+                            v.take(max) + "…"
+                        } else {
+                            v
+                        }
                     }
 
                     BlockedInboxStore.add(

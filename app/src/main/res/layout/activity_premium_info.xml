@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/premium_title"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
@@ -137,16 +137,6 @@
                                 android:visibility="visible" />
 
                     </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tvPremiumPrice"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="@string/premium_price_google_play_fallback"
-                        android:textSize="13sp"
-                        android:textColor="?android:attr/textColorSecondary"
-                        android:visibility="gone" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRedeemPremiumCode"

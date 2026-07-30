@@ -1,6 +1,6 @@
 import java.io.File
 
-// Release helpers for official Switchly APK/AAB output generation.
+// Release helpers for official signed artifacts and public-repository validation builds.
 // Inputs are provided by app/build.gradle.kts through Gradle extra properties.
 
 data class SwitchlyReleaseArtifact(
@@ -35,29 +35,23 @@ val externalCheckoutUrl = extra["switchlyExternalCheckoutUrl"] as org.gradle.api
 val switchlyDownloadsUrl = extra["switchlyDownloadsUrl"] as org.gradle.api.provider.Provider<String>
 
 val switchlyDistDir = rootProject.layout.projectDirectory.dir("dist")
-val switchlyReleaseArtifacts = listOf(
+
+// Official artifacts deliberately accept signed output names only. 
+// This prevents an unsigned public-repository build from being copied under a final release filename.
+val switchlyOfficialReleaseArtifacts = listOf(
     SwitchlyReleaseArtifact(
         taskName = "assembleFullRelease",
-        candidates = listOf(
-            "outputs/apk/full/release/app-full-release.apk",
-            "outputs/apk/full/release/app-full-release-unsigned.apk",
-        ),
+        candidates = listOf("outputs/apk/full/release/app-full-release.apk"),
         outputName = "Switchly-$switchlyVersionName-full.apk",
     ),
     SwitchlyReleaseArtifact(
         taskName = "assembleFirebaseEmailRelease",
-        candidates = listOf(
-            "outputs/apk/firebaseEmail/release/app-firebaseEmail-release.apk",
-            "outputs/apk/firebaseEmail/release/app-firebaseEmail-release-unsigned.apk",
-        ),
+        candidates = listOf("outputs/apk/firebaseEmail/release/app-firebaseEmail-release.apk"),
         outputName = "Switchly-$switchlyVersionName-firebase-email.apk",
     ),
     SwitchlyReleaseArtifact(
         taskName = "assembleOfflineRelease",
-        candidates = listOf(
-            "outputs/apk/offline/release/app-offline-release.apk",
-            "outputs/apk/offline/release/app-offline-release-unsigned.apk",
-        ),
+        candidates = listOf("outputs/apk/offline/release/app-offline-release.apk"),
         outputName = "Switchly-$switchlyVersionName-offline.apk",
     ),
     SwitchlyReleaseArtifact(
@@ -67,9 +61,9 @@ val switchlyReleaseArtifacts = listOf(
     ),
 )
 
-tasks.register("checkSwitchlyReleaseInputs") {
+tasks.register("checkSwitchlyOfficialReleaseInputs") {
     group = "switchly"
-    description = "Checks inputs required for official Switchly release artifacts."
+    description = "Checks private inputs required for official signed Switchly releases."
 
     doLast {
         if (!googleServicesJson.isFile) {
@@ -88,16 +82,19 @@ tasks.register("checkSwitchlyReleaseInputs") {
             )
         }
 
-        if (releaseSigningConfigured && !rootProject.file(releaseStoreFile.get()).isFile) {
-            throw GradleException("Release keystore not found: ${releaseStoreFile.get()}")
+        if (!releaseSigningConfigured) {
+            throw GradleException(
+                "Official release signing is not configured. " +
+                "The public repository intentionally contains no signing key. " +
+                "Use public-release-apk for an explicitly unsigned offline validation artifact, " +
+                "or provide SWITCHLY_RELEASE_STORE_FILE, " +
+                "SWITCHLY_RELEASE_STORE_PASSWORD, SWITCHLY_RELEASE_KEY_ALIAS and " +
+                "SWITCHLY_RELEASE_KEY_PASSWORD for an official release."
+            )
         }
 
-        if (!releaseSigningConfigured) {
-            logger.warn(
-                "Release signing is not configured. Gradle may create unsigned release artifacts; " +
-                    "set SWITCHLY_RELEASE_STORE_FILE, SWITCHLY_RELEASE_STORE_PASSWORD, " +
-                    "SWITCHLY_RELEASE_KEY_ALIAS and SWITCHLY_RELEASE_KEY_PASSWORD for signed releases."
-            )
+        if (!rootProject.file(releaseStoreFile.get()).isFile) {
+            throw GradleException("Release keystore not found: ${releaseStoreFile.get()}")
         }
 
         if (externalCheckoutUrl.get().isBlank()) {
@@ -113,18 +110,26 @@ tasks.register("checkSwitchlyReleaseInputs") {
     }
 }
 
+// Backwards-compatible check name for existing maintainer scripts.
+tasks.register("checkSwitchlyReleaseInputs") {
+    group = "switchly"
+    description = "Alias for checkSwitchlyOfficialReleaseInputs."
+    dependsOn("checkSwitchlyOfficialReleaseInputs")
+}
+
 tasks.register("release-apk") {
     group = "switchly"
-    description = "Builds Switchly release APK variants and the full Play Store AAB, then copies them to dist/."
+    description = "Builds, lints and copies all official signed Switchly APK/AAB variants to dist/."
 
-    dependsOn("checkSwitchlyReleaseInputs")
-    dependsOn(switchlyReleaseArtifacts.map { it.taskName })
+    dependsOn("checkSwitchlyOfficialReleaseInputs")
+    dependsOn("lintFullRelease", "lintFirebaseEmailRelease", "lintOfflineRelease")
+    dependsOn(switchlyOfficialReleaseArtifacts.map { it.taskName })
 
     doLast {
         val distDir = switchlyDistDir.asFile
         distDir.mkdirs()
 
-        switchlyReleaseArtifacts.forEach { artifact ->
+        switchlyOfficialReleaseArtifacts.forEach { artifact ->
             copySwitchlyArtifact(
                 candidates = artifact.candidates,
                 outputName = artifact.outputName,
@@ -132,7 +137,39 @@ tasks.register("release-apk") {
             )
         }
 
-        logger.lifecycle("Done. Release files are in: ${distDir.absolutePath}")
+        logger.lifecycle("Done. Official signed release files are in: ${distDir.absolutePath}")
+    }
+}
+
+// Public repositories can always validate and package the offline flavor without private
+// Firebase or signing files. Unsigned output is named explicitly so it cannot be mistaken for an install-ready official release artifact.
+tasks.register("public-release-apk") {
+    group = "switchly"
+    description = "Builds and lints the public offline release; unsigned output is labelled explicitly."
+
+    dependsOn("lintOfflineRelease", "assembleOfflineRelease")
+
+    doLast {
+        val distDir = switchlyDistDir.asFile
+        distDir.mkdirs()
+
+        val source = if (releaseSigningConfigured) {
+            listOf("outputs/apk/offline/release/app-offline-release.apk")
+        } else {
+            listOf("outputs/apk/offline/release/app-offline-release-unsigned.apk")
+        }
+        val outputName = if (releaseSigningConfigured) {
+            "Switchly-$switchlyVersionName-offline.apk"
+        } else {
+            "Switchly-$switchlyVersionName-offline-unsigned.apk"
+        }
+
+        copySwitchlyArtifact(
+            candidates = source,
+            outputName = outputName,
+            distDir = distDir,
+        )
+        logger.lifecycle("Done. Public release validation file is in: ${distDir.absolutePath}")
     }
 }
 
@@ -140,4 +177,10 @@ tasks.register("releaseApk") {
     group = "switchly"
     description = "Alias for release-apk."
     dependsOn("release-apk")
+}
+
+tasks.register("publicReleaseApk") {
+    group = "switchly"
+    description = "Alias for public-release-apk."
+    dependsOn("public-release-apk")
 }

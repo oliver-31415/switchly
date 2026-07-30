@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/tools_keys_title" />
+            app:title="@string/keys_codes_title" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -39,7 +39,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/tools_keys_section"
+                android:text="@string/keys_codes_section"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -65,7 +65,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="@string/tools_tags_codes_write_nfc"
+                        android:contentDescription="@string/keys_codes_write_nfc_title"
                         android:src="@drawable/nfc_24"
                         app:tint="?attr/colorPrimary" />
 
@@ -79,7 +79,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/tools_tags_codes_write_nfc"
+                            android:text="@string/keys_codes_write_nfc_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -87,7 +87,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/tools_nfc_write_summary"
+                            android:text="@string/keys_codes_write_nfc_summary"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -97,7 +97,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -123,7 +123,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="@string/tools_tags_codes_paired_tags"
+                        android:contentDescription="@string/keys_codes_paired_tags_title"
                         android:src="@drawable/nfc_24"
                         app:tint="?attr/colorPrimary" />
 
@@ -137,7 +137,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/tools_tags_codes_paired_tags"
+                            android:text="@string/keys_codes_paired_tags_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -145,7 +145,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/tools_paired_tags_summary"
+                            android:text="@string/keys_codes_paired_tags_summary"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -155,7 +155,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -181,7 +181,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="@string/tools_tags_codes_generate_qr"
+                        android:contentDescription="@string/keys_codes_manage_qr_title"
                         android:src="@drawable/qr_code_24"
                         app:tint="?attr/colorPrimary" />
 
@@ -195,7 +195,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/tools_tags_codes_generate_qr"
+                            android:text="@string/keys_codes_manage_qr_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -203,7 +203,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/tools_manage_qr_summary"
+                            android:text="@string/keys_codes_manage_qr_summary"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -213,65 +213,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
-                        app:tint="?android:attr/textColorSecondary" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardScanQr"
-                style="@style/Switchly.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:minHeight="72dp"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/blocking_hub_scan_qr_title"
-                        android:src="@drawable/qr_code_24"
-                        app:tint="?attr/colorPrimary" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/blocking_hub_scan_qr_title"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:text="@string/blocking_hub_scan_qr_summary"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:alpha="0.7"
-                        android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -297,7 +239,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="@string/tools_tags_codes_manage_barcodes"
+                        android:contentDescription="@string/keys_codes_manage_barcodes_title"
                         android:src="@drawable/barcode_24"
                         app:tint="?attr/colorPrimary" />
 
@@ -311,7 +253,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/tools_tags_codes_manage_barcodes"
+                            android:text="@string/keys_codes_manage_barcodes_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -319,7 +261,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/tools_manage_barcodes_summary"
+                            android:text="@string/keys_codes_manage_barcodes_summary"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -329,68 +271,11 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardScanBarcode"
-                style="@style/Switchly.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:minHeight="72dp"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/blocking_hub_scan_barcode_title"
-                        android:src="@drawable/barcode_24"
-                        app:tint="?attr/colorPrimary" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/blocking_hub_scan_barcode_title"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:text="@string/blocking_hub_scan_barcode_summary"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:alpha="0.7"
-                        android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
-                        app:tint="?android:attr/textColorSecondary" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

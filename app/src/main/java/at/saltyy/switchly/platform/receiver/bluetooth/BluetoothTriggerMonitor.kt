@@ -28,6 +28,8 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import at.saltyy.switchly.R
@@ -35,7 +37,6 @@ import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.platform.receiver.logic.BluetoothTriggerReceiverLogic
 import at.saltyy.switchly.ui.MainActivity
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicBoolean
 
 object BluetoothTriggerMonitor {
 
@@ -46,7 +47,7 @@ object BluetoothTriggerMonitor {
     private var listener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     @Volatile private var cachedServiceIntent: Intent? = null
-    private val initialSyncScheduled = AtomicBoolean(false)
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val syncExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "SwitchlyBluetoothMonitor").apply { isDaemon = true }
     }
@@ -59,6 +60,7 @@ object BluetoothTriggerMonitor {
         }
     }
 
+    @Synchronized
     fun ensureStarted(context: Context) {
         val ctx = context.applicationContext
         if (!listening) {
@@ -74,33 +76,31 @@ object BluetoothTriggerMonitor {
         scheduleSync(ctx)
     }
 
-    /**
-     * Starting a foreground service directly from Application.onCreate() or a receiver delays service creation until that callback returns, while Android's foreground deadline is already running.
-     * Defer and coalesce the initial sync so the service can be created immediately after the start request.
-     */
+    // Read schedules away from the main thread, then start or stop the foreground service from the main queue.
+    // The start request is therefore made only after Application.onCreate() or a receiver callback can return.
+    // Android starts the foreground-service deadline at the request, so starting from a worker during app startup can race a busy main thread.
     private fun scheduleSync(context: Context) {
         val ctx = context.applicationContext
-        if (!initialSyncScheduled.compareAndSet(false, true)) return
 
-        try {
+        runCatching {
             syncExecutor.execute {
-                try {
-                    sync(ctx)
-                } finally {
-                    initialSyncScheduled.set(false)
+                val active = runCatching {
+                    BluetoothTriggerReceiverLogic.hasActiveBluetoothSchedules(ScheduleStore.getAll(ctx))
+                }.getOrNull()
+
+                if (active == null) {
+                    return@execute
+                }
+
+                mainHandler.post {
+                    if (active) {
+                        startService(ctx)
+                    } else {
+                        stopService(ctx)
+                    }
                 }
             }
-        } catch (_: Throwable) {
-            initialSyncScheduled.set(false)
         }
-    }
-
-    private fun sync(context: Context) {
-        val ctx = context.applicationContext
-        val schedules = ScheduleStore.getAll(ctx)
-        val active = BluetoothTriggerReceiverLogic.hasActiveBluetoothSchedules(schedules)
-
-        if (active) startService(ctx) else stopService(ctx)
     }
 
     private fun startService(context: Context) {
@@ -128,7 +128,9 @@ object BluetoothTriggerMonitor {
                 context,
                 Manifest.permission.BLUETOOTH_CONNECT
             ) == PackageManager.PERMISSION_GRANTED
-            if (!hasBluetooth) return false
+            if (!hasBluetooth) {
+                return false
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -136,7 +138,9 @@ object BluetoothTriggerMonitor {
                 context,
                 Manifest.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE
             ) == PackageManager.PERMISSION_GRANTED
-            if (!hasFgsConnectedDevice) return false
+            if (!hasFgsConnectedDevice) {
+                return false
+            }
         }
 
         return true

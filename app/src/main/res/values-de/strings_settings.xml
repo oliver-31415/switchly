@@ -9,20 +9,21 @@
     <string name="settings_section_reliability">Berechtigungen &amp; Zuverlässigkeit</string>
     <string name="settings_section_data">Konto &amp; Daten</string>
     <string name="settings_section_help">Hilfe &amp; Info</string>
+    <string name="settings_section_developer">Entwickler</string>
 
     <!-- ====================================================== -->
     <!-- Controls -->
     <!-- ====================================================== -->
-    <string name="settings_tools_automation_title">Schlüssel &amp; Codes</string>
-    <string name="settings_tools_automation_summary">NFC-Tags, gekoppelte Tags, QR-Codes, Barcode-Aktionen und Scanner-Shortcuts verwalten</string>
+    <string name="settings_keys_codes_title">Schlüssel &amp; Codes</string>
+    <string name="settings_keys_codes_summary">NFC-Tags, gekoppelte Tags, QR-Codes und Barcode-Aktionen verwalten</string>
 
     <!-- ====================================================== -->
     <!-- Personalization -->
     <!-- ====================================================== -->
     <string name="settings_theme_title">Darstellung</string>
     <string name="settings_theme_summary">Design, Farben &amp; Sprache</string>
-    <string name="blocking_hub_display_title">Anzeige &amp; Shortcuts</string>
-    <string name="blocking_hub_display_summary">Switchly Home, Schnelleinstellungen-Kacheln und Android-Widgets</string>
+    <string name="settings_display_shortcuts_title">Anzeige &amp; Shortcuts</string>
+    <string name="settings_display_shortcuts_summary">Switchly Home, Schnelleinstellungen-Kacheln und Android-Widgets</string>
 
     <!-- ====================================================== -->
     <!-- Permissions and reliability -->

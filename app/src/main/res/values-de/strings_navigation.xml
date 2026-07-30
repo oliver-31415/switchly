@@ -6,8 +6,24 @@
     <!-- ====================================================== -->
     <string name="app_icon">App-Symbol</string>
     <string name="nav_home">Start</string>
-    <string name="nav_blocking">Regeln</string>
-    <string name="nav_tools">Aktivität</string>
+    <string name="nav_rules">Regeln</string>
+    <string name="nav_activity">Aktivität</string>
     <string name="nav_settings">Einstellungen</string>
+
+    <!-- ====================================================== -->
+    <!-- Erste Einführung in die Bottom Navigation -->
+    <!-- ====================================================== -->
+    <string name="nav_tour_home_title">Start</string>
+    <string name="nav_tour_home_desc">Hier findest du Schutzstatus, aktives Profil, Schnellsteuerung und deine ausgewählten Home-Karten.</string>
+    <string name="nav_tour_rules_title">Regeln</string>
+    <string name="nav_tour_rules_desc">Verwalte Apps, Webseiten, In-App-Regeln und Zeitpläne für deine Profile.</string>
+    <string name="nav_tour_activity_title">Aktivität</string>
+    <string name="nav_tour_activity_desc">Prüfe Nutzung, blockierte Öffnungen, Verlauf und blockierte Benachrichtigungen.</string>
+    <string name="nav_tour_settings_title">Einstellungen</string>
+    <string name="nav_tour_settings_desc">Passe Schlüssel, Berechtigungen, Darstellung, Backups und erweitertes Verhalten an.</string>
+    <string name="nav_tour_next">Weiter</string>
+    <string name="nav_tour_done">Verstanden</string>
+    <string name="nav_tour_skip">Tour überspringen</string>
+    <string name="nav_tour_step">%1$d von %2$d</string>
 
 </resources>

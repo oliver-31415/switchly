@@ -53,7 +53,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.ViewCompat
 import at.saltyy.switchly.R
-import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.data.prefs.ActivityHistoryLogStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
@@ -88,8 +88,8 @@ class ActivityHistoryActivity : AppCompatActivity() {
     private var typeFilter = TypeFilter.ALL
     private var sortOrder = SortOrder.NEWEST
     private var customRangePickerShowing = false
-    private val appLogChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key == AppLogStore.KEY_LINES) {
+    private val activityHistoryChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (ActivityHistoryLogStore.isHistoryChangeKey(key)) {
             runOnUiThread { refreshContent() }
         }
     }
@@ -110,7 +110,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
         val toolbar = MaterialToolbar(this).apply {
             minimumHeight = actionBarSize()
             title = getString(R.string.active_time_activity_history_title)
-            setNavigationIcon(R.drawable.arrow_back_ios_24)
+            setNavigationIcon(R.drawable.keyboard_arrow_left_24)
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@ActivityHistoryActivity))
             navigationIcon?.mutate()?.setTint(toolbarIconColor())
@@ -198,7 +198,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        AppLogStore.registerChangeListener(this, appLogChangeListener)
+        ActivityHistoryLogStore.registerChangeListener(this, activityHistoryChangeListener)
         refreshContent()
     }
 
@@ -208,7 +208,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
-        AppLogStore.unregisterChangeListener(this, appLogChangeListener)
+        ActivityHistoryLogStore.unregisterChangeListener(this, activityHistoryChangeListener)
         super.onStop()
     }
 
@@ -248,7 +248,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
         entriesContainer.removeAllViews()
 
         val window = selectedTimeWindow()
-        val entries = SwitchlyActivityHistory
+        val entries = ActivityHistoryRepository
             .recentEntries(this, days = historyLoadDays(window.first), limit = 500)
             .filter { it.timeMillis in window.first..window.second }
             .filter { typeFilter.matches(it) }
@@ -349,6 +349,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
                 contentDescription = getString(R.string.activity_history_range_custom)
                 icon = ContextCompat.getDrawable(this@ActivityHistoryActivity, R.drawable.calendar_month_24)
                 iconPadding = 0
+                iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
                 setPadding(dp(8), 0, dp(8), 0)
                 gravity = Gravity.CENTER
             }
@@ -364,6 +365,10 @@ class ActivityHistoryActivity : AppCompatActivity() {
             }
             styleRangeButton(this, active)
             setOnClickListener {
+                if (!ensureRangeAllowed(option)) {
+                    refreshContent()
+                    return@setOnClickListener
+                }
                 if (option == RangeFilter.CUSTOM) {
                     showCustomRangePicker()
                 } else {
@@ -374,10 +379,20 @@ class ActivityHistoryActivity : AppCompatActivity() {
         }
     }
 
+    private fun ensureRangeAllowed(option: RangeFilter): Boolean {
+        if (option == RangeFilter.TODAY || StatsPremiumGate.canUseExtendedStats(this)) {
+            return true
+        }
+        StatsPremiumGate.show(this)
+        return false
+    }
+
     private fun rangeChipText(option: RangeFilter): String = getString(option.labelRes)
 
     private fun customRangeSummaryView(): View? {
-        if (rangeFilter != RangeFilter.CUSTOM) return null
+        if (rangeFilter != RangeFilter.CUSTOM) {
+            return null
+        }
         val start = customRangeStartMillis ?: return null
         val end = customRangeEndMillis ?: return null
         val fmt = DateFormat.getDateInstance(DateFormat.SHORT)
@@ -446,7 +461,14 @@ class ActivityHistoryActivity : AppCompatActivity() {
     }
 
     private fun showCustomRangePicker() {
-        if (customRangePickerShowing || supportFragmentManager.isStateSaved) return
+        if (!ensureRangeAllowed(RangeFilter.CUSTOM)) {
+            rangeFilter = RangeFilter.TODAY
+            refreshContent()
+            return
+        }
+        if (customRangePickerShowing || supportFragmentManager.isStateSaved) {
+            return
+        }
 
         val currentStart = customRangeStartMillis
         val currentEnd = customRangeEndMillis
@@ -534,7 +556,9 @@ class ActivityHistoryActivity : AppCompatActivity() {
     }
 
     private fun applyCustomAccentToDatePicker(root: View) {
-        if (!CustomAccentApplier.isCustomAccentEnabled(this)) return
+        if (!CustomAccentApplier.isCustomAccentEnabled(this)) {
+            return
+        }
 
         val accent = AccentColor.getAccentColorInt(this)
         val defaultAccent = ContextCompat.getColor(this, R.color.accent_default_green)
@@ -657,8 +681,12 @@ class ActivityHistoryActivity : AppCompatActivity() {
     }
 
     private fun matchesDatePickerAccent(color: Int, defaultAccent: Int): Boolean {
-        if (Color.alpha(color) == 0) return false
-        if (color == defaultAccent) return true
+        if (Color.alpha(color) == 0) {
+            return false
+        }
+        if (color == defaultAccent) {
+            return true
+        }
         val dr = kotlin.math.abs(Color.red(color) - Color.red(defaultAccent))
         val dg = kotlin.math.abs(Color.green(color) - Color.green(defaultAccent))
         val db = kotlin.math.abs(Color.blue(color) - Color.blue(defaultAccent))
@@ -670,7 +698,9 @@ class ActivityHistoryActivity : AppCompatActivity() {
         if (rangeFilter == RangeFilter.CUSTOM) {
             val start = customRangeStartMillis
             val end = customRangeEndMillis
-            if (start != null && end != null) return Pair(start, end)
+            if (start != null && end != null) {
+                return Pair(start, end)
+            }
         }
         return when (rangeFilter) {
             RangeFilter.TODAY -> Pair(startOfToday(), now)
@@ -771,7 +801,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
         summary: String,
         value: String,
         iconRes: Int,
-        entry: SwitchlyActivityHistory.Entry? = null
+        entry: ActivityHistoryRepository.Entry? = null
     ): MaterialCardView {
         val card = MaterialCardView(this).apply {
             radius = dp(26).toFloat()
@@ -788,13 +818,13 @@ class ActivityHistoryActivity : AppCompatActivity() {
 
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(14), dp(14), dp(14), dp(14))
         }
 
         row.addView(ImageView(this).apply {
             setImageResource(iconRes)
-            imageTintList = android.content.res.ColorStateList.valueOf(AccentColor.getAccentColorInt(this@ActivityHistoryActivity))
+            imageTintList = ColorStateList.valueOf(AccentColor.getAccentColorInt(this@ActivityHistoryActivity))
             contentDescription = null
         }, LinearLayout.LayoutParams(dp(24), dp(24)))
 
@@ -830,7 +860,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
         return card
     }
 
-    private fun showEntryDetailDialog(entry: SwitchlyActivityHistory.Entry) {
+    private fun showEntryDetailDialog(entry: ActivityHistoryRepository.Entry) {
         val fmt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
         val body = buildString {
             append(getString(R.string.activity_history_detail_time_line, fmt.format(Date(entry.timeMillis)))).append("\n")
@@ -864,7 +894,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
         strokeWidth = dp(1)
     }
 
-    private fun obtainStyledForeground(): android.graphics.drawable.Drawable? {
+    private fun obtainStyledForeground(): Drawable? {
         val out = android.util.TypedValue()
         return if (theme.resolveAttribute(android.R.attr.selectableItemBackground, out, true)) {
             ContextCompat.getDrawable(this, out.resourceId)
@@ -881,11 +911,19 @@ class ActivityHistoryActivity : AppCompatActivity() {
 
     private fun toolbarIconColor(): Int {
         val bg = AccentColor.getToolbarColor(this)
-        return if (MaterialColors.isColorLight(bg)) Color.BLACK else Color.WHITE
+        return if (MaterialColors.isColorLight(bg)) {
+            Color.BLACK
+        } else {
+            Color.WHITE
+        }
     }
 
     private fun readableAccentTextColor(accent: Int): Int {
-        return if (MaterialColors.isColorLight(accent)) Color.BLACK else Color.WHITE
+        return if (MaterialColors.isColorLight(accent)) {
+            Color.BLACK
+        } else {
+            Color.WHITE
+        }
     }
 
     private fun actionBarSize(): Int {
@@ -920,28 +958,28 @@ class ActivityHistoryActivity : AppCompatActivity() {
         MANUAL(R.string.activity_history_type_manual),
         EMERGENCY(R.string.activity_history_type_emergency);
 
-        fun matches(entry: SwitchlyActivityHistory.Entry): Boolean {
+        fun matches(entry: ActivityHistoryRepository.Entry): Boolean {
             return when (this) {
                 ALL -> true
-                PROFILES -> entry.source == SwitchlyActivityHistory.Source.PROFILE
+                PROFILES -> entry.source == ActivityHistoryRepository.Source.PROFILE
                 SCHEDULES -> entry.source in setOf(
-                    SwitchlyActivityHistory.Source.SCHEDULE,
-                    SwitchlyActivityHistory.Source.LOCATION,
-                    SwitchlyActivityHistory.Source.WIFI,
-                    SwitchlyActivityHistory.Source.BLUETOOTH
+                    ActivityHistoryRepository.Source.SCHEDULE,
+                    ActivityHistoryRepository.Source.LOCATION,
+                    ActivityHistoryRepository.Source.WIFI,
+                    ActivityHistoryRepository.Source.BLUETOOTH
                 )
-                LOCATION -> entry.source == SwitchlyActivityHistory.Source.LOCATION
-                WIFI_BLUETOOTH -> entry.source == SwitchlyActivityHistory.Source.WIFI ||
-                    entry.source == SwitchlyActivityHistory.Source.BLUETOOTH
+                LOCATION -> entry.source == ActivityHistoryRepository.Source.LOCATION
+                WIFI_BLUETOOTH -> entry.source == ActivityHistoryRepository.Source.WIFI ||
+                    entry.source == ActivityHistoryRepository.Source.BLUETOOTH
                 SCANS -> entry.source in setOf(
-                    SwitchlyActivityHistory.Source.NFC,
-                    SwitchlyActivityHistory.Source.QR,
-                    SwitchlyActivityHistory.Source.BARCODE
+                    ActivityHistoryRepository.Source.NFC,
+                    ActivityHistoryRepository.Source.QR,
+                    ActivityHistoryRepository.Source.BARCODE
                 )
-                TEMPORARY -> entry.action == SwitchlyActivityHistory.Action.TEMPORARY
-                BLOCKED -> entry.action == SwitchlyActivityHistory.Action.BLOCKED
-                MANUAL -> entry.source == SwitchlyActivityHistory.Source.MANUAL
-                EMERGENCY -> entry.source == SwitchlyActivityHistory.Source.EMERGENCY
+                TEMPORARY -> entry.action == ActivityHistoryRepository.Action.TEMPORARY
+                BLOCKED -> entry.action == ActivityHistoryRepository.Action.BLOCKED
+                MANUAL -> entry.source == ActivityHistoryRepository.Source.MANUAL
+                EMERGENCY -> entry.source == ActivityHistoryRepository.Source.EMERGENCY
             }
         }
     }

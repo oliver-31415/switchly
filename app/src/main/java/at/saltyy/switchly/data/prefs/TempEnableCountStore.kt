@@ -24,9 +24,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.Calendar
 
-/**
- * Counts temporary enable actions per day.
- */
+// Counts temporary enable actions per day.
 object TempEnableCountStore {
     private const val PREFS = "switchly_prefs"
     private const val PREFIX = "temp_enable_count_" // temp_enable_count_yyyymmdd
@@ -41,7 +39,9 @@ object TempEnableCountStore {
     }
 
     fun getForLastNDays(context: Context, days: Int): Int {
-        if (days <= 0) return 0
+        if (days <= 0) {
+            return 0
+        }
 
         val sharedPreferences = prefs(context)
         val calendar = Calendar.getInstance()
@@ -114,7 +114,9 @@ object TempEnableCountStore {
     }
 
     fun incrementToday(context: Context, delta: Int = 1) {
-        if (delta <= 0) return
+        if (delta <= 0) {
+            return
+        }
 
         val sharedPreferences = prefs(context)
         val key = key(todayYmdInt())

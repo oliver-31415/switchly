@@ -34,14 +34,14 @@ import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.platform.receiver.wifi.WifiTriggerMonitor
 import at.saltyy.switchly.util.ProtectionStatusNotifier
 
-/**
- * Receives system boot events and restores Switchly runtime state.
- */
+// Receives system boot events and restores Switchly runtime state.
 class BootCompletedReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         val action = intent?.action ?: return
-        if (action != Intent.ACTION_BOOT_COMPLETED && action != Intent.ACTION_LOCKED_BOOT_COMPLETED) return
+        if (action != Intent.ACTION_BOOT_COMPLETED) {
+            return
+        }
 
         val ctx = context.applicationContext
 
@@ -77,7 +77,9 @@ class BootCompletedReceiver : BroadcastReceiver() {
         }
 
         // Start runtime only if it can actually function
-        if (!enabled || !autostart) return
+        if (!enabled || !autostart) {
+            return
+        }
 
         if (hasA11y) {
             runCatching {

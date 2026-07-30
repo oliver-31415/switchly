@@ -7,6 +7,14 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 package at.saltyy.switchly.feature.usage
@@ -32,10 +40,12 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLaunchCountStore
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
+import at.saltyy.switchly.data.prefs.UsageStore
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
@@ -107,8 +117,8 @@ class AppLaunchesActivity : AppCompatActivity() {
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         toolbar = MaterialToolbar(this).apply {
             minimumHeight = actionBarSize()
-            title = getString(R.string.insights_app_launches)
-            setNavigationIcon(R.drawable.arrow_back_ios_24)
+            title = getString(R.string.activity_entry_app_launches)
+            setNavigationIcon(R.drawable.keyboard_arrow_left_24)
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@AppLaunchesActivity))
         }
@@ -167,34 +177,31 @@ class AppLaunchesActivity : AppCompatActivity() {
     private fun load() {
         content.removeAllViews()
         addRangeChips()
-        if (!UsageStatsRepo.hasUsageAccess(this)) {
-            content.addView(messageCard(getString(R.string.usage_timeline_permission_needed)).apply {
-                setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
-            })
-            return
-        }
-
         content.addView(messageCard(getString(R.string.usage_timeline_loading)))
         val ctx = applicationContext
         val range = currentRange
         val scope = currentScope
+        val hasUsageAccess = UsageStatsRepo.hasUsageAccess(this)
         val profilePackages = if (scope == Scope.CURRENT_PROFILE) currentProfilePackages() else emptySet()
         Thread {
             val (from, to) = windowForRange(range)
-            val sessions = UsageTimelineRepo.allAppSessions(ctx, from, to, limit = 0)
-                .let { list ->
-                    if (scope == Scope.CURRENT_PROFILE) list.filter { it.packageName in profilePackages } else list
-                }
-            val summaries = sessions
-                .groupBy { it.packageName }
-                .map { (pkg, appSessions) ->
-                    LaunchAppSummary(
-                        packageName = pkg,
-                        label = appLabel(pkg),
-                        launchCount = appSessions.size,
-                        totalMs = appSessions.sumOf { it.durationMs }
-                    )
-                }
+            if (hasUsageAccess) {
+                runCatching { StatsArchiveSync.sync(ctx) }
+            }
+            val launchCounts = AppLaunchCountStore.getMapForDateRange(ctx, from, to)
+            val usageTotals = UsageStore.getUsageMsMapForDateRange(ctx, from, to)
+            val summaries = launchCounts
+                .filterKeys { pkg -> !UsageInsightsAppFilter.shouldHide(ctx, pkg) }
+                .map { (pkg, count) ->
+                LaunchAppSummary(
+                    packageName = pkg,
+                    label = appLabel(pkg),
+                    launchCount = count,
+                    totalMs = usageTotals[pkg] ?: 0L
+                )
+            }.let { list ->
+                if (scope == Scope.CURRENT_PROFILE) list.filter { it.packageName in profilePackages } else list
+            }
             val visibleSummaries = summaries
                 .filter { !hideSingleLaunchApps || it.launchCount > 1 }
                 .let { list ->
@@ -208,7 +215,15 @@ class AppLaunchesActivity : AppCompatActivity() {
                 if (isFinishing || isDestroyed) return@runOnUiThread
                 if (range != currentRange) return@runOnUiThread
                 if (scope != currentScope) return@runOnUiThread
-                render(visibleSummaries, summaries.sumOf { it.launchCount })
+                if (summaries.isEmpty() && !hasUsageAccess) {
+                    content.removeAllViews()
+                    addRangeChips()
+                    content.addView(messageCard(getString(R.string.usage_timeline_permission_needed)).apply {
+                        setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+                    })
+                } else {
+                    render(visibleSummaries, summaries.sumOf { it.launchCount })
+                }
             }
         }.start()
     }
@@ -333,7 +348,7 @@ class AppLaunchesActivity : AppCompatActivity() {
             })
         })
         row.addView(ImageView(this).apply {
-            setImageResource(R.drawable.arrow_forward_ios_24)
+            setImageResource(R.drawable.keyboard_arrow_right_24)
             imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this@AppLaunchesActivity, android.R.color.darker_gray))
             layoutParams = LinearLayout.LayoutParams(dp(18), dp(18))
         })
@@ -367,6 +382,7 @@ class AppLaunchesActivity : AppCompatActivity() {
                     contentDescription = getString(R.string.activity_history_range_custom)
                     icon = ContextCompat.getDrawable(this@AppLaunchesActivity, R.drawable.calendar_month_24)
                     iconPadding = 0
+                    iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
                     setPadding(dp(8), 0, dp(8), 0)
                     gravity = Gravity.CENTER
                 }
@@ -410,13 +426,17 @@ class AppLaunchesActivity : AppCompatActivity() {
     }
 
     private fun ensureRangeAllowed(range: Range): Boolean {
-        if (range == Range.TODAY || StatsPremiumGate.canUseExtendedStats(this)) return true
+        if (range == Range.TODAY || StatsPremiumGate.canUseExtendedStats(this)) {
+            return true
+        }
         StatsPremiumGate.show(this)
         return false
     }
 
     private fun addCustomRangeSummary() {
-        if (currentRange != Range.CUSTOM) return
+        if (currentRange != Range.CUSTOM) {
+            return
+        }
         val start = customRangeStartMillis ?: return
         val end = customRangeEndMillis ?: return
         val fmt = DateFormat.getDateInstance(DateFormat.SHORT)
@@ -482,7 +502,9 @@ class AppLaunchesActivity : AppCompatActivity() {
             load()
             return
         }
-        if (customRangePickerShowing || supportFragmentManager.isStateSaved) return
+        if (customRangePickerShowing || supportFragmentManager.isStateSaved) {
+            return
+        }
         customRangePickerShowing = true
         val now = System.currentTimeMillis()
         val currentStart = customRangeStartMillis ?: startOfTodayMillis()

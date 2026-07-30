@@ -24,9 +24,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.Calendar
 
-/**
- * Counts how often a specific app was blocked.
- */
+// Counts how often a specific app was blocked.
 object BlockCountStore {
     private const val PREFS = "switchly_prefs"
     private const val PREFIX = "blocked_count_" // blocked_count_yyyymmdd_pkg
@@ -37,12 +35,16 @@ object BlockCountStore {
     private fun key(ymd: Int, pkg: String): String = PREFIX + ymd + "_" + pkg
 
     fun getToday(context: Context, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
         return readIntCompat(prefs(context), key(todayYmdInt(), pkg))
     }
 
     fun getForLastNDays(context: Context, pkg: String, days: Int): Int {
-        if (pkg.isBlank() || days <= 0) return 0
+        if (pkg.isBlank() || days <= 0) {
+            return 0
+        }
 
         val sharedPreferences = prefs(context)
         val calendar = Calendar.getInstance()
@@ -57,7 +59,9 @@ object BlockCountStore {
     }
 
     fun getForMonth(context: Context, pkg: String, year: Int, month1Based: Int): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
 
         val sharedPreferences = prefs(context)
         val calendar = Calendar.getInstance().apply {
@@ -81,7 +85,9 @@ object BlockCountStore {
     }
 
     fun getForYear(context: Context, pkg: String, year: Int): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
 
         val sharedPreferences = prefs(context)
         val calendar = Calendar.getInstance().apply {
@@ -104,7 +110,9 @@ object BlockCountStore {
     }
 
     fun getOverall(context: Context, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank()) {
+            return 0
+        }
 
         var sum = 0L
         val suffix = "_" + pkg
@@ -121,8 +129,93 @@ object BlockCountStore {
         return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 
+    fun getTotalToday(context: Context): Int = totalForDays(context, setOf(todayYmdInt()))
+
+    fun getTotalForLastNDays(context: Context, days: Int): Int {
+        if (days <= 0) return 0
+        val wantedDays = linkedSetOf<Int>()
+        val calendar = Calendar.getInstance()
+        repeat(days) {
+            wantedDays += ymdInt(calendar)
+            calendar.add(Calendar.DAY_OF_YEAR, -1)
+        }
+        return totalForDays(context, wantedDays)
+    }
+
+    fun getTotalForMonth(context: Context, year: Int, month1Based: Int): Int {
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, (month1Based - 1).coerceIn(0, 11))
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val month = calendar.get(Calendar.MONTH)
+        val wantedDays = linkedSetOf<Int>()
+        while (calendar.get(Calendar.MONTH) == month) {
+            wantedDays += ymdInt(calendar)
+            calendar.add(Calendar.DAY_OF_MONTH, 1)
+        }
+        return totalForDays(context, wantedDays)
+    }
+
+    fun getTotalForYear(context: Context, year: Int): Int {
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val wantedDays = linkedSetOf<Int>()
+        while (calendar.get(Calendar.YEAR) == year) {
+            wantedDays += ymdInt(calendar)
+            calendar.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return totalForDays(context, wantedDays)
+    }
+
+    fun getTotalOverall(context: Context): Int {
+        var total = 0L
+        prefs(context).all.forEach { (key, value) ->
+            if (key.startsWith(PREFIX)) total += numericValue(value)
+        }
+        return total.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    private fun totalForDays(context: Context, wantedDays: Set<Int>): Int {
+        if (wantedDays.isEmpty()) return 0
+        var total = 0L
+        prefs(context).all.forEach { (key, value) ->
+            val day = dayFromKey(key) ?: return@forEach
+            if (day in wantedDays) total += numericValue(value)
+        }
+        return total.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    private fun dayFromKey(key: String): Int? {
+        if (!key.startsWith(PREFIX)) return null
+        val separator = key.indexOf('_', startIndex = PREFIX.length)
+        if (separator <= PREFIX.length) return null
+        return key.substring(PREFIX.length, separator).toIntOrNull()
+    }
+
+    private fun numericValue(value: Any?): Long = when (value) {
+        is Int -> value.toLong()
+        is Long -> value
+        is Number -> value.toLong()
+        is String -> value.toLongOrNull() ?: 0L
+        else -> 0L
+    }.coerceAtLeast(0L)
+
     fun incrementToday(context: Context, pkg: String, delta: Int = 1) {
-        if (pkg.isBlank() || delta <= 0) return
+        if (pkg.isBlank() || delta <= 0) {
+            return
+        }
 
         val sharedPreferences = prefs(context)
         val key = key(todayYmdInt(), pkg)

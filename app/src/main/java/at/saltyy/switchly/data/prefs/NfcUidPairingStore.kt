@@ -42,7 +42,8 @@ object NfcUidPairingStore {
         }
     }
 
-    enum class ReadOnlyAction(val id: String, vararg val legacyIds: String) {
+    enum class PairedTagAction(val id: String, vararg val legacyIds: String) {
+        USE_WRITTEN("use_written"),
         TOGGLE("toggle"),
         DISABLE("disable", "disable_only", "unlock_only"),
         ENABLE("enable", "enable_only", "lock_only"),
@@ -50,11 +51,11 @@ object NfcUidPairingStore {
         TEMP_ENABLE("temp_enable");
 
         companion object {
-            fun fromId(id: String?): ReadOnlyAction {
+            fun fromId(id: String?, fallback: PairedTagAction = TOGGLE): PairedTagAction {
                 return entries.firstOrNull { action ->
                     action.id.equals(id, ignoreCase = true) ||
                         action.legacyIds.any { it.equals(id, ignoreCase = true) }
-                } ?: TOGGLE
+                } ?: fallback
             }
         }
     }
@@ -65,16 +66,14 @@ object NfcUidPairingStore {
         val note: String?,
         val pairedAtMillis: Long,
         val tagKind: TagKind,
-        val readOnlyAction: ReadOnlyAction,
-        val readOnlyDurationMinutes: Int,
+        val action: PairedTagAction,
+        val durationMinutes: Int,
+        val askDurationWhenScanned: Boolean,
+        val actionProfile: String?,
         val enabled: Boolean
     ) {
         val supportsUidOnlyAction: Boolean
             get() = tagKind != TagKind.WRITABLE
-
-        val usesTemporaryReadOnlyAction: Boolean
-            get() = readOnlyAction == ReadOnlyAction.TEMP_DISABLE ||
-                readOnlyAction == ReadOnlyAction.TEMP_ENABLE
     }
 
     private const val PREFS = "switchly_prefs"
@@ -87,6 +86,8 @@ object NfcUidPairingStore {
     private const val KEY_TAG_ENABLED_PREFIX = "nfc_tag_enabled_"
     private const val KEY_TAG_READ_ONLY_ACTION_PREFIX = "nfc_tag_read_only_action_"
     private const val KEY_TAG_READ_ONLY_DURATION_PREFIX = "nfc_tag_read_only_duration_"
+    private const val KEY_TAG_ASK_DURATION_PREFIX = "nfc_tag_ask_duration_"
+    private const val KEY_TAG_ACTION_PROFILE_PREFIX = "nfc_tag_action_profile_"
     const val DEFAULT_READ_ONLY_TEMP_DURATION_MINUTES = 1
 
     private fun normalize(uid: String?): String = NfcTagUid.normalizeUidHex(uid)
@@ -111,7 +112,9 @@ object NfcUidPairingStore {
 
     fun isTagEnabled(ctx: Context, uidHex: String): Boolean {
         val clean = normalize(uidHex)
-        if (clean.isBlank()) return false
+        if (clean.isBlank()) {
+            return false
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return sp.getBoolean(KEY_TAG_ENABLED_PREFIX + clean, true)
     }
@@ -119,18 +122,20 @@ object NfcUidPairingStore {
     @Synchronized
     fun setTagEnabled(ctx: Context, uidHex: String, enabled: Boolean) {
         val clean = normalize(uidHex)
-        if (clean.isBlank()) return
+        if (clean.isBlank()) {
+            return
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit(commit = true) { putBoolean(KEY_TAG_ENABLED_PREFIX + clean, enabled) }
     }
 
-    /**
-     * @return true if this UID was newly added (was not previously paired)
-     */
+    // @return true if this UID was newly added (was not previously paired)
     @Synchronized
     fun addPairedUidHex(ctx: Context, uidHex: String, tagKind: TagKind? = null): Boolean {
         val clean = normalize(uidHex)
-        if (clean.isBlank()) return false
+        if (clean.isBlank()) {
+            return false
+        }
 
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val current = getPairedUidsHex(ctx).toMutableSet()
@@ -170,6 +175,8 @@ object NfcUidPairingStore {
             remove(KEY_TAG_ENABLED_PREFIX + clean)
             remove(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean)
             remove(KEY_TAG_READ_ONLY_DURATION_PREFIX + clean)
+            remove(KEY_TAG_ASK_DURATION_PREFIX + clean)
+            remove(KEY_TAG_ACTION_PROFILE_PREFIX + clean)
         }
 
         // Also remove optional per-tag limiter overrides.
@@ -190,9 +197,19 @@ object NfcUidPairingStore {
             ?.takeIf { it.isNotBlank() }
         val pairedAt = sp.getLong(KEY_TAG_PAIRED_AT_PREFIX + clean, 0L)
         val tagKind = TagKind.fromId(sp.getString(KEY_TAG_KIND_PREFIX + clean, null))
-        val readOnlyAction = ReadOnlyAction.fromId(sp.getString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, null))
+        val storedAction = sp.getString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, null)
+        val defaultAction = if (tagKind == TagKind.WRITABLE) {
+            PairedTagAction.USE_WRITTEN
+        } else {
+            PairedTagAction.TOGGLE
+        }
+        val action = PairedTagAction.fromId(storedAction, defaultAction)
         val enabled = sp.getBoolean(KEY_TAG_ENABLED_PREFIX + clean, true)
-        val readOnlyDurationMinutes = sp.getInt(
+        val askDurationWhenScanned = sp.getBoolean(KEY_TAG_ASK_DURATION_PREFIX + clean, false)
+        val actionProfile = sp.getString(KEY_TAG_ACTION_PROFILE_PREFIX + clean, null)
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+        val durationMinutes = sp.getInt(
             KEY_TAG_READ_ONLY_DURATION_PREFIX + clean,
             DEFAULT_READ_ONLY_TEMP_DURATION_MINUTES
         ).coerceIn(1, 1440)
@@ -202,31 +219,20 @@ object NfcUidPairingStore {
             note = note,
             pairedAtMillis = pairedAt,
             tagKind = tagKind,
-            readOnlyAction = readOnlyAction,
-            readOnlyDurationMinutes = readOnlyDurationMinutes,
+            action = action,
+            durationMinutes = durationMinutes,
+            askDurationWhenScanned = askDurationWhenScanned,
+            actionProfile = actionProfile,
             enabled = enabled
         )
     }
 
     fun supportsUidOnlyAction(ctx: Context, uidHex: String): Boolean {
         val clean = normalize(uidHex)
-        if (clean.isBlank()) return false
+        if (clean.isBlank()) {
+            return false
+        }
         return getTagMeta(ctx, clean).supportsUidOnlyAction
-    }
-
-    fun getReadOnlyAction(ctx: Context, uidHex: String): ReadOnlyAction {
-        val clean = normalize(uidHex)
-        if (clean.isBlank()) return ReadOnlyAction.TOGGLE
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return ReadOnlyAction.fromId(sp.getString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, null))
-    }
-
-    @Synchronized
-    fun setReadOnlyAction(ctx: Context, uidHex: String, action: ReadOnlyAction) {
-        val clean = normalize(uidHex)
-        if (clean.isBlank()) return
-        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        sp.edit(commit = true) { putString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, action.id) }
     }
 
     @Synchronized
@@ -235,12 +241,14 @@ object NfcUidPairingStore {
         uidHex: String,
         name: String?,
         note: String?,
-        readOnlyAction: ReadOnlyAction? = null,
-        readOnlyDurationMinutes: Int? = null,
+        action: PairedTagAction? = null,
+        durationMinutes: Int? = null,
         tagKind: TagKind? = null,
     ) {
         val clean = normalize(uidHex)
-        if (clean.isBlank()) return
+        if (clean.isBlank()) {
+            return
+        }
 
         fun sanitize(v: String?, maxLen: Int): String? {
             val s = v
@@ -258,11 +266,44 @@ object NfcUidPairingStore {
         sp.edit(commit = true) {
             if (n == null) remove(KEY_TAG_NAME_PREFIX + clean) else putString(KEY_TAG_NAME_PREFIX + clean, n)
             if (no == null) remove(KEY_TAG_NOTE_PREFIX + clean) else putString(KEY_TAG_NOTE_PREFIX + clean, no)
-            readOnlyAction?.let { putString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, it.id) }
-            readOnlyDurationMinutes
+            action?.let { putString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, it.id) }
+            durationMinutes
                 ?.coerceIn(1, 1440)
                 ?.let { putInt(KEY_TAG_READ_ONLY_DURATION_PREFIX + clean, it) }
             tagKind?.let { putString(KEY_TAG_KIND_PREFIX + clean, it.id) }
+        }
+    }
+
+    @Synchronized
+    fun setTagAction(
+        ctx: Context,
+        uidHex: String,
+        action: PairedTagAction,
+        durationMinutes: Int?,
+        askDurationWhenScanned: Boolean,
+        profile: String?,
+    ) {
+        val clean = normalize(uidHex)
+        if (clean.isBlank()) {
+            return
+        }
+
+        val cleanProfile = profile
+            ?.trim()
+            ?.take(80)
+            ?.takeIf { it.isNotBlank() }
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        sp.edit(commit = true) {
+            putString(KEY_TAG_READ_ONLY_ACTION_PREFIX + clean, action.id)
+            durationMinutes
+                ?.coerceIn(1, 1440)
+                ?.let { putInt(KEY_TAG_READ_ONLY_DURATION_PREFIX + clean, it) }
+            putBoolean(KEY_TAG_ASK_DURATION_PREFIX + clean, askDurationWhenScanned)
+            if (cleanProfile == null || action == PairedTagAction.USE_WRITTEN) {
+                remove(KEY_TAG_ACTION_PROFILE_PREFIX + clean)
+            } else {
+                putString(KEY_TAG_ACTION_PROFILE_PREFIX + clean, cleanProfile)
+            }
         }
     }
 
@@ -286,6 +327,8 @@ object NfcUidPairingStore {
                 remove(KEY_TAG_ENABLED_PREFIX + uid)
                 remove(KEY_TAG_READ_ONLY_ACTION_PREFIX + uid)
                 remove(KEY_TAG_READ_ONLY_DURATION_PREFIX + uid)
+                remove(KEY_TAG_ASK_DURATION_PREFIX + uid)
+                remove(KEY_TAG_ACTION_PROFILE_PREFIX + uid)
             }
         }
         uids.forEach { uid ->

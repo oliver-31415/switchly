@@ -24,6 +24,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import at.saltyy.switchly.R
+import at.saltyy.switchly.security.AppLockStore
 
 class DPMReceiver : DeviceAdminReceiver() {
 
@@ -34,6 +35,7 @@ class DPMReceiver : DeviceAdminReceiver() {
 
     override fun onDisabled(context: Context, intent: Intent) {
         super.onDisabled(context, intent)
+        AppLockStore.setStrictProtectionEnabled(context, false)
         Log.i(TAG, "Device admin disabled")
     }
 

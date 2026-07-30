@@ -23,7 +23,7 @@ import at.saltyy.switchly.data.prefs.ScheduleStore
 
 /**
  * Pure Bluetooth trigger evaluation logic (no Android dependencies).
- * In Switchly, Bluetooth triggers are part of schedules. 
+ * In Switchly, Bluetooth triggers are part of schedules.
  * Device address is preferred when available; name remains the fallback.
  */
 object BluetoothTriggerReceiverLogic {
@@ -47,11 +47,15 @@ object BluetoothTriggerReceiverLogic {
         deviceAddress: String?,
         schedules: List<ScheduleStore.Schedule>
     ): Match? {
-        if (event != Event.CONNECTED) return null
+        if (event != Event.CONNECTED) {
+            return null
+        }
 
         val name = deviceName?.trim().orEmpty()
         val address = normalizeAddress(deviceAddress)
-        if (name.isEmpty() && address.isEmpty()) return null
+        if (name.isEmpty() && address.isEmpty()) {
+            return null
+        }
 
         val s = schedules
             .asSequence()

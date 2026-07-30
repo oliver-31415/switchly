@@ -28,13 +28,14 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.ui.MainActivity
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicBoolean
 
 object WifiTriggerMonitor {
 
@@ -45,7 +46,7 @@ object WifiTriggerMonitor {
     private var listener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     @Volatile private var cachedServiceIntent: Intent? = null
-    private val initialSyncScheduled = AtomicBoolean(false)
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val syncExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "SwitchlyWifiMonitor").apply { isDaemon = true }
     }
@@ -58,6 +59,7 @@ object WifiTriggerMonitor {
         }
     }
 
+    @Synchronized
     fun ensureStarted(context: Context) {
         val ctx = context.applicationContext
 
@@ -74,33 +76,33 @@ object WifiTriggerMonitor {
         scheduleSync(ctx)
     }
 
-    /**
-     * Starting a foreground service directly from Application.onCreate() or a receiver delays service creation until that callback returns, while Android's foreground deadline is already running.
-     * Defer and coalesce the initial sync so the service can be created immediately after the start request.
-     */
+    // Read schedules away from the main thread, then start or stop the foreground service from the main queue.
+    // The start request is therefore made only after Application.onCreate() or a receiver callback can return.
+    // Android starts the foreground-service deadline at the request, so starting from a worker during app startup can race a busy main thread.
     private fun scheduleSync(context: Context) {
         val ctx = context.applicationContext
-        if (!initialSyncScheduled.compareAndSet(false, true)) return
 
-        try {
+        runCatching {
             syncExecutor.execute {
-                try {
-                    sync(ctx)
-                } finally {
-                    initialSyncScheduled.set(false)
+                val active = runCatching {
+                    ScheduleStore.getAll(ctx).any { schedule ->
+                        schedule.enabled && !schedule.wifiSsid.isNullOrBlank()
+                    }
+                }.getOrNull()
+
+                if (active == null) {
+                    return@execute
+                }
+
+                mainHandler.post {
+                    if (active) {
+                        startService(ctx)
+                    } else {
+                        stopService(ctx)
+                    }
                 }
             }
-        } catch (_: Throwable) {
-            initialSyncScheduled.set(false)
         }
-    }
-
-    private fun sync(context: Context) {
-        val ctx = context.applicationContext
-        val schedules = ScheduleStore.getAll(ctx)
-        val active = schedules.any { it.enabled && !it.wifiSsid.isNullOrBlank() }
-
-        if (active) startService(ctx) else stopService(ctx)
     }
 
     private fun startService(context: Context) {
@@ -131,14 +133,18 @@ object WifiTriggerMonitor {
             context,
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
-        if (!hasFine && !hasCoarse) return false
+        if (!hasFine && !hasCoarse) {
+            return false
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val hasBackground = ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
-            if (!hasBackground) return false
+            if (!hasBackground) {
+                return false
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -146,7 +152,9 @@ object WifiTriggerMonitor {
                 context,
                 Manifest.permission.FOREGROUND_SERVICE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
-            if (!hasFgsLocation) return false
+            if (!hasFgsLocation) {
+                return false
+            }
         }
 
         return true

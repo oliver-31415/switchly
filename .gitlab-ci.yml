@@ -16,11 +16,9 @@ cache:
     - .gradle/wrapper/
     - .gradle/caches/
 
-build_offline_release_apk:
+.android_build:
   image: eclipse-temurin:17-jdk-jammy
   stage: build
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
 
   variables:
     ANDROID_SDK_ROOT: /sdk
@@ -40,12 +38,43 @@ build_offline_release_apk:
     - cd $CI_PROJECT_DIR
     - chmod +x ./gradlew
 
+build_public_offline_release:
+  extends: .android_build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
   script:
-    - ./gradlew --no-daemon :app:lintOfflineRelease :app:assembleOfflineRelease
+    - ./gradlew --no-daemon :app:public-release-apk
 
   artifacts:
-    name: "switchly-offline-apk-$CI_COMMIT_SHORT_SHA"
+    name: "switchly-public-offline-$CI_COMMIT_SHORT_SHA"
     when: on_success
     expire_in: 30 days
     paths:
-      - app/build/outputs/apk/offline/release/*.apk
+      - dist/Switchly-*-offline-unsigned.apk
+      - dist/Switchly-*-offline.apk
+
+# This job appears only when the maintainer configured all private release inputs as protected CI variables. 
+# Forks and the public repository still build successfully through build_public_offline_release without any secrets.
+validate_official_release_variants:
+  extends: .android_build
+  rules:
+    - if: '$GOOGLE_SERVICES_JSON_B64 && $SWITCHLY_RELEASE_KEYSTORE_B64 && $SWITCHLY_RELEASE_STORE_PASSWORD && $SWITCHLY_RELEASE_KEY_ALIAS && $SWITCHLY_RELEASE_KEY_PASSWORD'
+
+  script:
+    - printf '%s' "$GOOGLE_SERVICES_JSON_B64" | base64 -d > app/google-services.json
+    - printf '%s' "$SWITCHLY_RELEASE_KEYSTORE_B64" | base64 -d > switchly-release.jks
+    - >-
+      ./gradlew --no-daemon :app:release-apk
+      -PSWITCHLY_RELEASE_STORE_FILE=switchly-release.jks
+      -PSWITCHLY_RELEASE_STORE_PASSWORD="$SWITCHLY_RELEASE_STORE_PASSWORD"
+      -PSWITCHLY_RELEASE_KEY_ALIAS="$SWITCHLY_RELEASE_KEY_ALIAS"
+      -PSWITCHLY_RELEASE_KEY_PASSWORD="$SWITCHLY_RELEASE_KEY_PASSWORD"
+
+  artifacts:
+    name: "switchly-official-release-$CI_COMMIT_SHORT_SHA"
+    when: on_success
+    expire_in: 30 days
+    paths:
+      - dist/Switchly-*.apk
+      - dist/Switchly-*.aab

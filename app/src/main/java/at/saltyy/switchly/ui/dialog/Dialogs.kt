@@ -115,7 +115,7 @@ fun AlertDialog.Builder.showAccented(): AlertDialog {
 /**
  * One shared Switchly option-dialog style.
  * Used for action menus, mode pickers, sort/filter pickers, profile actions, QR/barcode choices, etc.
- * Existing-value choices wait for the filled confirmation action; command menus still runimmediately. 
+ * Existing-value choices wait for the filled confirmation action; command menus still runimmediately.
  * No OEM green radios/checkmarks; selection uses accent border/background only.
  */
 private fun Context.showSwitchlyOptionDialogInternal(
@@ -382,7 +382,9 @@ fun Context.showSwitchlyMultiChoiceDialog(
 
     fun selectedCountLabel(): CharSequence {
         val count = rowStates.count { it }
-        if (count <= 0) return title
+        if (count <= 0) {
+            return title
+        }
         val countLabel = resources.getQuantityString(
             R.plurals.dialog_selected_count,
             count,

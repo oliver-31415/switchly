@@ -4,48 +4,64 @@
     <!-- ====================================================== -->
     <!-- Badges and common step actions -->
     <!-- ====================================================== -->
+    <string name="onb_badge_start">Start</string>
     <string name="onb_badge_required">Required</string>
     <string name="onb_badge_recommended">Recommended</string>
     <string name="onb_badge_optional">Optional</string>
     <string name="onb_granted">Granted</string>
     <string name="onb_done">Done</string>
+    <string name="onb_start_button">Start Switchly</string>
     <string name="onb_next">Next</string>
-    <string name="onb_skip">Skip</string>
+    <string name="onb_skip">Set up later</string>
     <string name="onb_open">Open</string>
     <string name="onb_permissions_action">Open next setting</string>
 
     <!-- ====================================================== -->
-    <!-- Welcome/core concept -->
+    <!-- Welcome and core concept -->
     <!-- ====================================================== -->
     <string name="onb_welcome_title">Welcome to Switchly</string>
-    <string name="onb_welcome_desc">Set up the first blocking list, then choose how Switchly should be turned on or off.</string>
-    <string name="onb_core_point_lists">App and website lists decide what can be blocked.</string>
-    <string name="onb_core_point_enabled_state">The Switchly enabled state decides when blocking is active.</string>
-    <string name="onb_core_point_controls">Schedules, NFC, QR, barcodes, widgets, tiles and buttons can control that state.</string>
+    <string name="onb_welcome_desc">Build a setup that adds friction where you need it without making your whole phone harder to use.</string>
+    <string name="onb_core_point_choose">Choose the apps, websites and in-app content you want each profile to manage.</string>
+    <string name="onb_core_point_control">Control protection with buttons, schedules, NFC, QR, barcodes, widgets or tiles.</string>
 
     <!-- ====================================================== -->
-    <!-- Optional usage report -->
+    <!-- Usage report onboarding step -->
     <!-- ====================================================== -->
     <string name="onb_usage_report_title">Show your current usage</string>
-    <string name="onb_usage_report_desc">Optional: grant Usage Access to see a quick 7-day report and find your biggest distractions before setup.</string>
-    <string name="onb_usage_report_point_average">Shows your 7-day average screen time.</string>
-    <string name="onb_usage_report_point_top_apps">Finds the apps you used most recently.</string>
-    <string name="onb_usage_report_point_optional">You can skip this and set up Switchly manually.</string>
-    <string name="onb_usage_report_action">Show usage report</string>
-    <string name="onb_usage_report_result_title">7-day usage report</string>
-    <string name="onb_usage_report_result_body">Daily average: %1$s\n7-day total: %2$s\n\nTop apps:\n%3$s</string>
-    <string name="onb_usage_report_app_row">• %1$s · %2$s</string>
-    <string name="onb_usage_report_no_apps">No usage data found yet.</string>
-    <string name="onb_usage_report_add_top_apps">Add top apps</string>
-    <string name="onb_usage_report_added_to_profile">Top apps added to this profile.</string>
+    <string name="onb_usage_report_desc">Want to see more details before choosing apps? Allow Usage Access below and Switchly will add a private 7-day report as the next step. You can continue without it.</string>
+    <string name="onb_usage_permission_status_ready">Ready · The 7-day report is now the next step</string>
+    <string name="onb_usage_permission_status_optional">Optional · Tap to allow</string>
+    <string name="onb_usage_report_private_title">Private on-device report</string>
+    <string name="onb_usage_report_private_desc">Switchly reads Android usage data locally to build this preview. Nothing from the report is uploaded.</string>
+    <string name="onb_usage_report_private_status">Adds a 7-day overview before app selection</string>
+
+    <!-- ====================================================== -->
+    <!-- Usage report preview -->
+    <!-- ====================================================== -->
+    <string name="onb_usage_preview_title">Your last 7 days</string>
+    <string name="onb_usage_preview_desc">See where your time went, then use the top apps as a starting point for your blocking list.</string>
+    <string name="onb_usage_preview_total">7-day total</string>
+    <string name="onb_usage_preview_daily_average">Daily average</string>
+    <string name="onb_usage_preview_top_apps">Your top 7 apps</string>
+    <string name="onb_usage_preview_other_apps">Others</string>
+    <string name="onb_usage_preview_empty_title">No recent usage yet</string>
+    <string name="onb_usage_preview_empty_desc">Use your apps for a little while and open this page again. You can continue onboarding without this report.</string>
 
     <!-- ====================================================== -->
     <!-- Pick apps -->
     <!-- ====================================================== -->
     <string name="onb_pick_title">Pick apps to block</string>
-    <string name="onb_pick_desc_required">Choose at least one app before continuing. You’ll see a quick review list at the end.</string>
+    <string name="onb_pick_desc_required">Choose at least one app before continuing. Pick deliberately based on what you actually want Switchly to block.</string>
     <string name="onb_pick_action">Choose apps</string>
-    <string name="onb_apps_picked">Apps picked</string>
+    <string name="onb_pick_point_goal">Choose apps based on the behavior you want to reduce or block.</string>
+    <string name="onb_pick_point_system_apps">Some launcher, authentication, security and system apps are safer left unblocked unless you have tested them.</string>
+    <string name="onb_pick_empty_title">No apps selected yet</string>
+    <string name="onb_pick_empty_desc">Open the app picker and choose the apps Switchly should handle for this profile.</string>
+    <string name="onb_pick_empty_status">Choose at least one app before starting.</string>
+    <plurals name="onb_apps_picked_count">
+        <item quantity="one">Change %1$d selected app</item>
+        <item quantity="other">Change %1$d selected apps</item>
+    </plurals>
     <string name="onb_required_pick_apps">Please choose and save at least one app before continuing.</string>
 
     <!-- ====================================================== -->
@@ -55,21 +71,20 @@
     <string name="onb_controls_desc">Choose how strict Switchly should be while blocking is active. You can keep it simple now and tighten it later.</string>
     <string name="onb_controls_action">Choose mode</string>
     <string name="onb_controls_selected">Mode selected</string>
-    <string name="onb_required_controls">Please choose how Switchly should be controlled before continuing.</string>
     <string name="onb_controls_point_enable_disable">Choose which actions can enable or disable Switchly.</string>
     <string name="onb_controls_point_lock_edits">Restrict profile, schedule or app-list edits while active.</string>
+    <string name="onb_required_controls">Please choose how Switchly should be controlled before continuing.</string>
 
     <!-- ====================================================== -->
     <!-- Permissions overview -->
     <!-- ====================================================== -->
     <string name="onb_permissions_hub_title">Permissions overview</string>
-    <string name="onb_permissions_hub_mode_desc">Set up the permissions for %1$s. Only Accessibility is required to continue.</string>
-    <string name="onb_required_permissions_hub">Please enable Accessibility before continuing. The other items can be set up now or later.</string>
-
+    <string name="onb_permissions_hub_mode_desc">Set up the permissions for %1$s. Accessibility and Usage Access are required to continue.</string>
+    <string name="onb_required_permissions_hub">Please enable Accessibility and Usage Access before continuing. The other items can be set up now or later.</string>
     <string name="onb_perm_accessibility_title">Accessibility</string>
     <string name="onb_perm_accessibility_desc">Required for core app and website blocking.</string>
     <string name="onb_perm_usage_title">Usage Access</string>
-    <string name="onb_perm_usage_desc">Optional for insights and diagnostics.</string>
+    <string name="onb_perm_usage_desc">Reads local app activity for usage-aware blocking and statistics. The data stays on this device.</string>
     <string name="onb_perm_notifications_title">Notifications</string>
     <string name="onb_perm_notifications_desc">Only needed when notification blocking is enabled.</string>
     <string name="onb_perm_battery_title">Battery unrestricted</string>
@@ -82,7 +97,6 @@
     <string name="onb_perm_exact_alarm_desc">Helps timed schedules run reliably.</string>
     <string name="onb_perm_nfc_title">Launch via NFC</string>
     <string name="onb_perm_nfc_desc">If you use NFC tags, Android may require Switchly to be allowed under Special app access &gt; Launch via NFC. Passive tags normally require the device to be unlocked.</string>
-
     <string name="onb_permission_status_ready">Ready</string>
     <string name="onb_permission_status_missing">Setup needed</string>
     <string name="onb_permission_status_manual">Check manually</string>
@@ -107,35 +121,94 @@
     <string name="onb_schedule_point_permissions">Timed, location, Wi-Fi and Bluetooth schedules may need extra permissions.</string>
 
     <!-- ====================================================== -->
-    <!-- Ready to start/review -->
+    <!-- Ready to start -->
     <!-- ====================================================== -->
     <string name="onb_start_title">Ready to start</string>
-    <string name="onb_start_desc_clean">Quickly review your setup before enabling Switchly.</string>
-    <string name="onb_start_test_action">Enable Switchly now</string>
+    <string name="onb_start_desc_clean">Review your setup and start Switchly. Profiles, controls, Home, rules and more can still be customized later in Settings.</string>
     <string name="onb_start_test_toast">Switchly enabled. Try opening one blocked app to test it.</string>
-
-    <string name="onb_review_blocked_mode_label">Blocked app list</string>
-    <string name="onb_review_allowed_mode_label">Allowed app list</string>
     <string name="onb_review_profile_title">Profile</string>
     <string name="onb_review_mode_title">Mode</string>
-    <string name="onb_review_app_list_subtitle">Tap to view all selected apps.</string>
-    <string name="onb_review_no_apps">No apps selected.</string>
-
-    <plurals name="onb_review_app_list_title">
-        <item quantity="one">%1$s: %2$d app</item>
-        <item quantity="other">%1$s: %2$d apps</item>
-    </plurals>
-
-    <plurals name="onb_review_apps_dialog_title">
-        <item quantity="one">%1$s (%2$d app)</item>
-        <item quantity="other">%1$s (%2$d apps)</item>
-    </plurals>
 
     <!-- ====================================================== -->
-    <!-- Generic fallback/required state -->
+    <!-- Selected apps review -->
+    <!-- ====================================================== -->
+    <string name="onb_review_apps_card_title">Review selected apps</string>
+    <plurals name="onb_review_apps_card_subtitle">
+        <item quantity="one">%1$d app checked · Tap to review the checklist</item>
+        <item quantity="other">%1$d apps checked · Tap to review the checklist</item>
+    </plurals>
+    <string name="onb_review_apps_dialog_title">Apps ready for this profile</string>
+    <string name="onb_review_apps_dialog_desc">Checked apps stay in this profile. Uncheck anything you do not want, then confirm with OK.</string>
+    <string name="onb_review_app_selected_content_description">%1$s selected. Tap to uncheck.</string>
+    <string name="onb_review_app_unselected_content_description">%1$s not selected. Tap to check.</string>
+    <string name="onb_review_apps_change">Add or change apps</string>
+    <string name="onb_keep_one_app">Keep at least one app selected to finish setup.</string>
+
+    <!-- ====================================================== -->
+    <!-- Generic fallback and required state -->
     <!-- ====================================================== -->
     <string name="onb_required_step">This step is required to continue.</string>
     <string name="onb_page_title_placeholder">Title</string>
     <string name="onb_page_desc_placeholder">Description</string>
 
+    <string name="onb_home_customize_title">Choose your Home layout</string>
+    <string name="onb_home_customize_desc">Choose a Home mode or use Custom to arrange cards and their contents.</string>
+    <!-- ====================================================== -->
+    <!-- Usage loading and Home mode selection -->
+    <!-- ====================================================== -->
+    <string name="onb_usage_preview_loading_title">Building your 7-day report</string>
+    <string name="onb_usage_preview_loading_desc">The first load can take a moment while Android usage data is prepared.</string>
+    <string name="onb_home_mode_selected">Selected Home mode</string>
+    <string name="onb_home_custom_selected_hint">Selected · Tap to customize modules</string>
+
+    <!-- ====================================================== -->
+    <!-- Optional setup page opened from the final footer -->
+    <!-- ====================================================== -->
+    <string name="onb_optional_setup_action">Explore optional setup</string>
+    <string name="onb_optional_hidden_apps_title">Hidden apps</string>
+    <string name="onb_optional_hidden_apps_desc">Hide selected apps from Usage &amp; Insights or from the App Picker.</string>
+    <string name="onb_optional_home_modes_title">Home modes</string>
+    <string name="onb_optional_home_modes_desc">Choose Default, Custom, Simple or Advanced Home.</string>
+    <string name="onb_optional_display_title">Display &amp; shortcuts</string>
+    <string name="onb_optional_display_desc">Add Android Quick Settings tiles and Home screen widgets.</string>
+    <string name="onb_optional_app_lock_title">App lock &amp; uninstall protection</string>
+    <string name="onb_optional_app_lock_desc">Protect access to Switchly and optionally add Device Admin uninstall friction.</string>
+    <string name="onb_optional_feature_access_title">Feature access</string>
+    <string name="onb_optional_feature_access_desc">Choose what remains accessible while protection is active and review advanced controls.</string>
+    <string name="onb_optional_faq_title">FAQ &amp; setup help</string>
+    <string name="onb_optional_faq_desc">Fix the background restrictions that most often cause blocking, schedules or statistics to stop—especially on Xiaomi, Redmi and POCO.</string>
+    <string name="onb_optional_support_title">Contact the developer</string>
+    <string name="onb_optional_support_desc">Send a support request and attach generated logs and device information when reporting a bug.</string>
+
+    <!-- Optional setup previews -->
+    <string name="onb_optional_hidden_usage_row_title">Usage &amp; Insights</string>
+    <string name="onb_optional_hidden_usage_row_desc">Keep selected apps out of usage reports and rankings.</string>
+    <string name="onb_optional_hidden_picker_row_title">App Picker</string>
+    <string name="onb_optional_hidden_picker_row_desc">Keep selected apps out of app-selection lists.</string>
+    <string name="onb_optional_hidden_count">Hidden: %1$d</string>
+    <string name="onb_optional_home_mode_tap">Tap to select</string>
+    <string name="onb_optional_display_tiles_title">Quick Settings tiles</string>
+    <string name="onb_optional_display_tiles_desc">Add control, QR and barcode shortcuts to Android Quick Settings.</string>
+    <string name="onb_optional_display_widgets_title">Android widgets</string>
+    <string name="onb_optional_display_widgets_desc">Add scanner, schedule, timer and notification widgets to the Home screen.</string>
+    <string name="onb_optional_app_lock_row_title">Switchly app lock</string>
+    <string name="onb_optional_app_lock_row_desc">Require your PIN or biometrics before Switchly can be opened.</string>
+    <string name="onb_optional_uninstall_row_title">Uninstall protection</string>
+    <string name="onb_optional_uninstall_row_desc">Add Android Device Admin friction before Switchly can be removed.</string>
+    <string name="onb_optional_faq_background_title">Background access checklist</string>
+    <string name="onb_optional_faq_background_desc">Check battery mode, Accessibility, auto-start and the permissions needed for reliable protection.</string>
+    <string name="onb_optional_faq_device_steps_title">Device-specific background steps</string>
+    <string name="onb_optional_faq_device_steps_desc">Open manufacturer-specific guidance for Xiaomi, Redmi, POCO, Samsung, Oppo and more.</string>
+    <string name="onb_optional_support_report_title">Report a problem</string>
+    <string name="onb_optional_support_report_desc">Create a support request with useful logs and device details.</string>
+    <string name="onb_optional_support_feedback_title">Send feedback</string>
+    <string name="onb_optional_support_feedback_desc">Share an idea, unclear wording or anything that could feel better.</string>
+
+    <string name="onb_optional_manage_hidden_action">Manage hidden apps</string>
+    <string name="onb_optional_home_settings_action">Open Home settings</string>
+    <string name="onb_optional_display_more_action">More display options</string>
+    <string name="onb_optional_protection_settings_action">Open protection settings</string>
+    <string name="onb_optional_access_more_action">More access controls</string>
+    <string name="onb_optional_faq_open_action">Open the full FAQ</string>
+    <string name="onb_optional_support_open_action">Open contact &amp; support</string>
 </resources>

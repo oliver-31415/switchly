@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title=""
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -198,7 +198,10 @@
                     android:layout_height="40dp"
                     android:minWidth="0dp"
                     android:contentDescription="@string/activity_history_range_custom"
+                    android:gravity="center"
+                    android:text=""
                     app:icon="@drawable/calendar_month_24"
+                    app:iconGravity="textStart"
                     app:iconPadding="0dp" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 

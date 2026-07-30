@@ -19,10 +19,8 @@
     <!-- Purchase and restore buttons -->
     <!-- ====================================================== -->
     <string name="premium_button_buy">Premium kaufen</string>
-    <string name="premium_price_label">Preis: %1$s</string>
-    <string name="premium_price_loading">Preis wird von Google Play geladen…</string>
-    <string name="premium_price_google_play_fallback">Preis wird vor dem Kauf von Google Play angezeigt.</string>
     <string name="premium_button_buy_with_price">Premium kaufen • %1$s</string>
+    <string name="premium_purchase_open_timeout">Google Play hat den Kaufbildschirm nicht geöffnet. Bitte versuche es erneut.</string>
     <string name="premium_purchase_error_generic">Google Play-Kauf konnte nicht geöffnet werden. Bitte versuche es erneut oder kontaktiere den Support.</string>
     <string name="premium_button_opening">Google Play wird geöffnet…</string>
     <string name="premium_button_restore">Käufe wiederherstellen</string>
@@ -83,7 +81,7 @@
     <string name="premium_redeem_code_hint">Premium-Code</string>
     <string name="premium_redeem_code_format">Beispiel: SWLY-XXXX-XXXX-XXXX</string>
     <string name="premium_redeem_code_format_switchly">Beispiel: SWLY-XXXX-XXXX-XXXX</string>
-    <string name="premium_redeem_code_format_offline">Beispiel: SALT-OFFLINE-0001</string>
+    <string name="premium_redeem_code_format_offline">Beispiel: SALT&#8209;OFFLINE&#8209;GJ86&#8209;8EV9</string>
     <string name="premium_redeem_button">Code einlösen</string>
     <string name="premium_redeem_checking">Code wird geprüft…</string>
     <string name="premium_redeem_success">Premium wurde erfolgreich freigeschaltet. Danke, dass du Switchly unterstützt!</string>

@@ -34,8 +34,11 @@ import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
+import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Tasks
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 object LocationTriggerMonitor {
@@ -46,6 +49,7 @@ object LocationTriggerMonitor {
     private const val REQUEST_PREFIX = "switchly_loc_"
     private const val REGISTRATION_REFRESH_MS = 10 * 60 * 1000L
     private const val REGISTRATION_IN_FLIGHT_DEBOUNCE_MS = 5_000L
+    private const val GEOFENCE_TASK_TIMEOUT_SECONDS = 15L
 
     @Volatile private var listening = false
     @Volatile private var lastRegistrationSignature: String? = null
@@ -57,7 +61,10 @@ object LocationTriggerMonitor {
         Thread(runnable, "SwitchlyLocationMonitor").apply { isDaemon = true }
     }
     private val syncScheduled = AtomicBoolean(false)
+    private val syncRequested = AtomicBoolean(false)
+    private val registrationLock = Any()
 
+    @Synchronized
     fun ensureStarted(context: Context) {
         val ctx = context.applicationContext
         if (!listening) {
@@ -74,18 +81,40 @@ object LocationTriggerMonitor {
 
     fun syncAsync(context: Context) {
         val ctx = context.applicationContext
-        if (!syncScheduled.compareAndSet(false, true)) return
-        syncExecutor.execute {
-            try {
-                syncNow(ctx)
-            } finally {
-                syncScheduled.set(false)
+        syncRequested.set(true)
+        if (!syncScheduled.compareAndSet(false, true)) {
+            return
+        }
+
+        val submitted = runCatching {
+            syncExecutor.execute {
+                try {
+                    do {
+                        syncRequested.set(false)
+                        syncNow(ctx)
+                    } while (syncRequested.get())
+                } finally {
+                    syncScheduled.set(false)
+                    if (syncRequested.get()) {
+                        syncAsync(ctx)
+                    }
+                }
             }
+        }.isSuccess
+
+        if (!submitted) {
+            syncScheduled.set(false)
         }
     }
 
     fun syncNow(context: Context) {
         val ctx = context.applicationContext
+        synchronized(registrationLock) {
+            syncNowLocked(ctx)
+        }
+    }
+
+    private fun syncNowLocked(ctx: Context) {
         val client = LocationServices.getGeofencingClient(ctx)
         val pendingIntent = geofencePendingIntent(ctx)
 
@@ -93,8 +122,7 @@ object LocationTriggerMonitor {
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasBackgroundLocationPermission(ctx))
         ) {
             clearRegistrationCache()
-            runCatching { client.removeGeofences(pendingIntent) }
-                .onFailure { Log.w(TAG, "removeGeofences failed: ${it.message}") }
+            removeGeofencesBlocking(client, pendingIntent)
             return
         }
 
@@ -104,8 +132,7 @@ object LocationTriggerMonitor {
 
         if (schedules.isEmpty()) {
             clearRegistrationCache()
-            runCatching { client.removeGeofences(pendingIntent) }
-                .onFailure { Log.w(TAG, "removeGeofences failed: ${it.message}") }
+            removeGeofencesBlocking(client, pendingIntent)
             return
         }
 
@@ -120,9 +147,6 @@ object LocationTriggerMonitor {
 
         inFlightRegistrationSignature = signature
         lastRegistrationAttemptMs = nowMs
-
-        runCatching { client.removeGeofences(pendingIntent) }
-            .onFailure { Log.w(TAG, "removeGeofences failed: ${it.message}") }
 
         val geofences = schedules.mapNotNull { s ->
             val lat = s.locationLat ?: return@mapNotNull null
@@ -150,7 +174,7 @@ object LocationTriggerMonitor {
         }
 
         val request = GeofencingRequest.Builder()
-            // Important: fire ENTER immediately when a schedule is created while the user is already inside the radius. 
+            // Important: fire ENTER immediately when a schedule is created while the user is already inside the radius.
             // Without this, location schedules can look broken until the user leaves and enters the area again.
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
             .addGeofences(geofences)
@@ -162,7 +186,9 @@ object LocationTriggerMonitor {
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
+            if (inFlightRegistrationSignature == signature) {
+                inFlightRegistrationSignature = null
+            }
             return
         }
         if (
@@ -172,32 +198,69 @@ object LocationTriggerMonitor {
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
+            if (inFlightRegistrationSignature == signature) {
+                inFlightRegistrationSignature = null
+            }
             return
         }
 
         try {
-            client.addGeofences(request, pendingIntent)
-                .addOnSuccessListener {
-                    lastRegistrationSignature = signature
-                    lastRegistrationSuccessMs = System.currentTimeMillis()
-                    if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
-                    AppLogStore.append(ctx, "Location", "Geofences registered count=${geofences.size}")
-                    checkCurrentLocationForInitialEnter(ctx, schedules)
+            // Wait for removal before adding the replacement set. Starting both tasks at once can
+            // let a late remove completion delete the newly registered geofences.
+            val removed = removeGeofencesBlocking(client, pendingIntent)
+            if (!removed) {
+                if (inFlightRegistrationSignature == signature) {
+                    inFlightRegistrationSignature = null
                 }
-                .addOnFailureListener { t ->
-                    if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
-                    AppLogStore.append(ctx, "Location", "Geofence registration failed: ${t.message ?: t.javaClass.simpleName}")
-                    Log.w(TAG, "addGeofences failed async: ${t.message}")
-                }
-        } catch (se: SecurityException) {
-            if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
-            AppLogStore.append(ctx, "Location", "Geofence registration failed: missing permission")
-            Log.w(TAG, "addGeofences failed: missing permission (${se.message})")
+                AppLogStore.append(ctx, "Location", "Geofence registration failed: previous registration could not be removed")
+                return
+            }
+
+            Tasks.await(
+                client.addGeofences(request, pendingIntent),
+                GEOFENCE_TASK_TIMEOUT_SECONDS,
+                TimeUnit.SECONDS
+            )
+
+            lastRegistrationSignature = signature
+            lastRegistrationSuccessMs = System.currentTimeMillis()
+            if (inFlightRegistrationSignature == signature) {
+                inFlightRegistrationSignature = null
+            }
+            AppLogStore.append(ctx, "Location", "Geofences registered count=${geofences.size}")
+            checkCurrentLocationForInitialEnter(ctx, schedules)
         } catch (t: Throwable) {
-            if (inFlightRegistrationSignature == signature) inFlightRegistrationSignature = null
-            AppLogStore.append(ctx, "Location", "Geofence registration failed: ${t.message ?: t.javaClass.simpleName}")
-            Log.w(TAG, "addGeofences failed: ${t.message}")
+            if (inFlightRegistrationSignature == signature) {
+                inFlightRegistrationSignature = null
+            }
+            val cause = t.cause ?: t
+            if (cause is InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
+            val message = cause.message ?: cause.javaClass.simpleName
+            AppLogStore.append(ctx, "Location", "Geofence registration failed: $message")
+            Log.w(TAG, "addGeofences failed: $message")
+        }
+    }
+
+    private fun removeGeofencesBlocking(
+        client: GeofencingClient,
+        pendingIntent: PendingIntent,
+    ): Boolean {
+        return runCatching {
+            Tasks.await(
+                client.removeGeofences(pendingIntent),
+                GEOFENCE_TASK_TIMEOUT_SECONDS,
+                TimeUnit.SECONDS
+            )
+            true
+        }.getOrElse { error ->
+            val cause = error.cause ?: error
+            if (cause is InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
+            Log.w(TAG, "removeGeofences failed: ${cause.message ?: cause.javaClass.simpleName}")
+            false
         }
     }
 
@@ -231,7 +294,9 @@ object LocationTriggerMonitor {
         context: Context,
         schedules: List<ScheduleStore.Schedule>
     ) {
-        if (!hasForegroundLocationPermission(context)) return
+        if (!hasForegroundLocationPermission(context)) {
+            return
+        }
 
         try {
             LocationServices.getFusedLocationProviderClient(context)
@@ -293,7 +358,9 @@ object LocationTriggerMonitor {
     fun requestIdForSchedule(scheduleId: Int): String = REQUEST_PREFIX + scheduleId
 
     fun scheduleIdFromRequestId(requestId: String?): Int? {
-        if (requestId.isNullOrBlank() || !requestId.startsWith(REQUEST_PREFIX)) return null
+        if (requestId.isNullOrBlank() || !requestId.startsWith(REQUEST_PREFIX)) {
+            return null
+        }
         return requestId.removePrefix(REQUEST_PREFIX).toIntOrNull()
     }
 
@@ -318,7 +385,9 @@ object LocationTriggerMonitor {
     }
 
     private fun hasBackgroundLocationPermission(context: Context): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return true
+        }
         return ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_BACKGROUND_LOCATION

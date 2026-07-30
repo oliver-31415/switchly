@@ -22,34 +22,40 @@ package at.saltyy.switchly.feature.usage
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import at.saltyy.switchly.data.prefs.OpenCountStore
+import at.saltyy.switchly.data.prefs.AppLaunchCountStore
+import at.saltyy.switchly.data.prefs.ScreenUnlockHistoryStore
 import at.saltyy.switchly.data.prefs.UsageStore
+import at.saltyy.switchly.data.statistics.StatsPersistence
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 object UsageHistoryBackfill {
     private const val PREFS = "switchly_prefs"
     private const val KEY_IMPORT_VERSION = "usage_history_backfill_version"
-    private const val CURRENT_VERSION = 2
+    private const val CURRENT_VERSION = 4
     private const val MAX_LOOKBACK_DAYS = 120
 
     fun maybeRun(ctx: Context): Boolean {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (readImportVersion(sp) >= CURRENT_VERSION) return false
-        if (!UsageStatsRepo.hasUsageAccess(ctx)) return false
-        // Accessibility-backed local history is the source of truth.
-        // Only do a one-time import on fresh installs/fresh data stores to seed older history conservatively.
-        if (UsageStore.hasAnyUsageData(ctx)) {
-            sp.edit { putInt(KEY_IMPORT_VERSION, CURRENT_VERSION) }
+        if (readImportVersion(sp) >= CURRENT_VERSION) {
             return false
         }
-
-        val changed = runCatching { backfillFromSystem(ctx) }.getOrDefault(false)
+        if (!UsageStatsRepo.hasUsageAccess(ctx)) {
+            return false
+        }
+        // Accessibility-backed local history remains the source of truth. Existing usage totals do
+        // not need to be overwritten, while launch counts and unlock sessions are imported because
+        // older builds depended on Android's short-lived event timeline for those views.
+        val importUsage = !UsageStore.hasAnyUsageData(ctx)
+        val result = runCatching { backfillFromSystem(ctx, importUsage) }
+        if (result.isFailure) {
+            return false
+        }
         sp.edit { putInt(KEY_IMPORT_VERSION, CURRENT_VERSION) }
-        return changed
+        return result.getOrDefault(false)
     }
 
-    private fun backfillFromSystem(ctx: Context): Boolean {
+    private fun backfillFromSystem(ctx: Context, importUsage: Boolean): Boolean {
         val now = System.currentTimeMillis()
         val todayStart = startOfDay(now)
         val startOfYear = Calendar.getInstance().apply {
@@ -73,22 +79,41 @@ object UsageHistoryBackfill {
             val dayEnd = minOf(next, now)
             val ymd = ymdInt(cursor)
 
-            val usage = UsageStatsRepo.getSingleDayUsageMapForImport(ctx, cursor, dayEnd)
-            for ((pkg, ms) in usage) {
-                val before = UsageStore.getUsageMsForDay(ctx, ymd, pkg)
-                UsageStore.mergeUsageMsForDay(ctx, ymd, pkg, ms)
-                if (ms > before) changed = true
+            if (importUsage) {
+                val usage = UsageStatsRepo.getSingleDayUsageMapForImport(ctx, cursor, dayEnd)
+                for ((pkg, ms) in usage) {
+                    val before = UsageStore.getUsageMsForDay(ctx, ymd, pkg)
+                    UsageStore.mergeUsageMsForDay(ctx, ymd, pkg, ms)
+                    if (ms > before) changed = true
+                }
+            }
+
+            val appSessions = UsageTimelineRepo.systemAllAppSessions(ctx, cursor, dayEnd, limit = 0)
+            if (appSessions.isNotEmpty()) {
+                StatsPersistence.archiveAppSessions(ctx, appSessions.map { session ->
+                    StatsPersistence.AppSession(session.packageName, session.startMs, session.endMs)
+                })
+                changed = true
             }
 
             val sessions = UsageStatsRepo.getSessionCountMapForWindow(ctx, cursor, dayEnd)
             for ((pkg, count) in sessions) {
-                OpenCountStore.mergeProfilelessForDay(ctx, ymd, pkg, count)
+                AppLaunchCountStore.mergeForDay(ctx, ymd, pkg, count)
                 if (count > 0) changed = true
+            }
+
+            val unlockSessions = UsageTimelineRepo.screenUnlockSessions(ctx, cursor, dayEnd, limit = 0)
+                .map { ScreenUnlockHistoryStore.Session(it.startMs, it.endMs) }
+            if (unlockSessions.isNotEmpty()) {
+                ScreenUnlockHistoryStore.mergeSessions(ctx, unlockSessions)
+                changed = true
             }
 
             cursor = next
         }
 
+        // Mark the migration complete only after every queued Room write has finished.
+        StatsPersistence.flushBlocking(ctx)
         return changed
     }
 

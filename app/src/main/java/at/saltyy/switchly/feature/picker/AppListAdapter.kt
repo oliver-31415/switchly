@@ -60,7 +60,9 @@ class AppListAdapter(
     private val onWebsiteRulesClicked: ((app: AppEntry) -> Unit)? = null,
     private val onInAppRulesClicked: ((app: AppEntry) -> Unit)? = null,
     private val onRowActionsClicked: ((app: AppEntry, hasWebsiteRules: Boolean, hasInAppRules: Boolean) -> Unit)? = null,
-    private val onSelectionChanged: ((count: Int) -> Unit)? = null
+    private val onProtectedSelectionRequested: ((app: AppEntry, onAllowed: () -> Unit) -> Unit)? = null,
+    private val onSelectionChanged: ((count: Int) -> Unit)? = null,
+    private val isReadOnlyProvider: () -> Boolean = { false }
 ) : ListAdapter<AppEntry, AppListAdapter.VH>(DIFF) {
 
     private val managed = preselectedManaged.toMutableSet()
@@ -98,7 +100,7 @@ class AppListAdapter(
         val isAllowMode = isAllowModeProvider.invoke()
         currentList.forEachIndexed { index, item ->
             val shouldSkip = if (isAllowMode) {
-                item.blockSafety.level == AppBlockSafety.Level.HARD_EXCLUDED
+                false
             } else {
                 item.blockSafety.level != AppBlockSafety.Level.NONE
             }
@@ -123,7 +125,9 @@ class AppListAdapter(
             .filter { it in managed }
             .toList()
 
-        if (unavailablePkgs.isEmpty()) return 0
+        if (unavailablePkgs.isEmpty()) {
+            return 0
+        }
 
         unavailablePkgs.forEach { pkg ->
             managed.remove(pkg)
@@ -166,7 +170,7 @@ class AppListAdapter(
     }
 
     private fun hasPinnedLimit(context: Context, profile: String?, item: AppEntry): Boolean {
-        if (profile.isNullOrBlank() || !item.isAvailable || item.blockSafety.level == AppBlockSafety.Level.HARD_EXCLUDED) {
+        if (profile.isNullOrBlank() || !item.isAvailable) {
             return false
         }
         return UsageLimitStore.getLimitMinutes(context, profile, item.packageName) > 0 ||
@@ -228,8 +232,6 @@ class AppListAdapter(
         private val tvMetaSeparator: TextView = v.findViewById(R.id.tvMetaSeparator)
 
         private val btnLimit: ImageButton = v.findViewById(R.id.btnLimit)
-        private val btnWebsiteRules: ImageButton = v.findViewById(R.id.btnWebsiteRules)
-        private val btnInAppRules: ImageButton = v.findViewById(R.id.btnInAppRules)
 
         private fun dp(value: Float): Int =
             (value * itemView.resources.displayMetrics.density).toInt()
@@ -260,8 +262,8 @@ class AppListAdapter(
         fun bind(item: AppEntry) {
             val ctx = itemView.context
             val profile = currentProfileProvider.invoke()
-            val hardExcluded = item.blockSafety.level == AppBlockSafety.Level.HARD_EXCLUDED
-            val softWarning = item.blockSafety.level == AppBlockSafety.Level.SOFT_WARNING
+            val readOnly = isReadOnlyProvider.invoke()
+            val protectedApp = item.blockSafety.level == AppBlockSafety.Level.PROTECTED
             val isAllowMode = isAllowModeProvider.invoke()
             val pinnedByInAppRules = hasPinnedInAppRule(ctx, profile, item)
 
@@ -286,7 +288,7 @@ class AppListAdapter(
             val hasSessionLimit = sessionLimitMin > 0
             val hasAttemptLimit = attemptLimit > 0
             val hasLimit = hasDailyLimit || hasSessionLimit || hasAttemptLimit
-            val effectiveHasLimit = hasLimit && !hardExcluded
+            val effectiveHasLimit = hasLimit
             val accent = AccentColor.getAccentColorInt(ctx)
 
             cb.buttonTintList = AccentColor.getActiveColor(ctx)
@@ -299,7 +301,7 @@ class AppListAdapter(
                     tvStateChip.visibility = View.VISIBLE
                     tvHint.visibility = View.VISIBLE
                     tvStateChip.text = ctx.getString(
-                        if (hardExcluded) R.string.app_picker_protected_chip else R.string.app_picker_caution_chip
+                        if (protectedApp) R.string.app_picker_protected_chip else R.string.app_picker_caution_chip
                     )
                     tvHint.text = item.blockSafety.hint
                 } else if (pinnedByInAppRules) {
@@ -358,15 +360,15 @@ class AppListAdapter(
                 limitRow.visibility = View.GONE
             }
 
-            if (hardExcluded) {
-                managed.remove(item.packageName)
-            }
-
             cb.setOnCheckedChangeListener(null)
 
-            cb.isChecked = !hardExcluded && (managed.contains(item.packageName) || pinnedByInAppRules)
-            cb.isEnabled = !hardExcluded
-            cb.alpha = if (hardExcluded) 0.65f else 1f
+            cb.isChecked = managed.contains(item.packageName) || pinnedByInAppRules
+            cb.isEnabled = item.isAvailable && !readOnly
+            cb.alpha = when {
+                !item.isAvailable -> 0.65f
+                readOnly -> 0.45f
+                else -> 1f
+            }
 
             lateinit var listener: CompoundButton.OnCheckedChangeListener
             fun setCheckedSilently(value: Boolean) {
@@ -376,19 +378,42 @@ class AppListAdapter(
             }
 
             listener = CompoundButton.OnCheckedChangeListener { _, checked ->
+                if (isReadOnlyProvider.invoke()) {
+                    setCheckedSilently(managed.contains(item.packageName) || pinnedByInAppRules)
+                    cb.isEnabled = false
+                    cb.alpha = 0.45f
+                    return@OnCheckedChangeListener
+                }
                 if (checked) {
-                    if (softWarning && !isAllowMode) {
+                    val needsWarning = if (isAllowMode) {
+                        false
+                    } else {
+                        item.blockSafety.level != AppBlockSafety.Level.NONE
+                    }
+                    if (needsWarning) {
                         setCheckedSilently(false)
-                        AlertDialog.Builder(ctx)
-                            .setTitle(item.blockSafety.warningTitle ?: ctx.getString(R.string.app_picker_protected_caution_title))
-                            .setMessage(item.blockSafety.warningMessage ?: item.blockSafety.hint ?: ctx.getString(R.string.app_picker_protected_generic_hint))
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .setPositiveButton(R.string.continue_label) { _, _ ->
-                                managed.add(item.packageName)
-                                notifySelectionCountChanged()
-                                notifyPkgChanged(item.packageName)
-                            }
-                            .showAccented()
+                        val allowSelection = {
+                            managed.add(item.packageName)
+                            notifySelectionCountChanged()
+                            notifyPkgChanged(item.packageName)
+                        }
+                        val protectedSelectionHandler = onProtectedSelectionRequested
+                        if (protectedSelectionHandler != null) {
+                            protectedSelectionHandler.invoke(item, allowSelection)
+                        } else {
+                            AlertDialog.Builder(ctx)
+                                .setTitle(item.blockSafety.warningTitle ?: ctx.getString(R.string.app_picker_protected_warning_title))
+                                .setMessage(item.blockSafety.warningMessage ?: item.blockSafety.hint ?: ctx.getString(R.string.app_picker_protected_warning_message))
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .setPositiveButton(
+                                    if (protectedApp) {
+                                        R.string.app_picker_block_protected_confirm
+                                    } else {
+                                        R.string.continue_label
+                                    }
+                                ) { _, _ -> allowSelection() }
+                                .showAccented()
+                        }
                     } else {
                         managed.add(item.packageName)
                         notifySelectionCountChanged()
@@ -413,31 +438,31 @@ class AppListAdapter(
             }
             cb.setOnCheckedChangeListener(listener)
 
-            bindRowActionButtons(item, hardExcluded)
+            bindRowActionButtons(item)
         }
 
-        private fun bindRowActionButtons(item: AppEntry, hardExcluded: Boolean) {
+        private fun bindRowActionButtons(item: AppEntry) {
             val ctx = itemView.context
-            val enabled = item.isAvailable && !hardExcluded
             val hasWebsiteRules = hasWebsiteRulesShortcut(item)
             val hasInAppRules = hasInAppRulesShortcut(item)
             val hasSecondaryRules = hasWebsiteRules || hasInAppRules
 
-            // Keep the row clean: browsers/supported in-app apps use the main row action button as a small rules menu instead of showing multiple tiny icons.
-            btnWebsiteRules.visibility = View.GONE
-            btnInAppRules.visibility = View.GONE
-
+            // Browsers and supported in-app apps use the main row action button as a compact rules menu.
             btnLimit.setImageResource(if (hasSecondaryRules) R.drawable.tune_24 else R.drawable.schedule_24)
             btnLimit.contentDescription = ctx.getString(
                 if (hasSecondaryRules) R.string.app_picker_row_actions else R.string.set_daily_limit
             )
             btnLimit.setColorFilter(AccentColor.getAccentColorInt(ctx))
 
-            if (item.isAvailable && !hardExcluded) {
+            if (item.isAvailable) {
                 btnLimit.visibility = View.VISIBLE
-                btnLimit.isEnabled = true
-                btnLimit.alpha = 1f
+                val readOnly = isReadOnlyProvider.invoke()
+                btnLimit.isEnabled = !readOnly
+                btnLimit.alpha = if (readOnly) 0.45f else 1f
                 btnLimit.setOnClickListener {
+                    if (isReadOnlyProvider.invoke()) {
+                        return@setOnClickListener
+                    }
                     if (hasSecondaryRules && onRowActionsClicked != null) {
                         onRowActionsClicked.invoke(item, hasWebsiteRules, hasInAppRules)
                     } else {
@@ -445,18 +470,10 @@ class AppListAdapter(
                     }
                 }
                 btnLimit.setOnLongClickListener {
+                    if (isReadOnlyProvider.invoke()) {
+                        return@setOnLongClickListener true
+                    }
                     onSetSessionLimitClicked?.invoke(item)
-                    true
-                }
-            } else if (item.isAvailable) {
-                btnLimit.visibility = View.VISIBLE
-                btnLimit.isEnabled = false
-                btnLimit.alpha = 0.45f
-                btnLimit.setOnClickListener {
-                    Toast.makeText(ctx, item.blockSafety.hint ?: ctx.getString(R.string.app_picker_protected_generic_hint), Toast.LENGTH_LONG).show()
-                }
-                btnLimit.setOnLongClickListener {
-                    Toast.makeText(ctx, item.blockSafety.hint ?: ctx.getString(R.string.app_picker_protected_generic_hint), Toast.LENGTH_LONG).show()
                     true
                 }
             } else {
@@ -473,26 +490,6 @@ class AppListAdapter(
             }
         }
 
-        private fun bindActionButton(
-            button: ImageButton,
-            visible: Boolean,
-            enabled: Boolean,
-            disabledToast: String,
-            onClick: () -> Unit
-        ) {
-            val ctx = itemView.context
-            button.visibility = if (visible) View.VISIBLE else View.GONE
-            button.isEnabled = enabled
-            button.alpha = if (enabled) 0.82f else 0.45f
-            button.setColorFilter(ContextCompat.getColor(ctx, R.color.status_neutral))
-            button.setOnClickListener {
-                if (enabled) {
-                    onClick()
-                } else {
-                    Toast.makeText(ctx, disabledToast, Toast.LENGTH_LONG).show()
-                }
-            }
-        }
     }
 
     companion object {

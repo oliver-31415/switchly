@@ -40,6 +40,7 @@ import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
+import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.PauseUntilStore
 import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
@@ -55,7 +56,9 @@ import kotlin.math.abs
 class ScheduleReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != ACTION_TICK) return
+        if (intent.action != ACTION_TICK) {
+            return
+        }
         val ctx = context.applicationContext
 
         // Heartbeat for schedule health diagnostics in UI.
@@ -70,6 +73,12 @@ class ScheduleReceiver : BroadcastReceiver() {
         val locationTransition = intent.getIntExtra(EXTRA_LOCATION_TRANSITION, -1)
         if (locationScheduleId > 0 && locationTransition > 0) {
             handleLocationTransition(ctx, locationScheduleId, locationTransition)
+            return
+        }
+
+        if (EmergencyBypassStore.isActive(ctx)) {
+            AppLogStore.append(ctx, "Schedule", "schedule_skipped reason=emergency_active")
+            updateNextAlarmAndNotifyIfChanged(ctx)
             return
         }
 
@@ -389,17 +398,13 @@ class ScheduleReceiver : BroadcastReceiver() {
                 "schedule_conflict active=#${target.id}:${ScheduleInsights.scheduleDisplayName(target)} overwritten=$overwritten"
             )
         }
-        AppLogStore.append(
-            ctx,
-            "Schedule",
-            "schedule_match id=${target.id} name=${ScheduleInsights.scheduleDisplayName(target)} action=${target.action.name} profile=${target.profile.ifBlank { "-" }} day=$todayBit time=$nowMinutes"
-        )
-        dbg("matches=${matches.size} -> winner id=${target.id} profile=${target.profile} start=${target.startMinutes} end=${target.endMinutes} action=${target.action}")
         val source = when {
             !target.wifiSsid.isNullOrBlank() -> SOURCE_WIFI
             !target.btDeviceName.isNullOrBlank() || !target.btDeviceAddress.isNullOrBlank() -> SOURCE_BT
             else -> SOURCE_TIME
         }
+
+        dbg("matches=${matches.size} -> winner id=${target.id} profile=${target.profile} start=${target.startMinutes} end=${target.endMinutes} action=${target.action}")
 
         // If the user manually toggled Switchly while a RANGE schedule is active, don't let the schedule instantly override the user's choice.
         // The override clears automatically once the schedule condition is no longer active.
@@ -448,8 +453,16 @@ class ScheduleReceiver : BroadcastReceiver() {
             shouldFireOneShotTime(ctx, target, token)
         }
 
+        if (executedNow) {
+            AppLogStore.append(
+                ctx,
+                "Schedule",
+                "schedule_match id=${target.id} name=${ScheduleInsights.scheduleDisplayName(target)} action=${target.action.name} profile=${target.profile.ifBlank { "-" }} day=$todayBit time=$nowMinutes"
+            )
+        }
+
         val applied = applySchedule(ctx, target, source)
-        if (applied) {
+        if (applied || executedNow) {
             if (executedNow) {
                 ScheduleExecutionCountStore.incrementToday(ctx)
             }
@@ -485,7 +498,9 @@ class ScheduleReceiver : BroadcastReceiver() {
 
         val isEnter = transition == Geofence.GEOFENCE_TRANSITION_ENTER
         val isExit = transition == Geofence.GEOFENCE_TRANSITION_EXIT
-        if ((isEnter && !wantsEnter) || (isExit && !wantsExit)) return
+        if ((isEnter && !wantsEnter) || (isExit && !wantsExit)) {
+            return
+        }
 
         val pairedMode = schedule.locationTrigger == ScheduleStore.LocationTrigger.ENTER_EXIT && (
             schedule.action == ScheduleStore.Action.ENABLE_AND_DISABLE ||
@@ -501,8 +516,12 @@ class ScheduleReceiver : BroadcastReceiver() {
                 inTimeRange(nowMinutes, schedule.startMinutes, schedule.endMinutes)
             )
 
-        if (isEnter && !withinDayAndTime) return
-        if (isExit && !withinDayAndTime && !pairedMode) return
+        if (isEnter && !withinDayAndTime) {
+            return
+        }
+        if (isExit && !withinDayAndTime && !pairedMode) {
+            return
+        }
 
         val effectiveAction = when (schedule.locationTrigger) {
             ScheduleStore.LocationTrigger.ENTER -> if (isEnter) schedule.action else null
@@ -526,7 +545,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
         ScheduleRuntimeStore.setLastLocationTransitionMs(ctx, schedule.id, transitionKey, nowMs)
 
-        val applied = applySchedule(ctx, schedule.copy(action = effectiveAction), SOURCE_LOCATION)
+        val applied = applySchedule(ctx, schedule.copy(action = effectiveAction), SOURCE_LOCATION, countNoopAsApplied = true)
         if (!applied) {
             if (isExit && ScheduleRuntimeStore.isManualSchedulePausedFor(ctx, schedule.id)) {
                 ScheduleRuntimeStore.setManualSchedulePauseActive(ctx, false)
@@ -600,7 +619,49 @@ class ScheduleReceiver : BroadcastReceiver() {
         )
     }
 
-    private fun applySchedule(ctx: Context, s: ScheduleStore.Schedule, source: String): Boolean {
+    private fun logScheduleNoopIfNeeded(
+        ctx: Context,
+        schedule: ScheduleStore.Schedule,
+        source: String,
+        enabled: Boolean
+    ) {
+        val nowMs = System.currentTimeMillis()
+        val signature = "${schedule.id}|${schedule.action.name}|${schedule.profile}|$source|$enabled"
+        val prefs = ctx.getSharedPreferences(PREFS_RUNTIME, Context.MODE_PRIVATE)
+        val lastTs = prefs.getLong(KEY_LAST_NOOP_LOG_TS, 0L)
+        val lastSignature = prefs.getString(KEY_LAST_NOOP_LOG_SIGNATURE, null)
+
+        if (lastSignature == signature && nowMs - lastTs < SCHEDULE_NOOP_LOG_THROTTLE_MS) {
+            return
+        }
+
+        prefs.edit {
+            putLong(KEY_LAST_NOOP_LOG_TS, nowMs)
+            putString(KEY_LAST_NOOP_LOG_SIGNATURE, signature)
+        }
+        AppLogStore.append(
+            ctx,
+            "Schedule",
+            "schedule_noop id=${schedule.id} name=${ScheduleInsights.scheduleDisplayName(schedule)} action=${schedule.action.name} profile=${schedule.profile.ifBlank { "-" }} source=$source enabled=$enabled reason=unchanged"
+        )
+    }
+
+    private fun applySchedule(
+        ctx: Context,
+        s: ScheduleStore.Schedule,
+        source: String,
+        countNoopAsApplied: Boolean = false
+    ): Boolean {
+        if (EmergencyBypassStore.isActive(ctx)) {
+            AppLogStore.append(
+                ctx,
+                "Schedule",
+                "schedule_skipped id=${s.id} name=${ScheduleInsights.scheduleDisplayName(s)} action=${s.action.name} source=$source reason=emergency_active"
+            )
+            updateNextAlarmAndNotifyIfChanged(ctx)
+            return false
+        }
+
         val currentProfile = ProfileStore.getCurrent(ctx)
         val tempOverrideActive = SwitchModeStore.hasActiveTemporaryOverride(ctx)
         val profileChanged = !tempOverrideActive && currentProfile != s.profile
@@ -703,6 +764,8 @@ class ScheduleReceiver : BroadcastReceiver() {
             ScheduleRuntimeStore.markDisableBlockedByNfc(ctx)
             AppLogStore.append(ctx, "Schedule", "Match failed reason=disable_blocked_by_nfc")
             dbg("Schedule disable blocked by NFC lock (id=${s.id}, source=$source)")
+            updateNextAlarmAndNotifyIfChanged(ctx)
+            return false
         }
 
         if (profileChanged) {
@@ -720,12 +783,6 @@ class ScheduleReceiver : BroadcastReceiver() {
             BlockingRuntime.ensureRunning(ctx)
         }
 
-        AppLogStore.append(
-            ctx,
-            "Schedule",
-            "schedule_apply id=${s.id} name=${ScheduleInsights.scheduleDisplayName(s)} action=${s.action.name} profile=${s.profile.ifBlank { "-" }} source=$source enabledBefore=$baseEnabledBefore enabledAfter=$baseEnabledAfter profileChanged=$profileChanged"
-        )
-
         if (isRangeEnableDisable || isRangeDisableEnable) {
             ScheduleRuntimeStore.setActiveRangeScheduleId(ctx, s.id)
         } else {
@@ -737,7 +794,7 @@ class ScheduleReceiver : BroadcastReceiver() {
             setLastActivationSource(ctx, source)
         }
 
-        // range flags: set based on current applied schedule
+        // Range flags: set based on the current applied schedule.
         if (ScheduleRuntimeStore.hadEnableAndDisable(ctx) != isRangeEnableDisable) {
             ScheduleRuntimeStore.setHadEnableAndDisable(ctx, isRangeEnableDisable)
         }
@@ -745,20 +802,36 @@ class ScheduleReceiver : BroadcastReceiver() {
             ScheduleRuntimeStore.setHadDisableAndEnable(ctx, isRangeDisableEnable)
         }
 
+        if (!stateActuallyChanged && !profileChanged) {
+            logScheduleNoopIfNeeded(ctx, s, source, baseEnabledAfter)
+            updateNextAlarmAndNotifyIfChanged(ctx)
+            return countNoopAsApplied
+        }
+
+        AppLogStore.append(
+            ctx,
+            "Schedule",
+            "schedule_apply id=${s.id} name=${ScheduleInsights.scheduleDisplayName(s)} action=${s.action.name} profile=${s.profile.ifBlank { "-" }} source=$source enabledBefore=$baseEnabledBefore enabledAfter=$baseEnabledAfter profileChanged=$profileChanged"
+        )
+
         updateNextAlarmAndNotifyIfChanged(ctx)
         return true
     }
 
     private fun shouldFireOneShotTime(ctx: Context, s: ScheduleStore.Schedule, token: String): Boolean {
         val last = ScheduleRuntimeStore.getLastFiredToken(ctx, s.id)
-        if (last == token) return false
+        if (last == token) {
+            return false
+        }
         ScheduleRuntimeStore.setLastFiredToken(ctx, s.id, token)
         return true
     }
 
     private fun shouldFireOneShotConn(ctx: Context, s: ScheduleStore.Schedule, token: String): Boolean {
         val last = ScheduleRuntimeStore.getLastFiredToken(ctx, s.id)
-        if (last == token) return false
+        if (last == token) {
+            return false
+        }
         ScheduleRuntimeStore.setLastFiredToken(ctx, s.id, token)
         return true
     }
@@ -781,7 +854,9 @@ class ScheduleReceiver : BroadcastReceiver() {
     }
 
     private fun activeStartSortKey(s: ScheduleStore.Schedule, nowMin: Int): Int {
-        if (!inTimeRange(nowMin, s.startMinutes, s.endMinutes)) return Int.MIN_VALUE
+        if (!inTimeRange(nowMin, s.startMinutes, s.endMinutes)) {
+            return Int.MIN_VALUE
+        }
 
         return if (s.endMinutes > s.startMinutes || nowMin >= s.startMinutes) {
             s.startMinutes
@@ -827,7 +902,9 @@ class ScheduleReceiver : BroadcastReceiver() {
             .orEmpty()
 
     private fun inTimeRange(nowMin: Int, startMin: Int, endMin: Int): Boolean {
-        if (endMin == startMin) return false
+        if (endMin == startMin) {
+            return false
+        }
 
         if (endMin > startMin) {
             return nowMin in startMin until endMin
@@ -858,7 +935,9 @@ class ScheduleReceiver : BroadcastReceiver() {
     private fun isAnyBtProfileConnected(ctx: Context): Boolean? {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val granted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
-            if (!granted) return null
+            if (!granted) {
+                return null
+            }
         }
 
         val bm = ctx.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager ?: return null
@@ -898,7 +977,9 @@ class ScheduleReceiver : BroadcastReceiver() {
         return try {
             for (n in allNetworksCompat(cm)) {
                 val caps = cm.getNetworkCapabilities(n) ?: continue
-                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return caps
+                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                    return caps
+                }
             }
             null
         } catch (_: Throwable) {
@@ -962,7 +1043,9 @@ class ScheduleReceiver : BroadcastReceiver() {
         val prefs = ctx.getSharedPreferences(PREFS_WIFI, Context.MODE_PRIVATE)
         val lastKey = prefs.getString(KEY_WIFI_LOG_STATE, null)
         val lastAt = prefs.getLong(KEY_WIFI_LOG_AT, 0L)
-        if (lastKey == key && now - lastAt < WIFI_LOG_THROTTLE_MS) return
+        if (lastKey == key && now - lastAt < WIFI_LOG_THROTTLE_MS) {
+            return
+        }
 
         prefs.edit {
             putString(KEY_WIFI_LOG_STATE, key)
@@ -982,7 +1065,9 @@ class ScheduleReceiver : BroadcastReceiver() {
     private fun cacheBtIdentity(ctx: Context, name: String?, addr: String?) {
         val cleanName = name?.trim()?.takeIf { it.isNotBlank() }
         val cleanAddr = addr?.trim()?.takeIf { it.isNotBlank() }
-        if (cleanName == null && cleanAddr == null) return
+        if (cleanName == null && cleanAddr == null) {
+            return
+        }
 
         ctx.getSharedPreferences(PREFS_BT, Context.MODE_PRIVATE).edit {
             if (cleanName != null) putString(KEY_BT_NAME, cleanName)
@@ -998,7 +1083,11 @@ class ScheduleReceiver : BroadcastReceiver() {
 
     private fun btAgeMs(ctx: Context): Long {
         val ts = ctx.getSharedPreferences(PREFS_BT, Context.MODE_PRIVATE).getLong(KEY_BT_TS, 0L)
-        return if (ts <= 0L) Long.MAX_VALUE else System.currentTimeMillis() - ts
+        return if (ts <= 0L) {
+            Long.MAX_VALUE
+        } else {
+            System.currentTimeMillis() - ts
+        }
     }
 
     private fun cachedBtName(ctx: Context) =
@@ -1009,12 +1098,6 @@ class ScheduleReceiver : BroadcastReceiver() {
 
     private fun cachedBtConnected(ctx: Context) =
         ctx.getSharedPreferences(PREFS_BT, Context.MODE_PRIVATE).getBoolean(KEY_BT_CONNECTED, false)
-
-    private fun setBtConnected(ctx: Context, connected: Boolean) {
-        ctx.getSharedPreferences(PREFS_BT, Context.MODE_PRIVATE).edit {
-            putBoolean(KEY_BT_CONNECTED, connected)
-        }
-    }
 
     private fun setLastActivationSource(ctx: Context, source: String) {
         ctx.getSharedPreferences(PREFS_RUNTIME, Context.MODE_PRIVATE).edit {
@@ -1043,7 +1126,10 @@ class ScheduleReceiver : BroadcastReceiver() {
         private const val KEY_LAST_SOURCE = "last_activation_source"
         private const val KEY_LAST_EVAL_LOG_TS = "schedule_eval_log_ts"
         private const val KEY_LAST_EVAL_LOG_SIGNATURE = "schedule_eval_log_signature"
+        private const val KEY_LAST_NOOP_LOG_TS = "schedule_noop_log_ts"
+        private const val KEY_LAST_NOOP_LOG_SIGNATURE = "schedule_noop_log_signature"
         private const val SCHEDULE_EVAL_LOG_THROTTLE_MS = 15 * 60 * 1000L
+        private const val SCHEDULE_NOOP_LOG_THROTTLE_MS = 15 * 60 * 1000L
         const val EXTRA_LOCATION_SCHEDULE_ID = "locationScheduleId"
         const val EXTRA_LOCATION_TRANSITION = "locationTransition"
         private const val SOURCE_WIFI = "wifi"

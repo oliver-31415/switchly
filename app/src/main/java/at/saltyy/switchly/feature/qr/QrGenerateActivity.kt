@@ -37,7 +37,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -53,6 +52,7 @@ import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
 import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.zxing.BarcodeFormat
@@ -117,6 +117,10 @@ class QrGenerateActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
+
+        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_qr_codes)) {
+            return
+        }
 
         if (!AutomationModeStore.shouldShowQrTools(this)) {
             Toast.makeText(this, R.string.mode_blocked_qr_action, Toast.LENGTH_SHORT).show()
@@ -187,6 +191,10 @@ class QrGenerateActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (!::b.isInitialized) return
+        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_qr_codes)) {
+            return
+        }
         setupToolbar()
         applyAccent()
     }
@@ -204,7 +212,7 @@ class QrGenerateActivity : AppCompatActivity() {
 
         b.toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
-        b.toolbar.setNavigationIcon(R.drawable.arrow_back_ios_24)
+        b.toolbar.setNavigationIcon(R.drawable.keyboard_arrow_left_24)
         b.toolbar.navigationIcon?.mutate()?.setTint(
             ContextCompat.getColor(this, R.color.font_white)
         )
@@ -377,7 +385,9 @@ class QrGenerateActivity : AppCompatActivity() {
 
     private fun parseMinutes(text: String?): Long? {
         val s = text?.trim().orEmpty()
-        if (s.isBlank()) return null
+        if (s.isBlank()) {
+            return null
+        }
         val match = Regex("""\d+""").find(s) ?: return null
         return match.value.toLongOrNull()
     }
@@ -408,7 +418,9 @@ class QrGenerateActivity : AppCompatActivity() {
     private fun shareQrAsPng() {
         val bitmap = currentQrBitmap ?: run {
             val uriText = b.tvUri.text?.toString().orEmpty()
-            if (uriText.isBlank()) return
+            if (uriText.isBlank()) {
+                return
+            }
             generateQrBitmap(uriText, 900)
         }
         val streamUri = writeQrBitmapToCache(bitmap) ?: run {

@@ -24,7 +24,9 @@ import android.view.accessibility.AccessibilityNodeInfo
 
 internal fun sanitizeWebsiteSignal(raw: String?, maxLen: Int = 120): String {
     val value = raw?.trim().orEmpty()
-    if (value.isBlank()) return "-"
+    if (value.isBlank()) {
+        return "-"
+    }
     val noQuery = value.substringBefore('?').substringBefore('#')
     val withoutScheme = noQuery.removePrefix("https://").removePrefix("http://")
     val trimmed = noQuery.trim('/').ifBlank { withoutScheme.take(maxLen) }

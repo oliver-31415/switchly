@@ -41,6 +41,7 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.view.DragEvent
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -63,7 +64,6 @@ import androidx.core.content.edit
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
@@ -110,17 +110,15 @@ import at.saltyy.switchly.feature.qr.QrScanActivity
 import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.ManageBlockedWebsitesActivity
-import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
 import at.saltyy.switchly.feature.settings.PermissionsActivity
-import at.saltyy.switchly.feature.settings.ReelsShortsBlockingActivity
+import at.saltyy.switchly.feature.settings.InAppRulesActivity
 import at.saltyy.switchly.feature.settings.SettingsActivity
 import at.saltyy.switchly.feature.settings.ToggleOptionsActivity
 import at.saltyy.switchly.feature.settings.HomeModeDialogHelper
 import at.saltyy.switchly.feature.support.SupportActivity
-import at.saltyy.switchly.feature.tools.BlockingHubActivity
-import at.saltyy.switchly.feature.tools.ManageInsightsActivity
-import at.saltyy.switchly.feature.tools.ToolsHubActivity
-import at.saltyy.switchly.feature.usage.ActiveTimeStatsActivity
+import at.saltyy.switchly.feature.tools.RulesHubActivity
+import at.saltyy.switchly.feature.tools.ActivityHubActivity
+import at.saltyy.switchly.feature.usage.ActiveTimeActivity
 import at.saltyy.switchly.feature.usage.QuickLimitDialogs
 import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.nfc.NfcWriterActivity
@@ -132,29 +130,25 @@ import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
+import at.saltyy.switchly.util.ActivityTransitionCompat
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
 import at.saltyy.switchly.util.ProtectionStatusNotifier
-import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.TimeFormatPrefs
 import at.saltyy.switchly.util.getIntCompat
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.checkbox.MaterialCheckBox
-import com.google.android.material.chip.Chip
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
-import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import java.util.Date
 import java.util.Calendar
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
@@ -168,35 +162,22 @@ import kotlinx.coroutines.withContext
 class MainActivity : AppCompatActivity() {
 
     companion object {
+        const val EXTRA_SKIP_ONBOARDING_GATE_ONCE = "extra_skip_onboarding_gate_once"
+
         private const val PREFS_UI_HINTS = "switchly_ui_hints"
         private const val KEY_TEMP_MODE_DISCOVERED = "temp_mode_discovered"
         private const val KEY_PRIMARY_TOGGLE_TAP_COUNT = "primary_toggle_tap_count"
         private const val KEY_QUICK_ACTIONS_EXPANDED = "home_quick_actions_expanded"
-        private const val KEY_EXPERIMENTAL_NOTICE = "experimental_notice_shown"
-        private const val KEY_HOME_LAYOUT_DETAILED = "home_layout_detailed"
-        private const val KEY_HOME_LAYOUT_MODE = "home_layout_mode"
-        private const val HOME_MODE_DEFAULT = "default"
-        private const val HOME_MODE_SIMPLE = "simple"
-        private const val HOME_MODE_ADVANCED = "advanced"
-        private const val HOME_MODE_FOCUS = "focus"
-        private const val HOME_MODE_CUSTOM = "custom"
-        private const val KEY_HOME_CUSTOM_ACTIVE_TIMER = "home_custom_active_timer"
-        private const val KEY_HOME_CUSTOM_MAIN_BUTTON = "home_custom_main_button"
-        private const val KEY_HOME_CUSTOM_ACTIVE_PROFILE = "home_custom_active_profile"
-        private const val KEY_HOME_CUSTOM_CONTROL_MODE = "home_custom_control_mode"
-        private const val KEY_HOME_CUSTOM_PICK_APPS = "home_custom_pick_apps"
-        private const val KEY_HOME_CUSTOM_TEMPORARY = "home_custom_temporary"
-        private const val KEY_HOME_CUSTOM_EMERGENCY = "home_custom_emergency"
-        private const val KEY_HOME_CUSTOM_QUICK_ACTIONS = "home_custom_quick_actions"
-        private const val KEY_HOME_CUSTOM_NEXT_SCHEDULE = "home_custom_next_schedule"
-        private const val KEY_HOME_CUSTOM_BLOCKED_NOW = "home_custom_blocked_now"
-        private const val KEY_HOME_CUSTOM_BLOCKED_APPS = "home_custom_blocked_apps"
-        private const val KEY_HOME_CUSTOM_PROFILE_DROPDOWN = "home_custom_profile_dropdown"
+        private const val KEY_BLOCKED_APPS_EXPANDED = "home_blocked_apps_expanded"
+        private const val KEY_EXPERIMENTAL_NOTICE_VERSION = "experimental_notice_last_version"
+        private const val EXPERIMENTAL_NOTICE_VERSION = 222
+        private const val KEY_BOTTOM_NAV_TOUR_PENDING = "bottom_nav_tour_pending"
+        private const val KEY_BOTTOM_NAV_TOUR_VERSION = "bottom_nav_tour_version"
+        private const val BOTTOM_NAV_TOUR_VERSION = 1
         private const val KEY_QA_APPS = "home_quick_tile_apps"
         private const val KEY_QA_PROFILES = "home_quick_tile_profiles"
         private const val KEY_QA_WEBSITES = "home_quick_tile_websites"
         private const val KEY_QA_INAPP = "home_quick_tile_inapp"
-        private const val KEY_QA_USAGE = "home_quick_tile_usage"
         private const val KEY_QA_NFC_WRITE = "home_quick_tile_nfc_write"
         private const val KEY_QA_BLOCKED_NOTIFICATIONS = "home_quick_tile_blocked_notifications"
         private const val KEY_QA_QR = "home_quick_tile_qr"
@@ -206,6 +187,11 @@ class MainActivity : AppCompatActivity() {
         private val PAYLOAD_BLOCKED_CHIPS = Any()
         private val PAYLOAD_BLOCKED_EDIT_STATE = Any()
 
+        fun queueBottomNavTour(context: Context) {
+            context.getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE).edit {
+                putBoolean(KEY_BOTTOM_NAV_TOUR_PENDING, true)
+            }
+        }
     }
 
     // Core status
@@ -218,15 +204,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvNfcLockedHint: TextView
     private lateinit var btnToggle: MaterialButton
     private lateinit var btnSimplePickApps: MaterialButton
-    private lateinit var chipTemp: Chip
     private lateinit var tvTempHint: TextView
     private lateinit var tvEmergencyHint: TextView
     private lateinit var layoutHomeRoot: LinearLayout
     private lateinit var layoutStatusContent: LinearLayout
+    private lateinit var layoutProtectionStatus: View
     private lateinit var cardStatus: MaterialCardView
     private lateinit var spaceBeforeStatusCard: View
-    private val customHomeCards = mutableMapOf<String, MaterialCardView>()
-    private val customHomeOriginalLayoutParams = mutableMapOf<View, ViewGroup.LayoutParams>()
+    private var bottomNavTourScheduled = false
+    private var bottomNavTourShowing = false
+    private var bottomNavTourDialog: AlertDialog? = null
+    private var bottomNavTourHighlight: BottomNavTourHighlight? = null
+    private var bottomNavTourOriginalIconTint: ColorStateList? = null
+    private var bottomNavTourOriginalTextTint: ColorStateList? = null
 
     // Profile controls
     private lateinit var profileDropdown: MaterialAutoCompleteTextView
@@ -237,7 +227,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardSetup: MaterialCardView
     private lateinit var tvSetupTitle: TextView
     private lateinit var tvSetupSubtitle: TextView
-    private lateinit var tvSetupBadge: TextView
     private lateinit var tvSetupDesc: TextView
     private lateinit var btnFinishSetup: MaterialButton
 
@@ -246,7 +235,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tileProfiles: MaterialCardView
     private lateinit var tileWriteNfc: MaterialCardView
     private lateinit var tileToggleOptions: MaterialCardView
-    private lateinit var tilePermissions: MaterialCardView
     private lateinit var tileNfcWrite: MaterialCardView
     private lateinit var tileBlockedNotifications: MaterialCardView
     private lateinit var tileQr: MaterialCardView
@@ -254,30 +242,26 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rowToolsShortcuts: LinearLayout
     private lateinit var rowScanShortcuts: LinearLayout
 
+    private lateinit var cardQuickActions: View
     private lateinit var rowQuickActionsHeader: View
+    private lateinit var dividerQuickActions: View
     private lateinit var tvQuickActionsTitle: TextView
     private lateinit var ivQuickActionsEdit: ImageView
     private lateinit var ivQuickActionsChevron: ImageView
     private lateinit var gridQuickActions: View
     private lateinit var rowManageShortcuts: LinearLayout
     private lateinit var rowUtilityShortcuts: LinearLayout
-    private lateinit var badgePermissions: TextView
 
     // Next schedule
     private lateinit var cardNextSchedule: MaterialCardView
     private lateinit var tvNextScheduleValue: TextView
     private var nextChangedReceiver: BroadcastReceiver? = null
 
-    // Blocked right now (live)
-    private lateinit var cardBlockedNow: MaterialCardView
-    private lateinit var layoutBlockedNowEmpty: View
-    private lateinit var ivBlockedNowEmptyIcon: ImageView
-    private lateinit var tvBlockedNowEmpty: TextView
-    private lateinit var tvBlockedNowMore: TextView
-    private lateinit var rvBlockedNow: RecyclerView
-
     // Blocked list
     private lateinit var cardBlockedApps: MaterialCardView
+    private lateinit var rowBlockedAppsHeader: View
+    private lateinit var ivBlockedAppsChevron: ImageView
+    private lateinit var layoutBlockedAppsContent: View
     private lateinit var rvBlocked: RecyclerView
     private lateinit var layoutBlockedAppsEmpty: View
     private lateinit var blockedHeader: TextView
@@ -287,9 +271,8 @@ class MainActivity : AppCompatActivity() {
     private val blockedAdapter = BlockedAppsAdapter(
         onAppClick = { app -> showBlockedAppQuickActions(app) },
         onEditClick = { app -> showBlockedAppQuickActions(app) },
-        canEdit = { ensureCanRemoveBlockedApp(showToast = false) }
+        canEdit = { ensureCanRemoveBlockedApp(showFeedback = false) }
     )
-    private val blockedNowAdapter = BlockedNowAdapter()
 
     private fun notifyBlockedChipsChanged() {
         notifyBlockedAdapterRangeChanged(PAYLOAD_BLOCKED_CHIPS)
@@ -301,7 +284,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun notifyBlockedAdapterRangeChanged(payload: Any) {
         val count = blockedAdapter.itemCount
-        if (count <= 0) return
+        if (count <= 0) {
+            return
+        }
 
         rvBlocked.post {
             val postedCount = blockedAdapter.itemCount
@@ -311,9 +296,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Cache the resolved blocked apps for the current profile so we can build the
-    // "Blocked right now" section without hitting the PackageManager every second.
-    private var cachedBlockedApps: List<AppDisplay> = emptyList()
     private var blockedListRefreshSeq: Int = 0
     private var blockedListRefreshJob: Job? = null
 
@@ -330,17 +312,28 @@ class MainActivity : AppCompatActivity() {
     private var livePrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     private fun showExperimentalFeaturesNoticeIfNeeded() {
+        if (intent.getBooleanExtra(OnboardingActivity.EXTRA_FROM_ONBOARDING, false)) {
+            return
+        }
+
         val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_EXPERIMENTAL_NOTICE, false)) return
+        if (prefs.getIntCompat(KEY_EXPERIMENTAL_NOTICE_VERSION, 0) >= EXPERIMENTAL_NOTICE_VERSION) {
+            return
+        }
+        // Keep the first post-onboarding launch focused on the navigation tour.
+        // The experimental feedback notice appears on the next normal app launch instead.
+        if (prefs.getBoolean(KEY_BOTTOM_NAV_TOUR_PENDING, false)) {
+            return
+        }
 
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.experimental_notice_title)
             .setMessage(R.string.experimental_notice_body)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE, true) }
+                prefs.edit { putInt(KEY_EXPERIMENTAL_NOTICE_VERSION, EXPERIMENTAL_NOTICE_VERSION) }
             }
             .setOnCancelListener {
-                prefs.edit { putBoolean(KEY_EXPERIMENTAL_NOTICE, true) }
+                prefs.edit { putInt(KEY_EXPERIMENTAL_NOTICE_VERSION, EXPERIMENTAL_NOTICE_VERSION) }
             }
             .showAccented()
     }
@@ -367,7 +360,8 @@ class MainActivity : AppCompatActivity() {
 
         // Versioned onboarding follows the build version, so refreshed setup flows can run once after updates.
         val shouldRunOnboarding = onboardingVersion < OnboardingActivity.ONBOARDING_VERSION
-        if (shouldRunOnboarding) {
+        val skipOnboardingGateOnce = intent.getBooleanExtra(EXTRA_SKIP_ONBOARDING_GATE_ONCE, false)
+        if (shouldRunOnboarding && !skipOnboardingGateOnce) {
             startActivity(Intent(this, OnboardingActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
             })
@@ -411,6 +405,7 @@ class MainActivity : AppCompatActivity() {
 
         layoutHomeRoot = findViewById(R.id.layoutHomeRoot)
         layoutStatusContent = findViewById(R.id.layoutStatusContent)
+        layoutProtectionStatus = findViewById(R.id.layoutProtectionStatus)
         cardStatus = findViewById(R.id.cardStatus)
         spaceBeforeStatusCard = findViewById(R.id.spaceBeforeStatusCard)
         ivStatusIcon = findViewById(R.id.ivStatusIcon)
@@ -421,14 +416,13 @@ class MainActivity : AppCompatActivity() {
         tvActiveDuration.isClickable = true
         tvActiveDuration.isFocusable = true
         tvActiveDuration.setOnClickListener {
-            startActivity(ActiveTimeStatsActivity.intent(this))
+            startActivity(ActiveTimeActivity.intent(this))
         }
         tvActiveProfile = findViewById(R.id.tvActiveProfile)
         rowActiveProfile = findViewById(R.id.rowActiveProfile)
         tvNfcLockedHint = findViewById(R.id.tvNfcLockedHint)
         btnToggle = findViewById(R.id.btnToggle)
         btnSimplePickApps = findViewById(R.id.btnSimplePickApps)
-        chipTemp = findViewById(R.id.chipTemp)
         tvTempHint = findViewById(R.id.tvTempHint)
         tvEmergencyHint = findViewById(R.id.tvEmergencyHint)
 
@@ -438,7 +432,6 @@ class MainActivity : AppCompatActivity() {
         cardSetup = findViewById(R.id.cardSetup)
         tvSetupTitle = findViewById(R.id.tvSetupTitle)
         tvSetupSubtitle = findViewById(R.id.tvSetupSubtitle)
-        tvSetupBadge = findViewById(R.id.tvSetupBadge)
         tvSetupDesc = findViewById(R.id.tvSetupDesc)
         btnFinishSetup = findViewById(R.id.btnFinishSetup)
 
@@ -446,7 +439,6 @@ class MainActivity : AppCompatActivity() {
         tileProfiles = findViewById(R.id.tileProfiles)
         tileWriteNfc = findViewById(R.id.tileWriteNfc)
         tileToggleOptions = findViewById(R.id.tileToggleOptions)
-        tilePermissions = findViewById(R.id.tilePermissions)
         tileNfcWrite = findViewById(R.id.tileNfcWrite)
         tileBlockedNotifications = findViewById(R.id.tileBlockedNotifications)
         tileQr = findViewById(R.id.tileQr)
@@ -454,7 +446,9 @@ class MainActivity : AppCompatActivity() {
         rowToolsShortcuts = findViewById(R.id.rowToolsShortcuts)
         rowScanShortcuts = findViewById(R.id.rowScanShortcuts)
 
+        cardQuickActions = findViewById(R.id.cardQuickActions)
         rowQuickActionsHeader = findViewById(R.id.rowQuickActionsHeader)
+        dividerQuickActions = findViewById(R.id.dividerQuickActions)
         tvQuickActionsTitle = findViewById(R.id.tvQuickActionsTitle)
         ivQuickActionsEdit = findViewById(R.id.ivQuickActionsEdit)
         ivQuickActionsChevron = findViewById(R.id.ivQuickActionsChevron)
@@ -462,19 +456,13 @@ class MainActivity : AppCompatActivity() {
         rowManageShortcuts = findViewById(R.id.rowManageShortcuts)
         rowUtilityShortcuts = findViewById(R.id.rowUtilityShortcuts)
 
-        badgePermissions = findViewById(R.id.badgePermissions)
-
         cardNextSchedule = findViewById(R.id.cardNextSchedule)
         tvNextScheduleValue = findViewById(R.id.tvNextScheduleValue)
 
-        cardBlockedNow = findViewById(R.id.cardBlockedNow)
-        layoutBlockedNowEmpty = findViewById(R.id.layoutBlockedNowEmpty)
-        ivBlockedNowEmptyIcon = findViewById(R.id.ivBlockedNowEmptyIcon)
-        tvBlockedNowEmpty = findViewById(R.id.tvBlockedNowEmpty)
-        tvBlockedNowMore = findViewById(R.id.tvBlockedNowMore)
-        rvBlockedNow = findViewById(R.id.rvBlockedNow)
-
         cardBlockedApps = findViewById(R.id.cardBlockedApps)
+        rowBlockedAppsHeader = findViewById(R.id.rowBlockedAppsHeader)
+        ivBlockedAppsChevron = findViewById(R.id.ivBlockedAppsChevron)
+        layoutBlockedAppsContent = findViewById(R.id.layoutBlockedAppsContent)
         rvBlocked = findViewById(R.id.rvBlocked)
         layoutBlockedAppsEmpty = findViewById(R.id.layoutBlockedAppsEmpty)
         blockedHeader = findViewById(R.id.blockedHeader)
@@ -486,8 +474,8 @@ class MainActivity : AppCompatActivity() {
 
         // Micro animations: subtle press-scale on interactive cards/buttons
         listOf(
-            tileManageApps, tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode,
-            cardNextSchedule, cardBlockedNow, rowActiveProfile, rowQuickActionsHeader
+            tileManageApps, tileProfiles, tileWriteNfc, tileToggleOptions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode,
+            cardNextSchedule, rowActiveProfile, rowQuickActionsHeader
         ).forEach { applyPressScale(it) }
         applyPressScale(btnToggle)
 
@@ -498,14 +486,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnSimplePickApps.setOnClickListener { openAppPickerIfUnlocked() }
-
-        // Temp badge (visible when a temp timer is active)
-        chipTemp.setOnClickListener {
-            val opened = showTempToggleSheet()
-            if (opened) {
-                markTempModeDiscovered(showSnack = false)
-            }
-        }
 
         // Optional text hint also opens temp mode
         tvTempHint.setOnClickListener {
@@ -541,10 +521,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
         tileToggleOptions.setOnClickListener {
-            if (SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)) {
+            if (EditingLockGuard.isLocked(this)) {
                 EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_inapp)
             } else {
-                startActivity(Intent(this, ReelsShortsBlockingActivity::class.java))
+                startActivity(Intent(this, InAppRulesActivity::class.java))
             }
         }
         tileQr.setOnClickListener { openQrScannerDirectly() }
@@ -556,9 +536,6 @@ class MainActivity : AppCompatActivity() {
         tileBarcode.setOnLongClickListener {
             showBarcodeChoiceDialog()
             true
-        }
-        tilePermissions.setOnClickListener {
-            startActivity(Intent(this, ToolsHubActivity::class.java))
         }
         tileNfcWrite.setOnClickListener {
             if (isNfcTagWritingLocked()) {
@@ -578,20 +555,22 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SchedulesActivity::class.java))
         }
 
-        // App picker
+        // Managed app list
+        rowBlockedAppsHeader.setOnClickListener { toggleManagedAppListExpanded() }
         btnPickApps.setOnClickListener { openAppPickerIfUnlocked() }
+        updateManagedAppListExpandedUi(animate = false)
 
         // Profile dropdown: selection only, no free text allowed
         profileDropdown.inputType = InputType.TYPE_NULL
         profileDropdown.keyListener = null
         profileDropdown.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus && !ensureCanSwitchProfiles(showToast = false)) {
+            if (hasFocus && !ensureCanSwitchProfiles(showFeedback = false)) {
                 profileDropdown.dismissDropDown()
                 profileDropdown.clearFocus()
             }
         }
         profileDropdown.setOnClickListener { v ->
-            if (!ensureCanSwitchProfiles(showToast = true)) {
+            if (!ensureCanSwitchProfiles(showFeedback = true)) {
                 profileDropdown.dismissDropDown()
                 profileDropdown.clearFocus()
                 return@setOnClickListener
@@ -602,14 +581,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
-        // Blocked right now list (non-scrollable – parent scrolls)
-        rvBlockedNow.layoutManager = object : LinearLayoutManager(this) {
-            override fun canScrollVertically(): Boolean = false
-        }
-        rvBlockedNow.isNestedScrollingEnabled = false
-        rvBlockedNow.setHasFixedSize(false)
-        rvBlockedNow.adapter = blockedNowAdapter
 
         // Blocked apps list (non-scrollable – parent scrolls)
         rvBlocked.layoutManager = object : LinearLayoutManager(this) {
@@ -687,6 +658,7 @@ class MainActivity : AppCompatActivity() {
         // Bottom navigation state
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
         setupBottomNav(bottomNav)
+        scheduleBottomNavTour(bottomNav)
 
         // refresh menu visibility (QR toggle)
         invalidateOptionsMenu()
@@ -718,8 +690,7 @@ class MainActivity : AppCompatActivity() {
             nextChangedReceiver = if (registered) receiver else null
         }
 
-        // Listen for limit reached/open-count changes so "Blocked now" chips update immediately
-        // while the app is in the foreground.
+        // Listen for limit reached/open-count changes so "Blocked now" chips update immediately while the app is in the foreground.
         if (livePrefsListener == null) {
             val sp = getSharedPreferences("switchly_prefs", MODE_PRIVATE)
             livePrefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
@@ -743,7 +714,6 @@ class MainActivity : AppCompatActivity() {
                     isLimitReachedKey || isOpenCountKey -> {
                         // Re-bind rows so chips update; keep it lightweight.
                         notifyBlockedChipsChanged()
-                        updateBlockedNowCard()
                     }
                 }
             }
@@ -773,24 +743,20 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_home -> true
 
-                R.id.nav_blocking -> {
-                    startActivity(Intent(this, BlockingHubActivity::class.java))
-                    true
+                R.id.nav_rules -> {
+                    RulesHubActivity.openWithAccessCheck(this)
                 }
 
-                R.id.nav_tools -> {
-                    startActivity(Intent(this, ToolsHubActivity::class.java))
+                R.id.nav_activity -> {
+                    ActivityTransitionCompat.switchWithoutAnimation(
+                        activity = this,
+                        intent = Intent(this, ActivityHubActivity::class.java),
+                    )
                     true
                 }
 
                 R.id.nav_settings -> {
-                    if (SwitchlyAppAccessGuard.isLocked(this)) {
-                        SwitchlyAppAccessGuard.showLockedToast(this)
-                        false
-                    } else {
-                        startActivity(Intent(this, SettingsActivity::class.java))
-                        true
-                    }
+                    SettingsActivity.openWithAccessCheck(this)
                 }
 
                 else -> false
@@ -798,10 +764,314 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private data class BottomNavTourStep(
+        val itemId: Int,
+        @param:DrawableRes val iconRes: Int,
+        @param:StringRes val titleRes: Int,
+        @param:StringRes val descriptionRes: Int,
+    )
+
+    private data class BottomNavTourHighlight(
+        val itemId: Int,
+    )
+
+    private fun scheduleBottomNavTour(bottomNav: BottomNavigationView) {
+        val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
+        val pending = prefs.getBoolean(KEY_BOTTOM_NAV_TOUR_PENDING, false)
+        val completedVersion = prefs.getIntCompat(KEY_BOTTOM_NAV_TOUR_VERSION, 0)
+        if (!pending || completedVersion >= BOTTOM_NAV_TOUR_VERSION) {
+            return
+        }
+        if (bottomNavTourScheduled || bottomNavTourShowing) {
+            return
+        }
+
+        bottomNavTourScheduled = true
+        bottomNav.postDelayed({
+            bottomNavTourScheduled = false
+            if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                return@postDelayed
+            }
+            if (!hasWindowFocus()) {
+                scheduleBottomNavTour(bottomNav)
+                return@postDelayed
+            }
+            showBottomNavTourStep(bottomNav, 0)
+        }, 700L)
+    }
+
+    private fun showBottomNavTourStep(
+        bottomNav: BottomNavigationView,
+        index: Int,
+    ) {
+        val steps = listOf(
+            BottomNavTourStep(
+                itemId = R.id.nav_home,
+                iconRes = R.drawable.switchly_home_nav,
+                titleRes = R.string.nav_tour_home_title,
+                descriptionRes = R.string.nav_tour_home_desc,
+            ),
+            BottomNavTourStep(
+                itemId = R.id.nav_rules,
+                iconRes = R.drawable.apps_24,
+                titleRes = R.string.nav_tour_rules_title,
+                descriptionRes = R.string.nav_tour_rules_desc,
+            ),
+            BottomNavTourStep(
+                itemId = R.id.nav_activity,
+                iconRes = R.drawable.bar_chart_24,
+                titleRes = R.string.nav_tour_activity_title,
+                descriptionRes = R.string.nav_tour_activity_desc,
+            ),
+            BottomNavTourStep(
+                itemId = R.id.nav_settings,
+                iconRes = R.drawable.tune_24,
+                titleRes = R.string.nav_tour_settings_title,
+                descriptionRes = R.string.nav_tour_settings_desc,
+            ),
+        )
+        val step = steps.getOrNull(index) ?: run {
+            finishBottomNavTour()
+            return
+        }
+
+        bottomNavTourShowing = true
+        val accent = AccentColor.getAccentColorInt(this)
+        showBottomNavTourDimOverlay(bottomNav)
+
+        val anchor = bottomNav.findViewById<View>(step.itemId)
+        highlightBottomNavTourAnchor(bottomNav, anchor, accent)
+
+        val content = layoutInflater.inflate(R.layout.dialog_bottom_nav_tour, null)
+        content.findViewById<ImageView>(R.id.ivNavTourIcon).apply {
+            setImageResource(step.iconRes)
+            imageTintList = ColorStateList.valueOf(accent)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = resources.displayMetrics.density * 22f
+                setColor(ColorUtils.setAlphaComponent(accent, 0x24))
+            }
+        }
+        content.findViewById<TextView>(R.id.tvNavTourStep).apply {
+            text = getString(R.string.nav_tour_step, index + 1, steps.size)
+            setTextColor(accent)
+        }
+        content.findViewById<TextView>(R.id.tvNavTourTitle).setText(step.titleRes)
+        content.findViewById<TextView>(R.id.tvNavTourDescription).setText(step.descriptionRes)
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(content)
+            .setCancelable(false)
+            .setNegativeButton(R.string.nav_tour_skip) { _, _ ->
+                resetBottomNavTourHighlight(bottomNav)
+                finishBottomNavTour()
+            }
+            .setPositiveButton(
+                if (index == steps.lastIndex) R.string.nav_tour_done else R.string.nav_tour_next
+            ) { _, _ ->
+                resetBottomNavTourHighlight(bottomNav)
+                bottomNavTourDialog = null
+                if (index == steps.lastIndex) {
+                    finishBottomNavTour()
+                } else {
+                    bottomNav.postDelayed({
+                        showBottomNavTourStep(bottomNav, index + 1)
+                    }, 140L)
+                }
+            }
+            .showAccented()
+
+        dialog.window?.apply {
+            clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(0f)
+        }
+        dialog.setOnDismissListener {
+            resetBottomNavTourHighlight(bottomNav)
+            if (bottomNavTourDialog === dialog) {
+                bottomNavTourDialog = null
+            }
+        }
+        bottomNavTourDialog = dialog
+    }
+
+    private fun highlightBottomNavTourAnchor(
+        bottomNav: BottomNavigationView,
+        anchor: View?,
+        accent: Int,
+    ) {
+        if (anchor == null) {
+            return
+        }
+
+        if (bottomNavTourOriginalIconTint == null) {
+            bottomNavTourOriginalIconTint = bottomNav.itemIconTintList
+        }
+        if (bottomNavTourOriginalTextTint == null) {
+            bottomNavTourOriginalTextTint = bottomNav.itemTextColor
+        }
+
+        val fallback = MaterialColors.getColor(
+            bottomNav,
+            com.google.android.material.R.attr.colorOnSurface
+        )
+        val inactiveIconColor = bottomNavTourOriginalIconTint?.getColorForState(
+            intArrayOf(-android.R.attr.state_checked),
+            bottomNavTourOriginalIconTint?.defaultColor ?: fallback,
+        ) ?: ColorUtils.setAlphaComponent(fallback, 0x99)
+        val inactiveTextColor = bottomNavTourOriginalTextTint?.getColorForState(
+            intArrayOf(-android.R.attr.state_checked),
+            bottomNavTourOriginalTextTint?.defaultColor ?: fallback,
+        ) ?: ColorUtils.setAlphaComponent(fallback, 0x99)
+
+        // Use a neutral global tint during the tour so Android cannot re-apply the
+        // actually selected Home color while another destination is being explained.
+        bottomNav.itemIconTintList = ColorStateList.valueOf(inactiveIconColor)
+        bottomNav.itemTextColor = ColorStateList.valueOf(inactiveTextColor)
+        applyBottomNavTourItemColors(bottomNav, inactiveIconColor, inactiveTextColor)
+
+        findBottomNavIcon(anchor)?.apply {
+            imageTintList = ColorStateList.valueOf(accent)
+            invalidate()
+        }
+        findBottomNavLabels(anchor).forEach { label ->
+            label.setTextColor(accent)
+            label.invalidate()
+        }
+        bottomNavTourHighlight = BottomNavTourHighlight(anchor.id)
+    }
+
+    private fun bottomNavTourItemIds(): List<Int> = listOf(
+        R.id.nav_home,
+        R.id.nav_rules,
+        R.id.nav_activity,
+        R.id.nav_settings,
+    )
+
+    private fun findBottomNavIcon(view: View): ImageView? {
+        if (view is ImageView) {
+            return view
+        }
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) {
+                findBottomNavIcon(view.getChildAt(index))?.let { return it }
+            }
+        }
+        return null
+    }
+
+    private fun findBottomNavLabels(view: View): List<TextView> {
+        val labels = mutableListOf<TextView>()
+        fun collect(current: View) {
+            when (current) {
+                is TextView -> labels += current
+                is ViewGroup -> {
+                    for (index in 0 until current.childCount) {
+                        collect(current.getChildAt(index))
+                    }
+                }
+            }
+        }
+        collect(view)
+        return labels
+    }
+
+    private fun applyBottomNavTourItemColors(
+        bottomNav: BottomNavigationView,
+        iconColor: Int,
+        textColor: Int,
+    ) {
+        bottomNavTourItemIds().forEach { itemId ->
+            val item = bottomNav.findViewById<View>(itemId) ?: return@forEach
+            findBottomNavIcon(item)?.apply {
+                imageTintList = ColorStateList.valueOf(iconColor)
+                invalidate()
+            }
+            findBottomNavLabels(item).forEach { label ->
+                label.setTextColor(textColor)
+                label.invalidate()
+            }
+        }
+    }
+
+    private fun resetBottomNavTourHighlight(bottomNav: BottomNavigationView) {
+        if (bottomNavTourHighlight == null) return
+
+        val fallback = MaterialColors.getColor(
+            bottomNav,
+            com.google.android.material.R.attr.colorOnSurface
+        )
+        val inactiveIconColor = bottomNavTourOriginalIconTint?.getColorForState(
+            intArrayOf(-android.R.attr.state_checked),
+            bottomNavTourOriginalIconTint?.defaultColor ?: fallback,
+        ) ?: ColorUtils.setAlphaComponent(fallback, 0x99)
+        val inactiveTextColor = bottomNavTourOriginalTextTint?.getColorForState(
+            intArrayOf(-android.R.attr.state_checked),
+            bottomNavTourOriginalTextTint?.defaultColor ?: fallback,
+        ) ?: ColorUtils.setAlphaComponent(fallback, 0x99)
+
+        bottomNav.itemIconTintList = ColorStateList.valueOf(inactiveIconColor)
+        bottomNav.itemTextColor = ColorStateList.valueOf(inactiveTextColor)
+        applyBottomNavTourItemColors(bottomNav, inactiveIconColor, inactiveTextColor)
+        bottomNavTourHighlight = null
+    }
+
+    private fun restoreBottomNavTourIcons(bottomNav: BottomNavigationView) {
+        val normalIconTint = bottomNavTourOriginalIconTint
+        val normalTextTint = bottomNavTourOriginalTextTint
+        bottomNav.itemIconTintList = normalIconTint
+        bottomNav.itemTextColor = normalTextTint
+        bottomNavTourItemIds().forEach { itemId ->
+            val item = bottomNav.findViewById<View>(itemId) ?: return@forEach
+            findBottomNavIcon(item)?.apply {
+                imageTintList = normalIconTint
+                refreshDrawableState()
+                invalidate()
+            }
+            findBottomNavLabels(item).forEach { label ->
+                normalTextTint?.let { tint -> label.setTextColor(tint) }
+                label.refreshDrawableState()
+                label.invalidate()
+            }
+        }
+        bottomNavTourOriginalIconTint = null
+        bottomNavTourOriginalTextTint = null
+    }
+
+    private fun showBottomNavTourDimOverlay(bottomNav: BottomNavigationView) {
+        val overlay = findViewById<View>(R.id.bottomNavTourDimOverlay)
+        val params = overlay.layoutParams as ViewGroup.MarginLayoutParams
+        if (params.bottomMargin != bottomNav.height) {
+            params.bottomMargin = bottomNav.height
+            overlay.layoutParams = params
+        }
+        overlay.isVisible = true
+    }
+
+    private fun finishBottomNavTour() {
+        bottomNavTourShowing = false
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
+        resetBottomNavTourHighlight(bottomNav)
+        bottomNav.menu.findItem(R.id.nav_home)?.isChecked = true
+        restoreBottomNavTourIcons(bottomNav)
+        findViewById<View>(R.id.bottomNavTourDimOverlay).isVisible = false
+
+        val dialog = bottomNavTourDialog
+        bottomNavTourDialog = null
+        dialog?.dismiss()
+        getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE).edit {
+            putBoolean(KEY_BOTTOM_NAV_TOUR_PENDING, false)
+            putInt(KEY_BOTTOM_NAV_TOUR_VERSION, BOTTOM_NAV_TOUR_VERSION)
+        }
+    }
+
     private fun applyAccentToButtons() {
         val accent = AccentColor.getAccentColorInt(this)
         val tint = ColorStateList.valueOf(accent)
-        val onAccent = if (ColorUtils.calculateLuminance(accent) > 0.52) Color.BLACK else Color.WHITE
+        val onAccent = if (ColorUtils.calculateLuminance(accent) > 0.52) {
+            Color.BLACK
+        } else {
+            Color.WHITE
+        }
 
         btnToggle.backgroundTintList = tint
         btnToggle.setTextColor(onAccent)
@@ -809,12 +1079,6 @@ class MainActivity : AppCompatActivity() {
         btnFinishSetup.setTextColor(onAccent)
         // Make the icon match the button text (otherwise it may stay default/black).
         btnFinishSetup.iconTint = ColorStateList.valueOf(onAccent)
-
-        // Active temporary-mode chip should follow accent (was still green in custom mode).
-        chipTemp.setTextColor(accent)
-        chipTemp.chipBackgroundColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x20))
-        chipTemp.chipStrokeColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 0x66))
-        chipTemp.chipStrokeWidth = resources.displayMetrics.density
 
         // Inline info/hint rows should look like normal text (not accent-colored).
         // Tint their icons to the text color for consistency.
@@ -858,14 +1122,18 @@ class MainActivity : AppCompatActivity() {
 
     // Subtle fade helpers (used for cards and empty states)
     private fun View.showFade(duration: Long = 160) {
-        if (isVisible) return
+        if (isVisible) {
+            return
+        }
         alpha = 0f
         isVisible = true
         animate().alpha(1f).setDuration(duration).start()
     }
 
     private fun View.hideFade(duration: Long = 140) {
-        if (!isVisible) return
+        if (!isVisible) {
+            return
+        }
         animate().alpha(0f).setDuration(duration).withEndAction {
             isVisible = false
             alpha = 1f
@@ -881,7 +1149,7 @@ class MainActivity : AppCompatActivity() {
     private fun View.hideHomeLayoutView(mode: String = homeLayoutMode()) {
         // Custom Home can reorder views in the same refresh pass.
         // Reordering a fading view can cancel the animation end action and leave an empty row/card behind, so hidden Custom Home blocks are removed immediately instead of fading out.
-        if (mode == HOME_MODE_CUSTOM) {
+        if (mode == ToggleOptionsActivity.HOME_MODE_CUSTOM) {
             hideNow()
         } else {
             hideFade()
@@ -905,57 +1173,61 @@ class MainActivity : AppCompatActivity() {
         val temporaryOverrideActive = SwitchModeStore.hasActiveTemporaryOverride(this)
         val emergencyActive = EmergencyBypassStore.isActive(this)
         val emergencyPaused = EmergencyBypassStore.isPaused(this)
-        if (!enabled && !temporaryOverrideActive && !emergencyActive) return false
+        if (!enabled && !temporaryOverrideActive && !emergencyActive) {
+            return false
+        }
 
-        if (temporaryOverrideActive) return true
+        if (temporaryOverrideActive) {
+            return true
+        }
+
+        if (emergencyActive) {
+            return false
+        }
 
         val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        if (requireNfc || emergencyActive || (enabled && emergencyPaused)) return true
+        if (requireNfc || (enabled && emergencyPaused)) {
+            return true
+        }
 
         return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
     }
 
-    private fun ensureCanOpenAppPicker(showToast: Boolean = true): Boolean {
-        if (isNfcLocked()) {
-            if (showToast) {
-                Toast.makeText(this, getString(R.string.toast_cannot_change_profile_while_locked), Toast.LENGTH_SHORT).show()
-            }
-            return false
-        }
-        if (isAppPickingLockedWhileEnabled()) {
-            if (showToast) {
-                Toast.makeText(this, getString(R.string.toast_disable_switchly_to_edit_blocked_apps), Toast.LENGTH_SHORT).show()
-            }
-            return false
-        }
-        return true
-    }
-
-    private fun ensureCanRemoveBlockedApp(showToast: Boolean = true): Boolean {
-        if (isNfcLocked()) {
-            if (showToast) {
-                Toast.makeText(this, getString(R.string.toast_cannot_change_profile_while_locked), Toast.LENGTH_SHORT).show()
-            }
-            return false
-        }
-        if (EditingLockGuard.isLocked(this)) {
-            if (showToast) {
-                Toast.makeText(this, R.string.toast_disable_switchly_to_edit_app_limits, Toast.LENGTH_SHORT).show()
+    private fun ensureCanOpenAppPicker(showFeedback: Boolean = true): Boolean {
+        if (isNfcLocked() || isAppPickingLockedWhileEnabled()) {
+            if (showFeedback) {
+                EditingLockGuard.showLockedDialog(
+                    this,
+                    R.string.toast_disable_switchly_to_edit_blocked_apps,
+                )
             }
             return false
         }
         return true
     }
 
-    private fun ensureCanSwitchProfiles(showToast: Boolean = true): Boolean {
+    private fun ensureCanRemoveBlockedApp(showFeedback: Boolean = true): Boolean {
+        if (isNfcLocked() || EditingLockGuard.isLocked(this)) {
+            if (showFeedback) {
+                EditingLockGuard.showLockedDialog(
+                    this,
+                    R.string.toast_disable_switchly_to_edit_app_limits,
+                )
+            }
+            return false
+        }
+        return true
+    }
+
+    private fun ensureCanSwitchProfiles(showFeedback: Boolean = true): Boolean {
         if (isNfcLocked()) {
-            if (showToast) {
+            if (showFeedback) {
                 EditingLockGuard.showLockedDialog(this, R.string.toast_cannot_change_profile_while_locked)
             }
             return false
         }
         if (isProfileSwitchLockedWhileEnabled()) {
-            if (showToast) {
+            if (showFeedback) {
                 EditingLockGuard.showLockedDialog(this, R.string.toast_disable_switchly_to_switch_profiles)
             }
             return false
@@ -1013,7 +1285,17 @@ class MainActivity : AppCompatActivity() {
     )
 
     private fun showTempToggleSheet(): Boolean {
-        if (!AutomationModeStore.isButtonAllowed(this)) {
+        val enabledNow = SwitchModeStore.isEnabled(this)
+        val tempDisableRemaining = SwitchModeStore.getTemporaryRemainingMillis(this)
+        val tempEnableRemaining = SwitchModeStore.getTemporaryEnableRemainingMillis(this)
+        val canUseTemporaryAction = when {
+            tempDisableRemaining > 0L -> true // Cancelling a pause only restores protection.
+            tempEnableRemaining > 0L -> AutomationModeStore.canButtonEnable(this)
+            enabledNow -> AutomationModeStore.isButtonAllowed(this)
+            else -> AutomationModeStore.canButtonEnable(this)
+        }
+
+        if (!canUseTemporaryAction) {
             Toast.makeText(
                 this,
                 getString(R.string.mode_blocked_button_action),
@@ -1021,10 +1303,6 @@ class MainActivity : AppCompatActivity() {
             ).show()
             return false
         }
-
-        val enabledNow = SwitchModeStore.isEnabled(this)
-        val tempDisableRemaining = SwitchModeStore.getTemporaryRemainingMillis(this)
-        val tempEnableRemaining = SwitchModeStore.getTemporaryEnableRemainingMillis(this)
 
         val mode = when {
             tempDisableRemaining > 0L -> TempSheetMode.DISABLE
@@ -1066,7 +1344,12 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             tvTitle.text = getString(R.string.nfc_action_temp_enable)
-            tvSubtitle.text = getString(R.string.dashboard_temp_sheet_sub_enable)
+            val currentProfile = ProfileStore.getCurrent(this).orEmpty().trim()
+            tvSubtitle.text = if (currentProfile.isBlank()) {
+                getString(R.string.dashboard_temp_sheet_sub_enable)
+            } else {
+                getString(R.string.dashboard_temp_sheet_sub_enable_profile, currentProfile)
+            }
         }
 
         tvNote.text = if (lockedByNfc) {
@@ -1224,12 +1507,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val tomorrow = java.util.Calendar.getInstance().apply {
-            add(java.util.Calendar.DAY_OF_YEAR, 1)
-            set(java.util.Calendar.HOUR_OF_DAY, 0)
-            set(java.util.Calendar.MINUTE, 0)
-            set(java.util.Calendar.SECOND, 0)
-            set(java.util.Calendar.MILLISECOND, 0)
+        val tomorrow = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }.timeInMillis
         options += PauseUntilOption(getString(R.string.dashboard_pause_until_tomorrow)) {
             pauseFor(tomorrow - now, "tomorrow")
@@ -1284,18 +1567,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openAppPickerIfUnlocked() {
-        if (!ensureCanOpenAppPicker(showToast = true)) return
+        if (!ensureCanOpenAppPicker(showFeedback = true)) {
+            return
+        }
         startActivity(Intent(this, AppPickerActivity::class.java))
     }
 
     private fun openProfilesIfUnlocked() {
-        if (!ensureCanSwitchProfiles(showToast = true)) return
+        if (!ensureCanSwitchProfiles(showFeedback = true)) {
+            return
+        }
         startActivity(Intent(this, ManageProfilesActivity::class.java))
-    }
-
-    private fun openAddProfileIfUnlocked() {
-        if (!ensureCanSwitchProfiles(showToast = true)) return
-        showAddProfileDialog()
     }
 
     private fun hasPostNotificationsPermission(): Boolean {
@@ -1325,9 +1607,7 @@ class MainActivity : AppCompatActivity() {
     private fun homeDp(value: Float): Int =
         (value * resources.displayMetrics.density + 0.5f).toInt()
 
-    /**
-     * Formats remaining milliseconds as a compact time (m:ss or h:mm:ss).
-     */
+    // Formats remaining milliseconds as a compact time (m:ss or h:mm:ss).
     private fun formatRemainingShort(ms: Long): String {
         val totalSec = (ms/1000L).coerceAtLeast(0L)
         val h = totalSec/3600L
@@ -1342,7 +1622,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun formatActiveDuration(ms: Long): String {
         val totalMinutes = (ms / 60_000L).coerceAtLeast(0L)
-        if (totalMinutes <= 0L) return getString(R.string.dashboard_active_duration_less_than_minute)
+        if (totalMinutes <= 0L) {
+            return getString(R.string.dashboard_active_duration_less_than_minute)
+        }
 
         val days = totalMinutes / (24L * 60L)
         val hours = (totalMinutes % (24L * 60L)) / 60L
@@ -1403,8 +1685,6 @@ class MainActivity : AppCompatActivity() {
             tvSetupTitle.setTextColor(
                 MaterialColors.getColor(tvSetupTitle, androidx.appcompat.R.attr.colorPrimary)
             )
-            tvSetupBadge.text = missingText
-            tvSetupBadge.isVisible = false
             tvSetupSubtitle.text = resources.getQuantityString(
                 R.plurals.dashboard_setup_subtitle_missing,
                 missing.size
@@ -1413,115 +1693,98 @@ class MainActivity : AppCompatActivity() {
             tvSetupDesc.text = bulletList
         }
 
-        updateQuickActionBadges(missing.size)
     }
 
-    private fun updateQuickActionBadges(missingSetupCount: Int) {
-        // Quick-action permission badge was removed when the tile became a Usage shortcut.
-        if (badgePermissions.isVisible) {
-            badgePermissions.isVisible = false
-            badgePermissions.alpha = 1f
-        }
-    }
-
-    private fun homeLayoutMode(): String {
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        return when (sp.getString(KEY_HOME_LAYOUT_MODE, null)) {
-            HOME_MODE_DEFAULT -> HOME_MODE_DEFAULT
-            HOME_MODE_SIMPLE -> HOME_MODE_SIMPLE
-            HOME_MODE_ADVANCED -> HOME_MODE_ADVANCED
-            HOME_MODE_FOCUS -> HOME_MODE_SIMPLE
-            HOME_MODE_CUSTOM -> HOME_MODE_CUSTOM
-            else -> if (sp.contains(KEY_HOME_LAYOUT_DETAILED)) {
-                if (sp.getBoolean(KEY_HOME_LAYOUT_DETAILED, true)) HOME_MODE_ADVANCED else HOME_MODE_SIMPLE
-            } else {
-                HOME_MODE_DEFAULT
-            }
-        }
-    }
-
-    private fun isDetailedHomeLayout(): Boolean = homeLayoutMode() == HOME_MODE_ADVANCED
+    private fun homeLayoutMode(): String = HomeModeDialogHelper.currentHomeLayoutMode(this)
 
     private fun customHomeEnabled(key: String, defaultValue: Boolean): Boolean {
         return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(key, defaultValue)
     }
 
+    private fun shouldShowHomeProtectionControl(): Boolean = when (homeLayoutMode()) {
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_PROTECTION_CONTROL, true)
+        else -> true
+    }
+
     private fun shouldShowHomeActiveTimer(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_ACTIVE_TIMER, true)
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> shouldShowHomeProtectionControl() &&
+            customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_TIMER, true)
         else -> true
     }
 
     private fun shouldShowHomeMainButton(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_MAIN_BUTTON, true)
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> shouldShowHomeProtectionControl() &&
+            customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_MAIN_BUTTON, true)
         else -> true
     }
 
     private fun shouldShowHomeActiveProfile(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_ACTIVE_PROFILE, true)
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> shouldShowHomeProtectionControl() &&
+            customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_PROFILE, true)
         else -> true
     }
 
     private fun shouldShowHomeControlMode(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_DEFAULT -> false
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_CONTROL_MODE, true)
+        ToggleOptionsActivity.HOME_MODE_DEFAULT -> false
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> shouldShowHomeProtectionControl() &&
+            customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_CONTROL_MODE, false)
         else -> true
     }
 
     private fun shouldShowHomePickApps(): Boolean = when (homeLayoutMode()) {
-        // Default already shows the app list below, so the standalone Pick apps shortcut is redundant.
-        HOME_MODE_DEFAULT -> false
-        HOME_MODE_SIMPLE -> true
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_PICK_APPS, true)
+        ToggleOptionsActivity.HOME_MODE_SIMPLE -> true
         else -> false
     }
 
     private fun shouldShowHomeProfileDropdown(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_ADVANCED -> true
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_PROFILE_DROPDOWN, false)
+        ToggleOptionsActivity.HOME_MODE_ADVANCED -> true
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> shouldShowHomeProtectionControl() &&
+            customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_PROFILE_DROPDOWN, false)
         else -> false
     }
 
     private fun shouldShowHomeQuickActions(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_ADVANCED -> true
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_QUICK_ACTIONS, false)
+        ToggleOptionsActivity.HOME_MODE_ADVANCED -> true
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_QUICK_ACTIONS, false)
         else -> false
     }
 
     private fun shouldShowHomeNextSchedule(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_ADVANCED -> true
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_NEXT_SCHEDULE, false)
-        else -> false
-    }
-
-    private fun shouldShowHomeBlockedNow(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_ADVANCED -> true
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_BLOCKED_NOW, false)
+        ToggleOptionsActivity.HOME_MODE_ADVANCED -> true
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_NEXT_SCHEDULE, false)
         else -> false
     }
 
     private fun shouldShowHomeBlockedApps(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_DEFAULT -> true
-        HOME_MODE_ADVANCED -> true
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_BLOCKED_APPS, false)
+        ToggleOptionsActivity.HOME_MODE_DEFAULT -> true
+        ToggleOptionsActivity.HOME_MODE_ADVANCED -> true
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_APPS, true)
         else -> false
     }
 
     private fun shouldShowHomeTemporaryShortcut(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_ADVANCED -> true
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_TEMPORARY, false)
+        ToggleOptionsActivity.HOME_MODE_DEFAULT, ToggleOptionsActivity.HOME_MODE_ADVANCED -> true
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> shouldShowHomeProtectionControl() &&
+            customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_TEMPORARY, true)
         else -> false
     }
 
     private fun shouldShowHomeEmergencyShortcut(): Boolean = when (homeLayoutMode()) {
-        HOME_MODE_ADVANCED -> true
-        HOME_MODE_CUSTOM -> customHomeEnabled(KEY_HOME_CUSTOM_EMERGENCY, false)
-        else -> false
+        ToggleOptionsActivity.HOME_MODE_ADVANCED -> true
+        ToggleOptionsActivity.HOME_MODE_CUSTOM -> shouldShowHomeProtectionControl() &&
+            customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_EMERGENCY, true)
+        else -> true
     }
 
     private fun refreshHomeLayout() {
         val mode = homeLayoutMode()
-        if (mode != HOME_MODE_CUSTOM) {
-            restoreStatusCardHomeItemsIfNeeded()
+        val showProtectionControl = shouldShowHomeProtectionControl()
+        if (showProtectionControl) {
+            spaceBeforeStatusCard.showFade()
+            cardStatus.showFade()
+        } else {
+            spaceBeforeStatusCard.hideHomeLayoutView(mode)
+            cardStatus.hideHomeLayoutView(mode)
         }
 
         updateTempHintVisibility()
@@ -1543,15 +1806,10 @@ class MainActivity : AppCompatActivity() {
         if (shouldShowHomeQuickActions()) {
             updateQuickActionsVisibility()
         } else {
-            gridQuickActions.hideHomeLayoutView(mode)
-            ivQuickActionsChevron.hideHomeLayoutView(mode)
-            ivQuickActionsEdit.hideHomeLayoutView(mode)
-            tvQuickActionsTitle.hideHomeLayoutView(mode)
-            rowQuickActionsHeader.hideHomeLayoutView(mode)
+            cardQuickActions.hideHomeLayoutView(mode)
         }
 
         if (shouldShowHomeNextSchedule()) updateNextScheduleCard() else cardNextSchedule.hideHomeLayoutView(mode)
-        if (shouldShowHomeBlockedNow()) updateBlockedNowCard() else cardBlockedNow.hideHomeLayoutView(mode)
         if (!shouldShowHomeBlockedApps()) {
             cardBlockedApps.hideHomeLayoutView(mode)
             layoutBlockedAppsEmpty.hideHomeLayoutView(mode)
@@ -1560,24 +1818,87 @@ class MainActivity : AppCompatActivity() {
             refreshBlockedList()
         }
 
-        if (mode == HOME_MODE_CUSTOM) {
+        if (mode == ToggleOptionsActivity.HOME_MODE_CUSTOM) {
+            applyProtectionChildOrder(HomeModeDialogHelper.customProtectionChildOrderKeys(this))
             applyCustomHomeOrderIfNeeded()
         } else {
+            applyProtectionChildOrder(HomeModeDialogHelper.defaultProtectionChildOrderKeys())
             applyDefaultAndAdvancedHomeOrderIfNeeded()
+        }
+    }
+
+    private fun applyProtectionChildOrder(orderedKeys: List<String>) {
+        if (!::layoutStatusContent.isInitialized || !::layoutProtectionStatus.isInitialized) return
+
+        val groups = linkedMapOf(
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_TIMER to listOf(layoutProtectionStatus),
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_MAIN_BUTTON to listOf(btnToggle, tvNfcLockedHint),
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_PROFILE to listOf(rowActiveProfile),
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_CONTROL_MODE to listOf(tvControlModeHint),
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_TEMPORARY to listOf(tvTempHint),
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_EMERGENCY to listOf(tvEmergencyHint),
+            ToggleOptionsActivity.KEY_HOME_CUSTOM_PROFILE_DROPDOWN to listOf(
+                dividerBeforeProfileDropdown,
+                layoutProfileDropdown,
+            ),
+        )
+        val orderedViews = buildList {
+            orderedKeys.forEach { key ->
+                addAll(groups[key].orEmpty())
+                if (key == ToggleOptionsActivity.KEY_HOME_CUSTOM_CONTROL_MODE) {
+                    add(btnSimplePickApps)
+                }
+            }
+        }
+        if (orderedViews.isEmpty()) return
+
+        val currentOrder = (0 until layoutStatusContent.childCount)
+            .map(layoutStatusContent::getChildAt)
+            .filter { it in orderedViews }
+        if (currentOrder == orderedViews) return
+
+        val attachedViews = orderedViews.filter { it.parent === layoutStatusContent }
+        val insertionIndex = attachedViews
+            .map { layoutStatusContent.indexOfChild(it) }
+            .filter { it >= 0 }
+            .minOrNull()
+            ?: return
+        val paramsByView = attachedViews.associateWith { it.layoutParams }
+        attachedViews.forEach(layoutStatusContent::removeView)
+
+        var targetIndex = insertionIndex.coerceAtMost(layoutStatusContent.childCount)
+        orderedViews.forEach { view ->
+            val params = paramsByView[view] ?: return@forEach
+            layoutStatusContent.addView(
+                view,
+                targetIndex.coerceAtMost(layoutStatusContent.childCount),
+                params,
+            )
+            targetIndex++
         }
     }
 
     private fun applyDefaultAndAdvancedHomeOrderIfNeeded() {
         val mode = homeLayoutMode()
-        if (mode != HOME_MODE_DEFAULT && mode != HOME_MODE_ADVANCED) return
-        if (!::layoutHomeRoot.isInitialized || !::cardStatus.isInitialized || !::cardBlockedApps.isInitialized) return
-        if (cardStatus.parent !== layoutHomeRoot || cardBlockedApps.parent !== layoutHomeRoot) return
+        if (mode != ToggleOptionsActivity.HOME_MODE_DEFAULT && mode != ToggleOptionsActivity.HOME_MODE_ADVANCED) {
+            return
+        }
+        if (!::layoutHomeRoot.isInitialized || !::cardStatus.isInitialized || !::cardBlockedApps.isInitialized) {
+            return
+        }
+        if (cardStatus.parent !== layoutHomeRoot || cardBlockedApps.parent !== layoutHomeRoot) {
+            return
+        }
 
         val statusIndex = layoutHomeRoot.indexOfChild(cardStatus)
-        if (statusIndex < 0) return
+        if (statusIndex < 0) {
+            return
+        }
         val targetIndex = (statusIndex + 1).coerceAtMost(layoutHomeRoot.childCount - 1)
         val currentIndex = layoutHomeRoot.indexOfChild(cardBlockedApps)
-        if (currentIndex == targetIndex) return
+        if (currentIndex == targetIndex) {
+            return
+        }
 
         val params = cardBlockedApps.layoutParams
         layoutHomeRoot.removeView(cardBlockedApps)
@@ -1586,198 +1907,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyCustomHomeOrderIfNeeded() {
-        if (homeLayoutMode() != HOME_MODE_CUSTOM) return
-        if (!::layoutHomeRoot.isInitialized || !::layoutStatusContent.isInitialized || !::cardStatus.isInitialized || !::spaceBeforeStatusCard.isInitialized) return
+        if (homeLayoutMode() != ToggleOptionsActivity.HOME_MODE_CUSTOM) {
+            return
+        }
+        if (!::layoutHomeRoot.isInitialized || !::cardStatus.isInitialized || !::spaceBeforeStatusCard.isInitialized) {
+            return
+        }
 
-        val order = HomeModeDialogHelper.customHomeOrderKeys(this)
-        val customCards = ensureCustomHomeFlatStatusItems()
-
-        // Custom Home order is global, not "status-card first, everything else after".
-        // The hero / active timer stays in the main status card.
-        // Individual status controls are rendered as small movable cards so external sections such as Blocked apps can sit directly between Active time and the switch/profile controls.
         reorderCustomHomeGroups(
             parent = layoutHomeRoot,
-            order = order,
+            order = HomeModeDialogHelper.customHomeOrderKeys(this),
             viewsByKey = mapOf(
-                KEY_HOME_CUSTOM_ACTIVE_TIMER to listOf(spaceBeforeStatusCard, cardStatus),
-                KEY_HOME_CUSTOM_MAIN_BUTTON to listOfNotNull(customCards[KEY_HOME_CUSTOM_MAIN_BUTTON]),
-                KEY_HOME_CUSTOM_ACTIVE_PROFILE to listOfNotNull(customCards[KEY_HOME_CUSTOM_ACTIVE_PROFILE]),
-                KEY_HOME_CUSTOM_CONTROL_MODE to listOfNotNull(customCards[KEY_HOME_CUSTOM_CONTROL_MODE]),
-                KEY_HOME_CUSTOM_PICK_APPS to listOfNotNull(customCards[KEY_HOME_CUSTOM_PICK_APPS]),
-                KEY_HOME_CUSTOM_TEMPORARY to listOfNotNull(customCards[KEY_HOME_CUSTOM_TEMPORARY]),
-                KEY_HOME_CUSTOM_EMERGENCY to listOfNotNull(customCards[KEY_HOME_CUSTOM_EMERGENCY]),
-                KEY_HOME_CUSTOM_QUICK_ACTIONS to listOf(rowQuickActionsHeader, gridQuickActions),
-                KEY_HOME_CUSTOM_NEXT_SCHEDULE to listOf(cardNextSchedule),
-                KEY_HOME_CUSTOM_BLOCKED_NOW to listOf(cardBlockedNow),
-                KEY_HOME_CUSTOM_BLOCKED_APPS to listOf(cardBlockedApps),
-                KEY_HOME_CUSTOM_PROFILE_DROPDOWN to listOfNotNull(customCards[KEY_HOME_CUSTOM_PROFILE_DROPDOWN])
+                ToggleOptionsActivity.KEY_HOME_CUSTOM_PROTECTION_CONTROL to listOf(spaceBeforeStatusCard, cardStatus),
+                ToggleOptionsActivity.KEY_HOME_CUSTOM_QUICK_ACTIONS to listOf(cardQuickActions),
+                ToggleOptionsActivity.KEY_HOME_CUSTOM_NEXT_SCHEDULE to listOf(cardNextSchedule),
+                ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_APPS to listOf(cardBlockedApps)
             )
         )
-    }
-
-    private fun ensureCustomHomeFlatStatusItems(): Map<String, MaterialCardView> {
-        if (::dividerBeforeProfileDropdown.isInitialized) {
-            dividerBeforeProfileDropdown.isVisible = false
-        }
-        return customHomeStatusGroups().mapValues { (key, views) ->
-            ensureCustomHomeCard(key, views)
-        }
-    }
-
-    private fun customHomeStatusGroups(): Map<String, List<View>> = mapOf(
-        KEY_HOME_CUSTOM_MAIN_BUTTON to listOf(btnToggle),
-        KEY_HOME_CUSTOM_ACTIVE_PROFILE to listOf(rowActiveProfile),
-        KEY_HOME_CUSTOM_CONTROL_MODE to listOf(tvControlModeHint),
-        KEY_HOME_CUSTOM_PICK_APPS to listOf(btnSimplePickApps),
-        KEY_HOME_CUSTOM_TEMPORARY to listOf(tvTempHint),
-        KEY_HOME_CUSTOM_EMERGENCY to listOf(tvEmergencyHint),
-        KEY_HOME_CUSTOM_PROFILE_DROPDOWN to listOf(layoutProfileDropdown)
-    )
-
-    private fun ensureCustomHomeCard(key: String, views: List<View>): MaterialCardView {
-        val card = customHomeCards.getOrPut(key) { createCustomHomeItemCard() }
-        val content = card.getChildAt(0) as LinearLayout
-        ensureCustomHomeCardHeader(content, key)
-
-        views.forEach { view ->
-            customHomeOriginalLayoutParams.getOrPut(view) { view.layoutParams }
-            if (view.parent !== content) {
-                (view.parent as? ViewGroup)?.removeView(view)
-                content.addView(view, customHomeItemLayoutParams(view))
-            }
-        }
-
-        if (card.parent !== layoutHomeRoot) {
-            (card.parent as? ViewGroup)?.removeView(card)
-            layoutHomeRoot.addView(card, card.layoutParams)
-        }
-
-        val hasVisibleContent = views.any { it.isVisible }
-        if (!hasVisibleContent) {
-            card.hideNow()
-        } else {
-            card.alpha = 1f
-            card.isVisible = true
-        }
-        return card
-    }
-
-    private fun ensureCustomHomeCardHeader(content: LinearLayout, key: String) {
-        val tag = "custom_home_item_header"
-        val existing = (0 until content.childCount)
-            .map { index -> content.getChildAt(index) }
-            .firstOrNull { it.tag == tag } as? TextView
-        val header = existing ?: TextView(this).apply {
-            this.tag = tag
-            setTextColor(ColorUtils.setAlphaComponent(
-                MaterialColors.getColor(this@MainActivity, com.google.android.material.R.attr.colorOnSurface, Color.BLACK),
-                0xA8
-            ))
-            textSize = 12f
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            letterSpacing = 0.04f
-        }
-        header.text = getString(customHomeCardTitleRes(key))
-        if (header.parent == null) {
-            content.addView(
-                header,
-                0,
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    bottomMargin = homeDp(6f)
-                }
-            )
-        }
-    }
-
-    @StringRes
-    private fun customHomeCardTitleRes(key: String): Int = when (key) {
-        KEY_HOME_CUSTOM_MAIN_BUTTON -> R.string.home_custom_main_button
-        KEY_HOME_CUSTOM_ACTIVE_PROFILE -> R.string.home_custom_active_profile
-        KEY_HOME_CUSTOM_CONTROL_MODE -> R.string.home_custom_control_mode
-        KEY_HOME_CUSTOM_PICK_APPS -> R.string.home_custom_pick_apps
-        KEY_HOME_CUSTOM_TEMPORARY -> R.string.home_custom_temporary
-        KEY_HOME_CUSTOM_EMERGENCY -> R.string.home_custom_emergency
-        KEY_HOME_CUSTOM_PROFILE_DROPDOWN -> R.string.home_custom_profile_dropdown
-        else -> R.string.home_layout_custom
-    }
-
-    private fun createCustomHomeItemCard(): MaterialCardView {
-        val onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
-        val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.WHITE)
-        return MaterialCardView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = homeDp(12f)
-            }
-            radius = homeDp(18f).toFloat()
-            cardElevation = 0f
-            setCardBackgroundColor(surface)
-            setStrokeWidth(homeDp(1f))
-            setStrokeColor(ColorUtils.setAlphaComponent(onSurface, 0x1F))
-
-            val content = LinearLayout(this@MainActivity).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(homeDp(12f), homeDp(12f), homeDp(12f), homeDp(12f))
-            }
-            addView(
-                content,
-                FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.WRAP_CONTENT
-                )
-            )
-        }
-    }
-
-    private fun customHomeItemLayoutParams(view: View): LinearLayout.LayoutParams {
-        val original = customHomeOriginalLayoutParams[view] as? LinearLayout.LayoutParams
-        return LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            original?.height ?: LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-    }
-
-    private fun restoreStatusCardHomeItemsIfNeeded() {
-        if (!::layoutStatusContent.isInitialized) return
-        val statusViews = listOf(
-            btnToggle,
-            rowActiveProfile,
-            tvControlModeHint,
-            btnSimplePickApps,
-            tvTempHint,
-            tvEmergencyHint,
-            dividerBeforeProfileDropdown,
-            layoutProfileDropdown
-        )
-
-        customHomeCards.values.forEach { card ->
-            (card.parent as? ViewGroup)?.removeView(card)
-        }
-
-        statusViews.forEach { view ->
-            if (view.parent !== layoutStatusContent) {
-                (view.parent as? ViewGroup)?.removeView(view)
-                val params = customHomeOriginalLayoutParams[view] ?: view.layoutParams
-                layoutStatusContent.addView(view, params)
-            }
-        }
-        reorderDirectChildren(layoutStatusContent, statusViews.filter { it.parent === layoutStatusContent })
-    }
-
-    private fun reorderCustomHomeViews(
-        parent: ViewGroup,
-        order: List<String>,
-        viewsByKey: Map<String, List<View>>
-    ) {
-        val orderedViews = order
-            .flatMap { key -> viewsByKey[key].orEmpty() }
-            .filter { view -> view.parent === parent }
-        reorderDirectChildren(parent, orderedViews)
     }
 
     private fun reorderCustomHomeGroups(
@@ -1793,7 +1939,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun reorderDirectChildren(parent: ViewGroup, orderedViews: List<View>) {
-        if (orderedViews.size <= 1) return
+        if (orderedViews.size <= 1) {
+            return
+        }
 
         val firstIndex = orderedViews
             .mapNotNull { view -> parent.indexOfChild(view).takeIf { it >= 0 } }
@@ -1821,7 +1969,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        val show = sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_NEXT_SCHEDULE, false)
+        val show = homeLayoutMode() == ToggleOptionsActivity.HOME_MODE_CUSTOM ||
+            sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_NEXT_SCHEDULE, false)
         if (show) {
             if (!cardNextSchedule.isVisible) {
                 cardNextSchedule.showFade()
@@ -1855,23 +2004,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateQuickActionsVisibility() {
         val mode = homeLayoutMode()
-        tvQuickActionsTitle.setPadding(
-            if (mode == HOME_MODE_CUSTOM) homeDp(12f) else 0,
-            tvQuickActionsTitle.paddingTop,
-            tvQuickActionsTitle.paddingRight,
-            tvQuickActionsTitle.paddingBottom
-        )
 
-        if (!shouldShowHomeQuickActions()) {
-            gridQuickActions.hideHomeLayoutView(mode)
-            ivQuickActionsChevron.hideHomeLayoutView(mode)
-            ivQuickActionsEdit.hideHomeLayoutView(mode)
-            tvQuickActionsTitle.hideHomeLayoutView(mode)
-            rowQuickActionsHeader.hideHomeLayoutView(mode)
+        if (!shouldShowHomeQuickActions() || !areQuickActionsEnabled()) {
+            cardQuickActions.hideHomeLayoutView(mode)
             return
         }
 
-        val show = areQuickActionsEnabled()
         val expanded = areQuickActionsExpanded()
         val enabledCount = getVisibleQuickActionsCount()
 
@@ -1881,26 +2019,24 @@ class MainActivity : AppCompatActivity() {
             resources.getQuantityString(R.plurals.dashboard_quick_actions_count, enabledCount, enabledCount)
         }
 
-        if (show) {
-            rowQuickActionsHeader.showFade()
-            tvQuickActionsTitle.showFade()
-            ivQuickActionsEdit.showFade()
-            ivQuickActionsChevron.showFade()
-            if (expanded) {
-                gridQuickActions.showFade()
-            } else {
-                gridQuickActions.hideFade()
-            }
+        cardQuickActions.showFade()
+        rowQuickActionsHeader.isVisible = true
+        tvQuickActionsTitle.isVisible = true
+        ivQuickActionsEdit.isVisible = true
+        ivQuickActionsChevron.isVisible = true
+        if (expanded) {
+            dividerQuickActions.showFade()
+            gridQuickActions.showFade()
         } else {
-            gridQuickActions.hideHomeLayoutView(mode)
-            ivQuickActionsChevron.hideHomeLayoutView(mode)
-            ivQuickActionsEdit.hideHomeLayoutView(mode)
-            tvQuickActionsTitle.hideHomeLayoutView(mode)
-            rowQuickActionsHeader.hideHomeLayoutView(mode)
+            dividerQuickActions.hideFade()
+            gridQuickActions.hideFade()
         }
 
         ivQuickActionsChevron.animate().cancel()
-        ivQuickActionsChevron.rotation = if (expanded) 180f else 0f
+        ivQuickActionsChevron.rotation = 0f
+        ivQuickActionsChevron.setImageResource(
+            if (expanded) R.drawable.keyboard_arrow_up_24 else R.drawable.keyboard_arrow_down_24
+        )
         ivQuickActionsChevron.contentDescription = getString(
             if (expanded) R.string.dashboard_quick_actions_collapse else R.string.dashboard_quick_actions_expand
         )
@@ -1910,12 +2046,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun areQuickActionsEnabled(): Boolean {
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        return sp.getBoolean(ToggleOptionsActivity.KEY_SHOW_QUICK_ACTIONS, true)
+        if (homeLayoutMode() == ToggleOptionsActivity.HOME_MODE_CUSTOM) {
+            return true
+        }
+        return PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(ToggleOptionsActivity.KEY_SHOW_QUICK_ACTIONS, true)
     }
 
     private fun isProtectionActivelyEnforced(): Boolean {
-        return SwitchModeStore.isEnabled(this) && !EmergencyBypassStore.isActive(this)
+        return EditingLockGuard.isLocked(this)
     }
 
     private fun openBlockedNotificationsIfAllowed() {
@@ -1928,7 +2067,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun areQuickActionsExpanded(): Boolean {
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        return sp.getBoolean(KEY_QUICK_ACTIONS_EXPANDED, true)
+        return sp.getBoolean(KEY_QUICK_ACTIONS_EXPANDED, false)
     }
 
     private fun isQuickActionTileEnabled(key: String, defaultValue: Boolean = true): Boolean {
@@ -1942,7 +2081,6 @@ class MainActivity : AppCompatActivity() {
         if (isQuickActionTileEnabled(KEY_QA_PROFILES)) count++
         if (isQuickActionTileEnabled(KEY_QA_WEBSITES)) count++
         if (isQuickActionTileEnabled(KEY_QA_INAPP)) count++
-        if (isQuickActionTileEnabled(KEY_QA_USAGE)) count++
         if (isQuickActionTileEnabled(KEY_QA_NFC_WRITE, defaultValue = false)) count++
         if (isQuickActionTileEnabled(KEY_QA_BLOCKED_NOTIFICATIONS, defaultValue = false)) count++
         if (isQuickActionTileEnabled(KEY_QA_QR) && AutomationModeStore.isQrAllowed(this)) count++
@@ -1969,7 +2107,6 @@ class MainActivity : AppCompatActivity() {
         KEY_QA_PROFILES,
         KEY_QA_WEBSITES,
         KEY_QA_INAPP,
-        KEY_QA_USAGE,
         KEY_QA_NFC_WRITE,
         KEY_QA_BLOCKED_NOTIFICATIONS,
         KEY_QA_QR,
@@ -2011,7 +2148,6 @@ class MainActivity : AppCompatActivity() {
             put(KEY_QA_PROFILES, QuickActionDialogItem(KEY_QA_PROFILES, getString(R.string.dashboard_tile_profiles), getString(R.string.dashboard_tile_profiles_sub), R.drawable.switch_account_24, isQuickActionTileEnabled(KEY_QA_PROFILES)))
             put(KEY_QA_WEBSITES, QuickActionDialogItem(KEY_QA_WEBSITES, getString(R.string.dashboard_tile_blocked_websites), getString(R.string.dashboard_tile_blocked_websites_sub), R.drawable.language_24, isQuickActionTileEnabled(KEY_QA_WEBSITES)))
             put(KEY_QA_INAPP, QuickActionDialogItem(KEY_QA_INAPP, getString(R.string.dashboard_tile_in_app), getString(R.string.dashboard_tile_in_app_sub), R.drawable.layers_24, isQuickActionTileEnabled(KEY_QA_INAPP)))
-            put(KEY_QA_USAGE, QuickActionDialogItem(KEY_QA_USAGE, getString(R.string.dashboard_tile_usage), getString(R.string.dashboard_tile_usage_sub), R.drawable.bar_chart_24, isQuickActionTileEnabled(KEY_QA_USAGE)))
             put(KEY_QA_NFC_WRITE, QuickActionDialogItem(KEY_QA_NFC_WRITE, getString(R.string.dashboard_tile_write_nfc), getString(R.string.dashboard_tile_write_nfc_sub), R.drawable.nfc_24, isQuickActionTileEnabled(KEY_QA_NFC_WRITE, defaultValue = false)))
             put(KEY_QA_BLOCKED_NOTIFICATIONS, QuickActionDialogItem(KEY_QA_BLOCKED_NOTIFICATIONS, getString(R.string.dashboard_tile_blocked_notifications), getString(R.string.dashboard_tile_blocked_notifications_sub), R.drawable.notifications_24, isQuickActionTileEnabled(KEY_QA_BLOCKED_NOTIFICATIONS, defaultValue = false)))
             if (AutomationModeStore.isQrAllowed(this@MainActivity)) {
@@ -2035,7 +2171,9 @@ class MainActivity : AppCompatActivity() {
         var draggedKey: String? = null
 
         fun moveItem(fromIndex: Int, toIndex: Int) {
-            if (fromIndex !in items.indices || toIndex !in items.indices || fromIndex == toIndex) return
+            if (fromIndex !in items.indices || toIndex !in items.indices || fromIndex == toIndex) {
+                return
+            }
             val moved = items.removeAt(fromIndex)
             items.add(toIndex, moved)
             rowsContainer.removeAllViews()
@@ -2048,27 +2186,21 @@ class MainActivity : AppCompatActivity() {
             moveItem(fromIndex, toIndex)
         }
 
-        fun createMoveButton(iconRes: Int, descriptionRes: Int, enabled: Boolean, onClick: () -> Unit): ImageView {
-            return ImageView(this).apply {
-                setImageResource(iconRes)
-                contentDescription = getString(descriptionRes)
-                alpha = if (enabled) 0.82f else 0.28f
-                isEnabled = enabled
-                isClickable = enabled
-                isFocusable = enabled
-                setPadding(dp(7), dp(7), dp(7), dp(7))
-                setColorFilter(if (enabled) onSurface else ColorUtils.setAlphaComponent(onSurface, 0x66))
-                setOnClickListener { onClick() }
-            }
-        }
-
-        fun attachDragReorder(card: MaterialCardView, key: String) {
-            card.setOnLongClickListener {
+        fun attachDragReorder(card: MaterialCardView, dragHandle: View, key: String) {
+            dragHandle.setOnTouchListener { view, event ->
+                if (event.actionMasked == MotionEvent.ACTION_UP) {
+                    view.performClick()
+                    return@setOnTouchListener true
+                }
+                if (event.actionMasked != MotionEvent.ACTION_DOWN) {
+                    return@setOnTouchListener false
+                }
                 draggedKey = key
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                 val data = ClipData.newPlainText("quick_action_tile", key)
-                val shadow = View.DragShadowBuilder(it)
-                it.startDragAndDrop(data, shadow, key, 0)
-                true
+                val started = view.startDragAndDrop(data, View.DragShadowBuilder(card), key, 0)
+                if (!started) draggedKey = null
+                started
             }
             card.setOnDragListener { view, event ->
                 when (event.action) {
@@ -2106,7 +2238,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val hint = TextView(this).apply {
-            text = getString(R.string.pref_home_layout_custom_reorder_hint)
+            text = getString(R.string.dashboard_quick_actions_reorder_hint)
             setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xAA))
             textSize = 12.5f
             gravity = android.view.Gravity.CENTER_HORIZONTAL
@@ -2120,11 +2252,11 @@ class MainActivity : AppCompatActivity() {
         container.addView(rowsContainer)
 
         renderRows = {
-            items.forEachIndexed { index, item ->
+            items.forEach { item ->
                 val card = MaterialCardView(this).apply {
                     radius = dp(16).toFloat()
                     cardElevation = 0f
-                    useCompatPadding = true
+                    useCompatPadding = false
                     setCardBackgroundColor(if (item.checked) ColorUtils.setAlphaComponent(accent, 0x12) else surfaceVariant)
                     setStrokeWidth(dp(if (item.checked) 2 else 1))
                     setStrokeColor(if (item.checked) accent else ColorUtils.setAlphaComponent(onSurface, 0x24))
@@ -2135,8 +2267,17 @@ class MainActivity : AppCompatActivity() {
                 val row = LinearLayout(this).apply {
                     orientation = LinearLayout.HORIZONTAL
                     gravity = android.view.Gravity.CENTER_VERTICAL
-                    setPadding(dp(14), dp(12), dp(6), dp(12))
+                    minimumHeight = dp(64)
+                    setPadding(dp(8), dp(7), dp(8), dp(7))
                 }
+
+                val dragHandle = ImageView(this).apply {
+                    setImageResource(R.drawable.drag_handle_24)
+                    contentDescription = getString(R.string.pref_home_layout_custom_drag_handle)
+                    setPadding(dp(8), dp(9), dp(8), dp(9))
+                    setColorFilter(ColorUtils.setAlphaComponent(onSurface, 0x99))
+                }
+                row.addView(dragHandle, LinearLayout.LayoutParams(dp(40), dp(46)))
 
                 val icon = ImageView(this).apply {
                     setImageResource(item.iconRes)
@@ -2146,7 +2287,7 @@ class MainActivity : AppCompatActivity() {
 
                 val textColumn = LinearLayout(this).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(14), 0, dp(8), 0)
+                    setPadding(dp(12), 0, dp(4), 0)
                 }
                 val label = TextView(this).apply {
                     text = item.label
@@ -2156,27 +2297,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 val summary = TextView(this).apply {
                     text = item.summary
-                    setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xB0))
-                    textSize = 13f
-                    setPadding(0, dp(3), 0, 0)
+                    setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xA8))
+                    textSize = 12.5f
+                    maxLines = 2
+                    setPadding(0, dp(2), 0, 0)
                 }
                 textColumn.addView(label)
                 textColumn.addView(summary)
                 row.addView(textColumn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-
-                val moveColumn = LinearLayout(this).apply {
-                    orientation = LinearLayout.VERTICAL
-                    gravity = android.view.Gravity.CENTER
-                }
-                moveColumn.addView(
-                    createMoveButton(R.drawable.arrow_upward_24, R.string.pref_home_layout_custom_move_up, index > 0) { moveItem(index, index - 1) },
-                    LinearLayout.LayoutParams(dp(34), dp(36))
-                )
-                moveColumn.addView(
-                    createMoveButton(R.drawable.arrow_downward_24, R.string.pref_home_layout_custom_move_down, index < items.lastIndex) { moveItem(index, index + 1) },
-                    LinearLayout.LayoutParams(dp(34), dp(36))
-                )
-                row.addView(moveColumn)
 
                 val box = MaterialCheckBox(this).apply {
                     isChecked = item.checked
@@ -2184,7 +2312,7 @@ class MainActivity : AppCompatActivity() {
                     buttonTintList = checkBoxTint
                     contentDescription = item.label
                 }
-                row.addView(box)
+                row.addView(box, LinearLayout.LayoutParams(dp(48), dp(48)))
 
                 fun updateChecked(checked: Boolean) {
                     item.checked = checked
@@ -2197,15 +2325,19 @@ class MainActivity : AppCompatActivity() {
                 card.setOnClickListener { updateChecked(!item.checked) }
                 box.setOnClickListener { updateChecked(box.isChecked) }
 
-                attachDragReorder(card, item.key)
+                attachDragReorder(card, dragHandle, item.key)
                 card.addView(row)
                 rowsContainer.addView(
                     card,
-                    LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        bottomMargin = dp(8)
+                    }
                 )
             }
         }
-
         renderRows()
         val scroll = android.widget.ScrollView(this).apply { addView(container) }
 
@@ -2223,14 +2355,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toggleQuickActionsExpanded() {
-        if (!areQuickActionsEnabled()) return
+        if (!areQuickActionsEnabled()) {
+            return
+        }
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         val expanded = !areQuickActionsExpanded()
         sp.edit { putBoolean(KEY_QUICK_ACTIONS_EXPANDED, expanded) }
-        ivQuickActionsChevron.animate().rotation(if (expanded) 180f else 0f).setDuration(180L).start()
+        ivQuickActionsChevron.animate().cancel()
+        ivQuickActionsChevron.rotation = 0f
+        ivQuickActionsChevron.setImageResource(
+            if (expanded) R.drawable.keyboard_arrow_up_24 else R.drawable.keyboard_arrow_down_24
+        )
         if (expanded) {
+            dividerQuickActions.showFade()
             gridQuickActions.showFade()
         } else {
+            dividerQuickActions.hideFade()
             gridQuickActions.hideFade()
         }
         tvQuickActionsTitle.text = if (expanded || getVisibleQuickActionsCount() <= 0) {
@@ -2244,13 +2384,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun syncScanQuickActions() {
-        if (!::tileQr.isInitialized) return
+        if (!::tileQr.isInitialized) {
+            return
+        }
 
         val appsVisible = isQuickActionTileEnabled(KEY_QA_APPS)
         val profilesVisible = isQuickActionTileEnabled(KEY_QA_PROFILES)
         val websitesVisible = isQuickActionTileEnabled(KEY_QA_WEBSITES)
         val inAppVisible = isQuickActionTileEnabled(KEY_QA_INAPP)
-        val usageVisible = isQuickActionTileEnabled(KEY_QA_USAGE)
         val nfcWriteVisible = isQuickActionTileEnabled(KEY_QA_NFC_WRITE, defaultValue = false)
         val blockedNotificationsVisible = isQuickActionTileEnabled(KEY_QA_BLOCKED_NOTIFICATIONS, defaultValue = false)
         val qrVisible = isQuickActionTileEnabled(KEY_QA_QR) && AutomationModeStore.isQrAllowed(this)
@@ -2261,7 +2402,6 @@ class MainActivity : AppCompatActivity() {
             KEY_QA_PROFILES to (tileProfiles to profilesVisible),
             KEY_QA_WEBSITES to (tileWriteNfc to websitesVisible),
             KEY_QA_INAPP to (tileToggleOptions to inAppVisible),
-            KEY_QA_USAGE to (tilePermissions to usageVisible),
             KEY_QA_NFC_WRITE to (tileNfcWrite to nfcWriteVisible),
             KEY_QA_BLOCKED_NOTIFICATIONS to (tileBlockedNotifications to blockedNotificationsVisible),
             KEY_QA_QR to (tileQr to qrVisible),
@@ -2269,7 +2409,7 @@ class MainActivity : AppCompatActivity() {
         )
         val orderedTiles = quickActionOrderKeys().mapNotNull { key -> tilesByKey[key] }
 
-        listOf(tileManageApps, tileProfiles, tileWriteNfc, tileToggleOptions, tilePermissions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode).forEach { tile ->
+        listOf(tileManageApps, tileProfiles, tileWriteNfc, tileToggleOptions, tileNfcWrite, tileBlockedNotifications, tileQr, tileBarcode).forEach { tile ->
             (tile.parent as? LinearLayout)?.removeView(tile)
             tile.visibility = View.GONE
         }
@@ -2296,9 +2436,10 @@ class MainActivity : AppCompatActivity() {
                 grid?.addView(dynamicRow)
             }
             row.visibility = View.VISIBLE
+            val spanFullRow = chunk.size == 1
             chunk.forEach { tile ->
                 tile.visibility = View.VISIBLE
-                tile.layoutParams = quickActionTileLayoutParams(single = chunk.size == 1)
+                tile.layoutParams = quickActionTileLayoutParams(spanFullRow)
                 row.addView(tile)
             }
         }
@@ -2317,154 +2458,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun quickActionTileLayoutParams(single: Boolean): LinearLayout.LayoutParams {
+    private fun quickActionTileLayoutParams(spanFullRow: Boolean): LinearLayout.LayoutParams {
         val density = resources.displayMetrics.density
         val margin = (6 * density).toInt()
-        val tileHeight = (164 * density).toInt()
-        return if (single) {
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                tileHeight
-            ).apply {
-                setMargins(margin, margin, margin, margin)
-            }
-        } else {
-            LinearLayout.LayoutParams(0, tileHeight, 1f).apply {
-                setMargins(margin, margin, margin, margin)
-            }
-        }
-    }
-
-    private fun activeControlLabels(): String {
-        val labels = mutableListOf<String>()
-        if (AutomationModeStore.isButtonAllowed(this)) labels += getString(R.string.control_manual)
-        if (AutomationModeStore.isNfcAllowed(this)) labels += getString(R.string.control_nfc)
-        if (AutomationModeStore.isScheduleAllowed(this)) labels += getString(R.string.control_schedules)
-        if (AutomationModeStore.isQrAllowed(this)) labels += getString(R.string.control_qr)
-        if (AutomationModeStore.isBarcodeAllowed(this)) labels += getString(R.string.control_barcode)
-        return labels.joinToString(", ")
-    }
-
-    private fun updateBlockedNowCard() {
-        if (!shouldShowHomeBlockedNow()) {
-            cardBlockedNow.hideFade()
-            return
-        }
-
-        // Dashboard section has been removed (card stays GONE). Keep logic as a no-op.
-        if (!cardBlockedNow.isVisible) return
-
-        val enabled = SwitchModeStore.isEnabled(this)
-        val emergency = EmergencyBypassStore.isActive(this)
-
-        fun showEmpty(@StringRes msg: Int, @DrawableRes icon: Int) {
-            tvBlockedNowEmpty.text = getString(msg)
-            ivBlockedNowEmptyIcon.setImageResource(icon)
-            layoutBlockedNowEmpty.showFade()
-            rvBlockedNow.hideFade()
-            tvBlockedNowMore.hideFade()
-        }
-
-        // Default: nothing blocked (or user explicitly bypasses)
-        if (!enabled) {
-            showEmpty(R.string.dashboard_blocked_now_off, R.drawable.lock_open_24)
-            return
-        }
-
-        if (emergency) {
-            showEmpty(R.string.dashboard_blocked_now_emergency, R.drawable.info_24)
-            return
-        }
-
-        val profile = ProfileStore.getCurrent(this)
-        if (profile.isNullOrBlank()) {
-            showEmpty(R.string.dashboard_blocked_now_all_allowed, R.drawable.toggle_on_24)
-            return
-        }
-
-        val blocked = cachedBlockedApps
-        if (blocked.isEmpty()) {
-            showEmpty(R.string.dashboard_blocked_now_all_allowed, R.drawable.toggle_on_24)
-            return
-        }
-
-        // Build list:
-        // 1) Limit reached apps (most "alive")
-        // 2) Hard-block apps (no limit set -> always blocked)
-        val limitReached = mutableListOf<BlockedNowItem>()
-        val hardBlocked = mutableListOf<BlockedNowItem>()
-
-        for (app in blocked) {
-            val limitMin = UsageLimitStore.getLimitMinutes(this, profile, app.pkg)
-            val sessionLimitMin = SessionLimitStore.getLimitMinutes(this, profile, app.pkg)
-            val attemptLimit = AttemptLimitStore.getLimitAttempts(this, profile, app.pkg)
-            val opensAtOrOver = attemptLimit > 0 && OpenCountStore.getToday(this, profile, app.pkg) >= attemptLimit
-            val hasAnyLimit = limitMin > 0 || sessionLimitMin > 0 || attemptLimit > 0
-
-            if (limitMin > 0) {
-                val resetMode = UsageLimitResetStore.getMode(this, profile, app.pkg)
-                val reached = if (resetMode == UsageLimitResetStore.MODE_SESSION) {
-                    UsageLimitSessionRuntimeStore.get(this, profile, app.pkg)?.reached == true
-                } else {
-                    LimitReachedStore.isReachedToday(this, profile, app.pkg)
-                }
-                if (reached) {
-                    limitReached.add(
-                        BlockedNowItem(
-                            label = app.label,
-                            pkg = app.pkg,
-                            icon = app.icon,
-                            reason = getString(R.string.dashboard_blocked_now_reason_limit),
-                            isAvailable = app.isAvailable
-                        )
-                    )
-                }
-            } else if (attemptLimit > 0) {
-                if (opensAtOrOver) {
-                    limitReached.add(
-                        BlockedNowItem(
-                            label = app.label,
-                            pkg = app.pkg,
-                            icon = app.icon,
-                            reason = getString(R.string.dashboard_blocked_now_reason_attempts),
-                            isAvailable = app.isAvailable
-                        )
-                    )
-                }
-            } else if (!hasAnyLimit && !isInAppOnlyManagedApp(this, profile, app.pkg)) {
-                hardBlocked.add(
-                    BlockedNowItem(
-                        label = app.label,
-                        pkg = app.pkg,
-                        icon = app.icon,
-                        reason = getString(R.string.dashboard_blocked_now_reason_profile),
-                        isAvailable = app.isAvailable
-                    )
-                )
-            }
-        }
-
-        val all = (limitReached + hardBlocked)
-            .sortedBy { it.label.lowercase() }
-
-        if (all.isEmpty()) {
-            showEmpty(R.string.dashboard_blocked_now_all_allowed, R.drawable.toggle_on_24)
-            return
-        }
-
-        // Only show the top 3, plus a small "+X more" hint (feels cleaner on the dashboard)
-        val display = all.take(3)
-        val moreCount = (all.size - display.size).coerceAtLeast(0)
-
-        layoutBlockedNowEmpty.hideFade()
-        rvBlockedNow.showFade()
-        blockedNowAdapter.submitList(display)
-
-        if (moreCount > 0) {
-            tvBlockedNowMore.text = resources.getQuantityString(R.plurals.dashboard_blocked_now_more, moreCount, moreCount)
-            tvBlockedNowMore.showFade()
-        } else {
-            tvBlockedNowMore.hideFade()
+        val tileHeight = (136 * density).toInt()
+        return LinearLayout.LayoutParams(
+            0,
+            tileHeight,
+            if (spanFullRow) 2f else 1f
+        ).apply {
+            setMargins(margin, margin, margin, margin)
         }
     }
 
@@ -2562,7 +2565,7 @@ class MainActivity : AppCompatActivity() {
         ivStatusIcon.setImageResource(if (enabled) R.drawable.lock_24 else R.drawable.lock_open_24)
         btnToggle.text = if (enabled) getString(R.string.dashboard_toggle_disable) else getString(R.string.dashboard_toggle_enable)
 
-        val locked = enabled && SwitchModeStore.isNfcRequiredForDisable(this)
+        val locked = enabled && !emergencyActive && SwitchModeStore.isNfcRequiredForDisable(this)
         tvNfcLockedHint.visibility = if (locked) View.VISIBLE else View.GONE
         btnToggle.isEnabled = !locked
 
@@ -2579,15 +2582,13 @@ class MainActivity : AppCompatActivity() {
 
         // Status line
         val stateWord = when {
+            tempDisableRemaining > 0L -> getString(R.string.state_temporarily_paused)
             tempEnableRemaining > 0L -> getString(R.string.state_temporarily_enabled)
             enabled -> getString(R.string.state_enabled)
             else -> getString(R.string.state_disabled)
         }
         val sb = StringBuilder()
-        sb.append(getString(R.string.switch_mode_label, stateWord))
-
-        // Temp-mode status now reuses the hint row below the main button instead of showing a separate chip.
-        chipTemp.visibility = View.GONE
+        sb.append(getString(R.string.protection_status_label, stateWord))
 
         when {
             emergencyActive -> {
@@ -2632,9 +2633,6 @@ class MainActivity : AppCompatActivity() {
         updateEmergencyHintVisibility()
         updateTempHintVisibility()
 
-        // Live section
-        updateBlockedNowCard()
-
         // Refresh "Blocked now" chip visibility in the blocked-apps list immediately when state changes (previously it only updated after re-opening the app).
         val chipKey = "$enabled|$emergencyActive"
         if (lastBlockedChipKey != chipKey) {
@@ -2643,7 +2641,7 @@ class MainActivity : AppCompatActivity() {
             notifyBlockedChipsChanged()
         }
 
-        val editEnabled = ensureCanRemoveBlockedApp(showToast = false)
+        val editEnabled = ensureCanRemoveBlockedApp(showFeedback = false)
         if (lastBlockedEditEnabled != editEnabled) {
             lastBlockedEditEnabled = editEnabled
             notifyBlockedEditStateChanged()
@@ -2669,8 +2667,9 @@ class MainActivity : AppCompatActivity() {
         val tempDisableRemaining = SwitchModeStore.getTemporaryRemainingMillis(this)
         val tempEnableRemaining = SwitchModeStore.getTemporaryEnableRemainingMillis(this)
         val hasActiveTemp = tempDisableRemaining > 0L || tempEnableRemaining > 0L
-        val showTemporaryMode = PreferenceManager.getDefaultSharedPreferences(this)
-            .getBoolean(ToggleOptionsActivity.KEY_SHOW_TEMPORARY_MODE, true)
+        val showTemporaryMode = homeLayoutMode() == ToggleOptionsActivity.HOME_MODE_CUSTOM ||
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(ToggleOptionsActivity.KEY_SHOW_TEMPORARY_MODE, true)
 
         tvTempHint.isVisible = hasActiveTemp || (shouldShowHomeTemporaryShortcut() && showTemporaryMode)
 
@@ -2684,7 +2683,15 @@ class MainActivity : AppCompatActivity() {
                 formatRemainingShort(tempEnableRemaining)
             )
             lockedByNfc -> getString(R.string.dashboard_temp_hint_locked_nfc)
-            else -> getString(R.string.dashboard_temp_hint)
+            SwitchModeStore.isEnabled(this) -> getString(R.string.dashboard_temp_hint_disable)
+            else -> {
+                val currentProfile = ProfileStore.getCurrent(this).orEmpty().trim()
+                if (currentProfile.isBlank()) {
+                    getString(R.string.dashboard_temp_hint_enable)
+                } else {
+                    getString(R.string.dashboard_temp_hint_enable_profile, currentProfile)
+                }
+            }
         }
 
         tvTempHint.alpha = when {
@@ -2700,8 +2707,9 @@ class MainActivity : AppCompatActivity() {
         val paused = EmergencyBypassStore.isPaused(this)
         val usedToday = EmergencyBypassStore.hasUsedToday(this)
         val rem = EmergencyBypassStore.minutesRemaining(this)
-        val showEmergencyUnlock = PreferenceManager.getDefaultSharedPreferences(this)
-            .getBoolean(ToggleOptionsActivity.KEY_SHOW_EMERGENCY_UNLOCK, true)
+        val showEmergencyUnlock = homeLayoutMode() == ToggleOptionsActivity.HOME_MODE_CUSTOM ||
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(ToggleOptionsActivity.KEY_SHOW_EMERGENCY_UNLOCK, true)
 
         tvEmergencyHint.isVisible = shouldShowHomeEmergencyShortcut() && ((showEmergencyUnlock && featureEnabled) || active || paused)
 
@@ -2935,7 +2943,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun trackPrimaryToggleTapForTempNudge() {
-        if (hasDiscoveredTempMode()) return
+        if (hasDiscoveredTempMode()) {
+            return
+        }
 
         val prefs = uiHintsPrefs()
         val taps = prefs.getInt(KEY_PRIMARY_TOGGLE_TAP_COUNT, 0) + 1
@@ -2959,7 +2969,7 @@ class MainActivity : AppCompatActivity() {
         val profileLocked = locked || isProfileSwitchLockedWhileEnabled()
         val appPickingLocked = locked || isAppPickingLockedWhileEnabled()
         val websitesLocked = EditingLockGuard.isLocked(this)
-        val inAppLocked = SwitchModeStore.isBaseEnabled(this) || EditingLockGuard.isLocked(this)
+        val inAppLocked = EditingLockGuard.isLocked(this)
         val nfcWriteLocked = isNfcTagWritingLocked()
         val blockedNotificationsLocked = isProtectionActivelyEnforced()
 
@@ -2971,13 +2981,12 @@ class MainActivity : AppCompatActivity() {
         val profileAlpha = if (profileLocked) 0.5f else 1f
         val appPickingAlpha = if (appPickingLocked) 0.5f else 1f
 
-        // Quick actions (Permissions stays available so users can fix setup)
+        // Keep locked quick actions clickable so they can show explanatory dialogs where needed.
         // Keep locked tiles clickable so they can show the explanatory lock dialog.
         tileManageApps.isEnabled = true
         tileProfiles.isEnabled = true
         tileWriteNfc.isEnabled = true
         tileToggleOptions.isEnabled = true
-        tilePermissions.isEnabled = true
         tileNfcWrite.isEnabled = true
         tileBlockedNotifications.isEnabled = true
         tileQr.isEnabled = true
@@ -2987,7 +2996,6 @@ class MainActivity : AppCompatActivity() {
         tileProfiles.alpha = profileAlpha
         tileWriteNfc.alpha = if (websitesLocked) lockedTileAlpha() else 1f
         tileToggleOptions.alpha = if (inAppLocked) lockedTileAlpha() else 1f
-        tilePermissions.alpha = 1f
         tileNfcWrite.alpha = if (nfcWriteLocked) lockedTileAlpha() else 1f
         tileBlockedNotifications.alpha = if (blockedNotificationsLocked) lockedTileAlpha() else 1f
         tileQr.alpha = 1f
@@ -2999,7 +3007,7 @@ class MainActivity : AppCompatActivity() {
     private fun lockedTileAlpha(): Float = LockedUi.cardAlpha(this)
 
     private fun isNfcTagWritingLocked(): Boolean {
-        return SwitchModeStore.isEnabled(this) &&
+        return EditingLockGuard.isLocked(this) &&
             !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this)
     }
 
@@ -3024,7 +3032,7 @@ class MainActivity : AppCompatActivity() {
         profileDropdown.setOnItemClickListener { _, _, pos, _ ->
             val selected = adapter.getItem(pos) ?: return@setOnItemClickListener
 
-            if (!ensureCanSwitchProfiles(showToast = true)) {
+            if (!ensureCanSwitchProfiles(showFeedback = true)) {
                 val cur = ProfileStore.getCurrent(this)
                 profileDropdown.setText(cur ?: "", false)
                 return@setOnItemClickListener
@@ -3040,88 +3048,11 @@ class MainActivity : AppCompatActivity() {
         return findViewById(android.R.id.content) ?: window.decorView
     }
 
-    private fun showAddProfileDialog() {
-        // Safety guard: even if called directly elsewhere, don't allow when switching is locked.
-        if (!ensureCanSwitchProfiles(showToast = true)) return
-
-        val sheet = BottomSheetDialog(this)
-        val parent = findViewById<ViewGroup>(android.R.id.content)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_add_profile, parent, false)
-        sheet.setContentView(view)
-
-        val icon = view.findViewById<ImageView>(R.id.icon)
-        val til = view.findViewById<TextInputLayout>(R.id.tilProfile)
-        val et = view.findViewById<TextInputEditText>(R.id.etProfile)
-        val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
-        val btnCreate = view.findViewById<MaterialButton>(R.id.btnCreate)
-
-        val accent = AccentColor.getAccentColorInt(this)
-        val tint = AccentColor.getActiveColor(this)
-        val onAccent = if (ColorUtils.calculateLuminance(accent) > 0.52) Color.BLACK else Color.WHITE
-
-        icon?.imageTintList = tint
-        til.setStartIconTintList(tint)
-        btnCancel.backgroundTintList = tint
-        btnCreate.backgroundTintList = tint
-        btnCancel.setTextColor(onAccent)
-        btnCreate.setTextColor(onAccent)
-
-        fun validate(): Boolean {
-            val name = et.text?.toString()?.trim().orEmpty()
-            return when {
-                name.length < 2 -> {
-                    til.error = getString(R.string.profile_name_too_short); false
-                }
-                ProfileStore.getProfiles(this).contains(name) -> {
-                    til.error = getString(R.string.profile_name_exists, name); false
-                }
-                else -> {
-                    til.error = null; true
-                }
-            }
-        }
-
-        btnCreate.isEnabled = false
-        et.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                btnCreate.isEnabled = validate()
-            }
-            override fun afterTextChanged(s: android.text.Editable?) {}
-        })
-
-        btnCancel.setOnClickListener { sheet.dismiss() }
-
-        btnCreate.setOnClickListener {
-            if (!validate()) return@setOnClickListener
-            val name = et.text?.toString()?.trim().orEmpty()
-
-            val added = ProfileStore.addProfile(this, name)
-            if (added) {
-                ProfileStore.setCurrent(this, name)
-                refreshProfilesUi()
-                profileDropdown.setText(name, false)
-                refreshBlockedList()
-                updateSwitchState()
-                sheet.dismiss()
-
-                Snackbar.make(
-                    snackRoot(),
-                    getString(R.string.profile_created, name),
-                    Snackbar.LENGTH_SHORT
-                ).show()
-            } else {
-                til.error = getString(R.string.profile_name_exists, name)
-            }
-        }
-
-        sheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        sheet.show()
-    }
-
     private fun showBlockedAppQuickActions(item: AppDisplay) {
         if (!item.isAvailable) {
-            if (!ensureCanRemoveBlockedApp(showToast = true)) return
+            if (!ensureCanRemoveBlockedApp(showFeedback = true)) {
+                return
+            }
             confirmRemoveBlockedApp(item)
             return
         }
@@ -3188,8 +3119,8 @@ class MainActivity : AppCompatActivity() {
             Toast.LENGTH_SHORT
         ).show()
         startActivity(
-            Intent(this, ReelsShortsBlockingActivity::class.java)
-                .putExtra(ReelsShortsBlockingActivity.EXTRA_FOCUS_PACKAGE, item.pkg)
+            Intent(this, InAppRulesActivity::class.java)
+                .putExtra(InAppRulesActivity.EXTRA_FOCUS_PACKAGE, item.pkg)
         )
     }
 
@@ -3237,7 +3168,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun confirmRemoveBlockedApp(item: AppDisplay) {
-        if (!ensureCanRemoveBlockedApp(showToast = true)) return
+        if (!ensureCanRemoveBlockedApp(showFeedback = true)) {
+            return
+        }
 
         AlertDialog.Builder(this)
             .setTitle(R.string.dashboard_blocked_app_remove_title)
@@ -3251,7 +3184,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun removeBlockedApp(item: AppDisplay) {
         val profile = ProfileStore.getCurrent(this)
-        if (profile.isNullOrBlank()) return
+        if (profile.isNullOrBlank()) {
+            return
+        }
 
         val selected = ProfileStore.getSelectedForProfileMode(this, profile).toMutableSet()
         selected.remove(item.pkg)
@@ -3280,6 +3215,46 @@ class MainActivity : AppCompatActivity() {
         }
         if (::tvEmpty.isInitialized) {
             tvEmpty.setText(if (isAllow) R.string.no_allowed_apps else R.string.no_blocked_apps)
+        }
+    }
+
+    private fun isManagedAppListExpanded(): Boolean {
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        return sp.getBoolean(KEY_BLOCKED_APPS_EXPANDED, false)
+    }
+
+    private fun toggleManagedAppListExpanded() {
+        val expanded = !isManagedAppListExpanded()
+        PreferenceManager.getDefaultSharedPreferences(this).edit {
+            putBoolean(KEY_BLOCKED_APPS_EXPANDED, expanded)
+        }
+        updateManagedAppListExpandedUi(animate = true)
+    }
+
+    private fun updateManagedAppListExpandedUi(animate: Boolean) {
+        if (!::layoutBlockedAppsContent.isInitialized || !::ivBlockedAppsChevron.isInitialized) {
+            return
+        }
+
+        val expanded = isManagedAppListExpanded()
+        ivBlockedAppsChevron.animate().cancel()
+        ivBlockedAppsChevron.rotation = 0f
+        ivBlockedAppsChevron.setImageResource(
+            if (expanded) R.drawable.keyboard_arrow_up_24 else R.drawable.keyboard_arrow_down_24
+        )
+        ivBlockedAppsChevron.contentDescription = getString(
+            if (expanded) R.string.dashboard_blocked_apps_collapse else R.string.dashboard_blocked_apps_expand
+        )
+
+        if (animate) {
+            if (expanded) {
+                layoutBlockedAppsContent.showFade()
+            } else {
+                layoutBlockedAppsContent.hideFade()
+            }
+        } else {
+            layoutBlockedAppsContent.visibility = if (expanded) View.VISIBLE else View.GONE
+            layoutBlockedAppsContent.alpha = 1f
         }
     }
 
@@ -3313,6 +3288,7 @@ class MainActivity : AppCompatActivity() {
                 rvBlocked.hideFade()
             } else {
                 cardBlockedApps.showFade()
+                updateManagedAppListExpandedUi(animate = false)
                 if (isEmpty) {
                     layoutBlockedAppsEmpty.showFade()
                     rvBlocked.hideFade()
@@ -3328,13 +3304,13 @@ class MainActivity : AppCompatActivity() {
                 notifyBlockedChipsChanged()
             }
 
-            cachedBlockedApps = items
-            updateBlockedNowCard()
         }
     }
 
     private fun loadBlockedPkgsFor(profile: String?): List<String> {
-        if (profile.isNullOrEmpty()) return emptyList()
+        if (profile.isNullOrEmpty()) {
+            return emptyList()
+        }
 
         // Limited apps are also managed by the profile and should appear together with the other selected apps, even if the stored selected-app set was not updated.
         val explicitlyBlocked = ProfileStore.getSelectedForProfileMode(this, profile)
@@ -3355,7 +3331,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isInAppOnlyManagedApp(ctx: Context, profile: String, pkgName: String): Boolean {
-        if (!InAppRuleStore.hasEnabledRulesForPackage(ctx, profile, pkgName)) return false
+        if (!InAppRuleStore.hasEnabledRulesForPackage(ctx, profile, pkgName)) {
+            return false
+        }
         return !ProfileStore.getBlockedForProfile(ctx, profile).contains(pkgName)
     }
 
@@ -3394,92 +3372,6 @@ class MainActivity : AppCompatActivity() {
         val icon: Drawable,
         val isAvailable: Boolean
     )
-
-    data class BlockedNowItem(
-        val label: String,
-        val pkg: String,
-        val icon: Drawable,
-        val reason: String,
-        val isAvailable: Boolean
-    )
-
-    private class BlockedNowAdapter :
-        ListAdapter<BlockedNowItem, BlockedNowAdapter.VH>(DIFF) {
-
-        class VH(v: View) : RecyclerView.ViewHolder(v) {
-            val rowRoot: View = v.findViewById(R.id.rowRoot)
-            val icon: ImageView = v.findViewById(R.id.appIcon)
-            val name: TextView = v.findViewById(R.id.appName)
-            val pkg: TextView = v.findViewById(R.id.appPkg)
-            val reason: TextView = v.findViewById(R.id.appReason)
-            val unavailableChip: TextView = v.findViewById(R.id.tvUnavailableChip)
-            val unavailableHint: TextView = v.findViewById(R.id.tvUnavailableHint)
-
-            private fun dp(value: Float): Int =
-                (value * itemView.resources.displayMetrics.density).toInt()
-
-            fun bind(item: BlockedNowItem) {
-                val ctx = itemView.context
-                icon.setImageDrawable(item.icon)
-                pkg.text = item.pkg
-
-                if (item.isAvailable) {
-                    name.text = item.label
-                    reason.text = item.reason
-                    reason.visibility = View.VISIBLE
-
-                    rowRoot.background = null
-                    unavailableChip.visibility = View.GONE
-                    unavailableHint.visibility = View.GONE
-                } else {
-                    name.text = ctx.getString(R.string.unavailable_app_label)
-                    reason.visibility = View.GONE
-
-                    val bg = GradientDrawable().apply {
-                        shape = GradientDrawable.RECTANGLE
-                        cornerRadius = dp(12f).toFloat()
-                        setColor(ContextCompat.getColor(ctx, R.color.unavailable_row_bg))
-                        setStroke(dp(1f), ContextCompat.getColor(ctx, R.color.unavailable_row_stroke))
-                    }
-                    rowRoot.background = bg
-
-                    val chipBg = GradientDrawable().apply {
-                        shape = GradientDrawable.RECTANGLE
-                        cornerRadius = dp(999f).toFloat()
-                        setColor(ContextCompat.getColor(ctx, R.color.unavailable_chip_bg))
-                    }
-                    unavailableChip.background = chipBg
-                    unavailableChip.setTextColor(ContextCompat.getColor(ctx, R.color.unavailable_chip_text))
-                    unavailableChip.visibility = View.VISIBLE
-                    unavailableHint.visibility = View.GONE
-                }
-            }
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v = LayoutInflater.from(parent.context)
-                .inflate(R.layout.row_blocked_now, parent, false)
-            return VH(v)
-        }
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.bind(getItem(position))
-        }
-
-        companion object {
-            private val DIFF = object : DiffUtil.ItemCallback<BlockedNowItem>() {
-                override fun areItemsTheSame(oldItem: BlockedNowItem, newItem: BlockedNowItem): Boolean {
-                    return oldItem.pkg == newItem.pkg && oldItem.reason == newItem.reason
-                }
-
-                override fun areContentsTheSame(oldItem: BlockedNowItem, newItem: BlockedNowItem): Boolean {
-                    return oldItem.pkg == newItem.pkg &&
-                        oldItem.label == newItem.label &&
-                        oldItem.reason == newItem.reason &&
-                        oldItem.isAvailable == newItem.isAvailable
-                }
-            }
-        }
-    }
 
     private class BlockedAppsAdapter(
         private val onAppClick: (AppDisplay) -> Unit,
@@ -3617,7 +3509,9 @@ class MainActivity : AppCompatActivity() {
             }
 
             private fun isInAppOnlyManagedApp(ctx: Context, profile: String, pkgName: String): Boolean {
-                if (!InAppRuleStore.hasEnabledRulesForPackage(ctx, profile, pkgName)) return false
+                if (!InAppRuleStore.hasEnabledRulesForPackage(ctx, profile, pkgName)) {
+                    return false
+                }
                 return !ProfileStore.getBlockedForProfile(ctx, profile).contains(pkgName)
             }
 
@@ -3700,7 +3594,9 @@ class MainActivity : AppCompatActivity() {
                 bindActions(holder, item, editEnabled)
                 handled = true
             }
-            if (handled) return
+            if (handled) {
+                return
+            }
             super.onBindViewHolder(holder, position, payloads)
         }
 
@@ -3739,27 +3635,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val quickActionsEnabled = areQuickActionsEnabled()
-        val qrAllowed = AutomationModeStore.isQrAllowed(this)
-        val barcodeAllowed = AutomationModeStore.isBarcodeAllowed(this)
-        val qrQuickTileShown = quickActionsEnabled && isQuickActionTileEnabled(KEY_QA_QR) && qrAllowed
-        val barcodeQuickTileShown = quickActionsEnabled && isQuickActionTileEnabled(KEY_QA_BARCODE) && barcodeAllowed
+        val scannerAvailable = AutomationModeStore.isQrAllowed(this) ||
+            AutomationModeStore.isBarcodeAllowed(this)
 
-        menu.findItem(R.id.action_qr_header)?.isVisible = qrAllowed && !qrQuickTileShown
-        menu.findItem(R.id.action_barcode_header)?.isVisible = barcodeAllowed && !barcodeQuickTileShown
+        // The shared scanner entry stays reachable while Switchly is active, even when Settings is locked or the optional Home quick-action cards are hidden.
+        menu.findItem(R.id.action_scanner_header)?.isVisible = scannerAvailable
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_qr_header -> {
-                startActivity(Intent(this, QrScanActivity::class.java)
-                    .putExtra(QrScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true))
-                true
-            }
-            R.id.action_barcode_header -> {
-                startActivity(Intent(this, BarcodeScanActivity::class.java)
-                    .putExtra(BarcodeScanActivity.EXTRA_ALLOW_DIRECT_OPEN, true))
+            R.id.action_scanner_header -> {
+                showScannerChoiceDialog()
                 true
             }
             R.id.action_info -> {
@@ -3783,6 +3670,51 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton(getString(R.string.close), null)
             .showAccented()
+    }
+
+    private fun showScannerChoiceDialog() {
+        data class ScannerChoice(
+            val option: SwitchlyDialogOption,
+            val open: () -> Unit,
+        )
+
+        val choices = buildList<ScannerChoice> {
+            if (AutomationModeStore.isQrAllowed(this@MainActivity)) {
+                add(
+                    ScannerChoice(
+                        option = SwitchlyDialogOption(
+                            title = getString(R.string.qr_scan_title),
+                            summary = getString(R.string.qr_scan_option_summary),
+                            iconRes = R.drawable.qr_code_24,
+                        ),
+                        open = ::openQrScannerDirectly,
+                    )
+                )
+            }
+            if (AutomationModeStore.isBarcodeAllowed(this@MainActivity)) {
+                add(
+                    ScannerChoice(
+                        option = SwitchlyDialogOption(
+                            title = getString(R.string.barcode_scan_title),
+                            summary = getString(R.string.barcode_scan_option_summary),
+                            iconRes = R.drawable.barcode_24,
+                        ),
+                        open = ::openBarcodeScannerDirectly,
+                    )
+                )
+            }
+        }
+
+        when (choices.size) {
+            0 -> Unit
+            1 -> choices.first().open()
+            else -> showSwitchlyOptionDialog(
+                title = getString(R.string.scanner_choice_title),
+                options = choices.map { it.option },
+            ) { index ->
+                choices.getOrNull(index)?.open?.invoke()
+            }
+        }
     }
 
     private fun openQrScannerDirectly() {
@@ -3848,7 +3780,15 @@ class MainActivity : AppCompatActivity() {
         ) { which ->
             when (which) {
                 0 -> openQrScannerDirectly()
-                1 -> startActivity(Intent(this, QrGenerateActivity::class.java))
+                1 -> {
+                    when {
+                        !AutomationModeStore.shouldShowQrTools(this) ->
+                            Toast.makeText(this, R.string.toast_manage_qr_requires_enabled, Toast.LENGTH_LONG).show()
+                        EditingLockGuard.isLocked(this) ->
+                            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_qr_codes)
+                        else -> startActivity(Intent(this, QrGenerateActivity::class.java))
+                    }
+                }
             }
         }
     }

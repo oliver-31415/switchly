@@ -34,7 +34,7 @@ object AppBlockSafety {
     enum class Level {
         NONE,
         SOFT_WARNING,
-        HARD_EXCLUDED
+        PROTECTED
     }
 
     enum class RiskCategory {
@@ -57,7 +57,7 @@ object AppBlockSafety {
         ALLOW,
         WARN_ONLY,
         STRICT_MODE_ONLY,
-        NEVER_BLOCK
+        PROTECTED
     }
 
     data class RiskRule(
@@ -95,34 +95,29 @@ object AppBlockSafety {
     )
 
     private val exactRiskRules = mapOf(
-        "com.android.settings" to RiskRule(
+        AndroidSystemPackages.SETTINGS to RiskRule(
             RiskCategory.SETTINGS,
             PolicyAction.STRICT_MODE_ONLY,
             "System settings can disable protections or grant privileged access."
         ),
-        "com.google.android.packageinstaller" to RiskRule(
+        AndroidSystemPackages.GOOGLE_PACKAGE_INSTALLER to RiskRule(
             RiskCategory.INSTALL,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Package installer can install or update apps."
         ),
-        "com.android.packageinstaller" to RiskRule(
+        AndroidSystemPackages.ANDROID_PACKAGE_INSTALLER to RiskRule(
             RiskCategory.INSTALL,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Package installer can install or update apps."
         ),
-        "com.android.vending" to RiskRule(
+        AndroidSystemPackages.PLAY_STORE to RiskRule(
             RiskCategory.STORE,
             PolicyAction.WARN_ONLY,
             "Play Store can install helper or escape apps."
         ),
-        "com.google.android.packageinstaller" to RiskRule(
-            RiskCategory.INSTALL,
-            PolicyAction.NEVER_BLOCK,
-            "Package installer can install or update apps."
-        ),
-        "com.google.android.permissioncontroller" to RiskRule(
+        AndroidSystemPackages.GOOGLE_PERMISSION_CONTROLLER to RiskRule(
             RiskCategory.PERMISSIONS,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Permission controller manages sensitive grants."
         ),
         "com.android.documentsui" to RiskRule(
@@ -140,29 +135,29 @@ object AppBlockSafety {
             PolicyAction.WARN_ONLY,
             "Files/Documents surfaces can matter for backup, restore, and recovery."
         ),
-        "com.google.android.permission" to RiskRule(
+        AndroidSystemPackages.LEGACY_GOOGLE_PERMISSION_CONTROLLER to RiskRule(
             RiskCategory.PERMISSIONS,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Permission controller manages sensitive grants."
         ),
         "com.google.android.setupwizard" to RiskRule(
             RiskCategory.PROVISIONING,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Setup flow is a privileged onboarding surface."
         ),
         "com.android.managedprovisioning" to RiskRule(
             RiskCategory.PROVISIONING,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Managed provisioning is a privileged enterprise/device-owner flow."
         ),
         "com.google.android.googlequicksearchbox" to RiskRule(
             RiskCategory.ASSISTANT,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Google app can be deeply integrated into launcher/search/assistant flows."
         ),
-        "com.android.systemui" to RiskRule(
+        AndroidSystemPackages.SYSTEM_UI to RiskRule(
             RiskCategory.SYSTEM_UI,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Blocking System UI can destabilize the device."
         ),
         "com.google.android.gms" to RiskRule(
@@ -272,25 +267,25 @@ object AppBlockSafety {
         ),
         "com.oplus.games" to RiskRule(
             RiskCategory.OTHER,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "OEM game hub wrappers can appear as foreground packages and cause false app blocks."
         ),
         "com.oneplus.gamespace" to RiskRule(
             RiskCategory.OTHER,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "OEM game hub wrappers can appear as foreground packages and cause false app blocks."
         )
     )
 
     private val prefixRiskRules = listOf(
-        "com.google.android.permissioncontroller" to RiskRule(
+        AndroidSystemPackages.GOOGLE_PERMISSION_CONTROLLER to RiskRule(
             RiskCategory.PERMISSIONS,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Permission controller manages sensitive grants."
         ),
-        "com.android.permissioncontroller" to RiskRule(
+        AndroidSystemPackages.ANDROID_PERMISSION_CONTROLLER to RiskRule(
             RiskCategory.PERMISSIONS,
-            PolicyAction.NEVER_BLOCK,
+            PolicyAction.PROTECTED,
             "Permission controller manages sensitive grants."
         )
     )
@@ -301,27 +296,33 @@ object AppBlockSafety {
 
     private fun resolve(context: Context, pkg: String, defaults: ResolvedDefaults): Info {
         val normalized = pkg.trim()
-        if (normalized.isBlank()) return Info()
+        if (normalized.isBlank()) {
+            return Info()
+        }
 
         if (normalized == defaults.defaultIme) {
             return Info(
-                level = Level.HARD_EXCLUDED,
-                hint = context.getString(R.string.app_picker_protected_keyboard_hint)
+                level = Level.PROTECTED,
+                hint = context.getString(R.string.app_picker_protected_keyboard_hint),
+                warningTitle = context.getString(R.string.app_picker_keyboard_warning_title),
+                warningMessage = context.getString(R.string.app_picker_keyboard_warning_message)
             )
         }
 
         if (normalized == defaults.defaultHome) {
             return Info(
-                level = Level.HARD_EXCLUDED,
-                hint = context.getString(R.string.app_picker_protected_launcher_hint)
+                level = Level.PROTECTED,
+                hint = context.getString(R.string.app_picker_protected_launcher_hint),
+                warningTitle = context.getString(R.string.app_picker_launcher_warning_title),
+                warningMessage = context.getString(R.string.app_picker_launcher_warning_message)
             )
         }
 
         val riskRule = matchRiskRule(normalized, defaults.defaultAssistant)
-        if (riskRule?.action == PolicyAction.NEVER_BLOCK) {
+        if (riskRule?.action == PolicyAction.PROTECTED) {
             val (hintRes, titleRes, messageRes) = resourcesForCategory(riskRule.category)
             return Info(
-                level = Level.HARD_EXCLUDED,
+                level = Level.PROTECTED,
                 hint = context.getString(hintRes),
                 warningTitle = titleRes?.let(context::getString),
                 warningMessage = messageRes?.let(context::getString)
@@ -344,7 +345,7 @@ object AppBlockSafety {
 
         if (normalized == defaults.defaultDialer) {
             return Info(
-                level = Level.HARD_EXCLUDED,
+                level = Level.PROTECTED,
                 hint = context.getString(R.string.app_picker_dialer_hint),
                 warningTitle = context.getString(R.string.app_picker_dialer_warning_title),
                 warningMessage = context.getString(R.string.app_picker_dialer_warning_message)
@@ -373,37 +374,66 @@ object AppBlockSafety {
         return Info()
     }
 
-    fun isHardExcluded(context: Context, pkg: String): Boolean =
-        resolve(context, pkg, collectResolvedDefaults(context, includeSlowPackageManagerLookups = false)).level == Level.HARD_EXCLUDED
+    fun isProtected(context: Context, pkg: String): Boolean =
+        resolve(context, pkg, collectResolvedDefaults(context, includeSlowPackageManagerLookups = false)).level == Level.PROTECTED
+
+    /**
+     * Packages that Switchly must never block, even after a user confirms a protected-app warning.
+     * Safety-sensitive Android apps are intentionally not included here: they remain marked as
+     * protected in the picker, but can be selected manually after an explicit warning.
+     */
+    fun isAlwaysExcluded(context: Context, pkg: String): Boolean {
+        val normalized = pkg.trim()
+        if (normalized.isBlank()) {
+            return true
+        }
+        if (normalized == context.packageName) {
+            return true
+        }
+        return false
+    }
+
+    fun requiresManualConfirmation(context: Context, pkg: String): Boolean {
+        if (isAlwaysExcluded(context, pkg)) {
+            return true
+        }
+        return resolve(context, pkg).level != Level.NONE
+    }
 
     fun isAllowModeEssential(context: Context, pkg: String): Boolean {
         val normalized = pkg.trim()
-        if (normalized.isBlank()) return false
+        if (normalized.isBlank()) {
+            return false
+        }
 
         // Switchly itself must never be blocked in Allow selected mode, otherwise the user can lock themselves out of the recovery UI.
-        if (normalized == context.packageName) return true
+        if (normalized == context.packageName) {
+            return true
+        }
 
-        // Allow mode is a safety-critical path. 
-        // Use the full cached default-app resolver here so the active launcher, keyboard, dialer, permission controller, installer, and similar hard exclusions remain reachable even if the fast cache has not been warmed yet.
-        return resolve(context, normalized, collectResolvedDefaults(context, includeSlowPackageManagerLookups = true)).level == Level.HARD_EXCLUDED
+        // Allow mode is a safety-critical path.
+        // Use the full cached default-app resolver here so the active launcher, keyboard, dialer, permission controller, installer, and similar protected apps remain reachable even if the fast cache has not been warmed yet.
+        return resolve(context, normalized, collectResolvedDefaults(context, includeSlowPackageManagerLookups = true)).level == Level.PROTECTED
     }
 
     fun sanitizeManagedPackages(context: Context, pkgs: Set<String>): Set<String> {
-        if (pkgs.isEmpty()) return emptySet()
+        if (pkgs.isEmpty()) {
+            return emptySet()
+        }
 
-        // Build the default-app snapshot once.
-        // This method is used from hot UI paths (status refresh, profile reads), so avoid PackageManager/Telecom binder calls here.
-        val defaults = collectResolvedDefaults(context, includeSlowPackageManagerLookups = false)
         return pkgs
             .asSequence()
+            .map { it.trim() }
             .filter { it.isNotBlank() }
-            .filterNot { resolve(context, it, defaults).level == Level.HARD_EXCLUDED }
+            .filterNot { isAlwaysExcluded(context, it) }
             .toCollection(linkedSetOf())
     }
 
     fun requiresStrictModeForBlocking(context: Context, pkg: String): Boolean {
         val normalized = pkg.trim()
-        if (normalized.isBlank()) return false
+        if (normalized.isBlank()) {
+            return false
+        }
         val defaultAssistant = getDefaultAssistantPackage(context)
         return matchRiskRule(normalized, defaultAssistant)?.action == PolicyAction.STRICT_MODE_ONLY ||
             isSettingsPackage(normalized, defaultSettingsPackage = null)
@@ -419,7 +449,9 @@ object AppBlockSafety {
     }
 
     fun canAllowStrictModeBlocking(context: Context, pkg: String): Boolean {
-        if (!requiresStrictModeForBlocking(context, pkg)) return true
+        if (!requiresStrictModeForBlocking(context, pkg)) {
+            return true
+        }
         return isStrictModeEnabled(context) && hasEmergencyRecoveryConfigured(context)
     }
 
@@ -478,7 +510,9 @@ object AppBlockSafety {
         val assistant = runCatching {
             Settings.Secure.getString(context.contentResolver, "assistant")
         }.getOrNull().orEmpty().trim()
-        if (assistant.isBlank()) return null
+        if (assistant.isBlank()) {
+            return null
+        }
         return assistant.substringBefore('/').trim().takeIf { it.isNotBlank() && it.contains('.') }
     }
 
@@ -498,7 +532,9 @@ object AppBlockSafety {
 
     private fun matchRiskRule(pkg: String, defaultAssistant: String?): RiskRule? {
         val normalized = pkg.trim()
-        if (normalized.isBlank()) return null
+        if (normalized.isBlank()) {
+            return null
+        }
 
         exactRiskRules[normalized]?.let { return it }
         prefixRiskRules.firstOrNull { (prefix, _) -> normalized == prefix || normalized.startsWith("$prefix.") }
@@ -547,10 +583,20 @@ object AppBlockSafety {
                 R.string.app_picker_browser_warning_title,
                 R.string.app_picker_browser_warning_message
             )
+            RiskCategory.ASSISTANT -> Triple(
+                R.string.app_picker_assistant_hint,
+                R.string.app_picker_assistant_warning_title,
+                R.string.app_picker_assistant_warning_message
+            )
+            RiskCategory.SYSTEM_UI -> Triple(
+                R.string.app_picker_system_ui_hint,
+                R.string.app_picker_system_ui_warning_title,
+                R.string.app_picker_system_ui_warning_message
+            )
             else -> Triple(
                 R.string.app_picker_protected_generic_hint,
-                null,
-                null
+                R.string.app_picker_protected_warning_title,
+                R.string.app_picker_protected_warning_message
             )
         }
     }
@@ -563,14 +609,20 @@ object AppBlockSafety {
 
     private fun isSettingsPackage(context: Context, pkg: String): Boolean {
         val normalized = pkg.trim()
-        if (normalized.isBlank()) return false
+        if (normalized.isBlank()) {
+            return false
+        }
         return isSettingsPackage(normalized, getDefaultSettingsPackage(context))
     }
 
     private fun isSettingsPackage(pkg: String, defaultSettingsPackage: String?): Boolean {
         val normalized = pkg.trim()
-        if (normalized.isBlank()) return false
-        if (normalized in knownSettingsPackages) return true
+        if (normalized.isBlank()) {
+            return false
+        }
+        if (normalized in knownSettingsPackages) {
+            return true
+        }
         return !defaultSettingsPackage.isNullOrBlank() && normalized == defaultSettingsPackage
     }
 
@@ -589,7 +641,7 @@ object AppBlockSafety {
         }
 
         if (!includeSlowPackageManagerLookups) {
-            // Hot paths such as AccessibilityService/package sanitizing must not run launcher, dialer, settings, or PackageManager resolver calls. 
+            // Hot paths such as AccessibilityService/package sanitizing must not run launcher, dialer, settings, or PackageManager resolver calls.
             // Reuse fresh resolved values where available, while still refreshing cheap Settings.Secure values.
             return ResolvedDefaults(
                 defaultIme = getDefaultInputMethodPackage(context) ?: cached?.defaultIme,
@@ -624,24 +676,19 @@ object AppBlockSafety {
 
     private fun normalizeHomePackage(pkg: String?): String? {
         val normalized = pkg?.trim().orEmpty()
-        if (normalized.isBlank()) return null
-        if (normalized in blockedHomeResolverPackages) return null
+        if (normalized.isBlank()) {
+            return null
+        }
+        if (normalized in blockedHomeResolverPackages) {
+            return null
+        }
         return normalized
     }
 
     private const val APP_PREFS = "switchly_prefs"
     private const val KEY_DEV_UNLOCKED = "pref_dev_unlocked"
 
-    private val knownSettingsPackages = setOf(
-        "com.android.settings"
-    )
+    private val knownSettingsPackages = AndroidSystemPackages.SETTINGS_PACKAGES
 
-    private val blockedHomeResolverPackages = setOf(
-        "android",
-        "com.android.settings",
-        "com.android.intentresolver",
-        "com.google.android.permission",
-        "com.google.android.permissioncontroller",
-        "com.android.permissioncontroller"
-    )
+    private val blockedHomeResolverPackages = AndroidSystemPackages.BLOCKED_HOME_RESOLVER_PACKAGES
 }

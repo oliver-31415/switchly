@@ -5,9 +5,11 @@
     <!-- Website blocking overview -->
     <!-- ====================================================== -->
     <string name="website_rules_title">Website-Regeln</string>
-    <string name="blocked_websites_empty">Noch keine blockierten Websites.\n\nTippe auf +, um eine Website für dieses Profil zu blockieren.</string>
+    <string name="blocked_websites_empty_title">Noch keine Website-Regeln</string>
+    <string name="blocked_websites_empty_body">Füge eine Website hinzu, die dieses Profil blockieren soll.</string>
+    <string name="empty_action_add_first_website">Erste Website hinzufügen</string>
     <string name="website_rules_info_title">Website-Regeln</string>
-    <string name="website_rules_info_body">Website-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nRegeln sind aktiv, sobald sie existieren. Mit dem Schalter direkt bei der Domain kannst du nur diese Regel vorübergehend deaktivieren, ohne sie zu löschen. Im Block selected Modus werden ausgewählte aktivierte Domains blockiert. Im Allow selected Modus werden ausgewählte aktivierte Domains erlaubt.\n\nWebsite-Blockierung liest die sichtbare URL in unterstützten Browsern über die Bedienungshilfe aus. Unterstützte/getestete Browser sind Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo und Ecosia. Die Unterstützung kann je nach Browser-Version und Gerät variieren.</string>
+    <string name="website_rules_info_body">Website-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nRegeln sind aktiv, sobald sie existieren. Mit der Checkbox direkt bei der Domain kannst du diese Regel aktivieren oder pausieren, ohne sie zu löschen. Im Block selected Modus werden angehakte Domains blockiert. Im Allow selected Modus werden angehakte Domains erlaubt.\n\nWebsite-Blockierung liest die sichtbare URL in unterstützten Browsern über die Bedienungshilfe aus. Unterstützte/getestete Browser sind Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo und Ecosia. Zusätzlich erkennt Switchly den integrierten Browser von Facebook Messenger bestmöglich, wenn Messenger die aktuelle URL über die Bedienungshilfe bereitstellt. Normale Chats und Nachrichtentexte werden nicht als Website-Oberfläche behandelt. Die Unterstützung kann je nach App-Version und Gerät variieren. Brave Shields kann URL-Informationen zeitweise verbergen; Switchly verwendet dann die zuletzt sicher erkannte Brave-Domain weiter, solange der Browser geöffnet bleibt, kann nach jeder Navigation aber keine perfekte Zuordnung garantieren.</string>
     <string name="website_rule_mode_title">Website-Regelmodus</string>
     <string name="website_rule_mode_block_summary">Ausgewählte aktivierte Websites werden blockiert, solange dieses Profil aktiv ist.</string>
     <string name="website_rule_mode_allow_summary">Ausgewählte aktivierte Websites sind erlaubt. Andere Websites werden blockiert, solange dieses Profil aktiv ist.</string>
@@ -31,7 +33,6 @@
     <!-- Daily limits -->
     <!-- ====================================================== -->
     <string name="daily_limit_helper">Lege Minuten pro Tag fest. Leer lassen für kein Limit.</string>
-    <string name="set_daily_limit_desc">Lege fest, wie viele Minuten pro Tag erlaubt sind, bevor Switchly blockiert.</string>
     <string name="daily_limit_value_format">%1$d Min/Tag</string>
     <string name="clear_limit">Limit löschen</string>
 
@@ -50,7 +51,8 @@
     </plurals>
 
     <string name="session_reset_limit_value_format">%1$d Min/Sitzung</string>
-    <string name="allowed_websites_empty">Noch keine erlaubten Websites.\n\nFüge Websites hinzu, die in diesem Profil im Allow Mode verfügbar bleiben sollen.</string>
+    <string name="allowed_websites_empty_title">Noch keine erlaubten Websites</string>
+    <string name="allowed_websites_empty_body">Füge Websites hinzu, die in diesem Profil im Allow Mode verfügbar bleiben sollen.</string>
     <string name="blocked_websites_profile_subtitle">Regeln für: %1$s</string>
     <string name="rule_allowed">Erlaubt</string>
     <string name="rule_allowed_always">Immer erlaubt</string>

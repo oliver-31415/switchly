@@ -19,9 +19,7 @@
 
 package at.saltyy.switchly.data.prefs
 
-/**
- * Preference keys for toggleable blocking options (in-app & websites).
- */
+// Preference keys for toggleable blocking options (in-app & websites).
 object BlockingToggleKeys {
     // Master toggles
     const val KEY_BLOCK_WEBSITES = "block_websites_toggle"
@@ -55,7 +53,6 @@ object BlockingToggleKeys {
     const val KEY_BLOCK_SNAP_FOLLOWING = "block_snap_following"
 
     // NFC writer
-    const val KEY_ENABLE_REENTRY_IN_WRITE = "enable_reentry_in_write"
     const val KEY_ENABLE_EMERGENCY_IN_WRITE = "enable_emergency_in_write"
 
     // NFC paired UID feature (UID-only/read-only tag UI + optional per-tag limits)
@@ -65,9 +62,6 @@ object BlockingToggleKeys {
     // Temporary action anti-overuse
     const val KEY_LIMIT_TEMP_DISABLE_TAGS = "limit_temp_disable_tags"
     const val KEY_LIMIT_TEMP_QR_CODES = "limit_temp_qr_codes"
-
-    // lock Settings/control screens while protection is active
-    const val KEY_LOCK_SWITCHLY_APP_ACCESS = "lock_switchly_app_access"
 
     val IN_APP_RULE_KEYS: Set<String> by lazy { setOf(KEY_BLOCK_INAPP) + IN_APP_SURFACE_KEYS }
 

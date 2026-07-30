@@ -19,7 +19,6 @@
 
 package at.saltyy.switchly.platform.tile
 
-import android.graphics.drawable.Icon
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
@@ -29,6 +28,7 @@ import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.feature.entry.QuickActionIconFactory
 
 class SwitchlyTileService : TileService() {
 
@@ -110,10 +110,10 @@ class SwitchlyTileService : TileService() {
                 getString(R.string.qs_label_off)
             }
 
-            // App-Icon
-            icon = Icon.createWithResource(
+            // Use a rendered monochrome bitmap so System UI does not need to resolve app-theme colors.
+            icon = QuickActionIconFactory.createTileIcon(
                 this@SwitchlyTileService,
-                R.drawable.app_blocking_white_24
+                R.drawable.qs_switchly_24
             )
             updateTile()
         }

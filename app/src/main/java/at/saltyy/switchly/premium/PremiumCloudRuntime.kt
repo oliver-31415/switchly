@@ -50,7 +50,9 @@ object PremiumCloudRuntime {
      *  - Premium state is determined locally by PremiumManager
      */
     fun syncPremiumFlag(ctx: Context) {
-        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) return
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            return
+        }
 
         val uid = Auth.uid() ?: return
         val isPremium = PremiumManager.isPremium(ctx)

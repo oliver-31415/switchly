@@ -21,16 +21,30 @@ package at.saltyy.switchly.data.sync
 
 import at.saltyy.switchly.BuildConfig
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.auth.Auth
+import at.saltyy.switchly.data.prefs.ActivityHistoryLogStore
+import at.saltyy.switchly.data.prefs.ActiveDurationStore
+import at.saltyy.switchly.data.prefs.ProfileUsageStore
+import at.saltyy.switchly.data.prefs.SurfaceUsageStore
+import at.saltyy.switchly.data.prefs.SwitchlyRuntimeStore
+import at.saltyy.switchly.data.prefs.UsageStore
+import at.saltyy.switchly.data.prefs.WebUsageStore
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.data.statistics.StatsBackupCodec
+import at.saltyy.switchly.data.statistics.StatsPersistence
+import at.saltyy.switchly.feature.usage.StatsArchiveSync
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import java.util.concurrent.Executors
 import kotlin.jvm.JvmStatic
 
 /**
@@ -40,27 +54,40 @@ import kotlin.jvm.JvmStatic
 object CloudSyncRuntime {
 
     private const val TAG = "CloudSyncRuntime"
+    private val backupExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "SwitchlyBackup").apply { isDaemon = true }
+    }
+    private val mainHandler = Handler(Looper.getMainLooper())
     private const val COLLECTION = "switchly_users"
     private const val SUB_BACKUPS = "backups"
+    private const val SUB_STATS_CHUNKS = "stats_chunks"
     private const val ROOT_DOCUMENT_BACKUP_ID = "__root_document__"
 
     private const val FIELD_PREFS = "prefs"
     private const val FIELD_SWITCHLY_PREFS = "switchly_prefs"
     private const val FIELD_SCHEDULES_PREFS = "schedules_prefs"
     private const val FIELD_UI_HINTS_PREFS = "ui_hints_prefs"
-    private const val FIELD_WIFI_RULES_PREFS = "wifi_rules_prefs"
     private const val FIELD_CREATED_AT = "created_at"
     private const val FIELD_STATS = "stats"
+    private const val FIELD_STATS_DATABASE = "stats_database"
+    private const val FIELD_STATS_CHUNK_COUNT = "chunk_count"
+    private const val FIELD_STATS_CHUNK_INDEX = "index"
+    private const val FIELD_STATS_CHUNK_DATA = "data"
     private const val FIELD_BACKUP_SCHEMA_VERSION = "backup_schema_version"
     private const val FIELD_CREATED_WITH_VERSION = "created_with_version"
     private const val FIELD_CREATED_WITH_VERSION_CODE = "created_with_version_code"
-    private const val BACKUP_SCHEMA_VERSION = 221
+    private const val BACKUP_SCHEMA_VERSION = 222
 
     // ScheduleStore prefs name in the project
     private const val SCHEDULES_PREFS_NAME = "switchly_prefs_schedules"
     private const val SCHEDULES_KEY_ITEMS = "items" // JSON list stored by ScheduleStore
     private const val UI_HINTS_PREFS_NAME = "switchly_ui_hints"
-    private const val WIFI_RULES_PREFS_NAME = "switchly_wifi_rules"
+
+    private val backupExcludedExactKeys = setOf(
+        "switch_mode_active_since_ms",
+        "switchly_runtime_running_since",
+        "stats_archive_last_sync_ms",
+    )
 
     private val backupExcludedKeyMarkers = listOf(
         "access_token",
@@ -83,7 +110,12 @@ object CloudSyncRuntime {
 
     private fun isBackupExcludedKey(key: String): Boolean {
         val normalized = key.trim().lowercase()
-        if (normalized.isBlank()) return true
+        if (normalized.isBlank()) {
+            return true
+        }
+        if (normalized in backupExcludedExactKeys) {
+            return true
+        }
         return backupExcludedKeyMarkers.any { marker -> normalized.contains(marker) }
     }
 
@@ -98,14 +130,12 @@ object CloudSyncRuntime {
                 snapshot.contains(FIELD_SWITCHLY_PREFS) ||
                 snapshot.contains(FIELD_SCHEDULES_PREFS) ||
                 snapshot.contains(FIELD_UI_HINTS_PREFS) ||
-                snapshot.contains(FIELD_WIFI_RULES_PREFS) ||
-                snapshot.contains(FIELD_STATS)
+                snapshot.contains(FIELD_STATS) ||
+                snapshot.contains(FIELD_STATS_DATABASE)
             )
     }
 
-    /**
-     * Converts SharedPreferences maps into Firestore-compatible maps: Collections/Sets -> List
-     */
+    // Converts SharedPreferences maps into Firestore-compatible maps: Collections/Sets -> List
     private fun normalizePrefsMap(src: Map<String, *>): Map<String, Any?> {
         val out = mutableMapOf<String, Any?>()
         for ((rawKey, value) in src) {
@@ -200,11 +230,21 @@ object CloudSyncRuntime {
 
     private fun applyStatsToInternalPrefs(ctx: Context, stats: Any?) {
         val map = stats as? Map<*, *> ?: return
-        if (map.containsKey("activity_history_logs")) {
-            val restoredActivityLogs = (map["activity_history_logs"] as? List<*>)
-                ?.filterIsInstance<String>()
-                .orEmpty()
-            AppLogStore.replaceLines(ctx, restoredActivityLogs)
+        val restoredActivityDays = (map["activity_history_days"] as? Map<*, *>)
+            ?.mapNotNull { (day, encoded) ->
+                val dayKey = day as? String ?: return@mapNotNull null
+                val value = encoded as? String ?: return@mapNotNull null
+                dayKey to value
+            }
+            ?.toMap()
+        when {
+            restoredActivityDays != null -> ActivityHistoryLogStore.replaceDays(ctx, restoredActivityDays)
+            map.containsKey("activity_history_logs") -> {
+                val restoredActivityLogs = (map["activity_history_logs"] as? List<*>)
+                    ?.filterIsInstance<String>()
+                    .orEmpty()
+                ActivityHistoryLogStore.replaceLines(ctx, restoredActivityLogs)
+            }
         }
 
         val sp = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
@@ -281,22 +321,37 @@ object CloudSyncRuntime {
     fun createLocalBackupPayload(ctx: Context, selection: BackupSelection): Map<String, Any?> {
         val now = System.currentTimeMillis()
 
+        if (selection.includes(BackupCategory.STATISTICS)) {
+            runCatching { StatsArchiveSync.sync(ctx, force = true) }
+        }
+
+        // Persist all buffered/live statistic deltas before reading SharedPreferences.
+        UsageStore.flush(ctx)
+        ProfileUsageStore.flush(ctx)
+        SurfaceUsageStore.flush(ctx)
+        WebUsageStore.flush(ctx)
+        ActiveDurationStore.checkpointForBackup(ctx)
+        SwitchlyRuntimeStore.checkpointForBackup(ctx)
+        val statsDatabase = if (selection.includes(BackupCategory.STATISTICS)) {
+            StatsBackupCodec.encode(StatsPersistence.snapshotForBackup(ctx))
+        } else {
+            null
+        }
+
         val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx).all
         val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE).all
         val schedulesPrefs = ctx.getSharedPreferences(SCHEDULES_PREFS_NAME, Context.MODE_PRIVATE).all
         val uiHintsPrefs = ctx.getSharedPreferences(UI_HINTS_PREFS_NAME, Context.MODE_PRIVATE).all
-        val wifiRulesPrefs = ctx.getSharedPreferences(WIFI_RULES_PREFS_NAME, Context.MODE_PRIVATE).all
 
         val all = BackupCategoryFilter.filterDefaultPrefs(normalizePrefsMap(defaultPrefs), selection)
         val internalAllRaw = BackupCategoryFilter.filterInternalPrefs(normalizePrefsMap(internalPrefs), selection)
         val schedulesAll = BackupCategoryFilter.filterSchedulesPrefs(normalizePrefsMap(schedulesPrefs), selection)
         val uiHintsAll = BackupCategoryFilter.filterUiHintsPrefs(normalizePrefsMap(uiHintsPrefs), selection)
-        val wifiRulesAll = BackupCategoryFilter.filterWifiRulesPrefs(normalizePrefsMap(wifiRulesPrefs), selection)
 
         val (internalAll, statsMapRaw) = extractStatsFromInternalPrefs(internalAllRaw)
         val statsMapWithLogs = statsMapRaw.toMutableMap()
-        val activityHistoryLogs = AppLogStore.latestLines(ctx, 1000)
-        statsMapWithLogs["activity_history_logs"] = activityHistoryLogs
+        ActivityHistoryLogStore.ensureMigrated(ctx, AppLogStore.latestLines(ctx, 1000))
+        statsMapWithLogs["activity_history_days"] = ActivityHistoryLogStore.exportDays(ctx)
         val statsMap = BackupCategoryFilter.filterStats(statsMapWithLogs, selection)
 
         return mapOf(
@@ -306,9 +361,9 @@ object CloudSyncRuntime {
             FIELD_PREFS to all,
             FIELD_SWITCHLY_PREFS to internalAll,
             FIELD_STATS to statsMap,
+            FIELD_STATS_DATABASE to statsDatabase,
             FIELD_SCHEDULES_PREFS to schedulesAll,
             FIELD_UI_HINTS_PREFS to uiHintsAll,
-            FIELD_WIFI_RULES_PREFS to wifiRulesAll,
             BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES to selection.categoryIds.toList().sorted(),
             BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP to !selection.isFull,
             FIELD_CREATED_AT to now
@@ -327,29 +382,122 @@ object CloudSyncRuntime {
             return
         }
 
-        try {
-            val data = createLocalBackupPayload(ctx, selection)
-            val db = FirebaseFirestore.getInstance()
-            val userRef = db.collection(COLLECTION).document(uid)
+        backupExecutor.execute {
+            try {
+                val data = createLocalBackupPayload(ctx, selection)
+                val prepared = prepareCloudPayload(data)
+                val db = FirebaseFirestore.getInstance()
+                val userRef = db.collection(COLLECTION).document(uid)
 
-            userRef.collection(SUB_BACKUPS)
-                .add(data)
-                .addOnSuccessListener { created ->
-                    if (BuildConfig.DEBUG) Log.d(TAG, "pushLocalState: backup version created: ${created.id}")
-                    AppLogStore.append(ctx, TAG, "Cloud backup created: ${created.id}")
-                    onDone(true, null)
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "pushLocalState: backup version failed", e)
-                    AppLogStore.append(ctx, TAG, "Cloud backup failed", e)
-                    onDone(false, e.localizedMessage)
-                }
-
-        } catch (e: Exception) {
-            Log.e(TAG, "pushLocalState crashed", e)
-            AppLogStore.append(ctx, TAG, "Cloud backup crashed", e)
-            onDone(false, e.localizedMessage)
+                userRef.collection(SUB_BACKUPS)
+                    .add(prepared.rootPayload)
+                    .addOnSuccessListener { created ->
+                        uploadStatsChunks(created, prepared.statsChunks) { chunkOk, chunkError ->
+                            if (!chunkOk) {
+                                created.delete()
+                                val error = chunkError ?: "Statistics backup chunks could not be uploaded"
+                                AppLogStore.append(ctx, TAG, error)
+                                deliverToMain { onDone(false, error) }
+                                return@uploadStatsChunks
+                            }
+                            if (BuildConfig.DEBUG) {
+                                Log.d(TAG, "pushLocalState: backup version created: ${created.id}")
+                            }
+                            AppLogStore.append(ctx, TAG, "Cloud backup created: ${created.id}")
+                            deliverToMain { onDone(true, null) }
+                        }
+                    }
+                    .addOnFailureListener { error ->
+                        Log.e(TAG, "pushLocalState: backup version failed", error)
+                        AppLogStore.append(ctx, TAG, "Cloud backup failed", error)
+                        deliverToMain { onDone(false, error.localizedMessage) }
+                    }
+            } catch (error: Exception) {
+                Log.e(TAG, "pushLocalState crashed", error)
+                AppLogStore.append(ctx, TAG, "Cloud backup crashed", error)
+                deliverToMain { onDone(false, error.localizedMessage) }
+            }
         }
+    }
+
+    fun applyBackupPayloadAsync(
+        ctx: Context,
+        payload: Map<*, *>,
+        onDone: (Result<Unit>) -> Unit,
+    ) {
+        backupExecutor.execute {
+            val result = runCatching { applyBackupPayload(ctx, payload) }
+            deliverToMain { onDone(result) }
+        }
+    }
+
+    private fun deliverToMain(action: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            action()
+        } else {
+            mainHandler.post(action)
+        }
+    }
+
+    private data class PreparedCloudPayload(
+        val rootPayload: Map<String, Any?>,
+        val statsChunks: List<String>,
+    )
+
+    private fun prepareCloudPayload(payload: Map<String, Any?>): PreparedCloudPayload {
+        val root = payload.toMutableMap()
+        val statsDatabase = payload[FIELD_STATS_DATABASE] as? Map<*, *>
+            ?: return PreparedCloudPayload(root, emptyList())
+        val chunks = (statsDatabase[StatsBackupCodec.FIELD_CHUNKS] as? List<*>)
+            ?.filterIsInstance<String>()
+            .orEmpty()
+        if (chunks.isEmpty()) {
+            return PreparedCloudPayload(root, emptyList())
+        }
+        val manifest = statsDatabase.entries.associate { entry -> entry.key.toString() to entry.value }.toMutableMap()
+        manifest.remove(StatsBackupCodec.FIELD_CHUNKS)
+        manifest[FIELD_STATS_CHUNK_COUNT] = chunks.size
+        root[FIELD_STATS_DATABASE] = manifest
+
+        // Room chunks hold the complete statistics archive. Keep the root Firestore document small
+        // instead of duplicating years of counters and sessions in the legacy preference payload.
+        root.remove(FIELD_STATS)
+        root[FIELD_SWITCHLY_PREFS] = (root[FIELD_SWITCHLY_PREFS] as? Map<*, *>)
+            ?.entries
+            ?.filterNot { entry -> StatsPersistence.isArchivedInternalKey(entry.key.toString()) }
+            ?.associate { entry -> entry.key.toString() to entry.value }
+            .orEmpty()
+        root[FIELD_PREFS] = (root[FIELD_PREFS] as? Map<*, *>)
+            ?.entries
+            ?.filterNot { entry -> StatsPersistence.isArchivedDefaultKey(entry.key.toString()) }
+            ?.associate { entry -> entry.key.toString() to entry.value }
+            .orEmpty()
+        root[FIELD_UI_HINTS_PREFS] = (root[FIELD_UI_HINTS_PREFS] as? Map<*, *>)
+            ?.entries
+            ?.filterNot { entry -> StatsPersistence.isArchivedUiHintsKey(entry.key.toString()) }
+            ?.associate { entry -> entry.key.toString() to entry.value }
+            .orEmpty()
+        return PreparedCloudPayload(root, chunks)
+    }
+
+    private fun uploadStatsChunks(
+        backupRef: DocumentReference,
+        chunks: List<String>,
+        onDone: (Boolean, String?) -> Unit,
+    ) {
+        if (chunks.isEmpty()) {
+            onDone(true, null)
+            return
+        }
+        val firestore = FirebaseFirestore.getInstance()
+        val batch = firestore.batch()
+        chunks.forEachIndexed { index, chunk ->
+            val chunkRef = backupRef.collection(SUB_STATS_CHUNKS).document(index.toString().padStart(6, '0'))
+            batch.set(chunkRef, mapOf(FIELD_STATS_CHUNK_INDEX to index, FIELD_STATS_CHUNK_DATA to chunk))
+        }
+        batch.commit()
+            .addOnSuccessListener { onDone(true, null) }
+            .addOnFailureListener { error -> onDone(false, error.localizedMessage) }
     }
 
     // Retrieves the last N backups from the "backups" subcollection.
@@ -439,19 +587,28 @@ object CloudSyncRuntime {
                     onDone(false, ctx.getString(R.string.cloud_error_backup_not_found))
                     return@addOnSuccessListener
                 }
-
-                try {
-                    applyBackupPayload(ctx, payloadFromSnapshot(snapshot))
-                    onDone(true, null)
-                } catch (e: Exception) {
-                    Log.e(TAG, "pullBackup failed", e)
-                    AppLogStore.append(ctx, TAG, "Cloud restore failed", e)
-                    onDone(false, e.localizedMessage)
+                loadPayloadWithStatsChunks(snapshot.reference, payloadFromSnapshot(snapshot)) { payloadResult ->
+                    payloadResult
+                        .onSuccess { payload ->
+                            applyBackupPayloadAsync(ctx, payload) { result ->
+                                result
+                                    .onSuccess { onDone(true, null) }
+                                    .onFailure { error ->
+                                        Log.e(TAG, "pullBackup failed", error)
+                                        AppLogStore.appendRateLimited(ctx, TAG, "Cloud restore failed", error)
+                                        onDone(false, error.localizedMessage)
+                                    }
+                            }
+                        }
+                        .onFailure { error ->
+                            AppLogStore.appendRateLimited(ctx, TAG, "Loading statistics backup chunks failed", error)
+                            onDone(false, error.localizedMessage)
+                        }
                 }
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "pullBackup failed", e)
-                AppLogStore.append(ctx, TAG, "Cloud restore failed", e)
+                AppLogStore.appendRateLimited(ctx, TAG, "Cloud restore failed", e)
                 onDone(false, e.localizedMessage)
             }
     }
@@ -465,24 +622,34 @@ object CloudSyncRuntime {
         val internalMap = payload[FIELD_SWITCHLY_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
         val schedulesMap = payload[FIELD_SCHEDULES_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
         val uiHintsMap = payload[FIELD_UI_HINTS_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
-        val wifiRulesMap = payload[FIELD_WIFI_RULES_PREFS] as? Map<*, *> ?: emptyMap<Any, Any>()
         val stats = payload[FIELD_STATS]
+        val statsDatabase = payload[FIELD_STATS_DATABASE] as? Map<*, *>
         val partialBackup = BackupCategoryFilter.isPartialBackup(payload)
 
-        applyPrefsMapToLocal(ctx, prefsMap, isInternal = false, isSchedules = false, clearBeforeApply = !partialBackup)
-        applyPrefsMapToLocal(ctx, internalMap, isInternal = true, isSchedules = false, clearBeforeApply = !partialBackup)
-        applyPrefsMapToLocal(ctx, schedulesMap, isInternal = false, isSchedules = true, clearBeforeApply = !partialBackup)
-        applyPrefsMapToLocal(ctx, uiHintsMap, prefsName = UI_HINTS_PREFS_NAME, clearBeforeApply = !partialBackup)
-        applyPrefsMapToLocal(ctx, wifiRulesMap, prefsName = WIFI_RULES_PREFS_NAME, clearBeforeApply = !partialBackup)
+        StatsPersistence.beginRestore(ctx)
+        try {
+            applyPrefsMapToLocal(ctx, prefsMap, isInternal = false, isSchedules = false, clearBeforeApply = !partialBackup)
+            applyPrefsMapToLocal(ctx, internalMap, isInternal = true, isSchedules = false, clearBeforeApply = !partialBackup)
+            applyPrefsMapToLocal(ctx, schedulesMap, isInternal = false, isSchedules = true, clearBeforeApply = !partialBackup)
+            applyPrefsMapToLocal(ctx, uiHintsMap, prefsName = UI_HINTS_PREFS_NAME, clearBeforeApply = !partialBackup)
 
-        // Expand compact stats payload back into internal prefs keys
-        applyStatsToInternalPrefs(ctx, stats)
+            // Expand compact stats payload back into internal prefs keys
+            applyStatsToInternalPrefs(ctx, stats)
 
-        // Safety: restored schedules should not immediately fire
-        if (schedulesMap.isNotEmpty()) forceDisableAllSchedules(ctx)
+            // Safety: restored schedules should not immediately fire
+            if (schedulesMap.isNotEmpty()) {
+                forceDisableAllSchedules(ctx)
+            }
 
-        // Safety: after restore, keep Switchly base state OFF so users don't get locked out
-        forceDisableSwitchlyAfterRestore(ctx)
+            // Safety: after restore, keep Switchly base state OFF so users don't get locked out
+            forceDisableSwitchlyAfterRestore(ctx)
+        } finally {
+            StatsPersistence.finishRestore(
+                context = ctx,
+                databasePayload = statsDatabase,
+                replaceDatabase = !partialBackup,
+            )
+        }
     }
 
     fun loadBackupPayload(
@@ -512,15 +679,17 @@ object CloudSyncRuntime {
                     return@addOnSuccessListener
                 }
 
-                runCatching { payloadFromSnapshot(snapshot) }
-                    .onSuccess { onDone(true, null, it) }
-                    .onFailure { e ->
-                        AppLogStore.append(ctx, TAG, "Loading cloud backup preview failed", e)
-                        onDone(false, e.localizedMessage, null)
-                    }
+                loadPayloadWithStatsChunks(snapshot.reference, payloadFromSnapshot(snapshot)) { payloadResult ->
+                    payloadResult
+                        .onSuccess { payload -> onDone(true, null, payload) }
+                        .onFailure { error ->
+                            AppLogStore.appendRateLimited(ctx, TAG, "Loading cloud backup preview failed", error)
+                            onDone(false, error.localizedMessage, null)
+                        }
+                }
             }
             .addOnFailureListener { e ->
-                AppLogStore.append(ctx, TAG, "Loading cloud backup preview failed", e)
+                AppLogStore.appendRateLimited(ctx, TAG, "Loading cloud backup preview failed", e)
                 onDone(false, e.localizedMessage, null)
             }
     }
@@ -530,8 +699,8 @@ object CloudSyncRuntime {
             payload.containsKey(FIELD_SWITCHLY_PREFS) ||
             payload.containsKey(FIELD_SCHEDULES_PREFS) ||
             payload.containsKey(FIELD_UI_HINTS_PREFS) ||
-            payload.containsKey(FIELD_WIFI_RULES_PREFS) ||
-            payload.containsKey(FIELD_STATS)
+            payload.containsKey(FIELD_STATS) ||
+            payload.containsKey(FIELD_STATS_DATABASE)
     }
 
     private fun payloadFromSnapshot(snapshot: DocumentSnapshot): Map<String, Any?> {
@@ -543,11 +712,49 @@ object CloudSyncRuntime {
             FIELD_SWITCHLY_PREFS to snapshot.get(FIELD_SWITCHLY_PREFS),
             FIELD_SCHEDULES_PREFS to snapshot.get(FIELD_SCHEDULES_PREFS),
             FIELD_UI_HINTS_PREFS to snapshot.get(FIELD_UI_HINTS_PREFS),
-            FIELD_WIFI_RULES_PREFS to snapshot.get(FIELD_WIFI_RULES_PREFS),
             FIELD_STATS to snapshot.get(FIELD_STATS),
+            FIELD_STATS_DATABASE to snapshot.get(FIELD_STATS_DATABASE),
             BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES to snapshot.get(BackupCategoryFilter.FIELD_INCLUDED_CATEGORIES),
             BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP to snapshot.get(BackupCategoryFilter.FIELD_IS_PARTIAL_BACKUP)
         )
+    }
+
+    private fun loadPayloadWithStatsChunks(
+        backupRef: DocumentReference,
+        payload: Map<String, Any?>,
+        onDone: (Result<Map<String, Any?>>) -> Unit,
+    ) {
+        val statsDatabase = payload[FIELD_STATS_DATABASE] as? Map<*, *>
+        if (statsDatabase == null || statsDatabase.containsKey(StatsBackupCodec.FIELD_CHUNKS)) {
+            onDone(Result.success(payload))
+            return
+        }
+        val chunkCount = (statsDatabase[FIELD_STATS_CHUNK_COUNT] as? Number)?.toInt() ?: 0
+        if (chunkCount <= 0) {
+            onDone(Result.success(payload))
+            return
+        }
+        backupRef.collection(SUB_STATS_CHUNKS)
+            .orderBy(FIELD_STATS_CHUNK_INDEX, Query.Direction.ASCENDING)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val chunks = snapshot.documents.mapNotNull { document ->
+                    document.getString(FIELD_STATS_CHUNK_DATA)
+                }
+                if (chunks.size != chunkCount) {
+                    onDone(Result.failure(IllegalStateException("Statistics backup is incomplete")))
+                    return@addOnSuccessListener
+                }
+                val restoredStats = statsDatabase.entries
+                    .associate { entry -> entry.key.toString() to entry.value }
+                    .toMutableMap()
+                restoredStats.remove(FIELD_STATS_CHUNK_COUNT)
+                restoredStats[StatsBackupCodec.FIELD_CHUNKS] = chunks
+                val restoredPayload = payload.toMutableMap()
+                restoredPayload[FIELD_STATS_DATABASE] = restoredStats
+                onDone(Result.success(restoredPayload))
+            }
+            .addOnFailureListener { error -> onDone(Result.failure(error)) }
     }
 
     // Applies a Firestore-loaded map to local SharedPreferences.
@@ -674,17 +881,29 @@ object CloudSyncRuntime {
             return
         }
 
-        FirebaseFirestore.getInstance()
+        val firestore = FirebaseFirestore.getInstance()
+        val backupRef = firestore
             .collection(COLLECTION)
             .document(uid)
             .collection(SUB_BACKUPS)
             .document(backupId)
-            .delete()
-            .addOnSuccessListener { cb(true, null) }
-            .addOnFailureListener { e ->
-                Log.w(TAG, "deleteBackup failed", e)
-                AppLogStore.append(ctx, TAG, "Deleting cloud backup failed", e)
-                cb(false, e.message)
+
+        backupRef.collection(SUB_STATS_CHUNKS).get()
+            .addOnSuccessListener { chunks ->
+                val batch = firestore.batch()
+                chunks.documents.forEach { document -> batch.delete(document.reference) }
+                batch.delete(backupRef)
+                batch.commit()
+                    .addOnSuccessListener { cb(true, null) }
+                    .addOnFailureListener { error ->
+                        Log.w(TAG, "deleteBackup failed", error)
+                        AppLogStore.append(ctx, TAG, "Deleting cloud backup failed", error)
+                        cb(false, error.message)
+                    }
+            }
+            .addOnFailureListener { error ->
+                Log.w(TAG, "deleteBackup chunks lookup failed", error)
+                cb(false, error.message)
             }
     }
 }

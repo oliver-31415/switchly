@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+
+    <!-- Compact Discord brand mark. Original Blurple is intentionally preserved. -->
+    <path
+        android:pathData="M248,216C324,180,400,164,480,164C560,164,636,180,712,216C768,300,804,404,816,516C756,600,688,656,612,692L580,648C624,632,660,612,692,584C560,640,400,640,268,584C300,612,336,632,380,648L348,692C272,656,204,600,144,516C156,404,192,300,248,216Z"
+        android:fillColor="#5865F2" />
+
+    <path
+        android:pathData="M328,416C328,380,352,352,380,352C412,352,432,380,432,416C432,452,412,480,380,480C352,480,328,452,328,416Z"
+        android:fillColor="#FFFFFF" />
+
+    <path
+        android:pathData="M528,416C528,380,548,352,580,352C608,352,632,380,632,416C632,452,608,480,580,480C548,480,528,452,528,416Z"
+        android:fillColor="#FFFFFF" />
+</vector>

@@ -60,7 +60,7 @@
     <string name="mode_blocked_nfc_action">NFC actions are disabled by current control mode.</string>
     <string name="mode_blocked_qr_action">QR actions are disabled by current control mode.</string>
     <string name="mode_blocked_barcode_action">Barcode actions are disabled by current control mode.</string>
-    <string name="mode_blocked_tile_action">Quick Settings tile is disabled because manual controls are disabled in the current control mode.</string>
+    <string name="mode_blocked_tile_action">Quick Settings control is unavailable in the current mode.</string>
     <string name="mode_blocked_button_action">Manual buttons are disabled by the current control mode.</string>
     <string name="mode_blocked_button_disable_enable_only">Manual buttons can only enable Switchly right now. Use your allowed control method to disable it.</string>
 
@@ -101,16 +101,13 @@
     <!-- ====================================================== -->
     <!-- Feature access -->
     <!-- ====================================================== -->
-    <string name="pref_lock_switchly_app_access_title">Block Switchly settings access</string>
-    <string name="pref_lock_switchly_app_access_summary">Lock Switchly screens while protection is active.</string>
-    <string name="toggle_detail_lock_switchly_app_access">When enabled, Switchly settings and control screens are blocked while protection is active. Disable Switchly first (via an allowed channel) to change settings again.</string>
     <string name="pref_require_nfc_unlock_title">Require NFC to disable Switchly</string>
     <string name="pref_require_nfc_unlock_summary">When on, only an allowed NFC action tag or QR fallback can disable Switchly.</string>
     <string name="toggle_locked_nfc_hint">Locked because “Require NFC to disable Switchly” is active.</string>
     <string name="toggle_locked_nfc_action">How to unlock</string>
     <string name="toggle_locked_nfc_howto">Scan your NFC action tag to disable Switchly and unlock protected controls. If QR unlock is enabled, you can use your QR fallback instead. After unlocking, schedules and protected settings are editable again.</string>
     <string name="pref_enable_paired_uids_title">Enable paired NFC tags</string>
-    <string name="pref_enable_paired_uids_summary">Allows UID-only/read-only NFC tags and per-tag limits. Written Switchly NFC action tags still work without pairing.</string>
+    <string name="pref_enable_paired_uids_summary">Allows UID-based actions, written-action overrides, and per-tag limits for paired NFC tags. Unpaired written Switchly tags still work normally.</string>
     <string name="toggle_info_paired_uids_title">Paired NFC tags</string>
     <string name="toggle_info_paired_uids_body_enabled">UID-only/read-only tag support is enabled. Pair tags in Manage paired tags to use them without writing a Switchly action, or to apply per-tag limits. Written Switchly NFC action tags still work without pairing.</string>
     <string name="toggle_info_paired_uids_body_disabled">Pairing is currently disabled.\nNormal written Switchly NFC action tags still work without pairing when NFC control is allowed.\nEnable this only for UID-only/read-only tags or per-tag limits.</string>
@@ -122,13 +119,13 @@
     <!-- ====================================================== -->
     <!-- Blocking protection -->
     <!-- ====================================================== -->
-    <string name="toggle_info_lock_and_temp_title">Settings lock &amp; temporary tags</string>
-    <string name="toggle_info_lock_and_temp_body">Settings lock blocks opening Switchly settings and control screens while protection is active.\nTemporary disable actions give you a short time window (e.g. 10 minutes) before the previous protection state is restored.</string>
     <string name="pref_block_notifications_summary">Keeps blocked apps quiet.</string>
-    <string name="pref_uninstall_friction_title">Uninstall protection</string>
-    <string name="pref_uninstall_friction_summary">Makes App Info, uninstall paths, and Switchly-related system settings harder to use while Switchly is active.</string>
     <string name="blocking_uninstall_friction_title">Uninstall friction active</string>
     <string name="blocking_uninstall_friction_message">Switchly is making uninstall-related screens harder to access while protection is active. This is friction, not true uninstall blocking. Disable Switchly first via your allowed method if you want to continue.</string>
+    <string name="switchly_settings_locked_title">Open Settings?</string>
+    <string name="settings_restricted_open_message">Switchly is active. Settings can still be viewed, but protection-related options cannot be changed until Switchly is fully disabled.</string>
+    <string name="settings_open_restricted">Open Settings</string>
+    <string name="settings_restricted_action_unavailable">Unavailable while Switchly is active.</string>
     <string name="blocking_settings_bypass_title">Switchly settings protected</string>
     <string name="blocking_settings_bypass_message">This system settings page could disable or weaken Switchly while protection is active. Disable Switchly first via your allowed method if you want to change these settings.</string>
 
@@ -143,15 +140,17 @@
     <string name="pref_home_layout_mode_title">Home mode</string>
     <string name="pref_home_layout_mode_summary">Choose how much detail the Home screen shows.</string>
     <string name="pref_home_layout_custom_title">Customize Home</string>
-    <string name="pref_home_layout_custom_summary">Choose the sections and actions shown in Custom Home mode.</string>
-    <string name="pref_home_layout_custom_builder_intro">Tap a card to add or remove that Home section. Selected cards are highlighted immediately.</string>
-    <string name="pref_home_layout_custom_reorder_hint">Use arrows or long press a row to move Home sections.</string>
-    <string name="pref_home_layout_custom_move_up">Move up</string>
-    <string name="pref_home_layout_custom_move_down">Move down</string>
+    <string name="pref_home_layout_custom_summary">Choose the main Home cards and the details shown inside each card.</string>
+    <string name="pref_home_layout_custom_builder_intro">Choose the Home cards and the details inside them.</string>
+    <string name="pref_home_layout_custom_reorder_hint">Drag by the handles to reorder. Tap a card to show or hide its details.</string>
+    <string name="dashboard_quick_actions_reorder_hint">Drag actions by the handle to reorder them.</string>
+    <string name="pref_home_layout_custom_drag_handle">Drag to reorder</string>
+    <string name="pref_home_layout_custom_expand_details">Expand details</string>
+    <string name="pref_home_layout_custom_collapse_details">Collapse details</string>
     <string name="pref_home_layout_custom_restore_default">Restore default</string>
     <plurals name="pref_home_layout_custom_selected_count">
-        <item quantity="one">%1$d of %2$d section selected</item>
-        <item quantity="other">%1$d of %2$d sections selected</item>
+        <item quantity="one">%1$d of %2$d Home card selected</item>
+        <item quantity="other">%1$d of %2$d Home cards selected</item>
     </plurals>
 
     <!-- ====================================================== -->
@@ -204,8 +203,6 @@
     <string name="pref_show_emergency_unlock_title">Emergency shortcut</string>
     <string name="pref_show_emergency_unlock_summary">Show this shortcut on Home.</string>
     <string name="toggle_detail_show_emergency_unlock">Controls only the Home shortcut. Active or paused emergency unlock sessions are still shown so they can be managed.</string>
-    <string name="pref_show_next_schedule_title">Show next schedule</string>
-    <string name="pref_show_next_schedule_summary">Show the next schedule on Home.</string>
 
     <!-- ====================================================== -->
     <!-- Tiles and shortcuts -->
@@ -236,45 +233,42 @@
     <string name="widget_pin_not_supported">Use your launcher’s widget picker to add this widget.</string>
     <string name="edit_locked_while_switchly_on_title">Switchly is active</string>
     <string name="edit_locked_manage_paired_tags">Turn off Switchly to manage paired NFC tags.</string>
+    <string name="edit_locked_manage_qr_codes">Turn off Switchly to create, view, copy, or share QR codes.</string>
     <string name="edit_locked_manage_barcodes">Turn off Switchly to manage barcodes.</string>
     <string name="edit_locked_manage_websites">Turn off Switchly to edit website rules.</string>
-    <string name="edit_locked_manage_apps">Turn off Switchly to edit selected apps.</string>
     <string name="edit_locked_manage_profiles">Turn off Switchly to manage profiles.</string>
     <string name="edit_locked_write_nfc_tags">Turn off Switchly to write or pair NFC tags.</string>
     <string name="edit_locked_manage_inapp">Turn off Switchly to edit in-app rules.</string>
     <string name="edit_locked_manage_blocked_notifications">Turn off Switchly to open blocked notifications.</string>
-    <string name="toast_disable_switchly_to_edit_blocked_apps">Turn off Switchly first, or enable “Allow picking apps” in Control settings.</string>
+    <string name="toast_disable_switchly_to_edit_blocked_apps">Fully disable Switchly to edit app rules.</string>
     <string name="toast_disable_switchly_to_switch_profiles">Turn off Switchly before switching profiles.</string>
     <string name="toast_disable_switchly_to_edit_websites">Turn off Switchly before editing website rules.</string>
     <string name="toast_disable_switchly_to_edit_app_limits">Turn off Switchly before editing app limits.</string>
-    <string name="toast_switchly_settings_locked_while_enabled">Turn off Switchly to edit settings.</string>
-    <string name="home_custom_active_timer">Active timer</string>
-    <string name="home_custom_main_button">Main enable/disable button</string>
+    <string name="home_custom_protection_control">Protection control</string>
+    <string name="home_custom_protection_control_summary">Main card with protection status, controls, profile and unlock actions.</string>
+    <string name="home_custom_active_timer">Active time</string>
+    <string name="home_custom_main_button">Enable / Disable</string>
     <string name="home_custom_active_profile">Active profile</string>
     <string name="home_custom_control_mode">Control mode</string>
-    <string name="home_custom_pick_apps">Pick apps button</string>
-    <string name="home_custom_temporary">Temporary mode shortcut</string>
-    <string name="home_custom_emergency">Emergency shortcut</string>
+    <string name="home_custom_temporary">Temporary control</string>
+    <string name="home_custom_emergency">Emergency unlock</string>
     <string name="home_custom_quick_actions">Quick actions</string>
     <string name="home_custom_next_schedule">Next schedule</string>
-    <string name="home_custom_blocked_now">Blocked right now</string>
-    <string name="home_custom_blocked_apps">App list</string>
-    <string name="home_custom_profile_dropdown">Profile dropdown</string>
+    <string name="home_custom_blocked_apps">Managed apps</string>
+    <string name="home_custom_profile_dropdown">Profile selector</string>
     <string name="home_mode_default_card_summary">Clean first-time Home screen with the main controls, app picker, and selected app list without advanced status sections.</string>
     <string name="home_mode_simple_card_summary">Minimal Home screen with the core Switchly controls.</string>
     <string name="home_mode_advanced_card_summary">Full Home screen with more details, shortcuts, and status sections.</string>
-    <string name="home_mode_custom_card_summary">Pick exactly which Home sections should be visible.</string>
-    <string name="home_custom_active_timer_summary">Shows the active-now timer below the Switchly status.</string>
-    <string name="home_custom_main_button_summary">Shows the main enable/disable button.</string>
+    <string name="home_mode_custom_card_summary">Choose main Home cards, customize their contents, and reorder both cards and contents with drag and drop.</string>
+    <string name="home_custom_active_timer_summary">Shows how long the current protection state has been active.</string>
+    <string name="home_custom_main_button_summary">Shows the main button for enabling or disabling Switchly.</string>
     <string name="home_custom_active_profile_summary">Shows the currently active profile row.</string>
     <string name="home_custom_control_mode_summary">Shows Schedule, NFC, QR, Barcode, or Mixed mode.</string>
-    <string name="home_custom_pick_apps_summary">Shows a direct shortcut to the app picker.</string>
-    <string name="home_custom_temporary_summary">Shows the temporary enable/disable shortcut and active temporary state.</string>
-    <string name="home_custom_emergency_summary">Shows Emergency Unlock status and shortcut.</string>
+    <string name="home_custom_temporary_summary">Shows Temporary enable or Temporary disable and its current state.</string>
+    <string name="home_custom_emergency_summary">Shows Emergency unlock status and its shortcut.</string>
     <string name="home_custom_quick_actions_summary">Shows the quick action tile section.</string>
     <string name="home_custom_next_schedule_summary">Shows the next upcoming schedule boundary.</string>
-    <string name="home_custom_blocked_now_summary">Shows what is currently blocked or limit-reached.</string>
-    <string name="home_custom_blocked_apps_summary">Shows the profile app list for block or allow mode.</string>
-    <string name="home_custom_profile_dropdown_summary">Shows the profile selector dropdown on Home.</string>
+    <string name="home_custom_blocked_apps_summary">Shows the selected apps for the active profile and the manage button.</string>
+    <string name="home_custom_profile_dropdown_summary">Shows the profile selector inside Protection Control.</string>
 
 </resources>

@@ -51,7 +51,6 @@ object AutomationModeStore {
     private const val KEY_ALLOW_BUTTON_ENABLE = "automation_allow_button_enable"
     private const val KEY_MIXED_ALLOW_SCHEDULE_EDITING = "automation_mixed_allow_schedule_editing"
     private const val KEY_MIXED_ALLOW_NFC_TAG_WRITING = "automation_mixed_allow_nfc_tag_writing"
-    private const val KEY_LOCK_SWITCHLY_APP_ACCESS = "pref_lock_switchly_app_access"
     private const val KEY_UNINSTALL_FRICTION = "pref_uninstall_friction"
 
     enum class Mode(val raw: String) {
@@ -95,7 +94,11 @@ object AutomationModeStore {
 
     fun getMode(context: Context): Mode {
         val storedMode = Mode.fromRaw(prefs(context).getString(KEY_AUTOMATION_MODE, Mode.MIXED.raw))
-        return if (isModeSupported(context, storedMode)) storedMode else Mode.MIXED
+        return if (isModeSupported(context, storedMode)) {
+            storedMode
+        } else {
+            Mode.MIXED
+        }
     }
 
     fun setMode(context: Context, mode: Mode) {
@@ -190,7 +193,9 @@ object AutomationModeStore {
     }
 
     fun isNfcAllowed(context: Context): Boolean {
-        if (!isNfcSupported(context)) return false
+        if (!isNfcSupported(context)) {
+            return false
+        }
         return when (getMode(context)) {
             Mode.NFC -> true
             Mode.MIXED -> isMixedAllowNfc(context)
@@ -198,11 +203,11 @@ object AutomationModeStore {
         }
     }
 
-    /**
-     * Pure capability check for QR based only on the selected control mode.
-     */
+    // Pure capability check for QR based only on the selected control mode.
     fun isQrChannelAllowed(context: Context): Boolean {
-        if (!isCameraSupported(context)) return false
+        if (!isCameraSupported(context)) {
+            return false
+        }
         return when (getMode(context)) {
             Mode.QR -> true
             Mode.MIXED -> isMixedAllowQr(context)
@@ -215,7 +220,9 @@ object AutomationModeStore {
     fun shouldShowQrTools(context: Context): Boolean = isQrChannelAllowed(context)
 
     fun isBarcodeChannelAllowed(context: Context): Boolean {
-        if (!isCameraSupported(context)) return false
+        if (!isCameraSupported(context)) {
+            return false
+        }
         return when (getMode(context)) {
             Mode.BARCODE -> true
             Mode.MIXED -> isMixedAllowBarcode(context)
@@ -243,8 +250,12 @@ object AutomationModeStore {
      * If NFC, QR, schedules, or the manual button are available, there is no need to relax the disable restriction just because barcode setup is incomplete.
      */
     fun shouldAllowManualDisableForMissingBarcodeSetup(context: Context): Boolean {
-        if (!isBarcodeSetupMissing(context)) return false
-        if (isButtonAllowed(context)) return false
+        if (!isBarcodeSetupMissing(context)) {
+            return false
+        }
+        if (isButtonAllowed(context)) {
+            return false
+        }
 
         val hasOtherDisableChannel =
             isScheduleAllowed(context) ||
@@ -257,9 +268,7 @@ object AutomationModeStore {
     fun isAnyScanFeatureEnabled(context: Context): Boolean =
         isQrChannelAllowed(context) || isBarcodeChannelAllowed(context)
 
-    /**
-     * Tile control follows the same full-control channel as the manual button.
-     */
+    // Tile control follows the same full-control channel as the manual button.
     fun isTileAllowed(context: Context): Boolean = isButtonAllowed(context)
 
     /**
@@ -315,17 +324,6 @@ object AutomationModeStore {
      */
     fun isNfcTagWritingAllowedWhileEnabled(context: Context): Boolean =
         isMixedAllowNfcTagWriting(context)
-
-    /**
-     * Optional hard lock for Switchly control surfaces while protection is active.
-     * When enabled, settings/control screens are blocked until Switchly is disabled.
-     */
-    fun isSwitchlyAppAccessLockEnabled(context: Context): Boolean =
-        getBool(context, KEY_LOCK_SWITCHLY_APP_ACCESS, false)
-
-    fun setSwitchlyAppAccessLockEnabled(context: Context, enabled: Boolean) {
-        putBool(context, KEY_LOCK_SWITCHLY_APP_ACCESS, enabled)
-    }
 
     fun isUninstallFrictionEnabled(context: Context): Boolean =
         getBool(context, KEY_UNINSTALL_FRICTION, false)

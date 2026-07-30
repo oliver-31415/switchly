@@ -24,11 +24,9 @@ import android.app.StatusBarManager
 import android.content.ComponentName
 import android.graphics.drawable.Icon
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import at.saltyy.switchly.R
-import java.util.concurrent.Executors
 
 // Helper for requesting Switchly Quick Settings tiles.
 object QuickTileHelper {
@@ -43,7 +41,7 @@ object QuickTileHelper {
             activity = activity,
             serviceClassName = "at.saltyy.switchly.platform.tile.SwitchlyTileService",
             label = activity.getString(R.string.app_name),
-            iconRes = R.drawable.app_blocking_black_24,
+            iconRes = R.drawable.qs_switchly_24,
             onResult = onResult
         )
     }
@@ -75,27 +73,27 @@ object QuickTileHelper {
         iconRes: Int,
         onResult: ((Int) -> Unit)? = null
     ): Boolean {
-        if (Build.VERSION.SDK_INT < 33) return false
+        if (Build.VERSION.SDK_INT < 33) {
+            return false
+        }
         val sb = activity.getSystemService(StatusBarManager::class.java) ?: return false
 
         val component = ComponentName(activity, serviceClassName)
         val icon = Icon.createWithResource(activity, iconRes)
-        val executor = Executors.newSingleThreadExecutor()
+        val mainExecutor = ContextCompat.getMainExecutor(activity)
 
-        sb.requestAddTileService(component, label, icon, executor) { result ->
-            Handler(Looper.getMainLooper()).post {
-                onResult?.invoke(result)
-                when (result) {
-                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
-                        Toast.makeText(activity, activity.getString(R.string.qs_added_ok), Toast.LENGTH_SHORT).show()
+        sb.requestAddTileService(component, label, icon, mainExecutor) { result ->
+            onResult?.invoke(result)
+            when (result) {
+                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
+                    Toast.makeText(activity, activity.getString(R.string.qs_added_ok), Toast.LENGTH_SHORT).show()
 
-                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
-                        Toast.makeText(activity, activity.getString(R.string.qs_added_already), Toast.LENGTH_SHORT).show()
+                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
+                    Toast.makeText(activity, activity.getString(R.string.qs_added_already), Toast.LENGTH_SHORT).show()
 
-                    else ->
-                        // Canceled or any other status
-                        Toast.makeText(activity, activity.getString(R.string.qs_added_cancel), Toast.LENGTH_SHORT).show()
-                }
+                else ->
+                    // Canceled or any other status
+                    Toast.makeText(activity, activity.getString(R.string.qs_added_cancel), Toast.LENGTH_SHORT).show()
             }
         }
 

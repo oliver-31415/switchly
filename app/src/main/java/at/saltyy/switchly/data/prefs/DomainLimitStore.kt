@@ -25,7 +25,7 @@ import androidx.preference.PreferenceManager
 
 /**
  * Daily per-domain limit (minutes), scoped to the active profile.
- * Older builds stored website limits globally by domain. 
+ * Older builds stored website limits globally by domain.
  * We still read those profileless keys once so existing user data is migrated into the active profile.
  */
 object DomainLimitStore {
@@ -65,7 +65,9 @@ object DomainLimitStore {
         val profile = currentProfile(ctx)
         val scoped = scopedKey(profile, d)
         val scopedMinutes = readMinutesRaw(ctx, scoped)
-        if (scopedMinutes > 0) return scopedMinutes
+        if (scopedMinutes > 0) {
+            return scopedMinutes
+        }
 
         val profileless = readMinutesRaw(ctx, profilelessKey(d))
         if (profileless > 0) {
@@ -137,7 +139,9 @@ object DomainLimitStore {
                 }
             }
 
-        if (entries.isEmpty()) return
+        if (entries.isEmpty()) {
+            return
+        }
 
         p.edit {
             for ((domain, minutes) in entries) {
@@ -151,7 +155,9 @@ object DomainLimitStore {
         val p = prefs(ctx)
         val prefix = PREFIX + PROFILE_SEGMENT + sanitizeProfile(profile) + "__"
         val keys = p.all.keys.filter { it.startsWith(prefix) }
-        if (keys.isEmpty()) return
+        if (keys.isEmpty()) {
+            return
+        }
         p.edit {
             for (key in keys) remove(key)
         }

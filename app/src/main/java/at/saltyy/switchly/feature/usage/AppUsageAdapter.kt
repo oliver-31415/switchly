@@ -69,7 +69,9 @@ class AppUsageAdapter(
     }
 
     fun setDetailsCtaEnabled(enabled: Boolean) {
-        if (detailsCtaEnabled == enabled) return
+        if (detailsCtaEnabled == enabled) {
+            return
+        }
         detailsCtaEnabled = enabled
         if (items.isNotEmpty()) notifyItemRangeChanged(0, items.size)
     }

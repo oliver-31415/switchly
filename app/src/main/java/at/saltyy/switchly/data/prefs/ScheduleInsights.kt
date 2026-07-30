@@ -111,8 +111,12 @@ object ScheduleInsights {
     }
 
     fun isActiveNow(schedule: ScheduleStore.Schedule, now: Calendar = Calendar.getInstance()): Boolean {
-        if (!schedule.enabled || schedule.isLocationSchedule()) return false
-        if (!appliesOnDay(schedule, now)) return false
+        if (!schedule.enabled || schedule.isLocationSchedule()) {
+            return false
+        }
+        if (!appliesOnDay(schedule, now)) {
+            return false
+        }
         val minutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
         return if (isRangeLike(schedule)) {
             inTimeRange(minutes, schedule.startMinutes, schedule.endMinutes)
@@ -136,7 +140,9 @@ object ScheduleInsights {
         schedule: ScheduleStore.Schedule,
         actionLabel: String
     ) {
-        if (timeMs < startMs || timeMs > endMs) return
+        if (timeMs < startMs || timeMs > endMs) {
+            return
+        }
         val time = TimeFormatPrefs.formatMinutesOfDay(
             context,
             Calendar.getInstance().apply { timeInMillis = timeMs }.let {
@@ -227,7 +233,9 @@ object ScheduleInsights {
     private fun splitWindow(start: Int, end: Int): List<Pair<Int, Int>> {
         val s = normalizedMinute(start)
         val e = normalizedMinute(end)
-        if (s == e) return listOf(0 to 1440)
+        if (s == e) {
+            return listOf(0 to 1440)
+        }
         return if (e > s) {
             listOf(s to e)
         } else {
@@ -236,7 +244,9 @@ object ScheduleInsights {
     }
 
     private fun inTimeRange(nowMin: Int, startMin: Int, endMin: Int): Boolean {
-        if (startMin == endMin) return true
+        if (startMin == endMin) {
+            return true
+        }
         return if (endMin > startMin) {
             nowMin in startMin until endMin
         } else {

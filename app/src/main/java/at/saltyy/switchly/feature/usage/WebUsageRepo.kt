@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.WebUsageStore
 
+// Loads and transforms web usage data.
 object WebUsageRepo {
 
     fun getLast7DaysSummary(ctx: Context, topN: Int = 20): UsageSummary {
@@ -60,7 +61,9 @@ object WebUsageRepo {
 
     fun getDateRangeSummary(ctx: Context, startMs: Long, endMs: Long, topN: Int = 20): UsageSummary {
         val totalsByDomain = WebUsageStore.getUsageMsMapForDateRange(ctx, startMs, endMs)
-        if (totalsByDomain.isEmpty()) return UsageSummary(0L, emptyList())
+        if (totalsByDomain.isEmpty()) {
+            return UsageSummary(0L, emptyList())
+        }
 
         val totalAll = totalsByDomain.values.sum().coerceAtLeast(1L)
         val icon = ContextCompat.getDrawable(ctx, R.drawable.language_24)
@@ -97,7 +100,9 @@ object WebUsageRepo {
             }
         }
 
-        if (totalsByDomain.isEmpty()) return UsageSummary(0L, emptyList())
+        if (totalsByDomain.isEmpty()) {
+            return UsageSummary(0L, emptyList())
+        }
 
         val totalAll = totalsByDomain.values.sum().coerceAtLeast(1L)
         val icon = ContextCompat.getDrawable(ctx, R.drawable.language_24)
@@ -126,7 +131,9 @@ object WebUsageRepo {
         // Include buffered increments from the Accessibility service.
         WebUsageStore.flush(ctx)
         val domains = WebUsageStore.getDomains(ctx)
-        if (domains.isEmpty()) return UsageSummary(0L, emptyList())
+        if (domains.isEmpty()) {
+            return UsageSummary(0L, emptyList())
+        }
 
         val totals = ArrayList<Pair<String, Long>>(domains.size)
         for (d in domains) {

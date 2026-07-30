@@ -34,6 +34,7 @@ import android.nfc.tech.NdefFormatable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.text.InputType
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -47,7 +48,6 @@ import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
@@ -58,7 +58,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -76,6 +75,7 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.android.material.appbar.MaterialToolbar
@@ -155,7 +155,7 @@ class NfcWriterActivity : AppCompatActivity() {
     private lateinit var tilTime: TextInputLayout
     private lateinit var tvActionHint: TextView
     private lateinit var btnArmWrite: Button
-    private lateinit var statusRow: android.view.View
+    private lateinit var statusRow: View
     private lateinit var tvStatus: TextView
     private lateinit var statusProgress: ProgressBar
 
@@ -174,14 +174,6 @@ class NfcWriterActivity : AppCompatActivity() {
             getString(R.string.nfc_action_temp_enable),
         )
 
-        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-
-        // Re-entry is meaningful only when Switchly settings access is locked while protection is active.
-        val showReentry = prefs.getBoolean(BlockingToggleKeys.KEY_LOCK_SWITCHLY_APP_ACCESS, false)
-        if (showReentry) {
-            labels += getString(R.string.nfc_action_reentry)
-        }
-
         return labels
     }
 
@@ -195,8 +187,20 @@ class NfcWriterActivity : AppCompatActivity() {
     }
 
     private fun isNfcTagWritingLocked(): Boolean {
-        return SwitchModeStore.isEnabled(this) &&
+        return EditingLockGuard.isLocked(this) &&
             !AutomationModeStore.isNfcTagWritingAllowedWhileEnabled(this)
+    }
+
+    private fun openSystemNfcSettings() {
+        val intents = listOf(
+            Intent(Settings.ACTION_NFC_SETTINGS),
+            Intent(Settings.ACTION_WIRELESS_SETTINGS),
+        )
+        for (intent in intents) {
+            if (runCatching { startActivity(intent) }.isSuccess) {
+                return
+            }
+        }
     }
 
     private fun openProtectionControls() {
@@ -212,22 +216,32 @@ class NfcWriterActivity : AppCompatActivity() {
 
     private fun updateWriteLockState() {
         val locked = isNfcTagWritingLocked()
+        val nfcSystemEnabled = nfcAdapter?.isEnabled == true
+        val controlsEnabled = !locked && nfcSystemEnabled
 
-        ddProfile.isEnabled = !locked
-        ddAction.isEnabled = !locked
-        ddTime.isEnabled = !locked
-        tilProfile.isEnabled = !locked
-        tilAction.isEnabled = !locked
-        tilTime.isEnabled = !locked
-        btnArmWrite.isEnabled = !locked
-        btnArmWrite.alpha = if (locked) 0.6f else 1f
-        btnArmWrite.text = if (locked) {
-            getString(R.string.nfc_write_locked_button)
-        } else {
-            getString(R.string.nfc_arm_write)
+        ddProfile.isEnabled = controlsEnabled
+        ddAction.isEnabled = controlsEnabled
+        ddTime.isEnabled = controlsEnabled
+        tilProfile.isEnabled = controlsEnabled
+        tilAction.isEnabled = controlsEnabled
+        tilTime.isEnabled = controlsEnabled
+        btnArmWrite.isEnabled = true
+        btnArmWrite.alpha = if (controlsEnabled) 1f else 0.72f
+        btnArmWrite.text = when {
+            locked -> getString(R.string.nfc_write_locked_button)
+            !nfcSystemEnabled -> getString(R.string.nfc_system_disabled_button)
+            else -> getString(R.string.nfc_arm_write)
         }
 
-        if (locked) {
+        if (!nfcSystemEnabled) {
+            statusRow.isVisible = true
+            statusRow.alpha = 1f
+            statusProgress.isVisible = false
+            tvStatus.text = getString(R.string.nfc_system_disabled_status)
+            tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_error))
+            statusRow.setOnClickListener { openSystemNfcSettings() }
+            btnArmWrite.setOnClickListener { openSystemNfcSettings() }
+        } else if (locked) {
             statusRow.isVisible = true
             statusRow.alpha = 1f
             statusProgress.isVisible = false
@@ -241,7 +255,10 @@ class NfcWriterActivity : AppCompatActivity() {
         } else {
             statusRow.setOnClickListener(null)
             btnArmWrite.setOnClickListener { buildUriForSelected() }
-            if (!statusProgress.isVisible && tvStatus.text?.toString() == getString(R.string.nfc_write_locked_status)) {
+            val statusText = tvStatus.text?.toString().orEmpty()
+            val staleSystemOrLockWarning = statusText == getString(R.string.nfc_write_locked_status) ||
+                statusText == getString(R.string.nfc_system_disabled_status)
+            if (!statusProgress.isVisible && staleSystemOrLockWarning) {
                 statusRow.isVisible = false
                 tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_neutral))
             }
@@ -564,17 +581,7 @@ class NfcWriterActivity : AppCompatActivity() {
     private fun updateTimeVisibilityForAction(selectedActionLabel: String) {
         val isTempDisable = selectedActionLabel == getString(R.string.nfc_action_temp_disable)
         val isTempEnable = selectedActionLabel == getString(R.string.nfc_action_temp_enable)
-        val isReentry = selectedActionLabel == getString(R.string.nfc_action_reentry)
-        val isTemp = isTempDisable || isTempEnable || isReentry
-
-        if (isReentry && isAskWhenScannedSelected()) {
-            PreferenceManager.getDefaultSharedPreferences(this).edit {
-                putString("pref_nfc_unlock_minutes", "10")
-            }
-            ddTime.setText(getString(R.string.nfc_time_10_min), false)
-        }
-
-        tilTime.isVisible = isTemp
+        tilTime.isVisible = isTempDisable || isTempEnable
     }
 
     private fun updateActionHintForSelection(selectedActionLabel: String) {
@@ -607,12 +614,6 @@ class NfcWriterActivity : AppCompatActivity() {
                         tempMinutes
                     )
                 }
-            getString(R.string.nfc_action_reentry) ->
-                resources.getQuantityString(
-                    R.plurals.nfc_action_desc_reentry,
-                    tempMinutes,
-                    tempMinutes
-                )
             getString(R.string.nfc_action_pair_uid) -> {
                 val enabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
                 if (enabled) getString(R.string.nfc_action_desc_pair_uid) else getString(R.string.nfc_action_desc_pair_uid_disabled)
@@ -684,6 +685,16 @@ class NfcWriterActivity : AppCompatActivity() {
     private fun buildActionInfoBody(): CharSequence {
         val sb = SpannableStringBuilder()
 
+        val introTitleStart = sb.length
+        sb.append(getString(R.string.nfc_write_intro_title)).append("\n")
+        sb.setSpan(
+            StyleSpan(Typeface.BOLD),
+            introTitleStart,
+            sb.length - 1,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        sb.append(getString(R.string.nfc_write_onboarding_message)).append("\n\n")
+
         fun addItem(title: String, desc: String) {
             val titleStart = sb.length
             sb.append("• ").append(title).append("\n")
@@ -727,19 +738,6 @@ class NfcWriterActivity : AppCompatActivity() {
             ) + "\n" + getString(R.string.nfc_action_desc_temp_enable_ask),
         )
 
-        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val showReentry = prefs.getBoolean(BlockingToggleKeys.KEY_LOCK_SWITCHLY_APP_ACCESS, false)
-        if (showReentry) {
-            addItem(
-                getString(R.string.nfc_action_reentry),
-                resources.getQuantityString(
-                    R.plurals.nfc_action_desc_reentry,
-                    sampleMinutes,
-                    sampleMinutes,
-                ),
-            )
-        }
-
         addItem(
             getString(R.string.store_card_title),
             getString(R.string.store_card_summary),
@@ -777,8 +775,7 @@ class NfcWriterActivity : AppCompatActivity() {
         val tempMinutes: Int? =
             if (
                 selectedActionLabel == getString(R.string.nfc_action_temp_disable) ||
-                selectedActionLabel == getString(R.string.nfc_action_temp_enable) ||
-                selectedActionLabel == getString(R.string.nfc_action_reentry)
+                selectedActionLabel == getString(R.string.nfc_action_temp_enable)
             ) {
                 tempMinutesRaw.toIntOrNull()
             } else null
@@ -791,7 +788,6 @@ class NfcWriterActivity : AppCompatActivity() {
             selectedActionLabel == getString(R.string.nfc_action_temp_disable) -> "temp_disable${(tempMinutes ?: 10).coerceIn(1, 1440)}"
             selectedActionLabel == getString(R.string.nfc_action_temp_enable) && askWhenScanned -> "temp_enable"
             selectedActionLabel == getString(R.string.nfc_action_temp_enable) -> "temp_enable${(tempMinutes ?: 10).coerceIn(1, 1440)}"
-            selectedActionLabel == getString(R.string.nfc_action_reentry) -> "reentry${(tempMinutes ?: 10).coerceIn(1, 1440)}"
             else -> "toggle"
         }
 
@@ -799,14 +795,12 @@ class NfcWriterActivity : AppCompatActivity() {
         val isProfile = !forceGlobalAction && selectedProfile.isNotEmpty() && selectedProfile != noneLabel
         val isTempAction =
             selectedActionLabel == getString(R.string.nfc_action_temp_disable) ||
-                selectedActionLabel == getString(R.string.nfc_action_temp_enable) ||
-                selectedActionLabel == getString(R.string.nfc_action_reentry)
+                selectedActionLabel == getString(R.string.nfc_action_temp_enable)
 
         if (isProfile && isTempAction) {
             val msgRes =
                 if (
-                    selectedActionLabel == getString(R.string.nfc_action_temp_disable) ||
-                    selectedActionLabel == getString(R.string.nfc_action_reentry)
+                    selectedActionLabel == getString(R.string.nfc_action_temp_disable)
                 ) {
                     R.string.nfc_temp_hint_profile_disable_toast
                 } else {

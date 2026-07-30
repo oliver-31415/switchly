@@ -20,10 +20,11 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/pref_permissions_title"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
+        android:id="@+id/permissionsScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingStart="16dp"
@@ -52,6 +53,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
+                android:id="@+id/sectionCore"
                 android:text="@string/permissions_section_core" />
 
             <com.google.android.material.card.MaterialCardView
@@ -213,6 +215,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:layout_marginBottom="8dp"
+                android:id="@+id/sectionNotifications"
                 android:text="@string/permissions_section_notifications" />
 
             <com.google.android.material.card.MaterialCardView
@@ -374,6 +377,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:layout_marginBottom="8dp"
+                android:id="@+id/sectionTriggers"
                 android:text="@string/permissions_section_triggers" />
 
             <com.google.android.material.card.MaterialCardView
@@ -693,6 +697,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:layout_marginBottom="8dp"
+                android:id="@+id/sectionBattery"
                 android:text="@string/permissions_section_battery" />
 
             <com.google.android.material.card.MaterialCardView

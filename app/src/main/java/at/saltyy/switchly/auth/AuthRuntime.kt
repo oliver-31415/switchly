@@ -76,10 +76,6 @@ object AuthRuntime {
         }.getOrNull()
     }
 
-    fun isFirebaseAuthAvailable(context: Context): Boolean {
-        return BuildConfig.SWITCHLY_FIREBASE_ENABLED && firebaseAuthOrNull(context) != null
-    }
-
     private fun firebaseAuthOrNull(context: Context): FirebaseAuth? {
         if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
             return null
@@ -352,10 +348,14 @@ object AuthRuntime {
             AuthAction.RESET_PASSWORD -> R.string.auth_error_reset_password_generic
         }
 
-        if (error == null) return context.getString(fallback)
+        if (error == null) {
+            return context.getString(fallback)
+        }
 
         val direct = error.message?.trim().orEmpty()
-        if (error is IllegalStateException && direct.isNotEmpty()) return direct
+        if (error is IllegalStateException && direct.isNotEmpty()) {
+            return direct
+        }
 
         return when (error) {
             is NoCredentialException -> context.getString(R.string.auth_sign_in_cancelled)
@@ -419,19 +419,19 @@ object AuthRuntime {
         )
     }
 
-    /**
-     * Returns current Firebase UID (or null if not signed in not configured).
-     */
+    // Returns current Firebase UID (or null if not signed in not configured).
     fun uid(): String? {
-        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) return null
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            return null
+        }
         return runCatching { FirebaseAuth.getInstance().currentUser?.uid }.getOrNull()
     }
 
-    /**
-     * Returns current Firebase email address (or null if not signed in/not configured).
-     */
+    // Returns current Firebase email address (or null if not signed in/not configured).
     fun email(): String? {
-        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) return null
+        if (!BuildConfig.SWITCHLY_FIREBASE_ENABLED) {
+            return null
+        }
         return runCatching { FirebaseAuth.getInstance().currentUser?.email }.getOrNull()
     }
 }

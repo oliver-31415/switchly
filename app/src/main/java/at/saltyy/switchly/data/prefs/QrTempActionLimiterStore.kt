@@ -29,7 +29,7 @@ import java.time.LocalDate
 
 /**
  * Limits temporary QR actions by scanned QR payload.
- * NFC temporary limits can use a physical tag UID. 
+ * NFC temporary limits can use a physical tag UID.
  * QR codes do not have a UID, so the limiter uses a stable hash of the scanned Switchly URI instead.
  */
 object QrTempActionLimiterStore {
@@ -91,7 +91,7 @@ object QrTempActionLimiterStore {
         val countKey = "$KEY_COUNT_PREFIX${bucket}_$day"
         val current = p.getInt(countKey, 0)
 
-        p.edit {
+        p.edit(commit = true) {
             putLong("$KEY_LAST_PREFIX$bucket", System.currentTimeMillis())
             putInt(countKey, current + 1)
         }

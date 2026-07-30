@@ -35,7 +35,7 @@ import at.saltyy.switchly.ui.dialog.showAccented
 
 /**
  * Public, browsable entry point for switchly:// QR links opened by external scanners.
- * The actual action execution stays in NfcEntryActivity, but external scanners do not get the internal QR scanner extra. 
+ * The actual action execution stays in NfcEntryActivity, but external scanners do not get the internal QR scanner extra.
  * This small trampoline validates the URI, asks for an explicit user confirmation, then forwards it as a QR-sourced action.
  */
 class ExternalQrActionActivity : AppCompatActivity() {

@@ -56,29 +56,34 @@ class BluetoothTriggerService : Service() {
 
     private val br = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
-            when (intent.action) {
-                BluetoothDevice.ACTION_ACL_CONNECTED,
-                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
-                    cacheFromIntent(intent, reason = "connected")
-                    sendTick(reason = "connected", eventBtConnected = true)
-                    scheduleRetryIfNeeded(reason = "connected")
-                }
+            runCatching {
+                when (intent.action) {
+                    BluetoothDevice.ACTION_ACL_CONNECTED,
+                    BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                        cacheFromIntent(intent, reason = "connected")
+                        sendTick(reason = "connected", eventBtConnected = true)
+                        scheduleRetryIfNeeded(reason = "connected")
+                    }
 
-                BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
-                    WifiBtCache.clearBt(applicationContext)
-                    sendTick(reason = "disconnected", eventBtConnected = false)
-                }
-
-                BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1)
-                    if (state != BluetoothAdapter.STATE_ON) {
+                    BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
                         WifiBtCache.clearBt(applicationContext)
-                        sendTick(reason = "btOff", eventBtConnected = false)
-                    } else {
-                        sendTick(reason = "btOn")
-                        scheduleRetryIfNeeded(reason = "btOn")
+                        sendTick(reason = "disconnected", eventBtConnected = false)
+                    }
+
+                    BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                        val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1)
+                        if (state != BluetoothAdapter.STATE_ON) {
+                            WifiBtCache.clearBt(applicationContext)
+                            sendTick(reason = "btOff", eventBtConnected = false)
+                        } else {
+                            sendTick(reason = "btOn")
+                            scheduleRetryIfNeeded(reason = "btOn")
+                        }
                     }
                 }
+            }.onFailure { error ->
+                Log.e(TAG, "Bluetooth trigger callback failed", error)
+                this@BluetoothTriggerService.stopSelf()
             }
         }
     }
@@ -88,7 +93,9 @@ class BluetoothTriggerService : Service() {
 
         // We are started via ContextCompat.startForegroundService().
         // If we don't call startForeground() fast enough (or it throws), Android will crash the app.
-        if (!ensureForegroundOrStop()) return
+        if (!ensureForegroundOrStop()) {
+            return
+        }
 
         val f = IntentFilter().apply {
             addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
@@ -96,16 +103,30 @@ class BluetoothTriggerService : Service() {
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
         }
-        ContextCompat.registerReceiver(
-            this,
-            br,
-            f,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
+        val registered = runCatching {
+            ContextCompat.registerReceiver(
+                this,
+                br,
+                f,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to register Bluetooth trigger receiver", error)
+        }.isSuccess
 
-        cacheFromSystem(reason = "serviceStart")
-        sendTick(reason = "serviceStart")
-        scheduleRetryIfNeeded(reason = "serviceStart")
+        if (!registered) {
+            stopSelf()
+            return
+        }
+
+        runCatching {
+            cacheFromSystem(reason = "serviceStart")
+            sendTick(reason = "serviceStart")
+            scheduleRetryIfNeeded(reason = "serviceStart")
+        }.onFailure { error ->
+            Log.e(TAG, "Initial Bluetooth trigger refresh failed", error)
+            stopSelf()
+        }
     }
 
     override fun onDestroy() {
@@ -119,7 +140,11 @@ class BluetoothTriggerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return if (ensureForegroundOrStop()) START_STICKY else START_NOT_STICKY
+        return if (ensureForegroundOrStop()) {
+            START_STICKY
+        } else {
+            START_NOT_STICKY
+        }
     }
 
     /**
@@ -129,7 +154,9 @@ class BluetoothTriggerService : Service() {
     private var foregroundStarted = false
 
     private fun ensureForegroundOrStop(): Boolean {
-        if (foregroundStarted) return true
+        if (foregroundStarted) {
+            return true
+        }
 
         val nm = getSystemService(NotificationManager::class.java)
 
@@ -229,7 +256,9 @@ class BluetoothTriggerService : Service() {
     private fun cacheFromSystem(reason: String) {
         val bm = getSystemService(BluetoothManager::class.java)
         val adapter = bm?.adapter ?: return
-        if (!adapter.isEnabled) return
+        if (!adapter.isEnabled) {
+            return
+        }
         if (BuildConfig.DEBUG) Log.d(TAG, "bt system start ($reason) - waiting for events")
     }
 
@@ -257,7 +286,9 @@ class BluetoothTriggerService : Service() {
                     applicationContext,
                     Manifest.permission.BLUETOOTH_CONNECT
                 ) == PackageManager.PERMISSION_GRANTED
-                if (!granted) return null
+                if (!granted) {
+                    return null
+                }
                 device.name
             } else {
                 device.name
@@ -271,7 +302,9 @@ class BluetoothTriggerService : Service() {
         val cached = WifiBtCache.getBt(applicationContext)
         val haveAddr = !cached.addr.isNullOrBlank()
         val haveName = !cached.name.isNullOrBlank()
-        if (haveAddr || haveName) return
+        if (haveAddr || haveName) {
+            return
+        }
 
         if (retryCount >= 5) {
             Log.w(TAG, "bt still missing after retries ($reason). Likely missing BLUETOOTH_CONNECT or BT off.")
@@ -283,7 +316,12 @@ class BluetoothTriggerService : Service() {
         retryCount++
 
         handler.postDelayed({
-            sendTick(reason = "retry")
+            runCatching {
+                sendTick(reason = "retry")
+            }.onFailure { error ->
+                Log.e(TAG, "Bluetooth retry callback failed", error)
+                stopSelf()
+            }
         }, delay)
 
         if (BuildConfig.DEBUG) Log.d(TAG, "scheduled bt retry in ${delay}ms ($reason)")

@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 
+// Persists and retrieves advanced mode state.
 object AdvancedModeStore {
     private const val PREFS = "switchly_prefs"
     private const val KEY_ADVANCED_MODE_ENABLED = "pref_advanced_mode_enabled"

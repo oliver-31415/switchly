@@ -35,13 +35,12 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
-import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.InAppLimitStore
 import at.saltyy.switchly.data.prefs.InAppRuleStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
 import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
-import at.saltyy.switchly.data.prefs.EmergencyBypassStore
+import at.saltyy.switchly.data.prefs.WebsiteRuleModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.picker.AppPickerActivity
@@ -56,7 +55,6 @@ import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.EditingLockGuard
-import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -68,35 +66,7 @@ import kotlinx.coroutines.launch
 class ManageProfilesActivity : AppCompatActivity() {
 
     private fun isProfileLockActive(): Boolean {
-        val enabled = SwitchModeStore.isEnabled(this)
-        val temporaryOverrideActive = SwitchModeStore.hasActiveTemporaryOverride(this)
-        val emergencyActive = EmergencyBypassStore.isActive(this)
-        val emergencyPaused = EmergencyBypassStore.isPaused(this)
-        if (!enabled && !temporaryOverrideActive && !emergencyActive) return false
-
-        if (temporaryOverrideActive) return true
-
-        val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        if (requireNfc || emergencyActive || (enabled && emergencyPaused)) return true
-
-        return !AutomationModeStore.isProfileSwitchingAllowedWhileEnabled(this)
-    }
-
-    private fun profileLockReasonMessageRes(): Int {
-        val enabled = SwitchModeStore.isEnabled(this)
-        val temporaryOverrideActive = SwitchModeStore.hasActiveTemporaryOverride(this)
-        val emergencyActive = EmergencyBypassStore.isActive(this)
-        val emergencyPaused = EmergencyBypassStore.isPaused(this)
-        val requireNfc = SwitchModeStore.isNfcRequiredForDisable(this)
-        return if (enabled && !temporaryOverrideActive && !requireNfc && !emergencyActive && !emergencyPaused) {
-            R.string.toast_disable_switchly_to_switch_profiles
-        } else {
-            R.string.toast_cannot_change_profile_while_locked
-        }
-    }
-
-    private fun showProfileLockedToast() {
-        EditingLockGuard.showLockedDialog(this, profileLockReasonMessageRes())
+        return EditingLockGuard.isLocked(this)
     }
 
     private fun snackRoot(): View {
@@ -105,8 +75,15 @@ class ManageProfilesActivity : AppCompatActivity() {
 
     private fun syncProfileLockUi() {
         val locked = isProfileLockActive()
-        findViewById<FloatingActionButton>(R.id.fabAdd)?.alpha = if (locked) 0.62f else 1f
-        list.alpha = if (locked) 0.92f else 1f
+        findViewById<FloatingActionButton>(R.id.fabAdd)?.apply {
+            isEnabled = !locked
+            isClickable = !locked
+            alpha = if (locked) 0.45f else 1f
+        }
+        list.alpha = 1f
+        if (::adapter.isInitialized && adapter.itemCount > 0) {
+            adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        }
     }
 
     private lateinit var list: RecyclerView
@@ -120,7 +97,6 @@ class ManageProfilesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        if (SwitchlyAppAccessGuard.blockIfLocked(this)) return
         setContentView(R.layout.activity_manage_profiles)
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
@@ -143,7 +119,11 @@ class ManageProfilesActivity : AppCompatActivity() {
             onDelete = { position -> adapter.itemAt(position)?.let(::deleteProfile) }
         )
 
-        findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener { showAddProfileSheet() }
+        findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener {
+            if (!isProfileLockActive()) {
+                showAddProfileSheet()
+            }
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -159,7 +139,6 @@ class ManageProfilesActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (SwitchlyAppAccessGuard.blockIfLocked(this)) return
         findViewById<MaterialToolbar>(R.id.toolbar)
             .setBackgroundColor(AccentColor.getToolbarColor(this))
         refresh()
@@ -195,13 +174,18 @@ class ManageProfilesActivity : AppCompatActivity() {
             val perform: () -> Unit,
         )
 
-        val actions = mutableListOf(
-            ProfileAction(
+        val actions = mutableListOf<ProfileAction>()
+
+        if (name == current) {
+            actions += ProfileAction(
                 title = getString(R.string.action_manage_selected_apps),
                 summary = getString(R.string.profile_action_apps_summary),
                 icon = R.drawable.apps_24,
                 perform = { openAppListForProfile(name) }
-            ),
+            )
+        }
+
+        actions += listOf(
             ProfileAction(
                 title = getString(R.string.action_edit_profile_details),
                 summary = getString(R.string.profile_action_details_summary),
@@ -249,15 +233,6 @@ class ManageProfilesActivity : AppCompatActivity() {
     }
 
     private fun openAppListForProfile(profile: String) {
-        if (EditingLockGuard.isLocked(this)) {
-            EditingLockGuard.showLockedDialog(this, R.string.toast_disable_switchly_to_edit_blocked_apps)
-            return
-        }
-        if (isProfileLockActive()) {
-            showProfileLockedToast()
-            return
-        }
-
         val intent = Intent(this, AppPickerActivity::class.java).apply {
             putExtra(AppPickerActivity.EXTRA_PROFILE_NAME, profile)
         }
@@ -266,7 +241,6 @@ class ManageProfilesActivity : AppCompatActivity() {
 
     private fun showAddProfileSheet() {
         if (isProfileLockActive()) {
-            showProfileLockedToast()
             return
         }
 
@@ -274,8 +248,7 @@ class ManageProfilesActivity : AppCompatActivity() {
             title = getString(R.string.add_profile),
             positiveText = getString(R.string.create),
             initialValue = "",
-            initialDescription = "",
-            helperText = getString(R.string.profile_create_helper)
+            initialDescription = ""
         ) { name, description ->
             if (ProfileStore.addProfile(this, name)) {
                 ProfileStore.setDescription(this, name, description)
@@ -292,7 +265,6 @@ class ManageProfilesActivity : AppCompatActivity() {
 
     private fun showRenameProfileSheet(oldName: String) {
         if (isProfileLockActive()) {
-            showProfileLockedToast()
             return
         }
 
@@ -301,8 +273,7 @@ class ManageProfilesActivity : AppCompatActivity() {
             title = getString(R.string.profile_details_title),
             positiveText = getString(R.string.save),
             initialValue = oldName,
-            initialDescription = oldDescription,
-            helperText = getString(R.string.profile_details_helper)
+            initialDescription = oldDescription
         ) { newName, description ->
             when {
                 newName != oldName && ProfileStore.getProfiles(this).contains(newName) -> {
@@ -330,18 +301,14 @@ class ManageProfilesActivity : AppCompatActivity() {
         positiveText: String,
         initialValue: String = "",
         initialDescription: String = "",
-        helperText: String = getString(R.string.profile_name_helper),
         onSubmit: (String, String) -> String?
     ) {
         val content = layoutInflater.inflate(R.layout.dialog_profile_name, FrameLayout(this), false)
         val tilProfile = content.findViewById<TextInputLayout>(R.id.tilProfile)
         val input = content.findViewById<TextInputEditText>(R.id.etProfile)
         val descriptionInput = content.findViewById<TextInputEditText>(R.id.etProfileDescription)
-        val helper = content.findViewById<TextView>(R.id.tvHelper)
-
         input.setText(initialValue)
         descriptionInput.setText(initialDescription)
-        helper.text = helperText
         val currentLength = input.text?.length ?: 0
         input.setSelection(currentLength.coerceAtMost(input.length()))
 
@@ -356,6 +323,11 @@ class ManageProfilesActivity : AppCompatActivity() {
             dialog.styleSwitchlyDialogButtons()
 
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                if (isProfileLockActive()) {
+                    dialog.dismiss()
+                    syncProfileLockUi()
+                    return@setOnClickListener
+                }
                 val name = input.text?.toString()?.trim().orEmpty()
                 when {
                     name.length < 2 -> {
@@ -381,13 +353,16 @@ class ManageProfilesActivity : AppCompatActivity() {
 
     private fun deleteProfile(name: String) {
         if (isProfileLockActive()) {
-            showProfileLockedToast()
             return
         }
         AlertDialog.Builder(this)
             .setTitle(R.string.action_delete_profile)
             .setMessage(getString(R.string.delete_profile_confirm, name) + "\n\n" + getString(R.string.destructive_cannot_be_undone))
             .setPositiveButton(R.string.delete) { _, _ ->
+                if (isProfileLockActive()) {
+                    syncProfileLockUi()
+                    return@setPositiveButton
+                }
                 ProfileStore.removeProfile(this, name)
                 val profiles = ProfileStore.getProfiles(this)
                 ProfileStore.setCurrent(this, profiles.firstOrNull() ?: "")
@@ -399,7 +374,6 @@ class ManageProfilesActivity : AppCompatActivity() {
 
     private fun duplicateProfile(name: String) {
         if (isProfileLockActive()) {
-            showProfileLockedToast()
             return
         }
         val blocked = ProfileStore.getBlockedForProfile(this, name)
@@ -422,6 +396,7 @@ class ManageProfilesActivity : AppCompatActivity() {
             ProfileStore.setAllowedForProfile(this, newName, allowed)
             ProfileStore.setDescription(this, newName, ProfileStore.getDescription(this, name))
             ProfileRuleModeStore.copyProfile(this, name, newName)
+            WebsiteRuleModeStore.copyProfile(this, name, newName)
             DomainBlockStore.copyProfile(this, name, newName)
             InAppLimitStore.copyProfile(this, name, newName)
             SurfaceLimitStore.copyProfile(this, name, newName)
@@ -435,7 +410,6 @@ class ManageProfilesActivity : AppCompatActivity() {
 
     private fun setActiveProfile(name: String) {
         if (isProfileLockActive()) {
-            showProfileLockedToast()
             return
         }
 
@@ -503,7 +477,13 @@ class ManageProfilesActivity : AppCompatActivity() {
                 card.strokeColor = if (isActive) accent else Color.TRANSPARENT
                 badge.setTextColor(Color.WHITE)
                 badge.backgroundTintList = android.content.res.ColorStateList.valueOf(accent)
+                val readOnly = isProfileLockActive()
+                itemView.alpha = if (readOnly) 0.82f else 1f
+                itemView.isClickable = !readOnly
                 itemView.setOnClickListener {
+                    if (isProfileLockActive()) {
+                        return@setOnClickListener
+                    }
                     val currentPosition = bindingAdapterPosition
                     if (currentPosition != RecyclerView.NO_POSITION) showActions(currentPosition)
                 }

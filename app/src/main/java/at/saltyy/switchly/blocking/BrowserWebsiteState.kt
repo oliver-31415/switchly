@@ -28,6 +28,8 @@ internal class BrowserWebsiteState {
     private var currentDomainAt: Long = 0L
     private var candidateDomain: String? = null
     private var candidateSince: Long = 0L
+    private var confirmedPkg: String? = null
+    private var confirmedDomain: String? = null
     private val addressEditGraceUntilByPkg = HashMap<String, Long>()
     private val pendingDomainByPkg = HashMap<String, String>()
     private val pendingDomainAtByPkg = HashMap<String, Long>()
@@ -36,6 +38,8 @@ internal class BrowserWebsiteState {
         currentPkg = null
         currentDomain = null
         currentDomainAt = 0L
+        confirmedPkg = null
+        confirmedDomain = null
         resetCandidate()
     }
 
@@ -43,6 +47,8 @@ internal class BrowserWebsiteState {
         currentPkg = pkg
         currentDomain = null
         currentDomainAt = 0L
+        confirmedPkg = null
+        confirmedDomain = null
         resetCandidate()
     }
 
@@ -51,7 +57,9 @@ internal class BrowserWebsiteState {
     }
 
     fun currentTrackedDomain(pkg: String, now: Long, isFirefox: Boolean): String? {
-        if (currentPkg != pkg) return null
+        if (currentPkg != pkg) {
+            return null
+        }
 
         val host = currentDomain ?: return null
         if (isFirefox && now - currentDomainAt > FIREFOX_LAST_DOMAIN_TTL_MS) {
@@ -79,6 +87,27 @@ internal class BrowserWebsiteState {
         currentDomainAt = now
     }
 
+    fun confirmCurrentDomain(pkg: String, host: String, now: Long) {
+        updateCurrentDomain(pkg, host, now)
+        confirmedPkg = pkg
+        confirmedDomain = host
+    }
+
+    fun currentConfirmedDomain(pkg: String): String? {
+        if (confirmedPkg != pkg) {
+            return null
+        }
+        return confirmedDomain
+    }
+
+    fun hasPendingUnconfirmedDomain(pkg: String): Boolean {
+        if (currentPkg != pkg) {
+            return false
+        }
+        val candidate = candidateDomain ?: return false
+        return confirmedPkg != pkg || confirmedDomain != candidate
+    }
+
     fun addressEditingRecently(pkg: String, now: Long = System.currentTimeMillis()): Boolean {
         return (addressEditGraceUntilByPkg[pkg] ?: 0L) > now
     }
@@ -89,7 +118,9 @@ internal class BrowserWebsiteState {
 
     fun notePendingDomain(pkg: String, host: String?, now: Long = System.currentTimeMillis()) {
         val normalized = host?.let { DomainBlockStore.normalize(it) }
-        if (normalized.isNullOrBlank()) return
+        if (normalized.isNullOrBlank()) {
+            return
+        }
 
         pendingDomainByPkg[pkg] = normalized
         pendingDomainAtByPkg[pkg] = now
@@ -119,7 +150,9 @@ internal class BrowserWebsiteState {
     }
 
     fun noteCandidate(host: String, now: Long): Boolean {
-        if (candidateDomain == host) return false
+        if (candidateDomain == host) {
+            return false
+        }
 
         candidateDomain = host
         candidateSince = now
@@ -134,6 +167,8 @@ internal class BrowserWebsiteState {
         currentPkg = pkg
         currentDomain = null
         currentDomainAt = 0L
+        confirmedPkg = null
+        confirmedDomain = null
         resetCandidate()
         clearPendingDomain(pkg)
         noteAddressEditing(pkg)

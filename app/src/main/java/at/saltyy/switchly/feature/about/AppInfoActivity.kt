@@ -26,6 +26,7 @@ import android.widget.Toast
 import androidx.core.net.toUri
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
+import at.saltyy.switchly.util.AndroidSystemPackages
 import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.util.PlayStoreUpdatePrompt
 import java.text.DateFormat
@@ -162,7 +163,8 @@ class AppInfoActivity : TilesInfoActivity() {
                 onClick = { openUrl(repo) },
                 copyValue = repo,
                 showCopyButton = true,
-                iconRes = R.drawable.layers_24,
+                iconRes = R.drawable.gitlab_24,
+                tintIcon = false,
                 copiedToast = getString(R.string.copied)
             ),
             Tile(
@@ -172,7 +174,8 @@ class AppInfoActivity : TilesInfoActivity() {
                 onClick = { openUrl(discord) },
                 copyValue = discord,
                 showCopyButton = true,
-                iconRes = R.drawable.help_24,
+                iconRes = R.drawable.discord_24,
+                tintIcon = false,
                 copiedToast = getString(R.string.about_discord_copied)
             ),
         )
@@ -209,16 +212,16 @@ class AppInfoActivity : TilesInfoActivity() {
         }
 
         val known = mapOf(
-            "com.android.vending" to getString(R.string.about_install_source_google_play),
+            AndroidSystemPackages.PLAY_STORE to getString(R.string.about_install_source_google_play),
             "com.google.android.feedback" to getString(R.string.about_install_source_google_play),
             "com.amazon.venezia" to getString(R.string.about_install_source_amazon),
             "org.fdroid.fdroid" to "F-Droid",
             "com.sec.android.app.samsungapps" to getString(R.string.about_install_source_galaxy_store),
             "com.huawei.appmarket" to "Huawei AppGallery",
             "com.xiaomi.mipicks" to "Xiaomi GetApps",
-            "com.android.packageinstaller" to getString(R.string.about_install_source_package_installer),
-            "com.google.android.packageinstaller" to getString(R.string.about_install_source_package_installer),
-            "com.miui.packageinstaller" to getString(R.string.about_install_source_package_installer)
+            AndroidSystemPackages.ANDROID_PACKAGE_INSTALLER to getString(R.string.about_install_source_package_installer),
+            AndroidSystemPackages.GOOGLE_PACKAGE_INSTALLER to getString(R.string.about_install_source_package_installer),
+            AndroidSystemPackages.MIUI_PACKAGE_INSTALLER to getString(R.string.about_install_source_package_installer)
         )
         known[installerPackage]?.let { return it }
 

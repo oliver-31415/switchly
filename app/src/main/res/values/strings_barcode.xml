@@ -28,17 +28,14 @@
     <!-- ====================================================== -->
     <!-- Barcode actions and limits -->
     <!-- ====================================================== -->
-    <string name="manage_barcodes_action_summary_fmt">%1$s - Action: %2$s</string>
-    <string name="manage_barcodes_limit_daily_summary">Max %1$d/day</string>
-    <string name="manage_barcodes_limit_cooldown_summary">Cooldown %1$d min</string>
     <string name="manage_barcodes_limit_daily_toast">Daily limit reached (%1$d).</string>
     <string name="manage_barcodes_limit_cooldown_toast">Try again in %1$d min.</string>
-    <string name="manage_barcodes_daily_limit_label">Daily uses</string>
+    <string name="manage_barcodes_daily_limit_label">Daily unlocks</string>
     <string name="manage_barcodes_cooldown_label">Cooldown (min)</string>
     <string name="manage_barcodes_action_section_title">Action</string>
     <string name="manage_barcodes_limits_section_title">Limits</string>
-    <string name="manage_barcodes_daily_limit_helper">Leave empty for unlimited use.</string>
-    <string name="manage_barcodes_cooldown_helper">Leave empty for no cooldown.</string>
+    <string name="manage_barcodes_daily_limit_helper">Only protection-reducing actions count. Leave empty for unlimited unlocks.</string>
+    <string name="manage_barcodes_cooldown_helper">Applies after an unlock or temporary pause. Leave empty for no cooldown.</string>
 
     <!-- ====================================================== -->
     <!-- Barcode delete and empty states -->

@@ -49,7 +49,9 @@ object ProfileUsageStore {
     }
 
     fun addUsageMsToday(ctx: Context, profile: String, pkg: String, deltaMs: Long) {
-        if (profile.isBlank() || pkg.isBlank() || deltaMs <= 0L) return
+        if (profile.isBlank() || pkg.isBlank() || deltaMs <= 0L) {
+            return
+        }
         val key = dayKey(todayYmdInt(), profile, pkg)
         val now = System.currentTimeMillis()
         var shouldFlush = false
@@ -63,7 +65,9 @@ object ProfileUsageStore {
     }
 
     fun getUsageMsToday(ctx: Context, profile: String, pkg: String): Long {
-        if (profile.isBlank() || pkg.isBlank()) return 0L
+        if (profile.isBlank() || pkg.isBlank()) {
+            return 0L
+        }
         val key = dayKey(todayYmdInt(), profile, pkg)
         val persisted = getLongCompat(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE), key, 0L)
         val buffered = synchronized(lock) { pending[key] ?: 0L }
@@ -71,7 +75,9 @@ object ProfileUsageStore {
     }
 
     fun setUsageMsToday(ctx: Context, profile: String, pkg: String, ms: Long) {
-        if (profile.isBlank() || pkg.isBlank()) return
+        if (profile.isBlank() || pkg.isBlank()) {
+            return
+        }
         flush(ctx)
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit {
             putLong(dayKey(todayYmdInt(), profile, pkg), ms.coerceAtLeast(0L))

@@ -5,6 +5,7 @@
     <!-- Schedule screen -->
     <!-- ====================================================== -->
     <string name="schedules_title">Zeitpläne</string>
+    <string name="schedules_profile_subtitle">Jeder Zeitplan wählt ein Profil</string>
     <string name="schedules_next_title">Nächster Zeitplan</string>
     <string name="schedules_next_at">Nächster Zeitplan: %1$s</string>
     <string name="schedules_next_none">Kein kommender Zeitplan</string>
@@ -16,9 +17,8 @@
     <!-- ====================================================== -->
     <!-- Rules hub shortcut -->
     <!-- ====================================================== -->
-    <string name="tools_schedules_title">Zeitpläne</string>
-    <string name="tools_schedules_summary">Automatische Aktionen für Zeit, WLAN, Bluetooth und Standort erstellen und verwalten</string>
-    <string name="toast_manage_schedules_requires_enabled">Zeitplan-Steuerung zuerst aktivieren.</string>
+    <string name="rules_schedules_title">Zeitpläne</string>
+    <string name="rules_schedules_summary">Automatische Aktionen für Zeit, WLAN, Bluetooth und Standort erstellen und verwalten</string>
 
     <!-- ====================================================== -->
     <!-- Schedule editor -->
@@ -80,9 +80,6 @@
     <string name="schedules_health_action_title">Empfohlene Aktion</string>
     <string name="schedules_health_action_permissions">Berechtigungen beheben</string>
     <string name="schedules_health_action_toggle_options">Umschaltoptionen öffnen</string>
-    <string name="schedules_health_battery_title">Akkueinstellungen</string>
-    <string name="schedules_health_battery_max_available_body">Dein Gerät bietet möglicherweise keine höhere Akku-Berechtigungsstufe wie „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, kannst du diesen Schritt als erledigt markieren.</string>
-    <string name="schedules_health_action_mark_battery_done">Höchste verfügbare Stufe bereits aktiviert</string>
     <string name="schedules_health_last_exec_never">nie</string>
     <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
     <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>
@@ -107,12 +104,10 @@
     <string name="schedules_disabled_footer_mode">Aktueller Steuerungsmodus: %1$s</string>
     <string name="schedules_disabled_footer_mixed_off">Aktueller Steuerungsmodus: %1$s - Zeitplan-Kanal: aus</string>
     <string name="schedules_disabled_action_open_controls">Schutzsteuerung öffnen</string>
-    <string name="schedules_disabled_read_only_toast">Zeitpläne sind schreibgeschützt, bis der aktuelle Steuerungsmodus Zeitplan-Automationen erlaubt.</string>
     <string name="schedules_locked_title">Zeitpläne sind gesperrt, solange Switchly aktiv ist</string>
     <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst.</string>
     <string name="schedules_locked_footer">Aktueller Steuerungsmodus: %1$s - Zeitplan-Bearbeitung: gesperrt</string>
     <string name="schedules_locked_action_open_controls">Schutzsteuerung öffnen</string>
-    <string name="schedules_locked_read_only_toast">Deaktiviere Switchly, um Zeitpläne zu ändern.</string>
     <string name="schedules_subtitle_fmt">%1$s - %2$s</string>
     <string name="schedules_label_value_fmt">%1$s: %2$s</string>
     <string name="schedules_label_value_multiline_fmt">%1$s\n%2$s</string>
@@ -200,7 +195,7 @@
     <string name="schedules_location_map_picker_selected">Ausgewählt: %1$s</string>
     <string name="schedules_location_picker_premium_title">Standortauswahl ist Premium</string>
     <string name="schedules_location_picker_premium_message">Schalte standortbasierte Zeitpläne und die visuelle Standortauswahl mit Switchly Premium frei.</string>
-    <string name="schedules_location_map_picker_load_failed">Die Karte braucht länger als erwartet zum Laden. Bitte prüfe deine Internetverbindung, Private DNS, VPN- oder Adblocker-Einstellungen. Du kannst weiterhin Suche oder aktuellen Standort verwenden.</string>
+    <string name="schedules_location_map_picker_load_failed">Karte nicht verfügbar. Prüfe Verbindung, VPN, Private DNS oder Adblocker. Suche und manuelle Auswahl funktionieren weiterhin.</string>
 
     <!-- ====================================================== -->
     <!-- Schedule status and errors -->

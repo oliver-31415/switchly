@@ -33,8 +33,12 @@ import at.saltyy.switchly.data.prefs.ExactAlarmPermissionSync
 class ExactAlarmPermissionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-        if (intent?.action != AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return
+        }
+        if (intent?.action != AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED) {
+            return
+        }
 
         ExactAlarmPermissionSync.syncAndReschedule(
             context = context,

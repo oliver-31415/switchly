@@ -99,7 +99,9 @@ class WeeklyBarChartView @JvmOverloads constructor(
     }
 
     fun setShowWeekdayLabels(show: Boolean) {
-        if (showWeekdayLabels == show) return
+        if (showWeekdayLabels == show) {
+            return
+        }
         showWeekdayLabels = show
         invalidate()
     }
@@ -131,7 +133,9 @@ class WeeklyBarChartView @JvmOverloads constructor(
         valuePaintAbove.color = dayPaint.color
         highlightPaint.color = dayPaint.color
 
-        if (values.isEmpty()) return
+        if (values.isEmpty()) {
+            return
+        }
 
         val maxV = max(1L, values.maxOrNull() ?: 1L).toFloat()
         val bars = values.size.coerceAtLeast(1)
@@ -190,7 +194,9 @@ class WeeklyBarChartView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
-        if (values.isEmpty() || onBarSelectedListener == null) return super.onTouchEvent(event)
+        if (values.isEmpty() || onBarSelectedListener == null) {
+            return super.onTouchEvent(event)
+        }
 
         val w = width.toFloat().takeIf { it > 0f } ?: return true
         val bars = values.size.coerceAtLeast(1)
@@ -270,13 +276,17 @@ class WeeklyBarChartView @JvmOverloads constructor(
     }
 
     private fun formatCompactDuration(ms: Long): String {
-        if (ms <= 0L) return "0m"
+        if (ms <= 0L) {
+            return "0m"
+        }
 
         // Keep labels compact and unambiguous.
         // - < 60 min: "37m"
         // - >= 60 min: "3:38" (hours:minutes, rounded to nearest minute)
         val totalMinutes = ((ms + 30_000L)/60_000L).coerceAtLeast(0L)
-        if (totalMinutes <= 0L) return "<1m"
+        if (totalMinutes <= 0L) {
+            return "<1m"
+        }
 
         return if (totalMinutes >= 60L) {
             val hours = totalMinutes/60L

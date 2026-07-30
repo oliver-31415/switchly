@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 
+// Persists and retrieves usage limit state.
 object UsageLimitStore {
     private const val PREFS = "switchly_prefs"
 
@@ -79,7 +80,9 @@ object UsageLimitStore {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = key(profile, pkg)
 
-        if (!prefs.contains(k)) return 0
+        if (!prefs.contains(k)) {
+            return 0
+        }
         return readIntOrLongAndMigrate(prefs, k).coerceAtLeast(0)
     }
 
@@ -118,10 +121,7 @@ object UsageLimitStore {
 
     /**
      * Best-effort limit for a package across ALL profiles.
-     *
-     * This fixes cases where TODAY shows usage (bar) but no "Limit/%" because
-     * the current profile has no limit, but another profile does (e.g. YouTube).
-     *
+     * This fixes cases where TODAY shows usage (bar) but no "Limit/%" because the current profile has no limit, but another profile does (e.g. YouTube).
      * Strategy: take the MAX minutes found for that package across profiles.
      */
     fun getBestLimitMinutesAcrossProfiles(ctx: Context, pkg: String): Int {
@@ -158,7 +158,9 @@ object UsageLimitStore {
      * If key doesn't exist or type is something else -> returns 0.
      */
     private fun readIntOrLongAndMigrate(prefs: SharedPreferences, key: String): Int {
-        if (!prefs.contains(key)) return 0
+        if (!prefs.contains(key)) {
+            return 0
+        }
 
         return try {
             prefs.getInt(key, 0)

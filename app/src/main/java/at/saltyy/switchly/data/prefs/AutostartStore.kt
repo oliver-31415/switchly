@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 
+// Persists and retrieves autostart state.
 object AutostartStore {
     private const val PREFS = "switchly_autostart"
     private const val KEY_AUTOSTART = "autostart_enabled"

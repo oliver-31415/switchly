@@ -54,14 +54,20 @@ object InAppRuleStore {
 
     fun getMode(context: Context, profile: String): String {
         val value = prefs(context).getString(modeKey(profile), MODE_BLOCK_SELECTED)
-        return if (value == MODE_ALLOW_SELECTED) MODE_ALLOW_SELECTED else MODE_BLOCK_SELECTED
+        return when (value) {
+            MODE_ALLOW_SELECTED -> MODE_ALLOW_SELECTED
+            else -> MODE_BLOCK_SELECTED
+        }
     }
 
     fun isAllowMode(context: Context, profile: String): Boolean =
         getMode(context, profile) == MODE_ALLOW_SELECTED
 
     fun setMode(context: Context, profile: String, mode: String) {
-        val safe = if (mode == MODE_ALLOW_SELECTED) MODE_ALLOW_SELECTED else MODE_BLOCK_SELECTED
+        val safe = when (mode) {
+            MODE_ALLOW_SELECTED -> MODE_ALLOW_SELECTED
+            else -> MODE_BLOCK_SELECTED
+        }
         prefs(context).edit { putString(modeKey(profile), safe) }
     }
 
@@ -101,7 +107,9 @@ object InAppRuleStore {
     private fun migrateLegacyRulesIntoProfileIfNeeded(context: Context, profile: String) {
         val sp = prefs(context)
         val hasLegacyRules = BlockingToggleKeys.IN_APP_RULE_KEYS.any { sp.contains(it) }
-        if (sp.getBoolean(KEY_LEGACY_RULE_MIGRATION_DONE, false) && !hasLegacyRules) return
+        if (sp.getBoolean(KEY_LEGACY_RULE_MIGRATION_DONE, false) && !hasLegacyRules) {
+            return
+        }
 
         sp.edit {
             BlockingToggleKeys.IN_APP_RULE_KEYS.forEach { baseKey ->
@@ -117,18 +125,25 @@ object InAppRuleStore {
     }
 
     private fun readScopedBool(context: Context, profile: String, baseKey: String, def: Boolean = false): Boolean {
-        if (baseKey == BlockingToggleKeys.KEY_BLOCK_YT_HOME) return false
+        if (baseKey == BlockingToggleKeys.KEY_BLOCK_YT_HOME) {
+            return false
+        }
         migrateLegacyRulesIntoProfileIfNeeded(context, profile)
         val sp = prefs(context)
         val scoped = key(profile, baseKey)
-        return if (sp.contains(scoped)) sp.getBoolean(scoped, def) else def
+        return when {
+            sp.contains(scoped) -> sp.getBoolean(scoped, def)
+            else -> def
+        }
     }
 
     fun isRuleSelected(context: Context, profile: String, baseKey: String): Boolean =
         readScopedBool(context, profile, baseKey, def = false)
 
     fun setRuleSelected(context: Context, profile: String, baseKey: String, selected: Boolean) {
-        if (baseKey == BlockingToggleKeys.KEY_BLOCK_YT_HOME) return
+        if (baseKey == BlockingToggleKeys.KEY_BLOCK_YT_HOME) {
+            return
+        }
         migrateLegacyRulesIntoProfileIfNeeded(context, profile)
         prefs(context).edit { putBoolean(key(profile, baseKey), selected) }
     }
@@ -139,7 +154,9 @@ object InAppRuleStore {
         PACKAGE_TO_RULE_KEYS.entries.firstOrNull { (_, keys) -> baseKey in keys }?.key
 
     fun hasSelectedRulesForPackage(context: Context, profile: String, packageName: String): Boolean {
-        if (profile.isBlank() || packageName.isBlank()) return false
+        if (profile.isBlank() || packageName.isBlank()) {
+            return false
+        }
         return PACKAGE_TO_RULE_KEYS[packageName]
             ?.any { readScopedBool(context, profile, it, def = false) } == true
     }
@@ -151,17 +168,27 @@ object InAppRuleStore {
     }
 
     fun shouldBlockSurface(context: Context, profile: String, baseKey: String): Boolean {
-        if (profile.isBlank() || baseKey.isBlank()) return false
-        if (baseKey == BlockingToggleKeys.KEY_BLOCK_YT_HOME) return false
+        if (profile.isBlank() || baseKey.isBlank()) {
+            return false
+        }
+        if (baseKey == BlockingToggleKeys.KEY_BLOCK_YT_HOME) {
+            return false
+        }
         val pkg = packageForRuleKey(baseKey) ?: return false
         val selected = readScopedBool(context, profile, baseKey, def = false)
-        if (!isAllowMode(context, profile)) return selected
-        if (!hasSelectedRulesForPackage(context, profile, pkg)) return false
+        if (!isAllowMode(context, profile)) {
+            return selected
+        }
+        if (!hasSelectedRulesForPackage(context, profile, pkg)) {
+            return false
+        }
         return !selected
     }
 
     fun getPackagesWithEnabledRules(context: Context, profile: String): Set<String> {
-        if (profile.isBlank()) return emptySet()
+        if (profile.isBlank()) {
+            return emptySet()
+        }
         return supportedPackages()
             .filterTo(linkedSetOf()) { hasEnabledRulesForPackage(context, profile, it) }
     }

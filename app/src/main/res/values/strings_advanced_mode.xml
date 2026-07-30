@@ -7,10 +7,10 @@
     <string name="advanced_mode_title">ADB tools</string>
     <string name="advanced_mode_admin_label">Switchly</string>
     <string name="advanced_mode_admin_description">Gives Switchly the control needed for optional advanced device-admin and managed-device features.</string>
-    <string name="advanced_mode_disable_warning">Disabling the Switchly device admin removes its advanced managed-device hooks. On normal personal devices this is only an advanced helper and not true uninstall protection.</string>
-    <string name="advanced_mode_summary_body">Advanced ADB setup for Device Admin, profile owner, and device owner experiments.</string>
-    <string name="advanced_mode_recommendation_body">For most users, normal uninstall friction is the right option. Use ADB tools only if you know the setup requirements.</string>
-    <string name="advanced_mode_constraints_body">Device owner usually needs a freshly provisioned device. Profile owner has separate setup limits. Device Admin is limited.</string>
+    <string name="advanced_mode_disable_warning">Disabling Switchly Device Admin turns off uninstall protection. Direct uninstall attempts can work again afterwards.</string>
+    <string name="advanced_mode_summary_body">Advanced ADB setup for Device Admin, Profile Owner, and Device Owner protection. Use this only on your own device and only after reading the setup notes.</string>
+    <string name="advanced_mode_recommendation_body">For most users, uninstall protection with Device Admin is the best balance. Device Owner can enforce a stronger system policy, but it requires a technical provisioning setup and can be difficult to undo.</string>
+    <string name="advanced_mode_constraints_body">Device Owner usually needs a freshly provisioned device with no existing accounts. Profile Owner has separate setup limits. Device Admin is easier to enable, but it is not the same as full managed-device protection.</string>
 
     <!-- ====================================================== -->
     <!-- Advanced mode tiles -->
@@ -30,11 +30,11 @@
     <!-- Advanced mode status and commands -->
     <!-- ====================================================== -->
     <string name="advanced_mode_status_standard">Standard app mode. No managed-device ownership is active.</string>
-    <string name="advanced_mode_status_device_admin">Device-admin activation is active.</string>
+    <string name="advanced_mode_status_device_admin">Uninstall protection is active.</string>
     <string name="advanced_mode_status_profile_owner">Profile owner is active.</string>
     <string name="advanced_mode_status_device_owner">Device owner is active.</string>
     <string name="advanced_mode_status_updated_toast">Managed-device status updated</string>
-    <string name="advanced_mode_add_admin_explanation">This only enables Switchly’s optional advanced admin receiver.\nIt does not guarantee uninstall blocking on a normal personal device.</string>
+    <string name="advanced_mode_add_admin_explanation">Enables Switchly Device Admin for uninstall protection. Direct uninstall attempts will fail while it is active, but Android still allows you to disable Device Admin in system settings.</string>
     <string name="advanced_mode_open_admin_failed">Could not open Android device admin screen</string>
     <string name="advanced_mode_command_copied">Command copied</string>
     <string name="advanced_mode_component_copied">Component copied</string>
@@ -44,7 +44,7 @@
     <!-- ====================================================== -->
     <!-- Developer mode -->
     <!-- ====================================================== -->
-    <string name="developer_mode_title">Developer</string>
+    <string name="developer_mode_title">Developer tools</string>
     <string name="developer_mode_info_title">Developer tools</string>
     <string name="developer_mode_info_body">Developer tools are hidden from normal settings. Turn them off here, or unlock them again later by long pressing the version row.</string>
     <string name="developer_mode_unlocked_toast">Developer mode unlocked</string>
@@ -53,8 +53,7 @@
     <string name="developer_mode_tile_adb_body">ADB commands for Device Admin, profile owner, and device owner testing.</string>
     <string name="developer_mode_tile_logging">Logging</string>
     <string name="developer_mode_tile_logging_body">View the latest 250 internal app log lines live and copy them for debugging.</string>
-    <string name="developer_mode_tile_disable">Turn off</string>
-    <string name="developer_mode_disable_body">Hide developer tools again. Unlock later by long pressing the version row.</string>
+    <string name="developer_mode_tile_disable">Turn off Developer mode</string>
     <string name="developer_mode_disabled_toast">Developer mode turned off</string>
 
     <!-- ====================================================== -->

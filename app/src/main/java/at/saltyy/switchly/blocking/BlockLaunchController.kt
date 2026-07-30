@@ -48,7 +48,9 @@ internal class BlockLaunchController(
         initialDelayMs: Long = 0L,
         stepMs: Long = 120L
     ) {
-        if (backCount <= 0) return
+        if (backCount <= 0) {
+            return
+        }
         for (i in 0 until backCount) {
             val delay = initialDelayMs + i.toLong() * stepMs
             if (delay <= 0L) {
@@ -80,11 +82,15 @@ internal class BlockLaunchController(
     }
 
     fun postKillBackgroundPackage(pkg: String, delayMs: Long = 0L) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            return
+        }
+
         val killAction = {
             if (SwitchModeStore.isEnabled(service)) {
                 runCatching {
-                val activityManager = service.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                activityManager.killBackgroundProcesses(pkg)
+                    val activityManager = service.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                    activityManager.killBackgroundProcesses(pkg)
                 }
             }
         }

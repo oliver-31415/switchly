@@ -25,9 +25,9 @@ import androidx.preference.PreferenceManager
 import java.time.LocalDate
 
 /**
- * Scope: per tag UID (fallback bucket "global" if UID unavailable).
- * Written NFC actions can still use the global defaults when the limiter feature is enabled. 
- * UID-only paired tags use only explicitly configured per-tag daily/cooldown overrides; empty fields mean no per-tag limit.
+ * Stores per-tag unlock limits by NFC UID (falling back to a global bucket when no UID exists).
+ * Explicit per-tag limits apply to protection-reducing actions such as Disable, disabling Toggle,
+ * Temporary disable and Re-entry. The legacy global limiter remains limited to temporary actions.
  */
 object NfcTempDisableLimiterStore {
 
@@ -58,7 +58,9 @@ object NfcTempDisableLimiterStore {
 
     fun isEnabled(ctx: Context): Boolean {
         val p = prefs(ctx)
-        if (p.getBoolean(BlockingToggleKeys.KEY_LIMIT_TEMP_DISABLE_TAGS, false)) return true
+        if (p.getBoolean(BlockingToggleKeys.KEY_LIMIT_TEMP_DISABLE_TAGS, false)) {
+            return true
+        }
         return p.all.keys.any { key ->
             key.startsWith(KEY_CFG_DAILY_PREFIX) || key.startsWith(KEY_CFG_COOLDOWN_PREFIX)
         }
@@ -91,7 +93,9 @@ object NfcTempDisableLimiterStore {
         val bucket = bucketForUid(uidBucket)
         val p = prefs(ctx)
         val key = "$KEY_CFG_DAILY_PREFIX$bucket"
-        if (!p.contains(key)) return null
+        if (!p.contains(key)) {
+            return null
+        }
         return p.getInt(key, DEFAULT_DAILY_USES_PER_TAG).coerceAtLeast(1)
     }
 
@@ -99,7 +103,9 @@ object NfcTempDisableLimiterStore {
         val bucket = bucketForUid(uidBucket)
         val p = prefs(ctx)
         val key = "$KEY_CFG_COOLDOWN_PREFIX$bucket"
-        if (!p.contains(key)) return null
+        if (!p.contains(key)) {
+            return null
+        }
         return p.getInt(key, DEFAULT_COOLDOWN_MINUTES).coerceAtLeast(1)
     }
 
@@ -187,7 +193,7 @@ object NfcTempDisableLimiterStore {
         val countKey = "$KEY_COUNT_PREFIX${bucket}_$day"
 
         val current = p.getInt(countKey, 0)
-        p.edit {
+        p.edit(commit = true) {
             putLong("$KEY_LAST_PREFIX$bucket", now)
             putInt(countKey, current + 1)
         }

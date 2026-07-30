@@ -40,7 +40,9 @@ object SessionLimitStore {
     fun getLimitMinutes(context: Context, profile: String, pkg: String): Int {
         val sharedPreferences = prefs(context)
         val key = key(profile, pkg)
-        if (!sharedPreferences.contains(key)) return 0
+        if (!sharedPreferences.contains(key)) {
+            return 0
+        }
         return readIntOrLongAndMigrate(sharedPreferences, key).coerceAtLeast(0)
     }
 
@@ -98,7 +100,9 @@ object SessionLimitStore {
         sharedPreferences: SharedPreferences,
         key: String,
     ): Int {
-        if (!sharedPreferences.contains(key)) return 0
+        if (!sharedPreferences.contains(key)) {
+            return 0
+        }
 
         return try {
             sharedPreferences.getInt(key, 0)

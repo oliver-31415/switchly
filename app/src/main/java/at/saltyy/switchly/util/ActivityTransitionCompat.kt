@@ -16,17 +16,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 package at.saltyy.switchly.util
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Build
 
 object ActivityTransitionCompat {
 
+    private const val OVERRIDE_TRANSITION_OPEN = 0
     private const val OVERRIDE_TRANSITION_CLOSE = 1
 
+    fun startWithoutAnimation(activity: Activity) {
+        suppressTransition(activity, OVERRIDE_TRANSITION_OPEN)
+    }
+
     fun finishWithoutAnimation(activity: Activity) {
+        suppressTransition(activity, OVERRIDE_TRANSITION_CLOSE)
+    }
+
+    fun switchWithoutAnimation(
+        activity: Activity,
+        intent: Intent,
+        finishCurrent: Boolean = false,
+    ) {
+        activity.startActivity(intent)
+        startWithoutAnimation(activity)
+        if (finishCurrent) {
+            activity.finish()
+            finishWithoutAnimation(activity)
+        }
+    }
+
+    private fun suppressTransition(activity: Activity, transitionType: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             runCatching {
                 Activity::class.java
@@ -34,9 +57,9 @@ object ActivityTransitionCompat {
                         "overrideActivityTransition",
                         Int::class.javaPrimitiveType,
                         Int::class.javaPrimitiveType,
-                        Int::class.javaPrimitiveType
+                        Int::class.javaPrimitiveType,
                     )
-                    .invoke(activity, OVERRIDE_TRANSITION_CLOSE, 0, 0)
+                    .invoke(activity, transitionType, 0, 0)
             }
         } else {
             runCatching {
@@ -44,7 +67,7 @@ object ActivityTransitionCompat {
                     .getMethod(
                         "overridePendingTransition",
                         Int::class.javaPrimitiveType,
-                        Int::class.javaPrimitiveType
+                        Int::class.javaPrimitiveType,
                     )
                     .invoke(activity, 0, 0)
             }

@@ -28,10 +28,13 @@ import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 object EditingLockGuard {
-    fun isLocked(ctx: Context): Boolean =
-        SwitchModeStore.isEnabled(ctx) ||
+    fun isLocked(ctx: Context): Boolean {
+        // Emergency Unlock temporarily pauses blocking, but it must not allow permanent changes to protection rules or settings.
+        // Editing becomes available only after Switchly is fully disabled.
+        return SwitchModeStore.isEnabled(ctx) ||
             SwitchModeStore.isBaseEnabled(ctx) ||
             SwitchModeStore.hasActiveTemporaryOverride(ctx)
+    }
 
     fun showLockedDialog(ctx: Context, @StringRes messageRes: Int) {
         val hint = runCatching { ctx.getString(messageRes) }.getOrDefault("").trim()
@@ -49,7 +52,9 @@ object EditingLockGuard {
     }
 
     fun blockWithDialog(activity: Activity, @StringRes messageRes: Int): Boolean {
-        if (!isLocked(activity)) return false
+        if (!isLocked(activity)) {
+            return false
+        }
 
         val hint = runCatching { activity.getString(messageRes) }.getOrDefault("").trim()
         val body = if (hint.isBlank()) {

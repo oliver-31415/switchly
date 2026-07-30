@@ -207,7 +207,7 @@
                     android:insetRight="0dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    
+
                     app:icon="@drawable/alarm_24"
                 app:iconGravity="textStart"
                     android:text="@string/schedules_start_time"
@@ -224,7 +224,7 @@
                     android:insetRight="0dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    
+
                     app:icon="@drawable/alarm_24"
                 app:iconGravity="textStart"
                     android:text="@string/schedules_end_time"
@@ -311,7 +311,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                
+
                     app:icon="@drawable/bluetooth_24"
                 app:iconGravity="textStart"
                     android:text="@string/schedules_bt_use_connected" />
@@ -326,7 +326,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                
+
                     app:icon="@drawable/bluetooth_24"
                 app:iconGravity="textStart"
                     android:text="@string/schedules_bt_pick_paired" />
@@ -645,7 +645,7 @@
                     android:insetRight="0dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    
+
                     app:icon="@drawable/schedule_24"
                 app:iconGravity="textStart"
                     android:text="@string/schedules_start_date"
@@ -662,7 +662,7 @@
                     android:insetRight="0dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    
+
                     app:icon="@drawable/schedule_24"
                 app:iconGravity="textStart"
                     android:text="@string/schedules_end_date"

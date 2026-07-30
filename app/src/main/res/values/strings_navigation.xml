@@ -6,8 +6,24 @@
     <!-- ====================================================== -->
     <string name="app_icon">App icon</string>
     <string name="nav_home">Home</string>
-    <string name="nav_blocking">Rules</string>
-    <string name="nav_tools">Activity</string>
+    <string name="nav_rules">Rules</string>
+    <string name="nav_activity">Activity</string>
     <string name="nav_settings">Settings</string>
+
+    <!-- ====================================================== -->
+    <!-- First-run bottom navigation tour -->
+    <!-- ====================================================== -->
+    <string name="nav_tour_home_title">Home</string>
+    <string name="nav_tour_home_desc">Your protection status, active profile, quick controls and selected Home cards live here.</string>
+    <string name="nav_tour_rules_title">Rules</string>
+    <string name="nav_tour_rules_desc">Manage apps, websites, in-app rules and schedules for your profiles.</string>
+    <string name="nav_tour_activity_title">Activity</string>
+    <string name="nav_tour_activity_desc">Review usage, blocked attempts, history and blocked notifications.</string>
+    <string name="nav_tour_settings_title">Settings</string>
+    <string name="nav_tour_settings_desc">Customize keys, permissions, appearance, backups and advanced behavior.</string>
+    <string name="nav_tour_next">Next</string>
+    <string name="nav_tour_done">Got it</string>
+    <string name="nav_tour_skip">Skip tour</string>
+    <string name="nav_tour_step">%1$d of %2$d</string>
 
 </resources>

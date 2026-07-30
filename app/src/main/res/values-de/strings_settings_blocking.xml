@@ -60,7 +60,7 @@
     <string name="mode_blocked_nfc_action">NFC-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_qr_action">QR-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_barcode_action">Barcode-Aktionen sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
-    <string name="mode_blocked_tile_action">Die Schnelleinstellungen-Kachel ist deaktiviert, weil manuelle Steuerung im aktuellen Modus deaktiviert ist.</string>
+    <string name="mode_blocked_tile_action">Die Schnelleinstellungen-Steuerung ist im aktuellen Modus nicht verfügbar.</string>
     <string name="mode_blocked_button_action">Manuelle Buttons sind durch den aktuellen Steuerungsmodus deaktiviert.</string>
     <string name="mode_blocked_button_disable_enable_only">Manuelle Buttons können Switchly hier nur einschalten. Zum Ausschalten nutze die erlaubte Steuerungsmethode.</string>
 
@@ -101,16 +101,13 @@
     <!-- ====================================================== -->
     <!-- Feature access -->
     <!-- ====================================================== -->
-    <string name="pref_lock_switchly_app_access_title">Zugriff auf Switchly-Einstellungen blockieren</string>
-    <string name="pref_lock_switchly_app_access_summary">Sperrt Switchly-Seiten, solange der Schutz aktiv ist.</string>
-    <string name="toggle_detail_lock_switchly_app_access">Wenn aktiv, sind Einstellungs- und Steuerseiten in Switchly gesperrt, solange der Schutz aktiv ist. Deaktiviere Switchly zuerst (über einen erlaubten Kanal), um Einstellungen wieder zu ändern.</string>
     <string name="pref_require_nfc_unlock_title">NFC zum Deaktivieren von Switchly erforderlich</string>
     <string name="pref_require_nfc_unlock_summary">Wenn aktiv, kann nur ein erlaubtes NFC-Aktionstag oder QR-Fallback Switchly deaktivieren.</string>
     <string name="toggle_locked_nfc_hint">Gesperrt, weil „NFC zum Deaktivieren von Switchly erforderlich“ aktiv ist.</string>
     <string name="toggle_locked_nfc_action">So entsperrst du</string>
     <string name="toggle_locked_nfc_howto">Scanne dein NFC-Aktionstag, um Switchly zu deaktivieren und geschützte Einstellungen zu entsperren. Wenn QR-Unlock aktiv ist, kannst du stattdessen deinen QR-Fallback nutzen.</string>
     <string name="pref_enable_paired_uids_title">Gepaarte NFC-Tags aktivieren</string>
-    <string name="pref_enable_paired_uids_summary">Erlaubt Nur-UID-/schreibgeschützte NFC-Tags und Limits pro Tag. Geschriebene Switchly-NFC-Aktionstags funktionieren weiterhin ohne Kopplung.</string>
+    <string name="pref_enable_paired_uids_summary">Erlaubt UID-basierte Aktionen, Overrides geschriebener Aktionen und Limits pro gekoppeltem NFC-Tag. Nicht gekoppelte beschriebene Switchly-Tags funktionieren weiterhin normal.</string>
     <string name="toggle_info_paired_uids_title">Gepaarte NFC-Tags</string>
     <string name="toggle_info_paired_uids_body_enabled">Nur-UID-/schreibgeschützte Tags sind aktiviert. Koppel Tags in „Gekoppelte Tags verwalten“, um sie ohne geschriebene Switchly-Aktion zu nutzen oder Limits pro Tag anzuwenden. Geschriebene Switchly-NFC-Aktionstags funktionieren weiterhin ohne Kopplung.</string>
     <string name="toggle_info_paired_uids_body_disabled">Kopplung ist derzeit deaktiviert.\nNormale geschriebene Switchly-NFC-Aktionstags funktionieren ohne Kopplung, wenn NFC-Steuerung erlaubt ist.\nAktiviere das nur für Nur-UID-/schreibgeschützte Tags oder Limits pro Tag.</string>
@@ -122,13 +119,13 @@
     <!-- ====================================================== -->
     <!-- Blocking protection -->
     <!-- ====================================================== -->
-    <string name="toggle_info_lock_and_temp_title">Einstellungs-Sperre &amp; temporäre Tags</string>
-    <string name="toggle_info_lock_and_temp_body">„Zugriff auf Switchly-Einstellungen blockieren“ verhindert das Öffnen von Switchly-Einstellungen und Steuerseiten, solange der Schutz aktiv ist.\nTemporäre Deaktivierungsaktionen geben dir ein kurzes Zeitfenster (z. B. 10 Minuten), bevor der vorherige Schutzstatus wiederhergestellt wird.</string>
     <string name="pref_block_notifications_summary">Hält blockierte Apps still.</string>
-    <string name="pref_uninstall_friction_title">Uninstall Protection</string>
-    <string name="pref_uninstall_friction_summary">Erschwert App-Info-, Deinstallationswege und Switchly-bezogene Systemeinstellungen, solange Switchly aktiv ist.</string>
     <string name="blocking_uninstall_friction_title">Deinstallations-Reibung aktiv</string>
     <string name="blocking_uninstall_friction_message">Switchly erschwert gerade den Zugriff auf deinstallationsbezogene Screens, solange der Schutz aktiv ist. Das ist nur Reibung, keine echte Deinstallationssperre. Deaktiviere Switchly zuerst über deine erlaubte Methode, wenn du fortfahren willst.</string>
+    <string name="switchly_settings_locked_title">Einstellungen öffnen?</string>
+    <string name="settings_restricted_open_message">Switchly ist aktiv. Die Einstellungen können weiterhin angesehen werden, aber schutzrelevante Optionen lassen sich erst ändern, wenn Switchly vollständig deaktiviert ist.</string>
+    <string name="settings_open_restricted">Einstellungen öffnen</string>
+    <string name="settings_restricted_action_unavailable">Nicht verfügbar, solange Switchly aktiv ist.</string>
     <string name="blocking_settings_bypass_title">Switchly-Einstellungen geschützt</string>
     <string name="blocking_settings_bypass_message">Diese Systemeinstellungsseite könnte Switchly deaktivieren oder abschwächen, solange der Schutz aktiv ist. Deaktiviere Switchly zuerst über deine erlaubte Methode, wenn du diese Einstellungen ändern willst.</string>
 
@@ -143,15 +140,17 @@
     <string name="pref_home_layout_mode_title">Home-Modus</string>
     <string name="pref_home_layout_mode_summary">Wähle, wie viele Details der Home Screen zeigt.</string>
     <string name="pref_home_layout_custom_title">Home anpassen</string>
-    <string name="pref_home_layout_custom_summary">Wähle die Bereiche und Aktionen, die im Custom Home-Modus angezeigt werden.</string>
-    <string name="pref_home_layout_custom_builder_intro">Tippe auf eine Karte, um diesen Home-Bereich hinzuzufügen oder zu entfernen. Ausgewählte Karten werden direkt hervorgehoben.</string>
-    <string name="pref_home_layout_custom_reorder_hint">Mit den Pfeilen oder per langem Drücken kannst du Home-Bereiche verschieben.</string>
-    <string name="pref_home_layout_custom_move_up">Nach oben verschieben</string>
-    <string name="pref_home_layout_custom_move_down">Nach unten verschieben</string>
+    <string name="pref_home_layout_custom_summary">Wähle die großen Home-Karten und die Details innerhalb jeder Karte.</string>
+    <string name="pref_home_layout_custom_builder_intro">Wähle die Home-Karten und ihre Inhalte.</string>
+    <string name="pref_home_layout_custom_reorder_hint">Ziehe am Griff zum Sortieren. Tippe auf eine Karte, um ihre Details ein- oder auszublenden.</string>
+    <string name="dashboard_quick_actions_reorder_hint">Ziehe Aktionen am Griff, um ihre Reihenfolge zu ändern.</string>
+    <string name="pref_home_layout_custom_drag_handle">Zum Verschieben ziehen</string>
+    <string name="pref_home_layout_custom_expand_details">Details aufklappen</string>
+    <string name="pref_home_layout_custom_collapse_details">Details zuklappen</string>
     <string name="pref_home_layout_custom_restore_default">Standard wiederherstellen</string>
     <plurals name="pref_home_layout_custom_selected_count">
-        <item quantity="one">%1$d von %2$d Bereich ausgewählt</item>
-        <item quantity="other">%1$d von %2$d Bereichen ausgewählt</item>
+        <item quantity="one">%1$d von %2$d Home-Karte ausgewählt</item>
+        <item quantity="other">%1$d von %2$d Home-Karten ausgewählt</item>
     </plurals>
 
     <!-- ====================================================== -->
@@ -204,8 +203,6 @@
     <string name="pref_show_emergency_unlock_title">Notfall-Shortcut</string>
     <string name="pref_show_emergency_unlock_summary">Diese Verknüpfung auf Home anzeigen.</string>
     <string name="toggle_detail_show_emergency_unlock">Steuert nur die Home-Verknüpfung. Aktive oder pausierte Notfall-Entsperrungen werden weiterhin angezeigt, damit sie verwaltet werden können.</string>
-    <string name="pref_show_next_schedule_title">Nächsten Zeitplan anzeigen</string>
-    <string name="pref_show_next_schedule_summary">Zeigt den nächsten Zeitplan auf dem Startbildschirm.</string>
 
     <!-- ====================================================== -->
     <!-- Tiles and shortcuts -->
@@ -236,45 +233,42 @@
     <string name="widget_pin_not_supported">Füge dieses Widget über die Widget-Auswahl deines Launchers hinzu.</string>
     <string name="edit_locked_while_switchly_on_title">Switchly ist aktiv</string>
     <string name="edit_locked_manage_paired_tags">Deaktiviere Switchly, um gekoppelte NFC-Tags zu verwalten.</string>
+    <string name="edit_locked_manage_qr_codes">Deaktiviere Switchly, um QR-Codes zu erstellen, anzuzeigen, zu kopieren oder zu teilen.</string>
     <string name="edit_locked_manage_barcodes">Deaktiviere Switchly, um Barcodes zu verwalten.</string>
     <string name="edit_locked_manage_websites">Deaktiviere Switchly, um Website-Regeln zu bearbeiten.</string>
-    <string name="edit_locked_manage_apps">Deaktiviere Switchly, um ausgewählte Apps zu bearbeiten.</string>
     <string name="edit_locked_manage_profiles">Deaktiviere Switchly, um Profile zu verwalten.</string>
     <string name="edit_locked_write_nfc_tags">Deaktiviere Switchly, um NFC-Tags zu schreiben oder zu koppeln.</string>
     <string name="edit_locked_manage_inapp">Deaktiviere Switchly, um In-App-Regeln zu bearbeiten.</string>
     <string name="edit_locked_manage_blocked_notifications">Deaktiviere Switchly, um blockierte Benachrichtigungen zu öffnen.</string>
-    <string name="toast_disable_switchly_to_edit_blocked_apps">Deaktiviere Switchly zuerst oder aktiviere „App-Auswahl erlauben“ in den Steuerungs-Einstellungen.</string>
+    <string name="toast_disable_switchly_to_edit_blocked_apps">Deaktiviere Switchly vollständig, um App-Regeln zu bearbeiten.</string>
     <string name="toast_disable_switchly_to_switch_profiles">Deaktiviere Switchly, bevor du Profile wechselst.</string>
     <string name="toast_disable_switchly_to_edit_websites">Deaktiviere Switchly, bevor du Website-Regeln bearbeitest.</string>
     <string name="toast_disable_switchly_to_edit_app_limits">Deaktiviere Switchly, bevor du App-Limits bearbeitest.</string>
-    <string name="toast_switchly_settings_locked_while_enabled">Deaktiviere Switchly, um Einstellungen zu bearbeiten.</string>
-    <string name="home_custom_active_timer">Aktiver Timer</string>
-    <string name="home_custom_main_button">Hauptbutton zum Aktivieren/Deaktivieren</string>
+    <string name="home_custom_protection_control">Schutzsteuerung</string>
+    <string name="home_custom_protection_control_summary">Hauptkarte mit Schutzstatus, Steuerung, Profil und Entsperraktionen.</string>
+    <string name="home_custom_active_timer">Aktive Zeit</string>
+    <string name="home_custom_main_button">Aktivieren / Deaktivieren</string>
     <string name="home_custom_active_profile">Aktives Profil</string>
     <string name="home_custom_control_mode">Kontrollmodus</string>
-    <string name="home_custom_pick_apps">Apps auswählen Button</string>
-    <string name="home_custom_temporary">Temporary Mode Shortcut</string>
-    <string name="home_custom_emergency">Emergency Shortcut</string>
+    <string name="home_custom_temporary">Temporäre Steuerung</string>
+    <string name="home_custom_emergency">Notfall-Entsperrung</string>
     <string name="home_custom_quick_actions">Schnellaktionen</string>
     <string name="home_custom_next_schedule">Nächster Zeitplan</string>
-    <string name="home_custom_blocked_now">Aktuell blockiert</string>
-    <string name="home_custom_blocked_apps">App-Liste</string>
-    <string name="home_custom_profile_dropdown">Profil-Dropdown</string>
+    <string name="home_custom_blocked_apps">Verwaltete Apps</string>
+    <string name="home_custom_profile_dropdown">Profilauswahl</string>
     <string name="home_mode_default_card_summary">Aufgeräumter Start-Home-Screen mit den wichtigsten Controls, App Picker und ausgewählter App-Liste, ohne erweiterte Statusbereiche.</string>
     <string name="home_mode_simple_card_summary">Minimaler Home Screen mit den wichtigsten Switchly-Steuerungen.</string>
     <string name="home_mode_advanced_card_summary">Voller Home Screen mit mehr Details, Shortcuts und Statusbereichen.</string>
-    <string name="home_mode_custom_card_summary">Wähle genau aus, welche Home-Bereiche sichtbar sein sollen.</string>
-    <string name="home_custom_active_timer_summary">Zeigt den Active-now Timer unter dem Switchly Status.</string>
-    <string name="home_custom_main_button_summary">Zeigt den Hauptbutton zum Aktivieren/Deaktivieren.</string>
+    <string name="home_mode_custom_card_summary">Wähle große Home-Karten, passe ihre Inhalte an und sortiere sowohl Karten als auch Inhalte per Drag &amp; Drop.</string>
+    <string name="home_custom_active_timer_summary">Zeigt, wie lange der aktuelle Schutzstatus bereits aktiv ist.</string>
+    <string name="home_custom_main_button_summary">Zeigt den Hauptbutton zum Aktivieren oder Deaktivieren von Switchly.</string>
     <string name="home_custom_active_profile_summary">Zeigt die aktuell aktive Profil-Zeile.</string>
     <string name="home_custom_control_mode_summary">Zeigt Schedule, NFC, QR, Barcode oder Mixed Mode.</string>
-    <string name="home_custom_pick_apps_summary">Zeigt einen direkten Shortcut zum App Picker.</string>
-    <string name="home_custom_temporary_summary">Zeigt den Temporary Enable/Disable Shortcut und aktiven Temporary Status.</string>
-    <string name="home_custom_emergency_summary">Zeigt Emergency Unlock Status und Shortcut.</string>
+    <string name="home_custom_temporary_summary">Zeigt Temporär aktivieren oder Temporär deaktivieren und den aktuellen Status.</string>
+    <string name="home_custom_emergency_summary">Zeigt Status und Shortcut der Notfall-Entsperrung.</string>
     <string name="home_custom_quick_actions_summary">Zeigt den Schnellaktionen-Bereich.</string>
     <string name="home_custom_next_schedule_summary">Zeigt den nächsten geplanten Schedule-Wechsel.</string>
-    <string name="home_custom_blocked_now_summary">Zeigt, was aktuell blockiert oder limit-erreicht ist.</string>
-    <string name="home_custom_blocked_apps_summary">Zeigt die Profil-App-Liste für Block- oder Allow-Modus.</string>
-    <string name="home_custom_profile_dropdown_summary">Zeigt das Profil-Dropdown auf Home.</string>
+    <string name="home_custom_blocked_apps_summary">Zeigt die ausgewählten Apps des aktiven Profils und den Verwalten-Button.</string>
+    <string name="home_custom_profile_dropdown_summary">Zeigt die Profilauswahl innerhalb der Schutzsteuerung.</string>
 
 </resources>

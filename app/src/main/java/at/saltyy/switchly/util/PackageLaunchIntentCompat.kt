@@ -25,7 +25,9 @@ import android.content.Intent
 object PackageLaunchIntentCompat {
     fun getLaunchIntent(context: Context, packageName: String): Intent? {
         val pkg = packageName.trim()
-        if (pkg.isBlank()) return null
+        if (pkg.isBlank()) {
+            return null
+        }
 
         return runCatching {
             context.packageManager.getLaunchIntentForPackage(pkg)

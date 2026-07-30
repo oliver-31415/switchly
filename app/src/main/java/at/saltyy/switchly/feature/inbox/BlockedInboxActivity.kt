@@ -39,10 +39,9 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.saltyy.switchly.R
+import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.data.prefs.BlockedInboxStore
 import at.saltyy.switchly.data.prefs.BlockedNotificationEvent
-import at.saltyy.switchly.data.prefs.EmergencyBypassStore
-import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
@@ -52,7 +51,6 @@ import at.saltyy.switchly.ui.attachEditDeleteSwipe
 import at.saltyy.switchly.ui.updateSelectionSubtitle
 import at.saltyy.switchly.ui.dialog.showDestructiveAccented
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
-import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.widget.BlockedNotificationsWidgetProvider
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.chip.Chip
@@ -85,11 +83,6 @@ class BlockedInboxActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        if (SwitchModeStore.isEnabled(this) && !EmergencyBypassStore.isActive(this)) {
-            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_blocked_notifications)
-            finish()
-            return
-        }
         setContentView(R.layout.activity_blocked_inbox)
 
         // Ensure selection checkboxes and other widgets never fall back to OEM green in CUSTOM accent mode.
@@ -112,7 +105,7 @@ class BlockedInboxActivity : AppCompatActivity() {
         empty = findViewById(R.id.tvEmpty)
         recycler.layoutManager = LinearLayoutManager(this)
         recycler.attachEditDeleteSwipe(
-            canSwipe = { !selectionMode },
+            canSwipe = { !selectionMode && !isReadOnly() },
             editIconRes = R.drawable.open_in_new_24,
             onEdit = { position -> visibleItems.getOrNull(position)?.let(::showDetailDialog) },
             onDelete = { position -> visibleItems.getOrNull(position)?.let(::confirmDeleteSingle) }
@@ -121,6 +114,18 @@ class BlockedInboxActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnFilter)?.setOnClickListener { showFilterMenuDialog() }
 
         load()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (isReadOnly() && selectionMode) {
+            exitSelectionMode()
+        }
+        invalidateOptionsMenu()
+    }
+
+    private fun isReadOnly(): Boolean {
+        return EditingLockGuard.isLocked(this)
     }
 
     private fun load() {
@@ -158,7 +163,9 @@ class BlockedInboxActivity : AppCompatActivity() {
                 }
             },
             onRowLongPress = { e ->
-                if (!selectionMode) {
+                if (isReadOnly()) {
+                    false
+                } else if (!selectionMode) {
                     enterSelectionMode(preselect = e)
                     true
                 } else {
@@ -175,6 +182,9 @@ class BlockedInboxActivity : AppCompatActivity() {
     }
 
     private fun enterSelectionMode(preselect: BlockedNotificationEvent? = null) {
+        if (isReadOnly()) {
+            return
+        }
         selectionMode = true
         selectedKeys.clear()
         preselect?.let { selectedKeys.add(eventKey(it)) }
@@ -300,11 +310,17 @@ class BlockedInboxActivity : AppCompatActivity() {
     }
 
     private fun confirmDeleteSingle(event: BlockedNotificationEvent) {
+        if (isReadOnly()) {
+            return
+        }
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.delete)
             .setMessage(getString(R.string.destructive_cannot_be_undone))
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.delete) { _, _ ->
+                if (isReadOnly()) {
+                    return@setPositiveButton
+                }
                 BlockedInboxStore.remove(this, event)
                 BlockedNotificationsWidgetProvider.refreshAll(this)
                 load()
@@ -318,7 +334,9 @@ class BlockedInboxActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        menu.findItem(R.id.action_cancel_select)?.isVisible = selectionMode
+        val readOnly = isReadOnly()
+        menu.findItem(R.id.action_cancel_select)?.isVisible = selectionMode && !readOnly
+        menu.findItem(R.id.action_delete)?.isVisible = !readOnly
         // In selection mode, delete action is "Delete selected". Outside, it enters selection mode.
         menu.findItem(R.id.action_delete)?.title =
             if (selectionMode) getString(R.string.delete) else getString(R.string.select)
@@ -340,6 +358,9 @@ class BlockedInboxActivity : AppCompatActivity() {
             }
 
             R.id.action_delete -> {
+                if (isReadOnly()) {
+                    return true
+                }
                 if (selectionMode) {
                     confirmDeleteSelected(); true
                 } else {
@@ -421,6 +442,10 @@ class BlockedInboxActivity : AppCompatActivity() {
     }
 
     private fun confirmDeleteSelected() {
+        if (isReadOnly()) {
+            exitSelectionMode()
+            return
+        }
         if (selectedKeys.isEmpty()) {
             exitSelectionMode()
             return
@@ -430,6 +455,10 @@ class BlockedInboxActivity : AppCompatActivity() {
             .setTitle(getString(R.string.blocked_inbox_delete_title))
             .setMessage(resources.getQuantityString(R.plurals.blocked_inbox_delete_selected_confirm_fmt, selectedKeys.size, selectedKeys.size) + "\n\n" + getString(R.string.destructive_cannot_be_undone))
             .setPositiveButton(getString(R.string.delete)) { _, _ ->
+                if (isReadOnly()) {
+                    exitSelectionMode()
+                    return@setPositiveButton
+                }
                 val toDelete = visibleItems.filter { selectedKeys.contains(eventKey(it)) }
                 toDelete.forEach { BlockedInboxStore.remove(this, it) }
                 BlockedNotificationsWidgetProvider.refreshAll(this)

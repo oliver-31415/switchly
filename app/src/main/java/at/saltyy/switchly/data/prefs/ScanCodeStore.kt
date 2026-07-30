@@ -123,7 +123,9 @@ object ScanCodeStore {
     fun upsert(ctx: Context, entry: Entry) {
         val cleanRaw = normalizeRaw(entry.rawValue)
         val cleanAction = entry.actionUri.trim()
-        if (cleanRaw.isBlank() || cleanAction.isBlank()) return
+        if (cleanRaw.isBlank() || cleanAction.isBlank()) {
+            return
+        }
 
         val id = buildId(entry.kind, cleanRaw)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -240,7 +242,9 @@ object ScanCodeStore {
         val kind = Kind.fromRaw(sp.getString(KEY_KIND_PREFIX + id, null))
         val rawValue = normalizeRaw(sp.getString(KEY_RAW_PREFIX + id, null))
         val actionUri = sp.getString(KEY_ACTION_PREFIX + id, null)?.trim().orEmpty()
-        if (rawValue.isBlank() || actionUri.isBlank()) return null
+        if (rawValue.isBlank() || actionUri.isBlank()) {
+            return null
+        }
         val name = sp.getString(KEY_NAME_PREFIX + id, null)?.trim()?.takeIf { it.isNotBlank() }
         val note = sp.getString(KEY_NOTE_PREFIX + id, null)?.trim()?.takeIf { it.isNotBlank() }
         val dailyLimit = if (sp.contains(KEY_DAILY_LIMIT_PREFIX + id)) getIntCompat(sp, KEY_DAILY_LIMIT_PREFIX + id, 1).coerceAtLeast(1) else null

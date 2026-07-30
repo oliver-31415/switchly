@@ -19,70 +19,26 @@
 
 package at.saltyy.switchly.platform.receiver.system
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.core.app.NotificationCompat
-import at.saltyy.switchly.R
-import at.saltyy.switchly.blocking.BlockingRuntime
-import at.saltyy.switchly.data.prefs.SwitchModeStore
-import at.saltyy.switchly.feature.settings.PermissionsActivity
 import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
-import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.util.ProtectionStatusNotifier
 
 /**
- * Triggered after an app update (ACTION_PACKAGE_REPLACED).
- * If Switchly is active but missing the Accessibility service, show a friendly notification that opens Switchly's permission flow.
+ * Triggered after an app update (ACTION_MY_PACKAGE_REPLACED).
+ * Android may need a moment to reconnect Accessibility after replacing the package, so use the
+ * shared verified/grace-period warning flow instead of showing an immediate notification.
  */
 class PostUpdateReceiver : BroadcastReceiver() {
 
     override fun onReceive(ctx: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_PACKAGE_REPLACED) return
+        if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) {
+            return
+        }
 
-        runCatching { LocationTriggerMonitor.ensureStarted(ctx.applicationContext) }
-
-        val enabled = SwitchModeStore.isEnabled(ctx)
-        if (!enabled) return
-
-        val needAccessibility = !BlockingRuntime.isAccessibilityActive(ctx)
-        if (!needAccessibility) return
-
-        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val chId = "post_update"
-
-        // minSdk 27 -> always create channel
-        val channel = NotificationChannel(
-            chId,
-            ctx.getString(R.string.app_name),
-            NotificationManager.IMPORTANCE_LOW
-        )
-        nm.createNotificationChannel(channel)
-
-        val settingsIntent = Intent(ctx, PermissionsActivity::class.java)
-            .putExtra(PermissionsActivity.EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE, true)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-        val pi = PendingIntent.getActivity(
-            ctx,
-            0,
-            settingsIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val message = ctx.getString(R.string.pref_open_accessibility_summary)
-
-        val notif = NotificationCompat.Builder(ctx, chId)
-            .setSmallIcon(R.drawable.app_blocking_white_24)
-            .setColor(AccentColor.getAccentColorInt(ctx))
-            .setContentTitle(ctx.getString(R.string.app_name))
-            .setContentText(message)
-            .setContentIntent(pi)
-            .setAutoCancel(true)
-            .build()
-
-        nm.notify(43, notif)
+        val appContext = ctx.applicationContext
+        runCatching { LocationTriggerMonitor.ensureStarted(appContext) }
+        runCatching { ProtectionStatusNotifier.refresh(appContext) }
     }
 }

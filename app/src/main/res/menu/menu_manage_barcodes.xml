@@ -4,27 +4,31 @@
 
     <item
         android:id="@+id/action_info"
-        android:title="@string/manage_barcodes_info_title"
         android:icon="@drawable/info_24"
+        android:orderInCategory="10"
+        android:title="@string/manage_barcodes_info_title"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_cancel_select"
-        android:title="@string/cancel"
         android:icon="@drawable/close_24"
+        android:orderInCategory="20"
+        android:title="@string/cancel"
         android:visible="false"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_select"
-        android:title="@string/select"
         android:icon="@drawable/delete_24"
+        android:orderInCategory="30"
+        android:title="@string/select"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_delete_selected"
-        android:title="@string/delete"
         android:icon="@drawable/delete_24"
+        android:orderInCategory="30"
+        android:title="@string/delete"
         android:visible="false"
         app:showAsAction="ifRoom" />
 </menu>

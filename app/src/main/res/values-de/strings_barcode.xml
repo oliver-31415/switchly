@@ -28,17 +28,14 @@
     <!-- ====================================================== -->
     <!-- Barcode actions and limits -->
     <!-- ====================================================== -->
-    <string name="manage_barcodes_action_summary_fmt">%1$s - Aktion: %2$s</string>
-    <string name="manage_barcodes_limit_daily_summary">Max. %1$d/Tag</string>
-    <string name="manage_barcodes_limit_cooldown_summary">Cooldown %1$d Min.</string>
     <string name="manage_barcodes_limit_daily_toast">Tageslimit erreicht (%1$d).</string>
     <string name="manage_barcodes_limit_cooldown_toast">Versuch es in %1$d Min. erneut.</string>
-    <string name="manage_barcodes_daily_limit_label">Tageslimit (optional)</string>
+    <string name="manage_barcodes_daily_limit_label">Tägliche Entsperrungen</string>
     <string name="manage_barcodes_cooldown_label">Cooldown in Minuten (optional)</string>
     <string name="manage_barcodes_action_section_title">Aktion</string>
     <string name="manage_barcodes_limits_section_title">Limits (optional)</string>
-    <string name="manage_barcodes_daily_limit_helper">Leer lassen für unbegrenzte Nutzung.</string>
-    <string name="manage_barcodes_cooldown_helper">Leer lassen für keinen Cooldown.</string>
+    <string name="manage_barcodes_daily_limit_helper">Nur schutzreduzierende Aktionen zählen. Leer lassen für unbegrenzte Entsperrungen.</string>
+    <string name="manage_barcodes_cooldown_helper">Gilt nach einer Entsperrung oder temporären Pause. Leer lassen für keinen Cooldown.</string>
 
     <!-- ====================================================== -->
     <!-- Barcode delete and empty states -->

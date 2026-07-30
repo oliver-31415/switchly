@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/app_lock_screen_title"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
@@ -34,38 +34,10 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <com.google.android.material.card.MaterialCardView
-                style="@style/Switchly.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/pref_app_lock_summary"
-                        android:textColor="?android:attr/textColorSecondary"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/tvAppLockStatus"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="4dp"
                 android:text="@string/app_lock_section_emergency_pin"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="14sp"
@@ -93,7 +65,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@null"
-                        android:src="@drawable/security_24"
+                        android:src="@drawable/pin_24"
                         app:tint="?attr/colorPrimary" />
 
                     <LinearLayout
@@ -124,7 +96,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -133,7 +105,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="@string/app_lock_section_uninstall_protection"
+                android:text="@string/app_lock_section_strict_protection"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -148,7 +120,7 @@
                 android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
-                    android:id="@+id/rowUninstallFriction"
+                    android:id="@+id/rowStrictProtection"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
@@ -173,7 +145,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/pref_uninstall_friction_title"
+                            android:text="@string/app_lock_strict_protection_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -181,13 +153,13 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:text="@string/pref_uninstall_friction_summary"
+                            android:text="@string/app_lock_strict_protection_summary"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="13sp" />
                     </LinearLayout>
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchUninstallFriction"
+                        android:id="@+id/switchStrictProtection"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         app:showText="false" />
@@ -281,7 +253,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@null"
-                        android:src="@drawable/security_24"
+                        android:src="@drawable/fingerprint_24"
                         app:tint="?attr/colorPrimary" />
 
                     <LinearLayout
@@ -337,7 +309,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@null"
-                        android:src="@drawable/lock_open_24"
+                        android:src="@drawable/pin_24"
                         app:tint="?attr/colorPrimary" />
 
                     <LinearLayout
@@ -368,7 +340,7 @@
                         android:layout_height="18dp"
                         android:alpha="0.7"
                         android:contentDescription="@string/open"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

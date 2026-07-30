@@ -37,6 +37,7 @@ import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.util.TimeFormatPrefs
 import java.util.Calendar
 
+// Updates the home-screen widget with the next enabled schedule.
 class NextScheduleWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(
@@ -128,21 +129,27 @@ class NextScheduleWidgetProvider : AppWidgetProvider() {
         }
 
         private fun findNextBoundary(context: Context): BoundaryInfo? {
-            if (SchedulePlanner.getNextBoundaryMillis(context) <= 0L) return null
+            if (SchedulePlanner.getNextBoundaryMillis(context) <= 0L) {
+                return null
+            }
             val schedules = ScheduleStore.getAll(context)
                 .filter { it.enabled }
                 .filterNot { schedule ->
                     val isConnectionOnly = !schedule.wifiSsid.isNullOrBlank() || (!schedule.btDeviceName.isNullOrBlank() || !schedule.btDeviceAddress.isNullOrBlank())
                     isConnectionOnly && schedule.startMinutes == 0 && schedule.endMinutes >= 1439
                 }
-            if (schedules.isEmpty()) return null
+            if (schedules.isEmpty()) {
+                return null
+            }
 
             val now = Calendar.getInstance()
             val nowMs = now.timeInMillis
             var best: BoundaryInfo? = null
 
             fun consider(candidate: BoundaryInfo) {
-                if (candidate.timeMillis <= nowMs) return
+                if (candidate.timeMillis <= nowMs) {
+                    return
+                }
                 if (best == null || candidate.timeMillis < best!!.timeMillis) {
                     best = candidate
                 }
@@ -187,7 +194,9 @@ class NextScheduleWidgetProvider : AppWidgetProvider() {
             day: Calendar,
             endBoundary: Boolean = false,
         ): BoundaryInfo? {
-            if (endBoundary && !isRangeAction(schedule.action)) return null
+            if (endBoundary && !isRangeAction(schedule.action)) {
+                return null
+            }
             val minutes = if (endBoundary) schedule.endMinutes else schedule.startMinutes
             val timeMillis = (day.clone() as Calendar).apply {
                 set(Calendar.HOUR_OF_DAY, minutes / 60)

@@ -27,9 +27,14 @@ import android.widget.Toast
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.ActivityHistoryLogStore
+import at.saltyy.switchly.data.statistics.StatsPersistence
 import at.saltyy.switchly.ui.MainActivity
+import at.saltyy.switchly.ui.dialog.showAccented
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 
@@ -37,7 +42,7 @@ import com.google.firebase.firestore.QuerySnapshot
  * Deletes the current Switchly account:
  * 1) Deletes Firestore user document and its "backups" subcollection.
  * 2) Attempts to delete the FirebaseAuth user (may require recent login).
- * 3) Clears local SharedPreferences.
+ * 3) Clears local preferences and databases.
  * 4) Restarts the app at MainActivity.
  */
 object AccountDeletion {
@@ -45,6 +50,7 @@ object AccountDeletion {
     private const val TAG = "AccountDeletion"
     private const val COLLECTION_USERS = "switchly_users"
     private const val SUB_BACKUPS = "backups"
+    private const val SUB_STATS_CHUNKS = "stats_chunks"
 
     fun deleteAccount(activity: Activity) {
         val user = FirebaseAuth.getInstance().currentUser
@@ -89,11 +95,11 @@ object AccountDeletion {
                     if (!authOk) {
                         // If this is the "recent login required" case, show a nicer message
                         if (authErr is FirebaseAuthRecentLoginRequiredException) {
-                            Toast.makeText(
-                                activity,
-                                activity.getString(R.string.account_delete_recent_login_required),
-                                Toast.LENGTH_LONG
-                            ).show()
+                            MaterialAlertDialogBuilder(activity)
+                                .setTitle(R.string.account_delete_recent_login_title)
+                                .setMessage(R.string.account_delete_recent_login_required)
+                                .setPositiveButton(R.string.ok, null)
+                                .showAccented()
                         } else {
                             val errText = authErr?.localizedMessage ?: activity.getString(R.string.error_unknown)
                             Toast.makeText(
@@ -127,25 +133,51 @@ object AccountDeletion {
             .collection(SUB_BACKUPS)
             .get()
             .addOnSuccessListener { snapshot: QuerySnapshot ->
-                if (snapshot.isEmpty) {
-                    onDone(true, null)
-                    return@addOnSuccessListener
-                }
+                deleteBackupDocumentsSequentially(
+                    db = db,
+                    documents = snapshot.documents,
+                    index = 0,
+                    onDone = onDone,
+                )
+            }
+            .addOnFailureListener { error ->
+                Log.w(TAG, "Failed to fetch backups", error)
+                onDone(false, error)
+            }
+    }
 
+    private fun deleteBackupDocumentsSequentially(
+        db: FirebaseFirestore,
+        documents: List<DocumentSnapshot>,
+        index: Int,
+        onDone: (Boolean, Exception?) -> Unit,
+    ) {
+        if (index >= documents.size) {
+            onDone(true, null)
+            return
+        }
+
+        val backup = documents[index]
+        backup.reference.collection(SUB_STATS_CHUNKS)
+            .get()
+            .addOnSuccessListener { chunks ->
                 val batch = db.batch()
-                for (doc in snapshot.documents) {
-                    batch.delete(doc.reference)
+                chunks.documents.forEach { chunk ->
+                    batch.delete(chunk.reference)
                 }
+                batch.delete(backup.reference)
                 batch.commit()
-                    .addOnSuccessListener { onDone(true, null) }
-                    .addOnFailureListener { e ->
-                        Log.w(TAG, "Failed to delete backups", e)
-                        onDone(false, e)
+                    .addOnSuccessListener {
+                        deleteBackupDocumentsSequentially(db, documents, index + 1, onDone)
+                    }
+                    .addOnFailureListener { error ->
+                        Log.w(TAG, "Failed to delete backup data", error)
+                        onDone(false, error)
                     }
             }
-            .addOnFailureListener { e ->
-                Log.w(TAG, "Failed to fetch backups", e)
-                onDone(false, e)
+            .addOnFailureListener { error ->
+                Log.w(TAG, "Failed to fetch statistics backup chunks", error)
+                onDone(false, error)
             }
     }
 
@@ -177,13 +209,19 @@ object AccountDeletion {
     }
 
     private fun clearLocalData(ctx: Context) {
-        // Default SharedPreferences (PreferenceFragmentCompat)
-        val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx)
-        defaultPrefs.edit { clear() }
-
-        // App-specific prefs
-        val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
-        internalPrefs.edit { clear() }
+        StatsPersistence.prepareForFullDataDeletion(ctx)
+        try {
+            PreferenceManager.getDefaultSharedPreferences(ctx).edit(commit = true) { clear() }
+            ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE).edit(commit = true) { clear() }
+            ctx.getSharedPreferences("switchly_prefs_schedules", Context.MODE_PRIVATE).edit(commit = true) { clear() }
+            ctx.getSharedPreferences("switchly_ui_hints", Context.MODE_PRIVATE).edit(commit = true) { clear() }
+            ctx.getSharedPreferences(ActivityHistoryLogStore.PREFS_NAME, Context.MODE_PRIVATE).edit(commit = true) { clear() }
+            ctx.databaseList().forEach { databaseName ->
+                ctx.deleteDatabase(databaseName)
+            }
+        } finally {
+            StatsPersistence.resumeAfterFullDataDeletion(ctx)
+        }
     }
 
     private fun restartApp(activity: Activity) {

@@ -21,6 +21,8 @@ package at.saltyy.switchly.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import at.saltyy.switchly.util.getIntCompat
+import at.saltyy.switchly.util.getLongCompat
 
 /**
  * Runtime helper for schedule behavior:
@@ -106,7 +108,7 @@ object ScheduleRuntimeStore {
 
     fun getManualOverrideScheduleId(ctx: Context): Int {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getInt(KEY_MANUAL_OVERRIDE_SCHEDULE_ID, -1)
+        return sp.getIntCompat(KEY_MANUAL_OVERRIDE_SCHEDULE_ID, -1)
     }
 
     fun setManualOverrideScheduleId(ctx: Context, scheduleId: Int) {
@@ -121,7 +123,7 @@ object ScheduleRuntimeStore {
 
     fun getActiveRangeScheduleId(ctx: Context): Int {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getInt(KEY_ACTIVE_RANGE_SCHEDULE_ID, -1)
+        return sp.getIntCompat(KEY_ACTIVE_RANGE_SCHEDULE_ID, -1)
     }
 
     fun setActiveRangeScheduleId(ctx: Context, scheduleId: Int) {
@@ -141,7 +143,7 @@ object ScheduleRuntimeStore {
 
     fun getManualSchedulePauseScheduleId(ctx: Context): Int {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getInt(KEY_MANUAL_SCHEDULE_PAUSE_SCHEDULE_ID, -1)
+        return sp.getIntCompat(KEY_MANUAL_SCHEDULE_PAUSE_SCHEDULE_ID, -1)
     }
 
     fun isManualSchedulePausedFor(ctx: Context, scheduleId: Int): Boolean {
@@ -183,7 +185,7 @@ object ScheduleRuntimeStore {
 
     fun getLastTickMs(ctx: Context): Long {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getLong(KEY_LAST_TICK_MS, 0L)
+        return sp.getLongCompat(KEY_LAST_TICK_MS, 0L)
     }
 
     fun markExecutedNow(ctx: Context) {
@@ -193,7 +195,7 @@ object ScheduleRuntimeStore {
 
     fun getLastExecutionMs(ctx: Context): Long {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getLong(KEY_LAST_EXECUTION_MS, 0L)
+        return sp.getLongCompat(KEY_LAST_EXECUTION_MS, 0L)
     }
 
     fun markDisableBlockedByNfc(ctx: Context) {
@@ -203,7 +205,7 @@ object ScheduleRuntimeStore {
 
     fun getLastDisableBlockedByNfcMs(ctx: Context): Long {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getLong(KEY_LAST_DISABLE_BLOCKED_NFC_MS, 0L)
+        return sp.getLongCompat(KEY_LAST_DISABLE_BLOCKED_NFC_MS, 0L)
     }
 
     fun clearDisableBlockedByNfc(ctx: Context) {
@@ -213,7 +215,7 @@ object ScheduleRuntimeStore {
 
     fun getLastLocationTransitionMs(ctx: Context, scheduleId: Int, transitionKey: String): Long {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getLong(KEY_LAST_LOCATION_TRANSITION_PREFIX + scheduleId + "_" + transitionKey, 0L)
+        return sp.getLongCompat(KEY_LAST_LOCATION_TRANSITION_PREFIX + scheduleId + "_" + transitionKey, 0L)
     }
 
     fun setLastLocationTransitionMs(ctx: Context, scheduleId: Int, transitionKey: String, value: Long) {

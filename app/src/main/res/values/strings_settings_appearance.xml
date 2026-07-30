@@ -4,7 +4,6 @@
     <!-- ====================================================== -->
     <!-- Appearance root and accent color -->
     <!-- ====================================================== -->
-    <string name="pref_theme_title">Appearance</string>
     <string name="pref_theme_color_title">Theme color</string>
     <string name="pref_theme_color_summary">Choose the accent color used across the app.</string>
     <string name="pref_theme_color_custom_fmt">Custom: %1$s</string>

@@ -24,6 +24,7 @@ import android.content.Intent
 import androidx.core.content.edit
 import at.saltyy.switchly.util.AppBlockSafety
 
+// Persists and retrieves profile state.
 object ProfileStore {
     private const val PREFS = "switchly_prefs"
 
@@ -54,7 +55,9 @@ object ProfileStore {
             emptySet()
         }
 
-        if (read.isNotEmpty()) return read
+        if (read.isNotEmpty()) {
+            return read
+        }
 
         // Stored set is empty or invalid -> reset to default.
         val initial = setOf("Default")
@@ -69,7 +72,9 @@ object ProfileStore {
     fun addProfile(context: Context, name: String): Boolean {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val current = getProfiles(context).toMutableSet()
-        if (name in current) return false
+        if (name in current) {
+            return false
+        }
         current += name
         sp.edit { putStringSet(KEY_PROFILES, current) }
         return true
@@ -79,7 +84,9 @@ object ProfileStore {
     fun removeProfile(context: Context, name: String) {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val current = getProfiles(context).toMutableSet()
-        if (!current.remove(name)) return
+        if (!current.remove(name)) {
+            return
+        }
 
         sp.edit {
             putStringSet(KEY_PROFILES, current)
@@ -99,16 +106,23 @@ object ProfileStore {
         InAppLimitStore.onProfileRemoved(context, name)
         SurfaceLimitStore.onProfileRemoved(context, name)
         InAppRuleStore.onProfileRemoved(context, name)
+        WebsiteRuleModeStore.onProfileRemoved(context, name)
         ProfileRuleModeStore.onProfileRemoved(context, name)
     }
 
     // Renames a profile.
     fun renameProfile(context: Context, old: String, new: String): Boolean {
-        if (old == new) return true
+        if (old == new) {
+            return true
+        }
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val set = getProfiles(context).toMutableSet()
-        if (!set.contains(old)) return false
-        if (set.contains(new)) return false
+        if (!set.contains(old)) {
+            return false
+        }
+        if (set.contains(new)) {
+            return false
+        }
 
         val oldBlocked = try {
             sp.getStringSet(keyBlocked(old), emptySet()) ?: emptySet()
@@ -147,6 +161,7 @@ object ProfileStore {
         InAppLimitStore.onProfileRenamed(context, old, new)
         SurfaceLimitStore.onProfileRenamed(context, old, new)
         InAppRuleStore.onProfileRenamed(context, old, new)
+        WebsiteRuleModeStore.onProfileRenamed(context, old, new)
         ProfileRuleModeStore.onProfileRenamed(context, old, new)
         return true
     }
@@ -172,7 +187,9 @@ object ProfileStore {
     fun getCurrent(context: Context): String? {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val v = sp.getString(KEY_CURRENT, null)
-        if (!v.isNullOrEmpty()) return v
+        if (!v.isNullOrEmpty()) {
+            return v
+        }
 
         val first = getProfiles(context).firstOrNull()
         if (first != null) {
@@ -199,7 +216,9 @@ object ProfileStore {
             emptySet()
         }
 
-        if (raw.isEmpty()) return emptySet()
+        if (raw.isEmpty()) {
+            return emptySet()
+        }
 
         // Keep the stored set mostly intact (minus blanks), but always exclude packages that Switchly currently protects for device safety (for example the active launcher or keyboard).
         return raw
@@ -210,7 +229,9 @@ object ProfileStore {
     // Returns all whole-app blocked package names for a specific profile.
     fun getBlockedForProfile(context: Context, profile: String): Set<String> {
         val blocked = getRawBlockedForProfile(context, profile)
-        if (blocked.isEmpty()) return emptySet()
+        if (blocked.isEmpty()) {
+            return emptySet()
+        }
 
         // In-app rules pin supported apps into the picker/list so the user can see why they are involved, but they must not turn the entire app into a whole-app block.
         return blocked.filterTo(linkedSetOf()) { pkg ->
@@ -219,7 +240,9 @@ object ProfileStore {
     }
 
     private fun isInAppOnlySelection(context: Context, profile: String, pkg: String): Boolean {
-        if (!InAppRuleStore.hasEnabledRulesForPackage(context, profile, pkg)) return false
+        if (!InAppRuleStore.hasEnabledRulesForPackage(context, profile, pkg)) {
+            return false
+        }
         return UsageLimitStore.getLimitMinutes(context, profile, pkg) <= 0 &&
             SessionLimitStore.getLimitMinutes(context, profile, pkg) <= 0 &&
             AttemptLimitStore.getLimitAttempts(context, profile, pkg) <= 0
@@ -248,10 +271,14 @@ object ProfileStore {
 
         // In allow-list mode, apps with active in-app rules must stay allowed.
         // Otherwise a configured rule like “block YouTube Shorts” would be hidden by the whole-app allow list and the entire app would be blocked instead.
-        if (!ProfileRuleModeStore.isAllowMode(context, profile)) return cleaned
+        if (!ProfileRuleModeStore.isAllowMode(context, profile)) {
+            return cleaned
+        }
 
         val requiredForInAppRules = InAppRuleStore.getPackagesWithEnabledRules(context, profile)
-        if (requiredForInAppRules.isEmpty()) return cleaned
+        if (requiredForInAppRules.isEmpty()) {
+            return cleaned
+        }
 
         return AppBlockSafety.sanitizeManagedPackages(context, cleaned + requiredForInAppRules)
     }
@@ -309,7 +336,9 @@ object ProfileStore {
     }
 
     private fun markAutoBlockKnownPackage(context: Context, profile: String, pkg: String) {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         val current = getAutoBlockKnownPackages(context, profile).toMutableSet()
         if (current.add(pkg)) {
             setAutoBlockKnownPackages(context, profile, current)
@@ -320,23 +349,21 @@ object ProfileStore {
         val pm = context.packageManager
         val packages = linkedSetOf<String>()
 
-        listOf(
-            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
-            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-        ).forEach { launcherIntent ->
-            runCatching { pm.queryIntentActivities(launcherIntent, 0) }
-                .getOrDefault(emptyList())
-                .mapNotNullTo(packages) { it.activityInfo?.applicationInfo?.packageName }
-        }
+        val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        runCatching { pm.queryIntentActivities(launcherIntent, 0) }
+            .getOrDefault(emptyList())
+            .mapNotNullTo(packages) { it.activityInfo?.applicationInfo?.packageName }
 
-        // Do not call getInstalledApplications() here. 
+        // Do not call getInstalledApplications() here.
         // Android package visibility can make it incomplete and lint warns about it.
         // Saved package names are resolved individually where needed instead of treating "not in launcher query" as unavailable.
         return packages.filterTo(linkedSetOf()) { it.isNotBlank() && it != context.packageName }
     }
 
     fun addBlockedAppToAutoBlockProfiles(context: Context, pkg: String): Int {
-        if (pkg.isBlank()) return 0
+        if (pkg.isBlank() || AppBlockSafety.requiresManualConfirmation(context, pkg)) {
+            return 0
+        }
         var changed = 0
         getProfiles(context).forEach { profile ->
             if (!isAutoBlockNewAppsEnabled(context, profile)) return@forEach
@@ -355,13 +382,15 @@ object ProfileStore {
     }
 
     /**
-     * Safety net for missed PACKAGE_ADDED broadcasts. 
+     * Safety net for missed PACKAGE_ADDED broadcasts.
      * If auto-block is enabled for a profile, any launchable packages that appeared after the stored baseline are added automatically.
      * If no baseline exists yet, create one without adding existing apps to avoid surprise bulk changes.
      */
     fun reconcileAutoBlockNewApps(context: Context): Int {
         val installed = getLaunchablePackages(context)
-        if (installed.isEmpty()) return 0
+        if (installed.isEmpty()) {
+            return 0
+        }
 
         var changed = 0
         getProfiles(context).forEach { profile ->
@@ -374,8 +403,12 @@ object ProfileStore {
                 return@forEach
             }
 
-            val newlyInstalled = installed - known
-            if (newlyInstalled.isEmpty()) return@forEach
+            val newlyInstalled = (installed - known)
+                .filterNotTo(linkedSetOf()) { AppBlockSafety.requiresManualConfirmation(context, it) }
+            if (newlyInstalled.isEmpty()) {
+                setAutoBlockKnownPackages(context, profile, known + installed)
+                return@forEach
+            }
 
             val current = getBlockedForProfile(context, profile)
             val sanitized = AppBlockSafety.sanitizeManagedPackages(context, current + newlyInstalled)

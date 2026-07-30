@@ -34,10 +34,11 @@ import com.google.android.material.card.MaterialCardView
 
 class FaqAdapter(
     private val items: List<FaqListItem>,
-    private val onFolderClick: (FaqListItem.Folder) -> Unit = {}
+    private val onFolderClick: (FaqListItem.Folder) -> Unit = {},
+    initialExpandedPosition: Int = RecyclerView.NO_POSITION
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private var expanded = RecyclerView.NO_POSITION
+    private var expanded = initialExpandedPosition
 
     override fun getItemViewType(position: Int): Int = when (items[position]) {
         is FaqListItem.Folder -> VIEW_TYPE_FOLDER
@@ -139,7 +140,10 @@ class FaqAdapter(
                     }
 
                     tvAnswer.isVisible = isOpen
-                    ivArrow.rotation = if (isOpen) 180f else 0f
+                    ivArrow.rotation = 0f
+                    ivArrow.setImageResource(
+                        if (isOpen) R.drawable.keyboard_arrow_up_24 else R.drawable.keyboard_arrow_down_24
+                    )
 
                     questionRow.setOnClickListener {
                         val old = expanded

@@ -24,6 +24,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.Calendar
 
+// Persists and retrieves barcode scan count state.
 object BarcodeScanCountStore {
     private const val PREFS = "switchly_prefs"
     private const val PREFIX = "barcode_scan_count_"
@@ -33,22 +34,110 @@ object BarcodeScanCountStore {
 
     private fun key(ymd: Int): String = PREFIX + ymd
 
+    fun getToday(context: Context): Int {
+        return readIntCompat(prefs(context), key(todayYmdInt()))
+    }
+
+    fun getForLastNDays(context: Context, days: Int): Int {
+        if (days <= 0) {
+            return 0
+        }
+
+        val sharedPreferences = prefs(context)
+        val calendar = Calendar.getInstance()
+        var sum = 0L
+
+        repeat(days) {
+            sum += readLongCompat(sharedPreferences, key(ymdInt(calendar)))
+            calendar.add(Calendar.DAY_OF_YEAR, -1)
+        }
+
+        return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    fun getForMonth(context: Context, year: Int, month1Based: Int): Int {
+        val sharedPreferences = prefs(context)
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, (month1Based - 1).coerceIn(0, 11))
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val targetMonth = calendar.get(Calendar.MONTH)
+        var sum = 0L
+
+        while (calendar.get(Calendar.MONTH) == targetMonth) {
+            sum += readLongCompat(sharedPreferences, key(ymdInt(calendar)))
+            calendar.add(Calendar.DAY_OF_MONTH, 1)
+        }
+
+        return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    fun getForYear(context: Context, year: Int): Int {
+        val sharedPreferences = prefs(context)
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        var sum = 0L
+
+        while (calendar.get(Calendar.YEAR) == year) {
+            sum += readLongCompat(sharedPreferences, key(ymdInt(calendar)))
+            calendar.add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    fun getOverall(context: Context): Int {
+        var sum = 0L
+        for ((storedKey, storedValue) in prefs(context).all) {
+            if (!storedKey.startsWith(PREFIX)) {
+                continue
+            }
+            sum += valueAsLong(storedValue)
+        }
+        return sum.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    @Synchronized
     fun incrementToday(context: Context, delta: Int = 1) {
-        if (delta <= 0) return
+        if (delta <= 0) {
+            return
+        }
 
         val sharedPreferences = prefs(context)
         val key = key(todayYmdInt())
-        val current = readIntCompat(sharedPreferences, key)
-        sharedPreferences.edit { putLong(key, (current + delta).toLong()) }
+        val current = readLongCompat(sharedPreferences, key)
+        sharedPreferences.edit { putLong(key, current + delta.toLong()) }
     }
 
     private fun readIntCompat(sharedPreferences: SharedPreferences, key: String): Int {
-        return when (val value = sharedPreferences.all[key]) {
-            is Int -> value
-            is Long -> value.toInt()
-            is Number -> value.toInt()
-            is String -> value.toLongOrNull()?.toInt() ?: value.toIntOrNull() ?: 0
-            else -> 0
+        return readLongCompat(sharedPreferences, key)
+            .coerceAtMost(Int.MAX_VALUE.toLong())
+            .toInt()
+    }
+
+    private fun readLongCompat(sharedPreferences: SharedPreferences, key: String): Long {
+        return valueAsLong(sharedPreferences.all[key])
+    }
+
+    private fun valueAsLong(value: Any?): Long {
+        return when (value) {
+            is Int -> value.toLong()
+            is Long -> value
+            is Number -> value.toLong()
+            is String -> value.toLongOrNull() ?: 0L
+            else -> 0L
         }
     }
 

@@ -87,9 +87,7 @@ object NfcSchema {
     // Helper for actions like "temp_disable10", "temp_enable30", "reentry120" and legacy "temp10". Bare "temp_enable" and "temp_disable" are valid and ask for a duration at scan time.
     private val TEMP_ACTION_REGEX = Regex("""(?:temp(?:_enable|_disable)?|reentry)(\d{1,4})""")
 
-    /**
-     * Returns true if the given host is one of the supported hosts.
-     */
+    // Returns true if the given host is one of the supported hosts.
     fun isKnownHost(host: String?): Boolean {
         val normalized = host?.trim()?.lowercase().orEmpty()
         return normalized == HOST_ACTION ||
@@ -105,8 +103,12 @@ object NfcSchema {
      */
     fun parseCommandUri(uri: Uri?): NfcCommand? {
         uri ?: return null
-        if (!uri.scheme.equals(SCHEME, ignoreCase = true)) return null
-        if (!uri.fragment.isNullOrBlank()) return null
+        if (!uri.scheme.equals(SCHEME, ignoreCase = true)) {
+            return null
+        }
+        if (!uri.fragment.isNullOrBlank()) {
+            return null
+        }
 
         val host = uri.host?.lowercase() ?: return null
         val segs = uri.pathSegments ?: emptyList()
@@ -119,19 +121,31 @@ object NfcSchema {
             in READABLE_ACTION_HOSTS -> parseReadableActionUri(uri, host)
 
             HOST_SWITCH -> {
-                if (!uri.query.isNullOrBlank()) return null
-                if (segs.size != 1) return null
+                if (!uri.query.isNullOrBlank()) {
+                    return null
+                }
+                if (segs.size != 1) {
+                    return null
+                }
                 val action = segs[0].trim().lowercase()
-                if (!isSupportedAction(action)) return null
+                if (!isSupportedAction(action)) {
+                    return null
+                }
                 GlobalCommand(action)
             }
 
             HOST_PROFILE -> {
-                if (!uri.query.isNullOrBlank()) return null
-                if (segs.size != 2) return null
+                if (!uri.query.isNullOrBlank()) {
+                    return null
+                }
+                if (segs.size != 2) {
+                    return null
+                }
                 val profile = segs[0].trim()
                 val action = segs[1].trim().lowercase()
-                if (profile.isBlank() || !isSupportedAction(action)) return null
+                if (profile.isBlank() || !isSupportedAction(action)) {
+                    return null
+                }
                 ProfileCommand(profile, action)
             }
 
@@ -143,8 +157,12 @@ object NfcSchema {
 
     fun isSupportedAction(action: String?): Boolean {
         val a = action?.trim()?.lowercase().orEmpty()
-        if (a.isBlank()) return false
-        if (a in setOf("enable", "disable", "toggle", "start", "stop", "on", "off", "activate", "emergency_disable")) return true
+        if (a.isBlank()) {
+            return false
+        }
+        if (a in setOf("enable", "disable", "toggle", "start", "stop", "on", "off", "activate", "emergency_disable")) {
+            return true
+        }
         return a.matches(Regex("""(temp_enable|temp_disable|reentry)(\d{1,4})?"""))
     }
 
@@ -172,7 +190,7 @@ object NfcSchema {
     fun uriForProfileAction(profile: String, action: String): String =
         buildCanonicalActionUri(action = action, profile = profile)
 
-    /** Legacy builder kept for diagnostics/tests only. New tags should use [uriForGlobalAction]. */
+    // Legacy builder kept for diagnostics/tests only. New tags should use `uriForGlobalAction`.
     fun legacyUriForGlobalAction(action: String): String =
         Uri.Builder()
             .scheme(SCHEME)
@@ -181,7 +199,7 @@ object NfcSchema {
             .build()
             .toString()
 
-    /** Legacy builder kept for diagnostics/tests only. New tags should use [uriForProfileAction]. */
+    // Legacy builder kept for diagnostics/tests only. New tags should use `uriForProfileAction`.
     fun legacyUriForProfileAction(profile: String, action: String): String =
         Uri.Builder()
             .scheme(SCHEME)
@@ -195,9 +213,7 @@ object NfcSchema {
     // Parsing helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Sealed hierarchy representing what a parsed NFC/deep-link command means.
-     */
+    // Sealed hierarchy representing what a parsed NFC/deep-link command means.
     sealed interface NfcCommand {
         val action: String
 
@@ -252,11 +268,15 @@ object NfcSchema {
     }
 
     private fun parseReadableActionUri(uri: Uri, typeHost: String): NfcCommand? {
-        if ((uri.pathSegments ?: emptyList()).isNotEmpty()) return null
+        if ((uri.pathSegments ?: emptyList()).isNotEmpty()) {
+            return null
+        }
 
         val action = actionWithDuration(typeHost, durationFromQuery(uri)) ?: return null
         val profile = profileFromQuery(uri).orEmpty()
-        if (!isSupportedAction(action)) return null
+        if (!isSupportedAction(action)) {
+            return null
+        }
 
         return if (profile.isBlank()) {
             GlobalCommand(action)
@@ -266,11 +286,15 @@ object NfcSchema {
     }
 
     private fun parseQueryActionUri(uri: Uri): NfcCommand? {
-        if ((uri.pathSegments ?: emptyList()).isNotEmpty()) return null
+        if ((uri.pathSegments ?: emptyList()).isNotEmpty()) {
+            return null
+        }
 
         val action = canonicalActionFromQuery(uri) ?: return null
         val profile = profileFromQuery(uri).orEmpty()
-        if (!isSupportedAction(action)) return null
+        if (!isSupportedAction(action)) {
+            return null
+        }
 
         return if (profile.isBlank()) {
             GlobalCommand(action)
@@ -288,7 +312,9 @@ object NfcSchema {
             ?.trim()
             ?.lowercase()
             ?: return null
-        if (rawType.isBlank()) return null
+        if (rawType.isBlank()) {
+            return null
+        }
 
         return actionWithDuration(expandCompactActionType(rawType), durationFromQuery(uri))
     }
@@ -310,7 +336,9 @@ object NfcSchema {
 
     private fun normalizeCanonicalActionParts(action: String): CanonicalActionParts? {
         val trimmed = action.trim().lowercase()
-        if (trimmed.isBlank()) return null
+        if (trimmed.isBlank()) {
+            return null
+        }
 
         val fixedTemp = Regex("""^(temp_enable|temp_disable|reentry)(\d{1,4})$""").matchEntire(trimmed)
         if (fixedTemp != null) {

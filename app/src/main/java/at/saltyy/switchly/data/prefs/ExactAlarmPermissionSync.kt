@@ -37,14 +37,14 @@ object ExactAlarmPermissionSync {
     private const val KEY_LAST_ALLOWED = "exact_alarm_permission_allowed"
 
     fun canScheduleExactAlarms(context: Context): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return true
+        }
         val am = context.getSystemService(AlarmManager::class.java) ?: return true
         return runCatching { am.canScheduleExactAlarms() }.getOrDefault(false)
     }
 
-    /**
-     * @return true when the stored permission state changed, or when a forced reschedule was run.
-     */
+    // @return true when the stored permission state changed, or when a forced reschedule was run.
     fun syncAndReschedule(
         context: Context,
         forceReschedule: Boolean = false,
@@ -57,7 +57,9 @@ object ExactAlarmPermissionSync {
         val previousAllowed = prefs.getBoolean(KEY_LAST_ALLOWED, currentAllowed)
         val changed = !hasStoredState || previousAllowed != currentAllowed
 
-        if (!changed && !forceReschedule) return false
+        if (!changed && !forceReschedule) {
+            return false
+        }
 
         prefs.edit {
             putBoolean(KEY_LAST_ALLOWED, currentAllowed)

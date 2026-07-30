@@ -89,7 +89,9 @@ object CustomAccentApplier {
     }
 
     fun applyIfNeeded(activity: Activity) {
-        if (!isCustomAccentEnabled(activity)) return
+        if (!isCustomAccentEnabled(activity)) {
+            return
+        }
 
         val root = activity.findViewById<View>(android.R.id.content) ?: return
         applyToView(root, activity)
@@ -109,7 +111,9 @@ object CustomAccentApplier {
     }
 
     fun applyToView(root: View, activity: Activity) {
-        if (!isCustomAccentEnabled(activity)) return
+        if (!isCustomAccentEnabled(activity)) {
+            return
+        }
         val accent = AccentColor.getAccentColorInt(activity)
         val defaultAccent = ContextCompat.getColor(activity, R.color.accent_default_green)
         recolorRecursive(root, defaultAccent, accent)
@@ -123,7 +127,9 @@ object CustomAccentApplier {
 
     fun applyToDialog(dialog: AlertDialog) {
         val activity = unwrapActivity(dialog.context) ?: return
-        if (!isCustomAccentEnabled(activity)) return
+        if (!isCustomAccentEnabled(activity)) {
+            return
+        }
 
         val accent = AccentColor.getAccentColorInt(activity)
         dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(accent)
@@ -205,7 +211,9 @@ object CustomAccentApplier {
         var c: Context? = context
         var guard = 0
         while (c != null && guard < 10) {
-            if (c is Activity) return c
+            if (c is Activity) {
+                return c
+            }
             c = (c as? ContextWrapper)?.baseContext
             guard += 1
         }
@@ -218,7 +226,9 @@ object CustomAccentApplier {
         defaultAccent: Int,
         accent: Int
     ) {
-        if (globalLayoutHooks.containsKey(activity)) return
+        if (globalLayoutHooks.containsKey(activity)) {
+            return
+        }
 
         var lastRunAt = 0L
         val listener = ViewTreeObserver.OnGlobalLayoutListener {
@@ -256,26 +266,32 @@ object CustomAccentApplier {
     }
 
     private fun recolorView(view: View, defaultAccent: Int, accent: Int) {
+        // The onboarding footer intentionally keeps its secondary action tonal.
+        // In CUSTOM mode the generic recursive pass used to interpret the outlined button's theme tint as a primary fill, making both footer actions accent-colored.
+        val preserveOnboardingSecondaryBackground = view.id == R.id.btn_skip
+
         // Generic background tint replacement
-        ViewCompat.getBackgroundTintList(view)?.let { tint ->
-            val candidate = tint.defaultColor
-            if (matchesAccent(candidate, defaultAccent)) {
-                ViewCompat.setBackgroundTintList(view, ColorStateList.valueOf(accent))
+        if (!preserveOnboardingSecondaryBackground) {
+            ViewCompat.getBackgroundTintList(view)?.let { tint ->
+                val candidate = tint.defaultColor
+                if (matchesAccent(candidate, defaultAccent)) {
+                    ViewCompat.setBackgroundTintList(view, ColorStateList.valueOf(accent))
+                }
             }
-        }
 
-        // Generic color drawable backgrounds
-        (view.background as? ColorDrawable)?.let { bg ->
-            if (matchesAccent(bg.color, defaultAccent)) {
-                view.setBackgroundColor(accent)
+            // Generic color drawable backgrounds
+            (view.background as? ColorDrawable)?.let { bg ->
+                if (matchesAccent(bg.color, defaultAccent)) {
+                    view.setBackgroundColor(accent)
+                }
             }
-        }
 
-        // Common shape drawable backgrounds
-        (view.background as? GradientDrawable)?.let { bg ->
-            val c = bg.color?.defaultColor
-            if (c != null && matchesAccent(c, defaultAccent)) {
-                bg.setColor(accent)
+            // Common shape drawable backgrounds
+            (view.background as? GradientDrawable)?.let { bg ->
+                val c = bg.color?.defaultColor
+                if (c != null && matchesAccent(c, defaultAccent)) {
+                    bg.setColor(accent)
+                }
             }
         }
 
@@ -313,7 +329,7 @@ object CustomAccentApplier {
             is MaterialButton -> {
                 val bgBefore = view.backgroundTintList?.defaultColor
                 val bgMatchedAccent = bgBefore != null && matchesAccent(bgBefore, defaultAccent)
-                if (bgMatchedAccent) {
+                if (bgMatchedAccent && !preserveOnboardingSecondaryBackground) {
                     view.backgroundTintList = ColorStateList.valueOf(accent)
                 }
 
@@ -737,8 +753,12 @@ object CustomAccentApplier {
         val visited = java.util.IdentityHashMap<Any, Boolean>()
 
         fun walk(obj: Any?, depth: Int) {
-            if (obj == null || depth <= 0) return
-            if (visited.put(obj, true) == true) return
+            if (obj == null || depth <= 0) {
+                return
+            }
+            if (visited.put(obj, true) == true) {
+                return
+            }
 
             val cls = obj.javaClass
 
@@ -786,7 +806,9 @@ object CustomAccentApplier {
 
     private fun ensureEditTextCursorHook(et: EditText, accent: Int) {
         // Avoid stacking listeners without needing an ids.xml resource.
-        if (cursorHooked[et] == true) return
+        if (cursorHooked[et] == true) {
+            return
+        }
         cursorHooked[et] = true
 
         fun retint() = tintEditTextCursorAndSelection(et, accent)
@@ -879,7 +901,9 @@ object CustomAccentApplier {
     }
 
     private fun replaceCheckedColor(list: ColorStateList?, checkedColor: Int, defaultAccent: Int): ColorStateList? {
-        if (list == null) return null
+        if (list == null) {
+            return null
+        }
 
         val checkedState = intArrayOf(android.R.attr.state_checked)
         val uncheckedState = intArrayOf(-android.R.attr.state_checked)
@@ -963,7 +987,11 @@ object CustomAccentApplier {
     private fun readableOnColor(bg: Int): Int {
         val black = ColorUtils.calculateContrast(Color.BLACK, bg)
         val white = ColorUtils.calculateContrast(Color.WHITE, bg)
-        return if (black >= white) Color.BLACK else Color.WHITE
+        return if (black >= white) {
+            Color.BLACK
+        } else {
+            Color.WHITE
+        }
     }
 
     private fun matchesAccent(color: Int, defaultAccent: Int): Boolean {
@@ -971,7 +999,9 @@ object CustomAccentApplier {
         val d = ColorUtils.setAlphaComponent(defaultAccent, 0xFF)
 
         // Exact hit (fast path)
-        if (c == d) return true
+        if (c == d) {
+            return true
+        }
 
         // Heuristic match for common Material blends (checked/pressed/disabled) derived from the default accent.
         //
@@ -985,14 +1015,18 @@ object CustomAccentApplier {
         Color.colorToHSV(d, hsvD)
 
         // If the color is close to grey (low saturation), it's almost certainly not accent-derived.
-        if (hsvC[1] < 0.12f) return false
+        if (hsvC[1] < 0.12f) {
+            return false
+        }
 
         fun hueDiff(a: Float, b: Float): Float {
             val diff = kotlin.math.abs(a - b)
             return kotlin.math.min(diff, 360f - diff)
         }
 
-        if (hueDiff(hsvC[0], hsvD[0]) > 35f) return false
+        if (hueDiff(hsvC[0], hsvD[0]) > 35f) {
+            return false
+        }
 
         val dr = Color.red(c) - Color.red(d)
         val dg = Color.green(c) - Color.green(d)

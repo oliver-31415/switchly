@@ -22,13 +22,16 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 
+// Persists and retrieves pause until state.
 object PauseUntilStore {
     private const val PREFS = "switchly_pause_until"
     private const val KEY_LOCATION_SCHEDULE_ID = "location_schedule_id"
     private const val KEY_LOCATION_ACTIVE = "location_active"
 
     fun markUntilLocationExit(context: Context, scheduleId: Int) {
-        if (scheduleId <= 0) return
+        if (scheduleId <= 0) {
+            return
+        }
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit {
             putBoolean(KEY_LOCATION_ACTIVE, true)
             putInt(KEY_LOCATION_SCHEDULE_ID, scheduleId)

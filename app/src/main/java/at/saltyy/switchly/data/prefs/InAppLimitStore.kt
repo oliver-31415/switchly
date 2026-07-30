@@ -41,7 +41,9 @@ object InAppLimitStore {
     fun getLimitMinutes(context: Context, profile: String): Int {
         val sharedPreferences = prefs(context)
         val key = key(profile)
-        if (!sharedPreferences.contains(key)) return 0
+        if (!sharedPreferences.contains(key)) {
+            return 0
+        }
         return readMinutesCompat(sharedPreferences, key)
     }
 
@@ -62,7 +64,9 @@ object InAppLimitStore {
         val sharedPreferences = prefs(context)
         val oldKey = key(oldProfile)
         val newKey = key(newProfile)
-        if (!sharedPreferences.contains(oldKey)) return
+        if (!sharedPreferences.contains(oldKey)) {
+            return
+        }
         val value = readMinutesCompat(sharedPreferences, oldKey)
         sharedPreferences.edit {
             if (value > 0) putInt(newKey, value) else remove(newKey)

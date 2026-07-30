@@ -6,7 +6,6 @@
     <!-- ====================================================== -->
     <string name="pref_autostart_title">Start Switchly after reboot</string>
     <string name="pref_autostart_summary">Start Switchly again after reboot.</string>
-    <string name="pref_open_accessibility_summary">Enable the Switchly accessibility service again so blocking works reliably.</string>
-    <string name="toggle_detail_autostart">After a reboot, Switchly tries to start itself again so your protection profile comes back automatically.</string>
+<string name="toggle_detail_autostart">After a reboot, Switchly tries to start itself again so your protection profile comes back automatically.</string>
 
 </resources>

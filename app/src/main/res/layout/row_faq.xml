@@ -67,7 +67,7 @@
             android:layout_width="22dp"
             android:layout_height="22dp"
             android:contentDescription="@string/faq_expand_description"
-            android:src="@drawable/arrow_drop_down_24" />
+            android:src="@drawable/keyboard_arrow_down_24" />
     </LinearLayout>
 
     <!-- ANSWER -->

@@ -25,6 +25,7 @@ import androidx.preference.PreferenceManager
 import java.net.IDN
 import java.util.Locale
 
+// Persists and retrieves domain block state.
 object DomainBlockStore {
 
     private const val KEY_ENABLED = "domain_block_enabled"
@@ -68,7 +69,9 @@ object DomainBlockStore {
     private fun migrateGlobalDomainsIfNeeded(ctx: Context, profile: String = currentProfile(ctx)) {
         val sp = prefs(ctx)
         val hasLegacyDomains = sp.contains(KEY_DOMAINS)
-        if (sp.getBoolean(KEY_PROFILE_MIGRATION_DONE, false) && !hasLegacyDomains) return
+        if (sp.getBoolean(KEY_PROFILE_MIGRATION_DONE, false) && !hasLegacyDomains) {
+            return
+        }
 
         val legacy = try {
             sp.getStringSet(KEY_DOMAINS, emptySet()) ?: emptySet()
@@ -89,7 +92,7 @@ object DomainBlockStore {
 
     fun getDomains(ctx: Context): Set<String> {
         val profile = ProfileStore.getCurrent(ctx) ?: "default"
-        return if (ProfileRuleModeStore.isAllowMode(ctx, profile)) {
+        return if (WebsiteRuleModeStore.isAllowMode(ctx, profile)) {
             getAllowedDomainsForProfile(ctx, profile)
         } else {
             getDomainsForProfile(ctx, profile)
@@ -171,19 +174,23 @@ object DomainBlockStore {
     fun isRuleEnabledForHost(ctx: Context, host: String): Boolean {
         val profile = ProfileStore.getCurrent(ctx) ?: "default"
         val disabled = getDisabledDomainsForProfile(ctx, profile)
-        if (disabled.isEmpty()) return true
+        if (disabled.isEmpty()) {
+            return true
+        }
         return disabled.none { matches(host, it) }
     }
 
     fun getEnabledDomains(ctx: Context): Set<String> {
         val profile = ProfileStore.getCurrent(ctx) ?: "default"
         val disabled = getDisabledDomainsForProfile(ctx, profile)
-        if (disabled.isEmpty()) return getDomains(ctx)
+        if (disabled.isEmpty()) {
+            return getDomains(ctx)
+        }
         return getDomains(ctx).filterNot { d -> disabled.any { matches(d, it) } }.toCollection(linkedSetOf())
     }
 
     private fun selectedDomainsForMode(ctx: Context, profile: String): Set<String> {
-        return if (ProfileRuleModeStore.isAllowMode(ctx, profile)) {
+        return if (WebsiteRuleModeStore.isAllowMode(ctx, profile)) {
             getAllowedDomainsForProfile(ctx, profile)
         } else {
             getDomainsForProfile(ctx, profile)
@@ -191,7 +198,7 @@ object DomainBlockStore {
     }
 
     private fun setSelectedDomainsForMode(ctx: Context, profile: String, domains: Set<String>) {
-        if (ProfileRuleModeStore.isAllowMode(ctx, profile)) {
+        if (WebsiteRuleModeStore.isAllowMode(ctx, profile)) {
             setAllowedDomainsForProfile(ctx, profile, domains)
         } else {
             setDomainsForProfile(ctx, profile, domains)
@@ -224,7 +231,7 @@ object DomainBlockStore {
 
     fun shouldBlockHost(ctx: Context, host: String): Boolean {
         val profile = ProfileStore.getCurrent(ctx) ?: "default"
-        val allowMode = ProfileRuleModeStore.isAllowMode(ctx, profile)
+        val allowMode = WebsiteRuleModeStore.isAllowMode(ctx, profile)
         val disabled = getDisabledDomainsForProfile(ctx, profile)
         val selectedRaw = if (allowMode) {
             getAllowedDomainsForProfile(ctx, profile)
@@ -233,7 +240,11 @@ object DomainBlockStore {
         }
         val selected = selectedRaw.filterNot { domain -> disabled.any { matches(domain, it) } }
         val matched = selected.any { matches(host, it) }
-        return if (allowMode) !matched else matched
+        return if (allowMode) {
+            !matched
+        } else {
+            matched
+        }
     }
 
     fun isHostSelected(ctx: Context, host: String): Boolean {
@@ -290,7 +301,9 @@ object DomainBlockStore {
 
     fun normalize(raw: String?): String? {
         var s = raw?.trim().orEmpty()
-        if (s.isBlank()) return null
+        if (s.isBlank()) {
+            return null
+        }
 
         s = s.lowercase(Locale.ROOT)
 
@@ -327,15 +340,23 @@ object DomainBlockStore {
         // Collapse accidental duplicate dots.
         while (".." in s) s = s.replace("..", ".")
 
-        if (s.isBlank() || s.startsWith(".") || s.endsWith(".")) return null
+        if (s.isBlank() || s.startsWith(".") || s.endsWith(".")) {
+            return null
+        }
 
         val ascii = runCatching { IDN.toASCII(s, IDN.ALLOW_UNASSIGNED) }.getOrNull()
             ?.lowercase(Locale.ROOT)
             ?: return null
 
-        if (!ascii.contains('.')) return null
-        if (ascii.length !in 3..253) return null
-        if (!ascii.matches(Regex("^[a-z0-9][a-z0-9.-]*[a-z0-9]$"))) return null
+        if (!ascii.contains('.')) {
+            return null
+        }
+        if (ascii.length !in 3..253) {
+            return null
+        }
+        if (!ascii.matches(Regex("^[a-z0-9][a-z0-9.-]*[a-z0-9]$"))) {
+            return null
+        }
 
         return ascii
     }

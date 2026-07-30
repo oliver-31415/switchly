@@ -84,6 +84,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
     private var fabAdd: FloatingActionButton? = null
     private val selectedRawValues: MutableSet<String> = linkedSetOf()
     private var selectionMode: Boolean = false
+    private var contentInitialized: Boolean = false
 
     private data class ActionSpec(
         val id: String,
@@ -126,9 +127,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        if (EditingLockGuard.isLocked(this) && !AutomationModeStore.isBarcodeSetupMissing(this)) {
-            EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_barcodes)
-            finish()
+        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_barcodes)) {
             return
         }
 
@@ -188,10 +187,15 @@ class ManageBarcodesActivity : AppCompatActivity() {
             if (!selectionMode) showAddChoiceDialog()
         }
         findViewById<View>(R.id.btnEmptyAddBarcode)?.setOnClickListener { showAddChoiceDialog() }
+        contentInitialized = true
     }
 
     override fun onResume() {
         super.onResume()
+        if (!contentInitialized) return
+        if (EditingLockGuard.blockWithDialog(this, R.string.edit_locked_manage_barcodes)) {
+            return
+        }
         refresh()
     }
 
@@ -202,7 +206,7 @@ class ManageBarcodesActivity : AppCompatActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         fabAdd?.isVisible = !selectionMode
-        menu.findItem(R.id.action_info)?.isVisible = !selectionMode
+        menu.findItem(R.id.action_info)?.isVisible = true
         menu.findItem(R.id.action_cancel_select)?.isVisible = selectionMode
         menu.findItem(R.id.action_select)?.isVisible = !selectionMode && adapter.itemCount > 0
         menu.findItem(R.id.action_delete_selected)?.isVisible = selectionMode
@@ -505,17 +509,25 @@ class ManageBarcodesActivity : AppCompatActivity() {
     ): ActionForm? {
         val cleanRaw = rawValue.trim()
         val action = actions.firstOrNull { getString(it.labelRes) == actionLabel } ?: return null
-        if (cleanRaw.isBlank()) return null
+        if (cleanRaw.isBlank()) {
+            return null
+        }
         val cleanMinutesText = minutesText?.trim().orEmpty()
         val askWhenScanned = action.id in setOf("temp_enable", "temp_disable") && cleanMinutesText == getString(R.string.qr_minutes_ask_when_scanned)
         val minutes = if (askWhenScanned) null else cleanMinutesText.takeIf { it.isNotBlank() }?.toLongOrNull()
-        if (action.supportsMinutes && !askWhenScanned && (minutes == null || minutes <= 0L)) return null
+        if (action.supportsMinutes && !askWhenScanned && (minutes == null || minutes <= 0L)) {
+            return null
+        }
         val universal = getString(R.string.manage_barcodes_profile_universal)
         val cleanProfile = profile?.trim()?.takeIf { it.isNotBlank() && !it.equals(universal, ignoreCase = true) }
         val dailyLimit = dailyLimitText?.trim()?.takeIf { it.isNotBlank() }?.toIntOrNull()
         val cooldownMinutes = cooldownText?.trim()?.takeIf { it.isNotBlank() }?.toIntOrNull()
-        if (dailyLimitText?.trim()?.isNotEmpty() == true && (dailyLimit == null || dailyLimit <= 0)) return null
-        if (cooldownText?.trim()?.isNotEmpty() == true && (cooldownMinutes == null || cooldownMinutes <= 0)) return null
+        if (dailyLimitText?.trim()?.isNotEmpty() == true && (dailyLimit == null || dailyLimit <= 0)) {
+            return null
+        }
+        if (cooldownText?.trim()?.isNotEmpty() == true && (cooldownMinutes == null || cooldownMinutes <= 0)) {
+            return null
+        }
         return ActionForm(
             rawValue = cleanRaw,
             name = name?.trim()?.takeIf { it.isNotBlank() },
@@ -551,36 +563,11 @@ class ManageBarcodesActivity : AppCompatActivity() {
         val minutes: Long?,
     )
 
-    private fun formatActionSummary(entry: ScanCodeStore.Entry): String {
-        val parsed = parseExisting(entry) ?: return entry.actionUri
-        val label = getString(parsed.action.labelRes)
-        val profileLabel = parsed.profile ?: getString(R.string.manage_barcodes_profile_universal)
-        val actionLabel = if (parsed.action.supportsMinutes) {
-            if (parsed.action.id in setOf("temp_enable", "temp_disable") && parsed.minutes == null) {
-                label + " (" + getString(R.string.qr_minutes_ask_when_scanned) + ")"
-            } else {
-                label + " (" + ((parsed.minutes ?: 10L).coerceAtLeast(1L)) + " " +
-                    getString(R.string.qr_minutes).lowercase(Locale.getDefault()) + ")"
-            }
-        } else {
-            label
-        }
-        return getString(R.string.manage_barcodes_action_summary_fmt, profileLabel, actionLabel)
-    }
-
     private fun formatIntOrEmpty(value: Int?): String =
         value?.let { NumberFormat.getIntegerInstance(Locale.getDefault()).format(it) }.orEmpty()
 
     private fun formatLong(value: Long): String =
         NumberFormat.getIntegerInstance(Locale.getDefault()).format(value)
-
-    private fun buildMetaSummary(entry: ScanCodeStore.Entry): String {
-        val parts = mutableListOf<String>()
-        entry.note?.takeIf { it.isNotBlank() }?.let { parts += it }
-        entry.dailyLimit?.let { parts += getString(R.string.manage_barcodes_limit_daily_summary, it) }
-        entry.cooldownMinutes?.let { parts += getString(R.string.manage_barcodes_limit_cooldown_summary, it) }
-        return parts.joinToString(" · ")
-    }
 
     private fun parseExisting(entry: ScanCodeStore.Entry?): ParsedExisting? {
         entry ?: return null

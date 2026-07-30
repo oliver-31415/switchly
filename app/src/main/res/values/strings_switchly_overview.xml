@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="switchly_overview_title">Switchly overview</string>
+    <string name="switchly_overview_summary">Scans, app launches, blocks, state changes, and schedules</string>
+    <string name="switchly_overview_info_title">About Switchly overview</string>
+    <string name="switchly_overview_info_body">This overview counts activity handled by Switchly, including NFC, QR and barcode scans, app launches, blocks, effective enable and disable changes, and schedule executions.\n\nThe values are stored locally as permanent statistics and are included when Statistics/counters is selected for JSON or cloud backup. Existing scan and schedule totals remain available. Detailed enable, disable, and schedule-result counters begin with the update that introduced this overview because older action sources cannot be reconstructed reliably.</string>
+    <string name="switchly_overview_storage_note">Stored locally and included in Statistics/counters backups. Detailed state-change counters begin with this update.</string>
+    <string name="switchly_overview_range_overall">Overall</string>
+    <string name="switchly_overview_section_scans">Scans and inputs</string>
+    <string name="switchly_overview_section_activity">Usage and protection</string>
+    <string name="switchly_overview_section_actions">Switchly actions</string>
+    <string name="switchly_overview_section_schedules">Schedules</string>
+    <string name="switchly_overview_nfc_scans">NFC scans</string>
+    <string name="switchly_overview_qr_scans">QR scans</string>
+    <string name="switchly_overview_barcode_scans">Barcode scans</string>
+    <string name="switchly_overview_app_launches">App launches</string>
+    <string name="switchly_overview_blocks">Blocks</string>
+    <string name="switchly_overview_enabled">Switchly enabled</string>
+    <string name="switchly_overview_disabled">Switchly disabled</string>
+    <string name="switchly_overview_temporary_enables">Temporary enables</string>
+    <string name="switchly_overview_emergency_unlocks">Emergency unlocks</string>
+    <string name="switchly_overview_schedules_executed">Schedules executed</string>
+    <string name="switchly_overview_schedule_enables">Schedules that enabled Switchly</string>
+    <string name="switchly_overview_schedule_disables">Schedules that disabled Switchly</string>
+
+</resources>

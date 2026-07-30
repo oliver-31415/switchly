@@ -46,9 +46,7 @@ object LocaleHelper {
         return sp.getString(KEY_LANG, "system") ?: "system"
     }
 
-    /**
-     * Persists the selected language and applies it globally.
-     */
+    // Persists the selected language and applies it globally.
     fun setLanguage(app: Application, lang: String) {
         val sp = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         sp.edit { putString(KEY_LANG, lang) }

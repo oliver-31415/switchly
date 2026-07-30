@@ -2,6 +2,7 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     style="@style/Switchly.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -24,14 +25,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/release_note_version_placeholder"
+                tools:text="v2.2.1-beta"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
             <TextView
                 android:id="@+id/tvDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/release_note_date_placeholder"
+                tools:text="Jul 9, 2026"
                 android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
                 android:textColor="?android:attr/textColorSecondary" />
 
@@ -42,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="@string/release_note_body_placeholder"
+            tools:text="Release notes…"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
             android:lineSpacingExtra="4dp"
             android:breakStrategy="balanced"

@@ -35,20 +35,43 @@ object SwitchlyRuntimeStore {
 
     private fun dayKey(ymd: Int): String = PREFIX_DAY + ymd.toString()
 
+    @Synchronized
     fun markStarted(ctx: Context) {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (sp.getLong(KEY_RUNNING_SINCE, 0L) > 0L) return // already running
+        if (sp.getLong(KEY_RUNNING_SINCE, 0L) > 0L) {
+            return // already running
+        }
         sp.edit { putLong(KEY_RUNNING_SINCE, System.currentTimeMillis()) }
     }
 
+    @Synchronized
     fun markStopped(ctx: Context) {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val since = sp.getLong(KEY_RUNNING_SINCE, 0L)
-        if (since <= 0L) return
+        if (since <= 0L) {
+            return
+        }
         sp.edit { putLong(KEY_RUNNING_SINCE, 0L) }
 
         val now = System.currentTimeMillis()
         addRuntimeRange(ctx, since, now)
+    }
+
+    // Persists elapsed live runtime before taking a backup, then continues from now.
+    @Synchronized
+    fun checkpointForBackup(ctx: Context) {
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val since = sp.getLong(KEY_RUNNING_SINCE, 0L)
+        if (since <= 0L) {
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        if (now <= since) {
+            return
+        }
+        addRuntimeRange(ctx, since, now)
+        sp.edit { putLong(KEY_RUNNING_SINCE, now) }
     }
 
     /**
@@ -56,7 +79,9 @@ object SwitchlyRuntimeStore {
      * This prevents attributing "overnight" runtime entirely to the stop day.
      */
     private fun addRuntimeRange(ctx: Context, startMs: Long, endMs: Long) {
-        if (endMs <= startMs) return
+        if (endMs <= startMs) {
+            return
+        }
 
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         var curStart = startMs
@@ -86,13 +111,16 @@ object SwitchlyRuntimeStore {
     }
 
     // Returns runtime for today. If service is currently running, includes elapsed time so far.
+    @Synchronized
     fun getRuntimeMsToday(ctx: Context): Long {
         val ymd = todayYmdInt()
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val base = sp.getLong(dayKey(ymd), 0L)
         val since = sp.getLong(KEY_RUNNING_SINCE, 0L)
 
-        if (since <= 0L) return base
+        if (since <= 0L) {
+            return base
+        }
 
         val now = System.currentTimeMillis()
         val todayStart = Calendar.getInstance().apply {
@@ -113,7 +141,9 @@ object SwitchlyRuntimeStore {
     }
 
     fun getRuntimeMsForLastNDays(ctx: Context, days: Int): Long {
-        if (days <= 0) return 0L
+        if (days <= 0) {
+            return 0L
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val cal = Calendar.getInstance()
         var sum = 0L

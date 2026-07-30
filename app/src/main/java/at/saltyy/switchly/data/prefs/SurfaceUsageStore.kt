@@ -56,7 +56,9 @@ object SurfaceUsageStore {
     private fun prefKey(surfaceKey: String): String = PREFIX_DAY + dayKey() + "_" + surfaceKey
 
     fun addUsageMsToday(context: Context, surfaceKey: String, deltaMs: Long) {
-        if (surfaceKey.isBlank() || deltaMs <= 0L) return
+        if (surfaceKey.isBlank() || deltaMs <= 0L) {
+            return
+        }
 
         val key = prefKey(surfaceKey)
         pending.merge(key, deltaMs) { current, extra -> current + extra }
@@ -64,7 +66,9 @@ object SurfaceUsageStore {
     }
 
     fun getUsageMsToday(context: Context, surfaceKey: String): Long {
-        if (surfaceKey.isBlank()) return 0L
+        if (surfaceKey.isBlank()) {
+            return 0L
+        }
 
         val key = prefKey(surfaceKey)
         val sharedPreferences = prefs(context)
@@ -83,19 +87,25 @@ object SurfaceUsageStore {
             force ||
                 (now - lastFlushAt) >= FLUSH_INTERVAL_MS ||
                 pending.size >= MAX_PENDING_KEYS
-        if (!shouldFlush) return
+        if (!shouldFlush) {
+            return
+        }
 
         synchronized(lock) {
             val stillTooEarly =
                 !force &&
                     (now - lastFlushAt) < FLUSH_INTERVAL_MS &&
                     pending.size < MAX_PENDING_KEYS
-            if (stillTooEarly) return
+            if (stillTooEarly) {
+                return
+            }
 
             lastFlushAt = now
             val snapshot = HashMap(pending)
             pending.clear()
-            if (snapshot.isEmpty()) return
+            if (snapshot.isEmpty()) {
+                return
+            }
 
             val sharedPreferences = prefs(context)
             sharedPreferences.edit {

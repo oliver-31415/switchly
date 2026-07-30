@@ -28,10 +28,14 @@ object UsageSanity {
     enum class RangeCap { TODAY, WEEK, MONTH, YEAR, OVERALL }
 
     fun capMapToRange(ctx: Context, raw: Map<String, Long>, range: RangeCap): Map<String, Long> {
-        if (raw.isEmpty()) return raw
+        if (raw.isEmpty()) {
+            return raw
+        }
         val total = raw.values.sum().coerceAtLeast(0L)
         val cap = maxPossibleMs(ctx, range)
-        if (cap <= 0L || total <= cap) return raw.mapValues { (_, v) -> v.coerceAtLeast(0L) }
+        if (cap <= 0L || total <= cap) {
+            return raw.mapValues { (_, v) -> v.coerceAtLeast(0L) }
+        }
 
         val out = linkedMapOf<String, Long>()
         var assigned = 0L
@@ -50,21 +54,33 @@ object UsageSanity {
     }
 
     fun capSeriesToRange(ctx: Context, series: List<Long>, range: RangeCap): List<Long> {
-        if (series.isEmpty()) return series
+        if (series.isEmpty()) {
+            return series
+        }
         return capSeriesToCap(series, maxPossibleMs(ctx, range))
     }
 
     fun capTotalToRange(ctx: Context, totalMs: Long, range: RangeCap): Long {
         val cap = maxPossibleMs(ctx, range)
-        return if (cap <= 0L) totalMs.coerceAtLeast(0L) else totalMs.coerceIn(0L, cap)
+        return if (cap <= 0L) {
+            totalMs.coerceAtLeast(0L)
+        } else {
+            totalMs.coerceIn(0L, cap)
+        }
     }
 
     private fun capSeriesToCap(series: List<Long>, cap: Long): List<Long> {
-        if (series.isEmpty()) return series
-        if (cap <= 0L) return series.map { 0L }
+        if (series.isEmpty()) {
+            return series
+        }
+        if (cap <= 0L) {
+            return series.map { 0L }
+        }
         val clean = series.map { it.coerceAtLeast(0L) }
         val total = clean.sum()
-        if (total <= cap) return clean
+        if (total <= cap) {
+            return clean
+        }
         val out = ArrayList<Long>(clean.size)
         var assigned = 0L
         clean.forEachIndexed { index, value ->

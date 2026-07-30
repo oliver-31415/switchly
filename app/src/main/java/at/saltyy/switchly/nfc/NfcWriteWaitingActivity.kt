@@ -38,6 +38,7 @@ import androidx.core.content.IntentCompat
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
+import at.saltyy.switchly.data.prefs.NfcDiagnosticsStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -128,7 +129,9 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        if (isFinishing || isDestroyed || isProcessingTag) return
+        if (isFinishing || isDestroyed || isProcessingTag) {
+            return
+        }
 
         val adapter = nfcAdapter ?: return
         val intent = Intent(this, this::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -155,7 +158,9 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent == null) return
+        if (intent == null) {
+            return
+        }
 
         val tag: Tag? = IntentCompat.getParcelableExtra(intent, NfcAdapter.EXTRA_TAG, Tag::class.java)
 
@@ -165,7 +170,9 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         }
 
         // Avoid double-processing (and avoid calling disableForegroundDispatch in a bad state).
-        if (isProcessingTag) return
+        if (isProcessingTag) {
+            return
+        }
         isProcessingTag = true
 
         // Stop foreground dispatch immediately so follow-up scans cannot get routed back into the write screen while this write result is still being shown.
@@ -179,11 +186,13 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
             if (mode == MODE_PAIR_UID_READONLY || mode == MODE_PAIR_UID_WRITABLE) {
                 val uid = NfcTagUid.uidHex(tag)
                 if (uid == null) {
+                    NfcDiagnosticsStore.recordWriteResult(this, RESULT_FAILED_STR)
                     finishWithError(RESULT_FAILED_STR)
                     return@post
                 }
 
                 if (mode == MODE_PAIR_UID_WRITABLE && !isWritableCapable(tag)) {
+                    NfcDiagnosticsStore.recordWriteResult(this, RESULT_NOT_WRITABLE_STR)
                     finishWithError(RESULT_NOT_WRITABLE_STR)
                     return@post
                 }
@@ -194,6 +203,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
                     NfcUidPairingStore.TagKind.READ_ONLY
                 }
                 val isNew = NfcUidPairingStore.addPairedUidHex(this, uid, tagKind)
+                NfcDiagnosticsStore.recordWriteResult(this, "paired_uid")
                 if (isNew) {
                     showPairMetaPrompt(uid) {
                         finishWithOk(uidHex = uid, alreadyPaired = false)
@@ -213,6 +223,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
             val result = writeUriToTag(uri, tag)
             when (result) {
                 WriteResult.OK -> {
+                    NfcDiagnosticsStore.recordWriteResult(this, "ok")
                     if (shouldAutoPairOnWrite()) {
                         val uid = NfcTagUid.uidHex(tag)
                         if (uid != null) {
@@ -234,9 +245,18 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
 
                     finishWithOk(uidHex = null)
                 }
-                WriteResult.TOO_SMALL -> finishWithError(RESULT_TOO_SMALL_STR)
-                WriteResult.NOT_WRITABLE -> finishWithError(RESULT_NOT_WRITABLE_STR)
-                WriteResult.FAILED -> finishWithError(RESULT_FAILED_STR)
+                WriteResult.TOO_SMALL -> {
+                    NfcDiagnosticsStore.recordWriteResult(this, RESULT_TOO_SMALL_STR)
+                    finishWithError(RESULT_TOO_SMALL_STR)
+                }
+                WriteResult.NOT_WRITABLE -> {
+                    NfcDiagnosticsStore.recordWriteResult(this, RESULT_NOT_WRITABLE_STR)
+                    finishWithError(RESULT_NOT_WRITABLE_STR)
+                }
+                WriteResult.FAILED -> {
+                    NfcDiagnosticsStore.recordWriteResult(this, RESULT_FAILED_STR)
+                    finishWithError(RESULT_FAILED_STR)
+                }
             }
         }
     }
@@ -360,8 +380,12 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
                 ndef = ndefTech
                 ndef.connect()
 
-                if (!ndef.isWritable) return WriteResult.NOT_WRITABLE
-                if (ndef.maxSize < message.toByteArray().size) return WriteResult.TOO_SMALL
+                if (!ndef.isWritable) {
+                    return WriteResult.NOT_WRITABLE
+                }
+                if (ndef.maxSize < message.toByteArray().size) {
+                    return WriteResult.TOO_SMALL
+                }
 
                 ndef.writeNdefMessage(message)
                 WriteResult.OK

@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import at.saltyy.switchly.data.statistics.StatsPersistence
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
@@ -78,7 +79,9 @@ object WebUsageStore {
 
     fun addUsageMsToday(ctx: Context, domain: String, deltaMs: Long) {
         val norm = DomainBlockStore.normalize(domain) ?: return
-        if (norm.isBlank() || deltaMs <= 0L) return
+        if (norm.isBlank() || deltaMs <= 0L) {
+            return
+        }
         val now = System.currentTimeMillis()
         val start = (now - deltaMs).coerceAtMost(now)
         val k = prefKeyForDay(norm, dayKey(0))
@@ -91,7 +94,9 @@ object WebUsageStore {
 
     fun getUsageMsToday(ctx: Context, domain: String): Long {
         val norm = DomainBlockStore.normalize(domain) ?: return 0L
-        if (norm.isBlank()) return 0L
+        if (norm.isBlank()) {
+            return 0L
+        }
         val k = prefKeyForDay(norm, dayKey(0))
         val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
         val base = prefs.getLong(k, 0L)
@@ -101,7 +106,9 @@ object WebUsageStore {
 
     fun setUsageMsToday(ctx: Context, domain: String, valueMs: Long) {
         val norm = DomainBlockStore.normalize(domain) ?: return
-        if (norm.isBlank()) return
+        if (norm.isBlank()) {
+            return
+        }
         val k = prefKeyForDay(norm, dayKey(0))
 
         // Drop any pending increments for today so the value is stable.
@@ -134,7 +141,9 @@ object WebUsageStore {
     }
 
     fun getUsageMsMapForDateRange(ctx: Context, startMs: Long, endMs: Long): Map<String, Long> {
-        if (endMs <= startMs) return emptyMap()
+        if (endMs <= startMs) {
+            return emptyMap()
+        }
         flush(ctx)
         val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
         val wanted = HashSet<String>()
@@ -165,7 +174,9 @@ object WebUsageStore {
     }
 
     fun getSessionsForDateRange(ctx: Context, startMs: Long, endMs: Long): List<WebsiteSession> {
-        if (endMs <= startMs) return emptyList()
+        if (endMs <= startMs) {
+            return emptyList()
+        }
         flush(ctx)
         val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
         val out = ArrayList<WebsiteSession>()
@@ -180,15 +191,25 @@ object WebUsageStore {
             out += parseSessions(prefs.getString(sessionKeyForDay(dayKeyForMillis(cal.timeInMillis)), null))
             cal.add(Calendar.DAY_OF_YEAR, 1)
         }
-        return out
+        val cached = out
             .filter { it.endMs > startMs && it.startMs < endMs && it.durationMs > 0L }
             .map { it.copy(startMs = maxOf(it.startMs, startMs), endMs = minOf(it.endMs, endMs)) }
+        val archived = StatsPersistence.websiteSessionsForRange(ctx, null, startMs, endMs).map { session ->
+            WebsiteSession(session.subject, session.startMs, session.endMs)
+        }
+        return (cached + archived)
+            .groupBy { session -> session.domain to session.startMs }
+            .values
+            .map { matches -> matches.maxBy(WebsiteSession::endMs) }
+            .sortedBy(WebsiteSession::startMs)
             .mergeWebsiteSessions()
     }
 
     fun getUsageMsForDateRange(ctx: Context, domain: String, startMs: Long, endMs: Long): List<Long> {
         val norm = DomainBlockStore.normalize(domain) ?: return emptyList()
-        if (norm.isBlank() || endMs <= startMs) return emptyList()
+        if (norm.isBlank() || endMs <= startMs) {
+            return emptyList()
+        }
         flush(ctx)
         val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
         val out = ArrayList<Long>()
@@ -247,7 +268,9 @@ object WebUsageStore {
      */
     fun clearAllUsage(ctx: Context, domain: String) {
         val norm = DomainBlockStore.normalize(domain) ?: return
-        if (norm.isBlank()) return
+        if (norm.isBlank()) {
+            return
+        }
 
         // Clear any buffered increments first to avoid re-adding after deletion.
         synchronized(lock) {
@@ -269,19 +292,24 @@ object WebUsageStore {
                 if (kept.size == sessions.size) null else key to kept
             }
 
-        if (keysToRemove.isEmpty() && sessionUpdates.isEmpty()) return
+        if (keysToRemove.isEmpty() && sessionUpdates.isEmpty()) {
+            return
+        }
         prefs.edit {
             for (k in keysToRemove) remove(k)
             for ((k, kept) in sessionUpdates) {
                 if (kept.isEmpty()) remove(k) else putString(k, encodeSessions(kept))
             }
         }
+        StatsPersistence.clearWebsiteSessions(ctx, norm)
     }
 
-    /** Total recorded usage for [domain] across all stored days. */
+    // Total recorded usage for the domain across all stored days.
     fun getUsageMsAllTime(ctx: Context, domain: String): Long {
         val norm = DomainBlockStore.normalize(domain) ?: return 0L
-        if (norm.isBlank()) return 0L
+        if (norm.isBlank()) {
+            return 0L
+        }
 
         // Ensure buffered increments are persisted so totals are correct.
         flush(ctx)
@@ -302,7 +330,9 @@ object WebUsageStore {
      */
     fun getUsageMsPerMonthAllTime(ctx: Context, domain: String): Map<Int, Long> {
         val norm = DomainBlockStore.normalize(domain) ?: return emptyMap()
-        if (norm.isBlank()) return emptyMap()
+        if (norm.isBlank()) {
+            return emptyMap()
+        }
 
         flush(ctx)
 
@@ -329,15 +359,21 @@ object WebUsageStore {
     private fun maybeFlush(ctx: Context, force: Boolean) {
         val now = System.currentTimeMillis()
         val should = force || (now - lastFlushAt) >= FLUSH_INTERVAL_MS || pending.size >= MAX_PENDING_KEYS || pendingSessions.size >= MAX_PENDING_KEYS
-        if (!should) return
+        if (!should) {
+            return
+        }
         synchronized(lock) {
-            if (!force && (now - lastFlushAt) < FLUSH_INTERVAL_MS && pending.size < MAX_PENDING_KEYS && pendingSessions.size < MAX_PENDING_KEYS) return
+            if (!force && (now - lastFlushAt) < FLUSH_INTERVAL_MS && pending.size < MAX_PENDING_KEYS && pendingSessions.size < MAX_PENDING_KEYS) {
+                return
+            }
             lastFlushAt = now
             val snapshot = HashMap(pending)
             val sessionSnapshot = ArrayList(pendingSessions)
             pending.clear()
             pendingSessions.clear()
-            if (snapshot.isEmpty() && sessionSnapshot.isEmpty()) return
+            if (snapshot.isEmpty() && sessionSnapshot.isEmpty()) {
+                return
+            }
 
             val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
             prefs.edit {
@@ -362,7 +398,9 @@ object WebUsageStore {
     private fun sessionKeyForDay(day: String): String = PREFIX_SESSION_DAY + day
 
     private fun parseSessions(raw: String?): List<WebsiteSession> {
-        if (raw.isNullOrBlank()) return emptyList()
+        if (raw.isNullOrBlank()) {
+            return emptyList()
+        }
         return runCatching {
             val array = JSONArray(raw)
             buildList {
@@ -390,7 +428,9 @@ object WebUsageStore {
     }
 
     private fun List<WebsiteSession>.mergeWebsiteSessions(): List<WebsiteSession> {
-        if (isEmpty()) return emptyList()
+        if (isEmpty()) {
+            return emptyList()
+        }
         val merged = ArrayList<WebsiteSession>()
         for (session in sortedBy { it.startMs }) {
             val last = merged.lastOrNull()

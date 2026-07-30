@@ -31,6 +31,12 @@ class TimeChangeReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         val action = intent?.action ?: return
+        val supportedAction = action == Intent.ACTION_TIME_CHANGED ||
+            action == Intent.ACTION_TIMEZONE_CHANGED ||
+            action == Intent.ACTION_DATE_CHANGED
+        if (!supportedAction) {
+            return
+        }
         val ctx = context.applicationContext
 
         if (BuildConfig.DEBUG) Log.d(TAG, "time change event: $action -> replan next alarm")

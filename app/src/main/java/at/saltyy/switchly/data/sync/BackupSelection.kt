@@ -23,9 +23,7 @@ import android.content.Context
 import androidx.core.content.edit
 import org.json.JSONArray
 
-/**
- * User-controlled backup categories. Full backup stays the default so existing behavior is unchanged.
- */
+// User-controlled backup categories. Full backup stays the default so existing behavior is unchanged.
 enum class BackupCategory(
     val id: String,
     val displayName: String,
@@ -103,13 +101,13 @@ enum class BackupCategory(
     ),
     STRICT_PROTECTION(
         id = "strict_protection",
-        displayName = "Strict/settings protection",
-        description = "Switchly app access lock, uninstall friction and settings-bypass protection"
+        displayName = "Uninstall/settings protection",
+        description = "Switchly app access lock, Device Admin uninstall protection and settings-bypass protection"
     ),
     STATISTICS(
         id = "statistics",
         displayName = "Statistics/counters",
-        description = "Usage, block, runtime, scan counters and activity history",
+        description = "Usage, launches, unlocks, block/runtime counters and activity history",
         sensitive = true
     ),
     APP_PREFERENCES(
@@ -129,11 +127,15 @@ data class BackupSelection(val categoryIds: Set<String>) {
     fun includes(category: BackupCategory): Boolean = category.id in categoryIds
 
     fun displaySummary(maxItems: Int = 4): String {
-        if (isFull) return "Full backup"
+        if (isFull) {
+            return "Full backup"
+        }
         val names = BackupCategory.values()
             .filter { includes(it) }
             .map { it.displayName }
-        if (names.isEmpty()) return "No categories selected"
+        if (names.isEmpty()) {
+            return "No categories selected"
+        }
         return if (names.size <= maxItems) {
             names.joinToString()
         } else {
@@ -213,7 +215,6 @@ object BackupCategoryFilter {
     private const val FIELD_STATS = "stats"
     private const val FIELD_SCHEDULES_PREFS = "schedules_prefs"
     private const val FIELD_UI_HINTS_PREFS = "ui_hints_prefs"
-    private const val FIELD_WIFI_RULES_PREFS = "wifi_rules_prefs"
 
     fun includedCategoryIdsFromPayload(payload: Map<*, *>): Set<String>? {
         val raw = payload[FIELD_INCLUDED_CATEGORIES] ?: return null
@@ -234,7 +235,6 @@ object BackupCategoryFilter {
         val internalMap = filterInternalPrefs(stringKeyMap(payload[FIELD_SWITCHLY_PREFS]), selection)
         val schedulesMap = filterSchedulesPrefs(stringKeyMap(payload[FIELD_SCHEDULES_PREFS]), selection)
         val uiHintsMap = filterUiHintsPrefs(stringKeyMap(payload[FIELD_UI_HINTS_PREFS]), selection)
-        val wifiRulesMap = filterWifiRulesPrefs(stringKeyMap(payload[FIELD_WIFI_RULES_PREFS]), selection)
         val statsMap = filterStats(stringKeyMap(payload[FIELD_STATS]), selection)
 
         return mapOf(
@@ -247,7 +247,6 @@ object BackupCategoryFilter {
             FIELD_STATS to statsMap,
             FIELD_SCHEDULES_PREFS to schedulesMap,
             FIELD_UI_HINTS_PREFS to uiHintsMap,
-            FIELD_WIFI_RULES_PREFS to wifiRulesMap,
             FIELD_INCLUDED_CATEGORIES to selection.categoryIds.toList().sorted(),
             FIELD_IS_PARTIAL_BACKUP to !selection.isFull,
         )
@@ -261,9 +260,6 @@ object BackupCategoryFilter {
 
     fun filterUiHintsPrefs(src: Map<String, Any?>, selection: BackupSelection): Map<String, Any?> =
         src.filterKeys { key -> selection.matchesAny(categoriesForUiHintsPrefsKey(key)) }
-
-    fun filterWifiRulesPrefs(src: Map<String, Any?>, selection: BackupSelection): Map<String, Any?> =
-        if (selection.includes(BackupCategory.WIFI_SCHEDULES)) src else emptyMap()
 
     fun filterStats(src: Map<String, Any?>, selection: BackupSelection): Map<String, Any?> =
         if (selection.includes(BackupCategory.STATISTICS)) src else emptyMap()
@@ -323,12 +319,18 @@ object BackupCategoryFilter {
                 baseKey.startsWith("in_app_")
         }
 
-        if (isInAppBaseKey(key)) return true
+        if (isInAppBaseKey(key)) {
+            return true
+        }
 
-        if (!key.startsWith("p_")) return false
+        if (!key.startsWith("p_")) {
+            return false
+        }
         val rawKey = key.removePrefix("p_")
         val blockSuffix = rawKey.substringAfter("_block_", missingDelimiterValue = "")
-        if (blockSuffix.isBlank()) return false
+        if (blockSuffix.isBlank()) {
+            return false
+        }
         return isInAppBaseKey("block_$blockSuffix")
     }
 
@@ -348,8 +350,7 @@ object BackupCategoryFilter {
             key.startsWith("supported_browser")
 
     private fun isStrictProtectionPrefsKey(key: String): Boolean =
-        key == "lock_switchly_app_access" ||
-            key == "pref_lock_switchly_app_access" ||
+        key.startsWith("pref_app_lock_") ||
             key == "pref_uninstall_friction" ||
             key.startsWith("settings_bypass") ||
             key.startsWith("strict_") ||
@@ -384,9 +385,12 @@ object BackupCategoryFilter {
             key.startsWith("surf_usage_day_") ||
             key.startsWith("surface_usage_") ||
             key.startsWith("open_count_") ||
+            key.startsWith("app_launch_count_") ||
+            key.startsWith("screen_unlock_") ||
             key.startsWith("limit_hit_") ||
             key.startsWith("switchly_runtime_ms_") ||
             key.startsWith("switchly_active_") ||
+            key.startsWith("switch_action_count_") ||
             key == "switch_mode_active_since_ms" ||
             key == "switch_mode_limit_session_generation" ||
             key.startsWith("emergency_unlock_count_") ||
@@ -446,6 +450,9 @@ object BackupCategoryFilter {
             key.startsWith("profile_rule_mode__") ||
             key.startsWith("profile_rule_allow_essentials__") -> setOf(BackupCategory.PROFILES, BackupCategory.BLOCKED_APPS)
 
+        key.startsWith("profile_website_rule_mode__") ->
+            setOf(BackupCategory.PROFILES, BackupCategory.WEBSITE_BROWSER_SETTINGS)
+
         isNotificationBlockingPrefsKey(key) -> setOf(BackupCategory.NOTIFICATION_BLOCKING)
 
         isInAppBlockingPrefsKey(key) ||
@@ -476,10 +483,13 @@ object BackupCategoryFilter {
             key.startsWith("blocked_attempt_") ||
             key.startsWith("switchly_runtime_ms_") ||
             key.startsWith("switchly_active_") ||
+            key.startsWith("switch_action_count_") ||
             key.startsWith("profile_usage_day_") ||
             key.startsWith("surf_usage_day_") ||
             key.startsWith("surface_usage_") ||
             key.startsWith("open_count_") ||
+            key.startsWith("app_launch_count_") ||
+            key.startsWith("screen_unlock_") ||
             key.startsWith("limit_hit_") ||
             key.startsWith("schedule_exec_count_") ||
             key == "switch_mode_active_since_ms" ||

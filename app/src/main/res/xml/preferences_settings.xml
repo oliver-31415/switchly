@@ -114,13 +114,6 @@
 
     </PreferenceScreen>
 
-    <PreferenceCategory
-        android:key="category_settings_data"
-        android:order="45"
-        android:layout="@layout/item_pref_section_header"
-        android:title="@string/settings_section_data"
-        app:iconSpaceReserved="false" />
-
     <!-- ACCOUNT -->
     <PreferenceScreen
         android:key="screen_account"
@@ -303,14 +296,6 @@
                 android:title="@string/privacy_report_title"
                 android:summary="@string/privacy_report_settings_summary"
                 android:icon="@drawable/security_24"
-                app:iconSpaceReserved="false" />
-
-            <Preference
-                android:key="pref_developer_mode"
-                android:layout="@layout/item_pref_card"
-                android:title="@string/developer_mode_title"
-                android:summary="@string/developer_mode_settings_summary"
-                android:icon="@drawable/tune_24"
                 app:iconSpaceReserved="false" />
 
             <Preference

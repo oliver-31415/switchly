@@ -51,7 +51,9 @@ object SurfaceLimitStore {
     }
 
     fun hasRule(ctx: Context, profile: String, surfaceKey: String): Boolean {
-        if (surfaceKey.isBlank()) return false
+        if (surfaceKey.isBlank()) {
+            return false
+        }
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return prefs.contains(key(profile, surfaceKey))
     }
@@ -61,7 +63,9 @@ object SurfaceLimitStore {
      * See [SurfaceLimitStore] doc for meaning.
      */
     fun getRule(ctx: Context, profile: String, surfaceKey: String): Int {
-        if (surfaceKey.isBlank()) return 0
+        if (surfaceKey.isBlank()) {
+            return 0
+        }
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = key(profile, surfaceKey)
         return readIntOrMigrate(prefs, k)
@@ -72,7 +76,9 @@ object SurfaceLimitStore {
      * Use -1 for always block, 0 to clear, >0 for minutes/day.
      */
     fun setRule(ctx: Context, profile: String, surfaceKey: String, rule: Int) {
-        if (surfaceKey.isBlank()) return
+        if (surfaceKey.isBlank()) {
+            return
+        }
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = key(profile, surfaceKey)
 
@@ -81,7 +87,9 @@ object SurfaceLimitStore {
     }
 
     fun clear(ctx: Context, profile: String, surfaceKey: String) {
-        if (surfaceKey.isBlank()) return
+        if (surfaceKey.isBlank()) {
+            return
+        }
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         prefs.edit { remove(key(profile, surfaceKey)) }
     }
@@ -91,7 +99,9 @@ object SurfaceLimitStore {
         val oldPrefix = PREFIX_RULE + sanitizeProfile(oldProfile) + "__"
         val newPrefix = PREFIX_RULE + sanitizeProfile(newProfile) + "__"
         val keys = prefs.all.keys.filter { it.startsWith(oldPrefix) }
-        if (keys.isEmpty()) return
+        if (keys.isEmpty()) {
+            return
+        }
 
         prefs.edit {
             keys.forEach { oldKey ->
@@ -108,7 +118,9 @@ object SurfaceLimitStore {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val prefix = PREFIX_RULE + sanitizeProfile(profile) + "__"
         val keys = prefs.all.keys.filter { it.startsWith(prefix) }
-        if (keys.isEmpty()) return
+        if (keys.isEmpty()) {
+            return
+        }
         prefs.edit { keys.forEach { remove(it) } }
     }
 
@@ -128,9 +140,7 @@ object SurfaceLimitStore {
         }
     }
 
-    /**
-     * Convenience: returns only the positive daily limit minutes (0 if none).
-     */
+    // Convenience: returns only the positive daily limit minutes (0 if none).
     fun getLimitMinutes(ctx: Context, profile: String, surfaceKey: String): Int {
         return getRule(ctx, profile, surfaceKey).coerceAtLeast(0)
     }

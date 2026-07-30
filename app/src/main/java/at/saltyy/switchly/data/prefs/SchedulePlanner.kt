@@ -25,6 +25,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.content.edit
+import at.saltyy.switchly.util.getLongCompat
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import java.util.Calendar
 import kotlin.math.max
@@ -43,7 +44,7 @@ object SchedulePlanner {
     // Broadcast action used to notify the UI about changes to the next schedule boundary
     const val ACTION_NEXT_CHANGED = "at.saltyy.switchly.schedule.NEXT_CHANGED"
 
-    // Fire at the exact boundary. 
+    // Fire at the exact boundary.
     // Using an "early" window can cause off-by-one-minute behavior when schedules are defined in whole minutes.
     private const val EARLY_WINDOW_MS = 0L
 
@@ -51,7 +52,7 @@ object SchedulePlanner {
     // Some refactors referenced this as PI_TICK but forgot to define it.
     private const val PI_TICK = 42
 
-    // Fallback: if exact alarms are not allowed (Android 12+ without permission), keep a lightweight inexact repeating tick. 
+    // Fallback: if exact alarms are not allowed (Android 12+ without permission), keep a lightweight inexact repeating tick.
     // This prevents schedules from \"never\" applying on devices that heavily defer one-off inexact alarms in Doze.
     private const val FALLBACK_TICK_RC = 43
     private const val FALLBACK_INTERVAL_MS = 15 * 60 * 1000L
@@ -180,25 +181,8 @@ object SchedulePlanner {
     }
 
     fun getNextBoundaryMillis(context: Context): Long {
-        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val raw = sp.all[KEY_NEXT_BOUNDARY_MS]
-
-        val boundaryMs = when (raw) {
-            is Long -> raw
-            is Int -> raw.toLong()
-            is Number -> raw.toLong()
-            is String -> raw.toLongOrNull() ?: -1L
-            null -> -1L
-            else -> -1L
-        }
-
-        // Older builds could leave this preference as Int/String.
-        // SharedPreferences.getLong() would crash with ClassCastException in that case, so normalize it here before the UI reads it again.
-        if (raw !is Long) {
-            sp.edit { putLong(KEY_NEXT_BOUNDARY_MS, boundaryMs) }
-        }
-
-        return boundaryMs
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getLongCompat(KEY_NEXT_BOUNDARY_MS, -1L)
     }
 
     private fun saveNextBoundary(ctx: Context, t: Long) {

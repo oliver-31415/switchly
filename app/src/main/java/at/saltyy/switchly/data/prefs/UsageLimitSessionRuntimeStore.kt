@@ -57,7 +57,9 @@ object UsageLimitSessionRuntimeStore {
         limitMs: Long,
         reached: Boolean
     ) {
-        if (profile.isBlank() || pkg.isBlank() || limitMs <= 0L) return
+        if (profile.isBlank() || pkg.isBlank() || limitMs <= 0L) {
+            return
+        }
         val p = prefix(profile, pkg)
         prefs(context).edit {
             putLong("${p}_generation", generation)
@@ -69,15 +71,23 @@ object UsageLimitSessionRuntimeStore {
     }
 
     fun get(context: Context, profile: String, pkg: String): State? {
-        if (profile.isBlank() || pkg.isBlank()) return null
+        if (profile.isBlank() || pkg.isBlank()) {
+            return null
+        }
         val p = prefix(profile, pkg)
         val sp = prefs(context)
         val generation = sp.getLong("${p}_generation", -1L)
-        if (generation < 0L) return null
+        if (generation < 0L) {
+            return null
+        }
         val currentGeneration = SwitchModeStore.getLimitSessionGeneration(context)
-        if (generation != currentGeneration) return null
+        if (generation != currentGeneration) {
+            return null
+        }
         val limitMs = sp.getLong("${p}_limit_ms", 0L)
-        if (limitMs <= 0L) return null
+        if (limitMs <= 0L) {
+            return null
+        }
         return State(
             profile = profile,
             pkg = pkg,
@@ -92,7 +102,9 @@ object UsageLimitSessionRuntimeStore {
     fun clearAll(context: Context) {
         val sp = prefs(context)
         val keys = sp.all.keys.filter { it.startsWith(PREFIX) }
-        if (keys.isEmpty()) return
+        if (keys.isEmpty()) {
+            return
+        }
         sp.edit { keys.forEach { remove(it) } }
     }
 }

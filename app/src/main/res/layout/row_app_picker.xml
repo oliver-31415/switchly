@@ -148,28 +148,6 @@
         </LinearLayout>
 
         <ImageButton
-            android:id="@+id/btnWebsiteRules"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/app_picker_open_website_rules"
-            android:padding="7dp"
-            android:visibility="gone"
-            app:srcCompat="@drawable/language_24"
-            app:tint="?attr/colorPrimary" />
-
-        <ImageButton
-            android:id="@+id/btnInAppRules"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/app_picker_open_in_app_rules"
-            android:padding="7dp"
-            android:visibility="gone"
-            app:srcCompat="@drawable/tune_24"
-            app:tint="?attr/colorPrimary" />
-
-        <ImageButton
             android:id="@+id/btnLimit"
             android:layout_width="36dp"
             android:layout_height="36dp"

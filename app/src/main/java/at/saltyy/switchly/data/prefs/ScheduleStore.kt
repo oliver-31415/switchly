@@ -25,6 +25,7 @@ import java.util.Calendar
 import org.json.JSONArray
 import org.json.JSONObject
 
+// Persists and retrieves schedule state.
 object ScheduleStore {
 
     private const val PREFS = "switchly_prefs_schedules"
@@ -124,7 +125,9 @@ object ScheduleStore {
         val arrStr = sp.getString(KEY_SCHEDULES, "[]") ?: "[]"
 
         val cached = cachedJson
-        if (cached != null && cached == arrStr) return cachedList
+        if (cached != null && cached == arrStr) {
+            return cachedList
+        }
 
         val arr = JSONArray(arrStr)
         val out = ArrayList<Schedule>()
@@ -176,7 +179,9 @@ object ScheduleStore {
 
     fun hasEnabledWifiSchedules(context: Context): Boolean {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (sp.contains(KEY_HAS_WIFI_SCHEDULES)) return sp.getBoolean(KEY_HAS_WIFI_SCHEDULES, false)
+        if (sp.contains(KEY_HAS_WIFI_SCHEDULES)) {
+            return sp.getBoolean(KEY_HAS_WIFI_SCHEDULES, false)
+        }
         val has = getAll(context).any { it.enabled && !it.wifiSsid.isNullOrBlank() }
         sp.edit { putBoolean(KEY_HAS_WIFI_SCHEDULES, has) }
         return has
@@ -184,7 +189,9 @@ object ScheduleStore {
 
     fun hasEnabledBluetoothSchedules(context: Context): Boolean {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (sp.contains(KEY_HAS_BT_SCHEDULES)) return sp.getBoolean(KEY_HAS_BT_SCHEDULES, false)
+        if (sp.contains(KEY_HAS_BT_SCHEDULES)) {
+            return sp.getBoolean(KEY_HAS_BT_SCHEDULES, false)
+        }
         val has = getAll(context).any { it.enabled && (!it.btDeviceName.isNullOrBlank() || !it.btDeviceAddress.isNullOrBlank()) }
         sp.edit { putBoolean(KEY_HAS_BT_SCHEDULES, has) }
         return has
@@ -192,7 +199,9 @@ object ScheduleStore {
 
     fun hasEnabledLocationSchedules(context: Context): Boolean {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (sp.contains(KEY_HAS_LOCATION_SCHEDULES)) return sp.getBoolean(KEY_HAS_LOCATION_SCHEDULES, false)
+        if (sp.contains(KEY_HAS_LOCATION_SCHEDULES)) {
+            return sp.getBoolean(KEY_HAS_LOCATION_SCHEDULES, false)
+        }
         val has = getAll(context).any { it.enabled && it.isLocationSchedule() }
         sp.edit { putBoolean(KEY_HAS_LOCATION_SCHEDULES, has) }
         return has

@@ -18,6 +18,7 @@
     <string name="permissions_status_disabled">Deaktiviert</string>
     <string name="permissions_status_location_approx">Ungefähr (Präzise erforderlich)</string>
     <string name="permissions_status_location_background_missing">Nur während der App-Nutzung (WLAN evtl. weniger zuverlässig; standortbasierte Zeitpläne brauchen „Immer erlauben“)</string>
+    <string name="permissions_status_nearby_wifi_missing">Berechtigung für WLAN-Geräte in der Nähe fehlt</string>
 
     <!-- ====================================================== -->
     <!-- Core permissions -->
@@ -37,7 +38,7 @@
     <string name="permissions_exact_alarms_not_allowed">Nicht erlaubt</string>
     <string name="permissions_nfc_title">Per NFC starten</string>
     <string name="permissions_nfc_status_manual">Manuell prüfen</string>
-    <string name="permissions_nfc_desc">Einige Android-Versionen zeigen unter „Spezieller App-Zugriff“ einen eigenen Eintrag „Per NFC starten“. Erlaube Switchly dort, damit geschriebene NFC-Tags Switchly beim Scannen öffnen können. Stelle außerdem sicher, dass der System-Schalter „NFC verwenden“ aktiviert ist. Android verlangt normalerweise, dass das Gerät entsperrt ist, bevor passive NFC-Tags an Apps weitergegeben werden.</string>
+    <string name="permissions_nfc_desc">Einige Android-Versionen zeigen unter „Spezieller App-Zugriff“ einen eigenen Eintrag „Per NFC starten“. Erlaube Switchly dort, damit geschriebene NFC-Tags Switchly beim Scannen öffnen können. Stelle außerdem sicher, dass der System-Schalter „NFC verwenden“ aktiviert ist. NFC nutzt keinen normalen Laufzeit-Berechtigungsdialog, daher prüft diese Zeile den System-NFC-Status und Androids Tag-Startzugriff. Android verlangt normalerweise, dass das Gerät entsperrt ist, bevor passive NFC-Tags an Apps weitergegeben werden.</string>
 
     <!-- ====================================================== -->
     <!-- Trigger and notification permissions -->
@@ -98,7 +99,7 @@
     <!-- Protection inactive state -->
     <!-- ====================================================== -->
     <string name="protection_inactive_title">Schutz inaktiv</string>
-    <string name="protection_inactive_text">Switchly ist aktiviert, aber der Bedienungshilfe-Dienst ist deaktiviert. Tippe, um ihn zu aktivieren.</string>
+    <string name="protection_inactive_text">Switchly ist aktiviert, aber der Bedienungshilfe-Dienst ist derzeit nicht aktiv. Tippe, um den Status zu prüfen.</string>
 
     <!-- ====================================================== -->
     <!-- Permission health diagnostics -->

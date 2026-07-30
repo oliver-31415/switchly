@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/toggle_options_title"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
@@ -1028,7 +1028,7 @@
                 style="@style/TextAppearance.MaterialComponents.Subtitle1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="22dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/toggle_group_manage_other_blocking_features"
                 android:textStyle="bold" />
@@ -1039,6 +1039,7 @@
                 style="@style/TextAppearance.MaterialComponents.Subtitle1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
                 android:text="@string/toggle_section_additional_features"
                 android:gravity="center_vertical"
                 app:drawableStartCompat="@drawable/tune_24"
@@ -1068,82 +1069,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="6dp">
-
-                    <!-- Settings access lock -->
-                    <LinearLayout
-                        android:id="@+id/rowLockSwitchlyAppAccess"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/lock_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
-
-                        <Space
-                            android:layout_width="14dp"
-                            android:layout_height="1dp" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/pref_lock_switchly_app_access_title" />
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body2"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/pref_lock_switchly_app_access_summary" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:gravity="center_horizontal">
-
-                            <androidx.appcompat.widget.AppCompatImageButton
-                                android:id="@+id/btnInfoLockSwitchlyAppAccess"
-                                android:layout_width="34dp"
-                                android:layout_height="34dp"
-                                android:layout_marginBottom="0dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
-                                android:padding="7dp"
-                                android:src="@drawable/info_24"
-                                app:tint="?attr/colorOnSurface" />
-
-                            <com.google.android.material.switchmaterial.SwitchMaterial
-                                android:id="@+id/switchLockSwitchlyAppAccess"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textOn=""
-                                android:textOff=""
-                                app:showText="false"/>
-
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <View
-                        android:id="@+id/dividerAfterLockSwitchlyAppAccess"
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
 
                     <!-- Require NFC to disable Switchly -->
                     <LinearLayout
@@ -1636,7 +1561,7 @@
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:layout_marginStart="8dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             android:alpha="0.6"
                             android:contentDescription="@string/open" />
                     </LinearLayout>
@@ -1691,7 +1616,7 @@
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:layout_marginStart="8dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             android:alpha="0.6"
                             android:contentDescription="@string/open" />
                     </LinearLayout>
@@ -1913,54 +1838,6 @@
                             app:showText="false"/>
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:id="@+id/rowShowNextSchedule"
-                        android:layout_width="match_parent"
-                        android:visibility="gone"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/dashboard_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
-
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/pref_show_next_schedule_title" />
-
-                            <TextView
-                                style="@style/TextAppearance.MaterialComponents.Body2"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/pref_show_next_schedule_summary" />
-                        </LinearLayout>
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchShowNextSchedule"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textOn=""
-                            android:textOff=""
-                            app:showText="false"/>
-                    </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -2046,7 +1923,7 @@
                             android:id="@+id/ivQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/open_in_new_24"
                             app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
                             android:contentDescription="@null" />
@@ -2102,7 +1979,7 @@
                             android:id="@+id/ivQrQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/open_in_new_24"
                             app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
                             android:contentDescription="@null" />
@@ -2158,7 +2035,7 @@
                             android:id="@+id/ivBarcodeQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/open_in_new_24"
                             app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
                             android:contentDescription="@null" />
@@ -2254,7 +2131,7 @@
                             android:id="@+id/ivWidgetBarcodeChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
                             android:contentDescription="@null" />
@@ -2310,7 +2187,7 @@
                             android:id="@+id/ivWidgetQrChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
                             android:contentDescription="@null" />
@@ -2366,7 +2243,7 @@
                             android:id="@+id/ivWidgetNextScheduleChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
                             android:contentDescription="@null" />
@@ -2422,7 +2299,7 @@
                             android:id="@+id/ivWidgetActiveTimerChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
                             android:contentDescription="@null" />
@@ -2478,7 +2355,7 @@
                             android:id="@+id/ivWidgetBlockedNotificationsChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
                             android:contentDescription="@null" />

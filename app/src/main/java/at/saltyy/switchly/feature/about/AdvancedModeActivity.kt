@@ -27,6 +27,7 @@ import android.widget.Toast
 import androidx.core.net.toUri
 import at.saltyy.switchly.R
 import at.saltyy.switchly.receiver.DPMReceiver
+import at.saltyy.switchly.util.AndroidSystemPackages
 
 class AdvancedModeActivity : TilesInfoActivity() {
 
@@ -179,8 +180,8 @@ class AdvancedModeActivity : TilesInfoActivity() {
     private fun openAdminScreen() {
         val primary = Intent().setComponent(
             ComponentName(
-                "com.android.settings",
-                "com.android.settings.DeviceAdminSettings"
+                AndroidSystemPackages.SETTINGS,
+                AndroidSystemPackages.SETTINGS_DEVICE_ADMIN_CLASS
             )
         )
 

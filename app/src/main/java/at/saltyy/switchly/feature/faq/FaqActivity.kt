@@ -20,6 +20,7 @@
 package at.saltyy.switchly.feature.faq
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
@@ -63,6 +64,8 @@ class FaqActivity : AppCompatActivity() {
 
     private var categories: List<FaqCategory> = emptyList()
     private var currentCategory: FaqCategory? = null
+    private var openedDirectlyToCategory = false
+    private var requestedQuestionResId = 0
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
@@ -83,7 +86,7 @@ class FaqActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        if (currentCategory != null) {
+        if (currentCategory != null && !openedDirectlyToCategory) {
             showCategoryOverview(clearSearch = true)
         } else {
             onBackPressedDispatcher.onBackPressed()
@@ -106,7 +109,11 @@ class FaqActivity : AppCompatActivity() {
     private fun toolbarForegroundColor(): Int {
         val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
-        return if (night) Color.WHITE else Color.BLACK
+        return if (night) {
+            Color.WHITE
+        } else {
+            Color.BLACK
+        }
     }
 
     private fun setupViews() {
@@ -142,7 +149,7 @@ class FaqActivity : AppCompatActivity() {
 
     private fun setupBackHandling() {
         onBackPressedDispatcher.addCallback(this) {
-            if (currentCategory != null) {
+            if (currentCategory != null && !openedDirectlyToCategory) {
                 showCategoryOverview(clearSearch = true)
             } else {
                 isEnabled = false
@@ -153,11 +160,17 @@ class FaqActivity : AppCompatActivity() {
 
     private fun loadInitialState() {
         categories = buildFaqCategories()
+        val requestedCategory = intent.getStringExtra(EXTRA_CATEGORY)
+        requestedQuestionResId = intent.getIntExtra(EXTRA_QUESTION_RES_ID, 0)
+        currentCategory = categories.firstOrNull { it.id == requestedCategory }
+        openedDirectlyToCategory = currentCategory != null
+        currentCategory?.let { toolbar.title = it.title }
     }
 
     private fun openCategory(folder: FaqListItem.Folder) {
         val category = categories.firstOrNull { it.id == folder.id } ?: return
         currentCategory = category
+        openedDirectlyToCategory = false
         toolbar.title = category.title
         if (!searchInput.text.isNullOrBlank()) {
             searchInput.setText("")
@@ -168,6 +181,7 @@ class FaqActivity : AppCompatActivity() {
 
     private fun showCategoryOverview(clearSearch: Boolean) {
         currentCategory = null
+        openedDirectlyToCategory = false
         toolbar.title = getString(R.string.faq_screen_title)
         if (clearSearch && !searchInput.text.isNullOrBlank()) {
             searchInput.setText("")
@@ -184,8 +198,26 @@ class FaqActivity : AppCompatActivity() {
             else -> filterFaqItems(searchableItems(), query)
         }
 
-        adapter = FaqAdapter(visibleItems, ::openCategory)
+        val initialExpandedPosition = if (requestedQuestionResId != 0) {
+            val requestedQuestion = getString(requestedQuestionResId)
+            visibleItems.indexOfFirst { item ->
+                item is FaqListItem.Item && item.question == requestedQuestion
+            }
+        } else {
+            RecyclerView.NO_POSITION
+        }
+
+        adapter = FaqAdapter(
+            items = visibleItems,
+            onFolderClick = ::openCategory,
+            initialExpandedPosition = initialExpandedPosition
+        )
         recycler.adapter = adapter
+
+        if (initialExpandedPosition != RecyclerView.NO_POSITION) {
+            requestedQuestionResId = 0
+            recycler.post { recycler.scrollToPosition(initialExpandedPosition) }
+        }
 
         val showEmpty = query.isNotBlank() && visibleItems.isEmpty()
         emptyState.visibility = if (showEmpty) View.VISIBLE else View.GONE
@@ -212,7 +244,9 @@ class FaqActivity : AppCompatActivity() {
     }
 
     private fun filterFaqItems(source: List<FaqListItem>, query: String): List<FaqListItem> {
-        if (query.isBlank()) return source
+        if (query.isBlank()) {
+            return source
+        }
 
         val lowerCaseQuery = query.lowercase()
         val filteredItems = mutableListOf<FaqListItem>()
@@ -331,6 +365,7 @@ class FaqActivity : AppCompatActivity() {
                     item(R.string.faq_q_blocked_notifications, R.string.faq_a_blocked_notifications, R.drawable.notifications_24),
                     item(R.string.faq_q_usage_stats, R.string.faq_a_usage_stats, R.drawable.bar_chart_24),
                     item(R.string.faq_q_usage_overall, R.string.faq_a_usage_overall, R.drawable.bar_chart_24),
+                    item(R.string.faq_q_stats_storage, R.string.faq_a_stats_storage, R.drawable.cloud_24),
                     item(R.string.faq_q_troubleshooting_first_steps, R.string.faq_a_troubleshooting_first_steps, R.drawable.help_24)
                 )
             ),
@@ -347,6 +382,7 @@ class FaqActivity : AppCompatActivity() {
                     item(R.string.faq_q_barcode_setup, R.string.faq_a_barcode_setup, R.drawable.barcode_24),
                     item(R.string.faq_q_nfc_tag_types, R.string.faq_a_nfc_tag_types, R.drawable.nfc_24),
                     item(R.string.faq_q_own_nfc_tag, R.string.faq_a_own_nfc_tag, R.drawable.nfc_24),
+                    item(R.string.faq_q_official_switchly_tags, R.string.faq_a_official_switchly_tags, R.drawable.nfc_24),
                     item(R.string.faq_q_nfc_tag_write_fails, R.string.faq_a_nfc_tag_write_fails, R.drawable.info_24),
                     item(R.string.faq_q_nfc_action_examples, R.string.faq_a_nfc_action_examples, R.drawable.nfc_24),
                     item(R.string.faq_q_nfc_uid_pair, R.string.faq_a_nfc_uid_pair, R.drawable.security_24),
@@ -400,7 +436,7 @@ class FaqActivity : AppCompatActivity() {
                     item(R.string.faq_q_support_report_contents, R.string.faq_a_support_report_contents, R.drawable.mail_24),
                     item(R.string.faq_q_premium_overview, R.string.faq_a_premium_overview, R.drawable.star_24),
                     item(R.string.faq_q_premium_how, R.string.faq_a_premium_how, R.drawable.star_24),
-                    item(R.string.faq_q_donate, R.string.faq_a_donate_clean, R.drawable.star_24),
+                    item(R.string.faq_q_support_switchly, R.string.faq_a_support_switchly, R.drawable.star_24),
                     item(R.string.faq_q_contact, R.string.faq_a_contact, R.drawable.mail_24)
                 )
             )
@@ -413,4 +449,24 @@ class FaqActivity : AppCompatActivity() {
             seen.add(item.question.trim().lowercase())
         }
     }
+    companion object {
+        const val CATEGORY_GETTING_STARTED = "start"
+        const val CATEGORY_BACKGROUND_ACCESS = "background"
+        private const val EXTRA_CATEGORY = "extra_category"
+        private const val EXTRA_QUESTION_RES_ID = "extra_question_res_id"
+
+        fun intent(
+            context: Context,
+            category: String? = null,
+            @StringRes questionResId: Int = 0
+        ): Intent = Intent(context, FaqActivity::class.java).apply {
+            if (!category.isNullOrBlank()) {
+                putExtra(EXTRA_CATEGORY, category)
+            }
+            if (questionResId != 0) {
+                putExtra(EXTRA_QUESTION_RES_ID, questionResId)
+            }
+        }
+    }
+
 }

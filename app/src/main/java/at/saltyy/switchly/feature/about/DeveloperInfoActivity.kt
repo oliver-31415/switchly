@@ -30,7 +30,7 @@ class DeveloperInfoActivity : TilesInfoActivity() {
     override fun tiles(): List<Tile> {
         val name = getString(R.string.dev_name_line).removePrefix("Developer: ").trim().ifBlank { getString(R.string.about_developer_name) }
         val website = getString(R.string.about_developer_website_url)
-        val email = getString(R.string.dev_contact_email)
+        val email = getString(R.string.about_dev_mail_address)
 
         return listOf(
             Tile(

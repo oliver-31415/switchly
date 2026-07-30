@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Topbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,15 +17,15 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/website_rules_title"
-            app:navigationIcon="@drawable/arrow_back_ios_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
     </com.google.android.material.appbar.AppBarLayout>
 
-	<LinearLayout
-	    android:id="@+id/content"
-	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
-	    android:orientation="vertical"
-	    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <TextView
             android:id="@+id/tvWebsiteRuleModeTitle"
@@ -51,19 +50,21 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnWebsiteModeBlock"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:minHeight="48dp"
                 android:layout_weight="1"
-                android:text="@string/profile_rule_mode_block" />
+                android:text="@string/profile_rule_mode_block"
+                app:cornerRadius="4dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnWebsiteModeAllow"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:minHeight="48dp"
                 android:layout_weight="1"
-                android:text="@string/profile_rule_mode_allow" />
+                android:text="@string/profile_rule_mode_allow"
+                app:cornerRadius="4dp" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <TextView
@@ -82,48 +83,82 @@
             android:id="@+id/listContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            tools:ignore="UselessParent">
+            android:layout_weight="1">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
-                android:padding="16dp" />
+                android:paddingStart="16dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="120dp" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/emptyCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="top|center_horizontal"
-                android:layout_marginStart="16dp"
+                android:layout_gravity="top"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
                 android:layout_marginTop="20dp"
-                android:layout_marginEnd="16dp"
                 android:visibility="gone"
-                app:cardUseCompatPadding="true"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?android:attr/colorBackground">
+                app:strokeColor="@color/status_border"
+                app:strokeWidth="1dp">
 
-                <TextView
-                    android:id="@+id/tvEmpty"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:lineSpacingExtra="2dp"
-                    android:paddingStart="18dp"
-                    android:paddingTop="18dp"
-                    android:paddingEnd="18dp"
-                    android:paddingBottom="18dp"
-                    android:text="@string/blocked_websites_empty"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp"
-                    android:alpha="0.78" />
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="22dp">
+
+                    <ImageView
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/language_24"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:id="@+id/tvEmptyTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="@string/blocked_websites_empty_title"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvEmptyBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center"
+                        android:text="@string/blocked_websites_empty_body"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEmptyAddWebsite"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/empty_action_add_first_website"
+                        android:textAllCaps="false"
+                        app:icon="@drawable/add_24"
+                        app:iconGravity="textStart" />
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </FrameLayout>
-
-	</LinearLayout>
+    </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"

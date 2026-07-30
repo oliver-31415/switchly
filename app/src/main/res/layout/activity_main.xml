@@ -63,8 +63,10 @@
                     android:paddingBottom="14dp">
 
                     <LinearLayout
+                        android:id="@+id/layoutProtectionStatus"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:baselineAligned="false"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
@@ -105,25 +107,7 @@
                                 android:text="@string/dashboard_setup_subtitle"
                                 android:textSize="13sp" />
                         </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/tvSetupBadge"
-                            style="@style/Switchly.TileBadge"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_badge_default_count"
-                            android:visibility="gone" />
                     </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tvSetupMissingLabel"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/dashboard_setup_missing_label"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                        android:visibility="gone" />
 
                     <TextView
                         android:id="@+id/tvSetupDesc"
@@ -196,7 +180,7 @@
                                 android:id="@+id/tvSwitchMode"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/switch_mode_status_placeholder"
+                                android:text="@string/protection_status_placeholder"
                                 android:textSize="22sp"
                                 android:textStyle="bold"
                                 android:maxLines="2" />
@@ -261,7 +245,7 @@
                         <ImageView
                             android:layout_width="14dp"
                             android:layout_height="14dp"
-                            android:src="@drawable/arrow_forward_ios_24"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             android:alpha="0.6"
                             android:contentDescription="@string/open" />
                     </LinearLayout>
@@ -306,20 +290,6 @@
                         android:textSize="13sp"
                         android:visibility="gone" />
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipTemp"
-                        style="@style/Switchly.Chip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="10dp"
-                        android:text="@string/dashboard_temp_chip"
-                        android:textSize="13sp"
-                        android:visibility="gone"
-                        app:chipIcon="@drawable/schedule_24"
-                        app:chipIconVisible="true"
-                        app:ensureMinTouchTargetSize="false" />
-
                     <TextView
                         android:id="@+id/tvTempHint"
                         android:layout_width="match_parent"
@@ -338,7 +308,7 @@
                         android:paddingEnd="12dp"
                         android:paddingBottom="9dp"
                         app:drawableStartCompat="@drawable/schedule_24"
-                        app:drawableEndCompat="@drawable/arrow_forward_ios_24"
+                        app:drawableEndCompat="@drawable/keyboard_arrow_right_24"
                         android:drawablePadding="10dp"
                         android:text="@string/dashboard_temp_hint"
                         android:textSize="13sp" />
@@ -361,7 +331,7 @@
                         android:paddingEnd="12dp"
                         android:paddingBottom="9dp"
                         app:drawableStartCompat="@drawable/security_24"
-                        app:drawableEndCompat="@drawable/arrow_forward_ios_24"
+                        app:drawableEndCompat="@drawable/keyboard_arrow_right_24"
                         android:drawablePadding="10dp"
                         android:text="@string/dashboard_emergency_hint_ready"
                         android:textSize="13sp" />
@@ -397,525 +367,8 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <LinearLayout
-                android:id="@+id/rowQuickActionsHeader"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:clickable="true"
-                android:focusable="true"
-                android:minHeight="40dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="2dp">
-
-                <TextView
-                    android:id="@+id/tvQuickActionsTitle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:includeFontPadding="true"
-                    android:text="@string/dashboard_quick_actions"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:alpha="0.75" />
-
-                <ImageView
-                    android:id="@+id/ivQuickActionsEdit"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="8dp"
-                    android:contentDescription="@string/dashboard_quick_actions_edit"
-                    android:padding="2dp"
-                    android:src="@drawable/edit_24"
-                    app:tint="?attr/colorOnSurface" />
-
-                <ImageView
-                    android:id="@+id/ivQuickActionsChevron"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:contentDescription="@string/dashboard_quick_actions_toggle"
-                    android:padding="2dp"
-                    android:src="@drawable/arrow_drop_down_24"
-                    app:tint="?attr/colorOnSurface" />
-            </LinearLayout>
-
-            <!-- Quick actions tiles -->
-            <LinearLayout
-                android:id="@+id/gridQuickActions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:id="@+id/rowManageShortcuts"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileManageApps"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="0dp"
-                                android:padding="8dp"
-                                android:src="@drawable/apps_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_apps" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_apps"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_apps_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileProfiles"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="0dp"
-                                android:padding="8dp"
-                                android:src="@drawable/switch_account_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_profiles" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_profiles"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_profiles_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileWriteNfc"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="0dp"
-                                android:padding="8dp"
-                                android:src="@drawable/language_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_blocked_websites" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_blocked_websites"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_blocked_websites_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/rowUtilityShortcuts"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileToggleOptions"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="0dp"
-                                android:padding="8dp"
-                                android:src="@drawable/apps_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_in_app" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_in_app"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_in_app_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tilePermissions"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                    android:layout_width="40dp"
-                                    android:layout_height="40dp"
-                                    android:layout_marginStart="0dp"
-                                    android:padding="8dp"
-                                    android:src="@drawable/bar_chart_24"
-                                    app:tint="?attr/colorOnSurface"
-                                    android:contentDescription="@string/dashboard_tile_usage" />
-
-                            <TextView
-                                android:id="@+id/badgePermissions"
-                                style="@style/Switchly.TileBadge"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/dashboard_badge_default_count"
-                                android:visibility="gone" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_usage"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_usage_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
-
-                <!-- QR/Barcode quick actions -->
-                <LinearLayout
-                    android:id="@+id/rowScanShortcuts"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:weightSum="2"
-                    android:visibility="gone">
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileQr"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="0dp"
-                                android:padding="8dp"
-                                android:src="@drawable/qr_code_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_qr" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_qr"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_qr_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileBarcode"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="0dp"
-                                android:padding="8dp"
-                                android:src="@drawable/barcode_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_barcode" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_barcode"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_barcode_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/rowToolsShortcuts"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:weightSum="2"
-                    android:visibility="gone">
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileNfcWrite"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="0dp"
-                                android:padding="8dp"
-                                android:src="@drawable/nfc_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_write_nfc" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_write_nfc"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_write_nfc_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tileBlockedNotifications"
-                        style="@style/Switchly.TileCard"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:minHeight="116dp"
-                        android:layout_margin="6dp"
-                        android:layout_weight="1"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:layout_marginStart="0dp"
-                                android:padding="8dp"
-                                android:src="@drawable/notifications_24"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/dashboard_tile_blocked_notifications" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_blocked_notifications"
-                                android:textStyle="bold"
-                                android:textSize="15sp"
-                                android:alpha="0.95" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:gravity="center"
-                                android:text="@string/dashboard_tile_blocked_notifications_sub"
-                                android:textSize="12sp"
-                                android:alpha="0.75" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
-
-            </LinearLayout>
+            <include
+                layout="@layout/view_home_quick_actions" />
 
             <!-- Next schedule (optional) -->
             <com.google.android.material.card.MaterialCardView
@@ -970,109 +423,8 @@
                         android:layout_gravity="center_vertical"
                         android:scaleType="centerInside"
                         android:alpha="0.72"
-                        android:src="@drawable/arrow_forward_ios_24"
+                        android:src="@drawable/keyboard_arrow_right_24"
                         android:contentDescription="@string/open" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Blocked right now (live) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardBlockedNow"
-                style="@style/Switchly.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    tools:ignore="UseCompoundDrawables">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        tools:ignore="UseCompoundDrawables">
-
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:src="@drawable/app_blocking_black_24"
-                            android:contentDescription="@string/dashboard_blocked_now_title" />
-
-                        <TextView
-                            android:id="@+id/tvBlockedNowTitle"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:layout_weight="1"
-                            android:text="@string/dashboard_blocked_now_title"
-                            android:textStyle="bold"
-                            android:textSize="16sp" />
-                    </LinearLayout>
-
-                    <com.google.android.material.divider.MaterialDivider
-                        style="@style/Switchly.Divider"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:layout_marginBottom="12dp" />
-
-                    <LinearLayout
-                        android:id="@+id/layoutBlockedNowEmpty"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:visibility="visible"
-                        tools:ignore="UseCompoundDrawables">
-
-                        <ImageView
-                            android:id="@+id/ivBlockedNowEmptyIcon"
-                            android:layout_width="34dp"
-                            android:layout_height="34dp"
-                            android:layout_marginStart="-2dp"
-                            android:padding="7dp"
-                            android:src="@drawable/toggle_on_24"
-                            android:alpha="0.75"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@string/dashboard_blocked_now_title" />
-
-                        <TextView
-                            android:id="@+id/tvBlockedNowEmpty"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="10dp"
-                            android:text="@string/dashboard_blocked_now_all_allowed"
-                            android:textSize="13sp"
-                            android:alpha="0.85"
-                            android:singleLine="true"
-                            android:ellipsize="end" />
-                    </LinearLayout>
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvBlockedNow"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false"
-                        android:layout_marginTop="10dp"
-                        android:visibility="gone" />
-
-                    <TextView
-                        android:id="@+id/tvBlockedNowMore"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/dashboard_blocked_now_more_preview"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:textColor="?attr/colorPrimary"
-                        android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -1091,10 +443,15 @@
                     android:padding="16dp">
 
                     <LinearLayout
+                        android:id="@+id/rowBlockedAppsHeader"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:orientation="horizontal">
 
                         <TextView
                             android:id="@+id/blockedHeader"
@@ -1102,8 +459,8 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/blocked_list_title"
-                            android:textStyle="bold"
-                            android:textSize="16sp" />
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnPickApps"
@@ -1112,67 +469,95 @@
                             android:layout_height="wrap_content"
                             android:text="@string/pick_apps"
                             app:icon="@drawable/apps_24"
-                            app:iconPadding="8dp"
-                            app:iconGravity="textStart" />
-                    </LinearLayout>
+                            app:iconGravity="textStart"
+                            app:iconPadding="8dp" />
 
-                    <com.google.android.material.divider.MaterialDivider
-                        style="@style/Switchly.Divider"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:layout_marginBottom="12dp" />
+                        <ImageView
+                            android:id="@+id/ivBlockedAppsChevron"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="4dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/dashboard_blocked_apps_collapse"
+                            android:padding="12dp"
+                            android:src="@drawable/keyboard_arrow_up_24"
+                            app:tint="?attr/colorOnSurface" />
+                    </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/layoutBlockedAppsEmpty"
+                        android:id="@+id/layoutBlockedAppsContent"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"
-                        tools:ignore="UseCompoundDrawables">
+                        android:orientation="vertical">
 
-                        <LinearLayout
+                        <com.google.android.material.divider.MaterialDivider
+                            style="@style/Switchly.Divider"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            tools:ignore="UseCompoundDrawables,UselessParent">
+                            android:layout_marginTop="12dp"
+                            android:layout_marginBottom="12dp" />
 
-                            <ImageView
-                                android:layout_width="34dp"
-                                android:layout_height="34dp"
-                                android:layout_marginStart="-2dp"
-                                android:padding="7dp"
-                                android:src="@drawable/apps_24"
-                                android:alpha="0.75"
-                                app:tint="?attr/colorOnSurface"
-                                android:contentDescription="@string/blocked_list_title" />
+                        <LinearLayout
+                            android:id="@+id/layoutBlockedAppsEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:visibility="gone"
+                            tools:ignore="UseCompoundDrawables">
 
-                            <TextView
-                                android:id="@+id/tvEmpty"
-                                android:layout_width="0dp"
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginStart="10dp"
-                                android:text="@string/no_blocked_apps"
-                                android:alpha="0.85"
-                                android:singleLine="true"
-                                android:ellipsize="end" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                tools:ignore="UseCompoundDrawables,UselessParent">
+
+                                <ImageView
+                                    android:layout_width="34dp"
+                                    android:layout_height="34dp"
+                                    android:layout_marginStart="-2dp"
+                                    android:alpha="0.75"
+                                    android:contentDescription="@string/blocked_list_title"
+                                    android:padding="7dp"
+                                    android:src="@drawable/apps_24"
+                                    app:tint="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:id="@+id/tvEmpty"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_weight="1"
+                                    android:alpha="0.85"
+                                    android:ellipsize="end"
+                                    android:singleLine="true"
+                                    android:text="@string/no_blocked_apps" />
+                            </LinearLayout>
+
                         </LinearLayout>
 
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvBlocked"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:nestedScrollingEnabled="false" />
                     </LinearLayout>
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvBlocked"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false"
-                        android:layout_marginTop="8dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <View
+        android:id="@+id/bottomNavTourDimOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#A3000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
 
     <!-- Bottom-Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

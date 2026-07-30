@@ -116,7 +116,11 @@ class WhatsNewActivity : AppCompatActivity() {
     private fun toolbarForegroundColor(): Int {
         val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
-        return if (night) Color.WHITE else Color.BLACK
+        return if (night) {
+            Color.WHITE
+        } else {
+            Color.BLACK
+        }
     }
 
     private fun withAlpha(color: Int, alpha: Int): Int =
@@ -218,7 +222,9 @@ class WhatsNewActivity : AppCompatActivity() {
     }
 
     private fun pickHighlights(lines: List<String>, limit: Int): List<String> {
-        if (lines.isEmpty() || limit <= 0) return emptyList()
+        if (lines.isEmpty() || limit <= 0) {
+            return emptyList()
+        }
 
         val buckets = linkedMapOf(
             ChangeKind.FIXED to mutableListOf<String>(),
@@ -284,7 +290,9 @@ class WhatsNewActivity : AppCompatActivity() {
     }
 
     private fun shortenLine(line: String, maxChars: Int): String {
-        if (line.length <= maxChars) return line
+        if (line.length <= maxChars) {
+            return line
+        }
         val cut = line.take(maxChars)
         val safe = cut.substringBeforeLast(' ')
         val base = if (safe.length >= (maxChars * 0.65f).toInt()) safe else cut

@@ -96,7 +96,9 @@ private class SwipeEditDeleteCallback(
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
         val position = viewHolder.bindingAdapterPosition
-        if (position == RecyclerView.NO_POSITION) return
+        if (position == RecyclerView.NO_POSITION) {
+            return
+        }
 
         viewHolder.bindingAdapter?.notifyItemChanged(position)
         when (direction) {

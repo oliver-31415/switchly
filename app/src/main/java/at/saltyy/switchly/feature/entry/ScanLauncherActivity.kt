@@ -23,6 +23,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.core.content.pm.ShortcutManagerCompat
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.feature.barcode.BarcodeScanActivity
 import at.saltyy.switchly.feature.inbox.BlockedInboxActivity
 import at.saltyy.switchly.feature.qr.QrScanActivity
@@ -55,7 +56,9 @@ class ScanLauncherActivity : Activity() {
 
     private fun shortcutIdFrom(intent: Intent?): String? {
         val data = intent?.data ?: return null
-        if (data.scheme != SHORTCUT_SCHEME || data.host != SHORTCUT_HOST) return null
+        if (data.scheme != SHORTCUT_SCHEME || data.host != SHORTCUT_HOST) {
+            return null
+        }
         return data.lastPathSegment?.trim()?.takeIf { it.isNotEmpty() }
     }
 
@@ -67,6 +70,11 @@ class ScanLauncherActivity : Activity() {
 
     private fun handleIntent(intent: Intent?) {
         reportShortcutUsage(intent)
+        AppLogStore.append(
+            this,
+            "Shortcut",
+            "Launcher action=${intent?.action.orEmpty()} id=${shortcutIdFrom(intent).orEmpty()}",
+        )
 
         when (intent?.action) {
             ACTION_FOCUS_NOW -> {
@@ -91,8 +99,22 @@ class ScanLauncherActivity : Activity() {
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
 
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(launchIntent)
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        runCatching {
+            startActivity(launchIntent)
+            ActivityTransitionCompat.startWithoutAnimation(this)
+        }.onFailure { error ->
+            AppLogStore.append(
+                this,
+                "Shortcut",
+                "Launch failed action=${intent?.action.orEmpty()} error=${error.javaClass.simpleName}",
+            )
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            )
+            ActivityTransitionCompat.startWithoutAnimation(this)
+        }
         finishAndNoAnim()
     }
 

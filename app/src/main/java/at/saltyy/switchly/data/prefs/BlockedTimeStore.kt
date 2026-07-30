@@ -23,6 +23,7 @@ import android.content.Context
 import androidx.core.content.edit
 import java.util.Calendar
 
+// Persists and retrieves blocked time state.
 object BlockedTimeStore {
     private const val PREFS = "switchly_prefs"
     // blocked_ms_yyyymmdd_pkg  (ymd = Int like 20251223)
@@ -39,7 +40,9 @@ object BlockedTimeStore {
     private fun dayKey(ymd: Int, pkg: String): String = PREFIX_DAY + ymd.toString() + "_" + pkg
 
     fun addBlockedMsToday(ctx: Context, pkg: String, deltaMs: Long) {
-        if (deltaMs <= 0L || pkg.isBlank()) return
+        if (deltaMs <= 0L || pkg.isBlank()) {
+            return
+        }
         val ymd = todayYmdInt()
         val k = dayKey(ymd, pkg)
 
@@ -55,7 +58,9 @@ object BlockedTimeStore {
     }
 
     fun getBlockedMsToday(ctx: Context, pkg: String): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
         val ymd = todayYmdInt()
         val key = dayKey(ymd, pkg)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -65,7 +70,9 @@ object BlockedTimeStore {
     }
 
     fun getBlockedMsForLastNDays(ctx: Context, pkg: String, days: Int): Long {
-        if (pkg.isBlank() || days <= 0) return 0L
+        if (pkg.isBlank() || days <= 0) {
+            return 0L
+        }
 
         flush(ctx)
 
@@ -82,7 +89,9 @@ object BlockedTimeStore {
     }
 
     fun getBlockedMsForMonth(ctx: Context, pkg: String, year: Int, month1Based: Int): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
 
         flush(ctx)
 
@@ -109,7 +118,9 @@ object BlockedTimeStore {
     }
 
     fun getBlockedMsForYear(ctx: Context, pkg: String, year: Int): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
 
         flush(ctx)
 
@@ -136,11 +147,12 @@ object BlockedTimeStore {
 
     /**
      * Sums all persisted blocked_ms entries for the given package across *all* days.
-     *
      * This is used for the "Overall" stats range.
      */
     fun getBlockedMsOverall(ctx: Context, pkg: String): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
         flush(ctx)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val suffix = "_" + pkg
@@ -166,7 +178,9 @@ object BlockedTimeStore {
     fun flush(ctx: Context) {
         val toWrite: Map<String, Long>
         synchronized(lock) {
-            if (pending.isEmpty()) return
+            if (pending.isEmpty()) {
+                return
+            }
             toWrite = HashMap(pending)
             pending.clear()
             lastFlushAtMs = System.currentTimeMillis()

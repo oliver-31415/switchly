@@ -30,7 +30,9 @@ object NfcTagUid {
     fun uidHex(tag: Tag?): String? = uidHex(tag?.id)
 
     fun uidHex(id: ByteArray?): String? {
-        if (id == null || id.isEmpty()) return null
+        if (id == null || id.isEmpty()) {
+            return null
+        }
         return id.joinToString(separator = "") { b ->
             "%02X".format(b)
         }.let { normalizeUidHex(it) }
@@ -41,7 +43,9 @@ object NfcTagUid {
      * Accepts formats like "04:AB-11 22" and converts to "04AB1122".
      */
     fun normalizeUidHex(value: String?): String {
-        if (value == null) return ""
+        if (value == null) {
+            return ""
+        }
         return value
             .trim()
             .uppercase()

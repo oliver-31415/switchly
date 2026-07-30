@@ -33,7 +33,7 @@ object QuickShortcutRegistrar {
 
     private const val PREFS = "switchly_shortcuts"
     private const val KEY_REGISTERED_SPEC = "registered_spec"
-    private const val SHORTCUT_SPEC = "focus_qr_barcode_v2"
+    private const val SHORTCUT_SPEC = "focus_qr_barcode"
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "SwitchlyShortcuts").apply { isDaemon = true }
@@ -41,7 +41,9 @@ object QuickShortcutRegistrar {
 
     fun refreshAsync(context: Context, force: Boolean = false) {
         val appContext = context.applicationContext
-        if (!force && isRegisteredForCurrentSpec(appContext)) return
+        if (!force && isRegisteredForCurrentSpec(appContext)) {
+            return
+        }
         executor.execute {
             if (!force && isRegisteredForCurrentSpec(appContext)) return@execute
             if (refresh(appContext)) {
@@ -112,7 +114,7 @@ object QuickShortcutRegistrar {
         val intent = Intent(context, ScanLauncherActivity::class.java)
             .setAction(action)
             .setData("switchly://shortcut/$id".toUri())
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
         return ShortcutInfoCompat.Builder(context, id)
             .setShortLabel(context.getString(shortLabelRes))

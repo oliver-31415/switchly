@@ -24,7 +24,7 @@ import at.saltyy.switchly.util.AppBlockSafety
 
 internal fun isHighRiskBlockTarget(context: Context, pkg: String): Boolean {
     return when (AppBlockSafety.matchRiskRule(context, pkg)?.action) {
-        AppBlockSafety.PolicyAction.NEVER_BLOCK,
+        AppBlockSafety.PolicyAction.PROTECTED,
         AppBlockSafety.PolicyAction.STRICT_MODE_ONLY,
         AppBlockSafety.PolicyAction.WARN_ONLY -> true
         else -> false
@@ -33,7 +33,7 @@ internal fun isHighRiskBlockTarget(context: Context, pkg: String): Boolean {
 
 internal fun shouldUseLoopSafetyMode(context: Context, pkg: String): Boolean {
     return when (AppBlockSafety.matchRiskRule(context, pkg)?.action) {
-        AppBlockSafety.PolicyAction.NEVER_BLOCK,
+        AppBlockSafety.PolicyAction.PROTECTED,
         AppBlockSafety.PolicyAction.STRICT_MODE_ONLY -> true
         else -> false
     }

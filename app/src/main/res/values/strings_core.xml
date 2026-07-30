@@ -29,6 +29,7 @@
     <string name="required">Required</string>
     <string name="invalid_value">Invalid value</string>
     <string name="state_enabled">Enabled</string>
+    <string name="state_temporarily_paused">Temporarily paused</string>
     <string name="state_temporarily_enabled">Temporarily enabled</string>
     <string name="state_disabled">Disabled</string>
 

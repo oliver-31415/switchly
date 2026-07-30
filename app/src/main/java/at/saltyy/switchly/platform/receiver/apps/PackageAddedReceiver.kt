@@ -28,11 +28,17 @@ import at.saltyy.switchly.data.prefs.ProfileStore
 
 class PackageAddedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_PACKAGE_ADDED) return
-        if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+        if (intent.action != Intent.ACTION_PACKAGE_ADDED) {
+            return
+        }
+        if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+            return
+        }
 
         val pkg = intent.data?.schemeSpecificPart?.takeIf { it.isNotBlank() } ?: return
-        if (pkg == context.packageName) return
+        if (pkg == context.packageName) {
+            return
+        }
 
         val changedProfiles = ProfileStore.addBlockedAppToAutoBlockProfiles(context, pkg)
         if (changedProfiles > 0) {

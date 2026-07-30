@@ -24,6 +24,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.Calendar
 
+// Persists and retrieves emergency unlock count state.
 object EmergencyUnlockCountStore {
     private const val PREFS = "switchly_prefs"
     private const val PREFIX = "emergency_unlock_count_" // emergency_unlock_count_yyyymmdd
@@ -38,7 +39,9 @@ object EmergencyUnlockCountStore {
     }
 
     fun getForLastNDays(context: Context, days: Int): Int {
-        if (days <= 0) return 0
+        if (days <= 0) {
+            return 0
+        }
 
         val sharedPreferences = prefs(context)
         val calendar = Calendar.getInstance()
@@ -111,7 +114,9 @@ object EmergencyUnlockCountStore {
     }
 
     fun incrementToday(context: Context, delta: Int = 1) {
-        if (delta <= 0) return
+        if (delta <= 0) {
+            return
+        }
 
         val sharedPreferences = prefs(context)
         val key = key(todayYmdInt())

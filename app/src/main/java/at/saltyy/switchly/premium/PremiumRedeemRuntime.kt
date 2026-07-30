@@ -54,7 +54,8 @@ object PremiumRedeemRuntime {
 
     private val VALID_SWITCHLY_COMPACT_CODE = Regex("^SWLY[A-Z0-9]{12}$")
     private val VALID_SWITCHLY_DISPLAY_CODE = Regex("^SWLY-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
-    private val VALID_OFFLINE_CODE = Regex("^SALT-OFFLINE-[0-9]{4}$")
+    private val VALID_OFFLINE_CODE = Regex("^SALT-OFFLINE-[A-Z0-9]{4}-[A-Z0-9]{4}$")
+    private val VALID_OFFLINE_COMPACT_CODE = Regex("^SALTOFFLINE[A-Z0-9]{8}$")
 
     data class RedeemResult(
         val success: Boolean,
@@ -119,11 +120,14 @@ object PremiumRedeemRuntime {
         }
 
         val offline = cleaned.replace(Regex("-+"), "-")
-        if (VALID_OFFLINE_CODE.matches(offline)) return offline
+        if (VALID_OFFLINE_CODE.matches(offline)) {
+            return offline
+        }
 
         val offlineCompact = cleaned.replace("-", "")
-        if (offlineCompact.matches(Regex("^SALTOFFLINE[0-9]{4}$"))) {
-            return "SALT-OFFLINE-${offlineCompact.takeLast(4)}"
+        if (VALID_OFFLINE_COMPACT_CODE.matches(offlineCompact)) {
+            val payload = offlineCompact.removePrefix("SALTOFFLINE")
+            return "SALT-OFFLINE-${payload.take(4)}-${payload.drop(4)}"
         }
 
         return cleaned
@@ -143,7 +147,7 @@ object PremiumRedeemRuntime {
 
     fun expectedFormatDescription(): String = when (helperMode()) {
         Mode.ONLINE_SWITCHLY_CODE -> "SWLY-XXXX-XXXX-XXXX"
-        Mode.OFFLINE_CODE -> "SALT-OFFLINE-0001"
+        Mode.OFFLINE_CODE -> "SALT-OFFLINE-XXXX-XXXX"
         Mode.UNSUPPORTED -> "SWLY-XXXX-XXXX-XXXX"
     }
 
@@ -408,7 +412,9 @@ object PremiumRedeemRuntime {
     }
 
     private fun readStream(stream: InputStream?): String {
-        if (stream == null) return ""
+        if (stream == null) {
+            return ""
+        }
         return BufferedReader(InputStreamReader(stream, StandardCharsets.UTF_8)).use { reader ->
             reader.readText()
         }

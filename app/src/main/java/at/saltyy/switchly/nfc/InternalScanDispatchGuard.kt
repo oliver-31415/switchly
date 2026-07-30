@@ -49,7 +49,9 @@ object InternalScanDispatchGuard {
     }
 
     fun consume(context: Context, expectedSource: String?, token: String?): Boolean {
-        if (expectedSource.isNullOrBlank() || token.isNullOrBlank()) return false
+        if (expectedSource.isNullOrBlank() || token.isNullOrBlank()) {
+            return false
+        }
 
         val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val sourceKey = KEY_SOURCE_PREFIX + token

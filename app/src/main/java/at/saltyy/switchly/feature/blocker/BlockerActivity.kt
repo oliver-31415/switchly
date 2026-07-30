@@ -20,7 +20,6 @@
 package at.saltyy.switchly.feature.blocker
 
 import android.app.Activity
-import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
@@ -41,10 +40,12 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.graphics.ColorUtils
-import androidx.core.net.toUri
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.SwitchModeStore
@@ -74,7 +75,9 @@ class BlockerActivity : ComponentActivity() {
 
     private val tick = object : Runnable {
         override fun run() {
-            if (!tickRunning) return
+            if (!tickRunning) {
+                return
+            }
             flushDelta()
             handler.postDelayed(this, 1000L)
         }
@@ -104,6 +107,7 @@ class BlockerActivity : ComponentActivity() {
         }
 
         setContentView(R.layout.activity_blocker)
+        applySystemBarInsets()
         runCatching { window.setWindowAnimations(0) }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -118,7 +122,7 @@ class BlockerActivity : ComponentActivity() {
             window.decorView.setBackgroundColor(bg)
 
             // Set correct status/nav icon appearance (dark icons on light bg, light icons on dark bg)
-            WindowCompat.setDecorFitsSystemWindows(window, true)
+            WindowCompat.setDecorFitsSystemWindows(window, false)
             val controller = WindowInsetsControllerCompat(window, window.decorView)
             val isLightBg = isColorLight(bg)
             controller.isAppearanceLightStatusBars = isLightBg
@@ -290,7 +294,9 @@ class BlockerActivity : ComponentActivity() {
             val secondaryText = ColorUtils.setAlphaComponent(primaryText, 0xB3)
 
             fun addRow(label: String, value: String) {
-                if (value.isBlank()) return
+                if (value.isBlank()) {
+                    return
+                }
                 val title = TextView(this@BlockerActivity).apply {
                     text = label
                     setTypeface(typeface, Typeface.BOLD)
@@ -419,12 +425,26 @@ class BlockerActivity : ComponentActivity() {
         runCatching { audio.dispatchMediaKeyEvent(up) }
     }
 
-    private fun killBackgroundPackage(context: Context, pkg: String) {
-        if (pkg.isBlank()) return
-        runCatching {
-            val am = context.getSystemService(ACTIVITY_SERVICE) as? ActivityManager ?: return@runCatching
-            am.killBackgroundProcesses(pkg)
+    private fun applySystemBarInsets() {
+        val root = findViewById<View>(R.id.blocker_root)
+        val initialLeft = root.paddingLeft
+        val initialTop = root.paddingTop
+        val initialRight = root.paddingRight
+        val initialBottom = root.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            view.updatePadding(
+                left = initialLeft + bars.left,
+                top = initialTop + bars.top,
+                right = initialRight + bars.right,
+                bottom = initialBottom + bars.bottom
+            )
+            insets
         }
+        ViewCompat.requestApplyInsets(root)
     }
 
     private fun resolveThemeColor(attr: Int, fallback: Int): Int {
@@ -503,17 +523,25 @@ class BlockerActivity : ComponentActivity() {
         }
 
         fun isRecentlyResumedFor(pkg: String, ttlMs: Long = VISIBLE_TTL_MS): Boolean {
-            if (pkg.isBlank()) return false
+            if (pkg.isBlank()) {
+                return false
+            }
             val visibleForSamePackage = visiblePkg == pkg
-            if (!isVisible || !visibleForSamePackage) return false
+            if (!isVisible || !visibleForSamePackage) {
+                return false
+            }
             val age = SystemClock.elapsedRealtime() - lastResumedAtRealtime
             return age in 0..ttlMs
         }
 
         fun isRecentlyFocusedFor(pkg: String, ttlMs: Long = VISIBLE_TTL_MS): Boolean {
-            if (pkg.isBlank()) return false
+            if (pkg.isBlank()) {
+                return false
+            }
             val visibleForSamePackage = visiblePkg == pkg
-            if (!isVisible || !hasWindowFocusNow || !visibleForSamePackage) return false
+            if (!isVisible || !hasWindowFocusNow || !visibleForSamePackage) {
+                return false
+            }
             val age = SystemClock.elapsedRealtime() - lastFocusedAtRealtime
             return age in 0..ttlMs
         }
@@ -524,7 +552,9 @@ class BlockerActivity : ComponentActivity() {
         }
 
         private fun ageOrMissing(now: Long, value: Long): String {
-            if (value <= 0L) return "-"
+            if (value <= 0L) {
+                return "-"
+            }
             return (now - value).coerceAtLeast(0L).toString()
         }
 
@@ -611,37 +641,6 @@ class BlockerActivity : ComponentActivity() {
             }
         }
 
-        private fun launchYouTubeHome(context: Context) {
-            // Use an explicit YouTube Home entry instead of ACTION_MAIN/CATEGORY_HOME.
-            // This prevents OK on a Shorts block from falling back to the phone launcher.
-            val flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
-                Intent.FLAG_ACTIVITY_NO_ANIMATION
-
-            val candidates = listOf(
-                Intent(Intent.ACTION_VIEW, "https://www.youtube.com/".toUri()).apply {
-                    setPackage("com.google.android.youtube")
-                    addFlags(flags)
-                },
-                Intent(Intent.ACTION_VIEW, "vnd.youtube://www.youtube.com/".toUri()).apply {
-                    setPackage("com.google.android.youtube")
-                    addFlags(flags)
-                },
-                PackageLaunchIntentCompat.getLaunchIntent(context, "com.google.android.youtube")?.apply {
-                    addFlags(flags)
-                }
-            ).filterNotNull()
-
-            for (intent in candidates) {
-                val started = runCatching {
-                    context.startActivity(intent)
-                    true
-                }.getOrDefault(false)
-                if (started) return
-            }
-        }
-
         private data class PendingBackNavigation(
             val pkg: String,
             val backCount: Int,
@@ -665,7 +664,9 @@ class BlockerActivity : ComponentActivity() {
 
         @Synchronized
         fun queuePendingBackNavigation(pkg: String, backCount: Int) {
-            if (pkg.isBlank() || backCount <= 0) return
+            if (pkg.isBlank() || backCount <= 0) {
+                return
+            }
             pendingBackNavigation = PendingBackNavigation(pkg = pkg, backCount = backCount, createdAt = System.currentTimeMillis())
         }
 
@@ -677,7 +678,9 @@ class BlockerActivity : ComponentActivity() {
                 pendingBackNavigation = null
                 return 0
             }
-            if (pending.pkg != pkg) return 0
+            if (pending.pkg != pkg) {
+                return 0
+            }
             pendingBackNavigation = null
             return pending.backCount.coerceAtLeast(0)
         }
@@ -688,7 +691,9 @@ class BlockerActivity : ComponentActivity() {
             cleanupShorts: Boolean = false,
             cleanupMiniPlayer: Boolean = true
         ) {
-            if (pkg != "com.google.android.youtube") return
+            if (pkg != "com.google.android.youtube") {
+                return
+            }
             pendingYouTubeHomeRedirect = PendingYouTubeHomeRedirect(
                 pkg = pkg,
                 cleanupShorts = cleanupShorts,
@@ -705,7 +710,9 @@ class BlockerActivity : ComponentActivity() {
                 pendingYouTubeHomeRedirect = null
                 return 0
             }
-            if (pending.pkg != pkg) return 0
+            if (pending.pkg != pkg) {
+                return 0
+            }
             pendingYouTubeHomeRedirect = null
             return FLAG_YOUTUBE_HOME_REDIRECT or
                 (if (pending.cleanupShorts) FLAG_YOUTUBE_CLEANUP_SHORTS else 0) or

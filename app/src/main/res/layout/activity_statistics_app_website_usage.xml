@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -17,7 +18,7 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:title="@string/statistics_usage_title"
-            app:navigationIcon="@drawable/arrow_back_ios_24">
+            app:navigationIcon="@drawable/keyboard_arrow_left_24">
 
             <ImageButton
                 android:id="@+id/btnStatsInfo"
@@ -110,7 +111,10 @@
                     android:layout_height="40dp"
                     android:minWidth="0dp"
                     android:contentDescription="@string/activity_history_range_custom"
+                    android:gravity="center"
+                    android:text=""
                     app:icon="@drawable/calendar_month_24"
+                    app:iconGravity="textStart"
                     app:iconPadding="0dp"
                     app:cornerRadius="4dp" />
 
@@ -190,7 +194,8 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnApps"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:layout_weight="1"
                     android:text="@string/usage_apps_tab"
                     app:cornerRadius="4dp" />
@@ -198,7 +203,8 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnWeb"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:layout_weight="1"
                     android:text="@string/usage_websites_tab"
                     app:cornerRadius="4dp" />
@@ -244,7 +250,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/usage_web_placeholder"
+                tools:text="@string/usage_websites_no_data"
                 android:visibility="gone"
                 android:alpha="0.8"/>
 

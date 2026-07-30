@@ -61,7 +61,8 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         @param:DrawableRes @field:DrawableRes val actionIconRes: Int? = null,
         val copiedToast: String? = null,
         @param:ColorRes @field:ColorRes val subtitleColorRes: Int? = null,
-        val subtitleAlpha: Float? = null
+        val subtitleAlpha: Float? = null,
+        val tintIcon: Boolean = true
     )
 
     private lateinit var toolbar: MaterialToolbar
@@ -101,10 +102,6 @@ abstract class TilesInfoActivity : AppCompatActivity() {
 
     private fun setupContent() {
         rowsContainer = findViewById(R.id.containerRows)
-
-        // The screen title is shown in the top bar.
-        // The old small section header looked cramped, so we hide it to keep the layout clean.
-        findViewById<TextView>(R.id.tvSection).visibility = View.GONE
     }
 
     protected fun refreshTiles() {
@@ -176,7 +173,7 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         tile.iconRes?.let { iconRes ->
             iconView.visibility = View.VISIBLE
             iconView.setImageResource(iconRes)
-            ImageViewCompat.setImageTintList(iconView, accentTint)
+            ImageViewCompat.setImageTintList(iconView, if (tile.tintIcon) accentTint else null)
         } ?: run {
             iconView.visibility = View.GONE
         }
@@ -244,6 +241,10 @@ abstract class TilesInfoActivity : AppCompatActivity() {
     private fun readableToolbarIconColor(): Int {
         val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
-        return if (night) Color.WHITE else Color.BLACK
+        return if (night) {
+            Color.WHITE
+        } else {
+            Color.BLACK
+        }
     }
 }

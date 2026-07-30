@@ -21,8 +21,6 @@ package at.saltyy.switchly.feature.settings
 
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.drawable.GradientDrawable
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -46,6 +44,7 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
+import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.nfc.NfcWriteWaitingActivity
 import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.theme.AccentColor
@@ -69,7 +68,6 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
-import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 
 class ManagePairedTagsActivity : AppCompatActivity() {
@@ -102,11 +100,6 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             else -> SortMode.NAME_AZ.id
         }
         return SortMode.fromId(id)
-    }
-
-    private fun setSortMode(mode: SortMode) {
-        val sp = getSharedPreferences("switchly_prefs", MODE_PRIVATE)
-        sp.edit { putInt("paired_tags_sort_mode", mode.id) }
     }
 
     private lateinit var adapter: TagAdapter
@@ -257,7 +250,9 @@ class ManagePairedTagsActivity : AppCompatActivity() {
     }
 
     private fun refresh() {
-        if (!::adapter.isInitialized || !::empty.isInitialized) return
+        if (!::adapter.isInitialized || !::empty.isInitialized) {
+            return
+        }
         val tags = NfcUidPairingStore.getPairedTags(this)
         val sorted = applySort(tags, getSortMode())
         lastTags = sorted
@@ -306,38 +301,6 @@ class ManagePairedTagsActivity : AppCompatActivity() {
 
     private fun buildStoreInfoMessage(baseMessageRes: Int): String {
         return getString(baseMessageRes) + "\n\n" + getString(R.string.store_card_title) + "\n" + getString(R.string.store_card_summary)
-    }
-
-    private fun showSortDialog() {
-        val modes = listOf(
-            SortMode.NEW_OLD,
-            SortMode.OLD_NEW,
-            SortMode.NAME_AZ,
-            SortMode.NAME_ZA
-        )
-        val labels = arrayOf(
-            getString(R.string.paired_tags_sort_new_old),
-            getString(R.string.paired_tags_sort_old_new),
-            getString(R.string.paired_tags_sort_name_az),
-            getString(R.string.paired_tags_sort_name_za)
-        )
-
-        val current = getSortMode()
-        val checked = modes.indexOf(current).coerceAtLeast(0)
-
-        // Use the same custom single-select list component as in Settings.
-        // This avoids OEM/framework tinted list indicators that can stay green in CUSTOM accent mode.
-        showSingleSelectRadioDialog(
-            title = getString(R.string.paired_tags_sort_title),
-            entries = labels.toList(),
-            checkedIndex = checked,
-            icons = listOf(R.drawable.schedule_24, R.drawable.schedule_24, R.drawable.tune_24, R.drawable.tune_24),
-        ) { which, dialog ->
-            val picked = modes.getOrNull(which) ?: SortMode.NAME_AZ
-            setSortMode(picked)
-            refresh()
-            dialog.dismiss()
-        }
     }
 
     private fun showAddDialog() {
@@ -390,29 +353,6 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         }
     }
 
-    private fun showSingleSelectRadioDialog(
-        title: String,
-        entries: List<String>,
-        checkedIndex: Int,
-        icons: List<Int?>? = null,
-        onSelected: (index: Int, dialog: AlertDialog) -> Unit,
-    ) {
-        lateinit var dialog: AlertDialog
-        dialog = showSwitchlyOptionDialog(
-            title = title,
-            options = entries.mapIndexed { index, label ->
-                SwitchlyDialogOption(
-                    title = label,
-                    iconRes = icons?.getOrNull(index),
-                    selected = index == checkedIndex
-                )
-            },
-            confirmSelection = true
-        ) { which ->
-            onSelected(which, dialog)
-        }
-    }
-
     private fun toggleSelection(uid: String) {
         if (selectedUids.contains(uid)) selectedUids.remove(uid) else selectedUids.add(uid)
         if (selectedUids.isEmpty()) {
@@ -430,74 +370,115 @@ class ManagePairedTagsActivity : AppCompatActivity() {
     }
 
     private fun showEditDialog(tag: NfcUidPairingStore.TagMeta) {
-        val content = LayoutInflater.from(this).inflate(R.layout.dialog_paired_tag_edit, FrameLayout(this), false)
+        val content = LayoutInflater.from(this).inflate(
+            R.layout.dialog_paired_tag_edit,
+            FrameLayout(this),
+            false,
+        )
         val etName = content.findViewById<EditText>(R.id.etTagName)
         val etNote = content.findViewById<EditText>(R.id.etTagNote)
-        val etReadOnlyDuration = content.findViewById<EditText>(R.id.etReadOnlyDurationMinutes)
         val etDailyLimit = content.findViewById<EditText>(R.id.etTagDailyLimit)
         val etCooldown = content.findViewById<EditText>(R.id.etTagCooldownMinutes)
-        val acReadOnlyAction = content.findViewById<MaterialAutoCompleteTextView>(R.id.acReadOnlyAction)
-        val readOnlyActionGroup = content.findViewById<View>(R.id.readOnlyActionGroup)
-        val tagUsageSettingsGroup = content.findViewById<View>(R.id.tagUsageSettingsGroup)
-        val tagUsageSettingsTitle = content.findViewById<View>(R.id.tvTagUsageSettingsTitle)
-        val durationInputLayout = content.findViewById<View>(R.id.tilReadOnlyDurationMinutes)
-        val durationHelper = content.findViewById<View>(R.id.tvReadOnlyDurationHelper)
-        val durationSpacer = content.findViewById<View>(R.id.spReadOnlyDurationSpacer)
         val etUid = content.findViewById<EditText>(R.id.etTagUid)
-
+        val acProfile = content.findViewById<MaterialAutoCompleteTextView>(R.id.acTagProfile)
+        val acAction = content.findViewById<MaterialAutoCompleteTextView>(R.id.acTagAction)
+        val acMinutes = content.findViewById<MaterialAutoCompleteTextView>(R.id.acTagMinutes)
+        val tilProfile = content.findViewById<View>(R.id.tilTagProfile)
+        val tilMinutes = content.findViewById<View>(R.id.tilTagMinutes)
+        val writtenActionHelper = content.findViewById<View>(R.id.tvWrittenActionHelper)
         val btnSave = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSave)
         val btnCancel = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
 
         val uidBucket = NfcTempDisableLimiterStore.bucketForUid(tag.uid)
+        val universalProfile = getString(R.string.manage_barcodes_profile_universal)
+        val profiles = listOf(universalProfile) + ProfileStore.getProfiles(this).toList().sorted()
+        val actionEntries = buildList {
+            if (tag.tagKind == NfcUidPairingStore.TagKind.WRITABLE) {
+                add(
+                    NfcUidPairingStore.PairedTagAction.USE_WRITTEN to
+                        getString(R.string.paired_tag_action_use_written)
+                )
+            }
+            add(
+                NfcUidPairingStore.PairedTagAction.ENABLE to
+                    getString(R.string.paired_tag_action_enable)
+            )
+            add(
+                NfcUidPairingStore.PairedTagAction.DISABLE to
+                    getString(R.string.paired_tag_action_disable)
+            )
+            add(
+                NfcUidPairingStore.PairedTagAction.TOGGLE to
+                    getString(R.string.paired_tag_action_toggle)
+            )
+            add(
+                NfcUidPairingStore.PairedTagAction.TEMP_DISABLE to
+                    getString(R.string.paired_tag_action_temp_disable)
+            )
+            add(
+                NfcUidPairingStore.PairedTagAction.TEMP_ENABLE to
+                    getString(R.string.paired_tag_action_temp_enable)
+            )
+        }
+
+        fun selectedAction(): NfcUidPairingStore.PairedTagAction {
+            return actionEntries
+                .firstOrNull { it.second == acAction.text?.toString().orEmpty() }
+                ?.first
+                ?: if (tag.tagKind == NfcUidPairingStore.TagKind.WRITABLE) {
+                    NfcUidPairingStore.PairedTagAction.USE_WRITTEN
+                } else {
+                    NfcUidPairingStore.PairedTagAction.TOGGLE
+                }
+        }
+
+        fun supportsMinutes(action: NfcUidPairingStore.PairedTagAction): Boolean {
+            return action == NfcUidPairingStore.PairedTagAction.TEMP_DISABLE ||
+                action == NfcUidPairingStore.PairedTagAction.TEMP_ENABLE
+        }
+
+        fun applyMinutePresets(action: NfcUidPairingStore.PairedTagAction) {
+            val presets = mutableListOf("5", "10", "30", "60", "120")
+            if (supportsMinutes(action)) {
+                presets += getString(R.string.qr_minutes_ask_when_scanned)
+            }
+            acMinutes.setAdapter(SwitchlyDropdownAdapter(this, presets))
+        }
+
+        fun updateActionVisibility() {
+            val action = selectedAction()
+            val usesWrittenAction = action == NfcUidPairingStore.PairedTagAction.USE_WRITTEN
+            tilProfile.isVisible = !usesWrittenAction
+            tilMinutes.isVisible = !usesWrittenAction && supportsMinutes(action)
+            writtenActionHelper.isVisible = usesWrittenAction
+            applyMinutePresets(action)
+        }
 
         etUid.setText(tag.uid)
         etName.setText(tag.name.orEmpty())
         etNote.setText(tag.note.orEmpty())
 
-        val readOnlyActionEntries = listOf(
-            NfcUidPairingStore.ReadOnlyAction.TOGGLE to getString(R.string.paired_tag_readonly_action_toggle),
-            NfcUidPairingStore.ReadOnlyAction.DISABLE to getString(R.string.paired_tag_readonly_action_disable),
-            NfcUidPairingStore.ReadOnlyAction.ENABLE to getString(R.string.paired_tag_readonly_action_enable),
-            NfcUidPairingStore.ReadOnlyAction.TEMP_DISABLE to getString(R.string.paired_tag_readonly_action_temp_disable),
-            NfcUidPairingStore.ReadOnlyAction.TEMP_ENABLE to getString(R.string.paired_tag_readonly_action_temp_enable),
+        acProfile.setAdapter(SwitchlyDropdownAdapter(this, profiles))
+        acProfile.setText(tag.actionProfile ?: universalProfile, false)
+        acProfile.setOnClickListener { acProfile.showDropDown() }
+
+        acAction.setAdapter(SwitchlyDropdownAdapter(this, actionEntries.map { it.second }))
+        val initialAction = actionEntries.firstOrNull { it.first == tag.action }
+            ?: actionEntries.first()
+        acAction.setText(initialAction.second, false)
+        acAction.setOnClickListener { acAction.showDropDown() }
+        acAction.setOnItemClickListener { _, _, _, _ -> updateActionVisibility() }
+
+        acMinutes.setText(
+            if (tag.askDurationWhenScanned) {
+                getString(R.string.qr_minutes_ask_when_scanned)
+            } else {
+                String.format(Locale.ROOT, "%d", tag.durationMinutes)
+            },
+            false,
         )
-
-        fun selectedReadOnlyAction(): NfcUidPairingStore.ReadOnlyAction {
-            return readOnlyActionEntries
-                .firstOrNull { it.second == acReadOnlyAction.text?.toString().orEmpty() }
-                ?.first
-                ?: NfcUidPairingStore.ReadOnlyAction.TOGGLE
-        }
-
-        fun usesTemporaryReadOnlyAction(): Boolean {
-            val action = selectedReadOnlyAction()
-            return action == NfcUidPairingStore.ReadOnlyAction.TEMP_DISABLE ||
-                action == NfcUidPairingStore.ReadOnlyAction.TEMP_ENABLE
-        }
-
-        fun updateTagUsageSettingsVisibility() {
-            val supportsUidOnlyAction = tag.supportsUidOnlyAction
-            val durationVisible = supportsUidOnlyAction && usesTemporaryReadOnlyAction()
-            tagUsageSettingsGroup.isVisible = supportsUidOnlyAction
-            tagUsageSettingsTitle.isVisible = supportsUidOnlyAction
-            durationInputLayout.isVisible = durationVisible
-            durationHelper.isVisible = durationVisible
-            durationSpacer.isVisible = durationVisible
-        }
-
-        acReadOnlyAction.setAdapter(
-            SwitchlyDropdownAdapter(this, readOnlyActionEntries.map { it.second })
-        )
-        acReadOnlyAction.setText(
-            readOnlyActionEntries.firstOrNull { it.first == tag.readOnlyAction }?.second
-                ?: getString(R.string.paired_tag_readonly_action_toggle),
-            false
-        )
-        acReadOnlyAction.setOnItemClickListener { _, _, _, _ -> updateTagUsageSettingsVisibility() }
-        acReadOnlyAction.setOnClickListener { acReadOnlyAction.showDropDown() }
-        readOnlyActionGroup.isVisible = tag.supportsUidOnlyAction
-        etReadOnlyDuration.setText(String.format(Locale.ROOT, "%d", tag.readOnlyDurationMinutes))
-        updateTagUsageSettingsVisibility()
+        acMinutes.setOnClickListener { acMinutes.showDropDown() }
+        updateActionVisibility()
 
         NfcTempDisableLimiterStore.getDailyLimitOverride(uidBucket, this)
             ?.let { etDailyLimit.setText(String.format(Locale.ROOT, "%d", it)) }
@@ -508,7 +489,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             title = getString(R.string.paired_tag_edit_title),
             content = content,
             cancelButton = btnCancel,
-            saveButton = btnSave
+            saveButton = btnSave,
         )
 
         btnSave.setOnClickListener {
@@ -518,7 +499,11 @@ class ManagePairedTagsActivity : AppCompatActivity() {
                 max = 50,
             )
             if (dailyResult == INVALID_NUMBER) {
-                Toast.makeText(this, getString(R.string.paired_tag_daily_limit_invalid), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.paired_tag_daily_limit_invalid),
+                    Toast.LENGTH_SHORT,
+                ).show()
                 return@setOnClickListener
             }
 
@@ -528,115 +513,70 @@ class ManagePairedTagsActivity : AppCompatActivity() {
                 max = 24 * 60,
             )
             if (cooldownResult == INVALID_NUMBER) {
-                Toast.makeText(this, getString(R.string.paired_tag_cooldown_invalid), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.paired_tag_cooldown_invalid),
+                    Toast.LENGTH_SHORT,
+                ).show()
                 return@setOnClickListener
             }
 
-            val daily = dailyResult.takeIf { it != EMPTY_NUMBER }
-            val cooldown = cooldownResult.takeIf { it != EMPTY_NUMBER }
-
-            val selectedReadOnlyAction = selectedReadOnlyAction()
-            val durationResult = parseOptionalBoundedInt(
-                raw = etReadOnlyDuration.text?.toString(),
-                min = 1,
-                max = 1440,
-            )
-            if (usesTemporaryReadOnlyAction() && durationResult == INVALID_NUMBER) {
-                Toast.makeText(this, getString(R.string.paired_tag_duration_invalid), Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            val duration = durationResult
-                .takeIf { it != EMPTY_NUMBER && it != INVALID_NUMBER }
-                ?: NfcUidPairingStore.DEFAULT_READ_ONLY_TEMP_DURATION_MINUTES
-
-            NfcUidPairingStore.setTagMeta(
-                this,
-                tag.uid,
-                etName.text?.toString(),
-                etNote.text?.toString(),
-                if (tag.supportsUidOnlyAction) selectedReadOnlyAction else null,
-                if (tag.supportsUidOnlyAction && usesTemporaryReadOnlyAction()) duration else null
-            )
-            if (tag.supportsUidOnlyAction) {
-                NfcTempDisableLimiterStore.setTagConfig(
-                    uidBucket = uidBucket,
-                    ctx = this,
-                    dailyLimit = daily,
-                    cooldownMinutes = cooldown,
+            val action = selectedAction()
+            val usesWrittenAction = action == NfcUidPairingStore.PairedTagAction.USE_WRITTEN
+            val temporaryAction = supportsMinutes(action)
+            val minutesText = acMinutes.text?.toString()?.trim().orEmpty()
+            val askWhenScanned = temporaryAction &&
+                minutesText == getString(R.string.qr_minutes_ask_when_scanned)
+            val durationResult = if (temporaryAction && !askWhenScanned) {
+                parseOptionalBoundedInt(
+                    raw = minutesText,
+                    min = 1,
+                    max = 1440,
                 )
             } else {
-                NfcTempDisableLimiterStore.clearTagConfig(uidBucket = uidBucket, ctx = this)
+                EMPTY_NUMBER
             }
+            if (temporaryAction && !askWhenScanned && durationResult == INVALID_NUMBER) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.paired_tag_duration_invalid),
+                    Toast.LENGTH_SHORT,
+                ).show()
+                return@setOnClickListener
+            }
+
+            val selectedProfile = acProfile.text
+                ?.toString()
+                ?.trim()
+                ?.takeIf { it.isNotBlank() && !it.equals(universalProfile, ignoreCase = true) }
+            val duration = durationResult
+                .takeIf { it != EMPTY_NUMBER && it != INVALID_NUMBER }
+                ?: tag.durationMinutes
+
+            NfcUidPairingStore.setTagMeta(
+                ctx = this,
+                uidHex = tag.uid,
+                name = etName.text?.toString(),
+                note = etNote.text?.toString(),
+            )
+            NfcUidPairingStore.setTagAction(
+                ctx = this,
+                uidHex = tag.uid,
+                action = action,
+                durationMinutes = if (temporaryAction && !usesWrittenAction) duration else null,
+                askDurationWhenScanned = askWhenScanned && !usesWrittenAction,
+                profile = if (usesWrittenAction) null else selectedProfile,
+            )
+            NfcTempDisableLimiterStore.setTagConfig(
+                uidBucket = uidBucket,
+                ctx = this,
+                dailyLimit = dailyResult.takeIf { it != EMPTY_NUMBER },
+                cooldownMinutes = cooldownResult.takeIf { it != EMPTY_NUMBER },
+            )
 
             refresh()
             dialog.dismiss()
         }
-    }
-
-    private fun forceTextInputAccent(til: TextInputLayout?, accent: Int) {
-        til ?: return
-        val enabled = intArrayOf(android.R.attr.state_enabled)
-        val focused = intArrayOf(android.R.attr.state_enabled, android.R.attr.state_focused)
-        val hovered = intArrayOf(android.R.attr.state_enabled, android.R.attr.state_hovered)
-        val disabled = intArrayOf(-android.R.attr.state_enabled)
-
-        val normal = ColorUtils.setAlphaComponent(accent, 0xAA)
-        val hover = ColorUtils.setAlphaComponent(accent, 0xCC)
-        val dis = ColorUtils.setAlphaComponent(accent, 0x55)
-
-        runCatching {
-            til.setBoxStrokeColorStateList(
-                ColorStateList(
-                    arrayOf(focused, hovered, enabled, disabled),
-                    intArrayOf(accent, hover, normal, dis)
-                )
-            )
-        }
-        runCatching { til.boxStrokeColor = accent }
-
-        val tint = ColorStateList.valueOf(accent)
-        runCatching { til.hintTextColor = tint }
-        runCatching { til.defaultHintTextColor = tint }
-        runCatching { til.setStartIconTintList(tint) }
-        runCatching { til.setEndIconTintList(tint) }
-
-        (til.editText as? EditText)?.let { forceCursor(it, accent) }
-    }
-
-    private fun forceCursor(et: EditText, accent: Int) {
-        runCatching {
-            et.highlightColor = ColorUtils.setAlphaComponent(accent, 0x44)
-        }
-
-        val cursorDrawable = GradientDrawable().apply {
-            setColor(accent)
-            setSize(dpToPx(2), (et.lineHeight * 2).coerceAtLeast(dpToPx(24)))
-        }
-
-        // On API 29+ prefer the public setter only (more stable on multi-line TextInputEditText).
-        if (Build.VERSION.SDK_INT >= 29) {
-            runCatching { et.textCursorDrawable = cursorDrawable }
-            et.invalidate()
-            return
-        }
-
-        // Best-effort public/hidden setters (OEM/framework differences)
-        runCatching {
-            val m = TextView::class.java.getMethod(
-                "setTextCursorDrawable",
-                android.graphics.drawable.Drawable::class.java
-            )
-            m.invoke(et, cursorDrawable)
-        }
-        runCatching {
-            val m = TextView::class.java.getDeclaredMethod(
-                "setTextCursorDrawable",
-                android.graphics.drawable.Drawable::class.java
-            )
-            m.isAccessible = true
-            m.invoke(et, cursorDrawable)
-        }
-
     }
 
     private fun dpToPx(dp: Int): Int =
@@ -644,9 +584,13 @@ class ManagePairedTagsActivity : AppCompatActivity() {
 
     private fun parseOptionalBoundedInt(raw: String?, min: Int, max: Int): Int {
         val text = raw?.trim().orEmpty()
-        if (text.isEmpty()) return EMPTY_NUMBER
+        if (text.isEmpty()) {
+            return EMPTY_NUMBER
+        }
         val parsed = text.toIntOrNull() ?: return INVALID_NUMBER
-        if (parsed !in min..max) return INVALID_NUMBER
+        if (parsed !in min..max) {
+            return INVALID_NUMBER
+        }
         return parsed
     }
 
@@ -669,9 +613,9 @@ class ManagePairedTagsActivity : AppCompatActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         fabAdd?.isVisible = !selectionMode
-        menu.findItem(R.id.action_info)?.isVisible = !selectionMode
+        menu.findItem(R.id.action_info)?.isVisible = true
         menu.findItem(R.id.action_cancel_select)?.isVisible = selectionMode
-        menu.findItem(R.id.action_select)?.isVisible = !selectionMode
+        menu.findItem(R.id.action_select)?.isVisible = !selectionMode && adapter.itemCount > 0
         menu.findItem(R.id.action_delete_selected)?.isVisible = selectionMode
         menu.findItem(R.id.action_delete_selected)?.isEnabled = selectedUids.isNotEmpty()
         return super.onPrepareOptionsMenu(menu)

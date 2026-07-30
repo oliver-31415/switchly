@@ -127,7 +127,9 @@ class PremiumRedeemActivity : AppCompatActivity() {
     }
 
     private fun redeemCurrentCode() {
-        if (redeemInProgress) return
+        if (redeemInProgress) {
+            return
+        }
         if (!PremiumRedeemRuntime.isRedeemSupportedBuild()) {
             showStatus(getString(R.string.premium_redeem_unsupported_build), isError = true)
             return

@@ -41,7 +41,9 @@ object UsageLimitResetStore {
     private fun key(profile: String, pkg: String): String = PREFIX_MODE + profile + "__" + pkg
 
     fun getMode(context: Context, profile: String, pkg: String): String {
-        if (profile.isBlank() || pkg.isBlank()) return MODE_DAY
+        if (profile.isBlank() || pkg.isBlank()) {
+            return MODE_DAY
+        }
         return when (prefs(context).getString(key(profile, pkg), MODE_DAY)) {
             MODE_SESSION -> MODE_SESSION
             else -> MODE_DAY
@@ -52,7 +54,9 @@ object UsageLimitResetStore {
         getMode(context, profile, pkg) == MODE_SESSION
 
     fun setMode(context: Context, profile: String, pkg: String, mode: String) {
-        if (profile.isBlank() || pkg.isBlank()) return
+        if (profile.isBlank() || pkg.isBlank()) {
+            return
+        }
         val k = key(profile, pkg)
         prefs(context).edit {
             when (mode) {
@@ -63,7 +67,9 @@ object UsageLimitResetStore {
     }
 
     fun clearMode(context: Context, profile: String, pkg: String) {
-        if (profile.isBlank() || pkg.isBlank()) return
+        if (profile.isBlank() || pkg.isBlank()) {
+            return
+        }
         prefs(context).edit { remove(key(profile, pkg)) }
     }
 }

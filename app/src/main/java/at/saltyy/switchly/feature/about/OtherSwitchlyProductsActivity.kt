@@ -26,7 +26,6 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.core.net.toUri
 import at.saltyy.switchly.R
-import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.dialog.showInfoDialog
 
 class OtherSwitchlyProductsActivity : TilesInfoActivity() {
@@ -58,7 +57,11 @@ class OtherSwitchlyProductsActivity : TilesInfoActivity() {
     private fun toolbarForegroundColor(): Int {
         val night = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
-        return if (night) Color.WHITE else Color.BLACK
+        return if (night) {
+            Color.WHITE
+        } else {
+            Color.BLACK
+        }
     }
 
     override fun tiles(): List<Tile> {

@@ -59,7 +59,7 @@ class DeveloperModeActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = getString(R.string.developer_mode_title)
         toolbar.title = getString(R.string.developer_mode_title)
-        toolbar.navigationIcon = ContextCompat.getDrawable(this, R.drawable.arrow_back_ios_24)
+        toolbar.navigationIcon = ContextCompat.getDrawable(this, R.drawable.keyboard_arrow_left_24)
         toolbar.setNavigationOnClickListener { finish() }
         val toolbarColor = AccentColor.getToolbarColor(this)
         val toolbarIconColor = if (ColorUtils.calculateLuminance(toolbarColor) > 0.5) Color.BLACK else Color.WHITE
@@ -83,7 +83,7 @@ class DeveloperModeActivity : AppCompatActivity() {
         findViewById<View>(R.id.cardDeveloperModeLogging).setOnClickListener {
             startActivity(Intent(this, DeveloperLogActivity::class.java))
         }
-        findViewById<View>(R.id.cardDeveloperModeDisable).setOnClickListener {
+        findViewById<View>(R.id.btnDeveloperModeDisable).setOnClickListener {
             AdvancedModeStore.setEnabled(this, false)
             Toast.makeText(this, getString(R.string.developer_mode_disabled_toast), Toast.LENGTH_SHORT).show()
             finish()

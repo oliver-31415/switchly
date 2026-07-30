@@ -21,12 +21,15 @@ package at.saltyy.switchly.security
 
 import android.content.Context
 import androidx.core.content.edit
+import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 
+// Persists and retrieves app lock state.
 object AppLockStore {
     private const val PREFS = "switchly_prefs"
     private const val KEY_ENABLED = "pref_app_lock_enabled"
     private const val KEY_PIN = "pref_app_lock_pin"
     private const val KEY_BIOMETRIC = "pref_app_lock_biometric"
+    private const val KEY_STRICT_PROTECTION = "pref_app_lock_strict_protection"
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -55,5 +58,13 @@ object AppLockStore {
 
     fun setBiometricEnabled(ctx: Context, enabled: Boolean) {
         prefs(ctx).edit(commit = true) { putBoolean(KEY_BIOMETRIC, enabled) }
+    }
+
+    fun isStrictProtectionEnabled(ctx: Context): Boolean =
+        prefs(ctx).getBoolean(KEY_STRICT_PROTECTION, false)
+
+    fun setStrictProtectionEnabled(ctx: Context, enabled: Boolean) {
+        prefs(ctx).edit(commit = true) { putBoolean(KEY_STRICT_PROTECTION, enabled) }
+        ManagedDevicePolicyHelper.syncSelfUninstallBlock(ctx)
     }
 }

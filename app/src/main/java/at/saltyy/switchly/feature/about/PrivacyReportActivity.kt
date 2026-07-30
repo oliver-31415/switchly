@@ -38,7 +38,9 @@ import at.saltyy.switchly.data.sync.BackupCategory
 import at.saltyy.switchly.data.sync.BackupSelection
 import at.saltyy.switchly.data.sync.BackupSelectionStore
 import at.saltyy.switchly.data.sync.FileBackupRuntime
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
 import at.saltyy.switchly.ui.dialog.showDestructiveAccented
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.text.SimpleDateFormat
@@ -259,32 +261,59 @@ class PrivacyReportActivity : TilesInfoActivity() {
     }
 
     private fun showExportSelectionDialog() {
-        val categories = BackupCategory.values().toList()
+        val categories = BackupCategory.values()
         val current = BackupSelectionStore.load(this)
         val checked = categories.map { current.includes(it) }.toBooleanArray()
+        val options = categories.map { category ->
+            val suffix = if (category.sensitive) {
+                getString(R.string.backup_category_sensitive_suffix)
+            } else {
+                ""
+            }
+            SwitchlyDialogOption(
+                title = "${category.displayName}$suffix",
+                summary = category.description,
+                iconRes = backupCategoryIconRes(category)
+            )
+        }
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.privacy_report_export_select_title)
-            .setMultiChoiceItems(
-                categories.map { it.displayName }.toTypedArray(),
-                checked
-            ) { _, which, isChecked ->
-                checked[which] = isChecked
+        showSwitchlyMultiChoiceDialog(
+            title = getString(R.string.privacy_report_export_select_title),
+            options = options,
+            checked = checked,
+            positiveTextRes = R.string.privacy_report_export_select_action,
+            compact = false,
+            widthFraction = 0.94f,
+        ) { states ->
+            val selectedIds = categories
+                .filterIndexed { index, _ -> states.getOrNull(index) == true }
+                .map { it.id }
+                .toSet()
+            if (selectedIds.isEmpty()) {
+                Toast.makeText(this, R.string.privacy_report_export_select_empty, Toast.LENGTH_SHORT).show()
+                return@showSwitchlyMultiChoiceDialog
             }
-            .setPositiveButton(R.string.privacy_report_export_select_action) { _, _ ->
-                val selectedIds = categories
-                    .filterIndexed { index, _ -> checked[index] }
-                    .map { it.id }
-                    .toSet()
-                if (selectedIds.isEmpty()) {
-                    Toast.makeText(this, R.string.privacy_report_export_select_empty, Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-                pendingExportSelection = BackupSelection.fromIds(selectedIds)
-                exportDataLauncher.launch(exportFileName())
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .showAccented()
+            pendingExportSelection = BackupSelection.fromIds(selectedIds)
+            exportDataLauncher.launch(exportFileName())
+        }
+    }
+
+    private fun backupCategoryIconRes(category: BackupCategory): Int = when (category) {
+        BackupCategory.PROFILES -> R.drawable.switch_account_24
+        BackupCategory.BLOCKED_APPS -> R.drawable.apps_24
+        BackupCategory.WEBSITE_RULES,
+        BackupCategory.WEBSITE_BROWSER_SETTINGS -> R.drawable.language_24
+        BackupCategory.NOTIFICATION_BLOCKING -> R.drawable.notifications_24
+        BackupCategory.IN_APP_BLOCKING -> R.drawable.app_blocking_black_24
+        BackupCategory.SCHEDULES -> R.drawable.schedule_24
+        BackupCategory.LOCATION_SCHEDULES -> R.drawable.location_on_24
+        BackupCategory.WIFI_SCHEDULES -> R.drawable.wifi_24
+        BackupCategory.BLUETOOTH_SCHEDULES -> R.drawable.bluetooth_24
+        BackupCategory.KEYS -> R.drawable.nfc_24
+        BackupCategory.CONTROL_SETTINGS -> R.drawable.tune_24
+        BackupCategory.STRICT_PROTECTION -> R.drawable.lock_24
+        BackupCategory.STATISTICS -> R.drawable.bar_chart_24
+        BackupCategory.APP_PREFERENCES -> R.drawable.account_box_24
     }
 
     private fun exportSelectedData(uri: Uri) {

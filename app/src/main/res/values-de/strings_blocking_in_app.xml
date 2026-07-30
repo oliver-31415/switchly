@@ -4,7 +4,7 @@
     <!-- ====================================================== -->
     <!-- In-app blocking overview -->
     <!-- ====================================================== -->
-    <string name="in_app_blocking_title">In-App-Regeln</string>
+    <string name="in_app_rules_title">In-App-Regeln</string>
 
     <string name="in_app_rules_info_title">In-App-Regeln</string>
     <string name="in_app_rules_info_body">In-App-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nRegeln sind aktiv, sobald für dieses Profil ausgewählte Bereiche existieren. Mit „Ausgewählte blockieren“ werden nur ausgewählte Bereiche blockiert. Mit „Ausgewählte erlauben“ bleiben ausgewählte Bereiche erlaubt und andere unterstützte Bereiche dieser App werden blockiert. Switchly nutzt die Bedienungshilfe, um unterstützte In-App-Bereiche zu erkennen. UI-Änderungen der Apps können die Zuverlässigkeit beeinflussen.\n\nVerfügbar bedeutet, dass der Bereich für die installierte App-Version unterstützt wird. Experimentell bedeutet Best-Effort und kann je nach App-Version, Einstiegspunkt, Sprache oder Gerät variieren. Deaktiviert bedeutet, dass die App nicht installiert ist oder die Regel gerade nicht genutzt werden kann. Demnächst bedeutet, dass der Bereich geplant, aber noch nicht erzwingbar ist.</string>
@@ -16,29 +16,10 @@
     <string name="in_app_rule_block_surface_fmt">%1$s blockieren</string>
     <string name="in_app_rule_allow_surface_fmt">%1$s erlauben</string>
     <string name="in_app_rules_profile_subtitle">Regeln für: %1$s</string>
-    <string name="in_app_blocking_youtube">YouTube</string>
-    <string name="in_app_blocking_instagram">Instagram</string>
-    <string name="in_app_blocking_x">X/Twitter</string>
-    <string name="in_app_blocking_snapchat">Snapchat</string>
-    <string name="in_app_blocking_block_shorts">Shorts blockieren</string>
-    <string name="in_app_blocking_block_subscriptions">Abos blockieren</string>
-    <string name="in_app_blocking_block_you">Du-Tab blockieren</string>
-    <string name="in_app_blocking_block_reels">Reels blockieren</string>
-    <string name="in_app_blocking_block_explore">Explore-Tab blockieren</string>
-    <string name="in_app_blocking_block_search">Suche blockieren</string>
-    <string name="in_app_blocking_block_stories">Stories/Discover blockieren</string>
-    <string name="in_app_blocking_block_home">Home blockieren</string>
-    <string name="in_app_blocking_block_grok">Grok blockieren</string>
-    <string name="in_app_blocking_block_notifications">Benachrichtigungen blockieren</string>
-    <string name="in_app_blocking_block_map">Karte blockieren</string>
-    <string name="in_app_blocking_block_spotlight">Spotlight blockieren</string>
-    <string name="in_app_blocking_block_following">Following blockieren</string>
-    <string name="in_app_blocking_block_comments">Kommentare blockieren</string>
-    <string name="in_app_blocking_block_mini_player">YouTube-Miniplayer blockieren</string>
-    <string name="in_app_blocking_block_pip">Bild-im-Bild-Modus blockieren</string>
-    <string name="in_app_blocking_limit_title">In-App-Blockierungslimit</string>
-    <string name="in_app_limit_label">In-App-Limit</string>
-    <string name="in_app_blocking_limit_desc">Tägliches Zeitlimit über alle aktivierten In-App-Bereiche.\nWenn kein Limit gesetzt ist, werden aktivierte Bereiche sofort blockiert.</string>
+    <string name="in_app_rules_youtube">YouTube</string>
+    <string name="in_app_rules_instagram">Instagram</string>
+    <string name="in_app_rules_x">X/Twitter</string>
+    <string name="in_app_rules_snapchat">Snapchat</string>
     <string name="in_app_surface_shorts_label">Shorts</string>
     <string name="in_app_surface_subscriptions_label">Abos</string>
     <string name="in_app_surface_you_label">Du</string>
@@ -55,20 +36,14 @@
     <string name="in_app_surface_map_label">Karte</string>
     <string name="in_app_surface_spotlight_label">Spotlight</string>
     <string name="in_app_surface_following_label">Following</string>
-    <string name="in_app_surface_use_global_limit_fmt">Globales Limit verwenden (%1$d Min/Tag)</string>
-    <string name="in_app_surface_set_global_limit">Globales In-App-Limit festlegen…</string>
     <string name="in_app_surface_always_block">Immer blockieren</string>
-    <string name="in_app_surface_custom">Benutzerdefiniert…</string>
-    <string name="in_app_surface_rule_dialog_title">%1$s</string>
-    <string name="in_app_surface_daily_limit_title">%1$s: tägliches Limit</string>
-    <string name="reels_shorts_subtitle">Shorts, Reels, Feeds, Tabs und andere unterstützte In-App-Bereiche verwalten.</string>
-    <string name="reels_shorts_status_installed">Installiert</string>
-    <string name="reels_shorts_status_supported">Verfügbar</string>
-    <string name="reels_shorts_status_experimental">Experimentell</string>
-    <string name="reels_shorts_status_planned">Demnächst</string>
-    <string name="reels_shorts_facebook">Facebook</string>
-    <string name="reels_shorts_tiktok">TikTok</string>
-    <string name="reels_shorts_for_you">For-You-Feed</string>
+    <string name="in_app_status_installed">Installiert</string>
+    <string name="in_app_status_supported">Verfügbar</string>
+    <string name="in_app_status_experimental">Experimentell</string>
+    <string name="in_app_status_planned">Demnächst</string>
+    <string name="in_app_rules_facebook">Facebook</string>
+    <string name="in_app_rules_tiktok">TikTok</string>
+    <string name="in_app_rules_for_you">For-You-Feed</string>
     <string name="in_app_rules_empty_installed">Derzeit sind keine unterstützten Apps installiert.</string>
     <string name="in_app_rules_empty_installed_summary">Hier werden nur installierte unterstützte Apps angezeigt. Installiere eine unterstützte App und öffne diesen Screen erneut, um ihre In-App-Bereiche zu verwalten.</string>
 

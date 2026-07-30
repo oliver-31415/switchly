@@ -62,7 +62,7 @@ object FileBackupRuntime {
     fun restoreBackupFromUri(ctx: Context, uri: Uri): Result<Unit> {
         return runCatching {
             CloudSyncRuntime.applyBackupPayload(ctx, readBackupPayloadFromUri(ctx, uri).getOrThrow())
-        }.onFailure { AppLogStore.append(ctx, TAG, "File restore failed", it) }
+        }.onFailure { AppLogStore.appendRateLimited(ctx, TAG, "File restore failed", it) }
     }
 
     fun readBackupPayloadFromUri(ctx: Context, uri: Uri): Result<Map<*, *>> {
@@ -78,13 +78,13 @@ object FileBackupRuntime {
                 root.has(FIELD_PAYLOAD) -> fromJsonValue(root.get(FIELD_PAYLOAD)) as? Map<*, *>
                 else -> fromJsonValue(root) as? Map<*, *>
             } ?: error("Invalid backup file")
-        }.onFailure { AppLogStore.append(ctx, TAG, "Reading file backup preview failed", it) }
+        }.onFailure { AppLogStore.appendRateLimited(ctx, TAG, "Reading file backup preview failed", it) }
     }
 
     fun restoreBackupPayload(ctx: Context, payload: Map<*, *>): Result<Unit> {
         return runCatching {
             CloudSyncRuntime.applyBackupPayload(ctx, payload)
-        }.onFailure { AppLogStore.append(ctx, TAG, "File restore failed", it) }
+        }.onFailure { AppLogStore.appendRateLimited(ctx, TAG, "File restore failed", it) }
     }
 
     private fun toJsonValue(value: Any?): Any {

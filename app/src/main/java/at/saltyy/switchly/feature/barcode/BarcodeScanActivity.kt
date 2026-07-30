@@ -107,7 +107,9 @@ class BarcodeScanActivity : AppCompatActivity() {
     private fun allowDirectOpen(): Boolean = intent?.getBooleanExtra(EXTRA_ALLOW_DIRECT_OPEN, false) == true
 
     private fun canOpenScanner(): Boolean {
-        if (isPickMode() || allowDirectOpen()) return true
+        if (isPickMode() || allowDirectOpen()) {
+            return true
+        }
         if (!allowDirectOpen() && !AutomationModeStore.isBarcodeAllowed(this)) {
             Toast.makeText(this, R.string.mode_blocked_barcode_action, Toast.LENGTH_SHORT).show()
             return false
@@ -193,7 +195,9 @@ class BarcodeScanActivity : AppCompatActivity() {
     }
 
     private fun handleBarcode(raw: String) {
-        if (!handled.compareAndSet(false, true)) return
+        if (!handled.compareAndSet(false, true)) {
+            return
+        }
 
         if (isPickMode()) {
             setResult(
@@ -214,15 +218,8 @@ class BarcodeScanActivity : AppCompatActivity() {
 
         val managed = ScanCodeStore.findEntry(this, ScanCodeStore.Kind.BARCODE, raw)
         if (managed != null) {
-            val check = ScanCodeStore.checkLimits(this, managed)
-            if (check != null) {
-                Toast.makeText(this, check, Toast.LENGTH_SHORT).show()
-                finish()
-                return
-            }
-            ScanCodeStore.consume(this, managed)
             BarcodeScanCountStore.incrementToday(this)
-            dispatchActionUri(managed.actionUri)
+            dispatchActionUri(managed.actionUri, managedRawValue = raw)
             return
         }
 
@@ -240,7 +237,7 @@ class BarcodeScanActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun dispatchActionUri(rawUri: String) {
+    private fun dispatchActionUri(rawUri: String, managedRawValue: String? = null) {
         val uri = rawUri.toUri()
         val source = ScanCodeStore.Kind.BARCODE.raw
         val token = InternalScanDispatchGuard.issue(this, source)
@@ -248,6 +245,11 @@ class BarcodeScanActivity : AppCompatActivity() {
             Intent(Intent.ACTION_VIEW, uri)
                 .putExtra(EXTRA_SCAN_SOURCE, source)
                 .putExtra(InternalScanDispatchGuard.EXTRA_TOKEN, token)
+                .apply {
+                    if (!managedRawValue.isNullOrBlank()) {
+                        putExtra(NfcEntryActivity.EXTRA_MANAGED_SCAN_RAW_VALUE, managedRawValue)
+                    }
+                }
                 .setClass(this, NfcEntryActivity::class.java)
         )
         finish()

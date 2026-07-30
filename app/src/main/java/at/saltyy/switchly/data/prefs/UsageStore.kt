@@ -23,6 +23,7 @@ import android.content.Context
 import androidx.core.content.edit
 import java.util.Calendar
 
+// Persists and retrieves usage state.
 object UsageStore {
     data class MonthBucket(val year: Int, val month1Based: Int, val totalMs: Long)
 
@@ -43,8 +44,12 @@ object UsageStore {
     @Volatile private var lastFlushAtMs: Long = 0L
 
     fun addUsageMsToday(ctx: Context, pkg: String, deltaMs: Long) {
-        if (pkg.isBlank()) return
-        if (deltaMs <= 0L) return
+        if (pkg.isBlank()) {
+            return
+        }
+        if (deltaMs <= 0L) {
+            return
+        }
 
         val ymd = todayYmdInt()
         val key = dayKey(ymd, pkg)
@@ -61,7 +66,9 @@ object UsageStore {
     }
 
     fun getUsageMsToday(ctx: Context, pkg: String): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
         val ymd = todayYmdInt()
         val key = dayKey(ymd, pkg)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -89,7 +96,9 @@ object UsageStore {
 
     // Explicit setter used for "clear today usage" when removing limit.
     fun setUsageMsToday(ctx: Context, pkg: String, ms: Long) {
-        if (pkg.isBlank()) return
+        if (pkg.isBlank()) {
+            return
+        }
         // Ensure buffered deltas are persisted before overwriting.
         flush(ctx)
         val ymd = todayYmdInt()
@@ -101,20 +110,26 @@ object UsageStore {
     }
 
     fun getUsageMsForDay(ctx: Context, ymd: Int, pkg: String): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
         flush(ctx)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return sp.getLong(dayKey(ymd, pkg), 0L).coerceAtLeast(0L)
     }
 
     fun mergeUsageMsForDay(ctx: Context, ymd: Int, pkg: String, ms: Long) {
-        if (pkg.isBlank() || ms <= 0L) return
+        if (pkg.isBlank() || ms <= 0L) {
+            return
+        }
         flush(ctx)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val k = dayKey(ymd, pkg)
         val cur = sp.getLong(k, 0L).coerceAtLeast(0L)
         val merged = maxOf(cur, ms.coerceAtLeast(0L))
-        if (merged == cur) return
+        if (merged == cur) {
+            return
+        }
         sp.edit { putLong(k, merged) }
     }
 
@@ -125,8 +140,12 @@ object UsageStore {
     }
 
     fun getUsageMsForLastNDays(ctx: Context, pkg: String, days: Int): Long {
-        if (pkg.isBlank()) return 0L
-        if (days <= 0) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
+        if (days <= 0) {
+            return 0L
+        }
 
         // Stats screen: flush once so the most recent buffered data is included.
         flush(ctx)
@@ -149,8 +168,12 @@ object UsageStore {
      * @param days number of days to sum (must be > 0)
      */
     fun getUsageMsForPastRange(ctx: Context, pkg: String, startOffsetDays: Int, days: Int): Long {
-        if (pkg.isBlank()) return 0L
-        if (days <= 0) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
+        if (days <= 0) {
+            return 0L
+        }
 
         flush(ctx)
 
@@ -168,7 +191,9 @@ object UsageStore {
     }
 
     fun getUsageMsForMonth(ctx: Context, pkg: String, year: Int, month1Based: Int): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
 
         flush(ctx)
 
@@ -194,7 +219,9 @@ object UsageStore {
     }
 
     fun getUsageMsForYear(ctx: Context, pkg: String, year: Int): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
 
         flush(ctx)
 
@@ -240,7 +267,9 @@ object UsageStore {
     }
 
     fun getUsageMsMapForLastNDays(ctx: Context, days: Int): Map<String, Long> {
-        if (days <= 0) return emptyMap()
+        if (days <= 0) {
+            return emptyMap()
+        }
         flush(ctx)
         val wanted = HashSet<Int>(days)
         val cal = Calendar.getInstance()
@@ -264,7 +293,9 @@ object UsageStore {
     }
 
     fun getUsageMsMapForDateRange(ctx: Context, startMs: Long, endMs: Long): Map<String, Long> {
-        if (endMs <= startMs) return emptyMap()
+        if (endMs <= startMs) {
+            return emptyMap()
+        }
         flush(ctx)
         val wanted = HashSet<Int>()
         val cal = Calendar.getInstance().apply {
@@ -282,7 +313,9 @@ object UsageStore {
     }
 
     fun getUsageMsSeriesForDateRange(ctx: Context, pkg: String, startMs: Long, endMs: Long): List<Long> {
-        if (pkg.isBlank() || endMs <= startMs) return emptyList()
+        if (pkg.isBlank() || endMs <= startMs) {
+            return emptyList()
+        }
         flush(ctx)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val out = ArrayList<Long>()
@@ -306,7 +339,9 @@ object UsageStore {
     }
 
     fun getUsageMsSeriesForLastNDays(ctx: Context, pkg: String, days: Int): List<Long> {
-        if (pkg.isBlank() || days <= 0) return emptyList()
+        if (pkg.isBlank() || days <= 0) {
+            return emptyList()
+        }
         flush(ctx)
         val cal = Calendar.getInstance()
         val ymds = ArrayList<Int>(days)
@@ -320,7 +355,9 @@ object UsageStore {
     }
 
     fun getUsageMsSeriesForCurrentMonth(ctx: Context, pkg: String): List<Long> {
-        if (pkg.isBlank()) return emptyList()
+        if (pkg.isBlank()) {
+            return emptyList()
+        }
         flush(ctx)
         val cal = Calendar.getInstance().apply {
             set(Calendar.DAY_OF_MONTH, 1)
@@ -343,7 +380,9 @@ object UsageStore {
     }
 
     fun getUsageMsMonthBucketsForCurrentYear(ctx: Context, pkg: String): List<MonthBucket> {
-        if (pkg.isBlank()) return emptyList()
+        if (pkg.isBlank()) {
+            return emptyList()
+        }
         flush(ctx)
         val year = Calendar.getInstance().get(Calendar.YEAR)
         val currentMonth1 = Calendar.getInstance().get(Calendar.MONTH) + 1
@@ -353,7 +392,9 @@ object UsageStore {
     }
 
     fun getUsageMsMonthBucketsAllTime(ctx: Context, pkg: String, maxMonths: Int = Int.MAX_VALUE): List<MonthBucket> {
-        if (pkg.isBlank()) return emptyList()
+        if (pkg.isBlank()) {
+            return emptyList()
+        }
         flush(ctx)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val byYearMonth = linkedMapOf<Int, Long>()
@@ -372,7 +413,11 @@ object UsageStore {
         val sorted = byYearMonth.entries.sortedBy { it.key }.map { (ym, total) ->
             MonthBucket(ym / 100, ym % 100, total)
         }
-        return if (sorted.size > maxMonths) sorted.takeLast(maxMonths) else sorted
+        return if (sorted.size > maxMonths) {
+            sorted.takeLast(maxMonths)
+        } else {
+            sorted
+        }
     }
 
     private fun getUsageMsMapMatching(ctx: Context, matches: (ymd: Int, pkg: String) -> Boolean): Map<String, Long> {
@@ -394,7 +439,9 @@ object UsageStore {
     }
 
     fun getUsageMsOverall(ctx: Context, pkg: String): Long {
-        if (pkg.isBlank()) return 0L
+        if (pkg.isBlank()) {
+            return 0L
+        }
         flush(ctx)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         var sum = 0L
@@ -439,7 +486,9 @@ object UsageStore {
     fun sanitizeImpossibleDailyTotals(ctx: Context): Boolean {
         flush(ctx)
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (sp.getInt(KEY_SANITIZE_VERSION, 0) >= CURRENT_SANITIZE_VERSION) return false
+        if (sp.getInt(KEY_SANITIZE_VERSION, 0) >= CURRENT_SANITIZE_VERSION) {
+            return false
+        }
 
         val all = sp.all
         val byDay = linkedMapOf<Int, MutableList<Pair<String, Long>>>()
@@ -503,7 +552,9 @@ object UsageStore {
     fun flush(ctx: Context) {
         val toWrite: Map<String, Long>
         synchronized(lock) {
-            if (pending.isEmpty()) return
+            if (pending.isEmpty()) {
+                return
+            }
             toWrite = HashMap(pending)
             pending.clear()
             lastFlushAtMs = System.currentTimeMillis()

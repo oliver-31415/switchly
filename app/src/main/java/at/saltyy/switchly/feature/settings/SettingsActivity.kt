@@ -35,16 +35,20 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
+import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.EmergencyPinStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.feature.about.DeveloperModeActivity
 import at.saltyy.switchly.feature.premium.PremiumInfoActivity
-import at.saltyy.switchly.feature.tools.BlockingHubActivity
+import at.saltyy.switchly.feature.tools.RulesHubActivity
 import at.saltyy.switchly.feature.tools.ManageKeysActivity
-import at.saltyy.switchly.feature.tools.ToolsHubActivity
+import at.saltyy.switchly.feature.tools.ActivityHubActivity
+import at.saltyy.switchly.feature.usage.IgnoredUsageAppsActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
+import at.saltyy.switchly.ui.LockedUi
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
@@ -52,6 +56,7 @@ import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.ActivityTransitionCompat
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -70,7 +75,6 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        if (SwitchlyAppAccessGuard.blockIfLocked(this)) return
         setContentView(R.layout.activity_settings)
 
         setupViews()
@@ -80,11 +84,12 @@ class SettingsActivity : AppCompatActivity() {
         setupRootCards()
         restoreScreenState(savedInstanceState)
         updateTitleFromFragment()
+        applyRestrictedAccessState()
     }
 
     override fun onResume() {
         super.onResume()
-        if (SwitchlyAppAccessGuard.blockIfLocked(this)) return
+        applyRestrictedAccessState()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -127,7 +132,7 @@ class SettingsActivity : AppCompatActivity() {
             val canGoBack = container.isVisible
             supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
             toolbar.navigationIcon = if (canGoBack) {
-                ContextCompat.getDrawable(this, R.drawable.arrow_back_ios_24)
+                ContextCompat.getDrawable(this, R.drawable.keyboard_arrow_left_24)
             } else {
                 null
             }
@@ -141,22 +146,27 @@ class SettingsActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    startActivity(
-                        Intent(this, MainActivity::class.java).apply {
+                    ActivityTransitionCompat.switchWithoutAnimation(
+                        activity = this,
+                        intent = Intent(this, MainActivity::class.java).apply {
                             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        }
+                        },
+                        finishCurrent = true,
                     )
-                    finish()
                     true
                 }
-                R.id.nav_blocking -> {
-                    startActivity(Intent(this, BlockingHubActivity::class.java))
-                    finish()
-                    true
+                R.id.nav_rules -> {
+                    RulesHubActivity.openWithAccessCheck(
+                        source = this,
+                        finishSourceAfterOpen = true
+                    )
                 }
-                R.id.nav_tools -> {
-                    startActivity(Intent(this, ToolsHubActivity::class.java))
-                    finish()
+                R.id.nav_activity -> {
+                    ActivityTransitionCompat.switchWithoutAnimation(
+                        activity = this,
+                        intent = Intent(this, ActivityHubActivity::class.java),
+                        finishCurrent = true,
+                    )
                     true
                 }
                 R.id.nav_settings -> true
@@ -173,27 +183,42 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupRootCards() {
         findViewById<View>(R.id.cardSettingsBlockingModes).setOnClickListener {
-            startActivity(Intent(this, BlockingModesActivity::class.java))
+            openProtectedSettingsSection {
+                startActivity(Intent(this, BlockingModesActivity::class.java))
+            }
         }
         findViewById<View>(R.id.cardSettingsBlockingFeatures).setOnClickListener {
-            startActivity(Intent(this, BlockingFeaturesActivity::class.java))
+            openProtectedSettingsSection {
+                startActivity(Intent(this, BlockingFeaturesActivity::class.java))
+            }
         }
-        findViewById<View>(R.id.cardSettingsToolsAutomation).setOnClickListener {
-            startActivity(Intent(this, ManageKeysActivity::class.java))
+        findViewById<View>(R.id.cardSettingsKeysCodes).setOnClickListener {
+            openProtectedSettingsSection {
+                startActivity(Intent(this, ManageKeysActivity::class.java))
+            }
         }
         findViewById<View>(R.id.cardSettingsAppearance).setOnClickListener {
             showNestedSettingsScreen("screen_appearance")
         }
+        findViewById<View>(R.id.cardSettingsIgnoredApps).setOnClickListener {
+            startActivity(IgnoredUsageAppsActivity.intent(this))
+        }
         findViewById<View>(R.id.cardSettingsDisplayShortcuts).setOnClickListener {
-            startActivity(Intent(this, ToggleOptionsActivity::class.java).apply {
-                putExtra(ToggleOptionsActivity.EXTRA_VIEW_SECTION, ToggleOptionsActivity.SECTION_DISPLAY)
-            })
+            openProtectedSettingsSection {
+                startActivity(Intent(this, ToggleOptionsActivity::class.java).apply {
+                    putExtra(ToggleOptionsActivity.EXTRA_VIEW_SECTION, ToggleOptionsActivity.SECTION_DISPLAY)
+                })
+            }
         }
         findViewById<View>(R.id.cardSettingsPermissions).setOnClickListener {
-            startActivity(Intent(this, PermissionsActivity::class.java))
+            openProtectedSettingsSection {
+                startActivity(Intent(this, PermissionsActivity::class.java))
+            }
         }
         findViewById<View>(R.id.cardSettingsAppLock).setOnClickListener {
-            startActivity(Intent(this, AppLockSettingsActivity::class.java))
+            openProtectedSettingsSection {
+                startActivity(Intent(this, AppLockSettingsActivity::class.java))
+            }
         }
         findViewById<View>(R.id.cardSettingsEmergencyUnlock).setOnClickListener {
             showEmergencyQuickSheet()
@@ -204,9 +229,61 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<View>(R.id.cardSettingsPremium).setOnClickListener {
             startActivity(Intent(this, PremiumInfoActivity::class.java))
         }
+        findViewById<View>(R.id.cardSettingsDeveloper).setOnClickListener {
+            openProtectedSettingsSection {
+                startActivity(Intent(this, DeveloperModeActivity::class.java))
+            }
+        }
         findViewById<View>(R.id.cardSettingsHelpAbout).setOnClickListener {
             showNestedSettingsScreen("screen_help_about")
         }
+    }
+
+    fun isRestrictedAccessActive(): Boolean {
+        return SwitchlyAppAccessGuard.isLocked(this)
+    }
+
+    private fun applyRestrictedAccessState() {
+        if (!::toolbar.isInitialized) {
+            return
+        }
+
+        val restricted = isRestrictedAccessActive()
+        val developerVisible = AdvancedModeStore.isEnabled(this)
+        findViewById<View>(R.id.tvSettingsDeveloperSection).isVisible = developerVisible
+        findViewById<View>(R.id.cardSettingsDeveloper).isVisible = developerVisible
+
+        toolbar.subtitle = null
+        supportActionBar?.subtitle = null
+
+        val restrictedCards = listOf(
+            R.id.cardSettingsBlockingModes,
+            R.id.cardSettingsBlockingFeatures,
+            R.id.cardSettingsKeysCodes,
+            R.id.cardSettingsDisplayShortcuts,
+            R.id.cardSettingsPermissions,
+            R.id.cardSettingsAppLock,
+            R.id.cardSettingsDeveloper
+        )
+        restrictedCards.forEach { cardId ->
+            applyRestrictedCardState(findViewById(cardId), restricted)
+        }
+    }
+
+    private fun applyRestrictedCardState(card: View, restricted: Boolean) {
+        card.isEnabled = !restricted
+        card.isClickable = !restricted
+        card.isFocusable = !restricted
+        card.alpha = if (restricted) LockedUi.cardAlpha(this) else 1f
+    }
+
+    private fun openProtectedSettingsSection(open: () -> Unit) {
+        if (SwitchlyAppAccessGuard.isLocked(this)) {
+            applyRestrictedAccessState()
+            return
+        }
+
+        open()
     }
 
     private fun restoreScreenState(savedInstanceState: Bundle?) {
@@ -246,7 +323,7 @@ class SettingsActivity : AppCompatActivity() {
         rootScroll.visibility = View.GONE
         container.visibility = View.VISIBLE
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.navigationIcon = ContextCompat.getDrawable(this, R.drawable.arrow_back_ios_24)
+        toolbar.navigationIcon = ContextCompat.getDrawable(this, R.drawable.keyboard_arrow_left_24)
     }
 
     private fun updateTitleFromFragment() {
@@ -292,6 +369,7 @@ class SettingsActivity : AppCompatActivity() {
                     SwitchModeStore.clearTemporary(this)
                     Toast.makeText(this, getString(R.string.emergency_paused_toast), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
+                    applyRestrictedAccessState()
                 }
             }
             addAction(getString(R.string.emergency_action_end)) {
@@ -300,6 +378,7 @@ class SettingsActivity : AppCompatActivity() {
                 SwitchModeStore.clearTemporary(this)
                 Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
                 BlockingRuntime.ensureRunning(this)
+                applyRestrictedAccessState()
             }
         } else if (paused) {
             addAction(getString(R.string.emergency_action_resume)) {
@@ -309,6 +388,7 @@ class SettingsActivity : AppCompatActivity() {
                     SwitchModeStore.setTemporarilyDisabled(this, remainingMinutes * 60_000L)
                     Toast.makeText(this, getString(R.string.emergency_resumed_toast), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
+                    applyRestrictedAccessState()
                 }
             }
             addAction(getString(R.string.emergency_action_end)) {
@@ -317,6 +397,7 @@ class SettingsActivity : AppCompatActivity() {
                 SwitchModeStore.clearTemporary(this)
                 Toast.makeText(this, getString(R.string.emergency_ended_toast), Toast.LENGTH_SHORT).show()
                 BlockingRuntime.ensureRunning(this)
+                applyRestrictedAccessState()
             }
         } else if (!usedToday) {
             requestEmergencyPinBeforeStart()
@@ -347,6 +428,36 @@ class SettingsActivity : AppCompatActivity() {
                 .setMessage(R.string.emergency_used_today)
                 .setNegativeButton(R.string.cancel, null)
                 .showAccented()
+        }
+    }
+
+    companion object {
+        fun openWithAccessCheck(
+            source: AppCompatActivity,
+            finishSourceAfterOpen: Boolean = false
+        ): Boolean {
+            if (!SwitchlyAppAccessGuard.isLocked(source)) {
+                ActivityTransitionCompat.switchWithoutAnimation(
+                    activity = source,
+                    intent = Intent(source, SettingsActivity::class.java),
+                    finishCurrent = finishSourceAfterOpen,
+                )
+                return true
+            }
+
+            AlertDialog.Builder(source)
+                .setTitle(R.string.switchly_settings_locked_title)
+                .setMessage(R.string.settings_restricted_open_message)
+                .setPositiveButton(R.string.settings_open_restricted) { _, _ ->
+                    ActivityTransitionCompat.switchWithoutAnimation(
+                        activity = source,
+                        intent = Intent(source, SettingsActivity::class.java),
+                        finishCurrent = finishSourceAfterOpen,
+                    )
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .showAccented()
+            return false
         }
     }
 
@@ -444,6 +555,7 @@ class SettingsActivity : AppCompatActivity() {
                     SwitchModeStore.setTemporarilyDisabled(this, 15 * 60_000L)
                     Toast.makeText(this, getString(R.string.emergency_enabled_toast, 15), Toast.LENGTH_SHORT).show()
                     BlockingRuntime.ensureRunning(this)
+                    applyRestrictedAccessState()
                 } else {
                     Toast.makeText(this, getString(R.string.emergency_used_today), Toast.LENGTH_SHORT).show()
                 }

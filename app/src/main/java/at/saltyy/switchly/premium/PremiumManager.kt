@@ -61,7 +61,9 @@ object PremiumManager {
             BuildConfig.SWITCHLY_REDEEM_CODES_ENABLED
 
     fun isPremium(ctx: Context): Boolean {
-        if (!isPremiumSupportedBuild()) return false
+        if (!isPremiumSupportedBuild()) {
+            return false
+        }
 
         val p = prefs(ctx)
         return when {
@@ -81,11 +83,15 @@ object PremiumManager {
     fun externalPaymentProviderName(): String = ExternalPaymentRuntime.providerName()
 
     fun premiumSource(ctx: Context): String {
-        if (!isPremium(ctx)) return SOURCE_NONE
+        if (!isPremium(ctx)) {
+            return SOURCE_NONE
+        }
 
         val p = prefs(ctx)
         val stored = p.getString(KEY_PREMIUM_SOURCE, null)
-        if (!stored.isNullOrBlank()) return stored
+        if (!stored.isNullOrBlank()) {
+            return stored
+        }
 
         return when {
             p.getBoolean(KEY_PREMIUM_FROM_PLAY, false) -> SOURCE_GOOGLE_PLAY_BILLING
@@ -236,11 +242,17 @@ object PremiumManager {
         }
     }
 
+    fun cancelPendingPurchaseLaunch() {
+        if (BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED) {
+            PremiumRuntime.cancelPendingPurchaseLaunch()
+        }
+    }
+
     // Called from UI to restore/manage purchases.
     fun restorePurchases(context: Context) {
         when {
             BuildConfig.SWITCHLY_PLAY_BILLING_ENABLED -> {
-                PremiumRuntime.refreshFromPlay(context)
+                PremiumRuntime.refreshFromPlay(context, force = true)
                 Toast.makeText(context, R.string.premium_checking_purchases, Toast.LENGTH_SHORT).show()
             }
 

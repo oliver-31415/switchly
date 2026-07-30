@@ -6,7 +6,7 @@ External/direct payment links are intended only for non-Play builds. Do not enab
 | ----- | ---------------- |
 | `full`/Play Store | Google Play Billing only. Custom redeem-code UI is hidden. |
 | `firebaseEmail`/direct APK | external/direct checkout, Firebase restore, and online Switchly redeem codes |
-| `offline`/offline APK | no online payment or account restore. Premium unlock uses the local offline code allowlist compiled into that build. |
+| `offline`/offline APK | no online payment or account restore. Optional local redeem is enabled only when a private allowlist is supplied at build time. |
 
 The Play Store build must keep external/direct payment links disabled so Google Play Billing remains unchanged.
 
@@ -65,7 +65,7 @@ For `firebaseEmail`, the intended flow is:
 ## Offline APK
 For `offline`, online checkout and online account restore are disabled.
 
-Offline Premium is unlocked only through the local offline code allowlist compiled into the APK. This is intended for offline/direct distribution and should stay separate from Firebase/Play Billing entitlement flows.
+Offline Premium redeem is enabled only when `SWITCHLY_OFFLINE_REDEEM_CODE_ALLOWLIST` is supplied privately at build time using `SALT-OFFLINE-XXXX-XXXX` codes. The allowlist is compiled into that APK, can be extracted by a determined user, and should stay separate from Firebase/Play Billing entitlement flows. Use signed license payloads for stronger offline protection.
 
 ## Switchly hosted endpoint
 If using the Switchly-hosted website/payment flow, the matching website deployment may provide endpoints like:

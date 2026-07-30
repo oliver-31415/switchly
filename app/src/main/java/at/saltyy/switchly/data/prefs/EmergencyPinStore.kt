@@ -22,6 +22,7 @@ package at.saltyy.switchly.data.prefs
 import android.content.Context
 import androidx.core.content.edit
 
+// Persists and retrieves emergency pin state.
 object EmergencyPinStore {
     private const val PREFS = "switchly_prefs"
     private const val KEY_EMERGENCY_PIN = "pref_emergency_pin"

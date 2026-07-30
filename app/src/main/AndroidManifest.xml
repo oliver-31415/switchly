@@ -2,16 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network access for Firebase authentication, cloud sync, and remote resources -->
-
     <!-- Google Play Billing for Play Store Premium purchases -->
     <uses-permission android:name="com.android.vending.BILLING" />
+
+    <!-- Network access for billing, maps, update checks, and optional online resources -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Usage access for screen-time statistics and app blocking decisions -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
 
-    <!-- Network-state checks for Firebase and sync logic -->
+    <!-- Direct system prompt for excluding Switchly from battery optimization -->
+    <uses-permission
+        android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+        tools:ignore="BatteryLife" />
+
+    <!-- Network-state checks for online features and reliability guidance -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Wi-Fi state access for Wi-Fi schedules and triggers -->
@@ -68,11 +73,10 @@
         android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
         tools:targetApi="34" />
 
-    <!-- Optional direct Android popup for allowing unrestricted background/battery behavior. -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" tools:ignore="BatteryLife" />
-
-    <!-- Optional background-process kill attempts for stronger blocking cleanup -->
-    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <!-- Background-process cleanup is only effective for other apps through Android 13. -->
+    <uses-permission
+        android:name="android.permission.KILL_BACKGROUND_PROCESSES"
+        android:maxSdkVersion="33" />
 
     <!-- Camera access for QR and barcode scanning -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -87,22 +91,29 @@
         android:name="android.hardware.nfc"
         android:required="false" />
 
-    <!-- Query launchable apps for the App rules picker -->
+    <!-- Package visibility used by app pickers and protected-app detection. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
-
-        <!-- Supported in-app blocking targets used for picker shortcuts and installation checks. -->
-        <package android:name="com.google.android.youtube" />
-        <package android:name="com.instagram.android" />
-        <package android:name="com.twitter.android" />
-        <package android:name="com.snapchat.android" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+        </intent>
+        <intent>
+            <action android:name="android.view.InputMethod" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.SETTINGS" />
+        </intent>
     </queries>
 
     <application
-        android:name=".app.App"
+        android:name=".app.SwitchlyApp"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -116,16 +127,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
-
-        <!-- Optional legacy HTTP library required by some Google Maps/Play Services modules -->
-        <uses-library
-            android:name="org.apache.http.legacy"
-            android:required="false" />
-
-        <!-- Device-admin receiver for Advanced Mode/strict protection -->
+        <!-- Device-admin receiver for Advanced Mode/uninstall protection -->
         <receiver
             android:name=".receiver.DPMReceiver"
             android:exported="true"
@@ -157,16 +159,7 @@
             android:excludeFromRecents="true"
             android:launchMode="singleTop"
             android:noHistory="true"
-            android:taskAffinity=""
-            android:theme="@android:style/Theme.Translucent.NoTitleBar">
-            <intent-filter>
-                <action android:name="at.saltyy.switchly.action.OPEN_QR_SCAN" />
-                <action android:name="at.saltyy.switchly.action.OPEN_BARCODE_SCAN" />
-                <action android:name="at.saltyy.switchly.action.OPEN_NFC_WRITE" />
-                <action android:name="at.saltyy.switchly.action.OPEN_BLOCKED_NOTIFICATIONS" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- Settings root screen -->
         <activity
@@ -174,42 +167,36 @@
             android:exported="false"
             android:label="@string/settings" />
 
-        <!-- Blocking hub screen -->
+        <!-- Rules hub screen -->
         <activity
-            android:name=".feature.tools.BlockingHubActivity"
+            android:name=".feature.tools.RulesHubActivity"
             android:exported="false"
-            android:label="@string/nav_blocking" />
+            android:label="@string/nav_rules" />
 
-        <!-- Tools/manage hub screen -->
+        <!-- Activity hub screen -->
         <activity
-            android:name=".feature.tools.ToolsHubActivity"
+            android:name=".feature.tools.ActivityHubActivity"
             android:exported="false"
-            android:label="@string/nav_tools" />
+            android:label="@string/nav_activity" />
 
         <!-- Schedule management screen -->
         <activity
             android:name=".feature.schedule.SchedulesActivity"
             android:exported="false"
             android:label="@string/schedules_title"
-            android:parentActivityName=".feature.settings.SettingsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.settings.SettingsActivity" />
-        </activity>
+            android:parentActivityName=".feature.settings.SettingsActivity" />
 
         <!-- Map picker for location-based schedules -->
         <activity
             android:name=".feature.schedule.LocationMapPickerActivity"
             android:exported="false"
-            android:hardwareAccelerated="true"
             android:label="@string/schedules_location_map_picker_title"
             android:parentActivityName=".feature.schedule.SchedulesActivity" />
 
         <!-- First-run onboarding flow -->
         <activity
             android:name=".feature.onboarding.OnboardingActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Switchly" />
+            android:exported="false" />
 
         <!-- Profile management screen -->
         <activity
@@ -229,14 +216,12 @@
         <!-- NFC action tag writer -->
         <activity
             android:name=".nfc.NfcWriterActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Switchly" />
+            android:exported="false" />
 
         <!-- NFC write waiting screen -->
         <activity
             android:name=".nfc.NfcWriteWaitingActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Switchly" />
+            android:exported="false" />
 
         <!-- NFC dispatch activity for Switchly NDEF and fallback tag scans -->
         <activity
@@ -244,35 +229,11 @@
             android:exported="true"
             android:launchMode="singleTop">
 
-            <!-- Broad Switchly URI dispatch for OEM NFC launch pickers such as HyperOS. -->
+            <!-- Switchly action and legacy URI tags. Host validation happens in code. -->
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="switchly" />
-            </intent-filter>
-
-            <!-- NFC NDEF discovered pointing to readable/alias Switchly action tags. -->
-            <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="switchly" />
-                <data android:host="action" />
-            </intent-filter>
-
-            <!-- NFC NDEF discovered pointing to legacy switchly://switch/... tags. -->
-            <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="switchly" />
-                <data android:host="switch" />
-            </intent-filter>
-
-            <!-- NFC NDEF discovered pointing to legacy switchly://profile/... tags. -->
-            <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="switchly" />
-                <data android:host="profile" />
             </intent-filter>
 
             <!-- Paired UID fallback for writable tags that contain unrelated plain text. -->
@@ -305,7 +266,6 @@
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:launchMode="singleTask"
-            android:supportsPictureInPicture="false"
             android:theme="@style/Theme.Switchly.Blocker"
             tools:ignore="DiscouragedApi" />
 
@@ -344,21 +304,13 @@
             android:name=".feature.premium.PremiumRedeemActivity"
             android:exported="false"
             android:label="@string/premium_redeem_title"
-            android:parentActivityName=".feature.premium.PremiumInfoActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.premium.PremiumInfoActivity" />
-        </activity>
+            android:parentActivityName=".feature.premium.PremiumInfoActivity" />
 
         <!-- Permission setup screen -->
         <activity
             android:name=".feature.settings.PermissionsActivity"
             android:exported="false"
-            android:parentActivityName=".feature.settings.SettingsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.settings.SettingsActivity" />
-        </activity>
+            android:parentActivityName=".feature.settings.SettingsActivity" />
 
         <!-- Home display/toggle options screen -->
         <activity
@@ -370,76 +322,38 @@
             android:name=".feature.settings.TroubleshootingActivity"
             android:exported="false"
             android:label="@string/troubleshooting_title"
-            android:parentActivityName=".feature.settings.SettingsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.settings.SettingsActivity" />
-        </activity>
+            android:parentActivityName=".feature.settings.SettingsActivity" />
 
         <!-- Blocking mode settings screen -->
         <activity
             android:name=".feature.settings.BlockingModesActivity"
             android:exported="false"
-            android:parentActivityName=".feature.settings.SettingsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.settings.SettingsActivity" />
-        </activity>
+            android:parentActivityName=".feature.settings.SettingsActivity" />
 
         <!-- Blocking feature settings screen -->
         <activity
             android:name=".feature.settings.BlockingFeaturesActivity"
             android:exported="false"
-            android:parentActivityName=".feature.settings.SettingsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.settings.SettingsActivity" />
-        </activity>
+            android:parentActivityName=".feature.settings.SettingsActivity" />
 
         <!-- Blocked notification inbox -->
         <activity
             android:name=".feature.inbox.BlockedInboxActivity"
             android:exported="false"
             android:label="@string/blocked_inbox_title"
-            android:parentActivityName=".feature.settings.SettingsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.settings.SettingsActivity" />
-        </activity>
+            android:parentActivityName=".feature.settings.SettingsActivity" />
 
         <!-- External QR/deep-link confirmation entry point -->
         <activity
             android:name=".feature.qr.ExternalQrActionActivity"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:theme="@style/Theme.Switchly">
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="switchly" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="switchly" />
-                <data android:host="action" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="switchly" />
-                <data android:host="switch" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="switchly" />
-                <data android:host="profile" />
             </intent-filter>
         </activity>
 
@@ -463,31 +377,23 @@
             android:name=".feature.about.WhatsNewActivity"
             android:exported="false"
             android:label="@string/settings_changelog_title"
-            android:parentActivityName=".feature.settings.SettingsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.settings.SettingsActivity" />
-        </activity>
+            android:parentActivityName=".feature.settings.SettingsActivity" />
 
         <!-- Support screen -->
         <activity
             android:name=".feature.support.SupportActivity"
             android:exported="false"
             android:label="@string/support_title"
-            android:parentActivityName=".feature.settings.SettingsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".feature.settings.SettingsActivity" />
-        </activity>
+            android:parentActivityName=".feature.settings.SettingsActivity" />
 
-        <!-- Insights hub for Usage statistics and Active time -->
+        <!-- Switchly action and input overview -->
         <activity
-            android:name=".feature.tools.ManageInsightsActivity"
+            android:name=".feature.usage.SwitchlyOverviewActivity"
             android:exported="false" />
 
-        <!-- Active time statistics dashboard -->
+        <!-- Active time overview -->
         <activity
-            android:name=".feature.usage.ActiveTimeStatsActivity"
+            android:name=".feature.usage.ActiveTimeActivity"
             android:exported="false" />
 
         <!-- Active time detail screen for sessions and monthly totals -->
@@ -500,19 +406,24 @@
             android:name=".feature.usage.ActivityHistoryActivity"
             android:exported="false" />
 
-        <!-- Usage statistics dashboard -->
+        <!-- App and website usage overview -->
         <activity
-            android:name=".feature.usage.ScreenTimeDashboardActivity"
+            android:name=".feature.usage.AppWebsiteUsageActivity"
             android:exported="false" />
 
-        <!-- Usage statistics detail screen for apps -->
+        <!-- App usage detail screen -->
         <activity
-            android:name=".feature.usage.ScreenTimeDetailActivity"
+            android:name=".feature.usage.AppUsageDetailActivity"
             android:exported="false" />
 
         <!-- App launch statistics and timeline screens -->
         <activity
             android:name=".feature.usage.AppLaunchesActivity"
+            android:exported="false" />
+
+        <!-- Apps excluded from usage statistics -->
+        <activity
+            android:name=".feature.usage.IgnoredUsageAppsActivity"
             android:exported="false" />
 
         <activity
@@ -528,9 +439,9 @@
             android:name=".feature.usage.ScreenUnlockDetailActivity"
             android:exported="false" />
 
-        <!-- Usage statistics detail screen for websites -->
+        <!-- Website usage detail screen -->
         <activity
-            android:name=".feature.usage.WebsiteDetailActivity"
+            android:name=".feature.usage.WebsiteUsageDetailActivity"
             android:exported="false" />
 
         <!-- Website rules management screen -->
@@ -538,14 +449,9 @@
             android:name=".feature.settings.ManageBlockedWebsitesActivity"
             android:exported="false" />
 
-        <!-- In-app blocking setup screen -->
+        <!-- In-app rules setup screen -->
         <activity
-            android:name=".feature.settings.InAppBlockingActivity"
-            android:exported="false" />
-
-        <!-- Legacy focused surface setup screen; the visible entry point is In-app rules. -->
-        <activity
-            android:name=".feature.settings.ReelsShortsBlockingActivity"
+            android:name=".feature.settings.InAppRulesActivity"
             android:exported="false" />
 
         <!-- Paired NFC tag management screen -->
@@ -568,8 +474,7 @@
             android:name=".feature.settings.AppLockActivity"
             android:exported="false"
             android:excludeFromRecents="true"
-            android:launchMode="singleTop"
-            android:theme="@style/Theme.Switchly" />
+            android:launchMode="singleTop" />
 
         <!-- App information screen -->
         <activity
@@ -620,7 +525,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
@@ -662,14 +566,13 @@
         <!-- Schedule receiver triggered by explicit PendingIntents -->
         <receiver
             android:name=".platform.receiver.schedule.ScheduleReceiver"
-            android:exported="false"
-            android:enabled="true" />
+            android:exported="false" />
 
         <!-- Quick Settings tile for toggling Switchly -->
         <service
             android:name=".platform.tile.SwitchlyTileService"
             android:exported="true"
-            android:icon="@drawable/app_blocking_white_24"
+            android:icon="@drawable/qs_switchly_24"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
@@ -826,7 +729,6 @@
         <receiver
             android:name=".feature.widget.ActiveTimerWidgetProvider"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher"
             android:label="@string/widget_active_timer_title">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

@@ -33,9 +33,7 @@ import at.saltyy.switchly.auth.AuthRuntime.AuthAction
  */
 object Auth {
 
-    /**
-     * Start Google sign-in using Credential Manager.
-     */
+    // Start Google sign-in using Credential Manager.
     fun startSignIn(
         activity: Activity,
         onFinished: ((Boolean, String?) -> Unit)? = null
@@ -104,20 +102,14 @@ object Auth {
         }
     }
 
-    /**
-     * Sign the user out of Firebase.
-     */
+    // Sign the user out of Firebase.
     fun signOut(context: Context, onDone: () -> Unit) {
         AuthRuntime.signOut(context, onDone)
     }
 
-    /**
-     * Returns the current Firebase UID (or null if not signed in).
-     */
+    // Returns the current Firebase UID (or null if not signed in).
     fun uid(): String? = AuthRuntime.uid()
 
-    /**
-     * Returns the current Firebase email address (or null if not signed in).
-     */
+    // Returns the current Firebase email address (or null if not signed in).
     fun email(): String? = AuthRuntime.email()
 }
