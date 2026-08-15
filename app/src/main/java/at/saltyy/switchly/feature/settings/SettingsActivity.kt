@@ -40,7 +40,7 @@ import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.EmergencyPinStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
-import at.saltyy.switchly.feature.about.DeveloperModeActivity
+import at.saltyy.switchly.feature.about.AdvancedModeActivity
 import at.saltyy.switchly.feature.premium.PremiumInfoActivity
 import at.saltyy.switchly.feature.tools.RulesHubActivity
 import at.saltyy.switchly.feature.tools.ManageKeysActivity
@@ -231,7 +231,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.cardSettingsDeveloper).setOnClickListener {
             openProtectedSettingsSection {
-                startActivity(Intent(this, DeveloperModeActivity::class.java))
+                startActivity(Intent(this, AdvancedModeActivity::class.java))
             }
         }
         findViewById<View>(R.id.cardSettingsHelpAbout).setOnClickListener {

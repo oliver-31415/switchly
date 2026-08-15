@@ -349,6 +349,7 @@ fun Context.showSwitchlyMultiChoiceDialog(
     @StringRes positiveTextRes: Int = android.R.string.ok,
     compact: Boolean = false,
     widthFraction: Float = 0.94f,
+    forceHorizontalButtons: Boolean = false,
     onConfirmed: (checked: BooleanArray) -> Unit
 ): AlertDialog {
     val accent = AccentColor.getAccentColorInt(this)
@@ -479,21 +480,76 @@ fun Context.showSwitchlyMultiChoiceDialog(
         typeface = Typeface.DEFAULT_BOLD
         setPadding(dp(2), 0, dp(2), dp(14))
     }
+    var inlineCancelButton: MaterialButton? = null
+    var inlineConfirmButton: MaterialButton? = null
     val content = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         clipToPadding = false
         setPadding(dp(16), dp(20), dp(16), dp(0))
         addView(headerTitleView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+        if (forceHorizontalButtons) {
+            val onAccent = if (ColorUtils.calculateLuminance(accent) > 0.5) Color.BLACK else Color.WHITE
+            val footer = LinearLayout(this@showSwitchlyMultiChoiceDialog).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                setPadding(0, dp(8), 0, dp(12))
+            }
+            inlineCancelButton = MaterialButton(this@showSwitchlyMultiChoiceDialog).apply {
+                setText(R.string.cancel)
+                isAllCaps = false
+                minHeight = dp(40)
+                elevation = 0f
+                stateListAnimator = null
+                insetTop = 0
+                insetBottom = 0
+                setTextColor(accent)
+                backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+                setPaddingRelative(dp(16), dp(8), dp(16), dp(8))
+            }
+            inlineConfirmButton = MaterialButton(this@showSwitchlyMultiChoiceDialog).apply {
+                setText(positiveTextRes)
+                isAllCaps = false
+                minHeight = dp(40)
+                elevation = 0f
+                stateListAnimator = null
+                insetTop = 0
+                insetBottom = 0
+                setTextColor(onAccent)
+                backgroundTintList = ColorStateList.valueOf(accent)
+                setPaddingRelative(dp(16), dp(8), dp(16), dp(8))
+            }
+            footer.addView(
+                inlineCancelButton,
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            )
+            footer.addView(
+                inlineConfirmButton,
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    marginStart = dp(8)
+                }
+            )
+            addView(footer, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
     }
 
-    dialog = MaterialAlertDialogBuilder(this)
-        .setView(content)
-        .setPositiveButton(positiveTextRes) { _, _ -> onConfirmed(rowStates) }
-        .setNegativeButton(R.string.cancel, null)
-        .create()
+    val builder = MaterialAlertDialogBuilder(this).setView(content)
+    if (!forceHorizontalButtons) {
+        builder
+            .setPositiveButton(positiveTextRes) { _, _ -> onConfirmed(rowStates) }
+            .setNegativeButton(R.string.cancel, null)
+    }
+    dialog = builder.create()
+    inlineCancelButton?.setOnClickListener { dialog.dismiss() }
+    inlineConfirmButton?.setOnClickListener {
+        onConfirmed(rowStates)
+        dialog.dismiss()
+    }
     dialog.setOnShowListener {
-        if (options.any { it.destructive }) dialog.styleSwitchlyDestructivePositiveButton() else dialog.styleSwitchlyDialogButtons()
+        if (!forceHorizontalButtons) {
+            if (options.any { it.destructive }) dialog.styleSwitchlyDestructivePositiveButton() else dialog.styleSwitchlyDialogButtons()
+        }
         dialog.window?.setLayout((resources.displayMetrics.widthPixels * widthFraction).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
     }
     dialog.show()

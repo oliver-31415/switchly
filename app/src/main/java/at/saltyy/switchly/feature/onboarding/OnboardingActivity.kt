@@ -178,7 +178,7 @@ class OnboardingActivity : ComponentActivity() {
             if (position > 0) {
                 pager.setCurrentItem(position - 1, true)
             } else {
-                finishToMain(skipOnboardingGateOnce = true)
+                leaveOnboarding()
             }
         }
 
@@ -195,9 +195,9 @@ class OnboardingActivity : ComponentActivity() {
             if (currentPage?.type == OnboardingPage.Type.OPTIONAL_SETUP) {
                 finishOnboarding()
             } else {
-                // Leaving required setup early intentionally does not mark onboarding as completed,
-                // so it can be continued on the next launch. Forced tutorial views simply return to Home.
-                finishToMain(skipOnboardingGateOnce = true)
+                // Leaving required setup early intentionally does not mark onboarding as completed, so it can be continued on the next launch.
+                // Forced tutorial views return to their caller.
+                leaveOnboarding()
             }
         }
 
@@ -284,7 +284,7 @@ class OnboardingActivity : ComponentActivity() {
             Toast.makeText(this, R.string.onb_start_test_toast, Toast.LENGTH_LONG).show()
             markDone()
         }
-        finishToMain(skipOnboardingGateOnce = true)
+        leaveOnboarding()
     }
 
     private fun lastOptionalSetupPageIndex(): Int =
@@ -1245,6 +1245,14 @@ class OnboardingActivity : ComponentActivity() {
             putInt(KEY_VERSION, ONBOARDING_VERSION)
         }
         MainActivity.queueBottomNavTour(this)
+    }
+
+    private fun leaveOnboarding() {
+        if (forced) {
+            finish()
+        } else {
+            finishToMain(skipOnboardingGateOnce = true)
+        }
     }
 
     private fun finishToMain(skipOnboardingGateOnce: Boolean = false) {

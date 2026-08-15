@@ -135,10 +135,8 @@ class SchedulesActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_OPEN_ADD_TIME = "extra_open_add_time"
-
         private const val PREFS_SCHEDULE_HEALTH = "switchly_schedule_health"
-        const val KEY_BATTERY_OPTIMIZATION_CONFIRMED_MAX_AVAILABLE =
-            "battery_optimization_confirmed_max_available"
+        const val KEY_BATTERY_OPTIMIZATION_CONFIRMED_MAX_AVAILABLE = "battery_optimization_confirmed_max_available"
         const val GOOGLE_MAPS_DNS_HOST = "clients4.google.com"
         const val GOOGLE_MAPS_REACHABILITY_TIMEOUT_MS = 2_500L
     }

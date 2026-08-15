@@ -10,7 +10,7 @@
     <string name="about_device_info_summary">Android version, model, and device</string>
     <string name="about_developer_info_title">Developer info</string>
     <string name="about_developer_info_summary">Developer and build details</string>
-    <string name="about_other_switchly_products_title">Other apps</string>
+    <string name="about_other_switchly_products_title">Other Switchly apps</string>
     <string name="about_other_switchly_products_summary">Switchly Lite, Launcher, and related apps</string>
     <string name="about_section_app">App</string>
     <string name="about_section_build">Build</string>
@@ -63,7 +63,7 @@
     <string name="about_website_url" translatable="false">https://switchly.saltyy.at</string>
     <string name="about_store_url" translatable="false">https://switchly.saltyy.at/store/</string>
     <string name="store_card_title">Official Switchly tags</string>
-    <string name="store_card_summary">Need a physical tag? Official NFC, QR and barcode tags are available in the Switchly Store.</string>
+    <string name="store_card_summary">Official NFC and QR tags.</string>
     <string name="store_open">Open Store</string>
     <string name="store_open_failed">Could not open the Switchly Store.</string>
     <string name="about_developer_website_url" translatable="false">https://saltyy.at</string>
@@ -91,7 +91,7 @@
     <string name="about_switchly_launcher_bonus">A simple and strong launcher made for a more minimal, distraction-free setup.</string>
     <string name="about_switchly_lite_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchly.lite</string>
     <string name="about_switchly_launcher_playstore_url" translatable="false">https://play.google.com/store/apps/details?id=at.saltyy.switchlylauncher</string>
-    <string name="about_other_apps_info_title">Other apps</string>
+    <string name="about_other_apps_info_title">Other Switchly apps</string>
     <string name="about_other_apps_info_body">Switchly Lite is the lighter app for simple NFC, button, and schedule setups.\n\nSwitchly Launcher is a minimal launcher for stricter, distraction-free phone setups.</string>
 
     <!-- ====================================================== -->

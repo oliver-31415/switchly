@@ -89,8 +89,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
             }
         }
 
-        // If Switchly is enabled but Accessibility is OFF after boot,
-        // show a persistent warning notification so the user can fix it.
+        // If Switchly is enabled but Accessibility is OFF after boot, show a persistent warning notification so the user can fix it.
         runCatching { ProtectionStatusNotifier.refresh(ctx) }
     }
 

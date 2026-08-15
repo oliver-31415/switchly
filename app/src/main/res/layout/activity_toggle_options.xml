@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -19,8 +18,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/toggle_options_title"
-            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24"
+            app:title="@string/toggle_options_title" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
@@ -28,8 +27,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp"
         android:paddingTop="20dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="24dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -44,10 +43,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
                 android:visibility="gone"
-                app:cardUseCompatPadding="true"
+                app:strokeWidth="1dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="1dp"
-                app:strokeWidth="1dp">
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -80,8 +79,8 @@
                         android:layout_width="44dp"
                         android:layout_height="44dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/info"
                         android:padding="10dp"
+                        android:contentDescription="@string/info"
                         android:src="@drawable/info_24"
                         app:tint="?attr/colorOnSurface" />
                 </LinearLayout>
@@ -92,10 +91,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
-                app:cardUseCompatPadding="true"
+                app:strokeWidth="1dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="1dp"
-                app:strokeWidth="1dp">
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -114,8 +113,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:alpha="0.84"
-                        android:text="@string/toggle_guided_card_body" />
+                        android:text="@string/toggle_guided_card_body"
+                        android:alpha="0.84" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnOpenFaqTips"
@@ -124,7 +123,6 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="@string/toggle_guided_card_action" />
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -144,12 +142,12 @@
                 style="@style/TextAppearance.MaterialComponents.Subtitle1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/toggle_section_control_mode"
+                android:layout_marginBottom="4dp"
                 android:gravity="center_vertical"
-                app:drawableStartCompat="@drawable/sync_24"
+                android:text="@string/toggle_section_control_mode"
                 android:drawablePadding="8dp"
-                app:drawableTint="?attr/colorOnSurface"
-                android:layout_marginBottom="4dp"/>
+                app:drawableStartCompat="@drawable/sync_24"
+                app:drawableTint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvControlModeSectionSummary"
@@ -157,16 +155,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.82"
-                android:text="@string/toggle_section_control_mode_summary" />
+                android:text="@string/toggle_section_control_mode_summary"
+                android:alpha="0.82" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardControlMode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -180,15 +178,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/alarm_24"
-                            app:tint="?attr/colorPrimary"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorPrimary" />
 
                         <Space
                             android:layout_width="14dp"
@@ -218,16 +216,16 @@
                             android:id="@+id/switchModeSchedule"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowModeNfc"
@@ -235,15 +233,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/nfc_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -273,16 +271,16 @@
                             android:id="@+id/switchModeNfc"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowModeQr"
@@ -290,15 +288,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/qr_code_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -328,16 +326,16 @@
                             android:id="@+id/switchModeQr"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowModeBarcode"
@@ -345,15 +343,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/barcode_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -383,16 +381,16 @@
                             android:id="@+id/switchModeBarcode"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowModeMixed"
@@ -400,15 +398,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/sync_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -438,11 +436,10 @@
                             android:id="@+id/switchModeMixed"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -453,12 +450,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:text="@string/toggle_section_mixed_channels"
+                android:layout_marginBottom="10dp"
                 android:gravity="center_vertical"
-                app:drawableStartCompat="@drawable/toggle_on_24"
+                android:text="@string/toggle_section_mixed_channels"
                 android:drawablePadding="8dp"
-                app:drawableTint="?attr/colorOnSurface"
-                android:layout_marginBottom="10dp"/>
+                app:drawableStartCompat="@drawable/toggle_on_24"
+                app:drawableTint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvMixedChannelsSectionSummary"
@@ -466,17 +463,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.82"
-                android:text="@string/toggle_section_mixed_channels_summary" />
+                android:text="@string/toggle_section_mixed_channels_summary"
+                android:alpha="0.82" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardMixedChannels"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -490,17 +487,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/alarm_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -526,17 +525,17 @@
                             android:id="@+id/switchMixedAllowSchedule"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterMixedAllowSchedule"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowNfc"
@@ -544,17 +543,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/nfc_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -580,17 +581,17 @@
                             android:id="@+id/switchMixedAllowNfc"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterMixedAllowNfc"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowQr"
@@ -598,17 +599,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/qr_code_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -634,17 +637,17 @@
                             android:id="@+id/switchMixedAllowQr"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterMixedAllowQr"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowBarcode"
@@ -652,17 +655,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/apps_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -688,17 +693,17 @@
                             android:id="@+id/switchMixedAllowBarcode"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterMixedAllowBarcode"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowButton"
@@ -706,17 +711,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/toggle_off_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -742,17 +749,17 @@
                             android:id="@+id/switchMixedAllowButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterMixedAllowButton"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowAppPicking"
@@ -760,17 +767,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/apps_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -796,17 +805,17 @@
                             android:id="@+id/switchMixedAllowAppPicking"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterMixedAllowAppPicking"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowProfileSwitching"
@@ -814,17 +823,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/switch_account_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -850,36 +861,38 @@
                             android:id="@+id/switchMixedAllowProfileSwitching"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterMixedAllowProfileSwitching"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowScheduleEditing"
-                        android:visibility="gone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:visibility="gone"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/schedule_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -905,17 +918,17 @@
                             android:id="@+id/switchMixedAllowScheduleEditing"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterMixedAllowScheduleEditing"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowAllowButtonEnable"
@@ -923,15 +936,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/play_arrow_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -961,17 +974,17 @@
                             android:id="@+id/switchAllowButtonEnable"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterAllowButtonEnable"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowMixedAllowNfcTagWriting"
@@ -979,17 +992,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/nfc_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1015,11 +1030,10 @@
                             android:id="@+id/switchMixedAllowNfcTagWriting"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -1040,12 +1054,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="@string/toggle_section_additional_features"
+                android:layout_marginBottom="10dp"
                 android:gravity="center_vertical"
-                app:drawableStartCompat="@drawable/tune_24"
+                android:text="@string/toggle_section_additional_features"
                 android:drawablePadding="8dp"
-                app:drawableTint="?attr/colorOnSurface"
-                android:layout_marginBottom="10dp"/>
+                app:drawableStartCompat="@drawable/tune_24"
+                app:drawableTint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvAdditionalFeaturesSectionSummary"
@@ -1053,16 +1067,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.82"
-                android:text="@string/toggle_section_additional_features_summary" />
+                android:text="@string/toggle_section_additional_features_summary"
+                android:alpha="0.82" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAdditionalFeatures"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -1077,15 +1091,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/nfc_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -1115,17 +1129,17 @@
                             android:id="@+id/switchRequireNfcUnlock"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerRequireNfcUnlock"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <!-- Paired NFC tag support -->
                     <LinearLayout
@@ -1134,15 +1148,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/nfc_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -1178,10 +1192,9 @@
                                 android:id="@+id/btnInfoEnablePairedUids"
                                 android:layout_width="34dp"
                                 android:layout_height="34dp"
-                                android:layout_marginBottom="0dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="7dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorOnSurface" />
 
@@ -1189,10 +1202,9 @@
                                 android:id="@+id/switchEnablePairedUids"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textOn=""
                                 android:textOff=""
-                                app:showText="false"/>
-
+                                android:textOn=""
+                                app:showText="false" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -1200,8 +1212,8 @@
                         android:id="@+id/dividerAfterEnablePairedUids"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowAutoPairOnWrite"
@@ -1209,15 +1221,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/nfc_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -1247,9 +1259,155 @@
                             android:id="@+id/switchAutoPairOnWrite"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- System status: ongoing notification -->
+            <TextView
+                android:id="@+id/tvDisplayStatusSection"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="4dp"
+                android:gravity="center_vertical"
+                android:text="@string/toggle_subsection_status"
+                android:drawablePadding="8dp"
+                app:drawableStartCompat="@drawable/notifications_24"
+                app:drawableTint="?attr/colorOnSurface" />
+
+            <TextView
+                android:id="@+id/tvDisplayStatusSectionSummary"
+                style="@style/TextAppearance.MaterialComponents.Body2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="@string/toggle_subsection_status_summary"
+                android:alpha="0.82" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardDisplayStatusControls"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="6dp">
+
+                    <LinearLayout
+                        android:id="@+id/rowPersistentStatusNotification"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/notifications_24"
+                            app:tint="?attr/colorOnSurface" />
+
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_persistent_status_notification_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/pref_persistent_status_notification_summary" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchPersistentStatusNotification"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textOff=""
+                            android:textOn=""
+                            app:showText="false" />
+                    </LinearLayout>
+
+                    <View
+                        android:id="@+id/dividerPersistentStatusNotificationMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
+
+                    <LinearLayout
+                        android:id="@+id/rowPersistentStatusNotificationMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="68dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/tune_24"
+                            app:tint="?attr/colorOnSurface" />
+
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_persistent_status_notification_mode_title" />
+
+                            <TextView
+                                android:id="@+id/tvPersistentStatusNotificationModeValue"
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/status_notification_mode_full" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="@string/open"
+                            android:src="@drawable/keyboard_arrow_right_24"
+                            android:alpha="0.7"
+                            app:tint="?android:attr/textColorSecondary" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -1261,12 +1419,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="@string/toggle_section_protection"
+                android:layout_marginBottom="10dp"
                 android:gravity="center_vertical"
-                app:drawableStartCompat="@drawable/security_24"
+                android:text="@string/toggle_section_protection"
                 android:drawablePadding="8dp"
-                app:drawableTint="?attr/colorOnSurface"
-                android:layout_marginBottom="10dp"/>
+                app:drawableStartCompat="@drawable/security_24"
+                app:drawableTint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvProtectionSectionSummary"
@@ -1274,16 +1432,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.82"
-                android:text="@string/toggle_section_protection_summary" />
+                android:text="@string/toggle_section_protection_summary"
+                android:alpha="0.82" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSafetyControls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -1298,17 +1456,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/notifications_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1334,16 +1494,16 @@
                             android:id="@+id/switchBlockNotifications"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <!-- Start Switchly after reboot -->
                     <LinearLayout
@@ -1352,17 +1512,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/battery_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1388,17 +1550,17 @@
                             android:id="@+id/switchAutostart"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterAutostart"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <!-- Emergency unlock feature -->
                     <LinearLayout
@@ -1407,17 +1569,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/security_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1443,9 +1607,9 @@
                             android:id="@+id/switchEmergency"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -1457,12 +1621,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="@string/toggle_section_ui"
+                android:layout_marginBottom="10dp"
                 android:gravity="center_vertical"
-                app:drawableStartCompat="@drawable/dashboard_24"
+                android:text="@string/toggle_section_ui"
                 android:drawablePadding="8dp"
-                app:drawableTint="?attr/colorOnSurface"
-                android:layout_marginBottom="10dp"/>
+                app:drawableStartCompat="@drawable/dashboard_24"
+                app:drawableTint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvUiSectionSummary"
@@ -1470,8 +1634,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.82"
-                android:text="@string/toggle_section_ui_summary" />
+                android:text="@string/toggle_section_ui_summary"
+                android:alpha="0.82" />
 
             <!-- In-app Home: Switchly Home cards and shortcuts -->
             <TextView
@@ -1480,12 +1644,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="@string/toggle_subsection_in_app_home"
+                android:layout_marginBottom="4dp"
                 android:gravity="center_vertical"
-                app:drawableStartCompat="@drawable/dashboard_24"
+                android:text="@string/toggle_subsection_in_app_home"
                 android:drawablePadding="8dp"
-                app:drawableTint="?attr/colorOnSurface"
-                android:layout_marginBottom="4dp"/>
+                app:drawableStartCompat="@drawable/dashboard_24"
+                app:drawableTint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvDisplayHomeSectionSummary"
@@ -1493,16 +1657,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.82"
-                android:text="@string/toggle_subsection_in_app_home_summary" />
+                android:text="@string/toggle_subsection_in_app_home_summary"
+                android:alpha="0.82" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDisplayHomeControls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -1516,17 +1680,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/dashboard_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1548,30 +1714,31 @@
                                 android:layout_marginTop="2dp"
                                 android:text="@string/pref_home_layout_mode_summary" />
                         </LinearLayout>
+
                         <TextView
                             android:id="@+id/tvHomeLayoutModeValue"
                             style="@style/TextAppearance.MaterialComponents.Body2"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
-                            android:alpha="0.82"
-                            android:text="@string/home_layout_detailed" />
+                            android:text="@string/home_layout_detailed"
+                            android:alpha="0.82" />
 
                         <ImageView
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:layout_marginStart="8dp"
+                            android:contentDescription="@string/open"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.6"
-                            android:contentDescription="@string/open" />
+                            android:alpha="0.6" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterHomeLayoutDetailed"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowHomeLayoutCustom"
@@ -1579,18 +1746,20 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
                         android:visibility="gone"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/tune_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1616,18 +1785,18 @@
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:layout_marginStart="8dp"
+                            android:contentDescription="@string/open"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.6"
-                            android:contentDescription="@string/open" />
+                            android:alpha="0.6" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterHomeLayoutCustom"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
                         android:visibility="gone"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowShowQuickActions"
@@ -1635,17 +1804,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/apps_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1671,17 +1842,17 @@
                             android:id="@+id/switchShowQuickActions"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterShowQuickActions"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowShowTemporaryMode"
@@ -1689,17 +1860,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/schedule_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1725,17 +1898,17 @@
                             android:id="@+id/switchShowTemporaryMode"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterShowTemporaryMode"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowShowActiveDuration"
@@ -1743,17 +1916,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/bar_chart_24"
-                            app:tint="?attr/colorPrimary"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorPrimary" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1779,17 +1954,17 @@
                             android:id="@+id/switchShowActiveDuration"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterShowActiveDuration"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowShowEmergencyUnlock"
@@ -1797,17 +1972,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/security_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1833,11 +2010,10 @@
                             android:id="@+id/switchShowEmergencyUnlock"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textOn=""
                             android:textOff=""
-                            app:showText="false"/>
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -1848,12 +2024,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:text="@string/toggle_subsection_tiles"
+                android:layout_marginBottom="4dp"
                 android:gravity="center_vertical"
-                app:drawableStartCompat="@drawable/toggle_on_24"
+                android:text="@string/toggle_subsection_tiles"
                 android:drawablePadding="8dp"
-                app:drawableTint="?attr/colorOnSurface"
-                android:layout_marginBottom="4dp"/>
+                app:drawableStartCompat="@drawable/toggle_on_24"
+                app:drawableTint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvDisplayTilesSectionSummary"
@@ -1861,16 +2037,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.82"
-                android:text="@string/toggle_subsection_tiles_summary" />
+                android:text="@string/toggle_subsection_tiles_summary"
+                android:alpha="0.82" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDisplayTileControls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -1884,15 +2060,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/dashboard_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
                         <Space
                             android:layout_width="14dp"
@@ -1911,11 +2087,11 @@
                                 android:text="@string/pref_qs_tile_title" />
 
                             <TextView
+                                android:id="@+id/tvQuickTileSummary"
                                 style="@style/TextAppearance.MaterialComponents.Body2"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:id="@+id/tvQuickTileSummary"
                                 android:text="@string/pref_qs_tile_summary" />
                         </LinearLayout>
 
@@ -1923,18 +2099,18 @@
                             android:id="@+id/ivQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/open_in_new_24"
-                            app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterQuickTile"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowQrQuickTile"
@@ -1942,17 +2118,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/qr_code_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1967,11 +2145,11 @@
                                 android:text="@string/pref_qr_qs_tile_title" />
 
                             <TextView
+                                android:id="@+id/tvQrQuickTileSummary"
                                 style="@style/TextAppearance.MaterialComponents.Body2"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:id="@+id/tvQrQuickTileSummary"
                                 android:text="@string/pref_qr_qs_tile_summary" />
                         </LinearLayout>
 
@@ -1979,18 +2157,18 @@
                             android:id="@+id/ivQrQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/open_in_new_24"
-                            app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterQrQuickTile"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowBarcodeQuickTile"
@@ -1998,17 +2176,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/barcode_24"
-                            app:tint="?attr/colorOnSurface"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
 
-                        <Space android:layout_width="14dp" android:layout_height="1dp" />
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -2023,11 +2203,11 @@
                                 android:text="@string/pref_barcode_qs_tile_title" />
 
                             <TextView
+                                android:id="@+id/tvBarcodeQuickTileSummary"
                                 style="@style/TextAppearance.MaterialComponents.Body2"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:id="@+id/tvBarcodeQuickTileSummary"
                                 android:text="@string/pref_barcode_qs_tile_summary" />
                         </LinearLayout>
 
@@ -2035,19 +2215,18 @@
                             android:id="@+id/ivBarcodeQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/open_in_new_24"
-                            app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterBarcodeQuickTile"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
-
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -2058,12 +2237,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:text="@string/toggle_subsection_widgets"
+                android:layout_marginBottom="4dp"
                 android:gravity="center_vertical"
-                app:drawableStartCompat="@drawable/apps_24"
+                android:text="@string/toggle_subsection_widgets"
                 android:drawablePadding="8dp"
-                app:drawableTint="?attr/colorOnSurface"
-                android:layout_marginBottom="4dp"/>
+                app:drawableStartCompat="@drawable/apps_24"
+                app:drawableTint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvDisplayWidgetsSectionSummary"
@@ -2071,16 +2250,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.82"
-                android:text="@string/toggle_subsection_widgets_summary" />
+                android:text="@string/toggle_subsection_widgets_summary"
+                android:alpha="0.82" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDisplayWidgetControls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -2094,15 +2273,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/barcode_24"
-                            app:tint="?attr/colorPrimary"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorPrimary" />
 
                         <Space
                             android:layout_width="14dp"
@@ -2127,22 +2306,23 @@
                                 android:layout_marginTop="2dp"
                                 android:text="@string/pref_widget_barcode_summary" />
                         </LinearLayout>
+
                         <ImageView
                             android:id="@+id/ivWidgetBarcodeChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterWidgetBarcode"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowWidgetQr"
@@ -2150,15 +2330,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/qr_code_24"
-                            app:tint="?attr/colorPrimary"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorPrimary" />
 
                         <Space
                             android:layout_width="14dp"
@@ -2183,22 +2363,23 @@
                                 android:layout_marginTop="2dp"
                                 android:text="@string/pref_widget_qr_summary" />
                         </LinearLayout>
+
                         <ImageView
                             android:id="@+id/ivWidgetQrChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterWidgetQr"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowWidgetNextSchedule"
@@ -2206,15 +2387,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/schedule_24"
-                            app:tint="?attr/colorPrimary"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorPrimary" />
 
                         <Space
                             android:layout_width="14dp"
@@ -2239,22 +2420,23 @@
                                 android:layout_marginTop="2dp"
                                 android:text="@string/pref_widget_next_schedule_summary" />
                         </LinearLayout>
+
                         <ImageView
                             android:id="@+id/ivWidgetNextScheduleChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterWidgetNextSchedule"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowWidgetActiveTimer"
@@ -2262,15 +2444,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/schedule_24"
-                            app:tint="?attr/colorPrimary"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorPrimary" />
 
                         <Space
                             android:layout_width="14dp"
@@ -2295,22 +2477,23 @@
                                 android:layout_marginTop="2dp"
                                 android:text="@string/pref_widget_active_timer_summary" />
                         </LinearLayout>
+
                         <ImageView
                             android:id="@+id/ivWidgetActiveTimerChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterWidgetActiveTimer"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <LinearLayout
                         android:id="@+id/rowWidgetBlockedNotifications"
@@ -2318,15 +2501,15 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp"
-                        android:background="?attr/selectableItemBackground">
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="14dp">
 
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/notifications_24"
-                            app:tint="?attr/colorPrimary"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorPrimary" />
 
                         <Space
                             android:layout_width="14dp"
@@ -2351,20 +2534,18 @@
                                 android:layout_marginTop="2dp"
                                 android:text="@string/pref_widget_blocked_notifications_summary" />
                         </LinearLayout>
+
                         <ImageView
                             android:id="@+id/ivWidgetBlockedNotificationsChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            app:tint="?attr/colorOnSurface"
                             android:alpha="0.55"
-                            android:contentDescription="@null" />
+                            app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
         </LinearLayout>
     </ScrollView>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

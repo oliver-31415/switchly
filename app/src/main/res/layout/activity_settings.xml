@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -41,12 +40,10 @@
             android:orientation="vertical">
 
             <TextView
+                style="@style/Switchly.SectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/settings_section_controls"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:text="@string/settings_section_controls" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSettingsBlockingModes"
@@ -61,9 +58,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -76,8 +73,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -99,9 +96,9 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -119,9 +116,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -134,8 +131,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -157,9 +154,9 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -177,9 +174,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -192,8 +189,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -215,21 +212,19 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
+                style="@style/Switchly.SectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_section_personalization"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="24dp"
+                android:text="@string/settings_section_personalization" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSettingsAppearance"
@@ -244,9 +239,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -259,8 +254,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -282,9 +277,9 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -302,9 +297,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -317,8 +312,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -332,19 +327,19 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="3dp"
-                            android:ellipsize="end"
-                            android:maxLines="1"
                             android:text="@string/ignored_usage_apps_summary"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
                     </LinearLayout>
 
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -362,9 +357,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -377,8 +372,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -400,21 +395,19 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
+                style="@style/Switchly.SectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_section_reliability"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="24dp"
+                android:text="@string/settings_section_reliability" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSettingsPermissions"
@@ -429,9 +422,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -444,8 +437,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -467,9 +460,9 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -487,9 +480,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -502,8 +495,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -525,9 +518,9 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -545,9 +538,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -560,8 +553,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -583,21 +576,19 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
+                style="@style/Switchly.SectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_section_data"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="24dp"
+                android:text="@string/settings_section_data" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSettingsAccountData"
@@ -612,9 +603,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -627,8 +618,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -650,9 +641,9 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -670,9 +661,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -685,8 +676,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -708,23 +699,21 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:id="@+id/tvSettingsDeveloperSection"
+                style="@style/Switchly.SectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_section_developer"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
+                android:layout_marginTop="24dp"
+                android:visibility="gone"
+                android:text="@string/settings_section_developer" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSettingsDeveloper"
@@ -732,37 +721,37 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
+                android:visibility="gone"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:visibility="gone">
+                android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="@string/developer_mode_info_title"
+                        android:contentDescription="@string/developer_mode_title"
                         android:src="@drawable/tune_24"
                         app:tint="?attr/colorPrimary" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/developer_mode_info_title"
+                            android:text="@string/developer_mode_title"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -778,21 +767,19 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
+                style="@style/Switchly.SectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_section_help"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="24dp"
+                android:text="@string/settings_section_help" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSettingsHelpAbout"
@@ -807,9 +794,9 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
                     android:minHeight="72dp"
                     android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
@@ -822,8 +809,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="14dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -845,9 +832,9 @@
                     <ImageView
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:alpha="0.7"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.7"
                         app:tint="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -858,11 +845,11 @@
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
         android:paddingStart="16dp"
         android:paddingTop="8dp"
         android:paddingEnd="16dp"
         android:paddingBottom="96dp"
-        android:visibility="gone"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <!-- Bottom-Navigation -->
@@ -876,5 +863,4 @@
         android:paddingBottom="0dp"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/menu_bottom_main" />
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

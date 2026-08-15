@@ -31,10 +31,10 @@
                 android:id="@+id/dropdownStatsPrimary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:gravity="center_vertical"
-                android:importantForAutofill="no"
                 android:inputType="none"
-                android:minHeight="56dp" />
+                android:importantForAutofill="no" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
@@ -59,10 +59,10 @@
                 android:id="@+id/dropdownStatsSort"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:gravity="center_vertical"
-                android:importantForAutofill="no"
                 android:inputType="none"
-                android:minHeight="56dp" />
+                android:importantForAutofill="no" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <CheckBox
@@ -72,6 +72,5 @@
             android:layout_marginTop="12dp"
             android:minHeight="44dp"
             android:visibility="gone" />
-
     </LinearLayout>
 </ScrollView>

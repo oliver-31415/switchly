@@ -7,6 +7,9 @@
     <string name="rules_hub_title">Regeln</string>
     <string name="rules_hub_profiles_section">Profile</string>
     <string name="rules_hub_categories_section">Regeln für dieses Profil</string>
+    <string name="switchly_rules_locked_title">Regeln öffnen?</string>
+    <string name="rules_restricted_open_message">Switchly ist aktiv. Regeln können weiterhin angesehen werden, aber Apps, Websites, In-App-Regeln, Profile und Zeitpläne lassen sich erst ändern, wenn Switchly vollständig deaktiviert ist.</string>
+    <string name="rules_open_restricted">Regeln öffnen</string>
     <string name="rules_apps_title">App-Regeln</string>
     <string name="rules_apps_summary">Blockierte oder erlaubte Apps, Limits und App-Regeln auswählen</string>
     <string name="rules_websites_title">Website-Regeln</string>

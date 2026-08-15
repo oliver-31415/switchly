@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Switchly.Card"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardRoot"
+    style="@style/Switchly.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
@@ -21,8 +21,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/checkSelect"
@@ -37,8 +37,8 @@
                 android:id="@+id/imgKind"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/schedule_24"
                 android:contentDescription="@null"
+                android:src="@drawable/schedule_24"
                 app:tint="?attr/colorPrimary" />
 
             <Space
@@ -55,41 +55,38 @@
                     android:id="@+id/textTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="@string/schedule_item_title_placeholder"
                     android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:text="@string/schedule_item_title_placeholder" />
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/textSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
+                    android:text="@string/schedule_item_subtitle_placeholder"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="13sp"
-                    android:alpha="0.86"
-                    android:text="@string/schedule_item_subtitle_placeholder" />
-
+                    android:alpha="0.86" />
             </LinearLayout>
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchEnabled"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="0dp" />
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/textNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
             android:layout_marginStart="38dp"
+            android:layout_marginTop="6dp"
+            android:visibility="gone"
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="13sp"
-            android:alpha="0.86"
             android:maxLines="3"
             android:ellipsize="end"
-            android:visibility="gone" />
-
+            android:alpha="0.86" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

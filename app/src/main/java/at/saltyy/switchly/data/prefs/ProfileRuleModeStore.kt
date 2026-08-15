@@ -21,6 +21,7 @@ package at.saltyy.switchly.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import at.saltyy.switchly.util.PersistentStatusNotifier
 
 /**
  * Per-profile app rule mode.
@@ -62,6 +63,7 @@ object ProfileRuleModeStore {
     fun setMode(context: Context, profile: String, mode: String) {
         val safe = if (mode == MODE_ALLOW_SELECTED) MODE_ALLOW_SELECTED else MODE_BLOCK_SELECTED
         prefs(context).edit { putString(keyMode(profile), safe) }
+        PersistentStatusNotifier.refresh(context)
     }
 
     fun shouldAllowEssentialSystemApps(context: Context, profile: String): Boolean =

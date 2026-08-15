@@ -4,14 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Topbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:fitsSystemWindows="true">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
@@ -29,8 +30,8 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="14dp"
         android:layout_marginEnd="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appBar"
         app:selectionRequired="true"
         app:singleSelection="true">
@@ -39,20 +40,20 @@
             android:id="@+id/btnHiddenUsageInsights"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
             android:layout_weight="1"
-            android:maxLines="1"
+            android:minHeight="48dp"
             android:text="@string/hidden_apps_tab_usage"
+            android:maxLines="1"
             app:cornerRadius="4dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnHiddenAppPickers"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
             android:layout_weight="1"
-            android:maxLines="1"
+            android:minHeight="48dp"
             android:text="@string/hidden_apps_tab_pickers"
+            android:maxLines="1"
             app:cornerRadius="4dp" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -64,19 +65,19 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toggleHiddenAppsSection"
         android:hint="@string/ignored_usage_apps_search_hint"
         app:endIconMode="clear_text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toggleHiddenAppsSection"
         app:startIconDrawable="@drawable/apps_24">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:imeOptions="actionDone"
-            android:inputType="text" />
+            android:inputType="text"
+            android:imeOptions="actionDone" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
@@ -86,11 +87,11 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="13sp"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchBox" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/searchBox"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="13sp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvIgnoredUsageApps"
@@ -99,12 +100,12 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:clipToPadding="false"
-        android:paddingBottom="10dp"
-        app:layout_constraintBottom_toTopOf="@id/btnSaveIgnoredApps"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvIgnoredCount" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvIgnoredCount"
+        app:layout_constraintBottom_toTopOf="@id/btnSaveIgnoredApps"
+        android:clipToPadding="false"
+        android:paddingBottom="10dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSaveIgnoredApps"
@@ -115,9 +116,8 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:text="@string/save"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:text="@string/save" />
 </androidx.constraintlayout.widget.ConstraintLayout>

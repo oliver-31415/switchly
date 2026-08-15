@@ -170,7 +170,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_QUICK_ACTIONS_EXPANDED = "home_quick_actions_expanded"
         private const val KEY_BLOCKED_APPS_EXPANDED = "home_blocked_apps_expanded"
         private const val KEY_EXPERIMENTAL_NOTICE_VERSION = "experimental_notice_last_version"
-        private const val EXPERIMENTAL_NOTICE_VERSION = 222
+        private const val EXPERIMENTAL_NOTICE_VERSION = 223
         private const val KEY_BOTTOM_NAV_TOUR_PENDING = "bottom_nav_tour_pending"
         private const val KEY_BOTTOM_NAV_TOUR_VERSION = "bottom_nav_tour_version"
         private const val BOTTOM_NAV_TOUR_VERSION = 1
@@ -511,21 +511,17 @@ class MainActivity : AppCompatActivity() {
         // Quick actions
         rowQuickActionsHeader.setOnClickListener { toggleQuickActionsExpanded() }
         ivQuickActionsEdit.setOnClickListener { showQuickActionsCustomizeDialog() }
-        tileManageApps.setOnClickListener { openAppPickerIfUnlocked() }
-        tileProfiles.setOnClickListener { openProfilesIfUnlocked() }
+        tileManageApps.setOnClickListener {
+            openRulesDestination(Intent(this, AppPickerActivity::class.java))
+        }
+        tileProfiles.setOnClickListener {
+            openRulesDestination(Intent(this, ManageProfilesActivity::class.java))
+        }
         tileWriteNfc.setOnClickListener {
-            if (EditingLockGuard.isLocked(this)) {
-                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_websites)
-            } else {
-                startActivity(Intent(this, ManageBlockedWebsitesActivity::class.java))
-            }
+            openRulesDestination(Intent(this, ManageBlockedWebsitesActivity::class.java))
         }
         tileToggleOptions.setOnClickListener {
-            if (EditingLockGuard.isLocked(this)) {
-                EditingLockGuard.showLockedDialog(this, R.string.edit_locked_manage_inapp)
-            } else {
-                startActivity(Intent(this, InAppRulesActivity::class.java))
-            }
+            openRulesDestination(Intent(this, InAppRulesActivity::class.java))
         }
         tileQr.setOnClickListener { openQrScannerDirectly() }
         tileQr.setOnLongClickListener {
@@ -1563,6 +1559,22 @@ class MainActivity : AppCompatActivity() {
                 }
                 onPicked(m)
             }
+            .showAccented()
+    }
+
+    private fun openRulesDestination(intent: Intent) {
+        if (!EditingLockGuard.isLocked(this)) {
+            startActivity(intent)
+            return
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.switchly_rules_locked_title)
+            .setMessage(R.string.rules_restricted_open_message)
+            .setPositiveButton(R.string.rules_open_restricted) { _, _ ->
+                startActivity(intent)
+            }
+            .setNegativeButton(R.string.cancel, null)
             .showAccented()
     }
 

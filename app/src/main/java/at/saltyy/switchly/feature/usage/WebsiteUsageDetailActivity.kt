@@ -117,6 +117,7 @@ class WebsiteUsageDetailActivity : AppCompatActivity() {
 
         b.toolbar.inflateMenu(R.menu.menu_website_detail)
         b.toolbar.menu?.findItem(R.id.action_delete)?.icon?.mutate()?.setTint(toolbarIconColor())
+        UsageInfoAction.attach(this, b.toolbar, R.string.website_usage_info_title, R.string.website_usage_info_body)
 
         val domain = intent.getStringExtra(EXTRA_DOMAIN) ?: return
         val label = intent.getStringExtra(EXTRA_LABEL) ?: domain

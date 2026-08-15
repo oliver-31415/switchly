@@ -26,17 +26,22 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.text.SpannableStringBuilder
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
-import android.widget.ImageView
+import android.view.ViewGroup
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -51,6 +56,7 @@ import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.data.prefs.NotificationBlockStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
+import at.saltyy.switchly.feature.faq.FaqActivity
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
@@ -64,8 +70,7 @@ import at.saltyy.switchly.util.PermissionSetupChecks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import java.text.DateFormat
-import java.util.Date
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -86,19 +91,8 @@ class PermissionsActivity : AppCompatActivity() {
         MISSING
     }
 
-    private lateinit var cardPermissionHeartbeat: View
-    private lateinit var rowStatusTop: View
-    private lateinit var dividerStatus: View
-    private lateinit var ivStatusIcon: ImageView
-    private lateinit var tvStatusTitle: TextView
-    private lateinit var tvPermissionHeartbeatStatus: TextView
-    private lateinit var tvPermissionLastChecked: TextView
-    private lateinit var rowStatusAction: View
-    private lateinit var tvStatusActionTitle: TextView
-    private lateinit var btnPermissionRecheck: MaterialButton
+    private lateinit var permissionStatusButton: AppCompatTextView
 
-    private var lastPermissionHealthCheckMs: Long = 0L
-    private var hideHealthCheckCard: Boolean = false
     private var lastMissingPermissionCount: Int = 0
     private var lastHasAccessibilityMismatch: Boolean = false
 
@@ -159,26 +153,7 @@ class PermissionsActivity : AppCompatActivity() {
         toolbar.navigationIcon?.mutate()?.setTint(toolbarIconColor)
         toolbar.setTitleTextColor(toolbarIconColor)
 
-        cardPermissionHeartbeat = findViewById(R.id.cardPermissionHeartbeat)
-        rowStatusTop = cardPermissionHeartbeat.findViewById(R.id.rowStatusTop)
-        dividerStatus = cardPermissionHeartbeat.findViewById(R.id.dividerStatus)
-        ivStatusIcon = cardPermissionHeartbeat.findViewById(R.id.ivStatusIcon)
-        tvStatusTitle = cardPermissionHeartbeat.findViewById(R.id.tvStatusTitle)
-        tvPermissionHeartbeatStatus = cardPermissionHeartbeat.findViewById(R.id.tvStatusBody)
-        tvPermissionLastChecked = cardPermissionHeartbeat.findViewById(R.id.tvStatusFooter)
-        rowStatusAction = cardPermissionHeartbeat.findViewById(R.id.rowStatusAction)
-        tvStatusActionTitle = cardPermissionHeartbeat.findViewById(R.id.tvStatusActionTitle)
-        btnPermissionRecheck = cardPermissionHeartbeat.findViewById(R.id.btnStatusAction)
-
-        ivStatusIcon.setImageResource(R.drawable.security_24)
-        tvStatusActionTitle.visibility = View.GONE
-        btnPermissionRecheck.setText(R.string.permissions_health_recheck)
-        rowStatusAction.visibility = View.VISIBLE
-        tvPermissionHeartbeatStatus.visibility = View.VISIBLE
-        tvPermissionLastChecked.visibility = View.VISIBLE
-
-        hideHealthCheckCard = intent.getBooleanExtra(EXTRA_FROM_ONBOARDING, false) || intent.getBooleanExtra(EXTRA_FROM_TUTORIAL, false)
-        cardPermissionHeartbeat.visibility = if (hideHealthCheckCard) View.GONE else View.VISIBLE
+        setupPermissionStatusAction(toolbar)
 
         tvNotificationsStatus = findViewById(R.id.tvNotificationsStatus)
         tvNotificationAccessStatus = findViewById(R.id.tvNotificationAccessStatus)
@@ -218,21 +193,6 @@ class PermissionsActivity : AppCompatActivity() {
         groupAutostart = findViewById(R.id.groupAutostart)
         tvAutostartHint = findViewById(R.id.tvAutostartHint)
 
-        btnPermissionRecheck.setOnClickListener {
-            updateUi(forceHeartbeat = true)
-
-            val msg = when {
-                lastHasAccessibilityMismatch -> getString(R.string.permissions_health_rechecked_with_mismatch)
-                lastMissingPermissionCount > 0 -> resources.getQuantityString(
-                    R.plurals.permissions_health_rechecked_missing,
-                    lastMissingPermissionCount,
-                    lastMissingPermissionCount
-                )
-                else -> getString(R.string.permissions_health_rechecked_all_good)
-            }
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-        }
-
         // OPEN buttons
         btnOpenNotifications.setOnClickListener {
             openOrRequestNotifications()
@@ -269,7 +229,13 @@ class PermissionsActivity : AppCompatActivity() {
         }
 
         btnOpenAutostart.setOnClickListener {
-            openAppDetails()
+            startActivity(
+                FaqActivity.intent(
+                    context = this,
+                    category = FaqActivity.CATEGORY_BACKGROUND_ACCESS,
+                    questionResId = R.string.faq_q_device_background_steps
+                )
+            )
         }
 
         btnOpenExactAlarms.setOnClickListener {
@@ -337,7 +303,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnWhyBattery.setOnClickListener {
             showWhyDialog(
                 getString(R.string.permissions_battery_title),
-                getString(R.string.permissions_battery_desc) + "\n\n" + getString(R.string.troubleshooting_battery_oem_note)
+                getString(R.string.permissions_battery_desc) + "\n\n" + getString(R.string.permissions_battery_oem_note)
             )
         }
 
@@ -351,7 +317,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnWhyExactAlarms.setOnClickListener {
             showWhyDialog(
                 getString(R.string.permissions_exact_alarms_title),
-                getString(R.string.permissions_exact_alarms_summary) + "\n\n" + getString(R.string.troubleshooting_exact_alarms_note)
+                getString(R.string.permissions_exact_alarms_summary) + "\n\n" + getString(R.string.permissions_exact_alarms_note)
             )
         }
 
@@ -377,6 +343,12 @@ class PermissionsActivity : AppCompatActivity() {
         CustomAccentApplier.applyIfNeeded(this)
         ExactAlarmPermissionSync.syncAndReschedule(this, reason = "permissions_resume")
         updateUi()
+        lifecycleScope.launch {
+            delay(350)
+            updateUi()
+            delay(900)
+            updateUi()
+        }
     }
 
     private fun updateUi(forceHeartbeat: Boolean = false) {
@@ -414,7 +386,10 @@ class PermissionsActivity : AppCompatActivity() {
         val nfcState = NfcLaunchAccessCompat.state(this)
         val nfcRelevant = AutomationModeStore.isNfcAllowed(this) ||
             runCatching { NfcUidPairingStore.getPairedUidsHex(this).isNotEmpty() }.getOrDefault(false)
-        val nfcMissing = nfcRelevant && nfcState == NfcLaunchAccessCompat.State.NOT_ALLOWED
+        val nfcMissing = nfcRelevant && nfcState in setOf(
+            NfcLaunchAccessCompat.State.NOT_ALLOWED,
+            NfcLaunchAccessCompat.State.NFC_DISABLED
+        )
 
         applyStatus(tvNotificationsStatus, notificationsOk)
         applyStatus(tvNotificationAccessStatus, notificationAccessGranted)
@@ -492,7 +467,6 @@ class PermissionsActivity : AppCompatActivity() {
                 getString(R.string.permissions_btn_open)
             }
 
-        lastPermissionHealthCheckMs = System.currentTimeMillis()
         val missingCount = listOf(
             (!accessibilityEnabled),
             (!usageAccessOk),
@@ -508,23 +482,15 @@ class PermissionsActivity : AppCompatActivity() {
         lastMissingPermissionCount = missingCount
         lastHasAccessibilityMismatch = stickyAccessibilityMismatch || accessibilityMismatchNow
 
-        if (!hideHealthCheckCard) {
-            updatePermissionHealthRow(
-                accessibilityEnabled = accessibilityEnabled,
-                mismatch = accessibilityMismatchNow || stickyAccessibilityMismatch,
-                batteryRelevant = batteryRelevant,
-                batteryOk = batteryOk,
-                exactAlarmsRelevant = exactAlarmsRelevant,
-                exactAlarmsOk = exactAlarmsOk,
-                missingCount = missingCount,
-                forceHeartbeat = forceHeartbeat
-            )
-        }
-
         updateBanner(
             missingCount = missingCount,
             stickyAccessibilityMismatch = stickyAccessibilityMismatch || accessibilityMismatchNow
         )
+        if (forceHeartbeat) {
+            permissionStatusButton.animate().alpha(0.55f).setDuration(80L).withEndAction {
+                permissionStatusButton.animate().alpha(1f).setDuration(140L).start()
+            }.start()
+        }
     }
 
     private fun refreshStickyAccessibilityMismatch(mismatchNow: Boolean): Boolean {
@@ -539,73 +505,6 @@ class PermissionsActivity : AppCompatActivity() {
         }
     }
 
-    private fun updatePermissionHealthRow(
-        accessibilityEnabled: Boolean,
-        mismatch: Boolean,
-        batteryRelevant: Boolean,
-        batteryOk: Boolean,
-        exactAlarmsRelevant: Boolean,
-        exactAlarmsOk: Boolean,
-        missingCount: Int,
-        forceHeartbeat: Boolean
-    ) {
-        val green = ContextCompat.getColor(this, R.color.status_ok)
-        val red = ContextCompat.getColor(this, R.color.status_error)
-
-        when {
-            mismatch -> {
-                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_mismatch)
-                tvPermissionHeartbeatStatus.setTextColor(red)
-            }
-
-            missingCount > 0 -> {
-                tvPermissionHeartbeatStatus.text = resources.getQuantityString(
-                    R.plurals.permissions_health_live_missing_count,
-                    missingCount,
-                    missingCount
-                )
-                tvPermissionHeartbeatStatus.setTextColor(red)
-            }
-
-            !accessibilityEnabled -> {
-                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_disabled)
-                tvPermissionHeartbeatStatus.setTextColor(red)
-            }
-
-            batteryRelevant && !batteryOk -> {
-                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_sched_battery_bad)
-                tvPermissionHeartbeatStatus.setTextColor(red)
-            }
-
-            exactAlarmsRelevant && !exactAlarmsOk -> {
-                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_exact_alarms_not_allowed)
-                tvPermissionHeartbeatStatus.setTextColor(red)
-            }
-
-            accessibilityEnabled -> {
-                tvPermissionHeartbeatStatus.text = if (batteryRelevant || exactAlarmsRelevant) {
-                    getString(R.string.permissions_health_live_ok_with_schedules)
-                } else {
-                    getString(R.string.permissions_health_live_ok)
-                }
-                tvPermissionHeartbeatStatus.setTextColor(green)
-            }
-
-            else -> {
-                tvPermissionHeartbeatStatus.text = getString(R.string.permissions_health_live_unknown)
-                tvPermissionHeartbeatStatus.setTextColor(red)
-            }
-        }
-
-        val checkedAt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(lastPermissionHealthCheckMs))
-            tvPermissionLastChecked.text = getString(R.string.permissions_health_last_checked_fmt, checkedAt)
-
-        if (forceHeartbeat) {
-            tvPermissionHeartbeatStatus.alpha = 0.6f
-            tvPermissionHeartbeatStatus.animate().alpha(1f).setDuration(180L).start()
-        }
-    }
-
     private fun applyProtectedButtonState(button: MaterialButton, locked: Boolean) {
         button.isEnabled = !locked
         button.isClickable = !locked
@@ -613,24 +512,71 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun updateBanner(missingCount: Int, stickyAccessibilityMismatch: Boolean) {
-        if (missingCount == 0 && !stickyAccessibilityMismatch) {
-            rowStatusTop.visibility = View.GONE
-            dividerStatus.visibility = View.GONE
-            return
-        }
-        rowStatusTop.visibility = View.VISIBLE
-        dividerStatus.visibility = View.VISIBLE
+        val hasIssues = missingCount > 0 || stickyAccessibilityMismatch
+        permissionStatusButton.setText(
+            if (hasIssues) R.string.permissions_toolbar_issues
+            else R.string.ok
+        )
 
-        tvStatusTitle.text = if (stickyAccessibilityMismatch) {
-            getString(R.string.permissions_banner_mismatch_title)
-        } else {
-            resources.getQuantityString(
-                R.plurals.permissions_banner_missing_count_short,
-                missingCount,
-                missingCount
-            )
+        // Keep the toolbar action flat and consistently visible on every accent color.
+        val contentColor = ContextCompat.getColor(this, android.R.color.white)
+        val shield = ContextCompat.getDrawable(this, R.drawable.security_24)?.mutate()?.apply {
+            setTint(contentColor)
         }
-        tvStatusTitle.setLineSpacing(0f, 1.0f)
+        permissionStatusButton.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            shield,
+            null,
+            null,
+            null
+        )
+        permissionStatusButton.setTextColor(contentColor)
+        permissionStatusButton.background = null
+        permissionStatusButton.alpha = 1f
+    }
+
+    private fun setupPermissionStatusAction(toolbar: MaterialToolbar) {
+        val horizontalPadding = (8 * resources.displayMetrics.density + 0.5f).toInt()
+        val actionHeight = (48 * resources.displayMetrics.density + 0.5f).toInt()
+        permissionStatusButton = AppCompatTextView(this).apply {
+            minWidth = 0
+            minHeight = actionHeight
+            gravity = Gravity.CENTER
+            isSingleLine = true
+            includeFontPadding = false
+            textSize = 13f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(ContextCompat.getColor(this@PermissionsActivity, android.R.color.white))
+            background = null
+            compoundDrawablePadding =
+                resources.getDimensionPixelSize(R.dimen.permission_toolbar_status_icon_padding)
+            setPadding(horizontalPadding, 0, horizontalPadding, 0)
+            contentDescription = getString(R.string.permissions_health_recheck)
+            setOnClickListener {
+                updateUi(forceHeartbeat = true)
+                val message = when {
+                    lastHasAccessibilityMismatch -> getString(R.string.permissions_health_rechecked_with_mismatch)
+                    lastMissingPermissionCount > 0 -> resources.getQuantityString(
+                        R.plurals.permissions_health_rechecked_missing,
+                        lastMissingPermissionCount,
+                        lastMissingPermissionCount
+                    )
+                    else -> getString(R.string.permissions_health_rechecked_all_good)
+                }
+                Toast.makeText(this@PermissionsActivity, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        val toolbarSpacing = (2 * resources.displayMetrics.density + 0.5f).toInt()
+        toolbar.addView(
+            permissionStatusButton,
+            Toolbar.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                actionHeight
+            ).apply {
+                gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                marginEnd = toolbarSpacing
+            }
+        )
     }
 
     private fun applyStatus(view: TextView, enabled: Boolean) {
@@ -676,7 +622,14 @@ class PermissionsActivity : AppCompatActivity() {
         }
         when (NfcLaunchAccessCompat.state(this)) {
             NfcLaunchAccessCompat.State.ALLOWED -> applyStatus(view, true)
-            NfcLaunchAccessCompat.State.NOT_ALLOWED -> applyStatus(view, false)
+            NfcLaunchAccessCompat.State.NOT_ALLOWED -> {
+                view.text = getString(R.string.permissions_nfc_status_not_allowed)
+                view.setTextColor(ContextCompat.getColor(this, R.color.status_error))
+            }
+            NfcLaunchAccessCompat.State.NFC_DISABLED -> {
+                view.text = getString(R.string.permissions_nfc_status_system_disabled)
+                view.setTextColor(ContextCompat.getColor(this, R.color.status_error))
+            }
             NfcLaunchAccessCompat.State.UNKNOWN -> {
                 view.text = getString(R.string.permissions_nfc_status_manual)
                 view.setTextColor(AccentColor.getAccentColorInt(this))
@@ -889,14 +842,7 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun openNfcSettings() {
-        val intents = listOf(
-            Intent("android.settings.MANAGE_SPECIAL_APP_ACCESSES"),
-            Intent(Settings.ACTION_NFC_SETTINGS),
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = "package:$packageName".toUri()
-            }
-        )
-        for (intent in intents) {
+        for (intent in NfcLaunchAccessCompat.settingsIntents(this)) {
             if (safeStart(intent)) {
                 return
             }
@@ -1036,7 +982,13 @@ class PermissionsActivity : AppCompatActivity() {
             "vivo",
             "samsung",
             "motorola",
-            "lenovo"
+            "lenovo",
+            "asus",
+            "sony",
+            "nokia",
+            "zte",
+            "tecno",
+            "infinix"
         ).any { all.contains(it) }
     }
 
@@ -1109,7 +1061,6 @@ class PermissionsActivity : AppCompatActivity() {
         private const val KEY_BATTERY_OPTIMIZATION_CONFIRMED_MAX_AVAILABLE = "battery_optimization_confirmed_max_available"
 
         const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
-        const val EXTRA_FROM_TUTORIAL = "extra_from_tutorial"
         const val EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE = "extra_show_accessibility_disclosure"
         const val EXTRA_FOCUS_SECTION = "extra_focus_section"
 

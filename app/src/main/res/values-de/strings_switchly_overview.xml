@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    
     <string name="switchly_overview_title">Switchly-Übersicht</string>
-    <string name="switchly_overview_summary">Scans, App-Starts, Blockierungen, Statusänderungen und Zeitpläne</string>
+    <string name="switchly_overview_summary">Scans, aktive Zeit, Öffnungen, Blockierungen, Limits, Aktionen und Zeitpläne</string>
     <string name="switchly_overview_info_title">Über die Switchly-Übersicht</string>
-    <string name="switchly_overview_info_body">Diese Übersicht zählt von Switchly verarbeitete Aktivitäten, darunter NFC-, QR- und Barcode-Scans, App-Starts, Blockierungen, effektive Aktivierungen und Deaktivierungen sowie ausgeführte Zeitpläne.\n\nDie Werte werden als dauerhafte Statistiken lokal gespeichert und gesichert, wenn beim JSON- oder Cloud-Backup „Statistiken/Zähler“ ausgewählt ist. Bereits vorhandene Scan- und Zeitplan-Summen bleiben verfügbar. Detaillierte Aktivierungs-, Deaktivierungs- und Zeitplan-Ergebniszähler beginnen mit dem Update, das diese Übersicht einführt, da sich ältere Aktionsquellen nicht zuverlässig rekonstruieren lassen.</string>
+    <string name="switchly_overview_info_body">Diese Übersicht zählt von Switchly verarbeitete Aktivitäten, darunter NFC-, QR- und Barcode-Scans, aktive Zeit, Öffnungen, Blockierungen, erreichte Limits, effektive Aktivierungen und Deaktivierungen sowie ausgeführte Zeitpläne.\n\nDie Werte werden als dauerhafte Statistiken lokal gespeichert und gesichert, wenn beim JSON- oder Cloud-Backup „Statistiken/Zähler“ ausgewählt ist. Bereits vorhandene Scan- und Zeitplan-Summen bleiben verfügbar. Detaillierte Aktivierungs-, Deaktivierungs-, Limit- und Zeitplan-Ergebniszähler beginnen mit den Updates, die diese Zähler eingeführt haben, da sich ältere Aktionsquellen nicht zuverlässig rekonstruieren lassen.</string>
     <string name="switchly_overview_storage_note">Lokal gespeichert und in Backups mit „Statistiken/Zähler“ enthalten. Detaillierte Statusänderungszähler beginnen mit diesem Update.</string>
     <string name="switchly_overview_range_overall">Gesamt</string>
     <string name="switchly_overview_section_scans">Scans und Eingaben</string>
@@ -14,8 +13,10 @@
     <string name="switchly_overview_nfc_scans">NFC-Scans</string>
     <string name="switchly_overview_qr_scans">QR-Scans</string>
     <string name="switchly_overview_barcode_scans">Barcode-Scans</string>
-    <string name="switchly_overview_app_launches">App-Starts</string>
+    <string name="switchly_overview_active_time">Aktive Zeit</string>
+    <string name="switchly_overview_app_launches">Öffnungen</string>
     <string name="switchly_overview_blocks">Blockierungen</string>
+    <string name="switchly_overview_limits_reached">Erreichte Limits</string>
     <string name="switchly_overview_enabled">Switchly aktiviert</string>
     <string name="switchly_overview_disabled">Switchly deaktiviert</string>
     <string name="switchly_overview_temporary_enables">Temporäre Aktivierungen</string>
@@ -23,5 +24,4 @@
     <string name="switchly_overview_schedules_executed">Zeitpläne ausgeführt</string>
     <string name="switchly_overview_schedule_enables">Zeitpläne, die Switchly aktiviert haben</string>
     <string name="switchly_overview_schedule_disables">Zeitpläne, die Switchly deaktiviert haben</string>
-
 </resources>

@@ -36,15 +36,18 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.setPadding
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.ActiveDurationStore
 import at.saltyy.switchly.data.prefs.AppLaunchCountStore
 import at.saltyy.switchly.data.prefs.BarcodeScanCountStore
-import at.saltyy.switchly.data.prefs.BlockCountStore
+import at.saltyy.switchly.data.prefs.BlockAttemptStore
 import at.saltyy.switchly.data.prefs.EmergencyUnlockCountStore
+import at.saltyy.switchly.data.prefs.LimitHitCountStore
 import at.saltyy.switchly.data.prefs.NfcScanCountStore
 import at.saltyy.switchly.data.prefs.QrScanCountStore
 import at.saltyy.switchly.data.prefs.ScheduleExecutionCountStore
 import at.saltyy.switchly.data.prefs.SwitchlyActionCountStore
 import at.saltyy.switchly.data.prefs.TempEnableCountStore
+import at.saltyy.switchly.feature.stats.StatsFormat
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
@@ -336,6 +339,12 @@ class SwitchlyOverviewActivity : AppCompatActivity() {
         activityCardContent.removeAllViews()
         addStatRow(
             parent = activityCardContent,
+            iconRes = R.drawable.timer_24,
+            labelRes = R.string.switchly_overview_active_time,
+            valueText = StatsFormat.prettyMsWithSeconds(activeTimeForRange())
+        )
+        addStatRow(
+            parent = activityCardContent,
             iconRes = R.drawable.apps_24,
             labelRes = R.string.switchly_overview_app_launches,
             value = countForRange(
@@ -348,14 +357,26 @@ class SwitchlyOverviewActivity : AppCompatActivity() {
         )
         addStatRow(
             parent = activityCardContent,
-            iconRes = R.drawable.lock_24,
+            iconRes = R.drawable.security_24,
             labelRes = R.string.switchly_overview_blocks,
             value = countForRange(
-                today = { BlockCountStore.getTotalToday(this) },
-                week = { BlockCountStore.getTotalForLastNDays(this, 7) },
-                month = { year, month -> BlockCountStore.getTotalForMonth(this, year, month) },
-                year = { year -> BlockCountStore.getTotalForYear(this, year) },
-                overall = { BlockCountStore.getTotalOverall(this) }
+                today = { BlockAttemptStore.getTodayTotal(this) },
+                week = { BlockAttemptStore.getForLastNDaysTotal(this, 7) },
+                month = { year, month -> BlockAttemptStore.getForMonthTotal(this, year, month) },
+                year = { year -> BlockAttemptStore.getForYearTotal(this, year) },
+                overall = { BlockAttemptStore.getOverallTotal(this) }
+            )
+        )
+        addStatRow(
+            parent = activityCardContent,
+            iconRes = R.drawable.bar_chart_24,
+            labelRes = R.string.switchly_overview_limits_reached,
+            value = countForRange(
+                today = { LimitHitCountStore.getToday(this) },
+                week = { LimitHitCountStore.getForLastNDays(this, 7) },
+                month = { year, month -> LimitHitCountStore.getForMonth(this, year, month) },
+                year = { year -> LimitHitCountStore.getForYear(this, year) },
+                overall = { LimitHitCountStore.getOverall(this) }
             ),
             last = true
         )
@@ -425,6 +446,16 @@ class SwitchlyOverviewActivity : AppCompatActivity() {
             value = actionCount(SwitchlyActionCountStore.Action.SCHEDULE_DISABLE),
             last = true
         )
+    }
+
+    private fun activeTimeForRange(): Long {
+        return when (selectedRange) {
+            Range.TODAY -> ActiveDurationStore.todayMs(this)
+            Range.WEEK -> ActiveDurationStore.lastNDaysMs(this, 7)
+            Range.MONTH -> ActiveDurationStore.thisMonthMs(this)
+            Range.YEAR -> ActiveDurationStore.thisYearMs(this)
+            Range.OVERALL -> ActiveDurationStore.overallMs(this)
+        }
     }
 
     private fun actionCount(action: SwitchlyActionCountStore.Action): Int {
@@ -515,6 +546,22 @@ class SwitchlyOverviewActivity : AppCompatActivity() {
         value: Int,
         last: Boolean = false,
     ) {
+        addStatRow(
+            parent = parent,
+            iconRes = iconRes,
+            labelRes = labelRes,
+            valueText = NumberFormat.getIntegerInstance().format(value),
+            last = last
+        )
+    }
+
+    private fun addStatRow(
+        parent: LinearLayout,
+        iconRes: Int,
+        labelRes: Int,
+        valueText: String,
+        last: Boolean = false,
+    ) {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -540,7 +587,7 @@ class SwitchlyOverviewActivity : AppCompatActivity() {
             marginStart = dp(14)
         })
         row.addView(TextView(this).apply {
-            text = NumberFormat.getIntegerInstance().format(value)
+            text = valueText
             textSize = 17f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(AccentColor.getAccentColorInt(this@SwitchlyOverviewActivity))

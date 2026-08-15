@@ -35,6 +35,7 @@ import at.saltyy.switchly.security.AppLockManager
 import at.saltyy.switchly.security.PlayIntegrityRuntime
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.ManagedDevicePolicyHelper
+import at.saltyy.switchly.util.PersistentStatusNotifier
 import com.google.firebase.FirebaseApp
 import java.util.concurrent.Executors
 
@@ -100,6 +101,7 @@ class SwitchlyApp : Application() {
             if (enabled && canRun) {
                 BlockingRuntime.ensureRunning(appContext)
             }
+            PersistentStatusNotifier.refresh(appContext)
         }
     }
 }

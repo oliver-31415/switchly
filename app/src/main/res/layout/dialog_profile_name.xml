@@ -22,11 +22,11 @@
             android:id="@+id/etProfile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:imeOptions="actionNext"
-            android:inputType="textCapWords|textPersonName"
-            android:maxLength="24"
+            android:singleLine="true"
             android:maxLines="1"
-            android:singleLine="true" />
+            android:inputType="textCapWords|textPersonName"
+            android:imeOptions="actionNext"
+            android:maxLength="24" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -44,13 +44,12 @@
             android:id="@+id/etProfileDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="top|start"
-            android:imeOptions="actionDone"
-            android:inputType="textCapSentences|textMultiLine"
-            android:maxLength="120"
-            android:maxLines="4"
             android:minHeight="112dp"
+            android:gravity="top|start"
+            android:maxLines="4"
+            android:inputType="textCapSentences|textMultiLine"
+            android:imeOptions="actionDone"
+            android:maxLength="120"
             android:minLines="3" />
     </com.google.android.material.textfield.TextInputLayout>
-
 </LinearLayout>

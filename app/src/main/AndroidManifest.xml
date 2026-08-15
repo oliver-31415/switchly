@@ -243,7 +243,7 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
-            <!-- Tech-discovered fallback for cards/tags that are claimed earlier than TAG_DISCOVERED for example IsoDep bank cards and some external/read-only tags). -->
+            <!-- Tech-discovered fallback for cards/tags that are claimed earlier than TAG_DISCOVERED for example IsoDep bank cards and some external/read-only tags. -->
             <intent-filter>
                 <action android:name="android.nfc.action.TECH_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -269,17 +269,11 @@
             android:theme="@style/Theme.Switchly.Blocker"
             tools:ignore="DiscouragedApi" />
 
-        <!-- Developer mode settings screen -->
+        <!-- Support log viewer -->
         <activity
-            android:name=".feature.about.DeveloperModeActivity"
+            android:name=".feature.support.SupportLogActivity"
             android:exported="false"
-            android:label="@string/developer_mode_title" />
-
-        <!-- Developer log viewer -->
-        <activity
-            android:name=".feature.about.DeveloperLogActivity"
-            android:exported="false"
-            android:label="@string/developer_logging_title" />
+            android:label="@string/support_logs_view_title" />
 
         <!-- Advanced mode information screen -->
         <activity
@@ -316,13 +310,6 @@
         <activity
             android:name=".feature.settings.ToggleOptionsActivity"
             android:exported="false" />
-
-        <!-- Troubleshooting screen -->
-        <activity
-            android:name=".feature.settings.TroubleshootingActivity"
-            android:exported="false"
-            android:label="@string/troubleshooting_title"
-            android:parentActivityName=".feature.settings.SettingsActivity" />
 
         <!-- Blocking mode settings screen -->
         <activity

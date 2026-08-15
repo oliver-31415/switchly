@@ -2,8 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="center_horizontal"
     android:orientation="vertical"
+    android:gravity="center_horizontal"
     android:paddingStart="24dp"
     android:paddingTop="24dp"
     android:paddingEnd="24dp"
@@ -21,8 +21,8 @@
         android:layout_width="72dp"
         android:layout_height="72dp"
         android:layout_marginTop="18dp"
-        android:contentDescription="@null"
-        android:padding="20dp" />
+        android:padding="20dp"
+        android:contentDescription="@null" />
 
     <TextView
         android:id="@+id/tvNavTourTitle"
@@ -39,7 +39,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:gravity="center"
-        android:lineSpacingExtra="2dp"
-        android:textSize="15sp" />
-
+        android:textSize="15sp"
+        android:lineSpacingExtra="2dp" />
 </LinearLayout>

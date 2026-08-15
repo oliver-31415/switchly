@@ -34,6 +34,7 @@ import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -88,9 +89,11 @@ import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.ui.dialog.showSwitchlyMultiChoiceDialog
+import at.saltyy.switchly.util.AppSigningInfo
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.NfcLaunchAccessCompat
+import at.saltyy.switchly.util.PersistentStatusNotifier
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import java.util.Calendar
@@ -138,7 +141,7 @@ class SupportActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvSupportEmail).apply {
             text = email
             setTextColor(ContextCompat.getColor(this@SupportActivity, R.color.contact_text))
-            visibility = android.view.View.VISIBLE
+            visibility = View.VISIBLE
             alpha = 1f
         }
 
@@ -150,13 +153,14 @@ class SupportActivity : AppCompatActivity() {
             }
         }
 
-        findViewById<ImageButton>(R.id.btnCopyEmail).apply {
-            ImageViewCompat.setImageTintList(this, AccentColor.getActiveColor(this@SupportActivity))
-            setOnClickListener {
-                val payload = AppLogStore.export(this@SupportActivity)
-                copyToClipboard(label = getString(R.string.support_copy_latest_logs), text = payload)
-                Toast.makeText(this@SupportActivity, getString(R.string.support_logs_copied), Toast.LENGTH_SHORT).show()
-            }
+        findViewById<View>(R.id.rowViewLogs).setOnClickListener {
+            startActivity(Intent(this, SupportLogActivity::class.java))
+        }
+
+        findViewById<View>(R.id.rowCopyLogs).setOnClickListener {
+            val payload = AppLogStore.export(this@SupportActivity)
+            copyToClipboard(label = getString(R.string.support_copy_latest_logs), text = payload)
+            Toast.makeText(this@SupportActivity, getString(R.string.support_logs_copied), Toast.LENGTH_SHORT).show()
         }
 
         findViewById<MaterialButton>(R.id.btnOpenEmail).setOnClickListener {
@@ -235,7 +239,8 @@ class SupportActivity : AppCompatActivity() {
             options = options,
             checked = checked,
             positiveTextRes = R.string.support_open_email,
-            compact = false
+            compact = false,
+            forceHorizontalButtons = true
         ) { states ->
             val selection = ReportSelection(
                 includeDebug = states.getOrNull(0) == true,
@@ -398,6 +403,10 @@ class SupportActivity : AppCompatActivity() {
         line(
             "Package",
             packageName
+        )
+        line(
+            "Signing SHA-1",
+            AppSigningInfo.sha1(this@SupportActivity)
         )
 
         runCatching {
@@ -907,6 +916,10 @@ class SupportActivity : AppCompatActivity() {
         line(
             "Emergency unlock visible",
             defaultSp.getBoolean("pref_show_emergency_unlock", true)
+        )
+        line(
+            "Persistent status notification",
+            PersistentStatusNotifier.isEnabled(this@SupportActivity)
         )
         line(
             "Home display mode",

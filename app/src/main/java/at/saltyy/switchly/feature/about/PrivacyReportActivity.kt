@@ -301,7 +301,7 @@ class PrivacyReportActivity : TilesInfoActivity() {
     private fun backupCategoryIconRes(category: BackupCategory): Int = when (category) {
         BackupCategory.PROFILES -> R.drawable.switch_account_24
         BackupCategory.BLOCKED_APPS -> R.drawable.apps_24
-        BackupCategory.WEBSITE_RULES,
+        BackupCategory.WEBSITE_RULES -> R.drawable.language_24
         BackupCategory.WEBSITE_BROWSER_SETTINGS -> R.drawable.language_24
         BackupCategory.NOTIFICATION_BLOCKING -> R.drawable.notifications_24
         BackupCategory.IN_APP_BLOCKING -> R.drawable.app_blocking_black_24

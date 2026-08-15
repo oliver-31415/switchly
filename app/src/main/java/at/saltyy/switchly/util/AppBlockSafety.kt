@@ -379,8 +379,8 @@ object AppBlockSafety {
 
     /**
      * Packages that Switchly must never block, even after a user confirms a protected-app warning.
-     * Safety-sensitive Android apps are intentionally not included here: they remain marked as
-     * protected in the picker, but can be selected manually after an explicit warning.
+     * Safety-sensitive Android apps are intentionally not included here:
+     *  they remain marked as protected in the picker, but can be selected manually after an explicit warning.
      */
     fun isAlwaysExcluded(context: Context, pkg: String): Boolean {
         val normalized = pkg.trim()

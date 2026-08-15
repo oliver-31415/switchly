@@ -22,12 +22,22 @@ package at.saltyy.switchly.feature.about
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.Toolbar
 import androidx.core.net.toUri
+import androidx.core.widget.TextViewCompat
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.receiver.DPMReceiver
 import at.saltyy.switchly.util.AndroidSystemPackages
+import com.google.android.material.appbar.MaterialToolbar
 
 class AdvancedModeActivity : TilesInfoActivity() {
 
@@ -52,7 +62,80 @@ class AdvancedModeActivity : TilesInfoActivity() {
         lastManagedStateKey = currentStateKey
     }
 
-    override fun screenTitle(): String = getString(R.string.advanced_mode_title)
+    override fun screenTitle(): String = getString(R.string.developer_mode_title)
+
+    override fun onToolbarReady(toolbar: MaterialToolbar, foregroundColor: Int) {
+        val horizontalPadding = (8 * resources.displayMetrics.density + 0.5f).toInt()
+        val actionHeight = (48 * resources.displayMetrics.density + 0.5f).toInt()
+        val actionBackground = TypedValue().also {
+            theme.resolveAttribute(android.R.attr.actionBarItemBackground, it, true)
+        }
+        val modeToggle = AppCompatTextView(this).apply {
+            minWidth = 0
+            minHeight = actionHeight
+            gravity = Gravity.CENTER
+            isSingleLine = true
+            includeFontPadding = false
+            textSize = 13f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(foregroundColor)
+            compoundDrawablePadding =
+                resources.getDimensionPixelSize(R.dimen.permission_toolbar_status_icon_padding)
+            setPadding(horizontalPadding, 0, horizontalPadding, 0)
+            TextViewCompat.setCompoundDrawableTintList(
+                this,
+                ColorStateList.valueOf(foregroundColor)
+            )
+            if (actionBackground.resourceId != 0) {
+                setBackgroundResource(actionBackground.resourceId)
+            }
+        }
+
+        fun renderEnabledState() {
+            val enabled = AdvancedModeStore.isEnabled(this)
+            modeToggle.setText(
+                if (enabled) R.string.developer_mode_enabled_short
+                else R.string.developer_mode_disabled_short
+            )
+            modeToggle.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                if (enabled) R.drawable.toggle_on_24 else R.drawable.toggle_off_24,
+                0,
+                0,
+                0
+            )
+            modeToggle.contentDescription = getString(
+                if (enabled) R.string.developer_mode_disable_action
+                else R.string.developer_mode_enable_action
+            )
+        }
+
+        modeToggle.setOnClickListener {
+            val enabled = !AdvancedModeStore.isEnabled(this)
+            AdvancedModeStore.setEnabled(this, enabled)
+            renderEnabledState()
+            Toast.makeText(
+                this,
+                getString(
+                    if (enabled) R.string.developer_mode_unlocked_toast
+                    else R.string.developer_mode_disabled_toast
+                ),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        renderEnabledState()
+
+        val toolbarSpacing = (2 * resources.displayMetrics.density + 0.5f).toInt()
+        toolbar.addView(
+            modeToggle,
+            Toolbar.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                actionHeight
+            ).apply {
+                gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                marginEnd = toolbarSpacing
+            }
+        )
+    }
 
     private fun currentManagedStateKey(): String {
         val dpm = getSystemService(DevicePolicyManager::class.java)

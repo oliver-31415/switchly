@@ -106,6 +106,12 @@ class NfcEntryActivity : Activity() {
                 techList = tag?.techList?.toList().orEmpty(),
                 uri = intent.data?.toString(),
             )
+            if (NfcRecentWriteGuard.shouldIgnore(this, tag)) {
+                NfcDiagnosticsStore.recordFailure(this, "post_write_rebound_ignored")
+                AppLogStore.append(this, "NFC", "Ignored immediate post-write tag rebound")
+                finish()
+                return
+            }
         }
 
         // NfcEntryActivity is exported for Android's NFC dispatch system.

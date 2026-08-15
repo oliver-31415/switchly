@@ -1,50 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="NestedWeights"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/widget_scanner_surface"
-    android:gravity="center_vertical"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:gravity="center_vertical"
+    android:background="@color/widget_scanner_surface"
+    android:padding="10dp"
+    tools:ignore="NestedWeights">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
         android:text="@string/widget_scanner_title"
         android:textColor="@color/widget_scanner_title"
         android:textSize="13sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
         android:layout_weight="1"
-        android:baselineAligned="false"
+        android:layout_marginTop="8dp"
         android:orientation="vertical"
+        android:baselineAligned="false"
         android:weightSum="2">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginBottom="6dp"
             android:layout_weight="1"
-            android:baselineAligned="false"
+            android:layout_marginBottom="6dp"
             android:orientation="horizontal"
+            android:baselineAligned="false"
             android:weightSum="2">
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:background="@color/widget_scanner_button_surface"
-                android:gravity="center"
+                android:layout_marginEnd="6dp"
                 android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/widget_scanner_button_surface"
                 android:padding="6dp">
 
                 <ImageView
@@ -57,20 +57,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
                     android:text="@string/widget_scanner_open_app"
                     android:textColor="@color/widget_scanner_text"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@color/widget_scanner_button_surface"
-                android:gravity="center"
                 android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/widget_scanner_button_surface"
                 android:padding="6dp">
 
                 <ImageView
@@ -83,11 +83,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
                     android:text="@string/dashboard_tile_qr"
                     android:textColor="@color/widget_scanner_text"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
             </LinearLayout>
         </LinearLayout>
 
@@ -95,18 +95,18 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:baselineAligned="false"
             android:orientation="horizontal"
+            android:baselineAligned="false"
             android:weightSum="2">
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:background="@color/widget_scanner_button_surface"
-                android:gravity="center"
+                android:layout_marginEnd="6dp"
                 android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/widget_scanner_button_surface"
                 android:padding="6dp">
 
                 <ImageView
@@ -119,20 +119,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
                     android:text="@string/dashboard_tile_barcode"
                     android:textColor="@color/widget_scanner_text"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@color/widget_scanner_button_surface"
-                android:gravity="center"
                 android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/widget_scanner_button_surface"
                 android:padding="6dp">
 
                 <ImageView
@@ -145,13 +145,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
                     android:text="@string/widget_hub_focus_now"
                     android:textColor="@color/widget_scanner_text"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-
 </LinearLayout>

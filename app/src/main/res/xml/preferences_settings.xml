@@ -82,7 +82,7 @@
             android:layout="@layout/item_pref_card"
             android:title="@string/pref_language_title"
             android:summary="@string/pref_language_summary"
-            android:icon="@drawable/language_24"
+            android:icon="@drawable/translate_24"
             app:iconSpaceReserved="false" />
 
     </PreferenceScreen>
@@ -247,7 +247,7 @@
             android:layout="@layout/item_pref_card"
             android:title="@string/settings_contact_support_title"
             android:summary="@string/settings_contact_support_summary"
-            android:icon="@drawable/mail_24"
+            android:icon="@drawable/help_24"
             app:iconSpaceReserved="false" />
 
         <Preference
@@ -296,6 +296,14 @@
                 android:title="@string/privacy_report_title"
                 android:summary="@string/privacy_report_settings_summary"
                 android:icon="@drawable/security_24"
+                app:iconSpaceReserved="false" />
+
+            <Preference
+                android:key="pref_about_store"
+                android:layout="@layout/item_pref_card"
+                android:title="@string/about_store_label"
+                android:summary="@string/store_card_summary"
+                android:icon="@drawable/nfc_24"
                 app:iconSpaceReserved="false" />
 
             <Preference

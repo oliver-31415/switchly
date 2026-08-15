@@ -36,8 +36,8 @@
                 android:id="@+id/etRawValue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textNoSuggestions|textMultiLine"
-                android:maxLines="3" />
+                android:maxLines="3"
+                android:inputType="textNoSuggestions|textMultiLine" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -55,8 +55,8 @@
                 android:id="@+id/etCodeName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textCapSentences"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:inputType="textCapSentences" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -74,8 +74,8 @@
                 android:id="@+id/etCodeNote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textCapSentences|textMultiLine"
                 android:maxLines="3"
+                android:inputType="textCapSentences|textMultiLine"
                 android:minLines="2" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -229,8 +229,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <Space
                 android:layout_width="0dp"
@@ -256,7 +256,5 @@
                 android:text="@string/save"
                 android:textStyle="bold" />
         </LinearLayout>
-
     </LinearLayout>
-
 </ScrollView>

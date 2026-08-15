@@ -1,4 +1,8 @@
+import groovy.json.JsonSlurper
 import java.io.File
+import java.security.KeyStore
+import java.security.MessageDigest
+import java.util.Locale
 
 // Release helpers for official signed artifacts and public-repository validation builds.
 // Inputs are provided by app/build.gradle.kts through Gradle extra properties.
@@ -8,6 +12,77 @@ data class SwitchlyReleaseArtifact(
     val candidates: List<String>,
     val outputName: String,
 )
+
+fun normalizeSwitchlySha1(value: String): String = value
+    .filter(Char::isLetterOrDigit)
+    .uppercase(Locale.US)
+
+fun formatSwitchlySha1(value: String): String = normalizeSwitchlySha1(value)
+    .chunked(2)
+    .joinToString(":")
+
+fun switchlyReleaseCertificateSha1(
+    storeFile: File,
+    storePassword: String,
+    keyAlias: String,
+): String {
+    val password = storePassword.toCharArray()
+    val keyStore = listOf("PKCS12", "JKS", KeyStore.getDefaultType())
+        .distinct()
+        .firstNotNullOfOrNull { type ->
+            runCatching {
+                KeyStore.getInstance(type).apply {
+                    storeFile.inputStream().use { input -> load(input, password) }
+                }
+            }.getOrNull()
+        }
+        ?: throw GradleException("Could not open release keystore: ${storeFile.absolutePath}")
+
+    val certificate = keyStore.getCertificate(keyAlias)
+        ?: throw GradleException("Release key alias not found in keystore: $keyAlias")
+    return MessageDigest.getInstance("SHA-1")
+        .digest(certificate.encoded)
+        .joinToString("") { byte -> "%02X".format(byte.toInt() and 0xFF) }
+}
+
+fun switchlyGoogleServicesAndroidSha1s(
+    googleServicesJson: File,
+    packageName: String,
+): Set<String> {
+    val root = runCatching { JsonSlurper().parse(googleServicesJson) as? Map<*, *> }
+        .getOrNull()
+        ?: return emptySet()
+    val clients = root["client"] as? List<*> ?: return emptySet()
+
+    return buildSet {
+        clients.forEach { rawClient ->
+            val client = rawClient as? Map<*, *> ?: return@forEach
+            val clientInfo = client["client_info"] as? Map<*, *>
+            val androidInfo = clientInfo?.get("android_client_info") as? Map<*, *>
+            val clientPackage = androidInfo?.get("package_name")?.toString()
+            if (clientPackage != packageName) return@forEach
+
+            val oauthClients = client["oauth_client"] as? List<*> ?: return@forEach
+            oauthClients.forEach { rawOauth ->
+                val oauth = rawOauth as? Map<*, *> ?: return@forEach
+                val clientType = when (val rawType = oauth["client_type"]) {
+                    is Number -> rawType.toInt()
+                    is String -> rawType.toIntOrNull()
+                    else -> null
+                }
+                if (clientType != 1) return@forEach
+
+                val oauthAndroidInfo = oauth["android_info"] as? Map<*, *>
+                val oauthPackage = oauthAndroidInfo?.get("package_name")?.toString()
+                if (oauthPackage != null && oauthPackage != packageName) return@forEach
+                oauthAndroidInfo?.get("certificate_hash")
+                    ?.toString()
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { add(normalizeSwitchlySha1(it)) }
+            }
+        }
+    }
+}
 
 fun Project.copySwitchlyArtifact(
     candidates: List<String>,
@@ -31,6 +106,8 @@ val googleServicesJson = extra["switchlyGoogleServicesJsonFile"] as File
 val googleWebClientId = extra["switchlyGoogleWebClientId"] as org.gradle.api.provider.Provider<String>
 val releaseSigningConfigured = extra["switchlyReleaseSigningConfigured"] as Boolean
 val releaseStoreFile = extra["switchlyReleaseStoreFile"] as org.gradle.api.provider.Provider<String>
+val releaseStorePassword = extra["switchlyReleaseStorePassword"] as org.gradle.api.provider.Provider<String>
+val releaseKeyAlias = extra["switchlyReleaseKeyAlias"] as org.gradle.api.provider.Provider<String>
 val externalCheckoutUrl = extra["switchlyExternalCheckoutUrl"] as org.gradle.api.provider.Provider<String>
 val switchlyDownloadsUrl = extra["switchlyDownloadsUrl"] as org.gradle.api.provider.Provider<String>
 
@@ -93,9 +170,30 @@ tasks.register("checkSwitchlyOfficialReleaseInputs") {
             )
         }
 
-        if (!rootProject.file(releaseStoreFile.get()).isFile) {
+        val releaseKeystore = rootProject.file(releaseStoreFile.get())
+        if (!releaseKeystore.isFile) {
             throw GradleException("Release keystore not found: ${releaseStoreFile.get()}")
         }
+
+        val releaseSha1 = switchlyReleaseCertificateSha1(
+            storeFile = releaseKeystore,
+            storePassword = releaseStorePassword.get(),
+            keyAlias = releaseKeyAlias.get(),
+        )
+        val configuredAndroidSha1s = switchlyGoogleServicesAndroidSha1s(
+            googleServicesJson = googleServicesJson,
+            packageName = "at.saltyy.switchly",
+        )
+        if (releaseSha1 !in configuredAndroidSha1s) {
+            throw GradleException(
+                "Google sign-in is not configured for the direct-download release APK. " +
+                    "Add SHA-1 ${formatSwitchlySha1(releaseSha1)} for package at.saltyy.switchly " +
+                    "in Firebase/Google Cloud, download the updated google-services.json, and rebuild."
+            )
+        }
+        logger.lifecycle(
+            "Verified Google sign-in Android OAuth client for release SHA-1 ${formatSwitchlySha1(releaseSha1)}"
+        )
 
         if (externalCheckoutUrl.get().isBlank()) {
             logger.warn(

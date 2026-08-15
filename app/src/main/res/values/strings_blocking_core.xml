@@ -7,6 +7,9 @@
     <string name="rules_hub_title">Rules</string>
     <string name="rules_hub_profiles_section">Profiles</string>
     <string name="rules_hub_categories_section">Rules for this profile</string>
+    <string name="switchly_rules_locked_title">Open Rules?</string>
+    <string name="rules_restricted_open_message">Switchly is active. Rules can still be viewed, but apps, websites, in-app rules, profiles, and schedules cannot be changed until Switchly is fully disabled.</string>
+    <string name="rules_open_restricted">Open Rules</string>
     <string name="rules_apps_title">App rules</string>
     <string name="rules_apps_summary">Choose blocked or allowed apps, limits, and app rules</string>
     <string name="rules_websites_title">Website rules</string>

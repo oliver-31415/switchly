@@ -386,6 +386,7 @@ class ManagePairedTagsActivity : AppCompatActivity() {
         val tilProfile = content.findViewById<View>(R.id.tilTagProfile)
         val tilMinutes = content.findViewById<View>(R.id.tilTagMinutes)
         val writtenActionHelper = content.findViewById<View>(R.id.tvWrittenActionHelper)
+        val btnRewriteTag = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnRewriteTag)
         val btnSave = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSave)
         val btnCancel = content.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
 
@@ -492,6 +493,12 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             saveButton = btnSave,
         )
 
+        btnRewriteTag.isVisible = tag.tagKind == NfcUidPairingStore.TagKind.WRITABLE
+        btnRewriteTag.setOnClickListener {
+            dialog.dismiss()
+            startRewriteFlow(tag)
+        }
+
         btnSave.setOnClickListener {
             val dailyResult = parseOptionalBoundedInt(
                 raw = etDailyLimit.text?.toString(),
@@ -577,6 +584,31 @@ class ManagePairedTagsActivity : AppCompatActivity() {
             refresh()
             dialog.dismiss()
         }
+    }
+
+    private fun startRewriteFlow(tag: NfcUidPairingStore.TagMeta) {
+        val action = when (tag.action) {
+            NfcUidPairingStore.PairedTagAction.USE_WRITTEN -> null
+            NfcUidPairingStore.PairedTagAction.TOGGLE -> "toggle"
+            NfcUidPairingStore.PairedTagAction.DISABLE -> "disable"
+            NfcUidPairingStore.PairedTagAction.ENABLE -> "enable"
+            NfcUidPairingStore.PairedTagAction.TEMP_DISABLE -> "temp_disable"
+            NfcUidPairingStore.PairedTagAction.TEMP_ENABLE -> "temp_enable"
+        }
+
+        startActivity(
+            Intent(this, NfcWriterActivity::class.java).apply {
+                putExtra(NfcWriterActivity.EXTRA_REWRITE_UID, tag.uid)
+                action?.let { putExtra(NfcWriterActivity.EXTRA_PRESELECT_ACTION, it) }
+                tag.actionProfile?.takeIf { it.isNotBlank() }?.let {
+                    putExtra(NfcWriterActivity.EXTRA_PRESELECT_PROFILE, it)
+                }
+                if (action == "temp_disable" || action == "temp_enable") {
+                    putExtra(NfcWriterActivity.EXTRA_PRESELECT_DURATION_MINUTES, tag.durationMinutes)
+                    putExtra(NfcWriterActivity.EXTRA_PRESELECT_ASK_DURATION, tag.askDurationWhenScanned)
+                }
+            },
+        )
     }
 
     private fun dpToPx(dp: Int): Int =

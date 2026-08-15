@@ -98,7 +98,10 @@ abstract class TilesInfoActivity : AppCompatActivity() {
         val title = screenTitle()
         supportActionBar?.title = title
         toolbar.title = title
+        onToolbarReady(toolbar, toolbarIconColor)
     }
+
+    protected open fun onToolbarReady(toolbar: MaterialToolbar, foregroundColor: Int) = Unit
 
     private fun setupContent() {
         rowsContainer = findViewById(R.id.containerRows)

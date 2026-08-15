@@ -4,10 +4,10 @@
     <!-- ====================================================== -->
     <!-- Support contact flow -->
     <!-- ====================================================== -->
-    <string name="support_title">Kontakt &amp; Support</string>
-    <string name="support_desc">Brauchst du Hilfe oder hast einen Fehler gefunden?\nSende eine E-Mail und füge nach Möglichkeit Debug-Infos sowie eine kurze Beschreibung hinzu.</string>
+    <string name="support_title">Support</string>
+    <string name="support_desc">Erstelle einen Bericht mit den gewünschten Details oder prüfe aktuelle Logs, bevor du den Support kontaktierst.</string>
     <string name="support_email_subject">Switchly-Support</string>
-    <string name="support_open_email">Support-E-Mail erstellen</string>
+    <string name="support_open_email">Bericht erstellen</string>
     <string name="support_copy_email">E-Mail kopieren</string>
     <string name="support_copied">E-Mail kopiert</string>
     <string name="support_copy_latest_logs">Neueste Logs kopieren</string>
@@ -17,7 +17,7 @@
     <string name="support_include_debug_summary">App, Gerät, Berechtigungen, Switchly-Status, Zeitpläne und Laufzeitstatus</string>
     <string name="support_include_advanced_debug">Erweiterte Diagnoseinfos anhängen</string>
     <string name="support_include_advanced_debug_summary">Ergänzt interne Einstellungs- und Funktionszähler im Debug-Report</string>
-    <string name="support_include_setup_details">Setup-Details für Modi, Profile und Zeitpläne anhängen</string>
+    <string name="support_include_setup_details">Setup-Details anhängen</string>
     <string name="support_include_setup_details_summary">Ergänzt Profilnamen, Regelanzahlen, Zeitplan-Konfiguration, Trigger und Überschneidungen</string>
     <string name="support_include_active_profile_apps">Apps aus dem aktiven Profil anhängen</string>
     <string name="support_include_active_profile_apps_summary">Ergänzt App-Namen und Paket-IDs, die durch den Regelmodus des aktiven Profils ausgewählt sind</string>
@@ -30,47 +30,26 @@
     <string name="support_response_time_details">Switchly wird von einer einzelnen Person entwickelt und unterstützt. Ich lese Support-Nachrichten und Bugreports so schnell wie möglich, Antworten können je nach Auslastung aber manchmal bis zu 7 Tage dauern.\n\nBitte füge bei Problemen mit Blocking, Zeitplänen, Premium oder Berechtigungen nach Möglichkeit Debug-Infos hinzu. Das hilft mir, schneller zu verstehen, was passiert ist.</string>
 
     <!-- ====================================================== -->
-    <!-- Troubleshooting overview -->
-    <!-- ====================================================== -->
-    <string name="troubleshooting_title">Fehlerbehebung</string>
-    <string name="troubleshooting_accessibility">Bedienungshilfedienst</string>
-    <string name="troubleshooting_battery">Akku-Optimierung deaktiviert</string>
-    <string name="troubleshooting_exact_alarms">Berechtigung für exakte Alarme</string>
-    <string name="troubleshooting_location">Standortberechtigung (WLAN-Trigger)</string>
-    <string name="troubleshooting_bluetooth">Bluetooth-Berechtigung (Geräte in der Nähe)</string>
-    <string name="troubleshooting_notification_access">Benachrichtigungszugriff</string>
-    <string name="troubleshooting_ok">OK ✅</string>
-    <string name="troubleshooting_missing">Fehlt ❌</string>
-    <string name="troubleshooting_battery_oem_note">Manche Geräte bieten keine Akkuoption „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, ist das auf deinem Gerät möglicherweise bereits das Maximum.</string>
-    <string name="troubleshooting_exact_alarms_note">Wenn exakte Alarme nicht erlaubt sind, können zeitbasierte Zeitpläne verspätet oder nicht zur richtigen Zeit ausgeführt werden.</string>
-
-    <!-- ====================================================== -->
-    <!-- Troubleshooting actions and explanations -->
-    <!-- ====================================================== -->
-    <string name="troubleshooting_open_permissions_overview">Berechtigungsübersicht öffnen</string>
-    <string name="troubleshooting_open_settings">Einstellungen öffnen</string>
-    <string name="troubleshooting_info_accessibility">Switchly benötigt Bedienungshilfe (Accessibility), um geöffnete Apps und Websites zu erkennen, auf In-App-Navigation zu reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchzusetzen. Wenn sie deaktiviert ist, funktionieren wichtige Schutzfunktionen nicht.</string>
-    <string name="troubleshooting_info_notification_access">Nur für die Funktion „Blockierte Benachrichtigungen“. Ohne Zugriff können Benachrichtigungen nicht blockiert werden.</string>
-    <string name="troubleshooting_info_battery">Die Akku-Optimierung kann Hintergrundarbeit verzögern. Deaktiviere die Optimierung für Switchly, um die Zuverlässigkeit zu verbessern.</string>
-    <string name="troubleshooting_info_exact_alarms">Exakte Alarme sorgen dafür, dass zeitbasierte Zeitpläne pünktlich auslösen. Manche Geräte verzögern Zeitpläne, wenn dies deaktiviert ist.</string>
-    <string name="troubleshooting_info_location">Android benötigt die Berechtigung für den genauen Standort, um den aktuellen WLAN-Namen (SSID) zu lesen. Für die beste Zuverlässigkeit bei WLAN-Triggern sollte zusätzlich Hintergrundstandort erlaubt sein.</string>
-    <string name="troubleshooting_info_bluetooth">Android 12+ benötigt die Berechtigung „Geräte in der Nähe“ bzw. Bluetooth für Bluetooth-basierte Zeitpläne.</string>
-    <string name="troubleshooting_xiaomi_note">Xiaomi-/Redmi-/POCO-Hinweis:\n\n• Aktiviere zusätzlich Autostart für Switchly\n• Stelle den Akku-Modus auf Uneingeschränkt/Nicht optimieren, falls verfügbar\n• Sperre die App nach Möglichkeit in den letzten Apps\n• Wenn vorhanden, erlaube Hintergrundaktivität für Switchly\n• Schalte die Bedienungshilfe einmal aus und wieder ein, falls sie als aktiv angezeigt wird, Switchly aber nicht reagiert</string>
-
-    <!-- ====================================================== -->
     <!-- Onboarding link -->
     <!-- ====================================================== -->
     <string name="pref_tutorial_title">Onboarding</string>
     <string name="pref_tutorial_summary">Einrichtungsschritte, Berechtigungen und Funktionen erneut ansehen</string>
 
     <!-- ====================================================== -->
-    <!-- Contact page layout -->
+    <!-- Support page layout -->
     <!-- ====================================================== -->
+    <string name="support_hero_title">Wie können wir helfen?</string>
+    <string name="support_diagnostics_section">Diagnose</string>
+    <string name="support_contact_section">Kontakt</string>
+    <string name="support_view_logs_title">Logs ansehen</string>
+    <string name="support_view_logs_desc">Öffnet eine Live-Ansicht der letzten 250 internen Switchly-Log-Zeilen.</string>
+    <string name="support_logs_view_title">Support-Logs</string>
+    <string name="support_logs_view_body">Live-Ansicht aktueller interner Switchly-Ereignisse. Reproduziere ein Problem zuerst, damit die relevanten Einträge hier erscheinen.</string>
+    <string name="support_logs_view_refresh">Aktualisieren</string>
+    <string name="support_logs_view_copy">Logs kopieren</string>
+    <string name="support_logs_view_empty">Keine aktuellen App-Logs.</string>
     <string name="support_email_label">Support-E-Mail</string>
-    <string name="support_actions_section">Weitere Optionen</string>
-    <string name="support_report_card_title">Supportbericht senden</string>
-    <string name="support_report_card_desc">Wähle vor dem Öffnen deiner E-Mail-App aus, welche Logs, Gerätedaten und Setup-Informationen angehängt werden.</string>
-    <string name="support_logs_card_title">Neueste Logs kopieren</string>
-    <string name="support_logs_card_desc">Kopiere aktuelle Switchly-Ereignisse, um sie in eine bestehende Nachricht oder ein Issue einzufügen.</string>
+    <string name="support_logs_card_title">Aktuelle Logs kopieren</string>
+    <string name="support_logs_card_desc">Kopiere aktuelle Switchly-Ereignisse für eine bestehende Nachricht oder ein Issue.</string>
 
 </resources>

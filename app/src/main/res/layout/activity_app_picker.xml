@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -17,8 +16,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/app_rules_title"
-            app:navigationIcon="@drawable/keyboard_arrow_left_24">
+            app:navigationIcon="@drawable/keyboard_arrow_left_24"
+            app:title="@string/app_rules_title">
 
             <ImageButton
                 android:id="@+id/btnAppRulesInfo"
@@ -26,8 +25,8 @@
                 android:layout_height="48dp"
                 android:layout_gravity="end|center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/app_rules_info_title"
                 android:padding="12dp"
+                android:contentDescription="@string/app_rules_info_title"
                 android:src="@drawable/info_24"
                 app:tint="?attr/colorOnSurface" />
         </com.google.android.material.appbar.MaterialToolbar>
@@ -57,8 +56,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/search_apps"
-                android:imeOptions="actionSearch"
-                android:inputType="text" />
+                android:inputType="text"
+                android:imeOptions="actionSearch" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
@@ -67,23 +66,23 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/profile_rule_mode_title"
-            android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary" />
+            android:textColor="?android:attr/textColorPrimary"
+            android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggleProfileRuleMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            app:singleSelection="true"
-            app:selectionRequired="true">
+            app:selectionRequired="true"
+            app:singleSelection="true">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnBlockSelectedMode"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
                 android:layout_weight="1"
+                android:minHeight="48dp"
                 android:text="@string/profile_rule_mode_block"
                 app:cornerRadius="4dp" />
 
@@ -91,8 +90,8 @@
                 android:id="@+id/btnAllowSelectedMode"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
                 android:layout_weight="1"
+                android:minHeight="48dp"
                 android:text="@string/profile_rule_mode_allow"
                 app:cornerRadius="4dp" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -126,8 +125,8 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
                 android:layout_weight="1"
+                android:layout_marginStart="8dp"
                 android:text="@string/app_picker_clear_all" />
         </LinearLayout>
 
@@ -152,8 +151,8 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/app_picker_auto_block_new_apps_info_title"
                 android:padding="12dp"
+                android:contentDescription="@string/app_picker_auto_block_new_apps_info_title"
                 android:src="@drawable/info_24"
                 app:tint="?attr/colorPrimary" />
         </LinearLayout>
@@ -173,9 +172,8 @@
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/save"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="8dp"
+            android:text="@string/save" />
     </LinearLayout>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -19,8 +18,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/pref_permissions_title"
-            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24"
+            app:title="@string/pref_permissions_title" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
@@ -28,8 +27,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp"
         android:paddingTop="16dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="24dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -39,29 +38,21 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Permissions: Action needed + Health check -->
-            <include
-                android:id="@+id/cardPermissionHeartbeat"
-                layout="@layout/view_status_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp" />
-
             <!-- SECTION: Core -->
             <TextView
+                android:id="@+id/sectionCore"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:id="@+id/sectionCore"
                 android:text="@string/permissions_section_core" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="1dp">
+                app:cardElevation="1dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -85,8 +76,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/security_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/security_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -119,8 +110,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -137,8 +128,8 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <!-- Usage access -->
                     <LinearLayout
@@ -156,8 +147,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/bar_chart_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/bar_chart_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -190,8 +181,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -204,26 +195,25 @@
                             android:layout_marginTop="10dp"
                             android:text="@string/permissions_btn_open" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- SECTION: Notifications -->
             <TextView
+                android:id="@+id/sectionNotifications"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:layout_marginBottom="8dp"
-                android:id="@+id/sectionNotifications"
                 android:text="@string/permissions_section_notifications" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="1dp">
+                app:cardElevation="1dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -247,8 +237,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/notifications_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/notifications_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -281,8 +271,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -299,8 +289,8 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <!-- Notification access -->
                     <LinearLayout
@@ -318,8 +308,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/security_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/security_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -352,8 +342,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -366,26 +356,25 @@
                             android:layout_marginTop="10dp"
                             android:text="@string/permissions_btn_open" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- SECTION: Extra triggers -->
             <TextView
+                android:id="@+id/sectionTriggers"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:layout_marginBottom="8dp"
-                android:id="@+id/sectionTriggers"
                 android:text="@string/permissions_section_triggers" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="1dp">
+                app:cardElevation="1dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -409,8 +398,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/alarm_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/alarm_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -443,8 +432,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -461,8 +450,8 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <!-- NFC launch access -->
                     <LinearLayout
@@ -480,8 +469,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/nfc_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/nfc_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -514,8 +503,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -532,8 +521,8 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <!-- Location -->
                     <LinearLayout
@@ -551,8 +540,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/location_on_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/location_on_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -585,8 +574,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -611,8 +600,8 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:alpha="0.12"
-                        android:background="?attr/colorOnSurface" />
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
 
                     <!-- Bluetooth -->
                     <LinearLayout
@@ -630,8 +619,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/bluetooth_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/bluetooth_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -664,8 +653,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -686,26 +675,25 @@
                             android:layout_marginTop="8dp"
                             android:text="@string/permissions_btn_open" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- SECTION: Battery and background -->
             <TextView
+                android:id="@+id/sectionBattery"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:layout_marginBottom="8dp"
-                android:id="@+id/sectionBattery"
                 android:text="@string/permissions_section_battery" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardUseCompatPadding="true"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="1dp">
+                app:cardElevation="1dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -713,71 +701,70 @@
                     android:orientation="vertical"
                     android:padding="18dp">
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/battery_24"
+                            app:tint="?attr/colorPrimary" />
+
+                        <Space
+                            android:layout_width="12dp"
+                            android:layout_height="1dp" />
+
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:src="@drawable/battery_24"
-                                android:contentDescription="@null"
-                                app:tint="?attr/colorPrimary" />
-
-                            <Space
-                                android:layout_width="12dp"
-                                android:layout_height="1dp" />
-
-                            <LinearLayout
-                                android:layout_width="0dp"
+                            <TextView
+                                style="@style/TextAppearance.Material3.BodyLarge"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
+                                android:text="@string/permissions_battery_title" />
 
-                                <TextView
-                                    style="@style/TextAppearance.Material3.BodyLarge"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/permissions_battery_title" />
-
-                                <TextView
-                                    android:id="@+id/tvBatteryStatus"
-                                    style="@style/TextAppearance.Material3.BodyMedium"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="2dp"
-                                    android:text="@string/permissions_status_disabled" />
-                            </LinearLayout>
-
-                            <androidx.appcompat.widget.AppCompatImageButton
-                                android:id="@+id/btnWhyBattery"
-                                android:layout_width="44dp"
-                                android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
-                                android:padding="10dp"
-                                android:src="@drawable/info_24"
-                                app:tint="?attr/colorPrimary" />
+                            <TextView
+                                android:id="@+id/tvBatteryStatus"
+                                style="@style/TextAppearance.Material3.BodyMedium"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/permissions_status_disabled" />
                         </LinearLayout>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnReqBattery"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_allow" />
+                        <androidx.appcompat.widget.AppCompatImageButton
+                            android:id="@+id/btnWhyBattery"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="10dp"
+                            android:contentDescription="@string/info"
+                            android:src="@drawable/info_24"
+                            app:tint="?attr/colorPrimary" />
+                    </LinearLayout>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnOpenBattery"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="@string/permissions_btn_open" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReqBattery"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/permissions_btn_allow" />
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnOpenBattery"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/permissions_btn_open" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -800,9 +787,9 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardUseCompatPadding="true"
                     app:cardCornerRadius="16dp"
-                    app:cardElevation="1dp">
+                    app:cardElevation="1dp"
+                    app:cardUseCompatPadding="true">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -819,8 +806,8 @@
                             <ImageView
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
-                                android:src="@drawable/battery_24"
                                 android:contentDescription="@null"
+                                android:src="@drawable/battery_24"
                                 app:tint="?attr/colorPrimary" />
 
                             <Space
@@ -839,8 +826,8 @@
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="@string/info"
                                 android:padding="10dp"
+                                android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
                         </LinearLayout>
@@ -859,13 +846,10 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:text="@string/permissions_btn_open" />
+                            android:text="@string/permissions_btn_view_device_guide" />
                     </LinearLayout>
-
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
-
         </LinearLayout>
     </ScrollView>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

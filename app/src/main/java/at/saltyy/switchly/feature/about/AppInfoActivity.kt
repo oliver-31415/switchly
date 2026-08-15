@@ -191,7 +191,7 @@ class AppInfoActivity : TilesInfoActivity() {
     }
 
     private fun openDeveloperMode() {
-        startActivity(Intent(this, DeveloperModeActivity::class.java))
+        startActivity(Intent(this, AdvancedModeActivity::class.java))
     }
 
     private fun resolveInstallerPackageName(): String? {

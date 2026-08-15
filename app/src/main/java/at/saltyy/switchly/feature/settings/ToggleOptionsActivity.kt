@@ -19,12 +19,15 @@
 
 package at.saltyy.switchly.feature.settings
 
+import android.Manifest
 import android.content.Context
 import android.content.ComponentName
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -34,7 +37,9 @@ import android.widget.ScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.content.withStyledAttributes
@@ -62,9 +67,12 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
+import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.PersistentStatusNotifier
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -161,7 +169,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             dialog.show()
         }
 
-        // --- Switches (Control mode)
+        // Switches (Control mode)
         val switchModeSchedule = findViewById<SwitchMaterial>(R.id.switchModeSchedule)
         val switchModeNfc = findViewById<SwitchMaterial>(R.id.switchModeNfc)
         val switchModeQr = findViewById<SwitchMaterial>(R.id.switchModeQr)
@@ -169,7 +177,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val switchModeMixed = findViewById<SwitchMaterial>(R.id.switchModeMixed)
         val switchAllowButtonEnable = findViewById<SwitchMaterial>(R.id.switchAllowButtonEnable)
 
-        // --- Switches (Mixed mode channels)
+        // Switches (Mixed mode channels)
         val cardMixedChannels = findViewById<MaterialCardView>(R.id.cardMixedChannels)
         val tvMixedChannelsSection = findViewById<TextView>(R.id.tvMixedChannelsSection)
         val tvMixedChannelsSectionSummary = findViewById<TextView>(R.id.tvMixedChannelsSectionSummary)
@@ -183,22 +191,23 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val switchMixedAllowScheduleEditing = findViewById<SwitchMaterial>(R.id.switchMixedAllowScheduleEditing)
         val switchMixedAllowNfcTagWriting = findViewById<SwitchMaterial>(R.id.switchMixedAllowNfcTagWriting)
 
-        // --- Switches (Additional features)
+        // Switches (Additional features)
         val switchRequireNfcUnlock = findViewById<SwitchMaterial>(R.id.switchRequireNfcUnlock)
 
-        // --- Switches (Protection)
+        // Switches (Protection)
         val switchBlockNotifications = findViewById<SwitchMaterial>(R.id.switchBlockNotifications)
         val switchAutostart = findViewById<SwitchMaterial>(R.id.switchAutostart)
 
-        // --- Switches (UI & Info)
+        // Switches (UI & Info)
         val switchEmergency = findViewById<SwitchMaterial>(R.id.switchEmergency)
         val switchShowQuickActions = findViewById<SwitchMaterial>(R.id.switchShowQuickActions)
         val switchShowTemporaryMode = findViewById<SwitchMaterial>(R.id.switchShowTemporaryMode)
         val switchShowActiveDuration = findViewById<SwitchMaterial>(R.id.switchShowActiveDuration)
         val switchShowEmergencyUnlock = findViewById<SwitchMaterial>(R.id.switchShowEmergencyUnlock)
+        val switchPersistentStatusNotification = findViewById<SwitchMaterial>(R.id.switchPersistentStatusNotification)
         val tvHomeLayoutModeValue = findViewById<TextView>(R.id.tvHomeLayoutModeValue)
 
-        // --- Switches (In-app)
+        // Switches (In-app)
         val switchEnablePairedUids = findViewById<SwitchMaterial>(R.id.switchEnablePairedUids)
         val switchAutoPairOnWrite = findViewById<SwitchMaterial>(R.id.switchAutoPairOnWrite)
 
@@ -240,6 +249,10 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val rowShowQuickActions = findViewById<View>(R.id.rowShowQuickActions)
         val rowShowTemporaryMode = findViewById<View>(R.id.rowShowTemporaryMode)
         val rowShowEmergencyUnlock = findViewById<View>(R.id.rowShowEmergencyUnlock)
+        val rowPersistentStatusNotification = findViewById<View>(R.id.rowPersistentStatusNotification)
+        val rowPersistentStatusNotificationMode = findViewById<View>(R.id.rowPersistentStatusNotificationMode)
+        val dividerPersistentStatusNotificationMode = findViewById<View>(R.id.dividerPersistentStatusNotificationMode)
+        val tvPersistentStatusNotificationModeValue = findViewById<TextView>(R.id.tvPersistentStatusNotificationModeValue)
         val rowHomeLayoutDetailed = findViewById<View>(R.id.rowHomeLayoutDetailed)
         val dividerAfterHomeLayoutDetailed = findViewById<View>(R.id.dividerAfterHomeLayoutDetailed)
         val rowHomeLayoutCustom = findViewById<View>(R.id.rowHomeLayoutCustom)
@@ -287,6 +300,8 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         tintLeadingIcon(rowShowQuickActions, accent)
         tintLeadingIcon(rowShowTemporaryMode, accent)
         tintLeadingIcon(rowShowEmergencyUnlock, accent)
+        tintLeadingIcon(rowPersistentStatusNotification, accent)
+        tintLeadingIcon(rowPersistentStatusNotificationMode, accent)
         tintLeadingIcon(rowHomeLayoutDetailed, accent)
         tintLeadingIcon(rowHomeLayoutCustom, accent)
         tintLeadingIcon(rowWidgetBarcode, accent)
@@ -444,6 +459,13 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             summaryRes = R.string.pref_show_emergency_unlock_summary,
             detailsRes = R.string.toggle_detail_show_emergency_unlock
         )
+        addInlineDetailsAction(
+            row = rowPersistentStatusNotification,
+            switchView = switchPersistentStatusNotification,
+            titleRes = R.string.pref_persistent_status_notification_title,
+            summaryRes = R.string.pref_persistent_status_notification_summary,
+            detailsRes = R.string.toggle_detail_persistent_status_notification
+        )
 
         accentSwitches.clear()
         accentSwitches += listOf(
@@ -469,6 +491,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             switchShowTemporaryMode,
             switchShowActiveDuration,
             switchShowEmergencyUnlock,
+            switchPersistentStatusNotification,
         )
         applySwitchAccentTints()
 
@@ -497,6 +520,71 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         switchShowTemporaryMode.isChecked = sp.getBoolean(KEY_SHOW_TEMPORARY_MODE, true)
         switchShowActiveDuration.isChecked = sp.getBoolean(KEY_SHOW_ACTIVE_DURATION, true)
         switchShowEmergencyUnlock.isChecked = sp.getBoolean(KEY_SHOW_EMERGENCY_UNLOCK, true)
+        switchPersistentStatusNotification.isChecked = PersistentStatusNotifier.isEnabled(ctx)
+
+        fun statusNotificationModeLabel(mode: String): String = getString(
+            when (mode) {
+                PersistentStatusNotifier.MODE_STATUS_ONLY -> R.string.status_notification_mode_status_only
+                PersistentStatusNotifier.MODE_ACTIVE_TIME -> R.string.status_notification_mode_active_time
+                PersistentStatusNotifier.MODE_APP_COUNT -> R.string.status_notification_mode_app_count
+                else -> R.string.status_notification_mode_full
+            }
+        )
+
+        fun refreshStatusNotificationModeUi() {
+            val enabled = switchPersistentStatusNotification.isChecked
+            tvPersistentStatusNotificationModeValue.text =
+                statusNotificationModeLabel(PersistentStatusNotifier.detailMode(this))
+            rowPersistentStatusNotificationMode.isEnabled = enabled
+            rowPersistentStatusNotificationMode.isClickable = enabled
+            rowPersistentStatusNotificationMode.alpha = if (enabled) 1f else 0.5f
+            dividerPersistentStatusNotificationMode.alpha = if (enabled) 0.12f else 0.06f
+        }
+
+        fun showStatusNotificationModeDialog() {
+            if (!switchPersistentStatusNotification.isChecked) return
+            val modes = arrayOf(
+                PersistentStatusNotifier.MODE_STATUS_ONLY,
+                PersistentStatusNotifier.MODE_ACTIVE_TIME,
+                PersistentStatusNotifier.MODE_APP_COUNT,
+                PersistentStatusNotifier.MODE_FULL,
+            )
+            val labels = modes.map(::statusNotificationModeLabel).toTypedArray()
+            val checked = modes.indexOf(PersistentStatusNotifier.detailMode(this)).coerceAtLeast(0)
+            showSwitchlyOptionDialog(
+                titleRes = R.string.pref_persistent_status_notification_mode_title,
+                options = labels.mapIndexed { index, label ->
+                    SwitchlyDialogOption(
+                        title = label,
+                        selected = index == checked,
+                    )
+                },
+            ) { which ->
+                PersistentStatusNotifier.setDetailMode(this, modes[which])
+                refreshStatusNotificationModeUi()
+            }
+        }
+
+        refreshStatusNotificationModeUi()
+
+        val statusNotificationPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (granted) {
+                PersistentStatusNotifier.setEnabled(this, true)
+                switchPersistentStatusNotification.isChecked = true
+                refreshStatusNotificationModeUi()
+            } else {
+                PersistentStatusNotifier.setEnabled(this, false)
+                switchPersistentStatusNotification.isChecked = false
+                refreshStatusNotificationModeUi()
+                Toast.makeText(
+                    this,
+                    getString(R.string.status_notification_permission_denied),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
         fun currentHomeLayoutMode(): String {
             return HomeModeDialogHelper.currentHomeLayoutMode(this)
@@ -853,6 +941,12 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         rowShowEmergencyUnlock.setOnClickListener {
             if (canEditActiveAccess()) switchShowEmergencyUnlock.toggle()
         }
+        rowPersistentStatusNotification.setOnClickListener {
+            switchPersistentStatusNotification.toggle()
+        }
+        rowPersistentStatusNotificationMode.setOnClickListener {
+            showStatusNotificationModeDialog()
+        }
         rowHomeLayoutDetailed.setOnClickListener {
             showHomeLayoutModeDialog()
         }
@@ -1058,6 +1152,30 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             }
             sp.edit { putBoolean(KEY_SHOW_EMERGENCY_UNLOCK, isChecked) }
             refreshEmergencyFeatureVisibility()
+        }
+        switchPersistentStatusNotification.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                buttonView.isChecked = false
+                statusNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                return@setOnCheckedChangeListener
+            }
+            if (isChecked && !NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+                buttonView.isChecked = false
+                Toast.makeText(
+                    this,
+                    getString(R.string.status_notification_permission_denied),
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnCheckedChangeListener
+            }
+            PersistentStatusNotifier.setEnabled(this, isChecked)
+            refreshStatusNotificationModeUi()
         }
 
         lifecycleScope.launch {
@@ -1757,6 +1875,9 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             R.id.tvDisplayHomeSection,
             R.id.tvDisplayHomeSectionSummary,
             R.id.cardDisplayHomeControls,
+            R.id.tvDisplayStatusSection,
+            R.id.tvDisplayStatusSectionSummary,
+            R.id.cardDisplayStatusControls,
             R.id.tvDisplayTilesSection,
             R.id.tvDisplayTilesSectionSummary,
             R.id.cardDisplayTileControls,
@@ -1778,7 +1899,10 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             SECTION_FEATURES -> setOf(
                 R.id.tvAdditionalFeaturesSection,
                 R.id.tvAdditionalFeaturesSectionSummary,
-                R.id.cardAdditionalFeatures
+                R.id.cardAdditionalFeatures,
+                R.id.tvDisplayStatusSection,
+                R.id.tvDisplayStatusSectionSummary,
+                R.id.cardDisplayStatusControls
             )
             SECTION_SAFETY -> setOf(
                 R.id.tvSafetyControlsSection,
@@ -1802,7 +1926,10 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 R.id.cardAdditionalFeatures,
                 R.id.tvSafetyControlsSection,
                 R.id.tvProtectionSectionSummary,
-                R.id.cardSafetyControls
+                R.id.cardSafetyControls,
+                R.id.tvDisplayStatusSection,
+                R.id.tvDisplayStatusSectionSummary,
+                R.id.cardDisplayStatusControls
             )
             else -> emptySet()
         }
@@ -1904,7 +2031,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         const val SECTION_SAFETY = "safety"
         const val SECTION_DISPLAY = "display"
         const val SECTION_OTHER = "other"
-
         const val KEY_SHOW_NEXT_SCHEDULE = "pref_show_next_schedule"
         const val KEY_SHOW_QUICK_ACTIONS = "pref_show_quick_actions"
         const val KEY_SHOW_TEMPORARY_MODE = "pref_show_temporary_mode"
@@ -1933,7 +2059,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         const val KEY_QS_TILE_REQUESTED = "pref_qs_tile_requested"
         const val KEY_QR_QS_TILE_REQUESTED = "pref_qr_qs_tile_requested"
         const val KEY_BARCODE_QS_TILE_REQUESTED = "pref_barcode_qs_tile_requested"
-
         fun start(context: Context) {
             context.startActivity(Intent(context, ToggleOptionsActivity::class.java))
         }

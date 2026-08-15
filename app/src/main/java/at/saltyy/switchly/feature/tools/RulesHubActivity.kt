@@ -24,6 +24,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.IdRes
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import at.saltyy.switchly.R
 import at.saltyy.switchly.feature.picker.AppPickerActivity
@@ -36,8 +37,10 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.ActivityTransitionCompat
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -102,14 +105,28 @@ class RulesHubActivity : AppCompatActivity() {
             source: AppCompatActivity,
             finishSourceAfterOpen: Boolean = false,
         ): Boolean {
-            // Rules are always reviewable.
-            // Individual editors enforce read-only mode while protection or a temporary override is active.
-            ActivityTransitionCompat.switchWithoutAnimation(
-                activity = source,
-                intent = Intent(source, RulesHubActivity::class.java),
-                finishCurrent = finishSourceAfterOpen,
-            )
-            return true
+            if (!SwitchlyAppAccessGuard.isLocked(source)) {
+                ActivityTransitionCompat.switchWithoutAnimation(
+                    activity = source,
+                    intent = Intent(source, RulesHubActivity::class.java),
+                    finishCurrent = finishSourceAfterOpen,
+                )
+                return true
+            }
+
+            AlertDialog.Builder(source)
+                .setTitle(R.string.switchly_rules_locked_title)
+                .setMessage(R.string.rules_restricted_open_message)
+                .setPositiveButton(R.string.rules_open_restricted) { _, _ ->
+                    ActivityTransitionCompat.switchWithoutAnimation(
+                        activity = source,
+                        intent = Intent(source, RulesHubActivity::class.java),
+                        finishCurrent = finishSourceAfterOpen,
+                    )
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .showAccented()
+            return false
         }
     }
 

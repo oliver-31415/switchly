@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Switchly.Card"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Switchly.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     app:cardUseCompatPadding="false">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
         android:paddingStart="14dp"
-        android:paddingEnd="14dp">
+        android:paddingTop="12dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -29,22 +29,22 @@
                 android:id="@+id/icon"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:layout_gravity="center_vertical"
                 android:contentDescription="@null"
-                android:scaleType="centerInside"
-                android:layout_gravity="center_vertical" />
+                android:scaleType="centerInside" />
 
             <TextView
                 android:id="@+id/name"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
                 android:layout_weight="1"
+                android:layout_marginStart="12dp"
                 android:text="@string/usage_app_placeholder"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:textColor="?attr/colorOnSurface" />
+                android:ellipsize="end" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -74,8 +74,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/usage_percent_zero"
                         android:textColor="?attr/colorOnSurface"
-                        android:alpha="0.65"
-                        android:textSize="12sp" />
+                        android:textSize="12sp"
+                        android:alpha="0.65" />
 
                     <TextView
                         android:id="@+id/details"
@@ -84,8 +84,8 @@
                         android:layout_marginStart="8dp"
                         android:text="@string/usage_open_details"
                         android:textColor="?attr/colorPrimary"
-                        android:textStyle="bold"
                         android:textSize="12sp"
+                        android:textStyle="bold"
                         android:alpha="0.92" />
                 </LinearLayout>
             </LinearLayout>
@@ -104,21 +104,21 @@
         </LinearLayout>
 
         <ProgressBar
-            style="?android:attr/progressBarStyleHorizontal"
             android:id="@+id/progress"
+            style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="6dp"
             android:layout_marginTop="8dp"
             android:max="100"
-            android:progress="0"/>
+            android:progress="0" />
 
         <LinearLayout
             android:id="@+id/usageMetricRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="7dp"
-            android:gravity="center_vertical"
             android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:visibility="gone">
 
             <com.google.android.material.chip.Chip
@@ -146,13 +146,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
+            android:visibility="gone"
             android:text=""
+            android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
-            android:alpha="0.85"
             android:maxLines="1"
             android:ellipsize="end"
-            android:visibility="gone"
-            android:textColor="?attr/colorPrimary" />
+            android:alpha="0.85" />
 
         <LinearLayout
             android:id="@+id/sessionUsageContainer"
@@ -167,20 +167,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text=""
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp"
-                android:alpha="0.88"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textColor="?attr/colorOnSurface" />
+                android:alpha="0.88" />
 
             <ProgressBar
-                style="?android:attr/progressBarStyleHorizontal"
                 android:id="@+id/sessionProgress"
+                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
                 android:layout_height="4dp"
                 android:layout_marginTop="4dp"
                 android:max="100"
-                android:progress="0"/>
+                android:progress="0" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -36,7 +36,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.AttemptLimitStore
+import at.saltyy.switchly.data.prefs.BlockAttemptStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
+import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
@@ -116,6 +118,7 @@ class AppUsageDetailActivity : AppCompatActivity() {
     private var currentSeries: List<Long> = emptyList()
     private var currentXAxisLabels: List<String> = emptyList()
     private var rangeJob: Job? = null
+    private var metricJob: Job? = null
     private var customRangeStartMillis: Long? = null
     private var customRangeEndMillis: Long? = null
     private var customRangePickerShowing = false
@@ -145,8 +148,6 @@ class AppUsageDetailActivity : AppCompatActivity() {
 
         b.btnRangeYear.visibility = View.VISIBLE
         b.btnRangeCustom.visibility = View.VISIBLE
-        b.sessions.visibility = View.GONE
-        b.attempts.visibility = View.GONE
         b.cardLaunchStats.visibility = View.GONE
         b.cardUsageTimeline.visibility = View.GONE
 
@@ -156,7 +157,6 @@ class AppUsageDetailActivity : AppCompatActivity() {
         val icon = runCatching { packageManager.getApplicationIcon(pkg) }.getOrNull()
         b.icon.setImageDrawable(icon)
 
-        b.weekTotal.visibility = View.GONE
         b.todayUsage.text = getString(
             R.string.usage_kv_fmt,
             getString(R.string.usage_today),
@@ -297,6 +297,7 @@ class AppUsageDetailActivity : AppCompatActivity() {
         b.tvProfileIndicator.visibility = View.GONE
         refreshDailyLimit(pkg)
         refreshAttemptLimit(pkg)
+        updateMetricChips(pkg, currentRange)
         syncLimitEditingUi()
     }
 
@@ -312,6 +313,7 @@ class AppUsageDetailActivity : AppCompatActivity() {
         rangeJob?.cancel()
         currentRange = range
         updateCustomRangeSummary()
+        updateMetricChips(pkg, range)
         when (range) {
             Range.TODAY -> {
                 currentSeries = UsageSanity.capSeriesToRange(this, UsageStatsRepo.getTodayPerHour(this, pkg), UsageSanity.RangeCap.TODAY)
@@ -379,6 +381,50 @@ class AppUsageDetailActivity : AppCompatActivity() {
                 b.lineChart.setValues(currentSeries)
                 b.lineChart.setXAxisLabels(currentXAxisLabels)
                 setHeaderUsageTotal(R.string.activity_history_range_custom, currentSeries.sum())
+            }
+        }
+    }
+
+    private fun updateMetricChips(pkg: String, range: Range) {
+        metricJob?.cancel()
+        metricJob = lifecycleScope.launch {
+            val (opens, attempts) = withContext(Dispatchers.IO) {
+                val selectedOpens = when (range) {
+                    Range.TODAY -> OpenCountStore.getTodayAllProfiles(this@AppUsageDetailActivity, pkg)
+                    Range.WEEK -> OpenCountStore.getForCurrentWeekAllProfiles(this@AppUsageDetailActivity, pkg)
+                    Range.MONTH -> OpenCountStore.getForCurrentMonthAllProfiles(this@AppUsageDetailActivity, pkg)
+                    Range.YEAR -> OpenCountStore.getForCurrentYearAllProfiles(this@AppUsageDetailActivity, pkg)
+                    Range.CUSTOM -> {
+                        val start = customRangeStartMillis ?: startOfTodayMillis()
+                        val end = customRangeEndMillis ?: System.currentTimeMillis()
+                        OpenCountStore.getForDateRangeAllProfiles(this@AppUsageDetailActivity, pkg, start, end)
+                    }
+                }
+                val selectedAttempts = when (range) {
+                    Range.TODAY -> BlockAttemptStore.getToday(this@AppUsageDetailActivity, pkg)
+                    Range.WEEK -> BlockAttemptStore.getForCurrentWeek(this@AppUsageDetailActivity, pkg)
+                    Range.MONTH -> BlockAttemptStore.getForCurrentMonth(this@AppUsageDetailActivity, pkg)
+                    Range.YEAR -> BlockAttemptStore.getForCurrentYear(this@AppUsageDetailActivity, pkg)
+                    Range.CUSTOM -> {
+                        val start = customRangeStartMillis ?: startOfTodayMillis()
+                        val end = customRangeEndMillis ?: System.currentTimeMillis()
+                        BlockAttemptStore.getForDateRange(this@AppUsageDetailActivity, pkg, start, end)
+                    }
+                }
+                selectedOpens to selectedAttempts
+            }
+            if (currentRange != range) {
+                return@launch
+            }
+            b.detailOpensChip.text = if (opens <= 0) {
+                getString(R.string.usage_opens_zero)
+            } else {
+                resources.getQuantityString(R.plurals.opens_format, opens, opens)
+            }
+            b.detailAttemptsChip.text = if (attempts <= 0) {
+                getString(R.string.usage_attempts_zero)
+            } else {
+                resources.getQuantityString(R.plurals.attempts_format, attempts, attempts)
             }
         }
     }

@@ -37,9 +37,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:enabled="false"
-                android:fontFamily="monospace"
+                android:maxLines="1"
                 android:inputType="none"
-                android:maxLines="1" />
+                android:fontFamily="monospace" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -58,10 +58,10 @@
                 android:id="@+id/etTagName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:autofillHints="name"
-                android:importantForAutofill="yes"
+                android:maxLines="1"
                 android:inputType="textCapSentences"
-                android:maxLines="1" />
+                android:autofillHints="name"
+                android:importantForAutofill="yes" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -80,10 +80,10 @@
                 android:id="@+id/etTagNote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:maxLines="3"
+                android:inputType="textCapSentences|textMultiLine"
                 android:autofillHints="none"
                 android:importantForAutofill="yes"
-                android:inputType="textCapSentences|textMultiLine"
-                android:maxLines="3"
                 android:minLines="2" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -138,10 +138,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
+            android:visibility="gone"
             android:text="@string/paired_tag_use_written_helper"
             android:textColor="?android:attr/textColorSecondary"
-            android:textSize="11sp"
-            android:visibility="gone" />
+            android:textSize="11sp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilTagMinutes"
@@ -161,6 +161,19 @@
                 android:layout_height="wrap_content"
                 android:inputType="none" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRewriteTag"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minHeight="48dp"
+            android:text="@string/paired_tag_rewrite_action"
+            android:visibility="gone"
+            app:icon="@drawable/nfc_24"
+            app:iconGravity="textStart"
+            app:iconPadding="10dp" />
 
         <TextView
             android:layout_width="match_parent"
@@ -227,8 +240,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <Space
                 android:layout_width="0dp"
@@ -254,7 +267,5 @@
                 android:text="@string/save"
                 android:textStyle="bold" />
         </LinearLayout>
-
     </LinearLayout>
-
 </ScrollView>

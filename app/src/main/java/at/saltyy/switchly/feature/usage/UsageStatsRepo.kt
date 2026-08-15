@@ -23,10 +23,14 @@ import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.Intent
 import android.os.Looper
 import at.saltyy.switchly.data.prefs.OpenCountStore
 import at.saltyy.switchly.data.prefs.UsageStore
+import at.saltyy.switchly.util.AppBlockSafety
+import at.saltyy.switchly.util.PackageManagerApiCompat
 import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 // Loads and transforms usage stats data.
@@ -36,6 +40,8 @@ object UsageStatsRepo {
     // Referencing these as local constants keeps minSdk 27 builds lint-clean without using newer SDK fields directly.
     private const val EVENT_ACTIVITY_RESUMED = 1
     private const val EVENT_ACTIVITY_PAUSED = 2
+    private const val EVENT_SCREEN_NON_INTERACTIVE = 16
+    private const val EVENT_KEYGUARD_SHOWN = 17
     private const val EVENT_ACTIVITY_STOPPED = 23
 
     private fun startOfDayLocal(timeMs: Long): Long {
@@ -424,6 +430,11 @@ object UsageStatsRepo {
         return out
     }
 
+    /**
+     * Counts one launch whenever the foreground application actually changes.
+     * Android can emit several ACTIVITY_RESUMED events while the user remains inside one app, for example during internal Activity changes, tab navigation or OEM window updates. 
+     * Those events are not separate app launches and must not inflate the daily counter.
+     */
     fun getSessionCountMapForWindow(ctx: Context, from: Long, to: Long): Map<String, Int> {
         if (isMainThread()) {
             return emptyMap()
@@ -432,6 +443,7 @@ object UsageStatsRepo {
         if (safeTo <= from) {
             return emptyMap()
         }
+
         val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val events = try {
             usm.queryEvents(from, safeTo)
@@ -440,18 +452,49 @@ object UsageStatsRepo {
         } catch (_: Throwable) {
             return emptyMap()
         }
-        val out = linkedMapOf<String, Int>()
-        val e = UsageEvents.Event()
+
+        val homePackages = getHomePackages(ctx)
+        val inputMethodPackage = AppBlockSafety.getDefaultInputMethodPackage(ctx)
+        val counts = linkedMapOf<String, Int>()
+        val event = UsageEvents.Event()
+        var foregroundPackage: String? = null
+
         while (events.hasNextEvent()) {
-            events.getNextEvent(e)
-            val pkg = e.packageName ?: continue
-            if (UsageInsightsAppFilter.shouldAlwaysHide(pkg)) continue
-            if (!isInstalled(ctx, pkg)) continue
-            if (e.eventType == EVENT_ACTIVITY_RESUMED) {
-                out[pkg] = (out[pkg] ?: 0) + 1
+            events.getNextEvent(event)
+            when (event.eventType) {
+                EVENT_SCREEN_NON_INTERACTIVE,
+                EVENT_KEYGUARD_SHOWN -> foregroundPackage = null
+
+                EVENT_ACTIVITY_RESUMED -> {
+                    val packageName = event.packageName ?: continue
+                    val normalized = packageName.lowercase(Locale.US)
+                    val isHomeSurface = packageName in homePackages ||
+                        normalized.contains("launcher") ||
+                        normalized.contains("quickstep")
+
+                    if (UsageInsightsAppFilter.isSwitchlyPackage(packageName) || isHomeSurface) {
+                        foregroundPackage = null
+                        continue
+                    }
+                    if (packageName == "com.android.systemui" ||
+                        packageName == inputMethodPackage ||
+                        UsageInsightsAppFilter.shouldAlwaysHide(packageName)
+                    ) {
+                        continue
+                    }
+                    if (UsageInsightsAppFilter.shouldHide(ctx, packageName) || !isInstalled(ctx, packageName)) {
+                        continue
+                    }
+                    if (foregroundPackage == packageName) {
+                        continue
+                    }
+
+                    foregroundPackage = packageName
+                    counts[packageName] = (counts[packageName] ?: 0) + 1
+                }
             }
         }
-        return out
+        return counts
     }
 
     fun getEarliestAvailableUsageMs(ctx: Context, from: Long, to: Long): Long? {
@@ -470,6 +513,18 @@ object UsageStatsRepo {
             return null
         }
         return stats.minOfOrNull { it.firstTimeStamp }
+    }
+
+    private fun getHomePackages(ctx: Context): Set<String> {
+        val pm = ctx.packageManager
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        return try {
+            PackageManagerApiCompat.queryIntentActivities(pm, intent)
+                .mapNotNull { it.activityInfo?.packageName }
+                .toSet()
+        } catch (_: Throwable) {
+            emptySet()
+        }
     }
 
     private fun shouldExcludePackage(ctx: Context, pkg: String): Boolean {

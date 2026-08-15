@@ -274,6 +274,107 @@ object OpenCountStore {
         return sum
     }
 
+    fun getForDateRangeAllProfiles(
+        ctx: Context,
+        pkg: String,
+        startMs: Long,
+        endMs: Long,
+    ): Int {
+        if (pkg.isBlank() || endMs < startMs) {
+            return 0
+        }
+        val day = Calendar.getInstance().apply {
+            timeInMillis = startMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val endDay = Calendar.getInstance().apply {
+            timeInMillis = endMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        var total = 0L
+        while (!day.after(endDay)) {
+            total += getForDayAllProfiles(ctx, ymdInt(day), pkg).toLong()
+            day.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    fun getMapForDateRangeAllProfiles(
+        ctx: Context,
+        startMs: Long,
+        endMs: Long,
+    ): Map<String, Int> {
+        if (endMs < startMs) {
+            return emptyMap()
+        }
+        val validDays = ymdValuesForRange(startMs, endMs)
+        if (validDays.isEmpty()) {
+            return emptyMap()
+        }
+
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val profileCounts = linkedMapOf<Pair<Int, String>, Long>()
+        val profileEntries = linkedSetOf<Pair<Int, String>>()
+        val legacyCounts = linkedMapOf<Pair<Int, String>, Long>()
+
+        for ((storedKey, storedValue) in prefs.all) {
+            if (!storedKey.startsWith(PREFIX)) {
+                continue
+            }
+            val suffix = storedKey.removePrefix(PREFIX)
+            if (suffix.length <= 9) {
+                continue
+            }
+            val ymd = suffix.take(8).toIntOrNull() ?: continue
+            if (ymd !in validDays) {
+                continue
+            }
+
+            when {
+                suffix.startsWith("__", startIndex = 8) -> {
+                    val packageSeparator = suffix.lastIndexOf("__")
+                    if (packageSeparator <= 8 || packageSeparator + 2 >= suffix.length) {
+                        continue
+                    }
+                    val packageName = suffix.substring(packageSeparator + 2)
+                    val dayPackage = ymd to packageName
+                    profileEntries += dayPackage
+                    profileCounts[dayPackage] =
+                        (profileCounts[dayPackage] ?: 0L) + preferenceNumber(storedValue)
+                }
+                suffix[8] == '_' -> {
+                    val packageName = suffix.substring(9)
+                    if (packageName.isBlank()) {
+                        continue
+                    }
+                    val dayPackage = ymd to packageName
+                    legacyCounts[dayPackage] =
+                        (legacyCounts[dayPackage] ?: 0L) + preferenceNumber(storedValue)
+                }
+            }
+        }
+
+        val totals = linkedMapOf<String, Long>()
+        val dayPackages = profileEntries + legacyCounts.keys
+        dayPackages.forEach { dayPackage ->
+            val value = if (dayPackage in profileEntries) {
+                profileCounts[dayPackage] ?: 0L
+            } else {
+                legacyCounts[dayPackage] ?: 0L
+            }
+            totals[dayPackage.second] = (totals[dayPackage.second] ?: 0L) + value
+        }
+        return totals.mapValues { (_, value) ->
+            value.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+        }
+    }
+
     fun getOverallAllProfiles(ctx: Context, pkg: String): Int {
         if (pkg.isBlank()) {
             return 0
@@ -346,6 +447,37 @@ object OpenCountStore {
             val v = runCatching { sp.getLong(k, 0L).toInt() }.getOrDefault(0)
             sp.edit { putInt(k, v) }
             v
+        }
+    }
+
+    private fun ymdValuesForRange(startMs: Long, endMs: Long): Set<Int> {
+        val day = Calendar.getInstance().apply {
+            timeInMillis = startMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val endDay = Calendar.getInstance().apply {
+            timeInMillis = endMs
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return buildSet {
+            while (!day.after(endDay)) {
+                add(ymdInt(day))
+                day.add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+    }
+
+    private fun preferenceNumber(value: Any?): Long {
+        return when (value) {
+            is Number -> value.toLong()
+            is String -> value.toLongOrNull() ?: 0L
+            else -> 0L
         }
     }
 

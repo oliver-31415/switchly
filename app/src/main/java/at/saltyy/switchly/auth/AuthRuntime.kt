@@ -38,6 +38,7 @@ import androidx.credentials.exceptions.NoCredentialException
 import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
+import at.saltyy.switchly.util.AppSigningInfo
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -234,19 +235,44 @@ object AuthRuntime {
         e: GetCredentialException,
         onResult: (Boolean, Throwable?) -> Unit
     ) {
-        when (e) {
-            is NoCredentialException -> {
+        val signingSha1 = AppSigningInfo.sha1(activity) ?: "unknown"
+        val diagnostic = buildString {
+            append("Credential Manager getCredential failed")
+            append(" variant=")
+            append(BuildConfig.SWITCHLY_APK_VARIANT)
+            append(" buildType=")
+            append(BuildConfig.BUILD_TYPE)
+            append(" package=")
+            append(activity.packageName)
+            append(" signingSha1=")
+            append(signingSha1)
+        }
+
+        when {
+            isAccountReauthFailure(e) -> {
+                Log.e(TAG, diagnostic, e)
+                AppLogStore.append(activity, TAG, "$diagnostic accountReauth=true", e)
+                val msg = activity.getString(R.string.auth_google_app_verification_failed)
+                onResult(false, IllegalStateException(msg, e))
+            }
+            e is NoCredentialException -> {
                 Log.w(TAG, "No credentials available", e)
                 AppLogStore.append(activity, TAG, "No Google credentials available", e)
                 val msg = activity.getString(R.string.auth_no_matching_google_accounts_found)
                 onResult(false, IllegalStateException(msg))
             }
             else -> {
-                Log.e(TAG, "getCredential failed", e)
-                AppLogStore.append(activity, TAG, "Credential Manager getCredential failed", e)
+                Log.e(TAG, diagnostic, e)
+                AppLogStore.append(activity, TAG, diagnostic, e)
                 onResult(false, e)
             }
         }
+    }
+
+    private fun isAccountReauthFailure(error: Throwable): Boolean {
+        val message = error.message.orEmpty()
+        return message.contains("Account reauth failed", ignoreCase = true) ||
+            message.contains("[16]", ignoreCase = true)
     }
 
     private fun firebaseAuthWithGoogle(

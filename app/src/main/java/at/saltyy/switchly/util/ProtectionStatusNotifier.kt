@@ -42,11 +42,9 @@ import at.saltyy.switchly.feature.settings.PermissionsActivity
 
 /**
  * Shows a persistent warning when Switchly is enabled but Accessibility is genuinely unavailable.
- *
- * Accessibility heartbeats can briefly look stale while a device wakes from deep sleep, after an
- * app update, or while Android reconnects the service. Those short transitions must not produce a
- * warning. We therefore remember the first unhealthy observation and verify it again after a grace
- * period before notifying the user.
+ * Accessibility heartbeats can briefly look stale while a device wakes from deep sleep, after an app update, or while Android reconnects the service. 
+ * Those short transitions must not produce a warning. 
+ * We therefore remember the first unhealthy observation and verify it again after a grace period before notifying the user.
  */
 object ProtectionStatusNotifier {
 
@@ -65,9 +63,8 @@ object ProtectionStatusNotifier {
     private var pendingVerification: Runnable? = null
 
     /**
-     * Called from the live Accessibility heartbeat. This is intentionally cheap in the normal
-     * case and immediately clears a pending/visible warning if the service recovered between
-     * verification checks.
+     * Called from the live Accessibility heartbeat.
+     * This is intentionally cheap in the normal case and immediately clears a pending/visible warning if the service recovered between verification checks.
      */
     fun onAccessibilityHeartbeat(context: Context) {
         val ctx = context.applicationContext
@@ -179,8 +176,7 @@ object ProtectionStatusNotifier {
                     AppLogStore.append(
                         ctx,
                         "Protection",
-                        "accessibility_warning_suppressed reason=recovered settingsEnabled=${diagnostics.accessibilityEnabledInSettings} " +
-                            "heartbeatAgeMs=${diagnostics.heartbeatAgeMs}"
+                        "accessibility_warning_suppressed reason=recovered settingsEnabled=${diagnostics.accessibilityEnabledInSettings} " + "heartbeatAgeMs=${diagnostics.heartbeatAgeMs}"
                     )
                     prefs.edit { putLong(KEY_LAST_SUPPRESSED_LOG_MS, now) }
                 }

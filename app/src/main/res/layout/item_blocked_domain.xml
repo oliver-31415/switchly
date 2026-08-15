@@ -9,18 +9,18 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
+    app:strokeColor="@color/switchly_card_stroke"
+    app:strokeWidth="1dp"
     app:cardBackgroundColor="@color/switchly_card_bg"
     app:cardCornerRadius="18dp"
     app:cardElevation="1dp"
-    app:cardUseCompatPadding="false"
-    app:strokeColor="@color/switchly_card_stroke"
-    app:strokeWidth="1dp">
+    app:cardUseCompatPadding="false">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:paddingStart="12dp"
         android:paddingTop="8dp"
         android:paddingEnd="10dp"
@@ -49,8 +49,8 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginEnd="10dp"
-            android:contentDescription="@string/website_rules_title"
             android:padding="6dp"
+            android:contentDescription="@string/website_rules_title"
             android:src="@drawable/language_24"
             app:tint="?attr/colorPrimary" />
 
@@ -64,21 +64,21 @@
                 android:id="@+id/tvDomain"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="15sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvMeta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
-                android:ellipsize="end"
-                android:maxLines="1"
                 android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
         </LinearLayout>
 
         <ImageButton
@@ -87,10 +87,9 @@
             android:layout_height="36dp"
             android:layout_marginStart="6dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/set_daily_limit"
             android:padding="7dp"
+            android:contentDescription="@string/set_daily_limit"
             app:srcCompat="@drawable/schedule_24"
             app:tint="?attr/colorPrimary" />
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>

@@ -25,6 +25,7 @@ object AndroidSystemPackages {
     const val INTENT_RESOLVER = "com.android.intentresolver"
 
     const val SETTINGS = "com.android.settings"
+    const val GOOGLE_SETTINGS = "com.google.android.settings"
     const val SAMSUNG_SETTINGS = "com.samsung.android.settings"
     const val SETTINGS_DEVICE_ADMIN_CLASS = "com.android.settings.DeviceAdminSettings"
 
@@ -45,8 +46,11 @@ object AndroidSystemPackages {
     const val SAMSUNG_PERMISSION_CONTROLLER = "com.samsung.android.permissioncontroller"
     const val LEGACY_GOOGLE_PERMISSION_CONTROLLER = "com.google.android.permission"
 
+    const val ANDROID_SYSTEM_INTELLIGENCE = "com.google.android.as"
+
     val SETTINGS_PACKAGES: Set<String> = setOf(
         SETTINGS,
+        GOOGLE_SETTINGS,
         SAMSUNG_SETTINGS,
     )
 
@@ -66,6 +70,7 @@ object AndroidSystemPackages {
         ANDROID_PERMISSION_CONTROLLER,
         GOOGLE_PERMISSION_CONTROLLER,
         SAMSUNG_PERMISSION_CONTROLLER,
+        LEGACY_GOOGLE_PERMISSION_CONTROLLER,
     )
 
     val SETTINGS_BYPASS_PACKAGES: Set<String> = SETTINGS_PACKAGES +

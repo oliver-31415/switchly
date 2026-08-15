@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -17,23 +16,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title="@string/nfc_writer_title"
-            app:navigationIcon="@drawable/keyboard_arrow_left_24"
             app:contentInsetStart="0dp"
             app:contentInsetStartWithNavigation="0dp"
-            app:titleMarginStart="0dp"
-            />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24"
+            app:title="@string/nfc_writer_title"
+            app:titleMarginStart="0dp" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Scrollable content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
         android:fillViewport="true"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -45,10 +43,10 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="0dp"
+                app:strokeColor="@color/status_border"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/status_border">
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -70,11 +68,11 @@
                             style="@style/Switchly.DropdownText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="none"
-                            android:importantForAutofill="no"
                             android:hint="@null"
+                            android:inputType="none"
+                            android:dropDownVerticalOffset="8dp"
                             android:dropDownWidth="wrap_content"
-                            android:dropDownVerticalOffset="8dp" />
+                            android:importantForAutofill="no" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Action -->
@@ -84,8 +82,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:hint="@string/nfc_action_hint"
                         android:orientation="vertical"
+                        android:hint="@string/nfc_action_hint"
                         app:endIconMode="dropdown_menu">
 
                         <com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -93,11 +91,11 @@
                             style="@style/Switchly.DropdownText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:dropDownWidth="wrap_content"
-                            android:dropDownVerticalOffset="8dp"
                             android:hint="@null"
-                            android:importantForAutofill="no"
-                            android:inputType="none" />
+                            android:inputType="none"
+                            android:dropDownVerticalOffset="8dp"
+                            android:dropDownWidth="wrap_content"
+                            android:importantForAutofill="no" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Temp disable duration (only visible when action = temp) -->
@@ -107,8 +105,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:hint="@string/nfc_duration_hint"
                         android:visibility="gone"
+                        android:hint="@string/nfc_duration_hint"
                         app:endIconMode="dropdown_menu">
 
                         <com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -116,19 +114,19 @@
                             style="@style/Switchly.DropdownText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="none"
-                            android:importantForAutofill="no"
                             android:hint="@null"
+                            android:inputType="none"
+                            android:dropDownVerticalOffset="8dp"
                             android:dropDownWidth="wrap_content"
-                            android:dropDownVerticalOffset="8dp" />
+                            android:importantForAutofill="no" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
 
                         <TextView
                             android:id="@+id/tvActionHint"
@@ -139,9 +137,9 @@
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="12sp" />
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
             <!-- Start/Cancel button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnArmWrite"
@@ -149,11 +147,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/nfc_arm_write"
-                app:icon="@drawable/nfc_24"
-                app:iconTint="@android:color/white"
                 android:textColor="@android:color/white"
+                app:icon="@drawable/nfc_24"
+                app:iconGravity="textStart"
                 app:iconPadding="10dp"
-                app:iconGravity="textStart" />
+                app:iconTint="@android:color/white" />
 
             <!-- Status -->
             <LinearLayout
@@ -161,9 +159,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:padding="14dp"
                 android:gravity="center_vertical"
                 android:visibility="gone"
+                android:padding="14dp"
                 android:animateLayoutChanges="true"
                 android:elevation="2dp">
 
@@ -180,11 +178,9 @@
                     style="?android:attr/progressBarStyleSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:indeterminate="true"
-                    android:layout_marginStart="10dp" />
+                    android:layout_marginStart="10dp"
+                    android:indeterminate="true" />
             </LinearLayout>
-
         </LinearLayout>
     </ScrollView>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

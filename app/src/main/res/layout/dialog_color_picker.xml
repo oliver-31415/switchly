@@ -10,16 +10,16 @@
         android:id="@+id/colorPickerHint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingBottom="12dp"
         android:text="@string/pref_accent_custom_title"
-        android:textStyle="bold"
-        android:paddingBottom="12dp" />
+        android:textStyle="bold" />
 
     <View
         android:id="@+id/colorPreview"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:background="@color/accent_default_green"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:background="@color/accent_default_green" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -34,8 +34,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/color_channel_g"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="8dp"
+        android:text="@string/color_channel_g" />
 
     <SeekBar
         android:id="@+id/sliderG"
@@ -45,12 +45,11 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/color_channel_b"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="8dp"
+        android:text="@string/color_channel_b" />
 
     <SeekBar
         android:id="@+id/sliderB"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-
 </LinearLayout>

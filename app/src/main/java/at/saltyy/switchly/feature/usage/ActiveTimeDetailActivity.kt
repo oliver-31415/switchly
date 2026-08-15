@@ -77,6 +77,7 @@ class ActiveTimeDetailActivity : AppCompatActivity() {
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@ActiveTimeDetailActivity))
         }
+        UsageInfoAction.attach(this, toolbar, R.string.active_time_info_title, R.string.active_time_info_body)
 
         root.addView(AppBarLayout(this).apply {
             fitsSystemWindows = true

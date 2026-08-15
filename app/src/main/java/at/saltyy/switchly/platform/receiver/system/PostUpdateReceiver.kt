@@ -23,12 +23,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import at.saltyy.switchly.platform.receiver.location.LocationTriggerMonitor
+import at.saltyy.switchly.util.PersistentStatusNotifier
 import at.saltyy.switchly.util.ProtectionStatusNotifier
 
 /**
  * Triggered after an app update (ACTION_MY_PACKAGE_REPLACED).
- * Android may need a moment to reconnect Accessibility after replacing the package, so use the
- * shared verified/grace-period warning flow instead of showing an immediate notification.
+ * Android may need a moment to reconnect Accessibility after replacing the package, so use the shared verified/grace-period warning flow instead of showing an immediate notification.
  */
 class PostUpdateReceiver : BroadcastReceiver() {
 
@@ -40,5 +40,6 @@ class PostUpdateReceiver : BroadcastReceiver() {
         val appContext = ctx.applicationContext
         runCatching { LocationTriggerMonitor.ensureStarted(appContext) }
         runCatching { ProtectionStatusNotifier.refresh(appContext) }
+        runCatching { PersistentStatusNotifier.refresh(appContext) }
     }
 }

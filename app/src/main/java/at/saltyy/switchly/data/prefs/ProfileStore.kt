@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.edit
 import at.saltyy.switchly.util.AppBlockSafety
+import at.saltyy.switchly.util.PersistentStatusNotifier
 
 // Persists and retrieves profile state.
 object ProfileStore {
@@ -108,6 +109,7 @@ object ProfileStore {
         InAppRuleStore.onProfileRemoved(context, name)
         WebsiteRuleModeStore.onProfileRemoved(context, name)
         ProfileRuleModeStore.onProfileRemoved(context, name)
+        PersistentStatusNotifier.refresh(context)
     }
 
     // Renames a profile.
@@ -163,6 +165,7 @@ object ProfileStore {
         InAppRuleStore.onProfileRenamed(context, old, new)
         WebsiteRuleModeStore.onProfileRenamed(context, old, new)
         ProfileRuleModeStore.onProfileRenamed(context, old, new)
+        PersistentStatusNotifier.refresh(context)
         return true
     }
 
@@ -204,6 +207,7 @@ object ProfileStore {
         val all = getProfiles(context)
         if (name in all) {
             sp.edit { putString(KEY_CURRENT, name) }
+            PersistentStatusNotifier.refresh(context)
         }
     }
 
@@ -253,6 +257,7 @@ object ProfileStore {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val sanitized = AppBlockSafety.sanitizeManagedPackages(context, pkgs)
         sp.edit { putStringSet(keyBlocked(profile), sanitized) }
+        PersistentStatusNotifier.refresh(context)
     }
 
     // Returns all allowed package names for a specific profile.
@@ -288,6 +293,7 @@ object ProfileStore {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val sanitized = AppBlockSafety.sanitizeManagedPackages(context, pkgs)
         sp.edit { putStringSet(keyAllowed(profile), sanitized) }
+        PersistentStatusNotifier.refresh(context)
     }
 
     fun getSelectedForProfileMode(context: Context, profile: String): Set<String> {

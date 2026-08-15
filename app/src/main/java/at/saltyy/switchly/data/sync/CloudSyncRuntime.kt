@@ -21,6 +21,7 @@ package at.saltyy.switchly.data.sync
 
 import at.saltyy.switchly.BuildConfig
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -43,6 +44,7 @@ import at.saltyy.switchly.feature.usage.StatsArchiveSync
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import java.util.concurrent.Executors
 import kotlin.jvm.JvmStatic
@@ -62,6 +64,8 @@ object CloudSyncRuntime {
     private const val SUB_BACKUPS = "backups"
     private const val SUB_STATS_CHUNKS = "stats_chunks"
     private const val ROOT_DOCUMENT_BACKUP_ID = "__root_document__"
+    private const val MAX_CLOUD_BACKUPS = 10
+    private const val DELETE_BATCH_SIZE = 450
 
     private const val FIELD_PREFS = "prefs"
     private const val FIELD_SWITCHLY_PREFS = "switchly_prefs"
@@ -124,6 +128,44 @@ object CloudSyncRuntime {
         val createdAt: Long
     )
 
+    data class BackupCompatibility(
+        val shouldWarn: Boolean,
+        val createdWithVersion: String?,
+        val legacyStatistics: Boolean,
+    )
+
+    fun inspectBackupCompatibility(payload: Map<*, *>): BackupCompatibility {
+        val createdWithVersion = payload[FIELD_CREATED_WITH_VERSION]
+            ?.toString()
+            ?.trim()
+            ?.takeIf(String::isNotEmpty)
+        val createdWithVersionCode = when (val value = payload[FIELD_CREATED_WITH_VERSION_CODE]) {
+            is Number -> value.toLong()
+            is String -> value.toLongOrNull()
+            else -> null
+        }
+        val schemaVersion = when (val value = payload[FIELD_BACKUP_SCHEMA_VERSION]) {
+            is Number -> value.toInt()
+            is String -> value.toIntOrNull()
+            else -> null
+        }
+        val includedCategories = BackupCategoryFilter.includedCategoryIdsFromPayload(payload)
+        val includesStatistics = includedCategories == null || BackupCategory.STATISTICS.id in includedCategories
+        val legacyStatistics = includesStatistics && payload[FIELD_STATS_DATABASE] !is Map<*, *>
+        val versionDiffers = when {
+            createdWithVersionCode != null -> createdWithVersionCode != BuildConfig.VERSION_CODE.toLong()
+            createdWithVersion != null -> createdWithVersion != BuildConfig.VERSION_NAME
+            else -> true
+        }
+        val schemaDiffers = schemaVersion != BACKUP_SCHEMA_VERSION
+
+        return BackupCompatibility(
+            shouldWarn = versionDiffers || schemaDiffers || legacyStatistics,
+            createdWithVersion = createdWithVersion,
+            legacyStatistics = legacyStatistics,
+        )
+    }
+
     private fun hasBackupPayload(snapshot: DocumentSnapshot): Boolean {
         return snapshot.exists() && (
             snapshot.contains(FIELD_PREFS) ||
@@ -172,8 +214,12 @@ object CloudSyncRuntime {
 
             for ((k, v) in prefsOut) {
                 val m = regex.matchEntire(k) ?: continue
-                val num = v as? Number ?: continue
-                items += buildItem(m) + mapOf("v" to num.toLong())
+                val numericValue = when (v) {
+                    is Number -> v.toLong()
+                    is String -> v.toLongOrNull()
+                    else -> null
+                } ?: continue
+                items += buildItem(m) + mapOf("v" to numericValue)
                 toRemove += k
             }
 
@@ -228,8 +274,10 @@ object CloudSyncRuntime {
         return prefsOut to statsOut
     }
 
-    private fun applyStatsToInternalPrefs(ctx: Context, stats: Any?) {
-        val map = stats as? Map<*, *> ?: return
+    private fun applyStatsToInternalPrefs(ctx: Context, stats: Any?): Int {
+        val map = stats as? Map<*, *> ?: return 0
+        var restoredValues = 0
+
         val restoredActivityDays = (map["activity_history_days"] as? Map<*, *>)
             ?.mapNotNull { (day, encoded) ->
                 val dayKey = day as? String ?: return@mapNotNull null
@@ -247,72 +295,167 @@ object CloudSyncRuntime {
             }
         }
 
-        val sp = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
+        fun stringValue(value: Any?): String? = when (value) {
+            is String -> value.trim().takeIf(String::isNotEmpty)
+            is Number -> value.toLong().toString()
+            else -> null
+        }
+
+        fun dayValue(value: Any?): String? {
+            val day = stringValue(value) ?: return null
+            return day.takeIf { candidate -> candidate.length == 8 && candidate.all(Char::isDigit) }
+        }
+
+        fun longValue(value: Any?): Long? = when (value) {
+            is Number -> value.toLong()
+            is String -> value.trim().toLongOrNull()
+            else -> null
+        }
+
+        fun booleanValue(value: Any?): Boolean? = when (value) {
+            is Boolean -> value
+            is Number -> value.toInt() != 0
+            is String -> when (value.trim().lowercase()) {
+                "true", "1" -> true
+                "false", "0" -> false
+                else -> null
+            }
+            else -> null
+        }
 
         fun buildKeyWithPkg(prefix: String, item: Map<*, *>): String? {
-            val d = item["d"] as? String ?: return null
-            val p = item["p"] as? String ?: return null
-            return "${prefix}${d}_${p}"
+            val day = dayValue(item["d"]) ?: return null
+            val packageName = stringValue(item["p"]) ?: return null
+            return "$prefix${day}_$packageName"
         }
 
         fun buildKeyNoPkg(prefix: String, item: Map<*, *>): String? {
-            val d = item["d"] as? String ?: return null
-            return prefix + d
+            val day = dayValue(item["d"]) ?: return null
+            return prefix + day
         }
 
-        sp.edit {
+        val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
+        internalPrefs.edit(commit = true) {
             fun applyListLong(listKey: String, keyBuilder: (Map<*, *>) -> String?) {
-                val items = map[listKey] as? List<*> ?: return
-                for (it in items) {
-                    val item = it as? Map<*, *> ?: continue
-                    val v = (item["v"] as? Number)?.toLong() ?: continue
+                val items = map[listKey] as? Collection<*> ?: return
+                for (rawItem in items) {
+                    val item = rawItem as? Map<*, *> ?: continue
+                    val value = longValue(item["v"]) ?: continue
                     val key = keyBuilder(item) ?: continue
-                    putLong(key, v)
+                    putLong(key, value)
+                    restoredValues++
                 }
             }
 
             fun applyListInt(listKey: String, keyBuilder: (Map<*, *>) -> String?) {
-                val items = map[listKey] as? List<*> ?: return
-                for (it in items) {
-                    val item = it as? Map<*, *> ?: continue
-                    val v = (item["v"] as? Number)?.toInt() ?: continue
+                val items = map[listKey] as? Collection<*> ?: return
+                for (rawItem in items) {
+                    val item = rawItem as? Map<*, *> ?: continue
+                    val value = longValue(item["v"])
+                        ?.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())
+                        ?.toInt()
+                        ?: continue
                     val key = keyBuilder(item) ?: continue
-                    putInt(key, v)
+                    putInt(key, value)
+                    restoredValues++
                 }
             }
 
-            fun applyListBoolTrue(listKey: String, keyBuilder: (Map<*, *>) -> String?) {
-                val items = map[listKey] as? List<*> ?: return
-                for (it in items) {
-                    val item = it as? Map<*, *> ?: continue
-                    val v = item["v"] as? Boolean ?: continue
-                    if (!v) continue
+            fun applyListBoolean(listKey: String, keyBuilder: (Map<*, *>) -> String?) {
+                val items = map[listKey] as? Collection<*> ?: return
+                for (rawItem in items) {
+                    val item = rawItem as? Map<*, *> ?: continue
+                    val value = booleanValue(item["v"]) ?: continue
                     val key = keyBuilder(item) ?: continue
-                    putBoolean(key, true)
+                    putBoolean(key, value)
+                    restoredValues++
                 }
             }
 
-            applyListLong("usage_day") { i -> buildKeyWithPkg("usage_day_", i) }
-            applyListLong("blocked_ms") { i -> buildKeyWithPkg("blocked_ms_", i) }
-            applyListLong("blocked_count") { i -> buildKeyWithPkg("blocked_count_", i) }
-            applyListLong("blocked_attempt") { i -> buildKeyWithPkg("blocked_attempt_", i) }
+            applyListLong("usage_day") { item -> buildKeyWithPkg("usage_day_", item) }
+            applyListLong("blocked_ms") { item -> buildKeyWithPkg("blocked_ms_", item) }
+            applyListLong("blocked_count") { item -> buildKeyWithPkg("blocked_count_", item) }
+            applyListLong("blocked_attempt") { item -> buildKeyWithPkg("blocked_attempt_", item) }
+            applyListLong("app_launch_count") { item -> buildKeyWithPkg("app_launch_count_", item) }
 
-            applyListLong("runtime_ms") { i -> buildKeyNoPkg("switchly_runtime_ms_", i) }
-            applyListLong("emergency_unlock_count") { i -> buildKeyNoPkg("emergency_unlock_count_", i) }
-            applyListLong("nfc_scan_count") { i -> buildKeyNoPkg("nfc_scan_count_", i) }
-            applyListLong("schedule_exec_count") { i -> buildKeyNoPkg("schedule_exec_count_", i) }
-
-            // Usage limits are Int + Bool
-            applyListBoolTrue("usage_limit_ever") { i ->
-                val p = i["p"] as? String ?: return@applyListBoolTrue null
-                "usage_limit_ever__${p}"
+            applyListInt("open_count") { item ->
+                val day = dayValue(item["d"]) ?: return@applyListInt null
+                val packageName = stringValue(item["p"]) ?: return@applyListInt null
+                val profile = stringValue(item["pr"])
+                if (profile == null) {
+                    "open_count_${day}_$packageName"
+                } else {
+                    "open_count_${day}__${profile}__$packageName"
+                }
             }
-            applyListInt("usage_limit_min") { i ->
-                val pr = i["pr"] as? String ?: return@applyListInt null
-                val p = i["p"] as? String ?: return@applyListInt null
-                "usage_limit_min__${pr}__${p}"
+
+            applyListLong("runtime_ms") { item -> buildKeyNoPkg("switchly_runtime_ms_", item) }
+            applyListLong("emergency_unlock_count") { item ->
+                buildKeyNoPkg("emergency_unlock_count_", item)
+            }
+            applyListLong("nfc_scan_count") { item -> buildKeyNoPkg("nfc_scan_count_", item) }
+            applyListLong("qr_scan_count") { item -> buildKeyNoPkg("qr_scan_count_", item) }
+            applyListLong("barcode_scan_count") { item ->
+                buildKeyNoPkg("barcode_scan_count_", item)
+            }
+            applyListLong("temp_enable_count") { item -> buildKeyNoPkg("temp_enable_count_", item) }
+            applyListLong("schedule_exec_count") { item ->
+                buildKeyNoPkg("schedule_exec_count_", item)
+            }
+
+            applyListLong("switch_action_count") { item ->
+                val action = stringValue(item["a"] ?: item["action"]) ?: return@applyListLong null
+                val day = dayValue(item["d"]) ?: return@applyListLong null
+                "switch_action_count_${action}_$day"
+            }
+
+            applyListBoolean("usage_limit_ever") { item ->
+                val packageName = stringValue(item["p"]) ?: return@applyListBoolean null
+                "usage_limit_ever__$packageName"
+            }
+            applyListInt("usage_limit_min") { item ->
+                val profile = stringValue(item["pr"]) ?: return@applyListInt null
+                val packageName = stringValue(item["p"]) ?: return@applyListInt null
+                "usage_limit_min__${profile}__$packageName"
             }
         }
+
+        fun restoreRawStatistics(raw: Map<*, *>) {
+            val internalWrites = linkedMapOf<String, Any?>()
+            val defaultWrites = linkedMapOf<String, Any?>()
+            val uiHintsWrites = linkedMapOf<String, Any?>()
+
+            raw.forEach { (rawKey, value) ->
+                val key = rawKey as? String ?: return@forEach
+                when {
+                    StatsPersistence.isArchivedInternalKey(key) -> internalWrites[key] = value
+                    StatsPersistence.isArchivedDefaultKey(key) -> defaultWrites[key] = value
+                    StatsPersistence.isArchivedUiHintsKey(key) -> uiHintsWrites[key] = value
+                }
+            }
+
+            fun writeValues(preferences: SharedPreferences, values: Map<String, Any?>) {
+                if (values.isEmpty()) {
+                    return
+                }
+                preferences.edit(commit = true) {
+                    values.forEach { (key, value) ->
+                        putSupportedPreferenceValue(this, key, value)
+                        restoredValues++
+                    }
+                }
+            }
+
+            writeValues(internalPrefs, internalWrites)
+            writeValues(PreferenceManager.getDefaultSharedPreferences(ctx), defaultWrites)
+            writeValues(ctx.getSharedPreferences(UI_HINTS_PREFS_NAME, Context.MODE_PRIVATE), uiHintsWrites)
+        }
+
+        // Some pre-database backups kept raw statistic keys instead of compact lists.
+        restoreRawStatistics(map)
+        (map["values"] as? Map<*, *>)?.let(::restoreRawStatistics)
+
+        return restoredValues
     }
 
     fun createLocalBackupPayload(ctx: Context): Map<String, Any?> =
@@ -392,7 +535,7 @@ object CloudSyncRuntime {
                 userRef.collection(SUB_BACKUPS)
                     .add(prepared.rootPayload)
                     .addOnSuccessListener { created ->
-                        uploadStatsChunks(created, prepared.statsChunks) { chunkOk, chunkError ->
+                        uploadStatsChunks(ctx, created, prepared.statsChunks) { chunkOk, chunkError ->
                             if (!chunkOk) {
                                 created.delete()
                                 val error = chunkError ?: "Statistics backup chunks could not be uploaded"
@@ -404,7 +547,18 @@ object CloudSyncRuntime {
                                 Log.d(TAG, "pushLocalState: backup version created: ${created.id}")
                             }
                             AppLogStore.append(ctx, TAG, "Cloud backup created: ${created.id}")
-                            deliverToMain { onDone(true, null) }
+                            pruneOldBackups(ctx, userRef) { cleanupError ->
+                                if (cleanupError != null) {
+                                    Log.w(TAG, "Cloud backup retention cleanup failed", cleanupError)
+                                    AppLogStore.append(
+                                        ctx,
+                                        TAG,
+                                        "Cloud backup created, but retention cleanup failed",
+                                        cleanupError,
+                                    )
+                                }
+                                deliverToMain { onDone(true, cleanupError?.localizedMessage) }
+                            }
                         }
                     }
                     .addOnFailureListener { error ->
@@ -481,6 +635,7 @@ object CloudSyncRuntime {
     }
 
     private fun uploadStatsChunks(
+        ctx: Context,
         backupRef: DocumentReference,
         chunks: List<String>,
         onDone: (Boolean, String?) -> Unit,
@@ -497,13 +652,99 @@ object CloudSyncRuntime {
         }
         batch.commit()
             .addOnSuccessListener { onDone(true, null) }
-            .addOnFailureListener { error -> onDone(false, error.localizedMessage) }
+            .addOnFailureListener { error ->
+                val message = if (
+                    error is FirebaseFirestoreException &&
+                    error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+                ) {
+                    ctx.getString(R.string.cloud_error_stats_chunks_permission)
+                } else {
+                    error.localizedMessage
+                }
+                onDone(false, message)
+            }
+    }
+
+    private fun pruneOldBackups(
+        ctx: Context,
+        userRef: DocumentReference,
+        onDone: (Throwable?) -> Unit,
+    ) {
+        userRef.collection(SUB_BACKUPS)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val staleBackups = snapshot.documents
+                    .sortedByDescending { document -> document.getLong(FIELD_CREATED_AT) ?: 0L }
+                    .drop(MAX_CLOUD_BACKUPS)
+                    .map { document -> document.reference }
+
+                deleteBackupReferencesSequentially(ctx, staleBackups, onDone)
+            }
+            .addOnFailureListener { error -> onDone(error) }
+    }
+
+    private fun deleteBackupReferencesSequentially(
+        ctx: Context,
+        references: List<DocumentReference>,
+        onDone: (Throwable?) -> Unit,
+    ) {
+        val current = references.firstOrNull()
+        if (current == null) {
+            onDone(null)
+            return
+        }
+
+        deleteBackupReference(ctx, current) { error ->
+            if (error != null) {
+                onDone(error)
+            } else {
+                deleteBackupReferencesSequentially(ctx, references.drop(1), onDone)
+            }
+        }
+    }
+
+    private fun deleteBackupReference(
+        ctx: Context,
+        backupRef: DocumentReference,
+        onDone: (Throwable?) -> Unit,
+    ) {
+        backupRef.collection(SUB_STATS_CHUNKS)
+            .get()
+            .addOnSuccessListener { chunks ->
+                val references = chunks.documents.map { document -> document.reference } + backupRef
+                deleteReferencesInBatches(ctx, references, onDone)
+            }
+            .addOnFailureListener { error -> onDone(error) }
+    }
+
+    private fun deleteReferencesInBatches(
+        ctx: Context,
+        references: List<DocumentReference>,
+        onDone: (Throwable?) -> Unit,
+    ) {
+        val currentBatch = references.take(DELETE_BATCH_SIZE)
+        if (currentBatch.isEmpty()) {
+            onDone(null)
+            return
+        }
+
+        val firestore = FirebaseFirestore.getInstance()
+        val batch = firestore.batch()
+        currentBatch.forEach { reference -> batch.delete(reference) }
+        batch.commit()
+            .addOnSuccessListener {
+                deleteReferencesInBatches(ctx, references.drop(currentBatch.size), onDone)
+            }
+            .addOnFailureListener { error ->
+                AppLogStore.append(ctx, TAG, "Deleting cloud backup documents failed", error)
+                onDone(error)
+            }
     }
 
     // Retrieves the last N backups from the "backups" subcollection.
     fun listBackups(
         ctx: Context,
-        limit: Long = 10,
+        limit: Long = MAX_CLOUD_BACKUPS.toLong(),
         onDone: (Boolean, String?, List<CloudBackupMeta>?) -> Unit
     ) {
         val uid = Auth.uid()
@@ -626,6 +867,9 @@ object CloudSyncRuntime {
         val statsDatabase = payload[FIELD_STATS_DATABASE] as? Map<*, *>
         val partialBackup = BackupCategoryFilter.isPartialBackup(payload)
 
+        val legacyStatisticsBackup = statsDatabase == null && stats is Map<*, *>
+        var restoredCompactValues = 0
+
         StatsPersistence.beginRestore(ctx)
         try {
             applyPrefsMapToLocal(ctx, prefsMap, isInternal = false, isSchedules = false, clearBeforeApply = !partialBackup)
@@ -633,8 +877,9 @@ object CloudSyncRuntime {
             applyPrefsMapToLocal(ctx, schedulesMap, isInternal = false, isSchedules = true, clearBeforeApply = !partialBackup)
             applyPrefsMapToLocal(ctx, uiHintsMap, prefsName = UI_HINTS_PREFS_NAME, clearBeforeApply = !partialBackup)
 
-            // Expand compact stats payload back into internal prefs keys
-            applyStatsToInternalPrefs(ctx, stats)
+            // Expand compact statistics from 2.1.x/2.2.x backups before Room is restored.
+            restoredCompactValues = applyStatsToInternalPrefs(ctx, stats)
+            normalizeLegacyStatisticsPreferences(ctx)
 
             // Safety: restored schedules should not immediately fire
             if (schedulesMap.isNotEmpty()) {
@@ -649,6 +894,21 @@ object CloudSyncRuntime {
                 databasePayload = statsDatabase,
                 replaceDatabase = !partialBackup,
             )
+
+            // Re-apply compact values after the database phase so an older or incomplete database archive cannot overwrite counters restored from legacy backups.
+            if (restoredCompactValues > 0) {
+                restoredCompactValues = applyStatsToInternalPrefs(ctx, stats)
+            }
+            normalizeLegacyStatisticsPreferences(ctx)
+            StatsPersistence.flushBlocking(ctx)
+
+            if (legacyStatisticsBackup && restoredCompactValues > 0) {
+                AppLogStore.append(
+                    ctx,
+                    TAG,
+                    "Legacy statistics migration restored $restoredCompactValues preference values",
+                )
+            }
         }
     }
 
@@ -757,6 +1017,119 @@ object CloudSyncRuntime {
             .addOnFailureListener { error -> onDone(Result.failure(error)) }
     }
 
+    private fun shouldStoreAsInt(key: String): Boolean {
+        return key == "onboarding_version" ||
+            key == "primary_toggle_tap_count" ||
+            key.startsWith("usage_limit_min__") ||
+            key.startsWith("session_limit_min__") ||
+            key.startsWith("attempt_limit__") ||
+            key.startsWith("inapp_limit_min__") ||
+            key.startsWith("surf_rule__") ||
+            key.startsWith("domain_limit_min_") ||
+            key.startsWith("scan_code_daily_limit_") ||
+            key.startsWith("scan_code_cooldown_") ||
+            key.startsWith("scan_code_count_") ||
+            key.startsWith("qr_temp_count_") ||
+            key.startsWith("nfc_td_count_") ||
+            key.startsWith("nfc_td_cfg_daily_") ||
+            key.startsWith("nfc_td_cfg_cooldown_") ||
+            key.startsWith("nfc_tag_read_only_duration_") ||
+            key.startsWith("open_count_")
+    }
+
+    private fun isArchivedStatisticsKey(key: String): Boolean {
+        return StatsPersistence.isArchivedInternalKey(key) ||
+            StatsPersistence.isArchivedDefaultKey(key) ||
+            StatsPersistence.isArchivedUiHintsKey(key)
+    }
+
+    private fun putSupportedPreferenceValue(
+        editor: SharedPreferences.Editor,
+        key: String,
+        value: Any?,
+    ) {
+        when (value) {
+            is Boolean -> editor.putBoolean(key, value)
+            is Number -> {
+                val numericValue = value.toLong()
+                when {
+                    shouldStoreAsInt(key) && numericValue in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong() -> {
+                        editor.putInt(key, numericValue.toInt())
+                    }
+                    isArchivedStatisticsKey(key) -> editor.putLong(key, numericValue)
+                    value is Float -> editor.putFloat(key, value)
+                    value is Double && value % 1.0 != 0.0 -> editor.putFloat(key, value.toFloat())
+                    value is Int -> editor.putInt(key, value)
+                    else -> editor.putLong(key, numericValue)
+                }
+            }
+            is String -> {
+                val numericValue = value.toLongOrNull()
+                when {
+                    numericValue != null && shouldStoreAsInt(key) &&
+                        numericValue in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong() -> {
+                        editor.putInt(key, numericValue.toInt())
+                    }
+                    numericValue != null && isArchivedStatisticsKey(key) -> {
+                        editor.putLong(key, numericValue)
+                    }
+                    else -> editor.putString(key, value)
+                }
+            }
+            is Collection<*> -> {
+                if (value.all { item -> item is String }) {
+                    editor.putStringSet(key, value.filterIsInstance<String>().toSet())
+                }
+            }
+        }
+    }
+
+    // Older backups could store statistic keys in the wrong SharedPreferences file or with JSON Int values.
+    // Put every archived key back into its canonical file and normalize numeric types before Room mirrors it.
+    private fun normalizeLegacyStatisticsPreferences(ctx: Context) {
+        val internalPrefs = ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE)
+        val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val uiHintsPrefs = ctx.getSharedPreferences(UI_HINTS_PREFS_NAME, Context.MODE_PRIVATE)
+        val sources = listOf(internalPrefs, defaultPrefs, uiHintsPrefs)
+        val snapshots = sources.associateWith { prefs -> prefs.all }
+        val writes = sources.associateWith { linkedMapOf<String, Any?>() }.toMutableMap()
+        val removals = sources.associateWith { linkedSetOf<String>() }.toMutableMap()
+
+        val keys = snapshots.values.flatMap { values -> values.keys }.toSet()
+        for (key in keys) {
+            val target = when {
+                StatsPersistence.isArchivedInternalKey(key) -> internalPrefs
+                StatsPersistence.isArchivedDefaultKey(key) -> defaultPrefs
+                StatsPersistence.isArchivedUiHintsKey(key) -> uiHintsPrefs
+                else -> null
+            } ?: continue
+
+            val value = snapshots[target]?.get(key)
+                ?: sources.firstNotNullOfOrNull { source -> snapshots[source]?.get(key) }
+                ?: continue
+            writes.getValue(target)[key] = value
+            sources.filter { source -> source !== target }.forEach { source ->
+                if (snapshots[source]?.containsKey(key) == true) {
+                    removals.getValue(source).add(key)
+                }
+            }
+        }
+
+        sources.forEach { prefs ->
+            val values = writes.getValue(prefs)
+            val keysToRemove = removals.getValue(prefs)
+            if (values.isEmpty() && keysToRemove.isEmpty()) {
+                return@forEach
+            }
+            prefs.edit(commit = true) {
+                keysToRemove.forEach(::remove)
+                values.forEach { (key, value) ->
+                    putSupportedPreferenceValue(this, key, value)
+                }
+            }
+        }
+    }
+
     // Applies a Firestore-loaded map to local SharedPreferences.
     private fun applyPrefsMapToLocal(
         ctx: Context,
@@ -774,61 +1147,17 @@ object CloudSyncRuntime {
         }
         val preservedEntitlementPrefs = prefs.all.filterKeys { key -> isBackupExcludedKey(key) }
 
-        // Firestore returns integral numbers as Long. Some of our prefs are truly Int-based.
-        // If we store them as Long, SharedPreferences.getInt(...) will crash with ClassCastException.
-        fun shouldStoreAsInt(key: String): Boolean {
-            return key == "onboarding_version" ||
-                key == "primary_toggle_tap_count" ||
-                key.startsWith("usage_limit_min__") ||
-                key.startsWith("session_limit_min__") ||
-                key.startsWith("attempt_limit__") ||
-                key.startsWith("inapp_limit_min__") ||
-                key.startsWith("surf_rule__") ||
-                key.startsWith("domain_limit_min_") ||
-                key.startsWith("scan_code_daily_limit_") ||
-                key.startsWith("scan_code_cooldown_") ||
-                key.startsWith("scan_code_count_") ||
-                key.startsWith("qr_temp_count_") ||
-                key.startsWith("nfc_td_count_") ||
-                key.startsWith("nfc_td_cfg_daily_") ||
-                key.startsWith("nfc_td_cfg_cooldown_") ||
-                key.startsWith("nfc_tag_read_only_duration_") ||
-                key.startsWith("open_count_")
-        }
-
         prefs.edit(commit = true) {
             if (clearBeforeApply) clear()
-
-            fun putSupportedValue(key: String, value: Any?) {
-                when (value) {
-                    is Boolean -> putBoolean(key, value)
-                    is Int -> putInt(key, value)
-                    is Long -> {
-                        if (shouldStoreAsInt(key) && value in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
-                            putInt(key, value.toInt())
-                        } else {
-                            putLong(key, value)
-                        }
-                    }
-                    is Float -> putFloat(key, value)
-                    is String -> putString(key, value)
-                    is List<*> -> {
-                        if (value.all { it is String }) {
-                            putStringSet(key, value.filterIsInstance<String>().toSet())
-                        }
-                    }
-                    else -> Unit
-                }
-            }
 
             for ((rawKey, value) in map) {
                 val key = rawKey as? String ?: continue
                 if (isBackupExcludedKey(key)) continue
-                putSupportedValue(key, value)
+                putSupportedPreferenceValue(this, key, value)
             }
 
             for ((key, value) in preservedEntitlementPrefs) {
-                putSupportedValue(key, value)
+                putSupportedPreferenceValue(this, key, value)
             }
         }
     }
@@ -881,29 +1210,20 @@ object CloudSyncRuntime {
             return
         }
 
-        val firestore = FirebaseFirestore.getInstance()
-        val backupRef = firestore
+        val backupRef = FirebaseFirestore.getInstance()
             .collection(COLLECTION)
             .document(uid)
             .collection(SUB_BACKUPS)
             .document(backupId)
 
-        backupRef.collection(SUB_STATS_CHUNKS).get()
-            .addOnSuccessListener { chunks ->
-                val batch = firestore.batch()
-                chunks.documents.forEach { document -> batch.delete(document.reference) }
-                batch.delete(backupRef)
-                batch.commit()
-                    .addOnSuccessListener { cb(true, null) }
-                    .addOnFailureListener { error ->
-                        Log.w(TAG, "deleteBackup failed", error)
-                        AppLogStore.append(ctx, TAG, "Deleting cloud backup failed", error)
-                        cb(false, error.message)
-                    }
-            }
-            .addOnFailureListener { error ->
-                Log.w(TAG, "deleteBackup chunks lookup failed", error)
+        deleteBackupReference(ctx, backupRef) { error ->
+            if (error == null) {
+                cb(true, null)
+            } else {
+                Log.w(TAG, "deleteBackup failed", error)
+                AppLogStore.append(ctx, TAG, "Deleting cloud backup failed", error)
                 cb(false, error.message)
             }
+        }
     }
 }

@@ -15,8 +15,6 @@ app/src/main/java/at/saltyy/switchly
 Icons are based on **Material Symbols**:
 [https://fonts.google.com/icons](https://fonts.google.com/icons)
 
-UI, navigation, icon, accessibility, and interaction rules are documented in [`docs/UI_CONVENTIONS.md`](./docs/UI_CONVENTIONS.md).
-
 ---
 
 ## Localization/i18n
@@ -200,6 +198,7 @@ Before starting a contribution, please contact me first:
 Please also read:
 * [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
 * [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
+* [`docs/DRAWABLE_CONVENTIONS.md`](./docs/DRAWABLE_CONVENTIONS.md)
 
 ---
 

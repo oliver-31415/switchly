@@ -107,7 +107,7 @@ enum class BackupCategory(
     STATISTICS(
         id = "statistics",
         displayName = "Statistics/counters",
-        description = "Usage, launches, unlocks, block/runtime counters and activity history",
+        description = "Usage, opens, unlocks, blocks, active time and activity history",
         sensitive = true
     ),
     APP_PREFERENCES(
@@ -213,6 +213,7 @@ object BackupCategoryFilter {
     private const val FIELD_PREFS = "prefs"
     private const val FIELD_SWITCHLY_PREFS = "switchly_prefs"
     private const val FIELD_STATS = "stats"
+    private const val FIELD_STATS_DATABASE = "stats_database"
     private const val FIELD_SCHEDULES_PREFS = "schedules_prefs"
     private const val FIELD_UI_HINTS_PREFS = "ui_hints_prefs"
 
@@ -236,6 +237,11 @@ object BackupCategoryFilter {
         val schedulesMap = filterSchedulesPrefs(stringKeyMap(payload[FIELD_SCHEDULES_PREFS]), selection)
         val uiHintsMap = filterUiHintsPrefs(stringKeyMap(payload[FIELD_UI_HINTS_PREFS]), selection)
         val statsMap = filterStats(stringKeyMap(payload[FIELD_STATS]), selection)
+        val statsDatabase = if (selection.includes(BackupCategory.STATISTICS)) {
+            payload[FIELD_STATS_DATABASE]
+        } else {
+            null
+        }
 
         return mapOf(
             FIELD_BACKUP_SCHEMA_VERSION to payload[FIELD_BACKUP_SCHEMA_VERSION],
@@ -245,6 +251,7 @@ object BackupCategoryFilter {
             FIELD_PREFS to prefsMap,
             FIELD_SWITCHLY_PREFS to internalMap,
             FIELD_STATS to statsMap,
+            FIELD_STATS_DATABASE to statsDatabase,
             FIELD_SCHEDULES_PREFS to schedulesMap,
             FIELD_UI_HINTS_PREFS to uiHintsMap,
             FIELD_INCLUDED_CATEGORIES to selection.categoryIds.toList().sorted(),

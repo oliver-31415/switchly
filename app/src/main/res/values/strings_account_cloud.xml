@@ -10,6 +10,7 @@
     <string name="auth_failed_to_process_google_token">Failed to process Google token</string>
     <string name="auth_no_matching_google_accounts_found">No matching Google accounts found</string>
     <string name="auth_missing_google_server_client_id">Google sign-in is not available in this app build yet. Please update the app or contact support.</string>
+    <string name="auth_google_app_verification_failed">Google could not verify this app build. Try the Play Store version or sign in with email.</string>
     <string name="auth_firebase_not_configured">Cloud sign-in is not available in this app build yet. Please update the app or contact support.</string>
     <string name="auth_email_sign_in_success">Signed in</string>
     <string name="auth_email_create_success">Account created. Verification email sent.</string>
@@ -22,9 +23,9 @@
     <string name="settings_account_delete_confirm_message">This will delete your Switchly cloud data, backups, and local settings. This cannot be undone.</string>
     <string name="account_delete_recent_login_required">For security reasons, please sign in again, then try deleting the account again.</string>
     <string name="account_delete_recent_login_title">Sign in again</string>
-    <string name="account_delete_failed_delete_account_fmt">Failed to delete account: %1$s</string>
-    <string name="account_delete_failed_delete_cloud_data_fmt">Failed to delete cloud data: %1$s</string>
-    <string name="account_delete_failed_delete_backups_fmt">Failed to delete backups: %1$s</string>
+    <string name="account_delete_failed_delete_account_fmt">Failed to delete account:\n%1$s</string>
+    <string name="account_delete_failed_delete_cloud_data_fmt">Failed to delete cloud data:\n%1$s</string>
+    <string name="account_delete_failed_delete_backups_fmt">Failed to delete backups:\n%1$s</string>
     <string name="account_deleted">Account deleted</string>
 
     <!-- ====================================================== -->
@@ -48,10 +49,12 @@
     <string name="cloud_delete_backups_loading">Deleting cloud backups…</string>
     <string name="cloud_no_backups">No backups found</string>
     <string name="cloud_not_logged_in">You are not signed in</string>
-    <string name="cloud_error_fmt">Error: %1$s</string>
+    <string name="cloud_error_fmt">Error:\n%1$s</string>
     <string name="cloud_error_no_backup_found">No backup found</string>
     <string name="cloud_error_backup_not_found">Backup not found</string>
     <string name="cloud_error_not_logged_in">Not signed in</string>
+    <string name="cloud_error_stats_chunks_permission">Full backup could not upload its statistics archive because cloud access is not configured for it. Please update Switchly or contact support.</string>
+    <string name="cloud_backup_ok_cleanup_warning">Backup created, but older cloud backups could not be removed. Switchly will retry the cleanup with the next backup.</string>
     <string name="pref_cloud_backup_title">Back up to cloud</string>
     <string name="pref_cloud_backup_summary">Manually back up your settings and profiles</string>
     <string name="pref_cloud_restore_title">Restore from cloud</string>
@@ -71,8 +74,8 @@
     <string name="file_backup_loading">Creating backup file…</string>
     <string name="file_restore_loading">Reading backup file…</string>
     <string name="restore_applying">Restoring data…</string>
-    <string name="file_backup_error_fmt">File backup failed: %1$s</string>
-    <string name="file_restore_error_fmt">File restore failed: %1$s</string>
+    <string name="file_backup_error_fmt">File backup failed:\n%1$s</string>
+    <string name="file_restore_error_fmt">File restore failed:\n%1$s</string>
 
     <!-- ====================================================== -->
     <!-- Backup and restore dialogs -->
@@ -86,6 +89,11 @@
     <string name="settings_confirm_restore_message">Load a backup from the cloud and overwrite local settings?</string>
     <string name="settings_confirm_file_backup_title">Back up to file</string>
     <string name="settings_confirm_file_restore_title">Restore from file</string>
+    <string name="restore_compatibility_warning_title">Older backup</string>
+    <string name="restore_compatibility_version_fmt">Created with Switchly %1$s.</string>
+    <string name="restore_compatibility_version_unknown">The Switchly version of this backup could not be determined.</string>
+    <string name="restore_compatibility_warning_body">This backup uses an older or different data format. Some parts may not restore completely or may behave differently in the current version.</string>
+    <string name="restore_compatibility_warning_statistics">Switchly will try to migrate compatible counters from this backup. Data that older versions did not store, especially exact sessions or history, may still be incomplete or missing.</string>
     <string name="settings_confirm_file_restore_message">Restore a local JSON backup and overwrite current Switchly data? For safety, Switchly and active schedules will be disabled after restore.</string>
     <string name="settings_confirm_backup_message_with_included_categories">Back up current data to the cloud?\n\nIncluded:\n%1$s</string>
     <string name="settings_confirm_backup_message_with_categories">Back up current data to the cloud?\n\nIncluded:\n%1$s\n\nExcluded/kept on restore:\n%2$s</string>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardFaqItem"
     android:layout_width="match_parent"
@@ -8,12 +7,12 @@
     android:layout_marginHorizontal="2dp"
     android:layout_marginVertical="5dp"
     android:foreground="?attr/selectableItemBackground"
-    app:cardUseCompatPadding="true"
+    app:strokeColor="@color/switchly_card_stroke"
+    app:strokeWidth="1dp"
+    app:cardBackgroundColor="@color/switchly_card_bg"
     app:cardCornerRadius="18dp"
     app:cardElevation="1dp"
-    app:strokeWidth="1dp"
-    app:strokeColor="@color/switchly_card_stroke"
-    app:cardBackgroundColor="@color/switchly_card_bg">
+    app:cardUseCompatPadding="true">
 
     <LinearLayout
         android:id="@+id/root"
@@ -22,66 +21,65 @@
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp"
         android:paddingTop="11dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="12dp">
 
-    <!-- HEADER -->
-    <TextView
-        android:id="@+id/tvHeader"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:letterSpacing="0.06"
-        android:textAllCaps="true"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:visibility="gone" />
-
-    <LinearLayout
-        android:id="@+id/questionRow"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/ivIcon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginEnd="10dp"
-            android:contentDescription="@string/faq_icon_description"
-            android:visibility="gone" />
-
+        <!-- HEADER -->
         <TextView
-            android:id="@+id/tvQuestion"
-            android:layout_width="0dp"
+            android:id="@+id/tvHeader"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:visibility="gone"
             android:textColor="?android:attr/textColorPrimary"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:textAllCaps="true" />
 
-        <ImageView
-            android:id="@+id/ivArrow"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:contentDescription="@string/faq_expand_description"
-            android:src="@drawable/keyboard_arrow_down_24" />
-    </LinearLayout>
+        <LinearLayout
+            android:id="@+id/questionRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-    <!-- ANSWER -->
-    <TextView
-        android:id="@+id/tvAnswer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:autoLink="web|email"
-        android:linksClickable="true"
-        android:lineSpacingExtra="2dp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="14sp"
-        android:visibility="gone" />
+            <ImageView
+                android:id="@+id/ivIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="10dp"
+                android:visibility="gone"
+                android:contentDescription="@string/faq_icon_description" />
 
+            <TextView
+                android:id="@+id/tvQuestion"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/ivArrow"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@string/faq_expand_description"
+                android:src="@drawable/keyboard_arrow_down_24" />
+        </LinearLayout>
+
+        <!-- ANSWER -->
+        <TextView
+            android:id="@+id/tvAnswer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:visibility="gone"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp"
+            android:autoLink="web|email"
+            android:lineSpacingExtra="2dp"
+            android:linksClickable="true" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

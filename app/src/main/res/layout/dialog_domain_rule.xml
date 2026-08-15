@@ -8,55 +8,55 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilDomain"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/domain_rule_hint_example"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         app:endIconMode="none">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etDomain"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
-            android:imeOptions="actionDone"
+            android:singleLine="true"
             android:maxLines="1"
-            android:singleLine="true" />
+            android:inputType="text"
+            android:imeOptions="actionDone" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilMode"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="@string/rule_type"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        android:hint="@string/rule_type">
 
         <com.google.android.material.textfield.MaterialAutoCompleteTextView
             android:id="@+id/acMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="none" />
+            android:inputType="none"
+            android:importantForAutofill="no" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilDailyLimit"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:hint="@string/minutes_hint"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         app:endIconMode="none">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etDailyLimit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="number"
-            android:imeOptions="actionDone"
+            android:singleLine="true"
             android:maxLines="1"
-            android:singleLine="true" />
+            android:inputType="number"
+            android:imeOptions="actionDone" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
@@ -64,7 +64,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:alpha="0.7"
-        android:text="@string/daily_limit_helper" />
-
+        android:text="@string/daily_limit_helper"
+        android:alpha="0.7" />
 </LinearLayout>

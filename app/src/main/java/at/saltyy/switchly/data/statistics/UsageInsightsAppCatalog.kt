@@ -19,6 +19,7 @@
 
 package at.saltyy.switchly.data.statistics
 
+import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.util.AndroidSystemPackages
 import java.util.Locale
 
@@ -33,6 +34,7 @@ object UsageInsightsAppCatalog {
         "com.android.shell",
         AndroidSystemPackages.INTENT_RESOLVER,
         "com.android.settings.intelligence",
+        AndroidSystemPackages.ANDROID_SYSTEM_INTELLIGENCE,
     )
 
     private val NFC_SERVICE_PACKAGES = setOf(
@@ -92,7 +94,8 @@ object UsageInsightsAppCatalog {
         SETTINGS_CANDIDATES + CONTACTS_CANDIDATES + FILES_CANDIDATES + GOOGLE_CANDIDATES
 
     private val ALWAYS_EXCLUDED_PACKAGES: Set<String> =
-        CORE_SYSTEM_PACKAGES +
+        setOf(BuildConfig.APPLICATION_ID.lowercase(Locale.US)) +
+            CORE_SYSTEM_PACKAGES +
             NFC_SERVICE_PACKAGES +
             TELECOM_SERVICE_PACKAGES +
             VPN_DIALOG_PACKAGES +

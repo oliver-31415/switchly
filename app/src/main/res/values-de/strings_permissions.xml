@@ -9,11 +9,7 @@
     <string name="permissions_section_battery">Akku &amp; Hintergrund</string>
     <string name="permissions_section_notifications">Benachrichtigungen</string>
     <string name="permissions_section_oem">OEM-Hintergrundeinstellungen</string>
-    <plurals name="permissions_banner_missing_count_short">
-        <item quantity="one">Aktion nötig: %1$d Berechtigung fehlt noch</item>
-        <item quantity="other">Aktion nötig: %1$d Berechtigungen fehlen noch</item>
-    </plurals>
-    <string name="permissions_banner_mismatch_title">Status-Konflikt erkannt</string>
+    <string name="permissions_toolbar_issues">Probleme</string>
     <string name="permissions_status_enabled">Aktiviert</string>
     <string name="permissions_status_disabled">Deaktiviert</string>
     <string name="permissions_status_location_approx">Ungefähr (Präzise erforderlich)</string>
@@ -27,6 +23,8 @@
     <string name="permissions_accessibility_desc">Erforderlich für zuverlässigen Schutz: damit Switchly geöffnete Apps und Websites erkennen, auf In-App-Navigation reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchsetzen kann.</string>
     <string name="permissions_usage_access_title">App-Nutzungszugriff</string>
     <string name="permissions_usage_access_desc">Erforderlich für Bildschirmzeit-Statistiken und tägliche App-Limits. Aktiviere den Zugriff auf „App-Nutzungsdaten“ für Switchly.</string>
+    <string name="permissions_battery_oem_note">Manche Geräte bieten keine Akkuoption „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, ist das auf deinem Gerät möglicherweise bereits das Maximum.</string>
+    <string name="permissions_exact_alarms_note">Wenn exakte Alarme nicht erlaubt sind, können zeitbasierte Zeitpläne verspätet oder nicht zur richtigen Zeit ausgeführt werden.</string>
     <string name="permissions_battery_title">Akku-Optimierung</string>
     <string name="permissions_battery_desc">Setze Switchly auf Uneingeschränkt/Nicht optimiert. Androids „Optimiert“-Modus kann Zeitpläne, Geofences, Empfänger und Hintergrundzuverlässigkeit trotzdem verzögern.</string>
     <string name="permissions_battery_allowed">Uneingeschränkt</string>
@@ -38,6 +36,8 @@
     <string name="permissions_exact_alarms_not_allowed">Nicht erlaubt</string>
     <string name="permissions_nfc_title">Per NFC starten</string>
     <string name="permissions_nfc_status_manual">Manuell prüfen</string>
+    <string name="permissions_nfc_status_not_allowed">Startberechtigung fehlt</string>
+    <string name="permissions_nfc_status_system_disabled">System-NFC deaktiviert</string>
     <string name="permissions_nfc_desc">Einige Android-Versionen zeigen unter „Spezieller App-Zugriff“ einen eigenen Eintrag „Per NFC starten“. Erlaube Switchly dort, damit geschriebene NFC-Tags Switchly beim Scannen öffnen können. Stelle außerdem sicher, dass der System-Schalter „NFC verwenden“ aktiviert ist. NFC nutzt keinen normalen Laufzeit-Berechtigungsdialog, daher prüft diese Zeile den System-NFC-Status und Androids Tag-Startzugriff. Android verlangt normalerweise, dass das Gerät entsperrt ist, bevor passive NFC-Tags an Apps weitergegeben werden.</string>
 
     <!-- ====================================================== -->
@@ -56,8 +56,8 @@
     <!-- ====================================================== -->
     <!-- OEM/autostart permission -->
     <!-- ====================================================== -->
-    <string name="permissions_autostart_title">Autostart (OEM)</string>
-    <string name="permissions_autostart_desc">Einige Hersteller (z. B. Samsung, Xiaomi oder Oppo) schränken Autostart und Hintergrundaktivität zusätzlich ein. Damit Switchly zuverlässig funktioniert, sollte Autostart für diese App erlaubt sein.</string>
+    <string name="permissions_autostart_title">Hersteller-Hintergrundeinstellungen</string>
+    <string name="permissions_autostart_desc">Manche Geräte ergänzen eigene Schlaf-, Akku-, Autostart- oder Hintergrundregeln. Prüfe den Guide für deinen Hersteller, damit Switchly nicht eingeschränkt wird.</string>
 
     <!-- ====================================================== -->
     <!-- Permission action buttons -->
@@ -67,6 +67,7 @@
     <string name="permissions_btn_allow">Erlauben</string>
     <string name="permissions_btn_permissions">Berechtigungen</string>
     <string name="permissions_btn_open">Einstellungen öffnen</string>
+    <string name="permissions_btn_view_device_guide">Geräte-Guide öffnen</string>
     <string name="permissions_btn_enable_precise">Präzise aktivieren</string>
     <string name="permissions_btn_enable_all_the_time">Immer aktivieren</string>
 
@@ -99,28 +100,17 @@
     <!-- Protection inactive state -->
     <!-- ====================================================== -->
     <string name="protection_inactive_title">Schutz inaktiv</string>
-    <string name="protection_inactive_text">Switchly ist aktiviert, aber der Bedienungshilfe-Dienst ist derzeit nicht aktiv. Tippe, um den Status zu prüfen.</string>
+    <string name="protection_inactive_text">Bedienungshilfe ist aus. Tippe zum Prüfen.</string>
 
     <!-- ====================================================== -->
     <!-- Permission health diagnostics -->
     <!-- ====================================================== -->
     <string name="permissions_health_recheck">Neu prüfen</string>
-    <string name="permissions_health_rechecked_all_good">Neuprüfung abgeschlossen: alle erforderlichen Berechtigungen sind gesetzt ✅</string>
-    <string name="permissions_health_rechecked_with_mismatch">Neuprüfung abgeschlossen: Status-Konflikt bei der Bedienungshilfe besteht weiterhin</string>
+    <string name="permissions_health_rechecked_all_good">Neuprüfung abgeschlossen:\nAlle erforderlichen Berechtigungen sind gesetzt</string>
+    <string name="permissions_health_rechecked_with_mismatch">Neuprüfung abgeschlossen:\nDer Status-Konflikt bei der Bedienungshilfe besteht weiterhin</string>
     <plurals name="permissions_health_rechecked_missing">
-        <item quantity="one">Neuprüfung abgeschlossen: %1$d erforderliche Berechtigung fehlt noch</item>
-        <item quantity="other">Neuprüfung abgeschlossen: %1$d erforderliche Berechtigungen fehlen noch</item>
+        <item quantity="one">Neuprüfung abgeschlossen:\n%1$d erforderliche Berechtigung fehlt</item>
+        <item quantity="other">Neuprüfung abgeschlossen:\n%1$d erforderliche Berechtigungen fehlen</item>
     </plurals>
-    <string name="permissions_health_live_unknown">Live-Check ausstehend…</string>
-    <string name="permissions_health_live_ok">Live-Check: Bedienungshilfe ist aktiv ✅</string>
-    <string name="permissions_health_live_disabled">Live-Check: Bedienungshilfe ist derzeit deaktiviert</string>
-    <plurals name="permissions_health_live_missing_count">
-        <item quantity="one">Live-Check: %1$d erforderliche Berechtigung fehlt noch</item>
-        <item quantity="other">Live-Check: %1$d erforderliche Berechtigungen fehlen noch</item>
-    </plurals>
-    <string name="permissions_health_live_sched_battery_bad">Accessibility ist aktiv, aber der Akku-Modus ist noch optimiert/eingeschränkt (Zeitpläne können verzögert werden)</string>
-    <string name="permissions_health_live_ok_with_schedules">Accessibility und uneingeschränkte Akku-Einstellung sehen gut aus ✅</string>
-    <string name="permissions_health_live_mismatch">Status-Konflikt erkannt. Nach dem Öffnen der Bedienungshilfe-Einstellungen bitte erneut prüfen.</string>
-    <string name="permissions_health_last_checked_fmt">Zuletzt geprüft: %1$s</string>
 
 </resources>

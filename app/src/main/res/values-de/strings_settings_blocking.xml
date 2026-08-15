@@ -9,11 +9,11 @@
     <string name="toggle_options_blocking_summary">Kontrollmodi, Funktionszugriff und Sicherheitsoptionen.</string>
     <string name="toggle_options_features_title">Funktionszugriff</string>
     <string name="toggle_options_safety_title">Sicherheit</string>
-    <string name="toggle_options_display_title">Home-Aussehen</string>
+    <string name="toggle_options_display_title">Widgets &amp; Shortcuts</string>
     <string name="toggle_group_manage_blocking_modes">Kontrollmodi</string>
     <string name="settings_blocking_modes_summary">Wähle, wie Switchly aktiviert oder deaktiviert wird.</string>
     <string name="toggle_group_manage_other_blocking_features">Funktionszugriff</string>
-    <string name="settings_blocking_features_summary">Wähle, was noch geändert oder genutzt werden darf, während Switchly aktiv ist.</string>
+    <string name="settings_blocking_features_summary">Steuere den Zugriff bei aktivem Switchly und konfiguriere den Systemstatus.</string>
 
     <!-- ====================================================== -->
     <!-- Sections and guidance -->
@@ -205,6 +205,36 @@
     <string name="toggle_detail_show_emergency_unlock">Steuert nur die Home-Verknüpfung. Aktive oder pausierte Notfall-Entsperrungen werden weiterhin angezeigt, damit sie verwaltet werden können.</string>
 
     <!-- ====================================================== -->
+    <!-- Dauerhafte Statusbenachrichtigung -->
+    <!-- ====================================================== -->
+    <string name="toggle_subsection_status">Systemstatus</string>
+    <string name="toggle_subsection_status_summary">Konfiguriert die optionale dauerhafte Benachrichtigung in der Android-Systemleiste.</string>
+    <string name="pref_persistent_status_notification_title">Dauerhafte Statusbenachrichtigung</string>
+    <string name="pref_persistent_status_notification_summary">Zeigt eine lautlose dauerhafte Benachrichtigung mit optionaler Aktivzeit und App-Information.</string>
+    <string name="pref_persistent_status_notification_mode_title">Benachrichtigungsdetails</string>
+    <string name="status_notification_mode_status_only">Nur Status</string>
+    <string name="status_notification_mode_active_time">Status + Aktivzeit</string>
+    <string name="status_notification_mode_app_count">Status + App-Anzahl</string>
+    <string name="status_notification_mode_full">Alle Details</string>
+    <string name="toggle_detail_persistent_status_notification">Zeigt eine lautlose dauerhafte Benachrichtigung mit dem aktuellen Switchly-Status. Wähle darunter Nur Status, Aktivzeit, App-Anzahl oder Alle Details. Tippe darauf, um Switchly zu öffnen, oder verwende die Profil-Aktion.</string>
+    <string name="status_notification_channel_name">Switchly-Status</string>
+    <string name="status_notification_channel_description">Dauerhafte Informationen zum Switchly-Status und Profil.</string>
+    <string name="status_notification_enabled_title">Switchly aktiviert</string>
+    <string name="status_notification_disabled_title">Switchly deaktiviert</string>
+    <string name="status_notification_profile_apps_fmt">Profil: %1$s · %2$s</string>
+    <plurals name="status_notification_blocked_apps">
+        <item quantity="one">%1$d blockierte App</item>
+        <item quantity="other">%1$d blockierte Apps</item>
+    </plurals>
+    <plurals name="status_notification_allowed_apps">
+        <item quantity="one">%1$d erlaubte App</item>
+        <item quantity="other">%1$d erlaubte Apps</item>
+    </plurals>
+    <string name="status_notification_no_profile">Kein Profil</string>
+    <string name="status_notification_profiles_action">Profile</string>
+    <string name="status_notification_permission_denied">Erlaube Benachrichtigungen, um die dauerhafte Statusbenachrichtigung zu verwenden.</string>
+
+    <!-- ====================================================== -->
     <!-- Tiles and shortcuts -->
     <!-- ====================================================== -->
     <string name="toggle_subsection_tiles_summary">Füge Android-Schnelleinstellungen-Kacheln für schnellen Zugriff über die Systemleiste hinzu.</string>
@@ -238,7 +268,6 @@
     <string name="edit_locked_manage_websites">Deaktiviere Switchly, um Website-Regeln zu bearbeiten.</string>
     <string name="edit_locked_manage_profiles">Deaktiviere Switchly, um Profile zu verwalten.</string>
     <string name="edit_locked_write_nfc_tags">Deaktiviere Switchly, um NFC-Tags zu schreiben oder zu koppeln.</string>
-    <string name="edit_locked_manage_inapp">Deaktiviere Switchly, um In-App-Regeln zu bearbeiten.</string>
     <string name="edit_locked_manage_blocked_notifications">Deaktiviere Switchly, um blockierte Benachrichtigungen zu öffnen.</string>
     <string name="toast_disable_switchly_to_edit_blocked_apps">Deaktiviere Switchly vollständig, um App-Regeln zu bearbeiten.</string>
     <string name="toast_disable_switchly_to_switch_profiles">Deaktiviere Switchly, bevor du Profile wechselst.</string>
@@ -247,7 +276,7 @@
     <string name="home_custom_protection_control">Schutzsteuerung</string>
     <string name="home_custom_protection_control_summary">Hauptkarte mit Schutzstatus, Steuerung, Profil und Entsperraktionen.</string>
     <string name="home_custom_active_timer">Aktive Zeit</string>
-    <string name="home_custom_main_button">Aktivieren / Deaktivieren</string>
+    <string name="home_custom_main_button">Aktivieren/Deaktivieren</string>
     <string name="home_custom_active_profile">Aktives Profil</string>
     <string name="home_custom_control_mode">Kontrollmodus</string>
     <string name="home_custom_temporary">Temporäre Steuerung</string>

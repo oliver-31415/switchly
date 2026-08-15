@@ -3,69 +3,69 @@
     android:id="@+id/widgetPauseRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/widget_scanner_surface"
-    android:gravity="center_vertical"
     android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:background="@color/widget_scanner_surface"
     android:padding="10dp">
 
     <TextView
         android:id="@+id/widgetPauseHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:drawablePadding="6dp"
-        android:ellipsize="end"
         android:gravity="center_vertical"
-        android:maxLines="1"
         android:text="@string/widget_pause_blocker_name"
         android:textColor="@color/widget_scanner_title"
         android:textSize="12sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:drawablePadding="6dp" />
 
     <TextView
         android:id="@+id/widgetPause15"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
         android:layout_weight="1"
-        android:background="@color/widget_scanner_button_surface"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
         android:clickable="true"
         android:focusable="true"
-        android:gravity="center"
-        android:maxLines="1"
+        android:background="@color/widget_scanner_button_surface"
         android:text="@string/widget_pause_15"
         android:textColor="@color/widget_scanner_text"
         android:textSize="12sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/widgetPause30"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="6dp"
         android:layout_weight="1"
-        android:background="@color/widget_scanner_button_surface"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
         android:clickable="true"
         android:focusable="true"
-        android:gravity="center"
-        android:maxLines="1"
+        android:background="@color/widget_scanner_button_surface"
         android:text="@string/widget_pause_30"
         android:textColor="@color/widget_scanner_text"
         android:textSize="12sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/widgetPause60"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="6dp"
         android:layout_weight="1"
-        android:background="@color/widget_scanner_button_surface"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
         android:clickable="true"
         android:focusable="true"
-        android:gravity="center"
-        android:maxLines="1"
+        android:background="@color/widget_scanner_button_surface"
         android:text="@string/widget_pause_60"
         android:textColor="@color/widget_scanner_text"
         android:textSize="12sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:maxLines="1" />
 </LinearLayout>

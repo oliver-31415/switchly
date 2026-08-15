@@ -18,8 +18,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:title=""
-            app:navigationIcon="@drawable/keyboard_arrow_left_24" />
+            app:navigationIcon="@drawable/keyboard_arrow_left_24"
+            app:title="" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -35,90 +35,120 @@
             android:orientation="vertical"
             tools:ignore="UseCompoundDrawables">
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="top"
-                android:layout_marginTop="2dp">
-
-                <ImageView
-                    android:id="@+id/icon"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="2dp"
-                    android:contentDescription="@null"/>
+                app:cardUseCompatPadding="false">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
 
-                    <TextView
-                        android:id="@+id/detailTitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        tools:text="YouTube" />
+                    <ImageView
+                        android:id="@+id/icon"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:contentDescription="@null"
+                        android:scaleType="centerInside" />
 
-                    <TextView
-                        android:id="@+id/detailSubtitle"
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:alpha="0.72"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="13sp"
-                        tools:text="Usage, limits, and activity" />
+                        android:layout_weight="1"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/todayUsage"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="@string/usage_today"
-                        android:textColor="?attr/colorOnSurface"/>
+                        <TextView
+                            android:id="@+id/detailTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:maxLines="2"
+                            android:ellipsize="end"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            tools:text="YouTube" />
 
-                    <TextView
-                        android:id="@+id/sessions"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/usage_sessions_today"
-                        android:textColor="?attr/colorOnSurface"/>
+                        <TextView
+                            android:id="@+id/detailSubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:alpha="0.72"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="13sp"
+                            tools:text="Usage, limits, and activity" />
+                    </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/attempts"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/usage_attempts_today"
-                        android:textColor="?attr/colorOnSurface"/>
-
-                    <TextView
-                        android:id="@+id/weekTotal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/usage_week_total"
-                        android:textColor="?attr/colorOnSurface"/>
+                    <ImageButton
+                        android:id="@+id/btnEditLimits"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/edit_limits"
+                        android:padding="12dp"
+                        app:srcCompat="@drawable/tune_24"
+                        app:tint="?attr/colorOnSurface" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                <!-- Quick limit editor (time/attempts) -->
-                <ImageButton
-                    android:id="@+id/btnEditLimits"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_marginTop="2dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/edit_limits"
-                    app:srcCompat="@drawable/tune_24"
-                    app:tint="?attr/colorOnSurface" />
-            </LinearLayout>
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:clipToPadding="false"
+                android:fillViewport="false"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp"
+                    app:singleLine="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/todayUsage"
+                        style="@style/Switchly.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:text="@string/usage_today"
+                        android:checkable="false" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/detailOpensChip"
+                        style="@style/Switchly.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:text="@string/usage_opens_zero"
+                        android:checkable="false" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/detailAttemptsChip"
+                        style="@style/Switchly.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:text="@string/usage_attempts_zero"
+                        android:checkable="false" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+
+            <TextView
+                style="@style/Switchly.SectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/usage_details_limits_section" />
 
             <!-- Limits (time + attempts) -->
             <TextView
@@ -127,19 +157,20 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text=""
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp"
-                android:alpha="0.7"
-                android:textColor="?attr/colorOnSurface" />
+                android:alpha="0.7" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal"
                 android:baselineAligned="false">
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardLimitTime"
+                    style="@style/Switchly.Card"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -158,9 +189,9 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/limit_time_action"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="12sp"
-                            android:alpha="0.7"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:alpha="0.7" />
 
                         <TextView
                             android:id="@+id/tvDailyLimitValue"
@@ -168,10 +199,9 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:text="@string/no_limit"
-                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp"
-                            android:textColor="?attr/colorOnSurface" />
-
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -181,6 +211,7 @@
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardLimitAttempts"
+                    style="@style/Switchly.Card"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -199,9 +230,9 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/limit_attempts_action"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="12sp"
-                            android:alpha="0.7"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:alpha="0.7" />
 
                         <TextView
                             android:id="@+id/tvDailyAttemptLimitValue"
@@ -209,13 +240,11 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:text="@string/no_limit"
-                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp"
-                            android:textColor="?attr/colorOnSurface" />
-
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
-
             </LinearLayout>
 
             <TextView
@@ -223,9 +252,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:alpha="0.7"
                 android:text="@string/limits_quick_edit_hint"
-                android:textColor="?attr/colorOnSurface" />
+                android:textColor="?attr/colorOnSurface"
+                android:alpha="0.7" />
 
             <LinearLayout
                 android:id="@+id/sessionLimitContainer"
@@ -240,10 +269,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/session_limit_current_label"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="12sp"
                     android:textStyle="bold"
-                    android:alpha="0.88"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:alpha="0.88" />
 
                 <TextView
                     android:id="@+id/sessionLimitSummary"
@@ -251,15 +280,15 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
                     android:text=""
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="12sp"
-                    android:alpha="0.78"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:alpha="0.78" />
 
                 <ProgressBar
-                    style="?android:attr/progressBarStyleHorizontal"
                     android:id="@+id/sessionLimitProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="5dp"
                     android:layout_marginTop="5dp"
@@ -267,14 +296,21 @@
                     android:progress="0" />
             </LinearLayout>
 
+            <TextView
+                style="@style/Switchly.SectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/usage_details_activity_section" />
+
             <!-- Range selector -->
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleRange"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                app:singleSelection="true"
-                app:selectionRequired="true">
+                android:layout_marginTop="10dp"
+                app:selectionRequired="true"
+                app:singleSelection="true">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRangeToday"
@@ -314,9 +350,9 @@
                     android:layout_width="44dp"
                     android:layout_height="40dp"
                     android:minWidth="0dp"
-                    android:contentDescription="@string/activity_history_range_custom"
                     android:gravity="center"
                     android:text=""
+                    android:contentDescription="@string/activity_history_range_custom"
                     app:icon="@drawable/calendar_month_24"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp" />
@@ -327,8 +363,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
                 android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:visibility="gone">
 
                 <TextView
@@ -353,7 +389,7 @@
                 android:id="@+id/chart"
                 android:layout_width="match_parent"
                 android:layout_height="140dp"
-                android:layout_marginTop="16dp"/>
+                android:layout_marginTop="16dp" />
 
             <at.saltyy.switchly.ui.widgets.TimeSeriesLineChartView
                 android:id="@+id/lineChart"
@@ -374,70 +410,70 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:alpha="0.7"
                     android:gravity="center"
                     android:text="@string/day_short_mon"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7" />
 
                 <TextView
                     android:id="@+id/day2"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:alpha="0.7"
                     android:gravity="center"
                     android:text="@string/day_short_tue"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7" />
 
                 <TextView
                     android:id="@+id/day3"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:alpha="0.7"
                     android:gravity="center"
                     android:text="@string/day_short_wed"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7" />
 
                 <TextView
                     android:id="@+id/day4"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:alpha="0.7"
                     android:gravity="center"
                     android:text="@string/day_short_thu"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7" />
 
                 <TextView
                     android:id="@+id/day5"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:alpha="0.7"
                     android:gravity="center"
                     android:text="@string/day_short_fri"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7" />
 
                 <TextView
                     android:id="@+id/day6"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:alpha="0.7"
                     android:gravity="center"
                     android:text="@string/day_short_sat"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7" />
 
                 <TextView
                     android:id="@+id/day7"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:alpha="0.7"
                     android:gravity="center"
                     android:text="@string/day_short_sun"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7" />
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -510,8 +546,6 @@
                         android:alpha="0.75" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

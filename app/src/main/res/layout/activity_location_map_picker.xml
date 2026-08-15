@@ -27,10 +27,10 @@
             style="@style/TextAppearance.MaterialComponents.Body2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/schedules_location_map_picker_body"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:text="@string/schedules_location_map_picker_body" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutMapLocationQuery"
@@ -38,21 +38,20 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvMapPickerBody"
             android:hint="@string/schedules_location_picker_hint"
             app:boxBackgroundMode="outline"
-            app:helperText="@string/schedules_location_picker_helper"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvMapPickerBody">
+            app:helperText="@string/schedules_location_picker_helper">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/inputMapLocationQuery"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:imeOptions="actionSearch"
+                android:minHeight="64dp"
                 android:inputType="textCapSentences"
-                android:minHeight="64dp" />
-
+                android:imeOptions="actionSearch" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -61,44 +60,42 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/schedules_location_map_picker_search_action"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/layoutMapLocationQuery" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/layoutMapLocationQuery"
+            android:text="@string/schedules_location_map_picker_search_action" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/mapFragment"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="12dp"
             android:layout_marginBottom="12dp"
-            android:minHeight="280dp"
-            app:layout_constraintBottom_toTopOf="@id/tvMapPickerSelection"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnMapPickerSearch" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnMapPickerSearch"
+            app:layout_constraintBottom_toTopOf="@id/tvMapPickerSelection"
+            android:minHeight="280dp"
+            android:name="com.google.android.gms.maps.SupportMapFragment" />
 
         <TextView
             android:id="@+id/tvMapPickerSelection"
             style="@style/TextAppearance.MaterialComponents.Body2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/schedules_location_map_picker_no_selection"
-            app:layout_constraintBottom_toTopOf="@id/btnMapPickerUseSelection"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintBottom_toTopOf="@id/btnMapPickerUseSelection"
+            android:text="@string/schedules_location_map_picker_no_selection" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnMapPickerUseSelection"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/ok"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="@string/ok" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </LinearLayout>

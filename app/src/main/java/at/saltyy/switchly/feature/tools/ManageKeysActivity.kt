@@ -171,8 +171,12 @@ class ManageKeysActivity : AppCompatActivity() {
     private fun syncLockedCardState() {
         val editLocked = EditingLockGuard.isLocked(this)
         val nfcAllowed = AutomationModeStore.isNfcAllowed(this)
-        applyLockedCardState(findViewById(R.id.cardWriteNfc), !nfcAllowed || isNfcTagWritingLocked())
-        applyLockedCardState(findViewById(R.id.cardPairedTags), !nfcAllowed || editLocked || !arePairedTagsEnabled())
+        applyLockedCardState(
+            findViewById(R.id.cardWriteNfc), 
+            !nfcAllowed || isNfcTagWritingLocked())
+        applyLockedCardState(
+            findViewById(R.id.cardPairedTags), 
+            !nfcAllowed || editLocked || !arePairedTagsEnabled())
         applyLockedCardState(
             findViewById(R.id.cardGenerateQr),
             !AutomationModeStore.shouldShowQrTools(this) || editLocked

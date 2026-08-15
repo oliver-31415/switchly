@@ -1,12 +1,41 @@
 {
   "releases": [
     {
-      "version": "v2.2.2",
-      "date": "July 28, 2026",
+      "version": "v2.2.3",
+      "date": "July 29, 2026",
       "releaseType": "beta",
       "sourceVersions": [
-        "v2.2.1-beta",
-        "v2.2.0-beta"
+        "v2.2.2"
+      ],
+      "body": [
+        "Added an optional silent persistent status notification that shows whether Switchly is enabled and which profile is selected.",
+        "Added a direct Profiles action to the status notification and kept its state synchronized with manual, scheduled, temporary, NFC, QR, barcode, profile, boot, and app-start changes.",
+        "Added a dedicated System status section under Feature access and requests Android notification permission when the feature is enabled.",
+        "Fixed the Website rules globe icon and restored the read-only confirmation shown before opening Rules while Switchly protection is active.",
+        "Expanded Switchly overview with Active time, Opens, Blocks, and Limits reached for every supported statistics range.",
+        "Clarified App & website usage with consistent Opens and Blocks labels, and fixed open counts so internal Activity changes are not counted as separate app opens.",
+        "Organized Activity into Statistics & events and Review sections, aligned the Active time icon, and standardized Website rules on the Language/globe icon.",
+        "Standardized layout section spacing and XML formatting, and normalized all vector drawable files to one predictable structure with documented exceptions.",
+        "Fixed NFC dispatch for UID-only, read-only, blank, and non-matching NDEF tags by declaring NFC technologies as alternative TECH_DISCOVERED matches instead of requiring every technology at once.",
+        "Refined Hidden apps and Usage exclusions by recognizing Google Settings as a suggestion, excluding legacy permission-controller and Android System Intelligence components, and matching only the current Switchly application ID.",
+        "Polished 2.2.3 backup and status UX with visible cloud-loading progress, selectable notification detail levels, read-only Quick Action access, visible usage metric chips, corrected language/website icons, and reliable statistics-database restore.",
+        "Improved NFC writing with background I/O, retryable tag-loss handling, direct UID fallback that keeps the selected action and profile, safe rewrite flows for paired tags, and protection against immediate post-write re-triggering.",
+        "Enhanced the optional status notification with the active session timer and the selected profile’s configured blocked or allowed app count.",
+        "Refined usage insights with consistent info actions, a clearer App usage details layout, and usage-time, Opens, and Blocks chips for every supported range, including custom ranges.",
+        "Fixed legacy statistics restore by normalizing old numeric preference types, moving archived counters back to their canonical storage, preserving them across the database restore phase, and mirroring the merged result into the durable statistics archive.",
+        "Reduced App & website usage loading work by calculating Opens and Blocks for all visible apps in bulk, and avoided unnecessary profile/app-count reads for compact status-notification modes.",
+        "Renamed Home, widgets & shortcuts to Widgets & shortcuts and fixed Feature access so the System status controls are actually visible.",
+        "Redesigned Support as a central help and diagnostics screen, moved the live log viewer out of Developer tools, and made recent logs directly viewable or copyable without unlocking Developer mode.",
+        "Refined Permissions with a compact Issues/OK toolbar status and clearer re-check feedback, fixed forced onboarding to return to Help & about, grouped the Switchly Store directly above Other Switchly apps under Info, removed the unused Troubleshooting screen, opened Developer tools directly with a compact topbar mode toggle, polished the Support report dialog, and corrected 2.2.2 to appear as a beta release.",
+        "Added a compatibility warning before restoring older or different backup formats and clarified that Switchly performs a best-effort migration for compatible legacy counters."
+      ]
+    },
+    {
+      "version": "v2.2.2",
+      "date": "July 22, 2026",
+      "releaseType": "beta",
+      "sourceVersions": [
+        "v2.2.1-beta"
       ],
       "body": [
         "Made uninstall protection independent from app access lock, with PIN or biometric confirmation before it can be disabled in Switchly.",
@@ -30,7 +59,7 @@
         "Added best-effort Website rule support for links opened inside Facebook Messenger’s built-in browser, while requiring a detected browser/WebView surface so normal chats and message text are not treated as website activity.",
         "Made Activity History independent from diagnostic logs, stored it in persistent per-day buckets, simplified Activity into one consistently ordered list, kept blocked notifications read-only while active, and added a Switchly overview for scans, state changes, schedules, Temporary enables, and Emergency Unlocks. Today remains free while longer ranges remain Premium.",
         "Expanded Switchly overview with range-based App launches and Blocks totals, unified segmented controls across App, Website, In-app, Hidden-app and Usage screens, and fixed a Hidden apps crash caused by themes without colorOutline.",
-        "Separated App, Website, and In-app Block selected / Allow selected modes per profile, and preserved case-sensitive Android package names in Hidden apps so apps such as Amazon Shopping appear consistently in both Usage & Insights and App pickers.",
+        "Separated App, Website, and In-app Block selected/Allow selected modes per profile, and preserved case-sensitive Android package names in Hidden apps so apps such as Amazon Shopping appear consistently in both Usage & Insights and App pickers.",
         "Added Suggested labels to the Hidden apps App picker and replaced scattered deprecated PackageManager suppressions with one typed API compatibility layer.",
         "Moved long-range statistics into a durable local Room archive while keeping the existing stores as a fast compatibility cache; daily counters, Activity History, website and unlock sessions, and exact app sessions now survive Android UsageEvents expiry and are included in local JSON and chunked cloud backup/restore.",
         "Added Hidden apps under Settings > Personalization with separate Usage & Insights and App pickers lists. Usage filters remove selected apps from top apps, summaries, launch counts, timelines, and onboarding insights without changing raw history; app-picker filters hide apps only when adding new selections, while existing profile entries, limits, and configured rules remain visible and editable.",
@@ -113,7 +142,7 @@
         "Major 2.2.0 update with a reworked setup experience, cleaner controls, improved usage insights, and many UX fixes",
         "Added the reworked onboarding with app picking, control mode selection first, mode-based permissions, and a cleaner Ready to start review",
         "Changed onboarding versioning so it only reruns when intentionally bumped; for 2.2.0 the setup version is 220",
-        "Added a grouped Help Center with Background access guidance, battery reliability tips, and a dontkillmyapp.com reference",
+        "Added a grouped Help Center with Background access guidance, battery reliability tips, and manufacturer-specific device steps",
         "Added direct Android battery/background permission request support with settings fallback",
         "Added universal Temporary Enable and Temporary Disable actions for NFC, QR, and barcodes with custom duration input",
         "Added a shorter readable Switchly action URI format for NFC, QR, and barcode actions, while keeping switchly://action, compact aliases, and legacy switchly://switch/switchly://profile tags supported",

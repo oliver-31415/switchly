@@ -234,7 +234,10 @@ object StatsPersistence {
                         }
                         snapshot.metadata.forEach(dao::putMetadata)
                     }
-                    restoreCacheValues(dao.getAllValues(), overwriteExisting = true)
+                    // The selected backup preferences may contain newer or more complete legacy counters.
+                    // Use the database archive only to fill missing cache entries, then mirror the merged result.
+                    restoreCacheValues(dao.getAllValues(), overwriteExisting = false)
+                    mirrorAllPreferenceValues()
                 }
             } else {
                 runIoBlocking {

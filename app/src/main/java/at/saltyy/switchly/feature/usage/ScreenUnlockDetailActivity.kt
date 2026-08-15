@@ -68,6 +68,7 @@ class ScreenUnlockDetailActivity : AppCompatActivity() {
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@ScreenUnlockDetailActivity))
         }
+        UsageInfoAction.attach(this, toolbar, R.string.screen_unlocks_info_title, R.string.screen_unlocks_info_body)
         root.addView(AppBarLayout(this).apply {
             fitsSystemWindows = true
             addView(toolbar, AppBarLayout.LayoutParams(

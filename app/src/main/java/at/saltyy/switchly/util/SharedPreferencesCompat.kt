@@ -24,10 +24,8 @@ import androidx.core.content.edit
 
 /**
  * Defensive numeric SharedPreferences accessors.
- *
- * Restores and older backup formats can rehydrate integral values with a different
- * storage type. Android's typed getters throw ClassCastException in that case, so
- * these helpers preserve the value and heal it back to the expected type.
+ * Restores and older backup formats can rehydrate integral values with a different storage type. 
+ * Android's typed getters throw ClassCastException in that case, so these helpers preserve the value and heal it back to the expected type.
  */
 fun SharedPreferences.getIntCompat(key: String, defaultValue: Int = 0): Int {
     return try {

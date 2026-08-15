@@ -96,7 +96,7 @@
     <string name="dashboard_temp_hint_enable_profile">Temporarily enable %1$s</string>
     <string name="dashboard_temp_hint_disable">Temporary pause - choose duration</string>
     <string name="dashboard_temp_hint_locked_nfc">Temporary mode unavailable while NFC-required unlock is enabled.</string>
-    <string name="dashboard_temp_nudge">Tip: Use temporary mode for quick 5–60 minute sessions.</string>
+    <string name="dashboard_temp_nudge">Tip:\nUse temporary mode for quick 5–60 minute sessions.</string>
     <string name="dashboard_temp_discovery_done">Temporary mode is ready. Open it from the status card anytime.</string>
 
     <!-- ====================================================== -->

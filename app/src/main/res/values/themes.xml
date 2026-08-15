@@ -4,7 +4,6 @@
     <!-- =========================
          THEME: Base + compatibility alias
          ========================= -->
-
     <!-- Backwards-compatible alias (older builds referenced @style/Switchly as the app theme) -->
     <style name="Switchly" parent="Theme.Switchly" />
 
@@ -54,7 +53,6 @@
     <!-- =========================
          THEME: Accent variants
          ========================= -->
-
     <!-- Blue -->
     <style name="Theme.Switchly.Accent.Blue" parent="Theme.Switchly">
         <item name="colorPrimary">@color/accent_blue</item>

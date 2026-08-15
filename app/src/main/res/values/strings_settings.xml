@@ -22,14 +22,14 @@
     <!-- ====================================================== -->
     <string name="settings_theme_title">Appearance</string>
     <string name="settings_theme_summary">Theme, colors &amp; language</string>
-    <string name="settings_display_shortcuts_title">Display &amp; shortcuts</string>
-    <string name="settings_display_shortcuts_summary">Switchly Home display, Quick Settings tiles, and Android widgets</string>
+    <string name="settings_display_shortcuts_title">Widgets &amp; shortcuts</string>
+    <string name="settings_display_shortcuts_summary">Manage Quick Settings tiles and Android widgets</string>
 
     <!-- ====================================================== -->
     <!-- Permissions and reliability -->
     <!-- ====================================================== -->
     <string name="settings_permissions_reliability_title">Permissions &amp; reliability</string>
-    <string name="settings_permissions_reliability_summary">Permissions and troubleshooting</string>
+    <string name="settings_permissions_reliability_summary">Permissions and background reliability</string>
     <string name="pref_permissions_title">Permissions</string>
     <string name="pref_permissions_summary">Check and manage the system permissions Switchly needs.</string>
     <string name="settings_emergency_unlock_title">Emergency unlock</string>
@@ -56,8 +56,8 @@
     <string name="settings_help_about_summary">FAQ, support and app information</string>
     <string name="pref_faq_title">Help Center</string>
     <string name="pref_faq_summary">Guides, FAQ groups and device-specific troubleshooting</string>
-    <string name="settings_contact_support_title">Contact support</string>
-    <string name="settings_contact_support_summary">Email the developer</string>
+    <string name="settings_contact_support_title">Support</string>
+    <string name="settings_contact_support_summary">Get help, send a report, and view diagnostics</string>
     <string name="settings_info_title">Info</string>
     <string name="settings_info_summary">App, device and developer details</string>
 

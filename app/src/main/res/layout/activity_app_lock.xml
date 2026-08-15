@@ -30,8 +30,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:alpha="0.8"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                android:alpha="0.8" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Switchly.TextInputLayout"
@@ -40,8 +40,8 @@
                 android:layout_marginTop="16dp"
                 android:hint="@string/app_lock_pin_hint_enter"
                 app:boxStrokeColor="?attr/colorPrimary"
-                app:hintTextColor="?attr/colorPrimary"
-                app:endIconMode="none">
+                app:endIconMode="none"
+                app:hintTextColor="?attr/colorPrimary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPin"
@@ -54,16 +54,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:gravity="end"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="end">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnBiometric"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/app_lock_biometric_button"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    android:text="@string/app_lock_biometric_button" />
 
                 <Space
                     android:layout_width="10dp"
@@ -77,5 +77,4 @@
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-
 </FrameLayout>

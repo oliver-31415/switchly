@@ -14,9 +14,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="14dp"
+        android:visibility="gone"
         android:textColor="?android:attr/textColorSecondary"
-        android:textSize="13.5sp"
-        android:visibility="gone" />
+        android:textSize="13.5sp" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilType"
@@ -30,9 +30,8 @@
             android:id="@+id/etType"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="none" />
-
+            android:inputType="none"
+            android:importantForAutofill="no" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
@@ -57,7 +56,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number" />
-
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -66,17 +64,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:hint="@string/limit_reset_mode_hint"
         android:visibility="gone"
+        android:hint="@string/limit_reset_mode_hint"
         app:endIconMode="dropdown_menu">
 
         <com.google.android.material.textfield.MaterialAutoCompleteTextView
             android:id="@+id/etResetMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="none" />
-
+            android:inputType="none"
+            android:importantForAutofill="no" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
@@ -116,7 +113,5 @@
             android:layout_height="wrap_content"
             android:text="@string/ok"
             android:textStyle="bold" />
-
     </LinearLayout>
-
 </LinearLayout>

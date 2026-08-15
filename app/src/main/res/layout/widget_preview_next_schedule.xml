@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="UseCompoundDrawables"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/widget_scanner_surface"
-    android:gravity="center_vertical"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:gravity="center_vertical"
+    android:background="@color/widget_scanner_surface"
+    android:padding="12dp"
+    tools:ignore="UseCompoundDrawables">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
         <ImageView
             android:layout_width="24dp"
@@ -24,36 +24,36 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
+            android:layout_marginStart="8dp"
             android:text="@string/widget_next_schedule_name"
             android:textColor="@color/widget_scanner_title"
             android:textSize="13sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:ellipsize="end"
         android:gravity="center"
-        android:maxLines="1"
         android:text="@string/widget_next_schedule_preview_time"
         android:textColor="@color/widget_scanner_title"
         android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:ellipsize="end"
         android:gravity="center"
-        android:maxLines="1"
         android:text="@string/widget_next_schedule_open"
         android:textColor="@color/widget_scanner_text"
-        android:textSize="11sp" />
+        android:textSize="11sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 </LinearLayout>

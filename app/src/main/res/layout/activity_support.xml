@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Topbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,7 +18,6 @@
             android:minHeight="?attr/actionBarSize"
             app:navigationIcon="@drawable/keyboard_arrow_left_24"
             app:title="@string/support_title" />
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -37,97 +36,62 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="4dp"
-                android:text="@string/support_desc"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:textColor="?android:attr/textColorSecondary" />
-
             <com.google.android.material.card.MaterialCardView
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp">
+                android:layout_height="wrap_content">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
 
-                    <LinearLayout
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:text="@string/support_hero_title"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                        android:textStyle="bold" />
 
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="@null"
-                            android:src="@drawable/send_24"
-                            app:tint="?attr/colorPrimary" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/support_report_card_title"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="3dp"
-                                android:text="@string/support_report_card_desc"
-                                android:textColor="?android:attr/textColorSecondary"
-                                android:textSize="13sp" />
-                        </LinearLayout>
-                    </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/support_desc"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:textColor="?android:attr/textColorSecondary" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnOpenEmail"
                         style="@style/Switchly.PrimaryButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
+                        android:layout_marginTop="18dp"
                         android:minHeight="52dp"
                         android:text="@string/support_open_email"
-                        app:icon="@drawable/mail_24"
+                        app:icon="@drawable/send_24"
                         app:iconGravity="textStart"
                         app:iconPadding="8dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="@string/support_response_time_short"
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:textColor="?android:attr/textColorSecondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center"
-                android:text="@string/support_response_time_short"
-                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-                android:textColor="?android:attr/textColorSecondary" />
-
-            <TextView
+                style="@style/Switchly.SectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:layout_marginTop="22dp"
-                android:text="@string/support_actions_section"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="24dp"
+                android:text="@string/support_diagnostics_section" />
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/Switchly.Card"
@@ -141,64 +105,65 @@
                     android:orientation="vertical">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/rowViewLogs"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minHeight="76dp"
+                        android:minHeight="82dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:paddingStart="16dp"
                         android:paddingTop="12dp"
-                        android:paddingEnd="10dp"
+                        android:paddingEnd="14dp"
                         android:paddingBottom="12dp">
 
                         <ImageView
-                            android:id="@+id/ivSupportEmail"
+                            android:id="@+id/ivViewLogs"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:contentDescription="@null"
-                            android:src="@drawable/mail_24"
+                            android:src="@drawable/list_alt_24"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
                             app:tint="?attr/colorPrimary" />
 
                         <TextView
-                            android:id="@+id/tvSupportEmailLabel"
+                            android:id="@+id/tvViewLogsTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="14dp"
-                            android:text="@string/support_email_label"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="12sp"
-                            app:layout_constraintEnd_toStartOf="@id/btnCopyEmailInline"
-                            app:layout_constraintStart_toEndOf="@id/ivSupportEmail"
+                            android:text="@string/support_view_logs_title"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            app:layout_constraintEnd_toStartOf="@id/ivViewLogsChevron"
+                            app:layout_constraintStart_toEndOf="@id/ivViewLogs"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
-                            android:id="@+id/tvSupportEmail"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="14dp"
                             android:layout_marginTop="3dp"
-                            android:maxLines="1"
-                            android:text="@string/about_mail_address"
-                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                            android:textColor="@color/contact_text"
-                            app:layout_constraintEnd_toStartOf="@id/btnCopyEmailInline"
-                            app:layout_constraintStart_toEndOf="@id/ivSupportEmail"
-                            app:layout_constraintTop_toBottomOf="@id/tvSupportEmailLabel" />
+                            android:maxLines="2"
+                            android:text="@string/support_view_logs_desc"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="12sp"
+                            app:layout_constraintEnd_toStartOf="@id/ivViewLogsChevron"
+                            app:layout_constraintStart_toEndOf="@id/ivViewLogs"
+                            app:layout_constraintTop_toBottomOf="@id/tvViewLogsTitle" />
 
-                        <ImageButton
-                            android:id="@+id/btnCopyEmailInline"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="@string/support_copy_email"
-                            android:padding="10dp"
-                            android:src="@drawable/content_copy_24"
+                        <ImageView
+                            android:id="@+id/ivViewLogsChevron"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:alpha="0.7"
+                            android:contentDescription="@string/open"
+                            android:src="@drawable/keyboard_arrow_right_24"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:tint="?attr/colorOnSurface" />
-
+                            app:tint="?android:attr/textColorSecondary" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <com.google.android.material.divider.MaterialDivider
@@ -209,16 +174,20 @@
                         android:layout_marginEnd="12dp" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/rowCopyLogs"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minHeight="88dp"
+                        android:minHeight="82dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:paddingStart="16dp"
                         android:paddingTop="12dp"
-                        android:paddingEnd="10dp"
+                        android:paddingEnd="14dp"
                         android:paddingBottom="12dp">
 
                         <ImageView
-                            android:id="@+id/ivLatestLogs"
+                            android:id="@+id/ivCopyLogs"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:contentDescription="@null"
@@ -229,19 +198,18 @@
                             app:tint="?attr/colorPrimary" />
 
                         <TextView
-                            android:id="@+id/tvLatestLogsTitle"
+                            android:id="@+id/tvCopyLogsTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="14dp"
                             android:text="@string/support_logs_card_title"
                             android:textSize="15sp"
                             android:textStyle="bold"
-                            app:layout_constraintEnd_toStartOf="@id/btnCopyEmail"
-                            app:layout_constraintStart_toEndOf="@id/ivLatestLogs"
+                            app:layout_constraintEnd_toStartOf="@id/ivCopyLogsAction"
+                            app:layout_constraintStart_toEndOf="@id/ivCopyLogs"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
-                            android:id="@+id/tvLatestLogsDesc"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="14dp"
@@ -250,29 +218,99 @@
                             android:text="@string/support_logs_card_desc"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="12sp"
-                            app:layout_constraintEnd_toStartOf="@id/btnCopyEmail"
-                            app:layout_constraintStart_toEndOf="@id/ivLatestLogs"
-                            app:layout_constraintTop_toBottomOf="@id/tvLatestLogsTitle" />
+                            app:layout_constraintEnd_toStartOf="@id/ivCopyLogsAction"
+                            app:layout_constraintStart_toEndOf="@id/ivCopyLogs"
+                            app:layout_constraintTop_toBottomOf="@id/tvCopyLogsTitle" />
 
-                        <ImageButton
-                            android:id="@+id/btnCopyEmail"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
+                        <ImageView
+                            android:id="@+id/ivCopyLogsAction"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:alpha="0.8"
                             android:contentDescription="@string/support_copy_latest_logs"
-                            android:padding="10dp"
                             android:src="@drawable/content_copy_24"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:tint="?attr/colorOnSurface" />
-
+                            app:tint="?attr/colorPrimary" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <TextView
+                style="@style/Switchly.SectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="24dp"
+                android:text="@string/support_contact_section" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Switchly.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="76dp"
+                    android:paddingStart="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="12dp">
+
+                    <ImageView
+                        android:id="@+id/ivSupportEmail"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/mail_24"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:id="@+id/tvSupportEmailLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="@string/support_email_label"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="12sp"
+                        app:layout_constraintEnd_toStartOf="@id/btnCopyEmailInline"
+                        app:layout_constraintStart_toEndOf="@id/ivSupportEmail"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tvSupportEmail"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginTop="3dp"
+                        android:maxLines="1"
+                        android:text="@string/about_mail_address"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                        android:textColor="@color/contact_text"
+                        app:layout_constraintEnd_toStartOf="@id/btnCopyEmailInline"
+                        app:layout_constraintStart_toEndOf="@id/ivSupportEmail"
+                        app:layout_constraintTop_toBottomOf="@id/tvSupportEmailLabel" />
+
+                    <ImageButton
+                        android:id="@+id/btnCopyEmailInline"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/support_copy_email"
+                        android:padding="10dp"
+                        android:src="@drawable/content_copy_24"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="?attr/colorOnSurface" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

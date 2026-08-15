@@ -179,11 +179,8 @@ class WifiTriggerService : Service() {
         }
     }
 
-    /**
-     * Returns true if we successfully entered the foreground.
-     * If we can't (e.g. permission/policy), we stop ourselves to avoid
-     * ForegroundServiceDidNotStartInTimeException.
-     */
+    // Tracks whether startForeground() completed successfully.
+    // On permission or policy failure, the service stops before Android times it out.
     private var foregroundStarted = false
 
     private fun ensureForegroundOrStop(): Boolean {

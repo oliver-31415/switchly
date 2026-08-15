@@ -31,9 +31,9 @@
     <string name="onb_usage_report_desc">Want to see more details before choosing apps? Allow Usage Access below and Switchly will add a private 7-day report as the next step. You can continue without it.</string>
     <string name="onb_usage_permission_status_ready">Ready · The 7-day report is now the next step</string>
     <string name="onb_usage_permission_status_optional">Optional · Tap to allow</string>
-    <string name="onb_usage_report_private_title">Private on-device report</string>
-    <string name="onb_usage_report_private_desc">Switchly reads Android usage data locally to build this preview. Nothing from the report is uploaded.</string>
-    <string name="onb_usage_report_private_status">Adds a 7-day overview before app selection</string>
+    <string name="onb_usage_report_private_title">Optional 7-day preview</string>
+    <string name="onb_usage_report_private_desc">Adds a visual breakdown with your total time, daily average, and top apps before app selection.</string>
+    <string name="onb_usage_report_private_status">Private · Nothing from the report is uploaded</string>
 
     <!-- ====================================================== -->
     <!-- Usage report preview -->
@@ -84,7 +84,7 @@
     <string name="onb_perm_accessibility_title">Accessibility</string>
     <string name="onb_perm_accessibility_desc">Required for core app and website blocking.</string>
     <string name="onb_perm_usage_title">Usage Access</string>
-    <string name="onb_perm_usage_desc">Reads local app activity for usage-aware blocking and statistics. The data stays on this device.</string>
+    <string name="onb_perm_usage_desc">Allows Switchly to read Android’s local usage history so it can build the preview and usage statistics.</string>
     <string name="onb_perm_notifications_title">Notifications</string>
     <string name="onb_perm_notifications_desc">Only needed when notification blocking is enabled.</string>
     <string name="onb_perm_battery_title">Battery unrestricted</string>
@@ -169,7 +169,7 @@
     <string name="onb_optional_hidden_apps_desc">Hide selected apps from Usage &amp; Insights or from the App Picker.</string>
     <string name="onb_optional_home_modes_title">Home modes</string>
     <string name="onb_optional_home_modes_desc">Choose Default, Custom, Simple or Advanced Home.</string>
-    <string name="onb_optional_display_title">Display &amp; shortcuts</string>
+    <string name="onb_optional_display_title">Widgets &amp; shortcuts</string>
     <string name="onb_optional_display_desc">Add Android Quick Settings tiles and Home screen widgets.</string>
     <string name="onb_optional_app_lock_title">App lock &amp; uninstall protection</string>
     <string name="onb_optional_app_lock_desc">Protect access to Switchly and optionally add Device Admin uninstall friction.</string>
@@ -210,5 +210,5 @@
     <string name="onb_optional_protection_settings_action">Open protection settings</string>
     <string name="onb_optional_access_more_action">More access controls</string>
     <string name="onb_optional_faq_open_action">Open the full FAQ</string>
-    <string name="onb_optional_support_open_action">Open contact &amp; support</string>
+    <string name="onb_optional_support_open_action">Open Support</string>
 </resources>

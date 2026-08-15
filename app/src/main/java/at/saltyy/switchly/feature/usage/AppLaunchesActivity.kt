@@ -122,6 +122,7 @@ class AppLaunchesActivity : AppCompatActivity() {
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
             setBackgroundColor(AccentColor.getToolbarColor(this@AppLaunchesActivity))
         }
+        UsageInfoAction.attach(this, toolbar, R.string.app_launches_info_title, R.string.app_launches_info_body)
         root.addView(AppBarLayout(this).apply {
             fitsSystemWindows = true
             addView(toolbar, AppBarLayout.LayoutParams(

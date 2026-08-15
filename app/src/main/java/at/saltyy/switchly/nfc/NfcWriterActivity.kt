@@ -18,6 +18,7 @@
  */
 
 package at.saltyy.switchly.nfc
+
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.Intent
@@ -25,12 +26,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.nfc.NdefMessage
-import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
-import android.nfc.Tag
-import android.nfc.tech.Ndef
-import android.nfc.tech.NdefFormatable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -47,7 +43,6 @@ import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
@@ -80,22 +75,13 @@ import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.MaterialColors
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
-import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 import kotlinx.coroutines.launch
 
 class NfcWriterActivity : AppCompatActivity() {
-
-    private enum class WriteResult {
-        OK,
-        TOO_SMALL,
-        NOT_WRITABLE,
-        FAILED
-    }
 
     private val writeFlowLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -125,6 +111,12 @@ class NfcWriterActivity : AppCompatActivity() {
                 when (resultStr) {
                     NfcWriteWaitingActivity.RESULT_TOO_SMALL_STR ->
                         tvStatus.text = getString(R.string.nfc_write_error_too_small)
+                    NfcWriteWaitingActivity.RESULT_NOT_WRITABLE_STR ->
+                        tvStatus.text = getString(R.string.nfc_write_error_not_writable)
+                    NfcWriteWaitingActivity.RESULT_UNSUPPORTED_STR ->
+                        tvStatus.text = getString(R.string.nfc_write_error_unsupported)
+                    NfcWriteWaitingActivity.RESULT_TRANSIENT_STR ->
+                        tvStatus.text = getString(R.string.nfc_write_transient_retry)
                     else ->
                         tvStatus.text = getString(R.string.nfc_write_error_generic)
                 }
@@ -161,9 +153,16 @@ class NfcWriterActivity : AppCompatActivity() {
 
     private val handler = Handler(Looper.getMainLooper())
 
-    private companion object {
-        const val TEMP_ASK_WHEN_SCANNED_VALUE = "ask"
+    companion object {
+        const val EXTRA_PRESELECT_PROFILE = "preselect_profile"
+        const val EXTRA_PRESELECT_ACTION = "preselect_action"
+        const val EXTRA_PRESELECT_DURATION_MINUTES = "preselect_duration_minutes"
+        const val EXTRA_PRESELECT_ASK_DURATION = "preselect_ask_duration"
+        const val EXTRA_REWRITE_UID = "rewrite_uid"
+        private const val TEMP_ASK_WHEN_SCANNED_VALUE = "ask"
     }
+
+    private var rewriteUid: String = ""
 
     private fun buildActionLabels(): List<String> {
         val labels = mutableListOf(
@@ -306,8 +305,11 @@ class NfcWriterActivity : AppCompatActivity() {
         // Text fields (dropdown outlines) accent tint
         tintTextFieldsWithAccent()
 
+        rewriteUid = NfcTagUid.normalizeUidHex(intent.getStringExtra(EXTRA_REWRITE_UID))
+        applyPreselectedDurationPreference()
         setupDropdowns()
         setupTimeDropdown()
+        applyIntentSelection()
 
         // Always "Write" (flow is on its own screen now)
         btnArmWrite.text = getString(R.string.nfc_arm_write)
@@ -322,6 +324,46 @@ class NfcWriterActivity : AppCompatActivity() {
         }
 
         updateWriteLockState()
+    }
+
+    private fun applyPreselectedDurationPreference() {
+        val action = intent.getStringExtra(EXTRA_PRESELECT_ACTION).orEmpty()
+        if (action != "temp_disable" && action != "temp_enable") {
+            return
+        }
+
+        val value = if (intent.getBooleanExtra(EXTRA_PRESELECT_ASK_DURATION, false)) {
+            TEMP_ASK_WHEN_SCANNED_VALUE
+        } else {
+            intent.getIntExtra(EXTRA_PRESELECT_DURATION_MINUTES, 10)
+                .coerceIn(1, 1440)
+                .toString()
+        }
+        PreferenceManager.getDefaultSharedPreferences(this).edit {
+            putString("pref_nfc_unlock_minutes", value)
+        }
+    }
+
+    private fun applyIntentSelection() {
+        val requestedProfile = intent.getStringExtra(EXTRA_PRESELECT_PROFILE)?.trim().orEmpty()
+        if (requestedProfile.isNotBlank() && ProfileStore.getProfiles(this).contains(requestedProfile)) {
+            ddProfile.setText(requestedProfile, false)
+        }
+
+        val requestedAction = intent.getStringExtra(EXTRA_PRESELECT_ACTION).orEmpty()
+        val actionLabel = when (requestedAction) {
+            "enable" -> getString(R.string.nfc_action_enable)
+            "disable" -> getString(R.string.nfc_action_disable)
+            "toggle" -> getString(R.string.nfc_action_toggle)
+            "temp_disable" -> getString(R.string.nfc_action_temp_disable)
+            "temp_enable" -> getString(R.string.nfc_action_temp_enable)
+            else -> null
+        }
+        if (actionLabel != null && actionLabels.contains(actionLabel)) {
+            ddAction.setText(actionLabel, false)
+            updateTimeVisibilityForAction(actionLabel)
+            updateActionHintForSelection(actionLabel)
+        }
     }
 
     private fun applyStatusRowChrome() {
@@ -759,6 +801,13 @@ class NfcWriterActivity : AppCompatActivity() {
 
         // UID-only pairing mode (supports read-only/non-NDEF tags)
         if (selectedActionLabel == getString(R.string.nfc_action_pair_uid)) {
+            val pairedTagsEnabled = PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
+            if (!pairedTagsEnabled) {
+                Toast.makeText(this, R.string.nfc_action_desc_pair_uid_disabled, Toast.LENGTH_LONG).show()
+                openProtectionControls()
+                return
+            }
             val i = Intent(this, NfcWriteWaitingActivity::class.java).apply {
                 putExtra(NfcWriteWaitingActivity.EXTRA_MODE, NfcWriteWaitingActivity.MODE_PAIR_UID_READONLY)
             }
@@ -814,81 +863,32 @@ class NfcWriterActivity : AppCompatActivity() {
         } else {
             NfcSchema.uriForGlobalAction(actionVerb)
         }
+        val fallbackAction = when (selectedActionLabel) {
+            getString(R.string.nfc_action_enable) -> "enable"
+            getString(R.string.nfc_action_disable) -> "disable"
+            getString(R.string.nfc_action_temp_disable) -> "temp_disable"
+            getString(R.string.nfc_action_temp_enable) -> "temp_enable"
+            else -> "toggle"
+        }
 
         val i = Intent(this, NfcWriteWaitingActivity::class.java).apply {
             putExtra(NfcWriteWaitingActivity.EXTRA_MODE, NfcWriteWaitingActivity.MODE_WRITE_URI)
             putExtra(NfcWriteWaitingActivity.EXTRA_URI_TO_WRITE, uri)
+            putExtra(NfcWriteWaitingActivity.EXTRA_FALLBACK_ACTION, fallbackAction)
+            if (isProfile) {
+                putExtra(NfcWriteWaitingActivity.EXTRA_FALLBACK_PROFILE, selectedProfile)
+            }
+            if (isTempAction) {
+                putExtra(
+                    NfcWriteWaitingActivity.EXTRA_FALLBACK_DURATION_MINUTES,
+                    (tempMinutes ?: 10).coerceIn(1, 1440),
+                )
+                putExtra(NfcWriteWaitingActivity.EXTRA_FALLBACK_ASK_DURATION, askWhenScanned)
+            }
+            if (rewriteUid.isNotBlank()) {
+                putExtra(NfcWriteWaitingActivity.EXTRA_EXPECTED_UID, rewriteUid)
+            }
         }
         writeFlowLauncher.launch(i)
-    }
-
-    private fun showPairMetaPrompt(uid: String) {
-        val v = layoutInflater.inflate(R.layout.dialog_paired_tag_pair_meta, FrameLayout(this), false)
-        v.findViewById<TextView>(R.id.tvUid).text = uid
-
-        val etName = v.findViewById<TextInputEditText>(R.id.etTagName)
-        val etNote = v.findViewById<TextInputEditText>(R.id.etTagNote)
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.paired_tag_pair_prompt_title))
-            .setMessage(getString(R.string.paired_tag_pair_prompt_message))
-            .setView(v)
-            .setPositiveButton(getString(R.string.paired_tag_pair_prompt_save)) { _, _ ->
-                at.saltyy.switchly.data.prefs.NfcUidPairingStore.setTagMeta(
-                    this,
-                    uid,
-                    etName.text?.toString(),
-                    etNote.text?.toString()
-                )
-            }
-            .setNegativeButton(getString(R.string.paired_tag_pair_prompt_skip), null)
-            .showAccented()
-    }
-
-    private fun writeUriToTag(uriString: String, tag: Tag): WriteResult {
-        var ndef: Ndef? = null
-        var formatable: NdefFormatable? = null
-        return try {
-            val uriRecord = NdefRecord.createUri(uriString)
-            val appRecord = NdefRecord.createApplicationRecord(packageName)
-            val uriOnlyMessage = NdefMessage(arrayOf(uriRecord))
-            val preferredMessage = NdefMessage(arrayOf(uriRecord, appRecord))
-
-            val ndefTech = Ndef.get(tag)
-            if (ndefTech != null) {
-                ndef = ndefTech
-                ndef.connect()
-
-                if (!ndef.isWritable) {
-                    return WriteResult.NOT_WRITABLE
-                }
-
-                val message = when {
-                    preferredMessage.toByteArray().size <= ndef.maxSize -> preferredMessage
-                    uriOnlyMessage.toByteArray().size <= ndef.maxSize -> uriOnlyMessage
-                    else -> return WriteResult.TOO_SMALL
-                }
-
-                ndef.writeNdefMessage(message)
-                WriteResult.OK
-            } else {
-                val formatableTech = NdefFormatable.get(tag) ?: return WriteResult.FAILED
-                formatable = formatableTech
-                formatable.connect()
-
-                runCatching {
-                    formatable.format(preferredMessage)
-                }.recoverCatching {
-                    formatable.format(uriOnlyMessage)
-                }.getOrThrow()
-
-                WriteResult.OK
-            }
-        } catch (_: Throwable) {
-            WriteResult.FAILED
-        } finally {
-            runCatching { ndef?.close() }
-            runCatching { formatable?.close() }
-        }
     }
 }

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -22,28 +21,28 @@
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
         android:layout_marginBottom="4dp"
+        app:strokeWidth="0dp"
         app:cardBackgroundColor="@android:color/transparent"
-        app:cardUseCompatPadding="false"
         app:cardCornerRadius="0dp"
         app:cardElevation="0dp"
-        app:strokeWidth="0dp">
+        app:cardUseCompatPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:paddingStart="4dp"
-            android:paddingEnd="4dp"
             android:paddingTop="4dp"
-            android:paddingBottom="4dp"
-            android:orientation="vertical">
+            android:paddingEnd="4dp"
+            android:paddingBottom="4dp">
 
             <LinearLayout
                 android:id="@+id/pageIndicator"
                 android:layout_width="match_parent"
                 android:layout_height="18dp"
                 android:layout_marginBottom="8dp"
-                android:gravity="center"
-                android:orientation="horizontal" />
+                android:orientation="horizontal"
+                android:gravity="center" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_optional_setup"
@@ -51,10 +50,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginBottom="8dp"
-                android:text="@string/onb_optional_setup_action"
-                android:textAllCaps="false"
-                android:textSize="15sp"
                 android:visibility="gone"
+                android:text="@string/onb_optional_setup_action"
+                android:textSize="15sp"
+                android:textAllCaps="false"
                 app:icon="@drawable/keyboard_arrow_right_24"
                 app:iconGravity="textEnd"
                 app:iconPadding="8dp" />
@@ -62,8 +61,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_skip"
@@ -72,8 +71,8 @@
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:text="@string/onb_skip"
-                    android:textAllCaps="false"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    android:textAllCaps="false" />
 
                 <View
                     android:id="@+id/onboardingButtonSpacer"
@@ -91,8 +90,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:text="@string/onb_next"
-                        android:textAllCaps="false"
-                        android:textSize="16sp" />
+                        android:textSize="16sp"
+                        android:textAllCaps="false" />
 
                     <!-- Overlay arrow: does NOT affect button text centering -->
                     <ImageView
@@ -101,17 +100,14 @@
                         android:layout_height="24dp"
                         android:layout_gravity="end|center_vertical"
                         android:layout_marginEnd="16dp"
-                        android:src="@drawable/keyboard_arrow_right_24"
-                        app:tint="@android:color/white"
-                        android:alpha="0.9"
-                        android:contentDescription="@null"
                         android:clickable="false"
-                        android:focusable="false" />
+                        android:focusable="false"
+                        android:contentDescription="@null"
+                        android:src="@drawable/keyboard_arrow_right_24"
+                        android:alpha="0.9"
+                        app:tint="@android:color/white" />
                 </FrameLayout>
-
             </LinearLayout>
-
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

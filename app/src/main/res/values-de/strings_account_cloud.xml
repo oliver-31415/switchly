@@ -10,6 +10,7 @@
     <string name="auth_failed_to_process_google_token">Google-Token konnte nicht verarbeitet werden</string>
     <string name="auth_no_matching_google_accounts_found">Keine passenden Google-Konten gefunden</string>
     <string name="auth_missing_google_server_client_id">Google-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
+    <string name="auth_google_app_verification_failed">Google konnte diesen App-Build nicht verifizieren. Verwende die Play-Store-Version oder melde dich per E-Mail an.</string>
     <string name="auth_firebase_not_configured">Cloud-Anmeldung ist in diesem App-Build noch nicht verfügbar. Bitte aktualisiere die App oder kontaktiere den Support.</string>
     <string name="auth_email_sign_in_success">Angemeldet</string>
     <string name="auth_email_create_success">Konto erstellt. Bestätigungs-E-Mail wurde gesendet.</string>
@@ -22,9 +23,9 @@
     <string name="settings_account_delete_confirm_message">Dadurch werden deine Switchly-Cloud-Daten, Backups und lokalen Einstellungen gelöscht. Dies kann nicht rückgängig gemacht werden.</string>
     <string name="account_delete_recent_login_required">Aus Sicherheitsgründen melde dich bitte erneut an und versuche dann, das Konto erneut zu löschen.</string>
     <string name="account_delete_recent_login_title">Erneut anmelden</string>
-    <string name="account_delete_failed_delete_account_fmt">Konto konnte nicht gelöscht werden: %1$s</string>
-    <string name="account_delete_failed_delete_cloud_data_fmt">Cloud-Daten konnten nicht gelöscht werden: %1$s</string>
-    <string name="account_delete_failed_delete_backups_fmt">Backups konnten nicht gelöscht werden: %1$s</string>
+    <string name="account_delete_failed_delete_account_fmt">Konto konnte nicht gelöscht werden:\n%1$s</string>
+    <string name="account_delete_failed_delete_cloud_data_fmt">Cloud-Daten konnten nicht gelöscht werden:\n%1$s</string>
+    <string name="account_delete_failed_delete_backups_fmt">Backups konnten nicht gelöscht werden:\n%1$s</string>
     <string name="account_deleted">Konto gelöscht</string>
 
     <!-- ====================================================== -->
@@ -48,10 +49,12 @@
     <string name="cloud_delete_backups_loading">Cloud-Backups werden gelöscht…</string>
     <string name="cloud_no_backups">Keine Backups gefunden</string>
     <string name="cloud_not_logged_in">Du bist nicht angemeldet</string>
-    <string name="cloud_error_fmt">Fehler: %1$s</string>
+    <string name="cloud_error_fmt">Fehler:\n%1$s</string>
     <string name="cloud_error_no_backup_found">Kein Backup gefunden</string>
     <string name="cloud_error_backup_not_found">Backup nicht gefunden</string>
     <string name="cloud_error_not_logged_in">Nicht angemeldet</string>
+    <string name="cloud_error_stats_chunks_permission">Das vollständige Backup konnte sein Statistikarchiv nicht hochladen, weil der Cloud-Zugriff dafür nicht konfiguriert ist. Aktualisiere Switchly oder kontaktiere den Support.</string>
+    <string name="cloud_backup_ok_cleanup_warning">Backup erstellt, ältere Cloud-Backups konnten aber nicht entfernt werden. Switchly versucht die Bereinigung beim nächsten Backup erneut.</string>
     <string name="pref_cloud_backup_title">In der Cloud sichern</string>
     <string name="pref_cloud_backup_summary">Sichere deine Einstellungen und Profile manuell</string>
     <string name="pref_cloud_restore_title">Aus der Cloud wiederherstellen</string>
@@ -71,8 +74,8 @@
     <string name="file_backup_loading">Backup-Datei wird erstellt…</string>
     <string name="file_restore_loading">Backup-Datei wird gelesen…</string>
     <string name="restore_applying">Daten werden wiederhergestellt…</string>
-    <string name="file_backup_error_fmt">Datei-Backup fehlgeschlagen: %1$s</string>
-    <string name="file_restore_error_fmt">Datei-Wiederherstellung fehlgeschlagen: %1$s</string>
+    <string name="file_backup_error_fmt">Datei-Backup fehlgeschlagen:\n%1$s</string>
+    <string name="file_restore_error_fmt">Datei-Wiederherstellung fehlgeschlagen:\n%1$s</string>
 
     <!-- ====================================================== -->
     <!-- Backup and restore dialogs -->
@@ -86,6 +89,11 @@
     <string name="settings_confirm_restore_message">Backup aus der Cloud laden und lokale Einstellungen überschreiben?</string>
     <string name="settings_confirm_file_backup_title">In Datei sichern</string>
     <string name="settings_confirm_file_restore_title">Aus Datei wiederherstellen</string>
+    <string name="restore_compatibility_warning_title">Älteres Backup</string>
+    <string name="restore_compatibility_version_fmt">Erstellt mit Switchly %1$s.</string>
+    <string name="restore_compatibility_version_unknown">Die Switchly-Version dieses Backups konnte nicht ermittelt werden.</string>
+    <string name="restore_compatibility_warning_body">Dieses Backup verwendet ein älteres oder anderes Datenformat. Einige Bereiche werden möglicherweise nicht vollständig wiederhergestellt oder verhalten sich in der aktuellen Version anders.</string>
+    <string name="restore_compatibility_warning_statistics">Switchly versucht, kompatible Zähler aus diesem Backup zu migrieren. Daten, die ältere Versionen nicht gespeichert haben – besonders genaue Sitzungen oder Verläufe – können weiterhin unvollständig sein oder fehlen.</string>
     <string name="settings_confirm_file_restore_message">Lokales JSON-Backup wiederherstellen und aktuelle Switchly-Daten überschreiben? Aus Sicherheitsgründen werden Switchly und aktive Zeitpläne nach der Wiederherstellung deaktiviert.</string>
     <string name="settings_confirm_backup_message_with_included_categories">Aktuelle Daten in der Cloud sichern?\n\nEnthalten:\n%1$s</string>
     <string name="settings_confirm_backup_message_with_categories">Aktuelle Daten in der Cloud sichern?\n\nEnthalten:\n%1$s\n\nAusgeschlossen/bei Restore behalten:\n%2$s</string>

@@ -4,7 +4,6 @@
     <!-- =========================
          THEME: Blocker variant
          ========================= -->
-
     <!-- Variant without ActionBar (overlay/blocker screens) -->
     <!-- Fully opaque, no edge-to-edge; used e.g. for BlockerActivity -->
     <style name="Theme.Switchly.Blocker" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -41,7 +40,6 @@
     <!-- =========================
          COMPONENT STYLES: Toolbar/buttons/cards/chips
          ========================= -->
-
     <!-- Unified top bar, uses current accent color -->
     <style name="Switchly.TopBar" parent="Widget.MaterialComponents.Toolbar">
         <!-- Background = current accent color -->
@@ -133,6 +131,13 @@
         <item name="cardElevation">1dp</item>
     </style>
 
+    <style name="Switchly.SectionHeader">
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
     <!-- Small divider inside cards -->
     <style name="Switchly.Divider" parent="Widget.MaterialComponents.MaterialDivider">
         <item name="dividerColor">@color/switchly_divider</item>
@@ -182,7 +187,6 @@
     <!-- =========================
          DROPDOWNS: TextInputLayout
          ========================= -->
-
     <!-- Default (non-dropdown) TextInputLayout styling used globally via theme -->
     <style name="Switchly.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxStrokeWidth">1dp</item>

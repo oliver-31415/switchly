@@ -20,6 +20,7 @@
 package at.saltyy.switchly.feature.usage
 
 import android.content.Context
+import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.data.prefs.IgnoredUsageAppsStore
 import at.saltyy.switchly.data.statistics.UsageInsightsAppCatalog
 
@@ -28,6 +29,10 @@ import at.saltyy.switchly.data.statistics.UsageInsightsAppCatalog
  * Blocking rules, profile membership and stored raw counters remain untouched.
  */
 object UsageInsightsAppFilter {
+    fun isSwitchlyPackage(packageName: String): Boolean {
+        return packageName.trim().equals(BuildConfig.APPLICATION_ID, ignoreCase = true)
+    }
+
     fun shouldHide(context: Context, packageName: String): Boolean {
         val normalized = packageName.trim()
         if (shouldAlwaysHide(normalized)) return true

@@ -3,12 +3,10 @@
 
     <!-- Night-mode theme must keep the same AppCompat/Material parent.
          Defining Theme.Switchly without a parent breaks AppCompatActivity at runtime. -->
-
     <!-- Backwards-compatible alias -->
     <style name="Switchly" parent="Theme.Switchly" />
 
     <!-- Compatibility alias -->
-
     <!-- Base application theme (night overrides) -->
     <style name="Theme.Switchly" parent="Theme.MaterialComponents.DayNight.NoActionBar">
 

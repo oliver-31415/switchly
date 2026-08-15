@@ -39,7 +39,6 @@ import kotlin.concurrent.thread
 
 /**
  * Redeems custom Switchly Premium codes for non-Play builds.
- *
  * Play Store builds intentionally do not expose this flow. They keep Google Play Billing.
  * Firebase/direct builds redeem SWLY codes through the website API.
  * Offline builds validate SALT-OFFLINE codes locally against an allowlist compiled only into that flavor.

@@ -71,7 +71,7 @@ Be extra careful with:
 
 For changes touching Accessibility, schedules, Premium, billing, backup/restore, NFC/QR/barcode actions, blocking logic, or background services, test the affected flavor on a real device when possible.
 
-Before changing navigation, icons, dialogs, selection controls, or security-sensitive management screens, read [`UI_CONVENTIONS.md`](./UI_CONVENTIONS.md).
+For vector assets and icon imports, also read [`DRAWABLE_CONVENTIONS.md`](./DRAWABLE_CONVENTIONS.md).
 
 ## Guidelines
 - Keep changes focused and easy to review
@@ -100,3 +100,4 @@ Please include:
 - screenshots or screen recordings for UI changes, if relevant
 - notes about behavior changes, especially around blocking, schedules, permissions, NFC, QR, barcode, Premium, or profiles
 - what you tested, including device/flavor where relevant
+

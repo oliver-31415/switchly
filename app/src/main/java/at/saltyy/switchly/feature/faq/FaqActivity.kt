@@ -331,7 +331,7 @@ class FaqActivity : AppCompatActivity() {
                 items = listOf(
                     item(R.string.faq_q_background_access_checklist, R.string.faq_a_background_access_checklist, R.drawable.battery_24),
                     item(R.string.faq_q_android_battery_popup, R.string.faq_a_android_battery_popup, R.drawable.battery_24),
-                    item(R.string.faq_q_dontkillmyapp, R.string.faq_a_dontkillmyapp, R.drawable.language_24),
+                    item(R.string.faq_q_device_background_steps, R.string.faq_a_device_background_steps, R.drawable.battery_24),
                     item(R.string.faq_q_xiaomi_background, R.string.faq_a_xiaomi_background, R.drawable.battery_24),
                     item(R.string.faq_q_battery, R.string.faq_a_battery, R.drawable.info_24),
                     item(R.string.faq_q_battery_permission_still_needed, R.string.faq_a_battery_permission_still_needed, R.drawable.battery_24),

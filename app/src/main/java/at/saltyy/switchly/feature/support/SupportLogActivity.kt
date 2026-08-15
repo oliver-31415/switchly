@@ -17,29 +17,33 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package at.saltyy.switchly.feature.about
+package at.saltyy.switchly.feature.support
 
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.ColorUtils
 import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.LocaleHelper
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
 
-class DeveloperLogActivity : AppCompatActivity() {
+class SupportLogActivity : AppCompatActivity() {
 
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var logText: TextView
+    private lateinit var copyButton: MaterialButton
     private val refreshRunnable = object : Runnable {
         override fun run() {
             refreshLogs()
@@ -54,19 +58,16 @@ class DeveloperLogActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtils.applyAccentTheme(this)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_developer_logs)
+        setContentView(R.layout.activity_support_logs)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbarDeveloperLogs)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.developer_logging_title)
-        toolbar.title = getString(R.string.developer_logging_title)
-        toolbar.setNavigationOnClickListener { finish() }
-        toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        setupToolbar()
 
-        logText = findViewById(R.id.tvDeveloperLogs)
-        findViewById<Button>(R.id.btnDeveloperLogsRefresh).setOnClickListener { refreshLogs() }
-        findViewById<Button>(R.id.btnDeveloperLogsCopy).setOnClickListener { copyLogs() }
+        logText = findViewById(R.id.tvSupportLogs)
+        copyButton = findViewById(R.id.btnSupportLogsCopy)
+        findViewById<MaterialButton>(R.id.btnSupportLogsRefresh).setOnClickListener {
+            refreshLogs()
+        }
+        copyButton.setOnClickListener { copyLogs() }
         refreshLogs()
     }
 
@@ -81,15 +82,37 @@ class DeveloperLogActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    private fun setupToolbar() {
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbarSupportLogs)
+        EdgeToEdgeUtils.setupClassic(activity = this, toolbar = toolbar)
+        setSupportActionBar(toolbar)
+        toolbar.setNavigationOnClickListener { finish() }
+        toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
+        val foreground = toolbarForegroundColor()
+        toolbar.navigationIcon?.mutate()?.setTint(foreground)
+        toolbar.setTitleTextColor(foreground)
+    }
+
     private fun refreshLogs() {
-        logText.text = AppLogStore.latestPlainText(this, MAX_VISIBLE_LINES)
+        val logs = AppLogStore.latestPlainText(this, MAX_VISIBLE_LINES).trim()
+        logText.text = logs.ifBlank { getString(R.string.support_logs_view_empty) }
+        copyButton.isEnabled = logs.isNotBlank()
     }
 
     private fun copyLogs() {
-        val text = AppLogStore.latestPlainText(this, MAX_VISIBLE_LINES)
+        val text = AppLogStore.latestPlainText(this, MAX_VISIBLE_LINES).trim()
+        if (text.isBlank()) {
+            Toast.makeText(this, getString(R.string.support_logs_view_empty), Toast.LENGTH_SHORT).show()
+            return
+        }
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("Switchly logs", text))
-        Toast.makeText(this, getString(R.string.copied), Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.support_logs_copied), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun toolbarForegroundColor(): Int {
+        val toolbarColor = AccentColor.getToolbarColor(this)
+        return if (ColorUtils.calculateLuminance(toolbarColor) > 0.5) Color.BLACK else Color.WHITE
     }
 
     private companion object {

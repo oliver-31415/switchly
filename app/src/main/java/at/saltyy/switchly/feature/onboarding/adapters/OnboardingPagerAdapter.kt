@@ -638,7 +638,7 @@ class OnboardingPagerAdapter(
                             FaqActivity.intent(
                                 context = activity,
                                 category = FaqActivity.CATEGORY_BACKGROUND_ACCESS,
-                                questionResId = R.string.faq_q_dontkillmyapp
+                                questionResId = R.string.faq_q_device_background_steps
                             )
                         )
                     }
@@ -655,7 +655,7 @@ class OnboardingPagerAdapter(
                     )
                     addOptionRow(
                         activity = activity,
-                        iconRes = R.drawable.language_24,
+                        iconRes = R.drawable.battery_24,
                         title = activity.getString(R.string.onb_optional_faq_device_steps_title),
                         subtitle = activity.getString(R.string.onb_optional_faq_device_steps_desc),
                         leadingColored = false,
@@ -1498,14 +1498,7 @@ class OnboardingPagerAdapter(
         }
 
         private fun openNfcLaunchSetup(activity: Activity) {
-            val intents = listOf(
-                Intent("android.settings.MANAGE_SPECIAL_APP_ACCESSES"),
-                Intent(Settings.ACTION_NFC_SETTINGS),
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = "package:${activity.packageName}".toUri()
-                }
-            )
-            for (intent in intents) {
+            for (intent in NfcLaunchAccessCompat.settingsIntents(activity)) {
                 if (safeStart(activity, intent)) {
                     return
                 }

@@ -96,7 +96,7 @@
     <string name="dashboard_temp_hint_enable_profile">%1$s temporär aktivieren</string>
     <string name="dashboard_temp_hint_disable">Temporär pausieren - Dauer wählen</string>
     <string name="dashboard_temp_hint_locked_nfc">Temporärer Modus ist nicht verfügbar, solange „NFC erforderlich“ aktiv ist.</string>
-    <string name="dashboard_temp_nudge">Tipp: Nutze den temporären Modus für schnelle 5–60-Minuten-Sessions.</string>
+    <string name="dashboard_temp_nudge">Tipp:\nNutze den temporären Modus für schnelle 5–60-Minuten-Sessions.</string>
     <string name="dashboard_temp_discovery_done">Temporärer Modus ist bereit. Öffne ihn jederzeit über die Statuskarte.</string>
 
     <!-- ====================================================== -->

@@ -14,9 +14,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
         android:minHeight="72dp"
         android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:padding="16dp">
 
         <ImageView
@@ -40,30 +40,30 @@
                 android:id="@+id/tvTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:ellipsize="end"
-                android:maxLines="2"
                 android:textColor="?android:attr/textColorSecondary"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:maxLines="2"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:ellipsize="end"
-                android:maxLines="2"
                 android:textColor="?android:attr/textColorSecondary"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:maxLines="2"
+                android:ellipsize="end" />
         </LinearLayout>
 
         <com.google.android.material.checkbox.MaterialCheckBox
@@ -71,9 +71,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:visibility="gone"
             android:clickable="false"
             android:focusable="false"
-            android:visibility="gone"
             app:buttonTint="?attr/colorPrimary"
             app:useMaterialThemeColors="false" />
 
@@ -82,11 +82,10 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:layout_marginStart="8dp"
-            android:alpha="0.7"
             android:contentDescription="@null"
-            android:importantForAccessibility="no"
             android:src="@drawable/keyboard_arrow_right_24"
+            android:importantForAccessibility="no"
+            android:alpha="0.7"
             app:tint="?android:attr/textColorSecondary" />
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>

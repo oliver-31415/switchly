@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="permission_toolbar_status_icon_padding">5dp</dimen>
+</resources>

@@ -10,22 +10,22 @@
     android:paddingBottom="4dp">
 
     <TextView
+        style="@style/TextAppearance.MaterialComponents.Body2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
         android:layout_marginEnd="4dp"
         android:layout_marginBottom="16dp"
-        android:text="@string/schedules_location_picker_body"
-        style="@style/TextAppearance.MaterialComponents.Body2" />
+        android:text="@string/schedules_location_picker_body" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/layoutLocationQuery"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
         android:layout_marginEnd="4dp"
         android:hint="@string/schedules_location_picker_hint"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         app:boxBackgroundMode="outline"
         app:helperText="@string/schedules_location_picker_helper">
 
@@ -33,9 +33,8 @@
             android:id="@+id/inputLocationQuery"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textCapSentences"
-            android:minHeight="64dp" />
-
+            android:minHeight="64dp"
+            android:inputType="textCapSentences" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.button.MaterialButton
@@ -47,5 +46,4 @@
         android:layout_marginTop="12dp"
         android:layout_marginEnd="4dp"
         android:text="@string/schedules_location_pick_current" />
-
 </LinearLayout>

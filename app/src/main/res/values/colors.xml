@@ -43,12 +43,6 @@
     <color name="switchly_divider">#14000000</color>
 
     <!-- =========================
-         SIMPLE ALIASES
-         ========================= -->
-    <color name="switchly_ok">@color/status_ok</color>
-    <color name="switchly_error">@color/status_error</color>
-
-    <!-- =========================
          ONBOARDING SUMMARY
          ========================= -->
      <!-- =========================

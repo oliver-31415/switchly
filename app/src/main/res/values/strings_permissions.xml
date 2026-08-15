@@ -9,11 +9,7 @@
     <string name="permissions_section_battery">Battery &amp; background</string>
     <string name="permissions_section_notifications">Notifications</string>
     <string name="permissions_section_oem">OEM background settings</string>
-    <plurals name="permissions_banner_missing_count_short">
-        <item quantity="one">Action needed: %1$d permission remaining</item>
-        <item quantity="other">Action needed: %1$d permissions remaining</item>
-    </plurals>
-    <string name="permissions_banner_mismatch_title">Status mismatch detected</string>
+    <string name="permissions_toolbar_issues">Issues</string>
     <string name="permissions_status_enabled">Enabled</string>
     <string name="permissions_status_disabled">Disabled</string>
     <string name="permissions_status_location_approx">Approximate (Precise required)</string>
@@ -27,6 +23,8 @@
     <string name="permissions_accessibility_desc">Required for reliable protection: lets Switchly detect opened apps and websites, react to in-app navigation, and enforce blocking, profiles, schedules, and usage limits.</string>
     <string name="permissions_usage_access_title">App usage access</string>
     <string name="permissions_usage_access_desc">Required for screen-time statistics and daily app limits. Enable “App usage data” access for Switchly.</string>
+    <string name="permissions_battery_oem_note">Some devices do not offer an “Unrestricted” battery option. If you already enabled the highest available background setting for Switchly, that may already be the maximum supported on your device.</string>
+    <string name="permissions_exact_alarms_note">If exact alarms are not allowed, time-based schedules may be delayed or not run at the correct time.</string>
     <string name="permissions_battery_title">Battery optimization</string>
     <string name="permissions_battery_desc">Set Switchly to Unrestricted/Not optimized. Android “Optimized” mode can still delay schedules, geofences, receivers, and background reliability.</string>
     <string name="permissions_battery_allowed">Unrestricted</string>
@@ -38,6 +36,8 @@
     <string name="permissions_exact_alarms_not_allowed">Not allowed</string>
     <string name="permissions_nfc_title">Launch via NFC</string>
     <string name="permissions_nfc_status_manual">Check manually</string>
+    <string name="permissions_nfc_status_not_allowed">Launch permission missing</string>
+    <string name="permissions_nfc_status_system_disabled">System NFC disabled</string>
     <string name="permissions_nfc_desc">Some Android versions show a separate “Launch via NFC” entry under Special app access. Allow Switchly there so written NFC tags can open Switchly when scanned. Also make sure the system “Use NFC” toggle is enabled. NFC does not use a normal runtime permission popup, so this row checks the system NFC state and Android tag-launch access instead. Android normally requires the device to be unlocked before passive NFC tags are dispatched to apps.</string>
 
     <!-- ====================================================== -->
@@ -56,8 +56,8 @@
     <!-- ====================================================== -->
     <!-- OEM/autostart permission -->
     <!-- ====================================================== -->
-    <string name="permissions_autostart_title">Auto-start (OEM)</string>
-    <string name="permissions_autostart_desc">Some manufacturers (e.g., Samsung, Xiaomi, or Oppo) further restrict auto-start and background activity. For Switchly to work reliably, auto-start should be allowed for this app.</string>
+    <string name="permissions_autostart_title">Manufacturer background settings</string>
+    <string name="permissions_autostart_desc">Some devices add sleep, battery, auto-start, or background activity controls beyond standard Android. Review the guide for your manufacturer so Switchly is not restricted.</string>
 
     <!-- ====================================================== -->
     <!-- Permission action buttons -->
@@ -67,6 +67,7 @@
     <string name="permissions_btn_allow">Allow</string>
     <string name="permissions_btn_permissions">Permissions</string>
     <string name="permissions_btn_open">Open settings</string>
+    <string name="permissions_btn_view_device_guide">View device guide</string>
     <string name="permissions_btn_enable_precise">Enable precise</string>
     <string name="permissions_btn_enable_all_the_time">Enable all the time</string>
 
@@ -99,28 +100,17 @@
     <!-- Protection inactive state -->
     <!-- ====================================================== -->
     <string name="protection_inactive_title">Protection inactive</string>
-    <string name="protection_inactive_text">Switchly is enabled, but the Accessibility service is not currently active. Tap to check its status.</string>
+    <string name="protection_inactive_text">Accessibility is off. Tap to check.</string>
 
     <!-- ====================================================== -->
     <!-- Permission health diagnostics -->
     <!-- ====================================================== -->
     <string name="permissions_health_recheck">Re-check</string>
-    <string name="permissions_health_rechecked_all_good">Re-check complete: all required permissions look good ✅</string>
-    <string name="permissions_health_rechecked_with_mismatch">Re-check complete: accessibility status mismatch still detected</string>
+    <string name="permissions_health_rechecked_all_good">Re-check complete:\nAll required permissions look good</string>
+    <string name="permissions_health_rechecked_with_mismatch">Re-check complete:\nAccessibility status mismatch still detected</string>
     <plurals name="permissions_health_rechecked_missing">
-        <item quantity="one">Re-check complete: %1$d required permission is still missing</item>
-        <item quantity="other">Re-check complete: %1$d required permissions are still missing</item>
+        <item quantity="one">Re-check complete:\n%1$d required permission is missing</item>
+        <item quantity="other">Re-check complete:\n%1$d required permissions are missing</item>
     </plurals>
-    <string name="permissions_health_live_unknown">Check pending…</string>
-    <string name="permissions_health_live_ok">Accessibility is active ✅</string>
-    <string name="permissions_health_live_disabled">Accessibility is currently disabled</string>
-    <plurals name="permissions_health_live_missing_count">
-        <item quantity="one">%1$d required permission is still missing</item>
-        <item quantity="other">%1$d required permissions are still missing</item>
-    </plurals>
-    <string name="permissions_health_live_sched_battery_bad">Accessibility is active, but battery mode is still optimized/restricted (schedules may be delayed)</string>
-    <string name="permissions_health_live_ok_with_schedules">Accessibility and unrestricted battery setup look good ✅</string>
-    <string name="permissions_health_live_mismatch">Status mismatch detected. Re-check after opening Accessibility settings.</string>
-    <string name="permissions_health_last_checked_fmt">Last checked: %1$s</string>
 
 </resources>

@@ -44,24 +44,12 @@
     <!-- Developer mode -->
     <!-- ====================================================== -->
     <string name="developer_mode_title">Developer-Tools</string>
-    <string name="developer_mode_info_title">Developer-Tools</string>
-    <string name="developer_mode_info_body">Developer-Tools sind in normalen Einstellungen versteckt. Du kannst sie hier wieder ausschalten oder später durch langes Drücken auf die Versions-Zeile erneut freischalten.</string>
     <string name="developer_mode_unlocked_toast">Developer-Modus freigeschaltet</string>
-    <string name="developer_mode_settings_summary">Öffnet ADB- und Logging-Tools, solange der Developer-Modus aktiviert ist.</string>
-    <string name="developer_mode_tile_adb">ADB</string>
-    <string name="developer_mode_tile_adb_body">ADB-Befehle für Device Admin, Profile Owner und Device Owner Tests.</string>
-    <string name="developer_mode_tile_logging">Logging</string>
-    <string name="developer_mode_tile_logging_body">Zeigt die letzten 250 internen App-Log-Zeilen live an und erlaubt das Kopieren zur Fehlersuche.</string>
-    <string name="developer_mode_tile_disable">Developer-Modus ausschalten</string>
+    <string name="developer_mode_settings_summary">Öffnet ADB- und Device-Owner-Tools, solange der Developer-Modus aktiviert ist.</string>
+    <string name="developer_mode_enabled_short">Ein</string>
+    <string name="developer_mode_disabled_short">Aus</string>
+    <string name="developer_mode_enable_action">Developer-Modus einschalten</string>
+    <string name="developer_mode_disable_action">Developer-Modus ausschalten</string>
     <string name="developer_mode_disabled_toast">Developer-Modus ausgeschaltet</string>
-
-    <!-- ====================================================== -->
-    <!-- Developer logging -->
-    <!-- ====================================================== -->
-    <string name="developer_logging_title">Logging</string>
-    <string name="developer_logging_body">Live-Ansicht der letzten internen Switchly-Logs. Das hilft beim Debugging, ohne jedes Mal eine Support-Mail erstellen zu müssen.</string>
-    <string name="developer_logging_refresh">Aktualisieren</string>
-    <string name="developer_logging_copy">Logs kopieren</string>
-    <string name="developer_logging_no_logs">Keine aktuellen App-Logs.</string>
 
 </resources>

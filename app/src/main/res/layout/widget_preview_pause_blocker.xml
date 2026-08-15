@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="UseCompoundDrawables"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/widget_scanner_surface"
-    android:gravity="center_vertical"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:gravity="center_vertical"
+    android:background="@color/widget_scanner_surface"
+    android:padding="12dp"
+    tools:ignore="UseCompoundDrawables">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
         <ImageView
             android:layout_width="20dp"
@@ -24,14 +24,14 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
+            android:layout_marginStart="8dp"
             android:text="@string/widget_pause_blocker_name"
             android:textColor="@color/widget_scanner_title"
             android:textSize="13sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
     </LinearLayout>
 
     <LinearLayout
@@ -44,38 +44,38 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:background="@color/widget_scanner_button_surface"
+            android:layout_marginEnd="8dp"
             android:gravity="center"
-            android:maxLines="1"
+            android:background="@color/widget_scanner_button_surface"
             android:text="@string/widget_pause_15"
             android:textColor="@color/widget_scanner_text"
             android:textSize="13sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:maxLines="1" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@color/widget_scanner_button_surface"
             android:gravity="center"
-            android:maxLines="1"
+            android:background="@color/widget_scanner_button_surface"
             android:text="@string/widget_pause_30"
             android:textColor="@color/widget_scanner_text"
             android:textSize="13sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:maxLines="1" />
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="42dp"
         android:layout_marginTop="8dp"
-        android:background="@color/widget_scanner_button_surface"
         android:gravity="center"
-        android:maxLines="1"
+        android:background="@color/widget_scanner_button_surface"
         android:text="@string/widget_pause_60"
         android:textColor="@color/widget_scanner_text"
         android:textSize="13sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:maxLines="1" />
 </LinearLayout>

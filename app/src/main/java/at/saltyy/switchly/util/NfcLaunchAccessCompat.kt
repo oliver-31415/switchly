@@ -20,24 +20,28 @@
 package at.saltyy.switchly.util
 
 import android.content.Context
+import android.content.Intent
 import android.nfc.NfcAdapter
 import android.os.Build
+import android.provider.Settings
+import androidx.core.net.toUri
 
 object NfcLaunchAccessCompat {
     enum class State {
         ALLOWED,
         NOT_ALLOWED,
+        NFC_DISABLED,
         UNKNOWN
     }
 
     fun state(context: Context): State {
         val adapter = runCatching { NfcAdapter.getDefaultAdapter(context) }.getOrNull() ?: return State.UNKNOWN
         if (!runCatching { adapter.isEnabled }.getOrDefault(false)) {
-            return State.NOT_ALLOWED
+            return State.NFC_DISABLED
         }
-        if (Build.VERSION.SDK_INT >= 36) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
             return runCatching {
-                if (adapter.isTagIntentAllowed) {
+                if (!adapter.isTagIntentAppPreferenceSupported || adapter.isTagIntentAllowed) {
                     State.ALLOWED
                 } else {
                     State.NOT_ALLOWED
@@ -48,6 +52,27 @@ object NfcLaunchAccessCompat {
     }
 
     fun isLikelyAllowed(context: Context): Boolean = state(context) == State.ALLOWED
+
+    fun settingsIntents(context: Context): List<Intent> = buildList {
+        val launchPreferenceIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            Intent(NfcAdapter.ACTION_CHANGE_TAG_INTENT_PREFERENCE)
+        } else {
+            null
+        }
+
+        if (state(context) == State.NFC_DISABLED) {
+            add(Intent(Settings.ACTION_NFC_SETTINGS))
+            launchPreferenceIntent?.let { add(it) }
+        } else {
+            launchPreferenceIntent?.let { add(it) }
+            add(Intent("android.settings.MANAGE_SPECIAL_APP_ACCESSES"))
+            add(Intent(Settings.ACTION_NFC_SETTINGS))
+        }
+
+        add(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = "package:${context.packageName}".toUri()
+        })
+    }
 
     private fun readTagIntentPreference(context: Context, adapter: NfcAdapter): State? {
         val packageName = context.packageName

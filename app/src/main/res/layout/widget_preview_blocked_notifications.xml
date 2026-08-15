@@ -2,44 +2,44 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/widget_scanner_surface"
-    android:gravity="center_vertical"
     android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@color/widget_scanner_surface"
     android:padding="14dp">
 
     <ImageView
         android:layout_width="34dp"
         android:layout_height="34dp"
         android:background="@color/widget_scanner_button_surface"
-        android:contentDescription="@null"
         android:padding="7dp"
+        android:contentDescription="@null"
         android:src="@drawable/widget_notifications_24" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
         android:layout_weight="1"
+        android:layout_marginStart="12dp"
         android:orientation="vertical">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
             android:text="@string/widget_blocked_notifications_name"
             android:textColor="@color/widget_scanner_title"
             android:textSize="13sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:ellipsize="end"
-            android:maxLines="1"
             android:text="@string/widget_blocked_notifications_preview_row"
             android:textColor="@color/widget_scanner_text"
-            android:textSize="11sp" />
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
     </LinearLayout>
 </LinearLayout>

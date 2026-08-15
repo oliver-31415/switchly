@@ -201,7 +201,9 @@ class AppWebsiteUsageActivity : AppCompatActivity() {
             limitBadgeProvider = { item ->
                 if (isWebMode) websiteLimitBadge(item) else appLimitBadge(item)
             },
-            usageMetricsProvider = null
+            usageMetricsProvider = { item ->
+                if (isWebMode) null else currentMetricsByPackage[item.packageName]
+            }
         )
 
         adapter.setDetailsCtaEnabled(true)
@@ -278,36 +280,65 @@ class AppWebsiteUsageActivity : AppCompatActivity() {
         return appLimitBadgeParts(profile, item.packageName).takeIf { it.isNotEmpty() }?.joinToString(" • ")
     }
 
-    private fun buildAppUsageMetrics(pkg: String, range: Range): AppUsageMetrics? {
-        val opens = when (range) {
-            Range.TODAY -> OpenCountStore.getTodayAllProfiles(this, pkg)
-            Range.WEEK -> OpenCountStore.getForCurrentWeekAllProfiles(this, pkg)
-            Range.MONTH -> OpenCountStore.getForCurrentMonthAllProfiles(this, pkg)
-            Range.YEAR -> OpenCountStore.getForCurrentYearAllProfiles(this, pkg)
-            Range.CUSTOM -> return null
+    private fun buildAppUsageMetricsMap(
+        packages: Set<String>,
+        range: Range,
+    ): Map<String, AppUsageMetrics> {
+        if (packages.isEmpty()) {
+            return emptyMap()
         }
-        val attempts = when (range) {
-            Range.TODAY -> BlockAttemptStore.getToday(this, pkg)
-            Range.WEEK -> BlockAttemptStore.getForCurrentWeek(this, pkg)
-            Range.MONTH -> BlockAttemptStore.getForCurrentMonth(this, pkg)
-            Range.YEAR -> BlockAttemptStore.getForCurrentYear(this, pkg)
-            Range.CUSTOM -> return null
+        val (startMs, endMs) = rangeBounds(range) ?: return emptyMap()
+        val opensByPackage = OpenCountStore.getMapForDateRangeAllProfiles(this, startMs, endMs)
+        val blocksByPackage = BlockAttemptStore.getMapForDateRange(this, startMs, endMs)
+
+        return packages.associateWith { packageName ->
+            val opens = opensByPackage[packageName] ?: 0
+            val blocks = blocksByPackage[packageName] ?: 0
+            AppUsageMetrics(
+                opensLabel = if (opens <= 0) {
+                    getString(R.string.usage_opens_zero)
+                } else {
+                    resources.getQuantityString(R.plurals.opens_format, opens, opens)
+                },
+                attemptsLabel = if (blocks <= 0) {
+                    getString(R.string.usage_attempts_zero)
+                } else {
+                    resources.getQuantityString(R.plurals.attempts_format, blocks, blocks)
+                }
+            )
         }
-        if (opens <= 0 && attempts <= 0) {
-            return null
+    }
+
+    private fun rangeBounds(range: Range): Pair<Long, Long>? {
+        val now = Calendar.getInstance()
+        val endMs = now.timeInMillis
+        val start = Calendar.getInstance().apply {
+            timeInMillis = endMs
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
-        return AppUsageMetrics(
-            opensLabel = if (opens <= 0) {
-                getString(R.string.usage_opens_zero)
-            } else {
-                resources.getQuantityString(R.plurals.opens_format, opens, opens)
-            },
-            attemptsLabel = if (attempts <= 0) {
-                getString(R.string.usage_attempts_zero)
-            } else {
-                resources.getQuantityString(R.plurals.attempts_format, attempts, attempts)
+
+        when (range) {
+            Range.TODAY -> Unit
+            Range.WEEK -> {
+                val daysSinceWeekStart =
+                    (7 + (start.get(Calendar.DAY_OF_WEEK) - start.firstDayOfWeek)) % 7
+                start.add(Calendar.DAY_OF_YEAR, -daysSinceWeekStart)
             }
-        )
+            Range.MONTH -> start.set(Calendar.DAY_OF_MONTH, 1)
+            Range.YEAR -> {
+                start.set(Calendar.MONTH, Calendar.JANUARY)
+                start.set(Calendar.DAY_OF_MONTH, 1)
+            }
+            Range.CUSTOM -> {
+                val customStart = customRangeStartMillis ?: return null
+                val customEnd = customRangeEndMillis ?: return null
+                return customStart to customEnd
+            }
+        }
+        return start.timeInMillis to endMs
     }
 
     private fun appLimitBadgeParts(profile: String, packageName: String): List<String> {
@@ -630,9 +661,11 @@ class AppWebsiteUsageActivity : AppCompatActivity() {
                 addAll(AttemptLimitStore.getAllLimitedPackages(this@AppWebsiteUsageActivity, profile))
             }
         }
-        val metrics = summary.topApps.mapNotNull { item ->
-            buildAppUsageMetrics(item.packageName, range)?.let { item.packageName to it }
-        }.toMap()
+        val metricPackages = buildSet {
+            addAll(summary.topApps.map { it.packageName })
+            addAll(blockedSet)
+        }
+        val metrics = buildAppUsageMetricsMap(metricPackages, range)
         return RefreshData(
             summary = summary,
             hasAccessibility = hasA11y,

@@ -43,9 +43,8 @@ object UsageHistoryBackfill {
         if (!UsageStatsRepo.hasUsageAccess(ctx)) {
             return false
         }
-        // Accessibility-backed local history remains the source of truth. Existing usage totals do
-        // not need to be overwritten, while launch counts and unlock sessions are imported because
-        // older builds depended on Android's short-lived event timeline for those views.
+        // Accessibility-backed local history remains the source of truth.
+        // Existing usage totals do not need to be overwritten, while launch counts and unlock sessions are imported because older builds depended on Android's short-lived event timeline for those views.
         val importUsage = !UsageStore.hasAnyUsageData(ctx)
         val result = runCatching { backfillFromSystem(ctx, importUsage) }
         if (result.isFailure) {
