@@ -20,10 +20,11 @@
     <!-- Welcome and core concept -->
     <!-- ====================================================== -->
     <string name="onb_welcome_title">Willkommen bei Switchly</string>
-    <string name="onb_welcome_desc">Erstelle ein Setup, das dort zusätzliche Hürden schafft, wo du sie brauchst, ohne das ganze Smartphone umständlicher zu machen.</string>
-    <string name="onb_core_point_choose">Wähle Apps, Webseiten und In-App-Inhalte, die jedes Profil verwalten soll.</string>
-    <string name="onb_core_point_control">Steuere den Schutz mit Buttons, Zeitplänen, NFC, QR, Barcodes, Widgets oder Kacheln.</string>
-
+    <string name="onb_welcome_desc">Wähle, was geschützt wird, entscheide, welche Steuerungen den Schutz ändern dürfen, und lass Switchly diese Regeln beibehalten.</string>
+    <string name="onb_core_point_choose">Wähle Apps, Websites und unterstützte In-App-Bereiche, die jedes Profil schützen soll.</string>
+    <string name="onb_core_point_control">Wähle die Steuerkanäle, denen du vertraust: NFC, Zeitpläne, QR, Barcode oder manuelle Steuerung.</string>
+    <string name="onb_core_point_enforce">Temporäre Aktionen enden automatisch, während geschützte Einstellungen bei aktivem Schutz schreibgeschützt bleiben.</string>
+    
     <!-- ====================================================== -->
     <!-- Usage report onboarding step -->
     <!-- ====================================================== -->
@@ -67,12 +68,12 @@
     <!-- ====================================================== -->
     <!-- Blocking controls -->
     <!-- ====================================================== -->
-    <string name="onb_controls_title">Auswählen, wie blockiert wird</string>
-    <string name="onb_controls_desc">Lege fest, wie streng Switchly sein soll, während die Blockierung aktiv ist. Du kannst einfach starten und später strenger werden.</string>
+    <string name="onb_controls_title">Wähle, was den Schutz ändern darf</string>
+    <string name="onb_controls_desc">Nur die erlaubten Steuerkanäle dürfen den Schutz ändern. Starte einfach und erhöhe die Hürde später, wenn du möchtest.</string>
     <string name="onb_controls_action">Modus auswählen</string>
     <string name="onb_controls_selected">Modus ausgewählt</string>
-    <string name="onb_controls_point_enable_disable">Wähle, welche Aktionen Switchly aktivieren oder deaktivieren dürfen.</string>
-    <string name="onb_controls_point_lock_edits">Schränke Profil-, Zeitplan- oder App-Listen-Änderungen während aktiver Blockierung ein.</string>
+    <string name="onb_controls_point_enable_disable">Erlaube nur die gewünschten Wege: NFC, Zeitpläne, QR, Barcode oder manuelle Steuerung.</string>
+    <string name="onb_controls_point_lock_edits">Schutzbezogene Änderungen bleiben schreibgeschützt, solange Switchly aktiv ist.</string>
     <string name="onb_required_controls">Bitte wähle zuerst aus, wie Switchly gesteuert werden soll.</string>
 
     <!-- ====================================================== -->
@@ -124,10 +125,10 @@
     <!-- Ready to start -->
     <!-- ====================================================== -->
     <string name="onb_start_title">Bereit zum Start</string>
-    <string name="onb_start_desc_clean">Prüfe deine Einrichtung und starte Switchly. Profile, Steuerung, Home, Regeln und mehr kannst du später weiterhin in den Einstellungen anpassen.</string>
+    <string name="onb_start_desc_clean">Prüfe, was geschützt ist, welche Steuerungen es ändern dürfen und ob die nötigen Berechtigungen bereit sind. Den Rest kannst du später in den Einstellungen anpassen.</string>
     <string name="onb_start_test_toast">Switchly aktiviert. Öffne eine blockierte App, um es zu testen.</string>
     <string name="onb_review_profile_title">Profil</string>
-    <string name="onb_review_mode_title">Modus</string>
+    <string name="onb_review_mode_title">Erlaubte Steuerung</string>
 
     <!-- ====================================================== -->
     <!-- Selected apps review -->
@@ -142,7 +143,7 @@
     <string name="onb_review_app_selected_content_description">%1$s ausgewählt. Tippen, um das Häkchen zu entfernen.</string>
     <string name="onb_review_app_unselected_content_description">%1$s nicht ausgewählt. Tippen, um die App auszuwählen.</string>
     <string name="onb_review_apps_change">Apps hinzufügen oder ändern</string>
-    <string name="onb_keep_one_app">Lass mindestens eine App ausgewählt, um das Setup abzuschließen.</string>
+    <string name="onb_keep_one_app">Lass mindestens eine App ausgewählt, um die Einrichtung abzuschließen.</string>
 
     <!-- ====================================================== -->
     <!-- Generic fallback and required state -->
@@ -152,7 +153,7 @@
     <string name="onb_page_desc_placeholder">Beschreibung</string>
 
     <string name="onb_home_customize_title">Dein Home-Layout wählen</string>
-    <string name="onb_home_customize_desc">Wähle einen Home-Modus oder ordne mit Custom Karten und Inhalte selbst an.</string>
+    <string name="onb_home_customize_desc">Wähle einen Startseitenmodus oder ordne Karten und Inhalte selbst an.</string>
     <!-- ====================================================== -->
     <!-- Usage-Ladevorgang und Home-Modus-Auswahl -->
     <!-- ====================================================== -->
@@ -166,31 +167,31 @@
     <!-- ====================================================== -->
     <string name="onb_optional_setup_action">Optionale Einrichtung ansehen</string>
     <string name="onb_optional_hidden_apps_title">Ausgeblendete Apps</string>
-    <string name="onb_optional_hidden_apps_desc">Blende Apps aus Nutzung &amp; Einblicke oder aus dem App Picker aus.</string>
+    <string name="onb_optional_hidden_apps_desc">Blende Apps aus Nutzung &amp; Einblicke oder aus der App-Auswahl aus.</string>
     <string name="onb_optional_home_modes_title">Home-Modi</string>
-    <string name="onb_optional_home_modes_desc">Wähle Default, Custom, Simple oder Advanced Home.</string>
+    <string name="onb_optional_home_modes_desc">Wähle Standard, Benutzerdefiniert, Einfach oder Erweitert.</string>
     <string name="onb_optional_display_title">Widgets &amp; Shortcuts</string>
-    <string name="onb_optional_display_desc">Füge Android-Schnelleinstellungen und Home-Screen-Widgets hinzu.</string>
+    <string name="onb_optional_display_desc">Füge Android-Schnelleinstellungen und Startseiten-Widgets hinzu.</string>
     <string name="onb_optional_app_lock_title">App-Sperre &amp; Deinstallationsschutz</string>
-    <string name="onb_optional_app_lock_desc">Schütze den Zugriff auf Switchly und aktiviere optional den Geräteadmin-Deinstallationsschutz.</string>
+    <string name="onb_optional_app_lock_desc">Schütze den Zugriff auf Switchly und füge optional Deinstallationshürden hinzu. Erweiterter Managed-Device-Schutz bleibt eine separate technische Einrichtung.</string>
     <string name="onb_optional_feature_access_title">Funktionszugriff</string>
     <string name="onb_optional_feature_access_desc">Lege fest, was bei aktivem Schutz erreichbar bleibt, und prüfe erweiterte Steuerungen.</string>
     <string name="onb_optional_faq_title">FAQ &amp; Einrichtungshilfe</string>
-    <string name="onb_optional_faq_desc">Behebe die Hintergrundbeschränkungen, durch die Blocking, Zeitpläne oder Statistiken oft ausfallen – besonders bei Xiaomi, Redmi und POCO.</string>
+    <string name="onb_optional_faq_desc">Behebe Hintergrundbeschränkungen, durch die Schutz, Zeitpläne oder Statistiken ausfallen können – besonders bei Xiaomi, Redmi und POCO.</string>
     <string name="onb_optional_support_title">Entwickler kontaktieren</string>
     <string name="onb_optional_support_desc">Sende eine Supportanfrage und hänge bei Fehlern die generierten Logs und Geräteinformationen an.</string>
 
     <!-- Vorschauen für die optionale Einrichtung -->
     <string name="onb_optional_hidden_usage_row_title">Nutzung &amp; Einblicke</string>
     <string name="onb_optional_hidden_usage_row_desc">Blende ausgewählte Apps aus Nutzungsberichten und Ranglisten aus.</string>
-    <string name="onb_optional_hidden_picker_row_title">App Picker</string>
+    <string name="onb_optional_hidden_picker_row_title">App-Auswahl</string>
     <string name="onb_optional_hidden_picker_row_desc">Blende ausgewählte Apps aus App-Auswahllisten aus.</string>
     <string name="onb_optional_hidden_count">Ausgeblendet: %1$d</string>
     <string name="onb_optional_home_mode_tap">Tippen zum Auswählen</string>
     <string name="onb_optional_display_tiles_title">Schnelleinstellungen</string>
     <string name="onb_optional_display_tiles_desc">Füge Schalter sowie QR- und Barcode-Scanner zu Androids Schnelleinstellungen hinzu.</string>
     <string name="onb_optional_display_widgets_title">Android-Widgets</string>
-    <string name="onb_optional_display_widgets_desc">Füge Scanner-, Zeitplan-, Timer- und Benachrichtigungs-Widgets zum Home Screen hinzu.</string>
+    <string name="onb_optional_display_widgets_desc">Füge Scanner-, Zeitplan-, Timer- und Benachrichtigungs-Widgets zur Startseite hinzu.</string>
     <string name="onb_optional_app_lock_row_title">Switchly-App-Sperre</string>
     <string name="onb_optional_app_lock_row_desc">Verlange PIN oder Biometrie, bevor Switchly geöffnet werden kann.</string>
     <string name="onb_optional_uninstall_row_title">Deinstallationsschutz</string>

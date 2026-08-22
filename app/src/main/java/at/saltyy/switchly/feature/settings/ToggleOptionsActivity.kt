@@ -67,6 +67,7 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.applySwitchlyStyle
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
@@ -88,7 +89,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
 
     private lateinit var cardNfcLockedHint: MaterialCardView
     private lateinit var btnNfcLockedHowTo: ImageButton
-    private lateinit var btnInfoEnablePairedUids: ImageButton
     private val accentSwitches = mutableListOf<SwitchMaterial>()
     private val detailButtons = mutableListOf<ImageButton>()
     private var ignoreControlModeListener = false
@@ -131,38 +131,17 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         cardNfcLockedHint = findViewById(R.id.cardNfcLockedHint)
         btnNfcLockedHowTo = findViewById(R.id.btnNfcLockedHowTo)
 
-        btnInfoEnablePairedUids = findViewById(R.id.btnInfoEnablePairedUids)
-
         findViewById<MaterialButton>(R.id.btnOpenFaqTips).setOnClickListener {
             startActivity(Intent(this, FaqActivity::class.java))
         }
 
         // Info icon should follow the selected accent color.
         tintInfoIcon(btnNfcLockedHowTo)
-        tintInfoIcon(btnInfoEnablePairedUids)
 
         btnNfcLockedHowTo.setOnClickListener {
             val dialog = MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.toggle_locked_nfc_action)
                 .setMessage(R.string.toggle_locked_nfc_howto)
-                .setPositiveButton(R.string.ok, null)
-                .create()
-            dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
-            dialog.show()
-        }
-
-        btnInfoEnablePairedUids.setOnClickListener {
-            val dialog = MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.toggle_info_paired_uids_title)
-                .setMessage(
-                    if (PreferenceManager.getDefaultSharedPreferences(this)
-                            .getBoolean(BlockingToggleKeys.KEY_ENABLE_PAIRED_UIDS, false)
-                    ) {
-                        R.string.toggle_info_paired_uids_body_enabled
-                    } else {
-                        R.string.toggle_info_paired_uids_body_disabled
-                    }
-                )
                 .setPositiveButton(R.string.ok, null)
                 .create()
             dialog.setOnShowListener { dialog.styleSwitchlyDialogButtons() }
@@ -202,6 +181,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val switchEmergency = findViewById<SwitchMaterial>(R.id.switchEmergency)
         val switchShowQuickActions = findViewById<SwitchMaterial>(R.id.switchShowQuickActions)
         val switchShowTemporaryMode = findViewById<SwitchMaterial>(R.id.switchShowTemporaryMode)
+        val switchLockActiveTemporaryTimer = findViewById<SwitchMaterial>(R.id.switchLockActiveTemporaryTimer)
         val switchShowActiveDuration = findViewById<SwitchMaterial>(R.id.switchShowActiveDuration)
         val switchShowEmergencyUnlock = findViewById<SwitchMaterial>(R.id.switchShowEmergencyUnlock)
         val switchPersistentStatusNotification = findViewById<SwitchMaterial>(R.id.switchPersistentStatusNotification)
@@ -238,8 +218,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val rowQuickTile = findViewById<View>(R.id.rowQuickTile)
         val rowQrQuickTile = findViewById<View>(R.id.rowQrQuickTile)
         val rowBarcodeQuickTile = findViewById<View>(R.id.rowBarcodeQuickTile)
-        val dividerAfterQrQuickTile = findViewById<View>(R.id.dividerAfterQrQuickTile)
-        val dividerAfterBarcodeQuickTile = findViewById<View>(R.id.dividerAfterBarcodeQuickTile)
 
         val rowBlockNotifs = findViewById<View>(R.id.rowBlockNotifications)
         val rowAutostart = findViewById<View>(R.id.rowAutostart)
@@ -248,6 +226,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val dividerBeforeEmergency = findViewById<View>(R.id.dividerAfterAutostart)
         val rowShowQuickActions = findViewById<View>(R.id.rowShowQuickActions)
         val rowShowTemporaryMode = findViewById<View>(R.id.rowShowTemporaryMode)
+        val rowLockActiveTemporaryTimer = findViewById<View>(R.id.rowLockActiveTemporaryTimer)
         val rowShowEmergencyUnlock = findViewById<View>(R.id.rowShowEmergencyUnlock)
         val rowPersistentStatusNotification = findViewById<View>(R.id.rowPersistentStatusNotification)
         val rowPersistentStatusNotificationMode = findViewById<View>(R.id.rowPersistentStatusNotificationMode)
@@ -268,13 +247,6 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         val rowEnablePairedUids = findViewById<View>(R.id.rowEnablePairedUids)
         val rowAutoPairOnWrite = findViewById<View>(R.id.rowAutoPairOnWrite)
         val accent = AccentColor.getAccentColorInt(this)
-        val green = ContextCompat.getColor(this, R.color.accent_green)
-        val blue = ContextCompat.getColor(this, R.color.accent_blue)
-        val teal = ContextCompat.getColor(this, R.color.accent_teal)
-        val purple = ContextCompat.getColor(this, R.color.accent_purple)
-        val orange = ContextCompat.getColor(this, R.color.accent_orange)
-        val amber = ContextCompat.getColor(this, R.color.accent_amber)
-        val gray = ContextCompat.getColor(this, R.color.accent_gray)
         tintLeadingIcon(rowModeSchedule, accent)
         tintLeadingIcon(rowModeNfc, accent)
         tintLeadingIcon(rowModeQr, accent)
@@ -299,6 +271,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         tintLeadingIcon(rowEmergency, accent)
         tintLeadingIcon(rowShowQuickActions, accent)
         tintLeadingIcon(rowShowTemporaryMode, accent)
+        tintLeadingIcon(rowLockActiveTemporaryTimer, accent)
         tintLeadingIcon(rowShowEmergencyUnlock, accent)
         tintLeadingIcon(rowPersistentStatusNotification, accent)
         tintLeadingIcon(rowPersistentStatusNotificationMode, accent)
@@ -489,6 +462,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
             switchEmergency,
             switchShowQuickActions,
             switchShowTemporaryMode,
+            switchLockActiveTemporaryTimer,
             switchShowActiveDuration,
             switchShowEmergencyUnlock,
             switchPersistentStatusNotification,
@@ -518,6 +492,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         switchEmergency.isChecked = EmergencyBypassStore.isFeatureEnabled(ctx)
         switchShowQuickActions.isChecked = sp.getBoolean(KEY_SHOW_QUICK_ACTIONS, true)
         switchShowTemporaryMode.isChecked = sp.getBoolean(KEY_SHOW_TEMPORARY_MODE, true)
+        switchLockActiveTemporaryTimer.isChecked = sp.getBoolean(KEY_LOCK_ACTIVE_TEMPORARY_TIMER, true)
         switchShowActiveDuration.isChecked = sp.getBoolean(KEY_SHOW_ACTIVE_DURATION, true)
         switchShowEmergencyUnlock.isChecked = sp.getBoolean(KEY_SHOW_EMERGENCY_UNLOCK, true)
         switchPersistentStatusNotification.isChecked = PersistentStatusNotifier.isEnabled(ctx)
@@ -858,7 +833,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                     findViewById(android.R.id.content),
                     getString(R.string.qs_tile_add_hint),
                     Snackbar.LENGTH_LONG
-                ).show()
+                ).applySwitchlyStyle().show()
             }
         }
         val requestQrQuickTile: () -> Unit = {
@@ -870,7 +845,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                     findViewById(android.R.id.content),
                     getString(R.string.qr_qs_tile_add_hint),
                     Snackbar.LENGTH_LONG
-                ).show()
+                ).applySwitchlyStyle().show()
             }
         }
 
@@ -883,7 +858,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                     findViewById(android.R.id.content),
                     getString(R.string.barcode_qs_tile_add_hint),
                     Snackbar.LENGTH_LONG
-                ).show()
+                ).applySwitchlyStyle().show()
             }
         }
 
@@ -894,7 +869,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                     findViewById(android.R.id.content),
                     getString(R.string.widget_pin_not_supported),
                     Snackbar.LENGTH_LONG
-                ).show()
+                ).applySwitchlyStyle().show()
                 return
             }
 
@@ -904,7 +879,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 findViewById(android.R.id.content),
                 getString(R.string.widget_pin_requested),
                 Snackbar.LENGTH_SHORT
-            ).show()
+            ).applySwitchlyStyle().show()
         }
 
         rowQuickTile.setOnClickListener {
@@ -934,6 +909,9 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         rowShowQuickActions.setOnClickListener { switchShowQuickActions.toggle() }
         rowShowTemporaryMode.setOnClickListener {
             if (canEditActiveAccess()) switchShowTemporaryMode.toggle()
+        }
+        rowLockActiveTemporaryTimer.setOnClickListener {
+            if (canEditActiveAccess()) switchLockActiveTemporaryTimer.toggle()
         }
         findViewById<View>(R.id.rowShowActiveDuration).setOnClickListener {
             if (canEditActiveAccess()) switchShowActiveDuration.toggle()
@@ -1094,6 +1072,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                             }
                         }
                     }
+                    .applySwitchlyStyle()
                     .show()
             }
         }
@@ -1136,6 +1115,17 @@ open class ToggleOptionsActivity : AppCompatActivity() {
                 return@setOnCheckedChangeListener
             }
             sp.edit { putBoolean(KEY_SHOW_TEMPORARY_MODE, isChecked) }
+        }
+
+        switchLockActiveTemporaryTimer.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (updatingUi) return@setOnCheckedChangeListener
+            if (!canEditActiveAccess()) {
+                updatingUi = true
+                buttonView.isChecked = sp.getBoolean(KEY_LOCK_ACTIVE_TEMPORARY_TIMER, true)
+                updatingUi = false
+                return@setOnCheckedChangeListener
+            }
+            sp.edit { putBoolean(KEY_LOCK_ACTIVE_TEMPORARY_TIMER, isChecked) }
         }
         switchShowActiveDuration.setOnCheckedChangeListener { buttonView, isChecked ->
             if (!canEditActiveAccess()) {
@@ -2034,6 +2024,7 @@ open class ToggleOptionsActivity : AppCompatActivity() {
         const val KEY_SHOW_NEXT_SCHEDULE = "pref_show_next_schedule"
         const val KEY_SHOW_QUICK_ACTIONS = "pref_show_quick_actions"
         const val KEY_SHOW_TEMPORARY_MODE = "pref_show_temporary_mode"
+        const val KEY_LOCK_ACTIVE_TEMPORARY_TIMER = "pref_lock_active_temporary_timer"
         const val KEY_SHOW_ACTIVE_DURATION = "pref_show_active_duration"
         const val KEY_SHOW_EMERGENCY_UNLOCK = "pref_show_emergency_unlock"
         const val KEY_HOME_LAYOUT_DETAILED = "home_layout_detailed"

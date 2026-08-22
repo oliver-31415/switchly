@@ -72,7 +72,6 @@ import at.saltyy.switchly.ui.SwitchlyDropdownAdapter
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
-import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.shape.MaterialShapeDrawable
@@ -719,7 +718,6 @@ class NfcWriterActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle(R.string.nfc_action_info_title)
             .setView(scroll)
-            .setNeutralButton(R.string.store_open) { _, _ -> SwitchlyStoreLinks.openStore(this) }
             .setPositiveButton(R.string.ok, null)
             .showAccented()
     }
@@ -778,11 +776,6 @@ class NfcWriterActivity : AppCompatActivity() {
                 sampleMinutes,
                 sampleMinutes,
             ) + "\n" + getString(R.string.nfc_action_desc_temp_enable_ask),
-        )
-
-        addItem(
-            getString(R.string.store_card_title),
-            getString(R.string.store_card_summary),
         )
 
         sb.append(getString(R.string.pref_limit_temp_disable_tags_summary))

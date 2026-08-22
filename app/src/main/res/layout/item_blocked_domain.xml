@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rowRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="3dp"
     android:layout_marginBottom="3dp"
+    android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:strokeColor="@color/switchly_card_stroke"
-    app:strokeWidth="1dp"
     app:cardBackgroundColor="@color/switchly_card_bg"
     app:cardCornerRadius="18dp"
     app:cardElevation="1dp"
-    app:cardUseCompatPadding="false">
+    app:cardUseCompatPadding="false"
+    app:strokeColor="@color/switchly_card_stroke"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -86,8 +87,8 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginStart="6dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="7dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/set_daily_limit"
             app:srcCompat="@drawable/schedule_24"
             app:tint="?attr/colorPrimary" />

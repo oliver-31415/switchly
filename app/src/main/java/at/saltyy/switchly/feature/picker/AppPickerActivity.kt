@@ -61,7 +61,10 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.SegmentedToggleUi
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.applySwitchlyStyle
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.SwitchlyInfoRow
+import at.saltyy.switchly.ui.dialog.showSwitchlyInfoDialog
 import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.util.ActivityTransitionCompat
@@ -180,20 +183,6 @@ class AppPickerActivity : AppCompatActivity() {
                 setColorFilter(toolbarIconColor)
             }
             setOnClickListener { showAppRulesInfo() }
-        }
-        findViewById<ImageButton>(R.id.btnAutoBlockNewAppsInfo).apply {
-            val surfaceIconColor = MaterialColors.getColor(
-                this,
-                com.google.android.material.R.attr.colorOnSurface,
-                Color.BLACK
-            )
-            imageTintList = ColorStateList.valueOf(surfaceIconColor)
-            setColorFilter(surfaceIconColor)
-            post {
-                imageTintList = ColorStateList.valueOf(surfaceIconColor)
-                setColorFilter(surfaceIconColor)
-            }
-            setOnClickListener { showAutoBlockNewAppsInfo() }
         }
         autoBlockNewAppsCheckbox = cbAutoBlockNewApps
 
@@ -503,23 +492,53 @@ class AppPickerActivity : AppCompatActivity() {
 
             if (requested == currentRuleMode) return@addOnButtonCheckedListener
 
-            saveCurrentModeSelection(activeProfile)
-            currentRuleMode = requested
-            ProfileRuleModeStore.setMode(this, activeProfile, requested)
-            adapter.replaceManagedPackages(
-                AppBlockSafety.sanitizeManagedPackages(this, selectedPackagesForCurrentMode(activeProfile))
-            )
-            applyProfileRuleModeUi(
-                toggleProfileRuleMode,
-                btnBlockSelectedMode,
-                btnAllowSelectedMode,
-                tvProfileRuleModeSummary,
-                cbAutoBlockNewApps,
-                toolbar,
-                btnSelectAll,
-                btnClearAll
-            )
-            BlockingRuntime.ensureRunning(this)
+            fun applyRequestedMode() {
+                saveCurrentModeSelection(activeProfile)
+                currentRuleMode = requested
+                ProfileRuleModeStore.setMode(this, activeProfile, requested)
+                adapter.replaceManagedPackages(
+                    AppBlockSafety.sanitizeManagedPackages(this, selectedPackagesForCurrentMode(activeProfile))
+                )
+                applyProfileRuleModeUi(
+                    toggleProfileRuleMode,
+                    btnBlockSelectedMode,
+                    btnAllowSelectedMode,
+                    tvProfileRuleModeSummary,
+                    cbAutoBlockNewApps,
+                    toolbar,
+                    btnSelectAll,
+                    btnClearAll
+                )
+                BlockingRuntime.ensureRunning(this)
+            }
+
+            if (requested == ProfileRuleModeStore.MODE_ALLOW_SELECTED) {
+                group.check(R.id.btnBlockSelectedMode)
+                val allowedCount = ProfileStore.getAllowedForProfile(this, activeProfile).size
+                val blockedCount = (adapter.itemCount - allowedCount).coerceAtLeast(0)
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.app_allow_mode_preview_title)
+                    .setMessage(
+                        getString(
+                            R.string.app_allow_mode_preview_body,
+                            resources.getQuantityString(
+                                R.plurals.app_allow_mode_preview_blocked_count,
+                                blockedCount,
+                                blockedCount,
+                            ),
+                            resources.getQuantityString(
+                                R.plurals.app_allow_mode_preview_allowed_count,
+                                allowedCount,
+                                allowedCount,
+                            ),
+                        )
+                    )
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.app_allow_mode_preview_action) { _, _ -> applyRequestedMode() }
+                    .showAccented()
+            } else {
+                applyRequestedMode()
+            }
         }
 
         applyProfileRuleModeUi(
@@ -629,27 +648,26 @@ class AppPickerActivity : AppCompatActivity() {
 
         cbAutoBlockNewApps.isEnabled = !isAllow && !currentProfile.isNullOrBlank()
         cbAutoBlockNewApps.isChecked = !isAllow && (currentProfile?.let { ProfileStore.isAutoBlockNewAppsEnabled(this, it) } ?: false)
-        cbAutoBlockNewApps.alpha = if (isAllow) 0.55f else 1f
+        val autoBlockAlpha = if (isAllow) 0.55f else 1f
+        cbAutoBlockNewApps.alpha = autoBlockAlpha
+        findViewById<TextView>(R.id.tvAutoBlockNewAppsSummary)?.alpha = autoBlockAlpha
     }
 
     private fun normalizeDialogBreaks(text: String): String =
         text.replace("/n", "\n").replace("\\n", "\n")
 
     private fun showAppRulesInfo() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.app_rules_info_title)
-            .setMessage(normalizeDialogBreaks(getString(R.string.app_rules_info_body)))
-            .setPositiveButton(android.R.string.ok, null)
-            .showAccented()
+        showSwitchlyInfoDialog(
+            title = getString(R.string.app_rules_info_title),
+            rows = listOf(
+                SwitchlyInfoRow(
+                    label = getString(R.string.app_rules_info_title),
+                    value = normalizeDialogBreaks(getString(R.string.app_rules_info_body)),
+                ),
+            ),
+        )
     }
 
-    private fun showAutoBlockNewAppsInfo() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.app_picker_auto_block_new_apps_info_title)
-            .setMessage(normalizeDialogBreaks(getString(R.string.app_picker_auto_block_new_apps_info_body)))
-            .setPositiveButton(android.R.string.ok, null)
-            .showAccented()
-    }
 
     private fun setupSearch(etSearch: TextInputEditText) {
         etSearch.addTextChangedListener(object : TextWatcher {
@@ -749,6 +767,7 @@ class AppPickerActivity : AppCompatActivity() {
     private fun showPickerNotice(anchor: View, message: CharSequence) {
         Snackbar.make(anchor, message, Snackbar.LENGTH_LONG)
             .setAnchorView(anchor)
+            .applySwitchlyStyle()
             .show()
     }
 

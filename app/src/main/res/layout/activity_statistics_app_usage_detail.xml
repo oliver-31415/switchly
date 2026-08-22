@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -25,8 +26,8 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
         android:padding="16dp"
+        android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -58,19 +59,19 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginStart="14dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
                             android:id="@+id/detailTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:maxLines="2"
-                            android:ellipsize="end"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="20sp"
                             android:textStyle="bold"
+                            android:maxLines="2"
+                            android:ellipsize="end"
                             tools:text="YouTube" />
 
                         <TextView
@@ -89,9 +90,9 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:layout_marginStart="8dp"
+                        android:padding="12dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/edit_limits"
-                        android:padding="12dp"
                         app:srcCompat="@drawable/tune_24"
                         app:tint="?attr/colorOnSurface" />
                 </LinearLayout>
@@ -156,10 +157,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
+                android:alpha="0.7"
                 android:text=""
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="12sp"
-                android:alpha="0.7" />
+                android:textSize="12sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -174,9 +175,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:foreground="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
                     app:cardUseCompatPadding="true">
 
                     <LinearLayout
@@ -188,10 +189,10 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:alpha="0.7"
                             android:text="@string/limit_time_action"
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="12sp"
-                            android:alpha="0.7" />
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/tvDailyLimitValue"
@@ -215,9 +216,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:foreground="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
                     app:cardUseCompatPadding="true">
 
                     <LinearLayout
@@ -229,10 +230,10 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:alpha="0.7"
                             android:text="@string/limit_attempts_action"
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="12sp"
-                            android:alpha="0.7" />
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/tvDailyAttemptLimitValue"
@@ -252,9 +253,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:alpha="0.7"
                 android:text="@string/limits_quick_edit_hint"
-                android:textColor="?attr/colorOnSurface"
-                android:alpha="0.7" />
+                android:textColor="?attr/colorOnSurface" />
 
             <LinearLayout
                 android:id="@+id/sessionLimitContainer"
@@ -268,23 +269,23 @@
                     android:id="@+id/sessionLimitLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:alpha="0.88"
                     android:text="@string/session_limit_current_label"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:alpha="0.88" />
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/sessionLimitSummary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
+                    android:alpha="0.78"
                     android:text=""
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="12sp"
                     android:maxLines="1"
-                    android:ellipsize="end"
-                    android:alpha="0.78" />
+                    android:ellipsize="end" />
 
                 <ProgressBar
                     android:id="@+id/sessionLimitProgress"
@@ -351,8 +352,8 @@
                     android:layout_height="40dp"
                     android:minWidth="0dp"
                     android:gravity="center"
-                    android:text=""
                     android:contentDescription="@string/activity_history_range_custom"
+                    android:text=""
                     app:icon="@drawable/calendar_month_24"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp" />
@@ -411,9 +412,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_mon"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day2"
@@ -421,9 +422,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_tue"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day3"
@@ -431,9 +432,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_wed"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day4"
@@ -441,9 +442,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_thu"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day5"
@@ -451,9 +452,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_fri"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day6"
@@ -461,9 +462,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_sat"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day7"
@@ -471,9 +472,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_sun"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -504,10 +505,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
+                        android:alpha="0.82"
                         android:text="@string/usage_launch_stats_loading"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="13sp"
-                        android:alpha="0.82" />
+                        android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -540,10 +541,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
+                        android:alpha="0.75"
                         android:text="@string/usage_timeline_loading"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="13sp"
-                        android:alpha="0.75" />
+                        android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

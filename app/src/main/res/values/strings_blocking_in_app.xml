@@ -7,12 +7,23 @@
     <string name="in_app_rules_title">In-app rules</string>
 
     <string name="in_app_rules_info_title">In-app rules</string>
-    <string name="in_app_rules_info_body">In-app rules are profile-specific and apply only while this profile is active.\n\nRules are active as soon as selected sections exist for this profile. Use Block selected to block only selected sections, or Allow selected to allow selected sections and block the other supported sections for that app. Switchly uses Accessibility to detect supported in-app sections, so app UI changes can affect reliability.\n\nAvailable means the section is supported for the installed app version. Experimental means it works best-effort and may vary by app version, entry point, language, or device. Disabled means the app is not installed or the rule cannot be used right now. Coming soon means the section is listed as a planned rule but is not enforceable yet.</string>
+    <string name="in_app_rules_info_body">In-app rules apply only to the selected profile.\n\nChoose a mode:\n• Block selected: Only selected sections are blocked.\n• Allow selected: Selected sections stay available; other supported sections of that app are blocked.\n\nStatus:\n• Available: Supported for the installed app version.\n• Experimental: May vary by app version, language, entry point, or device.\n• Disabled: The app is not installed or the rule cannot currently be used.\n• Coming soon: Planned, but not yet enforceable.\n\nSwitchly detects these sections using Accessibility. Changes to supported apps can affect detection.</string>
     <string name="in_app_rule_mode_title">In-app rule mode</string>
     <string name="in_app_rule_mode_block">Block selected</string>
     <string name="in_app_rule_mode_allow">Allow selected</string>
     <string name="in_app_rule_mode_block_summary">Switches mark sections that Switchly should block.</string>
-    <string name="in_app_rule_mode_allow_summary">Switches mark sections that stay allowed. Other supported sections for that app are blocked once at least one section is selected.</string>
+    <string name="in_app_rule_mode_allow_summary">Only selected sections stay available. Other supported sections of that app are blocked once at least one section is selected.</string>
+    <string name="in_app_rule_allow_confirm_title">Use Allow selected?</string>
+    <string name="in_app_rule_allow_confirm_body_counted">With the currently installed apps, %1$s and %2$s. Apps without a selected section are not affected.</string>
+    <plurals name="in_app_rule_allow_blocked_count">
+        <item quantity="one">%d supported section will be blocked</item>
+        <item quantity="other">%d supported sections will be blocked</item>
+    </plurals>
+    <plurals name="in_app_rule_allow_allowed_count">
+        <item quantity="one">%d will remain available</item>
+        <item quantity="other">%d will remain available</item>
+    </plurals>
+    <string name="in_app_rule_allow_confirm_action">Use Allow selected</string>
     <string name="in_app_rule_block_surface_fmt">Block %1$s</string>
     <string name="in_app_rule_allow_surface_fmt">Allow %1$s</string>
     <string name="in_app_rules_profile_subtitle">Rules for: %1$s</string>
@@ -37,7 +48,9 @@
     <string name="in_app_surface_spotlight_label">Spotlight</string>
     <string name="in_app_surface_following_label">Following</string>
     <string name="in_app_surface_always_block">Always block</string>
-    <string name="in_app_status_installed">Installed</string>
+    <string name="in_app_app_diagnostic_never">v%1$s · not detected yet</string>
+    <string name="in_app_app_diagnostic_detected">v%1$s · detected %2$s</string>
+    <string name="in_app_app_diagnostic_stale">v%1$s · detection may be outdated</string>
     <string name="in_app_status_supported">Available</string>
     <string name="in_app_status_experimental">Experimental</string>
     <string name="in_app_status_planned">Coming soon</string>

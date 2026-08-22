@@ -48,7 +48,6 @@
     <!-- ====================================================== -->
     <!-- Camera permission and external scanner confirmation -->
     <!-- ====================================================== -->
-    <string name="permission_camera_required">Für das Scannen von QR-Codes ist die Kameraberechtigung erforderlich.</string>
     <string name="external_qr_confirm_title">Switchly-QR-Aktion ausführen?</string>
     <string name="external_qr_confirm_message">Dieser Link wurde von einem externen QR-Scanner geöffnet. Fahre nur fort, wenn du bewusst einen Switchly-QR-Code gescannt hast.</string>
     <string name="external_qr_confirm_action">Aktion ausführen</string>

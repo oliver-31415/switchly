@@ -23,7 +23,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
@@ -42,6 +41,7 @@ import at.saltyy.switchly.data.prefs.QrScanCountStore
 import at.saltyy.switchly.data.prefs.ScanCodeStore
 import at.saltyy.switchly.nfc.InternalScanDispatchGuard
 import at.saltyy.switchly.nfc.NfcEntryActivity
+import at.saltyy.switchly.util.ScanFeedback
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -66,7 +66,13 @@ class QrScanActivity : AppCompatActivity() {
     ) { granted ->
         if (granted) startCamera()
         else {
-            Toast.makeText(this, R.string.permission_camera_required, Toast.LENGTH_SHORT).show()
+            ScanFeedback.error(
+                this,
+                "QR",
+                "permission_missing",
+                getString(R.string.scan_error_camera_permission_qr),
+                long = true,
+            )
             finish()
         }
     }
@@ -98,7 +104,7 @@ class QrScanActivity : AppCompatActivity() {
             return true
         }
         if (!allowDirectOpen() && !AutomationModeStore.isQrAllowed(this)) {
-            Toast.makeText(this, R.string.mode_blocked_qr_action, Toast.LENGTH_SHORT).show()
+            ScanFeedback.error(this, "QR", "control_mode_blocked", getString(R.string.mode_blocked_qr_action))
             return false
         }
         return true
@@ -107,7 +113,11 @@ class QrScanActivity : AppCompatActivity() {
     private fun startCamera() {
         val providerFuture = ProcessCameraProvider.getInstance(this)
         providerFuture.addListener({
-            val provider = providerFuture.get()
+            val provider = runCatching { providerFuture.get() }.getOrElse {
+                ScanFeedback.error(this, "QR", "camera_unavailable", getString(R.string.scan_error_camera_unavailable), long = true)
+                finish()
+                return@addListener
+            }
 
             val preview = Preview.Builder().build().also {
                 it.surfaceProvider = previewView.surfaceProvider
@@ -121,13 +131,18 @@ class QrScanActivity : AppCompatActivity() {
                 analyze(imageProxy)
             }
 
-            provider.unbindAll()
-            provider.bindToLifecycle(
-                this,
-                CameraSelector.DEFAULT_BACK_CAMERA,
-                preview,
-                analysis
-            )
+            runCatching {
+                provider.unbindAll()
+                provider.bindToLifecycle(
+                    this,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    analysis
+                )
+            }.onFailure {
+                ScanFeedback.error(this, "QR", "camera_unavailable", getString(R.string.scan_error_camera_unavailable), long = true)
+                finish()
+            }
         }, ContextCompat.getMainExecutor(this))
     }
 
@@ -173,7 +188,7 @@ class QrScanActivity : AppCompatActivity() {
         }
 
         if (!allowDirectOpen() && !AutomationModeStore.isQrAllowed(this)) {
-            Toast.makeText(this, R.string.mode_blocked_qr_action, Toast.LENGTH_SHORT).show()
+            ScanFeedback.error(this, "QR", "control_mode_blocked", getString(R.string.mode_blocked_qr_action))
             finish()
             return
         }
@@ -192,7 +207,7 @@ class QrScanActivity : AppCompatActivity() {
             return
         }
 
-        Toast.makeText(this, R.string.invalid_qr_code, Toast.LENGTH_SHORT).show()
+        ScanFeedback.error(this, "QR", "not_linked", getString(R.string.scan_error_qr_not_linked))
         finish()
     }
 

@@ -95,6 +95,7 @@ import at.saltyy.switchly.data.prefs.ScheduleRuntimeStore
 import at.saltyy.switchly.data.prefs.ScheduleStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
+import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.SessionLimitStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.UsageLimitStore
@@ -169,8 +170,6 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_PRIMARY_TOGGLE_TAP_COUNT = "primary_toggle_tap_count"
         private const val KEY_QUICK_ACTIONS_EXPANDED = "home_quick_actions_expanded"
         private const val KEY_BLOCKED_APPS_EXPANDED = "home_blocked_apps_expanded"
-        private const val KEY_EXPERIMENTAL_NOTICE_VERSION = "experimental_notice_last_version"
-        private const val EXPERIMENTAL_NOTICE_VERSION = 223
         private const val KEY_BOTTOM_NAV_TOUR_PENDING = "bottom_nav_tour_pending"
         private const val KEY_BOTTOM_NAV_TOUR_VERSION = "bottom_nav_tour_version"
         private const val BOTTOM_NAV_TOUR_VERSION = 1
@@ -311,33 +310,6 @@ class MainActivity : AppCompatActivity() {
     // Live updates: refresh "Blocked now" chips as soon as limits are reached while the app is open.
     private var livePrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
-    private fun showExperimentalFeaturesNoticeIfNeeded() {
-        if (intent.getBooleanExtra(OnboardingActivity.EXTRA_FROM_ONBOARDING, false)) {
-            return
-        }
-
-        val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
-        if (prefs.getIntCompat(KEY_EXPERIMENTAL_NOTICE_VERSION, 0) >= EXPERIMENTAL_NOTICE_VERSION) {
-            return
-        }
-        // Keep the first post-onboarding launch focused on the navigation tour.
-        // The experimental feedback notice appears on the next normal app launch instead.
-        if (prefs.getBoolean(KEY_BOTTOM_NAV_TOUR_PENDING, false)) {
-            return
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.experimental_notice_title)
-            .setMessage(R.string.experimental_notice_body)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                prefs.edit { putInt(KEY_EXPERIMENTAL_NOTICE_VERSION, EXPERIMENTAL_NOTICE_VERSION) }
-            }
-            .setOnCancelListener {
-                prefs.edit { putInt(KEY_EXPERIMENTAL_NOTICE_VERSION, EXPERIMENTAL_NOTICE_VERSION) }
-            }
-            .showAccented()
-    }
-
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.wrapContext(newBase))
     }
@@ -391,7 +363,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         setSupportActionBar(toolbar)
-        showExperimentalFeaturesNoticeIfNeeded()
         toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
         // Force white toolbar action/overflow icons (some devices/theme combos render them black in light mode)
@@ -859,20 +830,20 @@ class MainActivity : AppCompatActivity() {
             .setView(content)
             .setCancelable(false)
             .setNegativeButton(R.string.nav_tour_skip) { _, _ ->
-                resetBottomNavTourHighlight(bottomNav)
                 finishBottomNavTour()
             }
             .setPositiveButton(
                 if (index == steps.lastIndex) R.string.nav_tour_done else R.string.nav_tour_next
             ) { _, _ ->
-                resetBottomNavTourHighlight(bottomNav)
-                bottomNavTourDialog = null
                 if (index == steps.lastIndex) {
                     finishBottomNavTour()
                 } else {
-                    bottomNav.postDelayed({
+                    // Keep the navigation highlight alive while the current dialog closes.
+                    // The next step swaps the checked/tinted destination immediately instead of briefly restoring the whole bar between steps.
+                    bottomNavTourDialog = null
+                    bottomNav.post {
                         showBottomNavTourStep(bottomNav, index + 1)
-                    }, 140L)
+                    }
                 }
             }
             .showAccented()
@@ -882,9 +853,12 @@ class MainActivity : AppCompatActivity() {
             setDimAmount(0f)
         }
         dialog.setOnDismissListener {
-            resetBottomNavTourHighlight(bottomNav)
+            // During Next, bottomNavTourDialog is cleared before this dialog dismisses so the current highlight is intentionally preserved until the next step replaces it.
             if (bottomNavTourDialog === dialog) {
                 bottomNavTourDialog = null
+                if (bottomNavTourShowing) {
+                    finishBottomNavTour()
+                }
             }
         }
         bottomNavTourDialog = dialog
@@ -919,116 +893,33 @@ class MainActivity : AppCompatActivity() {
             bottomNavTourOriginalTextTint?.defaultColor ?: fallback,
         ) ?: ColorUtils.setAlphaComponent(fallback, 0x99)
 
-        // Use a neutral global tint during the tour so Android cannot re-apply the
-        // actually selected Home color while another destination is being explained.
-        bottomNav.itemIconTintList = ColorStateList.valueOf(inactiveIconColor)
-        bottomNav.itemTextColor = ColorStateList.valueOf(inactiveTextColor)
-        applyBottomNavTourItemColors(bottomNav, inactiveIconColor, inactiveTextColor)
-
-        findBottomNavIcon(anchor)?.apply {
-            imageTintList = ColorStateList.valueOf(accent)
-            invalidate()
-        }
-        findBottomNavLabels(anchor).forEach { label ->
-            label.setTextColor(accent)
-            label.invalidate()
-        }
+        // Drive the tour through BottomNavigationView's own checked state instead of directly tinting its internal ImageView/TextViews. 
+        // The old approach was fragile:
+        // Material could re-bind the child views while dialogs changed, which briefly made every destination accented (or every destination neutral). 
+        // A checked-state tint guarantees exactly one highlighted destination at a time.
+        bottomNav.itemIconTintList = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(),
+            ),
+            intArrayOf(accent, inactiveIconColor),
+        )
+        bottomNav.itemTextColor = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(),
+            ),
+            intArrayOf(accent, inactiveTextColor),
+        )
+        bottomNav.menu.findItem(anchor.id)?.isChecked = true
         bottomNavTourHighlight = BottomNavTourHighlight(anchor.id)
     }
 
-    private fun bottomNavTourItemIds(): List<Int> = listOf(
-        R.id.nav_home,
-        R.id.nav_rules,
-        R.id.nav_activity,
-        R.id.nav_settings,
-    )
-
-    private fun findBottomNavIcon(view: View): ImageView? {
-        if (view is ImageView) {
-            return view
-        }
-        if (view is ViewGroup) {
-            for (index in 0 until view.childCount) {
-                findBottomNavIcon(view.getChildAt(index))?.let { return it }
-            }
-        }
-        return null
-    }
-
-    private fun findBottomNavLabels(view: View): List<TextView> {
-        val labels = mutableListOf<TextView>()
-        fun collect(current: View) {
-            when (current) {
-                is TextView -> labels += current
-                is ViewGroup -> {
-                    for (index in 0 until current.childCount) {
-                        collect(current.getChildAt(index))
-                    }
-                }
-            }
-        }
-        collect(view)
-        return labels
-    }
-
-    private fun applyBottomNavTourItemColors(
-        bottomNav: BottomNavigationView,
-        iconColor: Int,
-        textColor: Int,
-    ) {
-        bottomNavTourItemIds().forEach { itemId ->
-            val item = bottomNav.findViewById<View>(itemId) ?: return@forEach
-            findBottomNavIcon(item)?.apply {
-                imageTintList = ColorStateList.valueOf(iconColor)
-                invalidate()
-            }
-            findBottomNavLabels(item).forEach { label ->
-                label.setTextColor(textColor)
-                label.invalidate()
-            }
-        }
-    }
-
-    private fun resetBottomNavTourHighlight(bottomNav: BottomNavigationView) {
-        if (bottomNavTourHighlight == null) return
-
-        val fallback = MaterialColors.getColor(
-            bottomNav,
-            com.google.android.material.R.attr.colorOnSurface
-        )
-        val inactiveIconColor = bottomNavTourOriginalIconTint?.getColorForState(
-            intArrayOf(-android.R.attr.state_checked),
-            bottomNavTourOriginalIconTint?.defaultColor ?: fallback,
-        ) ?: ColorUtils.setAlphaComponent(fallback, 0x99)
-        val inactiveTextColor = bottomNavTourOriginalTextTint?.getColorForState(
-            intArrayOf(-android.R.attr.state_checked),
-            bottomNavTourOriginalTextTint?.defaultColor ?: fallback,
-        ) ?: ColorUtils.setAlphaComponent(fallback, 0x99)
-
-        bottomNav.itemIconTintList = ColorStateList.valueOf(inactiveIconColor)
-        bottomNav.itemTextColor = ColorStateList.valueOf(inactiveTextColor)
-        applyBottomNavTourItemColors(bottomNav, inactiveIconColor, inactiveTextColor)
-        bottomNavTourHighlight = null
-    }
-
     private fun restoreBottomNavTourIcons(bottomNav: BottomNavigationView) {
-        val normalIconTint = bottomNavTourOriginalIconTint
-        val normalTextTint = bottomNavTourOriginalTextTint
-        bottomNav.itemIconTintList = normalIconTint
-        bottomNav.itemTextColor = normalTextTint
-        bottomNavTourItemIds().forEach { itemId ->
-            val item = bottomNav.findViewById<View>(itemId) ?: return@forEach
-            findBottomNavIcon(item)?.apply {
-                imageTintList = normalIconTint
-                refreshDrawableState()
-                invalidate()
-            }
-            findBottomNavLabels(item).forEach { label ->
-                normalTextTint?.let { tint -> label.setTextColor(tint) }
-                label.refreshDrawableState()
-                label.invalidate()
-            }
-        }
+        bottomNav.itemIconTintList = bottomNavTourOriginalIconTint
+        bottomNav.itemTextColor = bottomNavTourOriginalTextTint
+        bottomNav.menu.findItem(R.id.nav_home)?.isChecked = true
+        bottomNavTourHighlight = null
         bottomNavTourOriginalIconTint = null
         bottomNavTourOriginalTextTint = null
     }
@@ -1046,8 +937,6 @@ class MainActivity : AppCompatActivity() {
     private fun finishBottomNavTour() {
         bottomNavTourShowing = false
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
-        resetBottomNavTourHighlight(bottomNav)
-        bottomNav.menu.findItem(R.id.nav_home)?.isChecked = true
         restoreBottomNavTourIcons(bottomNav)
         findViewById<View>(R.id.bottomNavTourDimOverlay).isVisible = false
 
@@ -1348,14 +1237,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val hasActive = (tempDisableRemaining > 0L) || (tempEnableRemaining > 0L)
+        val lockActiveTimerChanges = hasActive &&
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(ToggleOptionsActivity.KEY_LOCK_ACTIVE_TEMPORARY_TIMER, true)
+
         tvNote.text = if (lockedByNfc) {
             getString(R.string.dashboard_temp_hint_locked_nfc)
+        } else if (lockActiveTimerChanges) {
+            getString(R.string.dashboard_temp_active_changes_locked)
         } else {
             getString(R.string.nfc_temp_hint_timer_behavior)
         }
 
         // Show remaining time if a timer is already running
-        val hasActive = (tempDisableRemaining > 0L) || (tempEnableRemaining > 0L)
         if (hasActive) {
             val handler = Handler(Looper.getMainLooper())
             val tick = object : Runnable {
@@ -1406,7 +1301,7 @@ class MainActivity : AppCompatActivity() {
             llOptions.addView(b)
         }
 
-        if (!lockedByNfc) {
+        if (!lockedByNfc && !lockActiveTimerChanges) {
             // Presets
             val presets = listOf(5, 15, 30, 60)
             for (m in presets) {
@@ -1443,7 +1338,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Cancel active timer
-        if (hasActive && !(lockedByNfc && tempDisableRemaining > 0L)) {
+        val canCancelActiveTimer = tempDisableRemaining > 0L || !lockActiveTimerChanges
+        if (hasActive && canCancelActiveTimer && !(lockedByNfc && tempDisableRemaining > 0L)) {
             addOption(getString(R.string.dashboard_temp_sheet_cancel_timer)) {
                 if (tempDisableRemaining > 0L) {
                     SwitchModeStore.cancelTemporaryDisable(this)
@@ -1694,9 +1590,7 @@ class MainActivity : AppCompatActivity() {
                 missing.size
             )
             tvSetupTitle.text = missingText
-            tvSetupTitle.setTextColor(
-                MaterialColors.getColor(tvSetupTitle, androidx.appcompat.R.attr.colorPrimary)
-            )
+            tvSetupTitle.setTextColor(AccentColor.getAccentColorInt(this))
             tvSetupSubtitle.text = resources.getQuantityString(
                 R.plurals.dashboard_setup_subtitle_missing,
                 missing.size
@@ -2271,7 +2165,7 @@ class MainActivity : AppCompatActivity() {
                     useCompatPadding = false
                     setCardBackgroundColor(if (item.checked) ColorUtils.setAlphaComponent(accent, 0x12) else surfaceVariant)
                     setStrokeWidth(dp(if (item.checked) 2 else 1))
-                    setStrokeColor(if (item.checked) accent else ColorUtils.setAlphaComponent(onSurface, 0x24))
+                    strokeColor = if (item.checked) accent else ColorUtils.setAlphaComponent(onSurface, 0x24)
                     isClickable = true
                     isFocusable = true
                 }
@@ -2331,7 +2225,7 @@ class MainActivity : AppCompatActivity() {
                     box.isChecked = checked
                     card.setCardBackgroundColor(if (checked) ColorUtils.setAlphaComponent(accent, 0x12) else surfaceVariant)
                     card.setStrokeWidth(dp(if (checked) 2 else 1))
-                    card.setStrokeColor(if (checked) accent else ColorUtils.setAlphaComponent(onSurface, 0x24))
+                    card.strokeColor = if (checked) accent else ColorUtils.setAlphaComponent(onSurface, 0x24)
                 }
 
                 card.setOnClickListener { updateChecked(!item.checked) }
@@ -2497,11 +2391,11 @@ class MainActivity : AppCompatActivity() {
     private fun mixedEnabledChannelsLabel(): String {
         val methods = mutableListOf<String>()
 
-        if (AutomationModeStore.isScheduleAllowed(this)) {
-            methods += getString(R.string.dashboard_control_method_schedule)
-        }
         if (AutomationModeStore.isNfcAllowed(this)) {
             methods += getString(R.string.dashboard_control_method_nfc)
+        }
+        if (AutomationModeStore.isScheduleAllowed(this)) {
+            methods += getString(R.string.dashboard_control_method_schedule)
         }
         if (AutomationModeStore.isQrAllowed(this)) {
             methods += getString(R.string.dashboard_control_method_qr)
@@ -2517,7 +2411,7 @@ class MainActivity : AppCompatActivity() {
             return getString(R.string.dashboard_control_method_configured)
         }
 
-        return methods.joinToString(separator = getString(R.string.dashboard_control_method_separator))
+        return methods.joinToString(separator = ", ")
     }
 
     private fun updateControlModeHint(enabled: Boolean) {
@@ -2950,7 +2844,7 @@ class MainActivity : AppCompatActivity() {
                 val anchor = findViewById<View>(R.id.bottomNav)
                 if (anchor != null) snack.setAnchorView(anchor)
             }
-            snack.show()
+            snack.applySwitchlyStyle().show()
         }
     }
 
@@ -2973,7 +2867,7 @@ class MainActivity : AppCompatActivity() {
                 val anchor = findViewById<View>(R.id.bottomNav)
                 if (anchor != null) snack.setAnchorView(anchor)
             }
-            snack.show()
+            snack.applySwitchlyStyle().show()
         }
     }
 
@@ -3053,6 +2947,16 @@ class MainActivity : AppCompatActivity() {
             ProfileStore.setCurrent(this, selected)
             refreshBlockedList()
             updateSwitchState()
+            Snackbar.make(
+                snackRoot(),
+                getString(
+                    R.string.profile_set_active_rules_toast,
+                    selected,
+                    ProfileStore.getSelectedForProfileMode(this, selected).size.let { count -> resources.getQuantityString(R.plurals.profile_app_count, count, count) },
+                    DomainBlockStore.getDomains(this).size.let { count -> resources.getQuantityString(R.plurals.profile_website_count, count, count) },
+                ),
+                Snackbar.LENGTH_SHORT
+            ).applySwitchlyStyle().show()
         }
     }
 
@@ -3217,7 +3121,7 @@ class MainActivity : AppCompatActivity() {
             snackRoot(),
             getString(R.string.dashboard_blocked_app_removed, item.label),
             Snackbar.LENGTH_SHORT
-        ).show()
+        ).applySwitchlyStyle().show()
     }
 
     private fun updateManagedAppListHeader(profile: String?) {

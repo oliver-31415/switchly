@@ -22,6 +22,7 @@ package at.saltyy.switchly.feature.usage
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
@@ -131,6 +132,12 @@ class AppWebsiteUsageActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         b = ActivityStatisticsAppWebsiteUsageBinding.inflate(layoutInflater)
         setContentView(b.root)
+        b.webPlaceholder.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(ContextCompat.getColor(this@AppWebsiteUsageActivity, R.color.switchly_card_bg))
+            setStroke(dp(1), ContextCompat.getColor(this@AppWebsiteUsageActivity, R.color.switchly_card_stroke))
+            cornerRadius = dp(20).toFloat()
+        }
 
         EdgeToEdgeUtils.setupClassic(
             activity = this,

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -17,15 +18,15 @@
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
         android:layout_marginBottom="4dp"
-        app:strokeWidth="0dp"
+        android:layout_gravity="bottom"
         app:cardBackgroundColor="@android:color/transparent"
         app:cardCornerRadius="0dp"
         app:cardElevation="0dp"
-        app:cardUseCompatPadding="false">
+        app:cardUseCompatPadding="false"
+        app:strokeWidth="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -46,7 +47,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_optional_setup"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Switchly.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginBottom="8dp"
@@ -66,7 +67,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_skip"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
                     android:layout_weight="1"
@@ -98,13 +99,13 @@
                         android:id="@+id/nextArrow"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:layout_gravity="end|center_vertical"
                         android:layout_marginEnd="16dp"
+                        android:layout_gravity="end|center_vertical"
                         android:clickable="false"
                         android:focusable="false"
+                        android:alpha="0.9"
                         android:contentDescription="@null"
                         android:src="@drawable/keyboard_arrow_right_24"
-                        android:alpha="0.9"
                         app:tint="@android:color/white" />
                 </FrameLayout>
             </LinearLayout>

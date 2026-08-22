@@ -23,12 +23,14 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -475,8 +477,13 @@ class ManageProfilesActivity : AppCompatActivity() {
                 val accent = AccentColor.getAccentColorInt(this@ManageProfilesActivity)
                 card.strokeWidth = if (isActive) dp(2) else dp(1)
                 card.strokeColor = if (isActive) accent else Color.TRANSPARENT
-                badge.setTextColor(Color.WHITE)
-                badge.backgroundTintList = android.content.res.ColorStateList.valueOf(accent)
+                val onAccent = if (ColorUtils.calculateLuminance(accent) > 0.5) Color.BLACK else Color.WHITE
+                badge.setTextColor(onAccent)
+                badge.background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    setColor(accent)
+                    cornerRadius = dp(999).toFloat()
+                }
                 val readOnly = isProfileLockActive()
                 itemView.alpha = if (readOnly) 0.82f else 1f
                 itemView.isClickable = !readOnly

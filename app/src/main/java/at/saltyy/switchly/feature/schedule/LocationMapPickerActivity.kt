@@ -38,6 +38,7 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
+import at.saltyy.switchly.ui.applySwitchlyStyle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
@@ -201,7 +202,7 @@ class LocationMapPickerActivity : AppCompatActivity() {
             root,
             R.string.schedules_location_map_picker_load_failed,
             Snackbar.LENGTH_LONG,
-        ).show()
+        ).applySwitchlyStyle().show()
     }
 
     private fun runSearch() {

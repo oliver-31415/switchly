@@ -30,6 +30,7 @@ import at.saltyy.switchly.BuildConfig
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.premium.PremiumManager
 import at.saltyy.switchly.premium.PremiumRedeemRuntime
 import at.saltyy.switchly.theme.AccentColor
@@ -64,6 +65,11 @@ class PremiumInfoActivity : AppCompatActivity() {
         purchaseFlowOpening = false
         renderState()
         val message = getString(R.string.premium_purchase_open_timeout)
+        AppLogStore.append(
+            applicationContext,
+            "Billing",
+            "Purchase screen timeout: activity stayed resumed and Google Play UI did not open"
+        )
         statusTextView.text = message
         statusTextView.visibility = View.VISIBLE
     }

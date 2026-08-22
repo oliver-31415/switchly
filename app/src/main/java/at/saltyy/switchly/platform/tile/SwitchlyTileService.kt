@@ -56,6 +56,7 @@ class SwitchlyTileService : TileService() {
         }
 
         if (!canChange) {
+            AppLogStore.append(ctx, "QuickSettings", "action_result action=toggle result=blocked reason=control_mode enabled=$currentlyEnabled")
             val messageRes = if (currentlyEnabled && AutomationModeStore.isButtonEnableAllowed(ctx)) {
                 R.string.mode_blocked_button_disable_enable_only
             } else {
@@ -77,6 +78,7 @@ class SwitchlyTileService : TileService() {
 
         // Disable only via NFC, when lock is enabled (unless Emergency Bypass is active)
         if (currentlyEnabled && requireNfc && !emergencyActive) {
+            AppLogStore.append(ctx, "QuickSettings", "action_result action=disable result=blocked reason=nfc_required")
             Toast.makeText(
                 applicationContext,
                 getString(R.string.toast_disable_requires_nfc),
@@ -87,12 +89,29 @@ class SwitchlyTileService : TileService() {
         }
 
         val target = !currentlyEnabled
-        if (SwitchModeStore.setEnabled(ctx, target, allowNfcBypass = false)) {
+        val before = SwitchModeStore.isEnabled(ctx)
+        val accepted = SwitchModeStore.setEnabled(ctx, target, allowNfcBypass = false)
+        val after = SwitchModeStore.isEnabled(ctx)
+        if (accepted && before != after) {
             AppLogStore.append(
                 ctx,
                 "Profiles",
                 "Manual toggle action=${if (target) "enable" else "disable"} profile=${ProfileStore.getCurrent(ctx)}"
             )
+            AppLogStore.append(ctx, "QuickSettings", "action_result action=${if (target) "enable" else "disable"} result=changed reason=applied")
+        } else if (accepted) {
+            AppLogStore.append(
+                ctx,
+                "QuickSettings",
+                "action_result action=${if (target) "enable" else "disable"} result=noop reason=${if (after) "already_enabled" else "already_disabled"}"
+            )
+            Toast.makeText(
+                applicationContext,
+                getString(if (after) R.string.widget_focus_already_active else R.string.widget_pause_already_disabled),
+                Toast.LENGTH_SHORT
+            ).show()
+        } else {
+            AppLogStore.append(ctx, "QuickSettings", "action_result action=${if (target) "enable" else "disable"} result=blocked reason=state_change_rejected")
         }
         refreshTile()
     }

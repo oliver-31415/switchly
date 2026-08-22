@@ -21,7 +21,6 @@
     <!-- Automatic blocking -->
     <!-- ====================================================== -->
     <string name="app_picker_auto_block_new_apps_title">Neu installierte Apps automatisch blockieren</string>
-    <string name="app_picker_auto_block_new_apps_info_title">Neu installierte Apps automatisch blockieren</string>
-    <string name="app_picker_auto_block_new_apps_info_body">Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt. Geschützte und sicherheitsrelevante Apps werden übersprungen und müssen einzeln bestätigt werden.\n\n„Alle auswählen“ aktiviert das auch für zukünftige Installationen.</string>
+    <string name="app_picker_auto_block_new_apps_summary">Neu installierte startbare Apps werden automatisch zu diesem Profil hinzugefügt. Sicherheitsrelevante Apps werden übersprungen.</string>
 
 </resources>

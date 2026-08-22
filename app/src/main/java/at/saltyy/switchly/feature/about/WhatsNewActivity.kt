@@ -43,6 +43,15 @@ private enum class ReleaseType {
     BETA
 }
 
+private data class ReleaseDefinition(
+    val id: String,
+    val version: String,
+    val date: String,
+    val ownLines: List<String>,
+    val sourceVersions: List<String>,
+    val releaseType: ReleaseType,
+)
+
 private data class ReleaseNote(
     val version: String,
     val date: String,
@@ -299,7 +308,8 @@ class WhatsNewActivity : AppCompatActivity() {
         return base.trimEnd('.', ',', ';', ':') + "…"
     }
 
-    // Loads release notes from res/raw/changelog.json (fallback: empty list).
+    // Loads release notes from res/raw/changelog.json.
+    //  `sourceVersions` inherits source release bodies recursively, preserving source order and de-duplicating equivalent lines.
     private fun loadReleaseNotes(): List<ReleaseNote> {
         return runCatching {
             val json = resources.openRawResource(R.raw.changelog)
@@ -308,12 +318,12 @@ class WhatsNewActivity : AppCompatActivity() {
 
             val obj = JSONObject(json)
             val arr = obj.getJSONArray("releases")
-            val out = ArrayList<ReleaseNote>(arr.length())
+            val definitions = ArrayList<ReleaseDefinition>(arr.length())
 
             for (i in 0 until arr.length()) {
                 val r = arr.getJSONObject(i)
                 val version = r.optString("version").trim()
-                val date = r.optString("date").trim()
+                if (version.isBlank()) continue
 
                 val releaseType = when (r.optString("releaseType").trim().lowercase()) {
                     "beta" -> ReleaseType.BETA
@@ -321,31 +331,98 @@ class WhatsNewActivity : AppCompatActivity() {
                     else -> if (version.lowercase().contains("beta")) ReleaseType.BETA else ReleaseType.PUBLIC
                 }
 
-                val lines = mutableListOf<String>()
-                val bodyArr = r.optJSONArray("body")
-                if (bodyArr != null) {
-                    for (j in 0 until bodyArr.length()) {
-                        val line = bodyArr.optString(j).trim()
-                        if (line.isNotBlank()) lines += line.removePrefix("• ").trim()
+                val ownLines = readBodyLines(r)
+                val sources = mutableListOf<String>()
+                r.optJSONArray("sourceVersions")?.let { sourceArray ->
+                    for (j in 0 until sourceArray.length()) {
+                        sourceArray.optString(j).trim().takeIf { it.isNotBlank() }?.let(sources::add)
                     }
-                } else {
-                    r.optString("body")
-                        .split("\n")
-                        .map { it.trim().removePrefix("• ").trim() }
-                        .filterTo(lines) { it.isNotBlank() }
                 }
 
-                if (version.isNotBlank() && lines.isNotEmpty()) {
-                    out += ReleaseNote(
-                        version = version,
-                        date = date,
-                        lines = lines,
-                        releaseType = releaseType
-                    )
-                }
+                definitions += ReleaseDefinition(
+                    id = r.optString("id").trim().ifBlank { version },
+                    version = version,
+                    date = r.optString("date").trim(),
+                    ownLines = ownLines,
+                    sourceVersions = sources,
+                    releaseType = releaseType,
+                )
             }
 
-            out
+            val byRef = LinkedHashMap<String, ReleaseDefinition>()
+            fun addReference(reference: String, definition: ReleaseDefinition) {
+                if (reference.isBlank()) return
+                byRef[reference] = definition
+                if (reference.startsWith("v", ignoreCase = true)) {
+                    byRef.putIfAbsent(reference.drop(1), definition)
+                } else {
+                    byRef.putIfAbsent("v$reference", definition)
+                }
+            }
+            definitions.forEach { definition ->
+                addReference(definition.id, definition)
+                addReference(definition.version, definition)
+            }
+            val memo = HashMap<String, List<String>>()
+
+            definitions.mapNotNull { definition ->
+                val lines = resolveReleaseLines(definition, byRef, memo, linkedSetOf())
+                if (lines.isEmpty()) null else ReleaseNote(
+                    version = definition.version,
+                    date = definition.date,
+                    lines = lines,
+                    releaseType = definition.releaseType,
+                )
+            }
         }.getOrElse { emptyList() }
     }
+
+    private fun readBodyLines(r: JSONObject): List<String> {
+        val lines = mutableListOf<String>()
+        val bodyArr = r.optJSONArray("body")
+        if (bodyArr != null) {
+            for (j in 0 until bodyArr.length()) {
+                bodyArr.optString(j).trim().takeIf { it.isNotBlank() }?.let {
+                    lines += it.removePrefix("• ").trim()
+                }
+            }
+        } else {
+            r.optString("body")
+                .split("\n")
+                .map { it.trim().removePrefix("• ").trim() }
+                .filterTo(lines) { it.isNotBlank() }
+        }
+        return lines
+    }
+
+    private fun resolveReleaseLines(
+        definition: ReleaseDefinition,
+        byRef: Map<String, ReleaseDefinition>,
+        memo: MutableMap<String, List<String>>,
+        resolving: LinkedHashSet<String>,
+    ): List<String> {
+        memo[definition.id]?.let { return it }
+        if (!resolving.add(definition.id)) return emptyList()
+
+        val combined = mutableListOf<String>()
+        definition.sourceVersions.forEach { sourceRef ->
+            byRef[sourceRef]?.let { source ->
+                combined += resolveReleaseLines(source, byRef, memo, resolving)
+            }
+        }
+        combined += definition.ownLines
+        resolving.remove(definition.id)
+
+        val seen = HashSet<String>()
+        val resolved = combined.filter { line ->
+            val key = line
+                .trim()
+                .replace("\\s+".toRegex(), " ")
+                .lowercase()
+            seen.add(key)
+        }
+        memo[definition.id] = resolved
+        return resolved
+    }
+
 }

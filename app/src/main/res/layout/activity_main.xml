@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -28,12 +29,12 @@
         android:id="@+id/scrollMain"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:fillViewport="true"
         android:paddingStart="14dp"
         android:paddingTop="16dp"
         android:paddingEnd="14dp"
         android:paddingBottom="96dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
         android:overScrollMode="never"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -85,8 +86,8 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:layout_marginStart="10dp"
+                            android:layout_weight="1"
                             android:orientation="vertical">
 
                             <TextView
@@ -102,9 +103,9 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:alpha="0.78"
                                 android:text="@string/dashboard_setup_subtitle"
-                                android:textSize="13sp"
-                                android:alpha="0.78" />
+                                android:textSize="13sp" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -171,8 +172,8 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:layout_marginStart="14dp"
+                            android:layout_weight="1"
                             android:orientation="vertical">
 
                             <TextView
@@ -215,28 +216,28 @@
                         android:minHeight="42dp"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground"
                         android:paddingStart="10dp"
                         android:paddingTop="8dp"
                         android:paddingEnd="10dp"
-                        android:paddingBottom="8dp">
+                        android:paddingBottom="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true">
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.78"
                             android:contentDescription="@null"
                             android:src="@drawable/account_box_24"
-                            android:alpha="0.78"
                             app:tint="?attr/colorOnSurface" />
 
                         <TextView
                             android:id="@+id/tvActiveProfile"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:layout_marginStart="10dp"
+                            android:layout_weight="1"
                             android:text="@string/dashboard_active_profile_unknown"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -244,9 +245,9 @@
                         <ImageView
                             android:layout_width="14dp"
                             android:layout_height="14dp"
+                            android:alpha="0.6"
                             android:contentDescription="@string/open"
-                            android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.6" />
+                            android:src="@drawable/keyboard_arrow_right_24" />
                     </LinearLayout>
 
                     <TextView
@@ -256,22 +257,22 @@
                         android:layout_marginTop="2dp"
                         android:minHeight="40dp"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
                         android:paddingStart="10dp"
                         android:paddingTop="8dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:alpha="0.82"
                         android:text="@string/dashboard_control_mode_hint_placeholder"
                         android:textSize="13sp"
                         android:maxLines="2"
-                        android:alpha="0.82"
-                        android:drawablePadding="10dp"
                         android:lineSpacingExtra="1dp"
+                        android:drawablePadding="10dp"
                         app:drawableStartCompat="@drawable/tune_24" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnSimplePickApps"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        style="@style/Switchly.OutlinedButton"
                         android:layout_width="match_parent"
                         android:layout_height="44dp"
                         android:layout_marginTop="8dp"
@@ -296,18 +297,18 @@
                         android:layout_marginTop="10dp"
                         android:minHeight="40dp"
                         android:gravity="center_vertical"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground"
                         android:paddingStart="10dp"
                         android:paddingTop="9dp"
                         android:paddingEnd="12dp"
                         android:paddingBottom="9dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:alpha="0.9"
                         android:text="@string/dashboard_temp_hint"
                         android:textSize="13sp"
                         android:maxLines="1"
                         android:ellipsize="end"
-                        android:alpha="0.9"
                         android:drawablePadding="10dp"
                         app:drawableEndCompat="@drawable/keyboard_arrow_right_24"
                         app:drawableStartCompat="@drawable/schedule_24" />
@@ -319,18 +320,18 @@
                         android:layout_marginTop="4dp"
                         android:minHeight="40dp"
                         android:gravity="center_vertical"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground"
                         android:paddingStart="10dp"
                         android:paddingTop="9dp"
                         android:paddingEnd="12dp"
                         android:paddingBottom="9dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:alpha="0.9"
                         android:text="@string/dashboard_emergency_hint_ready"
                         android:textSize="13sp"
                         android:maxLines="1"
                         android:ellipsize="end"
-                        android:alpha="0.9"
                         android:drawablePadding="10dp"
                         app:drawableEndCompat="@drawable/keyboard_arrow_right_24"
                         app:drawableStartCompat="@drawable/security_24" />
@@ -376,9 +377,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:visibility="gone"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:visibility="gone">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -396,8 +397,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginStart="12dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
@@ -420,10 +421,10 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center_vertical"
+                        android:alpha="0.72"
                         android:contentDescription="@string/open"
                         android:src="@drawable/keyboard_arrow_right_24"
-                        android:scaleType="centerInside"
-                        android:alpha="0.72" />
+                        android:scaleType="centerInside" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -448,9 +449,9 @@
                         android:minHeight="48dp"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
+                        android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground">
+                        android:focusable="true">
 
                         <TextView
                             android:id="@+id/blockedHeader"
@@ -463,7 +464,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnPickApps"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            style="@style/Switchly.TextButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/pick_apps"
@@ -476,8 +477,8 @@
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:layout_marginStart="4dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
                             android:padding="12dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="@string/dashboard_blocked_apps_collapse"
                             android:src="@drawable/keyboard_arrow_up_24"
                             app:tint="?attr/colorOnSurface" />
@@ -516,21 +517,21 @@
                                     android:layout_height="34dp"
                                     android:layout_marginStart="-2dp"
                                     android:padding="7dp"
+                                    android:alpha="0.75"
                                     android:contentDescription="@string/blocked_list_title"
                                     android:src="@drawable/apps_24"
-                                    android:alpha="0.75"
                                     app:tint="?attr/colorOnSurface" />
 
                                 <TextView
                                     android:id="@+id/tvEmpty"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
                                     android:layout_marginStart="10dp"
+                                    android:layout_weight="1"
+                                    android:alpha="0.85"
                                     android:text="@string/no_blocked_apps"
-                                    android:singleLine="true"
                                     android:ellipsize="end"
-                                    android:alpha="0.85" />
+                                    android:singleLine="true" />
                             </LinearLayout>
                         </LinearLayout>
 
@@ -550,10 +551,10 @@
         android:id="@+id/bottomNavTourDimOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
+        android:background="#A3000000"
         android:clickable="true"
         android:focusable="true"
-        android:background="#A3000000"
+        android:visibility="gone"
         android:importantForAccessibility="no" />
 
     <!-- Bottom-Navigation -->
@@ -562,9 +563,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="?attr/colorSurface"
         android:paddingTop="0dp"
         android:paddingBottom="0dp"
+        android:background="?attr/colorSurface"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/menu_bottom_main" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

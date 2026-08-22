@@ -35,15 +35,14 @@ import at.saltyy.switchly.ui.dialog.showAccented
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
- * Google Play requires a prominent in-app disclosure and explicit consent before
- * sending users to the system Accessibility permission screen.
+ * Google Play requires a prominent in-app disclosure and explicit consent before sending users to the system Accessibility permission screen.
  */
 object AccessibilityDisclosure {
     private const val PREFS = "accessibility_disclosure"
     private const val KEY_ACCEPTED_VERSION = "accepted_version"
 
     // Bump this when the disclosure text materially changes.
-    private const val DISCLOSURE_VERSION = 1
+    private const val DISCLOSURE_VERSION = 2
 
     fun openSettingsWithDisclosure(activity: Activity, forceShow: Boolean = false) {
         if (!forceShow && hasAcceptedDisclosure(activity)) {

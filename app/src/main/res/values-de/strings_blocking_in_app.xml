@@ -7,12 +7,23 @@
     <string name="in_app_rules_title">In-App-Regeln</string>
 
     <string name="in_app_rules_info_title">In-App-Regeln</string>
-    <string name="in_app_rules_info_body">In-App-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nRegeln sind aktiv, sobald für dieses Profil ausgewählte Bereiche existieren. Mit „Ausgewählte blockieren“ werden nur ausgewählte Bereiche blockiert. Mit „Ausgewählte erlauben“ bleiben ausgewählte Bereiche erlaubt und andere unterstützte Bereiche dieser App werden blockiert. Switchly nutzt die Bedienungshilfe, um unterstützte In-App-Bereiche zu erkennen. UI-Änderungen der Apps können die Zuverlässigkeit beeinflussen.\n\nVerfügbar bedeutet, dass der Bereich für die installierte App-Version unterstützt wird. Experimentell bedeutet Best-Effort und kann je nach App-Version, Einstiegspunkt, Sprache oder Gerät variieren. Deaktiviert bedeutet, dass die App nicht installiert ist oder die Regel gerade nicht genutzt werden kann. Demnächst bedeutet, dass der Bereich geplant, aber noch nicht erzwingbar ist.</string>
+    <string name="in_app_rules_info_body">In-App-Regeln gelten nur für das ausgewählte Profil.\n\nWähle einen Modus:\n• Ausgewählte blockieren: Nur ausgewählte Bereiche werden blockiert.\n• Ausgewählte erlauben: Ausgewählte Bereiche bleiben verfügbar; andere unterstützte Bereiche dieser App werden blockiert.\n\nStatus:\n• Verfügbar: Für die installierte App-Version unterstützt.\n• Experimentell: Kann je nach App-Version, Sprache, Einstiegspunkt oder Gerät unterschiedlich funktionieren.\n• Deaktiviert: Die App ist nicht installiert oder die Regel kann derzeit nicht genutzt werden.\n• Demnächst: Geplant, aber noch nicht funktionsfähig.\n\nSwitchly erkennt diese Bereiche mithilfe der Bedienungshilfe. Änderungen an unterstützten Apps können die Erkennung beeinflussen.</string>
     <string name="in_app_rule_mode_title">In-App-Regelmodus</string>
     <string name="in_app_rule_mode_block">Ausgewählte blockieren</string>
     <string name="in_app_rule_mode_allow">Ausgewählte erlauben</string>
     <string name="in_app_rule_mode_block_summary">Schalter markieren Bereiche, die Switchly blockieren soll.</string>
-    <string name="in_app_rule_mode_allow_summary">Schalter markieren Bereiche, die erlaubt bleiben. Andere unterstützte Bereiche dieser App werden blockiert, sobald mindestens ein Bereich ausgewählt ist.</string>
+    <string name="in_app_rule_mode_allow_summary">Nur ausgewählte Bereiche bleiben verfügbar. Andere unterstützte Bereiche dieser App werden blockiert, sobald mindestens ein Bereich ausgewählt ist.</string>
+    <string name="in_app_rule_allow_confirm_title">„Ausgewählte erlauben“ verwenden?</string>
+    <string name="in_app_rule_allow_confirm_body_counted">Mit den aktuell installierten Apps gilt: %1$s und %2$s. Apps ohne ausgewählten Bereich sind nicht betroffen.</string>
+    <plurals name="in_app_rule_allow_blocked_count">
+        <item quantity="one">%d unterstützter Bereich wird blockiert</item>
+        <item quantity="other">%d unterstützte Bereiche werden blockiert</item>
+    </plurals>
+    <plurals name="in_app_rule_allow_allowed_count">
+        <item quantity="one">%d bleibt verfügbar</item>
+        <item quantity="other">%d bleiben verfügbar</item>
+    </plurals>
+    <string name="in_app_rule_allow_confirm_action">Ausgewählte erlauben</string>
     <string name="in_app_rule_block_surface_fmt">%1$s blockieren</string>
     <string name="in_app_rule_allow_surface_fmt">%1$s erlauben</string>
     <string name="in_app_rules_profile_subtitle">Regeln für: %1$s</string>
@@ -37,7 +48,9 @@
     <string name="in_app_surface_spotlight_label">Spotlight</string>
     <string name="in_app_surface_following_label">Following</string>
     <string name="in_app_surface_always_block">Immer blockieren</string>
-    <string name="in_app_status_installed">Installiert</string>
+    <string name="in_app_app_diagnostic_never">v%1$s · noch nicht erkannt</string>
+    <string name="in_app_app_diagnostic_detected">v%1$s · erkannt: %2$s</string>
+    <string name="in_app_app_diagnostic_stale">v%1$s · Erkennung möglicherweise veraltet</string>
     <string name="in_app_status_supported">Verfügbar</string>
     <string name="in_app_status_experimental">Experimentell</string>
     <string name="in_app_status_planned">Demnächst</string>

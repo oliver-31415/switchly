@@ -150,7 +150,7 @@ object UsageDatePickerAccentTint {
             val target = if (forceRangeTint) subtleAccent else accent
             when (drawable) {
                 is ColorDrawable -> {
-                    if (forceRangeTint || looksLikePickerAccent(drawable.color, defaultAccent)) drawable.setColor(target)
+                    if (forceRangeTint || looksLikePickerAccent(drawable.color, defaultAccent)) drawable.color = target
                 }
                 is GradientDrawable -> {
                     val color = drawable.color?.defaultColor

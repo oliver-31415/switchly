@@ -60,6 +60,15 @@
     <string name="profile_saved">Profil „%1$s“ gespeichert.</string>
     <string name="profile_duplicated">Profil „%1$s“ dupliziert.</string>
     <string name="profile_set_active_toast">„%1$s“ ist jetzt aktiv.</string>
+    <string name="profile_set_active_rules_toast">„%1$s“ aktiviert · %2$s · %3$s</string>
+    <plurals name="profile_app_count">
+        <item quantity="one">%d App</item>
+        <item quantity="other">%d Apps</item>
+    </plurals>
+    <plurals name="profile_website_count">
+        <item quantity="one">%d Website</item>
+        <item quantity="other">%d Websites</item>
+    </plurals>
     <string name="state_profile_on_status">Aktiv</string>
 
 </resources>

@@ -76,12 +76,12 @@
     <string name="schedules_wifi_enter_manually">Enter manually</string>
     <string name="schedules_wifi_pick_action">Pick Wi-Fi</string>
     <string name="schedules_health_info_title">Schedule health</string>
-    <string name="schedules_health_info_body">This banner shows the most common reasons schedules don’t trigger (permissions, battery optimization, exact alarms, accessibility).</string>
+    <string name="schedules_health_info_body">This banner is reserved for schedule conflicts or automation states that need attention. Missing trigger permissions are shown in each schedule’s info and in Setup Health.</string>
     <string name="schedules_health_action_title">Recommended action</string>
     <string name="schedules_health_action_permissions">Fix permissions</string>
     <string name="schedules_health_action_toggle_options">Open toggle options</string>
     <string name="schedules_health_last_exec_never">never</string>
-    <string name="schedules_health_generic_issue">There are still some schedule permissions or requirements not set correctly.</string>
+    <string name="schedules_health_generic_issue">A schedule requirement needs attention.</string>
     <string name="schedules_health_last_exec_compact">Last schedule execution: %1$s</string>
     <string name="schedules_insights_title">Schedule insights</string>
     <string name="schedules_insights_overlap_title">Schedule overlap warning</string>
@@ -104,10 +104,6 @@
     <string name="schedules_disabled_footer_mode">Current control mode: %1$s</string>
     <string name="schedules_disabled_footer_mixed_off">Current control mode: %1$s - Schedule channel: off</string>
     <string name="schedules_disabled_action_open_controls">Open Protection controls</string>
-    <string name="schedules_locked_title">Schedules are locked while Switchly is active</string>
-    <string name="schedules_locked_body">Schedules still run normally, but adding, editing, deleting, and toggling them is locked until you disable Switchly.</string>
-    <string name="schedules_locked_footer">Current control mode: %1$s - Schedule editing: locked</string>
-    <string name="schedules_locked_action_open_controls">Open Protection controls</string>
     <string name="schedules_subtitle_fmt">%1$s - %2$s</string>
     <string name="schedules_label_value_fmt">%1$s: %2$s</string>
     <string name="schedules_label_value_multiline_fmt">%1$s\n%2$s</string>
@@ -210,4 +206,57 @@
     <string name="schedules_error_location_required">Please choose a location first.</string>
 
     <string name="schedules_priority_info_body">Priority when actions overlap:\n1. Manual/NFC override\n2. Emergency unlock\n3. Temporary actions\n4. Location schedules\n5. Wi-Fi/Bluetooth schedules\n6. Time schedules\n\nIf multiple schedules match, Switchly logs the conflict and applies the winning schedule instead of silently hiding it.</string>
+
+    <!-- ====================================================== -->
+    <!-- Schedule test                                         -->
+    <!-- ====================================================== -->
+
+    <!-- Entry point / dialog -->
+    <string name="schedules_test_title">Check schedule</string>
+
+    <!-- Dialog fields -->
+    <string name="schedules_test_field_schedule">Schedule</string>
+    <string name="schedules_test_field_condition">Condition</string>
+    <string name="schedules_test_field_permissions">Permissions</string>
+    <string name="schedules_test_field_detected">Detected now</string>
+    <string name="schedules_test_field_action">Action</string>
+    <string name="schedules_test_field_result">Result</string>
+
+    <!-- Field values -->
+    <string name="schedules_test_value_enabled">Enabled</string>
+    <string name="schedules_test_value_disabled">Disabled</string>
+    <string name="schedules_test_value_condition_met">Met</string>
+    <string name="schedules_test_value_condition_not_met">Not met</string>
+    <string name="schedules_test_value_permissions_ready">Ready</string>
+    <string name="schedules_test_value_permission_missing_fmt">Missing: %1$s</string>
+
+    <!-- Detected state -->
+    <string name="schedules_test_status_time_fmt">Time %1$s</string>
+    <string name="schedules_test_status_wifi_fmt">Wi-Fi “%1$s”</string>
+    <string name="schedules_test_status_wifi_none">Wi-Fi not connected / SSID unavailable</string>
+    <string name="schedules_test_status_bt_fmt">Bluetooth %1$s</string>
+    <string name="schedules_test_status_bt_none">no matching Bluetooth device connected</string>
+    <string name="schedules_test_status_location_inside_fmt">inside area · %1$d m from center</string>
+    <string name="schedules_test_status_location_outside_fmt">outside area · %1$d m from center</string>
+    <string name="schedules_test_status_location_unknown">current location unavailable</string>
+
+    <!-- Permission names -->
+    <string name="schedules_test_permission_wifi">Wi-Fi / location</string>
+    <string name="schedules_test_permission_bluetooth">Bluetooth</string>
+    <string name="schedules_test_permission_location">Location</string>
+    <string name="schedules_test_permission_accessibility">Accessibility</string>
+
+    <!-- Result messages -->
+    <string name="schedules_test_result_would_change">would change the protection state</string>
+    <string name="schedules_test_result_profile_change">would switch the active profile</string>
+    <string name="schedules_test_result_already_enabled">no change — already enabled</string>
+    <string name="schedules_test_result_already_disabled">no change — already disabled</string>
+    <string name="schedules_test_result_waiting">waiting for the condition</string>
+    <string name="schedules_test_result_schedule_disabled">schedule is disabled</string>
+    <string name="schedules_test_result_permission_missing">required permission is missing</string>
+    <string name="schedules_test_result_control_mode">blocked by the current control mode</string>
+    <string name="schedules_test_result_nfc_lock">disable would be blocked because NFC is required</string>
+    <string name="schedules_test_result_emergency">blocked while Emergency Bypass is active</string>
+    <string name="schedules_test_result_temp_override">would update the schedule base state; the temporary action stays active</string>
+
 </resources>

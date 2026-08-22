@@ -625,7 +625,7 @@ class ActivityHistoryActivity : AppCompatActivity() {
             when (drawable) {
                 is ColorDrawable -> {
                     if (matchesDatePickerAccent(drawable.color, defaultAccent)) {
-                        drawable.setColor(accent)
+                        drawable.color = accent
                     }
                 }
                 is GradientDrawable -> {

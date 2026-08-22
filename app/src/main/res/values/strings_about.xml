@@ -62,9 +62,7 @@
     <string name="about_developer_name" translatable="false">Saltyy (Andi S.)</string>
     <string name="about_website_url" translatable="false">https://switchly.saltyy.at</string>
     <string name="about_store_url" translatable="false">https://switchly.saltyy.at/store/</string>
-    <string name="store_card_title">Official Switchly tags</string>
     <string name="store_card_summary">Official NFC and QR tags.</string>
-    <string name="store_open">Open Store</string>
     <string name="store_open_failed">Could not open the Switchly Store.</string>
     <string name="about_developer_website_url" translatable="false">https://saltyy.at</string>
     <string name="about_dev_mail_address" translatable="false">andi@saltyy.at</string>

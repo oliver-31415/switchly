@@ -19,31 +19,20 @@
 
 package at.saltyy.switchly.auth
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import at.saltyy.switchly.R
-import at.saltyy.switchly.data.prefs.ActivityHistoryLogStore
-import at.saltyy.switchly.data.statistics.StatsPersistence
-import at.saltyy.switchly.ui.MainActivity
-import at.saltyy.switchly.ui.dialog.showAccented
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import at.saltyy.switchly.data.prefs.AppLogStore
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 
 /**
- * Deletes the current Switchly account:
- * 1) Deletes Firestore user document and its "backups" subcollection.
- * 2) Attempts to delete the FirebaseAuth user (may require recent login).
- * 3) Clears local preferences and databases.
- * 4) Restarts the app at MainActivity.
+ * Self-service account deletion for the current authenticated Switchly user.
+ * The UI re-authenticates the user before this starts so Firestore can be removed while the authenticated session is still valid.
+ * Local profiles, rules, schedules and statistics are kept; only local account/cloud-session metadata is cleared after a successful deletion.
  */
 object AccountDeletion {
 
@@ -52,73 +41,67 @@ object AccountDeletion {
     private const val SUB_BACKUPS = "backups"
     private const val SUB_STATS_CHUNKS = "stats_chunks"
 
-    fun deleteAccount(activity: Activity) {
-        val user = FirebaseAuth.getInstance().currentUser
+    enum class Stage {
+        BACKUPS,
+        CLOUD_DATA,
+        AUTH_ACCOUNT,
+    }
+
+    data class Result(
+        val success: Boolean,
+        val stage: Stage? = null,
+        val error: Throwable? = null,
+    )
+
+    fun deleteAccount(
+        context: Context,
+        onDone: (Result) -> Unit,
+    ) {
+        val user = runCatching { FirebaseAuth.getInstance().currentUser }.getOrNull()
         if (user == null) {
-            Toast.makeText(
-                activity,
-                activity.getString(R.string.settings_google_logged_out),
-                Toast.LENGTH_SHORT
-            ).show()
+            onDone(Result(success = false, stage = Stage.AUTH_ACCOUNT, error = IllegalStateException("Not signed in")))
             return
         }
 
+        val appContext = context.applicationContext
         val uid = user.uid
         val db = FirebaseFirestore.getInstance()
+        AppLogStore.append(appContext, TAG, "Starting self-service account deletion")
 
-        // Delete backups first (if any)
         deleteBackups(db, uid) { backupsOk, backupsErr ->
             if (!backupsOk) {
-                val errText = backupsErr?.localizedMessage ?: activity.getString(R.string.error_unknown)
-                Toast.makeText(
-                    activity,
-                    activity.getString(R.string.account_delete_failed_delete_backups_fmt, errText),
-                    Toast.LENGTH_LONG
-                ).show()
+                AppLogStore.append(appContext, TAG, "Account deletion stopped while deleting backups", backupsErr)
+                onDone(Result(success = false, stage = Stage.BACKUPS, error = backupsErr))
                 return@deleteBackups
             }
 
-            // Delete main user document
             deleteUserDocument(db, uid) { docOk, docErr ->
                 if (!docOk) {
-                    val errText = docErr?.localizedMessage ?: activity.getString(R.string.error_unknown)
-                    Toast.makeText(
-                        activity,
-                        activity.getString(R.string.account_delete_failed_delete_cloud_data_fmt, errText),
-                        Toast.LENGTH_LONG
-                    ).show()
+                    AppLogStore.append(appContext, TAG, "Account deletion stopped while deleting cloud data", docErr)
+                    onDone(Result(success = false, stage = Stage.CLOUD_DATA, error = docErr))
                     return@deleteUserDocument
                 }
 
-                // Try to delete Firebase auth user
-                deleteAuthUser(user) { authOk, authErr ->
-                    if (!authOk) {
-                        // If this is the "recent login required" case, show a nicer message
-                        if (authErr is FirebaseAuthRecentLoginRequiredException) {
-                            MaterialAlertDialogBuilder(activity)
-                                .setTitle(R.string.account_delete_recent_login_title)
-                                .setMessage(R.string.account_delete_recent_login_required)
-                                .setPositiveButton(R.string.ok, null)
-                                .showAccented()
-                        } else {
-                            val errText = authErr?.localizedMessage ?: activity.getString(R.string.error_unknown)
-                            Toast.makeText(
-                                activity,
-                                activity.getString(R.string.account_delete_failed_delete_account_fmt, errText),
-                                Toast.LENGTH_LONG
-                            ).show()
+                user.delete()
+                    .addOnSuccessListener {
+                        clearLocalAccountState(appContext)
+                        AppLogStore.append(appContext, TAG, "Firebase account and cloud data deleted")
+
+                        // Firebase signs the user out after delete(). Also clear Credential Managers provider state so the next sign-in starts from a clean account session.
+                        AuthRuntime.signOut(appContext) {
+                            onDone(Result(success = true))
                         }
-                        return@deleteAuthUser
                     }
-
-                    // Clear local data
-                    clearLocalData(activity)
-
-                    Toast.makeText(activity, activity.getString(R.string.account_deleted), Toast.LENGTH_SHORT).show()
-
-                    // Restart app to MainActivity
-                    restartApp(activity)
-                }
+                    .addOnFailureListener { error ->
+                        Log.w(TAG, "Failed to delete auth user after cloud cleanup", error)
+                        AppLogStore.append(
+                            appContext,
+                            TAG,
+                            "Cloud data removed, but Firebase Auth account deletion failed; retry is safe",
+                            error,
+                        )
+                        onDone(Result(success = false, stage = Stage.AUTH_ACCOUNT, error = error))
+                    }
             }
         }
     }
@@ -126,7 +109,7 @@ object AccountDeletion {
     private fun deleteBackups(
         db: FirebaseFirestore,
         uid: String,
-        onDone: (Boolean, Exception?) -> Unit
+        onDone: (Boolean, Exception?) -> Unit,
     ) {
         db.collection(COLLECTION_USERS)
             .document(uid)
@@ -162,9 +145,7 @@ object AccountDeletion {
             .get()
             .addOnSuccessListener { chunks ->
                 val batch = db.batch()
-                chunks.documents.forEach { chunk ->
-                    batch.delete(chunk.reference)
-                }
+                chunks.documents.forEach { chunk -> batch.delete(chunk.reference) }
                 batch.delete(backup.reference)
                 batch.commit()
                     .addOnSuccessListener {
@@ -184,51 +165,21 @@ object AccountDeletion {
     private fun deleteUserDocument(
         db: FirebaseFirestore,
         uid: String,
-        onDone: (Boolean, Exception?) -> Unit
+        onDone: (Boolean, Exception?) -> Unit,
     ) {
         db.collection(COLLECTION_USERS)
             .document(uid)
             .delete()
             .addOnSuccessListener { onDone(true, null) }
-            .addOnFailureListener { e ->
-                Log.w(TAG, "Failed to delete user document", e)
-                onDone(false, e)
+            .addOnFailureListener { error ->
+                Log.w(TAG, "Failed to delete user document", error)
+                onDone(false, error)
             }
     }
 
-    private fun deleteAuthUser(
-        user: com.google.firebase.auth.FirebaseUser,
-        onDone: (Boolean, Exception?) -> Unit
-    ) {
-        user.delete()
-            .addOnSuccessListener { onDone(true, null) }
-            .addOnFailureListener { e ->
-                Log.w(TAG, "Failed to delete auth user", e)
-                onDone(false, e)
-            }
-    }
-
-    private fun clearLocalData(ctx: Context) {
-        StatsPersistence.prepareForFullDataDeletion(ctx)
-        try {
-            PreferenceManager.getDefaultSharedPreferences(ctx).edit(commit = true) { clear() }
-            ctx.getSharedPreferences("switchly_prefs", Context.MODE_PRIVATE).edit(commit = true) { clear() }
-            ctx.getSharedPreferences("switchly_prefs_schedules", Context.MODE_PRIVATE).edit(commit = true) { clear() }
-            ctx.getSharedPreferences("switchly_ui_hints", Context.MODE_PRIVATE).edit(commit = true) { clear() }
-            ctx.getSharedPreferences(ActivityHistoryLogStore.PREFS_NAME, Context.MODE_PRIVATE).edit(commit = true) { clear() }
-            ctx.databaseList().forEach { databaseName ->
-                ctx.deleteDatabase(databaseName)
-            }
-        } finally {
-            StatsPersistence.resumeAfterFullDataDeletion(ctx)
+    private fun clearLocalAccountState(context: Context) {
+        PreferenceManager.getDefaultSharedPreferences(context).edit(commit = true) {
+            remove("pref_last_backup_epoch_ms")
         }
-    }
-
-    private fun restartApp(activity: Activity) {
-        val intent = Intent(activity, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        }
-        activity.startActivity(intent)
-        activity.finish()
     }
 }

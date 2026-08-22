@@ -20,7 +20,7 @@
     <!-- Core permissions -->
     <!-- ====================================================== -->
     <string name="permissions_accessibility_title">Bedienungshilfe-Dienst</string>
-    <string name="permissions_accessibility_desc">Erforderlich für zuverlässigen Schutz: damit Switchly geöffnete Apps und Websites erkennen, auf In-App-Navigation reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchsetzen kann.</string>
+    <string name="permissions_accessibility_desc">Erforderlich für App-, Website-, unterstützten In-App- und Nutzungslimit-Schutz: damit Switchly Vordergrundwechsel und die für konfigurierte Regeln nötigen sichtbaren Informationen erkennen kann.</string>
     <string name="permissions_usage_access_title">App-Nutzungszugriff</string>
     <string name="permissions_usage_access_desc">Erforderlich für Bildschirmzeit-Statistiken und tägliche App-Limits. Aktiviere den Zugriff auf „App-Nutzungsdaten“ für Switchly.</string>
     <string name="permissions_battery_oem_note">Manche Geräte bieten keine Akkuoption „Uneingeschränkt“ an. Wenn du für Switchly bereits die höchstmögliche Hintergrund- oder Akku-Einstellung aktiviert hast, ist das auf deinem Gerät möglicherweise bereits das Maximum.</string>
@@ -38,13 +38,13 @@
     <string name="permissions_nfc_status_manual">Manuell prüfen</string>
     <string name="permissions_nfc_status_not_allowed">Startberechtigung fehlt</string>
     <string name="permissions_nfc_status_system_disabled">System-NFC deaktiviert</string>
-    <string name="permissions_nfc_desc">Einige Android-Versionen zeigen unter „Spezieller App-Zugriff“ einen eigenen Eintrag „Per NFC starten“. Erlaube Switchly dort, damit geschriebene NFC-Tags Switchly beim Scannen öffnen können. Stelle außerdem sicher, dass der System-Schalter „NFC verwenden“ aktiviert ist. NFC nutzt keinen normalen Laufzeit-Berechtigungsdialog, daher prüft diese Zeile den System-NFC-Status und Androids Tag-Startzugriff. Android verlangt normalerweise, dass das Gerät entsperrt ist, bevor passive NFC-Tags an Apps weitergegeben werden.</string>
+    <string name="permissions_nfc_desc">Erforderlich, um Switchly über NFC-Tags zu öffnen. Aktiviere System-NFC und erlaube Switchly, falls vorhanden, unter Spezieller App-Zugriff → Per NFC starten. Android verlangt normalerweise ein entsperrtes Gerät.</string>
 
     <!-- ====================================================== -->
     <!-- Trigger and notification permissions -->
     <!-- ====================================================== -->
     <string name="permissions_location_title">Standort</string>
-    <string name="permissions_location_desc">Benötigt für WLAN-basierte und standortbasierte Zeitpläne. Du kannst das hier schon vor dem Erstellen eines Zeitplans aktivieren. WLAN-Trigger benötigen Standort, um die aktuelle SSID zu lesen, und Standort-Zeitpläne benötigen präzisen Standort. Für Geofence-Zeitpläne im Hintergrund aktiviere zusätzlich „Immer erlauben“.</string>
+    <string name="permissions_location_desc">Erforderlich für WLAN- und Standort-Zeitpläne. WLAN-Auslöser benötigen Standortzugriff, um den Netzwerknamen zu lesen. Standort-Zeitpläne benötigen einen präzisen Standort und „Immer erlauben“ für zuverlässige Geofences im Hintergrund.</string>
     <string name="permissions_bluetooth_title">Bluetooth (Geräte in der Nähe)</string>
     <string name="permissions_bluetooth_desc">Benötigt für Bluetooth-basierte Zeitpläne unter Android 12+. Du kannst das hier schon vor dem Erstellen eines Zeitplans aktivieren.</string>
     <string name="permissions_notifications_title">Benachrichtigungen</string>
@@ -75,10 +75,26 @@
     <!-- Why dialogs and disclosures -->
     <!-- ====================================================== -->
     <string name="permissions_why_dialog_header">Darum ist das wichtig</string>
-    <string name="accessibility_service_desc">Ermöglicht Switchly, geöffnete Apps und Websites zu erkennen, auf In-App-Navigation zu reagieren und Blockierungen, Profile, Zeitpläne und Nutzungslimits durchzusetzen.</string>
+    <string name="accessibility_service_desc">Ermöglicht Switchly, Vordergrund-Apps, unterstützte Browser-URLs/-Texte und unterstützte In-App-Navigation zu erkennen, wenn dies zum Durchsetzen konfigurierter Schutzregeln und Nutzungslimits nötig ist.</string>
     <string name="accessibility_disclosure_title">Zustimmung zum Bedienungshilfe-Dienst</string>
-    <string name="accessibility_disclosure_message">Switchly verwendet den Android Accessibility Service für seine zentralen Schutzfunktionen.\n\nWorauf Switchly zugreifen kann, während der Dienst aktiv ist:\n• Die aktuell geöffnete App und Fensterwechsel\n• Sichtbaren Text und URLs in unterstützten Browsern, wenn dies zum Prüfen von Website-Regeln nötig ist\n• In-App-Navigationsereignisse in unterstützten Apps, wenn dies für In-App-Regeln und Limits nötig ist\n\nWie Switchly diesen Zugriff verwendet:\n• Um blockierte Apps und Websites zu erkennen und dich davon wegzuleiten\n• Um Profile, Zeitpläne, App-Limits, Website-Limits und In-App-Blockierungen durchzusetzen\n• Um Nutzungs- und Blockierungsstatistiken lokal auf deinem Gerät zu zählen\n\nSwitchly verwendet Accessibility nicht, um Passwörter oder private Nachrichten zu lesen, ändert keine Systemeinstellungen ohne deine Aktion und teilt keine Accessibility-Daten für Werbung.\n\nDu kannst diese Berechtigung ablehnen, aber die zentralen Schutzfunktionen von Switchly benötigen Accessibility und funktionieren ohne diese Berechtigung nicht.</string>
-    <string name="accessibility_disclosure_checkbox">Ich verstehe, dass Switchly Accessibility für seine zentralen Schutzfunktionen benötigt.</string>
+    <string name="accessibility_disclosure_message">Switchly verwendet den Android-Bedienungshilfe-Dienst für App-, Website- und unterstützten In-App-Schutz.
+
+Worauf Switchly zugreifen kann, während der Dienst aktiv ist:
+• Die aktuell geöffnete App und Fensterwechsel
+• Sichtbaren Text und URLs in unterstützten Browsern, wenn dies zum Prüfen von Website-Regeln nötig ist
+• In-App-Navigationsereignisse in unterstützten Apps, wenn dies für In-App-Regeln und Limits nötig ist
+
+Wie Switchly diesen Zugriff verwendet:
+• Um geschützte Apps, Websites und unterstützte In-App-Bereiche zu erkennen und dich daraus wegzuleiten
+• Um App- und Website-Limits durchzusetzen und lokale Nutzungs-/Blockierungsstatistiken zu erfassen
+• Damit der Schutz auf Wechsel der Vordergrund-App oder sichtbaren Seite reagieren kann
+
+Die Bedienungshilfe wird nicht verwendet, um eine Deinstallation zu verhindern, Geräteadmin oder Device Owner zu aktivieren oder Managed-Device-Richtlinien zu ändern. Dafür nutzt Switchly getrennte Android-Geräteverwaltungs-APIs mit separaten Nutzer- oder Bereitstellungsschritten.
+
+Switchly verwendet die Bedienungshilfe nicht zum Lesen von Passwörtern oder privaten Nachrichten und verkauft oder teilt Bedienungshilfe-Daten nicht für Werbung. Die Verarbeitung für diese Schutzfunktionen erfolgt auf deinem Gerät.
+
+Du kannst diese Berechtigung ablehnen. App-, Website- und unterstützter In-App-Schutz, der die Vordergrunderkennung benötigt, funktioniert dann jedoch nicht.</string>
+    <string name="accessibility_disclosure_checkbox">Ich verstehe, worauf Switchly über die Bedienungshilfe zugreifen kann und wie dieser Zugriff für den Schutz verwendet wird.</string>
     <string name="accessibility_disclosure_accept">Ich stimme zu</string>
     <string name="accessibility_disclosure_decline">Nicht jetzt</string>
 

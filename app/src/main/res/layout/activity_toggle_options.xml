@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -43,10 +44,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
                 android:visibility="gone"
-                app:strokeWidth="1dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="1dp"
-                app:cardUseCompatPadding="true">
+                app:cardUseCompatPadding="true"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -78,8 +79,8 @@
                         android:id="@+id/btnNfcLockedHowTo"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
                         android:padding="10dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/info"
                         android:src="@drawable/info_24"
                         app:tint="?attr/colorOnSurface" />
@@ -90,17 +91,21 @@
                 android:id="@+id/cardGuidedSetupHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp"
-                app:strokeWidth="1dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="1dp"
-                app:cardUseCompatPadding="true">
+                android:layout_marginBottom="8dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="0dp"
+                app:cardElevation="0dp"
+                app:cardUseCompatPadding="false"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:paddingStart="4dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingBottom="6dp">
 
                     <TextView
                         style="@style/TextAppearance.MaterialComponents.Subtitle1"
@@ -113,12 +118,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="@string/toggle_guided_card_body"
-                        android:alpha="0.84" />
+                        android:alpha="0.84"
+                        android:text="@string/toggle_guided_card_body" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnOpenFaqTips"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        style="@style/Switchly.TextButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
@@ -155,8 +160,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_section_control_mode_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_section_control_mode_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardControlMode"
@@ -178,8 +183,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -233,8 +238,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -288,8 +293,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -343,8 +348,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -398,8 +403,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -463,8 +468,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_section_mixed_channels_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_section_mixed_channels_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardMixedChannels"
@@ -487,8 +492,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -543,8 +548,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -599,8 +604,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -655,8 +660,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -711,8 +716,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -767,8 +772,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -823,8 +828,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -879,9 +884,9 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:visibility="gone"
+                        android:padding="14dp"
                         android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:visibility="gone">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -936,8 +941,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -992,8 +997,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1067,8 +1072,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_section_additional_features_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_section_additional_features_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAdditionalFeatures"
@@ -1091,8 +1096,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1148,8 +1153,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1182,30 +1187,14 @@
                                 android:text="@string/pref_enable_paired_uids_summary" />
                         </LinearLayout>
 
-                        <LinearLayout
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchEnablePairedUids"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:gravity="center_horizontal">
-
-                            <androidx.appcompat.widget.AppCompatImageButton
-                                android:id="@+id/btnInfoEnablePairedUids"
-                                android:layout_width="34dp"
-                                android:layout_height="34dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:padding="7dp"
-                                android:contentDescription="@string/info"
-                                android:src="@drawable/info_24"
-                                app:tint="?attr/colorOnSurface" />
-
-                            <com.google.android.material.switchmaterial.SwitchMaterial
-                                android:id="@+id/switchEnablePairedUids"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textOff=""
-                                android:textOn=""
-                                app:showText="false" />
-                        </LinearLayout>
+                            android:layout_marginStart="8dp"
+                            android:textOff=""
+                            android:textOn=""
+                            app:showText="false" />
                     </LinearLayout>
 
                     <View
@@ -1221,8 +1210,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1286,8 +1275,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_subsection_status_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_subsection_status_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDisplayStatusControls"
@@ -1309,8 +1298,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1366,8 +1355,8 @@
                         android:minHeight="68dp"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1404,9 +1393,9 @@
                         <ImageView
                             android:layout_width="18dp"
                             android:layout_height="18dp"
+                            android:alpha="0.7"
                             android:contentDescription="@string/open"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.7"
                             app:tint="?android:attr/textColorSecondary" />
                     </LinearLayout>
                 </LinearLayout>
@@ -1432,8 +1421,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_section_protection_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_section_protection_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSafetyControls"
@@ -1456,8 +1445,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1512,8 +1501,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1569,8 +1558,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1634,8 +1623,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_section_ui_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_section_ui_summary" />
 
             <!-- In-app Home: Switchly Home cards and shortcuts -->
             <TextView
@@ -1657,8 +1646,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_subsection_in_app_home_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_subsection_in_app_home_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDisplayHomeControls"
@@ -1680,8 +1669,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1721,16 +1710,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
-                            android:text="@string/home_layout_detailed"
-                            android:alpha="0.82" />
+                            android:alpha="0.82"
+                            android:text="@string/home_layout_detailed" />
 
                         <ImageView
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:layout_marginStart="8dp"
+                            android:alpha="0.6"
                             android:contentDescription="@string/open"
-                            android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.6" />
+                            android:src="@drawable/keyboard_arrow_right_24" />
                     </LinearLayout>
 
                     <View
@@ -1746,9 +1735,9 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:visibility="gone"
+                        android:padding="14dp"
                         android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:visibility="gone">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1785,17 +1774,17 @@
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:layout_marginStart="8dp"
+                            android:alpha="0.6"
                             android:contentDescription="@string/open"
-                            android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.6" />
+                            android:src="@drawable/keyboard_arrow_right_24" />
                     </LinearLayout>
 
                     <View
                         android:id="@+id/dividerAfterHomeLayoutCustom"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:visibility="gone"
                         android:background="?attr/colorOnSurface"
+                        android:visibility="gone"
                         android:alpha="0.12" />
 
                     <LinearLayout
@@ -1804,8 +1793,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1860,8 +1849,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1911,13 +1900,69 @@
                         android:alpha="0.12" />
 
                     <LinearLayout
+                        android:id="@+id/rowLockActiveTemporaryTimer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/lock_24"
+                            app:tint="?attr/colorOnSurface" />
+
+                        <Space
+                            android:layout_width="14dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/pref_lock_active_temporary_timer_title" />
+
+                            <TextView
+                                style="@style/TextAppearance.MaterialComponents.Body2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/pref_lock_active_temporary_timer_summary" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchLockActiveTemporaryTimer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textOff=""
+                            android:textOn=""
+                            app:showText="false" />
+                    </LinearLayout>
+
+                    <View
+                        android:id="@+id/dividerAfterLockActiveTemporaryTimer"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorOnSurface"
+                        android:alpha="0.12" />
+
+                    <LinearLayout
                         android:id="@+id/rowShowActiveDuration"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -1972,8 +2017,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2037,8 +2082,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_subsection_tiles_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_subsection_tiles_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDisplayTileControls"
@@ -2060,8 +2105,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2099,9 +2144,9 @@
                             android:id="@+id/ivQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.55"
                             android:contentDescription="@null"
                             android:src="@drawable/open_in_new_24"
-                            android:alpha="0.55"
                             app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
@@ -2118,8 +2163,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2157,9 +2202,9 @@
                             android:id="@+id/ivQrQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.55"
                             android:contentDescription="@null"
                             android:src="@drawable/open_in_new_24"
-                            android:alpha="0.55"
                             app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
@@ -2176,8 +2221,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2215,9 +2260,9 @@
                             android:id="@+id/ivBarcodeQuickTileChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.55"
                             android:contentDescription="@null"
                             android:src="@drawable/open_in_new_24"
-                            android:alpha="0.55"
                             app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
@@ -2250,8 +2295,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/toggle_subsection_widgets_summary"
-                android:alpha="0.82" />
+                android:alpha="0.82"
+                android:text="@string/toggle_subsection_widgets_summary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDisplayWidgetControls"
@@ -2273,8 +2318,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2311,9 +2356,9 @@
                             android:id="@+id/ivWidgetBarcodeChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.55"
                             android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.55"
                             app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
@@ -2330,8 +2375,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2368,9 +2413,9 @@
                             android:id="@+id/ivWidgetQrChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.55"
                             android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.55"
                             app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
@@ -2387,8 +2432,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2425,9 +2470,9 @@
                             android:id="@+id/ivWidgetNextScheduleChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.55"
                             android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.55"
                             app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
@@ -2444,8 +2489,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2482,9 +2527,9 @@
                             android:id="@+id/ivWidgetActiveTimerChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.55"
                             android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.55"
                             app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
 
@@ -2501,8 +2546,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="14dp">
+                        android:padding="14dp"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="22dp"
@@ -2539,9 +2584,9 @@
                             android:id="@+id/ivWidgetBlockedNotificationsChevron"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:alpha="0.55"
                             android:contentDescription="@null"
                             android:src="@drawable/keyboard_arrow_right_24"
-                            android:alpha="0.55"
                             app:tint="?attr/colorOnSurface" />
                     </LinearLayout>
                 </LinearLayout>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="website_allow_mode_preview_title">„Ausgewählte erlauben“ verwenden?</string>
+    <plurals name="website_allow_mode_preview_body">
+        <item quantity="one">%d gespeicherte Website bleibt verfügbar. Andere erkannte Websites werden blockiert, solange dieses Profil aktiv ist.</item>
+        <item quantity="other">%d gespeicherte Websites bleiben verfügbar. Andere erkannte Websites werden blockiert, solange dieses Profil aktiv ist.</item>
+    </plurals>
+    <string name="website_allow_mode_preview_action">Modus verwenden</string>
 
     <!-- ====================================================== -->
     <!-- Website blocking overview -->
@@ -9,7 +15,7 @@
     <string name="blocked_websites_empty_body">Füge eine Website hinzu, die dieses Profil blockieren soll.</string>
     <string name="empty_action_add_first_website">Erste Website hinzufügen</string>
     <string name="website_rules_info_title">Website-Regeln</string>
-    <string name="website_rules_info_body">Website-Regeln sind profilspezifisch und gelten nur, solange dieses Profil aktiv ist.\n\nRegeln sind aktiv, sobald sie existieren. Mit der Checkbox direkt bei der Domain kannst du diese Regel aktivieren oder pausieren, ohne sie zu löschen. Im Block selected Modus werden angehakte Domains blockiert. Im Allow selected Modus werden angehakte Domains erlaubt.\n\nWebsite-Blockierung liest die sichtbare URL in unterstützten Browsern über die Bedienungshilfe aus. Unterstützte/getestete Browser sind Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo und Ecosia. Zusätzlich erkennt Switchly den integrierten Browser von Facebook Messenger bestmöglich, wenn Messenger die aktuelle URL über die Bedienungshilfe bereitstellt. Normale Chats und Nachrichtentexte werden nicht als Website-Oberfläche behandelt. Die Unterstützung kann je nach App-Version und Gerät variieren. Brave Shields kann URL-Informationen zeitweise verbergen; Switchly verwendet dann die zuletzt sicher erkannte Brave-Domain weiter, solange der Browser geöffnet bleibt, kann nach jeder Navigation aber keine perfekte Zuordnung garantieren.</string>
+    <string name="website_rules_info_body">Website-Regeln gelten nur für das ausgewählte Profil.\n\nWähle einen Modus:\n• Ausgewählte blockieren: Aktivierte Domains werden blockiert.\n• Ausgewählte erlauben: Aktivierte Domains bleiben verfügbar; andere erkannte Websites werden blockiert.\n\nMit der Checkbox neben einer Domain kannst du ihre Regel pausieren oder fortsetzen, ohne sie zu löschen. Switchly erkennt sichtbare URLs in unterstützten Browsern mithilfe der Bedienungshilfe. Browser-Updates und Datenschutzfunktionen können die Erkennung beeinflussen.\n\nDie aktuelle Kompatibilitätsliste und Hilfe zur Fehlerbehebung findest du im Hilfebereich.</string>
     <string name="website_rule_mode_title">Website-Regelmodus</string>
     <string name="website_rule_mode_block_summary">Ausgewählte aktivierte Websites werden blockiert, solange dieses Profil aktiv ist.</string>
     <string name="website_rule_mode_allow_summary">Ausgewählte aktivierte Websites sind erlaubt. Andere Websites werden blockiert, solange dieses Profil aktiv ist.</string>
@@ -52,7 +58,7 @@
 
     <string name="session_reset_limit_value_format">%1$d Min/Sitzung</string>
     <string name="allowed_websites_empty_title">Noch keine erlaubten Websites</string>
-    <string name="allowed_websites_empty_body">Füge Websites hinzu, die in diesem Profil im Allow Mode verfügbar bleiben sollen.</string>
+    <string name="allowed_websites_empty_body">Füge Websites hinzu, die in diesem Profil verfügbar bleiben sollen.</string>
     <string name="blocked_websites_profile_subtitle">Regeln für: %1$s</string>
     <string name="rule_allowed">Erlaubt</string>
     <string name="rule_allowed_always">Immer erlaubt</string>

@@ -45,7 +45,6 @@ object AppBlockSafety {
         ASSISTANT,
         STORE,
         FILES,
-        BROWSER,
         SYSTEM_UI,
         LAUNCHER,
         DIALER,
@@ -130,11 +129,6 @@ object AppBlockSafety {
             PolicyAction.WARN_ONLY,
             "Files/Documents surfaces can matter for backup, restore, and recovery."
         ),
-        "com.google.android.apps.nbu.files" to RiskRule(
-            RiskCategory.FILES,
-            PolicyAction.WARN_ONLY,
-            "Files/Documents surfaces can matter for backup, restore, and recovery."
-        ),
         AndroidSystemPackages.LEGACY_GOOGLE_PERMISSION_CONTROLLER to RiskRule(
             RiskCategory.PERMISSIONS,
             PolicyAction.PROTECTED,
@@ -152,8 +146,8 @@ object AppBlockSafety {
         ),
         "com.google.android.googlequicksearchbox" to RiskRule(
             RiskCategory.ASSISTANT,
-            PolicyAction.PROTECTED,
-            "Google app can be deeply integrated into launcher/search/assistant flows."
+            PolicyAction.WARN_ONLY,
+            "Google app is user-facing and can be blocked, but doing so may affect launcher search or Assistant integration."
         ),
         AndroidSystemPackages.SYSTEM_UI to RiskRule(
             RiskCategory.SYSTEM_UI,
@@ -162,8 +156,8 @@ object AppBlockSafety {
         ),
         "com.google.android.gms" to RiskRule(
             RiskCategory.OTHER,
-            PolicyAction.WARN_ONLY,
-            "Google Play services is deeply integrated into Android."
+            PolicyAction.PROTECTED,
+            "Google Play services is a core Android dependency used by authentication, push messaging, Maps, and other system-integrated features."
         ),
         "com.google.android.as" to RiskRule(
             RiskCategory.ASSISTANT,
@@ -179,81 +173,6 @@ object AppBlockSafety {
             RiskCategory.ASSISTANT,
             PolicyAction.WARN_ONLY,
             "Bixby settings can affect assistant behavior and recovery paths."
-        ),
-        "com.android.chrome" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "org.mozilla.firefox" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "org.mozilla.firefox_beta" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "net.waterfox.android.release" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.brave.browser" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.brave.browser_beta" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.brave.browser_nightly" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.microsoft.emmx" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.sec.android.app.sbrowser" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.sec.android.app.sbrowser.beta" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.vivaldi.browser" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.opera.browser" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.opera.browser.beta" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.opera.mini.native" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
-        ),
-        "com.kiwibrowser.browser" to RiskRule(
-            RiskCategory.BROWSER,
-            PolicyAction.WARN_ONLY,
-            "Browsers are often used for downloads, support, and recovery steps."
         ),
         "com.google.android.apps.nexuslauncher" to RiskRule(
             RiskCategory.LAUNCHER,
@@ -577,11 +496,6 @@ object AppBlockSafety {
                 R.string.app_picker_files_hint,
                 R.string.app_picker_files_warning_title,
                 R.string.app_picker_files_warning_message
-            )
-            RiskCategory.BROWSER -> Triple(
-                R.string.app_picker_browser_hint,
-                R.string.app_picker_browser_warning_title,
-                R.string.app_picker_browser_warning_message
             )
             RiskCategory.ASSISTANT -> Triple(
                 R.string.app_picker_assistant_hint,

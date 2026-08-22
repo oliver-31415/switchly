@@ -650,8 +650,6 @@ object CustomAccentApplier {
      * This is separate from the cursor drawable and can keep the theme default green even when the cursor itself is tinted.
      */
     private fun tintEditTextSelectionHandles(et: EditText, accent: Int) {
-        val ctx = et.context
-
         fun tint(d: android.graphics.drawable.Drawable?): android.graphics.drawable.Drawable? {
             d ?: return null
             val wrapped = DrawableCompat.wrap(d.mutate())

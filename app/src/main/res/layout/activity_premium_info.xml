@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -41,12 +42,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                app:strokeColor="@color/switchly_card_stroke"
-                app:strokeWidth="1dp"
                 app:cardBackgroundColor="@color/switchly_card_bg"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="1dp"
-                app:cardUseCompatPadding="false">
+                app:cardUseCompatPadding="false"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -111,9 +112,9 @@
                             android:textColor="?attr/colorOnPrimary"
                             android:textSize="11sp"
                             android:textStyle="bold"
-                            android:singleLine="true"
                             android:ellipsize="end"
                             android:checkable="false"
+                            android:singleLine="true"
                             android:textAllCaps="true"
                             app:chipBackgroundColor="?attr/colorPrimary"
                             app:chipCornerRadius="999dp"
@@ -125,8 +126,8 @@
                             android:id="@+id/tvPremiumThanks"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:layout_marginStart="6dp"
+                            android:layout_weight="1"
                             android:visibility="visible"
                             android:text="@string/premium_support_note"
                             android:textColor="?android:attr/textColorSecondary"
@@ -137,7 +138,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRedeemPremiumCode"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        style="@style/Switchly.OutlinedButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
@@ -163,12 +164,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                app:strokeColor="@color/switchly_card_stroke"
-                app:strokeWidth="1dp"
                 app:cardBackgroundColor="@color/switchly_card_bg"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="1dp"
-                app:cardUseCompatPadding="true">
+                app:cardUseCompatPadding="true"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -192,10 +193,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
+                        android:alpha="0.78"
                         android:text="@string/premium_nfc_desc"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp"
-                        android:alpha="0.78" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -205,12 +206,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                app:strokeColor="@color/switchly_card_stroke"
-                app:strokeWidth="1dp"
                 app:cardBackgroundColor="@color/switchly_card_bg"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="1dp"
-                app:cardUseCompatPadding="true">
+                app:cardUseCompatPadding="true"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -234,10 +235,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
+                        android:alpha="0.78"
                         android:text="@string/premium_unlock_desc"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp"
-                        android:alpha="0.78" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -247,12 +248,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                app:strokeColor="@color/switchly_card_stroke"
-                app:strokeWidth="1dp"
                 app:cardBackgroundColor="@color/switchly_card_bg"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="1dp"
-                app:cardUseCompatPadding="true">
+                app:cardUseCompatPadding="true"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -276,10 +277,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
+                        android:alpha="0.78"
                         android:text="@string/premium_automation_desc"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp"
-                        android:alpha="0.78" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -289,12 +290,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                app:strokeColor="@color/switchly_card_stroke"
-                app:strokeWidth="1dp"
                 app:cardBackgroundColor="@color/switchly_card_bg"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="1dp"
-                app:cardUseCompatPadding="true">
+                app:cardUseCompatPadding="true"
+                app:strokeColor="@color/switchly_card_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -318,10 +319,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
+                        android:alpha="0.78"
                         android:text="@string/premium_stats_desc"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp"
-                        android:alpha="0.78" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -340,7 +341,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRestorePurchases"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"

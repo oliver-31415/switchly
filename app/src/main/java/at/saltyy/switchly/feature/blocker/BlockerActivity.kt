@@ -22,7 +22,6 @@ package at.saltyy.switchly.feature.blocker
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Typeface
 import android.graphics.Color
 import android.media.AudioManager
 import android.os.Build
@@ -35,7 +34,6 @@ import android.view.View
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
@@ -45,7 +43,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.graphics.ColorUtils
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.SwitchModeStore
@@ -53,8 +50,9 @@ import at.saltyy.switchly.data.prefs.LastBlockReasonStore
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.SwitchlyInfoRow
+import at.saltyy.switchly.ui.dialog.showSwitchlyInfoDialog
 import at.saltyy.switchly.util.PackageLaunchIntentCompat
-import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.lang.ref.WeakReference
 
@@ -268,63 +266,36 @@ class BlockerActivity : ComponentActivity() {
 
     private fun showBlockReasonInfo() {
         val snapshot = blockReasonSnapshot
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.block_reason_info_title)
-            .setPositiveButton(android.R.string.ok, null)
         if (snapshot == null) {
-            dialog.setMessage(R.string.block_reason_info_empty)
-        } else {
-            dialog.setView(buildBlockReasonInfoView(snapshot))
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.block_reason_info_title)
+                .setMessage(R.string.block_reason_info_empty)
+                .setPositiveButton(android.R.string.ok, null)
+                .showAccented()
+            return
         }
-        dialog.showAccented()
-    }
 
-    private fun buildBlockReasonInfoView(snapshot: LastBlockReasonStore.Snapshot): View {
-        val padH = (20 * resources.displayMetrics.density).toInt()
-        val padTop = (8 * resources.displayMetrics.density).toInt()
-        val padBottom = (2 * resources.displayMetrics.density).toInt()
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(padH, padTop, padH, padBottom)
-            val primaryText = MaterialColors.getColor(
-                this@BlockerActivity,
-                com.google.android.material.R.attr.colorOnSurface,
-                Color.BLACK,
-            )
-            val secondaryText = ColorUtils.setAlphaComponent(primaryText, 0xB3)
-
-            fun addRow(label: String, value: String) {
-                if (value.isBlank()) {
-                    return
-                }
-                val title = TextView(this@BlockerActivity).apply {
-                    text = label
-                    setTypeface(typeface, Typeface.BOLD)
-                    setTextColor(primaryText)
-                    textSize = 13f
-                }
-                val body = TextView(this@BlockerActivity).apply {
-                    text = value
-                    setTextColor(secondaryText)
-                    textSize = 14f
-                    val bottom = (10 * resources.displayMetrics.density).toInt()
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                    ).apply { bottomMargin = bottom }
-                }
-                addView(title)
-                addView(body)
-            }
-
-            addRow("Profile", snapshot.profile)
-            addRow("Rule", snapshot.rule)
-            addRow("Mode", snapshot.mode)
-            addRow("Source", snapshot.source)
-            addRow("Matched", snapshot.matched.ifBlank { snapshot.label.ifBlank { snapshot.pkg } })
-            addRow("Result", snapshot.result)
-            addRow("Details", snapshot.details)
+        fun row(labelRes: Int, value: String, emphasized: Boolean = false): SwitchlyInfoRow? {
+            if (value.isBlank()) return null
+            return SwitchlyInfoRow(getString(labelRes), value, emphasized)
         }
+
+        showSwitchlyInfoDialog(
+            title = getString(R.string.block_reason_info_title),
+            rows = listOfNotNull(
+                row(R.string.block_reason_field_profile, snapshot.profile),
+                row(R.string.block_reason_field_rule, snapshot.rule),
+                row(R.string.block_reason_field_mode, snapshot.mode),
+                row(R.string.block_reason_field_source, snapshot.source),
+                row(
+                    R.string.block_reason_field_matched,
+                    snapshot.matched.ifBlank { snapshot.label.ifBlank { snapshot.pkg } },
+                ),
+                row(R.string.block_reason_field_result, snapshot.result, emphasized = true),
+                row(R.string.block_reason_field_details, snapshot.details),
+            ),
+            positiveText = getString(android.R.string.ok),
+        )
     }
 
     private fun handleCloseAction() {

@@ -28,10 +28,10 @@
     <!-- Info dialogs -->
     <!-- ====================================================== -->
     <string name="qr_info_title">QR-Code-Aktionen</string>
-    <string name="qr_info_body">Erstelle QR-Codes, die beim Scannen Switchly-Aktionen ausführen. QR-Codes können Switchly aktivieren, deaktivieren, umschalten oder temporär ändern.\n\nFür strengere Setups kannst du in den Kontrollmodi nur QR aktiv lassen und die anderen Kanäle deaktivieren.</string>
+    <string name="qr_info_body">QR-Codes können beim Scannen folgende Switchly-Aktionen ausführen:\n• Schutz aktivieren oder deaktivieren\n• Aktuellen Status umschalten\n• Temporäre Aktion starten\n• Profil wechseln\n\nFür eine strengere Einrichtung kannst du nur die gewünschten Steuerungskanäle aktiviert lassen.</string>
     <string name="manage_barcodes_info_title">Barcode-Aktionen</string>
-    <string name="manage_barcodes_info_body">Gespeicherte Barcodes machen gedruckte oder physische Codes zu Switchly-Aktionen. Damit kannst du Switchly aktivieren, deaktivieren, umschalten oder temporär ändern, ohne die App zu bearbeiten.\n\nFür mehr Hürde kannst du den Barcode außerhalb deiner Reichweite platzieren und Temporary Disable oder Temporary Enable mit „Beim Scannen fragen“ verwenden.</string>
+    <string name="manage_barcodes_info_body">Gespeicherte Barcodes verbinden einen physischen Code mit einer Switchly-Aktion:\n• Schutz aktivieren, deaktivieren oder umschalten\n• Temporäre Aktion starten\n• Profil wechseln\n\nFür eine größere Hürde kannst du den Barcode außer Reichweite aufbewahren. Mit „Beim Scannen fragen“ wählst du die Dauer während des Scans.</string>
     <string name="paired_tags_info_title">Gekoppelte NFC-Tags</string>
-    <string name="paired_tags_info_body">Gekoppelte Tags lassen Switchly ein NFC-Tag anhand seiner UID erkennen. Schreibgeschützte Tags verwenden direkt das ausgewählte Profil und die Aktion. Beschreibbare Tags können Profil, Aktion und Dauer vom Tag übernehmen oder mit einer eigenen Konfiguration überschreiben.\n\nTageslimits und Cooldowns gelten bei beiden Tag-Typen für tatsächliche Entsperr- oder Schutzpausen-Aktionen.</string>
+    <string name="paired_tags_info_body">Gekoppelte Tags werden anhand ihrer eindeutigen ID erkannt.\n• Schreibgeschützte Tags verwenden die in Switchly eingerichtete Aktion.\n• Beschreibbare Tags können ihre gespeicherte Aktion oder eine eigene Überschreibung verwenden.\n• Tageslimits und Abklingzeiten gelten für Entsperrungen und Schutzpausen.\n\nFür normale beschreibbare Switchly-Tags ist das Koppeln optional, solange du keine Einstellungen oder Limits pro Tag benötigst.</string>
 
 </resources>

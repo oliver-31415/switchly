@@ -41,13 +41,12 @@
     <!-- ====================================================== -->
     <string name="dashboard_control_mode_hint_placeholder">Kontrollmodus: —</string>
     <string name="dashboard_control_mode_hint_fmt">Kontrollmodus: %1$s</string>
-    <string name="dashboard_control_method_schedule">Zeitplänen</string>
+    <string name="dashboard_control_method_schedule">Zeitpläne</string>
     <string name="dashboard_control_method_nfc">NFC</string>
-    <string name="dashboard_control_method_qr">QR-Scan</string>
-    <string name="dashboard_control_method_barcode">Barcode-Scan</string>
+    <string name="dashboard_control_method_qr">QR</string>
+    <string name="dashboard_control_method_barcode">Barcode</string>
     <string name="dashboard_control_method_manual">manueller Steuerung</string>
     <string name="dashboard_control_method_configured">konfigurierter Methode</string>
-    <string name="dashboard_control_method_separator">, </string>
     <string name="dashboard_control_mode_hint_mixed_fmt">Kontrollmodus: %1$s Kanäle: %2$s</string>
     <string name="dashboard_control_mode_schedule">Zeitpläne</string>
     <string name="dashboard_control_mode_nfc">NFC</string>
@@ -97,6 +96,7 @@
     <string name="dashboard_temp_hint_disable">Temporär pausieren - Dauer wählen</string>
     <string name="dashboard_temp_hint_locked_nfc">Temporärer Modus ist nicht verfügbar, solange „NFC erforderlich“ aktiv ist.</string>
     <string name="dashboard_temp_nudge">Tipp:\nNutze den temporären Modus für schnelle 5–60-Minuten-Sessions.</string>
+    <string name="dashboard_temp_active_changes_locked">Dieser Timer ist geschützt. Auf Home kann er nicht ersetzt oder verkürzt werden. Eine temporäre Pause kann weiterhin vorzeitig beendet werden, um den Schutz wiederherzustellen.</string>
     <string name="dashboard_temp_discovery_done">Temporärer Modus ist bereit. Öffne ihn jederzeit über die Statuskarte.</string>
 
     <!-- ====================================================== -->
@@ -115,7 +115,7 @@
     <string name="dashboard_tile_profiles_sub">Erstellen &amp; bearbeiten</string>
     <string name="dashboard_tile_blocked_websites">Website-Regeln</string>
     <string name="dashboard_tile_blocked_websites_sub">Domains für dieses Profil</string>
-    <string name="dashboard_tile_in_app">In-App-Blocking</string>
+    <string name="dashboard_tile_in_app">In-App-Schutz</string>
     <string name="dashboard_tile_in_app_sub">Feeds &amp; Oberflächen</string>
     <string name="dashboard_quick_actions_edit">Schnellaktionen bearbeiten</string>
     <string name="dashboard_quick_actions_customize">Schnellaktionen anpassen</string>
@@ -140,10 +140,10 @@
     <string name="main_info_contact_action">Kontakt</string>
     <string name="main_info_older_versions_action">Downloads</string>
     <string name="main_development_info_message">Switchly ist noch in Entwicklung. Ich teste die App so sorgfältig wie möglich mit offenen Beta-Phasen, aber Android verhält sich je nach Gerät unterschiedlich, daher finde ich nicht jedes Problem selbst.\nWenn bei dir etwas nicht richtig funktioniert, schreib mir bitte eine Mail.\n\nDu kannst die Download-Seite über den Button unten öffnen.</string>
-    <string name="home_layout_default">Default</string>
-    <string name="home_layout_minimal">Simple</string>
-    <string name="home_layout_detailed">Advanced</string>
-    <string name="home_layout_custom">Custom</string>
+    <string name="home_layout_default">Standard</string>
+    <string name="home_layout_minimal">Einfach</string>
+    <string name="home_layout_detailed">Erweitert</string>
+    <string name="home_layout_custom">Benutzerdefiniert</string>
 
     <!-- ====================================================== -->
     <!-- Block reason info -->
@@ -151,6 +151,13 @@
     <string name="block_reason_info_title">Warum wurde das blockiert?</string>
     <string name="block_reason_info_button_desc">Anzeigen, warum das blockiert wurde</string>
     <string name="block_reason_info_empty">Kein aktueller Blockiergrund verfügbar.</string>
+    <string name="block_reason_field_profile">Profil</string>
+    <string name="block_reason_field_rule">Regel</string>
+    <string name="block_reason_field_mode">Modus</string>
+    <string name="block_reason_field_source">Quelle</string>
+    <string name="block_reason_field_matched">Treffer</string>
+    <string name="block_reason_field_result">Ergebnis</string>
+    <string name="block_reason_field_details">Details</string>
     <string name="block_reason_rule_allow_selected">Nur ausgewählte erlauben</string>
     <string name="block_reason_rule_daily_time_limit">Tages-Zeitlimit</string>
     <string name="block_reason_rule_open_limit">Tägliches Öffnungslimit</string>
@@ -159,11 +166,11 @@
     <string name="block_reason_rule_website_rule">Website-Regel</string>
     <string name="block_reason_rule_website_limit">Website-Zeitlimit</string>
     <string name="block_reason_rule_settings_bypass">Einstellungen-Schutz</string>
-    <string name="block_reason_mode_block_selected">Block selected: Eintrag ist ausgewählt</string>
-    <string name="block_reason_mode_allow_not_allowed">Allow selected: Eintrag ist nicht erlaubt</string>
-    <string name="block_reason_mode_website_block_selected">Block selected: Domain ist ausgewählt</string>
-    <string name="block_reason_mode_website_allow_not_allowed">Allow selected: Domain ist nicht erlaubt</string>
-    <string name="block_reason_source_app_blocking">App-Blocking</string>
+    <string name="block_reason_mode_block_selected">Ausgewählte blockieren: Eintrag ist ausgewählt</string>
+    <string name="block_reason_mode_allow_not_allowed">Ausgewählte erlauben: Eintrag ist nicht erlaubt</string>
+    <string name="block_reason_mode_website_block_selected">Ausgewählte blockieren: Domain ist ausgewählt</string>
+    <string name="block_reason_mode_website_allow_not_allowed">Ausgewählte erlauben: Domain ist nicht erlaubt</string>
+    <string name="block_reason_source_app_blocking">App-Schutz</string>
     <string name="block_reason_source_website">Website-Regel</string>
     <string name="block_reason_source_in_app">In-App-Regel</string>
     <string name="block_reason_source_strict_mode">Strict Mode</string>

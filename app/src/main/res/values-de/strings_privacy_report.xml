@@ -8,18 +8,18 @@
     <string name="privacy_report_local_title">Lokale Switchly-Daten</string>
     <string name="privacy_report_profiles_schedules_title">Profile &amp; Zeitpläne</string>
     <string name="privacy_report_profiles_schedules_summary">Profile: %1$d · Zeitpläne: %2$d</string>
-    <string name="privacy_report_rules_title">Blocking-Regeln</string>
+    <string name="privacy_report_rules_title">Schutzregeln</string>
     <string name="privacy_report_rules_summary">Website-Regeln: %1$d · In-App-Apps: %2$d</string>
     <string name="privacy_report_diagnostics_title">Lokale Diagnose</string>
     <string name="privacy_report_diagnostics_summary">Blockierte Benachrichtigungen: %1$d · Logs: %2$d</string>
     <string name="privacy_report_local_compact">Profile: %1$d · Zeitpläne: %2$d\nWebsite-Regeln: %3$d · In-App-Apps: %4$d\nBenachrichtigungen: %5$d · Logs: %6$d</string>
     <string name="privacy_report_not_stored_title">Nicht von Switchly gespeichert</string>
     <string name="privacy_report_not_stored_compact">Passwörter, Nachrichten und Bildschirminhalte werden nicht gespeichert</string>
-    <string name="privacy_report_not_stored_summary">Switchly speichert keine Passwörter, privaten Nachrichten, vollständigen Browserverläufe oder sichtbaren Bildschirminhalte, die über Accessibility verarbeitet werden. Accessibility-Ereignisse werden lokal für das Blocking ausgewertet.</string>
+    <string name="privacy_report_not_stored_summary">Switchly speichert keine Passwörter, privaten Nachrichten, vollständigen Browserverläufe oder sichtbaren Bildschirminhalte, die über die Bedienungshilfe verarbeitet werden. Ereignisse der Bedienungshilfe werden lokal für den Schutz ausgewertet.</string>
 
     <string name="privacy_report_sharing_title">Datenweitergabe</string>
     <string name="privacy_report_sharing_compact">Standardmäßig lokal; Online-Dienste hängen von der APK-Variante ab</string>
-    <string name="privacy_report_sharing_summary">Switchlys Blocking-Engine lädt Profilnamen, App-/Website-Regeln, Inhalte blockierter Benachrichtigungen oder detaillierte Nutzungsverläufe nicht automatisch hoch. Diese Daten können das Gerät verlassen, wenn du bewusst Cloud-Backup, Supportbericht oder Datenexport/-freigabe verwendest.\n\nAbhängig von der APK-Variante können Google-Play- oder Firebase-Dienste technische Crash-, Integritäts-, Anmelde-, Kauf- sowie grundlegende App-/Gerätemetadaten verarbeiten.</string>
+    <string name="privacy_report_sharing_summary">Switchlys Schutzsystem lädt Profilnamen, App-/Website-Regeln, Inhalte blockierter Benachrichtigungen oder detaillierte Nutzungsverläufe nicht automatisch hoch. Diese Daten können das Gerät verlassen, wenn du bewusst Cloud-Sicherung, Supportbericht oder Datenexport verwendest.\n\nJe nach APK-Variante können Google Play oder Firebase technische Absturz-, Integritäts-, Anmelde-, Kauf- sowie grundlegende App- und Gerätemetadaten verarbeiten.</string>
 
     <string name="privacy_report_backup_title">Backup</string>
     <string name="privacy_report_backup_compact">Aktuelle Auswahl: %1$s</string>

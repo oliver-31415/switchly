@@ -19,7 +19,6 @@
 
 package at.saltyy.switchly.nfc
 
-import android.app.PendingIntent
 import android.content.Intent
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
@@ -36,12 +35,11 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.IntentCompat
 import androidx.core.content.edit
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import at.saltyy.switchly.R
+import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.NfcDiagnosticsStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
@@ -56,7 +54,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * Full-screen "ready to write" screen.
- * Handles NFC foreground dispatch and writing, then returns the result to [NfcWriterActivity].
+ * Handles NFC reader mode and writing, then returns the result to [NfcWriterActivity].
  */
 class NfcWriteWaitingActivity : AppCompatActivity() {
 
@@ -85,6 +83,13 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         const val RESULT_FAILED_STR = "failed"
 
         private const val MAX_TRANSIENT_FAILURES_BEFORE_FALLBACK = 3
+
+        @Volatile
+        private var writeSessionActive: Boolean = false
+
+        private const val SUCCESS_TAG_DEBOUNCE_MS = 1200
+
+        fun isWriteSessionActive(): Boolean = writeSessionActive
     }
 
     private enum class WriteResult {
@@ -112,6 +117,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
     private lateinit var tvTitle: TextView
     private lateinit var tvHint: TextView
     private lateinit var btnClose: android.view.View
+    private lateinit var btnRetry: android.view.View
 
     private var mode: String = MODE_WRITE_URI
     private var uriToWrite: String? = null
@@ -130,13 +136,18 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         tvTitle = findViewById(R.id.waitTitle)
         tvHint = findViewById(R.id.waitHint)
         btnClose = findViewById(R.id.closeButton)
+        btnRetry = findViewById(R.id.retryButton)
 
         btnClose.setOnClickListener {
-            safeDisableForegroundDispatch()
+            safeDisableReaderMode()
             setResult(RESULT_CANCELED, Intent().apply { putExtra(EXTRA_RESULT, RESULT_FAILED_STR) })
             finish()
         }
+        btnRetry.setOnClickListener {
+            resetForNextTag()
+        }
 
+        writeSessionActive = true
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         mode = intent.getStringExtra(EXTRA_MODE) ?: MODE_WRITE_URI
         uriToWrite = intent.getStringExtra(EXTRA_URI_TO_WRITE)
@@ -154,31 +165,37 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         showWaitingState()
     }
 
-    override fun onResume() {
-        super.onResume()
-        enableForegroundDispatchIfReady()
+    private val readerCallback = NfcAdapter.ReaderCallback { tag ->
+        // Reader callbacks are not guaranteed to run on the main thread.
+        // Keep all UI/lifecycle state changes on the activity thread and ignore duplicate discoveries while processing.
+        runOnUiThread { handleDiscoveredTag(tag) }
+    }
+
+    override fun onPostResume() {
+        super.onPostResume()
+        // AppCompat/Lifecycle can still report STARTED from inside onResume().
+        // Reader mode must be enabled only once the Activity is fully resumed, otherwise the call can be skipped and Android falls back to the manifest NFC dispatch (NfcEntryActivity).
+        enableReaderModeIfReady()
     }
 
     override fun onPause() {
-        safeDisableForegroundDispatch()
+        safeDisableReaderMode()
         super.onPause()
     }
 
     override fun onStop() {
-        safeDisableForegroundDispatch()
+        safeDisableReaderMode()
         super.onStop()
     }
 
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        val tag = intent?.let {
-            IntentCompat.getParcelableExtra(it, NfcAdapter.EXTRA_TAG, Tag::class.java)
-        }
-        if (tag == null) {
-            Toast.makeText(this, getString(R.string.nfc_tag_error), Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (isProcessingTag) {
+    override fun onDestroy() {
+        safeDisableReaderMode()
+        writeSessionActive = false
+        super.onDestroy()
+    }
+
+    private fun handleDiscoveredTag(tag: Tag) {
+        if (isFinishing || isDestroyed || isProcessingTag) {
             return
         }
 
@@ -189,7 +206,10 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         }
 
         isProcessingTag = true
-        safeDisableForegroundDispatch()
+        // Keep reader mode active for the complete NFC transaction.
+        // Disabling reader mode here can tear down the RF connection before Ndef.connect()/writeNdefMessage() finishes and surface as a false TagLostException even when the tag has not moved. 
+        // Duplicate callbacks are already ignored by isProcessingTag.
+        btnRetry.visibility = android.view.View.GONE
         tvTitle.text = getString(R.string.nfc_writing)
         tvHint.text = getString(R.string.nfc_hold_still)
         progress.isIndeterminate = true
@@ -273,6 +293,10 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
     }
 
     private fun handleSuccessfulWrite(tag: Tag, uid: String?) {
+        // The write is complete, but the physical tag is usually still on the antenna.
+        // If reader mode is torn down immediately Android can rediscover the same tag through normal NFC dispatch, which causes a second NFC haptic/notification on some devices.
+        // Debounce this tag while it remains in range and keep reader mode active until the Activity finishes.
+        suppressRediscoveryAfterSuccess(tag)
         transientFailureCount = 0
         lastTransientUid = ""
         NfcDiagnosticsStore.recordWriteResult(this, RESULT_OK_STR)
@@ -311,9 +335,13 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
             return
         }
 
+        // Stop polling after a real transient failure.
+        // Automatically re-enabling reader mode while the same tag is still sitting on the antenna causes an immediate rediscovery/retry loop.
+        // Let the user remove the tag and explicitly arm the writer again instead.
+        safeDisableReaderMode()
         tvTitle.text = getString(R.string.nfc_write_transient_title)
         tvHint.text = getString(R.string.nfc_write_transient_retry)
-        handler.postDelayed({ resetForNextTag() }, 900L)
+        btnRetry.visibility = android.view.View.VISIBLE
     }
 
     private fun showUidFallback(
@@ -327,7 +355,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
             return
         }
 
-        safeDisableForegroundDispatch()
+        safeDisableReaderMode()
         val title = when (result) {
             RESULT_TOO_SMALL_STR -> getString(R.string.nfc_write_error_too_small_title)
             RESULT_NOT_WRITABLE_STR -> getString(R.string.nfc_write_error_not_writable_title)
@@ -403,18 +431,19 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
 
     private fun showWrongTag(actualUid: String) {
         isProcessingTag = true
-        safeDisableForegroundDispatch()
+        safeDisableReaderMode()
         tvTitle.text = getString(R.string.nfc_rewrite_wrong_tag_title)
         tvHint.text = getString(
             R.string.nfc_rewrite_wrong_tag_message,
             expectedUid,
             actualUid.ifBlank { getString(R.string.nfc_rewrite_unknown_uid) },
         )
-        handler.postDelayed({ resetForNextTag() }, 1_400L)
+        btnRetry.visibility = android.view.View.VISIBLE
     }
 
     private fun showWaitingState() {
         progress.isIndeterminate = true
+        if (::btnRetry.isInitialized) btnRetry.visibility = android.view.View.GONE
         tvTitle.text = getString(R.string.nfc_waiting_tag)
         tvHint.text = when (mode) {
             MODE_PAIR_UID_WRITABLE -> getString(R.string.nfc_pair_waiting_writable)
@@ -431,33 +460,58 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         if (isFinishing || isDestroyed) {
             return
         }
+        safeDisableReaderMode()
         isProcessingTag = false
         showWaitingState()
-        enableForegroundDispatchIfReady()
+        enableReaderModeIfReady()
     }
 
-    private fun enableForegroundDispatchIfReady() {
-        if (isFinishing || isDestroyed || isProcessingTag ||
-            !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
-        ) {
+    private fun enableReaderModeIfReady() {
+        if (isFinishing || isDestroyed || isProcessingTag) {
             return
         }
 
         val adapter = nfcAdapter ?: return
-        val dispatchIntent = Intent(this, this::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            dispatchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-        )
+        val readerFlags =
+            NfcAdapter.FLAG_READER_NFC_A or
+                NfcAdapter.FLAG_READER_NFC_B or
+                NfcAdapter.FLAG_READER_NFC_F or
+                NfcAdapter.FLAG_READER_NFC_V or
+                NfcAdapter.FLAG_READER_NFC_BARCODE or
+                NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
+
+        // Do not use FLAG_READER_SKIP_NDEF_CHECK here: the writer needs Android to enumerate the Ndef technology so existing/formatted tags can be written via Ndef.get(tag).
         runCatching {
-            adapter.enableForegroundDispatch(this, pendingIntent, null, null)
+            adapter.enableReaderMode(this, readerCallback, readerFlags, null)
+        }.onSuccess {
+            AppLogStore.append(this, "NFC", "Writer reader mode enabled")
+        }.onFailure { error ->
+            NfcDiagnosticsStore.recordFailure(this, "writer_reader_mode_enable_failed")
+            AppLogStore.append(
+                this,
+                "NFC",
+                "Writer reader mode failed: ${error.javaClass.simpleName}: ${error.message.orEmpty()}",
+            )
         }
     }
 
-    private fun safeDisableForegroundDispatch() {
-        runCatching { nfcAdapter?.disableForegroundDispatch(this) }
+    private fun safeDisableReaderMode() {
+        runCatching { nfcAdapter?.disableReaderMode(this) }
+    }
+
+    private fun suppressRediscoveryAfterSuccess(tag: Tag) {
+        runCatching {
+            // minSdk is 27, so NfcAdapter.ignore() is available on every supported Switchly device.
+            // Once the write has completed we no longer need to communicate with this tag.
+            // Ignore it until it has genuinely left the field to prevent duplicate reader/intent discovery.
+            nfcAdapter?.ignore(tag, SUCCESS_TAG_DEBOUNCE_MS, null, handler)
+        }.onFailure { error ->
+            AppLogStore.append(
+                this,
+                "NFC",
+                "Writer success debounce failed: ${error.javaClass.simpleName}: ${error.message.orEmpty()}",
+            )
+        }
     }
 
     private fun shouldAutoPairOnWrite(): Boolean {
@@ -495,7 +549,8 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
         alreadyPaired: Boolean = false,
         guardUidHex: String? = uidHex,
     ) {
-        safeDisableForegroundDispatch()
+        // Do not disable reader mode here while the tag may still be touching the phone. onPause() will tear it down when this Activity actually finishes. 
+        // This avoids an immediate fallback to normal NFC dispatch and the resulting duplicate haptic/scan.
         NfcRecentWriteGuard.markUid(this, guardUidHex)
         tvTitle.text = when {
             alreadyPaired -> getString(R.string.nfc_pair_already_added)
@@ -529,7 +584,7 @@ class NfcWriteWaitingActivity : AppCompatActivity() {
     }
 
     private fun finishWithError(result: String) {
-        safeDisableForegroundDispatch()
+        safeDisableReaderMode()
         tvTitle.text = when (result) {
             RESULT_TOO_SMALL_STR -> getString(R.string.nfc_write_error_too_small_title)
             RESULT_NOT_WRITABLE_STR -> getString(R.string.nfc_write_error_not_writable_title)

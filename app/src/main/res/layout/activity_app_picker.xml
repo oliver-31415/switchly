@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -24,8 +25,8 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="end|center_vertical"
-                android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/app_rules_info_title"
                 android:src="@drawable/info_24"
                 app:tint="?attr/colorOnSurface" />
@@ -114,7 +115,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSelectAll"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Switchly.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -122,11 +123,11 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnClearAll"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Switchly.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="8dp"
+                android:layout_weight="1"
                 android:text="@string/app_picker_clear_all" />
         </LinearLayout>
 
@@ -135,26 +136,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:orientation="vertical">
 
             <CheckBox
                 android:id="@+id/cbAutoBlockNewApps"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/app_picker_auto_block_new_apps_title"
                 android:textColor="?android:attr/textColorPrimary" />
 
-            <ImageButton
-                android:id="@+id/btnAutoBlockNewAppsInfo"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="12dp"
-                android:contentDescription="@string/app_picker_auto_block_new_apps_info_title"
-                android:src="@drawable/info_24"
-                app:tint="?attr/colorPrimary" />
+            <TextView
+                android:id="@+id/tvAutoBlockNewAppsSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="48dp"
+                android:layout_marginTop="-4dp"
+                android:layout_marginEnd="8dp"
+                android:text="@string/app_picker_auto_block_new_apps_summary"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12.5sp" />
         </LinearLayout>
 
         <!-- App list -->
@@ -162,14 +162,15 @@
             android:id="@+id/rvApps"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
             android:layout_marginTop="8dp"
-            android:clipToPadding="false"
-            android:paddingBottom="32dp" />
+            android:layout_weight="1"
+            android:paddingBottom="32dp"
+            android:clipToPadding="false" />
 
         <!-- Save button -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
+            style="@style/Switchly.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"

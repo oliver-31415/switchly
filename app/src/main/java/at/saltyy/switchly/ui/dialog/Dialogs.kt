@@ -67,6 +67,103 @@ data class SwitchlyDialogOption(
     val enabled: Boolean = true
 )
 
+data class SwitchlyInfoRow(
+    val label: CharSequence,
+    val value: CharSequence,
+    val emphasized: Boolean = false,
+)
+
+/**
+ * Compact information dialog used for diagnostics/status summaries.
+ * Simple explanations use the standard Material message layout;
+ * multi-row diagnostics stay flat on the normal dialog background without nested cards.
+ */
+fun Context.showSwitchlyInfoDialog(
+    title: CharSequence,
+    rows: List<SwitchlyInfoRow>,
+    emptyMessage: CharSequence? = null,
+    positiveText: CharSequence = getString(R.string.ok),
+): AlertDialog {
+    fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
+
+    val usableRows = rows.filter { it.value.isNotBlank() }
+    val simpleRow = usableRows.singleOrNull()?.takeIf { !it.emphasized }
+
+    // Simple information should look like the regular Website Rules dialog: no nested card or artificial dark surface, just the normal Material dialog background and message typography.
+    if (simpleRow != null || usableRows.isEmpty()) {
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setMessage(simpleRow?.value ?: emptyMessage ?: "")
+            .setPositiveButton(positiveText, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.styleSwitchlyDialogButtons()
+            dialog.applySwitchlyDialogWidth(0.90f)
+        }
+        dialog.show()
+        return dialog
+    }
+
+    val accent = AccentColor.getAccentColorInt(this)
+    val onSurface = MaterialColors.getColor(
+        this,
+        com.google.android.material.R.attr.colorOnSurface,
+        Color.BLACK,
+    )
+    val secondary = ColorUtils.setAlphaComponent(onSurface, 0xA8)
+
+    val content = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(24), dp(2), dp(24), dp(4))
+    }
+
+    val orderedRows = usableRows.filter { it.emphasized } + usableRows.filterNot { it.emphasized }
+    orderedRows.forEachIndexed { index, row ->
+        if (index > 0) {
+            content.addView(View(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    dp(if (row.emphasized) 12 else 10),
+                )
+            })
+        }
+
+        val labelMatchesTitle = row.label.toString().trim().equals(title.toString().trim(), ignoreCase = true)
+        if (!labelMatchesTitle) {
+            content.addView(TextView(this).apply {
+                text = row.label
+                textSize = 12f
+                setTypeface(typeface, Typeface.BOLD)
+                setTextColor(if (row.emphasized) accent else secondary)
+            })
+        }
+
+        content.addView(TextView(this).apply {
+            text = row.value
+            textSize = if (row.emphasized) 15f else 14f
+            setTextColor(onSurface)
+            if (row.emphasized) setTypeface(typeface, Typeface.BOLD)
+            if (!labelMatchesTitle) setPadding(0, dp(2), 0, 0)
+        })
+    }
+
+    val scroll = ScrollView(this).apply {
+        isFillViewport = false
+        addView(content)
+    }
+
+    val dialog = MaterialAlertDialogBuilder(this)
+        .setTitle(title)
+        .setView(scroll)
+        .setPositiveButton(positiveText, null)
+        .create()
+    dialog.setOnShowListener {
+        dialog.styleSwitchlyDialogButtons()
+        dialog.applySwitchlyDialogWidth(0.90f)
+    }
+    dialog.show()
+    return dialog
+}
 
 fun AlertDialog.styleSwitchlyDestructivePositiveButton() {
     styleSwitchlyDialogButtons()
@@ -587,14 +684,30 @@ fun Context.showSwitchlyOptionDialog(
 fun AlertDialog.styleSwitchlyDialogButtons() {
     val accent = AccentColor.getAccentColorInt(context)
     val onAccent = if (ColorUtils.calculateLuminance(accent) > 0.5) Color.BLACK else Color.WHITE
+    val onSurface = MaterialColors.getColor(
+        context,
+        com.google.android.material.R.attr.colorOnSurface,
+        Color.BLACK,
+    )
 
     fun dp(v: Int): Int = (v * context.resources.displayMetrics.density).toInt()
 
+    // Plain message dialogs should still feel like the same component as the richer Switchly diagnostic dialogs, especially with longer German copy on smaller displays.
+    findViewById<TextView>(android.R.id.message)?.apply {
+        setTextColor(ColorUtils.setAlphaComponent(onSurface, 0xDE))
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+        setLineSpacing(dp(2).toFloat(), 1.06f)
+        maxLines = Int.MAX_VALUE
+    }
+
     fun styleCommon(b: Button) {
         b.isAllCaps = false
+        b.isSingleLine = false
+        b.maxLines = 2
+        b.minWidth = 0
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-        val hp = dp(16)
-        val vp = dp(10)
+        val hp = dp(14)
+        val vp = dp(8)
         b.setPaddingRelative(hp, vp, hp, vp)
         b.minHeight = dp(40)
         runCatching {
@@ -623,6 +736,13 @@ fun AlertDialog.styleSwitchlyDialogButtons() {
     // Consistent spacing between buttons.
     val gap = dp(8)
     val ordered = listOfNotNull(neu, neg, pos).filter { it.isVisible }
+    val compactButtons = ordered.size >= 3 || ordered.sumOf { it.text?.length ?: 0 } > 34
+    if (compactButtons) {
+        ordered.forEach { button ->
+            button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            button.setPaddingRelative(dp(10), dp(7), dp(10), dp(7))
+        }
+    }
     ordered.forEachIndexed { idx, b ->
         val lp = b.layoutParams
         if (lp is ViewGroup.MarginLayoutParams) {

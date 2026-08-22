@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardFaqFolder"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="10dp"
     android:layout_marginVertical="10dp"
+    android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:strokeColor="@color/switchly_card_stroke"
-    app:strokeWidth="1dp"
     app:cardBackgroundColor="@color/switchly_card_bg"
     app:cardCornerRadius="24dp"
     app:cardElevation="2dp"
-    app:cardUseCompatPadding="true">
+    app:cardUseCompatPadding="true"
+    app:strokeColor="@color/switchly_card_stroke"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,57 +24,56 @@
         android:orientation="vertical"
         android:gravity="center"
         android:paddingHorizontal="22dp"
-        android:paddingVertical="26dp">
+        android:paddingTop="22dp"
+        android:paddingBottom="20dp">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardFaqFolderIcon"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            app:strokeWidth="0dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp">
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:cardUseCompatPadding="false"
+            app:strokeWidth="0dp">
 
             <ImageView
                 android:id="@+id/ivFaqFolderIcon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:layout_gravity="center"
-                android:contentDescription="@string/faq_icon_description"
-                android:src="@drawable/folder_24" />
+                android:contentDescription="@null" />
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:id="@+id/tvFaqFolderTitle"
-            style="@style/TextAppearance.MaterialComponents.Headline6"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="14dp"
             android:gravity="center"
+            android:textAlignment="center"
             android:textColor="?android:attr/textColorPrimary"
-            android:textStyle="bold"
-            android:textAlignment="center" />
+            android:textSize="17sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvFaqFolderSubtitle"
-            style="@style/TextAppearance.MaterialComponents.Body1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="5dp"
             android:gravity="center"
+            android:maxLines="3"
+            android:textAlignment="center"
             android:textColor="?android:attr/textColorSecondary"
-            android:alpha="0.74"
-            android:lineSpacingExtra="2dp"
-            android:textAlignment="center" />
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/tvFaqFolderCount"
-            style="@style/TextAppearance.MaterialComponents.Body2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
+            android:layout_marginTop="10dp"
             android:textColor="?android:attr/textColorSecondary"
-            android:alpha="0.72"
-            android:drawablePadding="6dp" />
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

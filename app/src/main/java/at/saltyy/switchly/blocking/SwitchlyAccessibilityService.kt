@@ -52,6 +52,7 @@ import at.saltyy.switchly.data.prefs.DomainBlockStore
 import at.saltyy.switchly.data.prefs.DomainLimitStore
 import at.saltyy.switchly.data.prefs.EmergencyBypassStore
 import at.saltyy.switchly.data.prefs.InAppRuleStore
+import at.saltyy.switchly.data.prefs.InAppDetectionStore
 import at.saltyy.switchly.data.prefs.LimitReachedStore
 import at.saltyy.switchly.data.prefs.LastBlockReasonStore
 import at.saltyy.switchly.data.prefs.OpenCountStore
@@ -126,6 +127,10 @@ class SwitchlyAccessibilityService : AccessibilityService() {
 
     // In-app surface tracking for usage + limits (Shorts/Reels/Explore)
     @Volatile private var currentSurfaceKey: String? = null
+        set(value) {
+            field = value
+            value?.let { InAppDetectionStore.record(this, it) }
+        }
     @Volatile private var currentSurfacePkg: String? = null
 
     // Per-package probe/enforcement cadence (prevents duplicate heavy scans during event storms)
@@ -3918,10 +3923,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         classifyBottomTab(direct)?.let { return it }
 
         val normalized = firstClickableAncestorInPackage(direct, PACKAGE_SNAPCHAT) ?: direct
-        return try {
-            classifyBottomTab(normalized)
-        } finally {
-        }
+        return classifyBottomTab(normalized)
     }
 
     private fun detectSnapchatSelectedSurface(root: AccessibilityNodeInfo?): String? {
@@ -3930,7 +3932,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
         val height = resources.displayMetrics.heightPixels.coerceAtLeast(1)
         var best: Pair<String, Float>? = null
 
-        val found = findAnyNode(r) { node ->
+        findAnyNode(r) { node ->
             val nodePkg = node.packageName?.toString()?.lowercase(Locale.getDefault()).orEmpty()
             if (nodePkg != PACKAGE_SNAPCHAT) return@findAnyNode false
             if (!node.isSelected) return@findAnyNode false
@@ -3946,10 +3948,7 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             best = snapchatBottomTabSurfaceFromCenterX(centerX) to centerY
             true
         }
-        try {
-            return best?.first
-        } finally {
-        }
+        return best?.first
     }
 
     private fun tapScreenAtRatio(centerXRatio: Float, centerYRatio: Float = 0.90f): Boolean {
@@ -4215,13 +4214,9 @@ class SwitchlyAccessibilityService : AccessibilityService() {
             return true
         }
 
-        val found = findAnyNode(r) { node ->
+        return findAnyNode(r) { node ->
             node.packageName?.toString()?.lowercase(Locale.getDefault()) == targetPkg
-        }
-        return try {
-            found != null
-        } finally {
-        }
+        } != null
     }
 
     private fun clickNodeOrClickableParent(node: AccessibilityNodeInfo?): Boolean {

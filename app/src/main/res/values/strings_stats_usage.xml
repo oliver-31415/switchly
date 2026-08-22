@@ -62,11 +62,11 @@
     <string name="app_usage_detail_subtitle">Usage, limits, and activity</string>
     <string name="website_usage_detail_title">Website usage details</string>
     <string name="website_usage_detail_subtitle">Usage, limit, and rule state</string>
-    <string name="usage_details_info_body">The chips below the app show usage time, opens, and blocks for the selected range. Tap the tune icon or either limit card to edit limits.\n\nDaily limits count against today\'s allowance. Session limits reset when Switchly or the active profile starts a new active session.\n\nThe session bar shows how much of the current session limit has already been used.</string>
+    <string name="usage_details_info_body">The summary chips show:\n• Usage time\n• App opens\n• Blocks\n\nTap the limits action or a limit card to edit limits. Daily limits reset each day. Session limits reset when Switchly or the active profile starts a new active session.</string>
     <string name="usage_details_limits_section">Limits</string>
     <string name="usage_details_activity_section">Usage over time</string>
     <string name="website_usage_info_title">Website usage details</string>
-    <string name="website_usage_info_body">Shows tracked time for this domain together with its current daily limit and rule state. Tap the tune icon to edit the limit or open Website rules to change whether the domain is blocked or allowed.\n\nWebsite tracking depends on Accessibility and supported browser or in-app browser detection, so some private, embedded, or manufacturer-specific browser sessions may not be available.</string>
+    <string name="website_usage_info_body">This screen shows:\n• Tracked time for the domain\n• Current daily limit\n• Current rule state\n\nUse the limits action to edit the limit or open Website rules to change access. Private, embedded, or unsupported browser sessions may be missing.</string>
     <!-- ====================================================== -->
     <!-- Unavailable apps -->
     <!-- ====================================================== -->
@@ -97,7 +97,7 @@
     <!-- ====================================================== -->
     <string name="statistics_usage_title">App &amp; website usage</string>
     <string name="statistics_usage_info_title">App &amp; website usage</string>
-    <string name="statistics_usage_info_body">Tap the tune icon next to an app to edit limits.\n\nApp rows also show opens and blocks for the selected range. Switchly statistics focus on blocking activity, scans, schedules, and limit-related usage. Allowed or temporarily unlocked usage may not always be included, so this is not a full Digital Wellbeing replacement.\n\nDaily limits count against today\'s allowance. Session limits reset when Switchly or the active profile starts a new active session.</string>
+    <string name="statistics_usage_info_body">Each app row can show:\n• Usage time\n• App opens\n• Blocks\n\nUse the limits action to edit daily or session limits. Switchly focuses on protection-related activity and is not a complete Digital Wellbeing replacement.</string>
     <string name="stats_range_today">Today</string>
     <string name="stats_range_week">Week</string>
     <string name="stats_range_month">Month</string>
@@ -131,7 +131,7 @@
     <string name="usage_timeline_permission_needed">Usage Access is needed for the opens timeline.</string>
     <string name="usage_timeline_row">%1$s · %2$s–%3$s · %4$s</string>
     <string name="app_launches_info_title">App opens</string>
-    <string name="app_launches_info_body">Shows how often apps were opened during the selected range and the usage sessions associated with each app. Counts combine Switchly\'s local open archive with Android Usage Access where available and avoid counting internal Activity changes as separate opens.\n\nExact historical sessions depend on Usage Access and on when local archiving started, so older ranges may contain totals without every individual open timestamp.</string>
+    <string name="app_launches_info_body">Shows how often apps were opened during the selected range and the sessions associated with each app. Older ranges may contain a total without every individual timestamp because detailed history starts only when local archiving is available.</string>
     <string name="app_launches_total_title">Total opens</string>
     <string name="app_launches_overview_title">Opens overview</string>
     <string name="app_launches_empty">No app opens found for this range.</string>
@@ -146,7 +146,7 @@
         <item quantity="other">%1$d opens</item>
     </plurals>
     <string name="screen_unlocks_info_title">Screen unlocks</string>
-    <string name="screen_unlocks_info_body">Groups device unlocks into sessions and shows the apps and websites used before the screen was locked again. Usage Access is required for these insights.\n\nAndroid and device manufacturers expose unlock and foreground-app events differently, so very short sessions or some system-level activity may be missing.</string>
+    <string name="screen_unlocks_info_body">Groups device unlocks into sessions and shows the apps and websites used until the screen was locked again. Usage Access is required. Very short sessions or system activity may be missing.</string>
     <string name="screen_unlocks_permission_needed">Usage Access is needed for screen unlock insights.</string>
     <string name="screen_unlocks_empty">No screen unlocks found for this range.</string>
     <string name="screen_unlocks_sort_filter_title">Sort &amp; filter unlocks</string>

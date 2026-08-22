@@ -179,7 +179,7 @@ object StatsPersistence {
         synchronized(initLock) {
             pauseDepth.incrementAndGet()
             try {
-                runIoBlocking { Unit }
+                runIoBlocking { }
                 internalPrefs.unregisterOnSharedPreferenceChangeListener(internalListener)
                 defaultPrefs.unregisterOnSharedPreferenceChangeListener(defaultListener)
                 historyPrefs.unregisterOnSharedPreferenceChangeListener(historyListener)

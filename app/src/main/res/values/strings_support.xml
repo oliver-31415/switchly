@@ -5,14 +5,14 @@
     <!-- Support contact flow -->
     <!-- ====================================================== -->
     <string name="support_title">Support</string>
-    <string name="support_desc">Send a report with the details you choose, or inspect recent logs before contacting support.</string>
+    <string name="support_desc">Contact support by email and choose which diagnostic details to include, or inspect recent logs first.</string>
     <string name="support_email_subject">Switchly Support</string>
-    <string name="support_open_email">Create report</string>
+    <string name="support_open_email">Contact Support</string>
     <string name="support_copy_email">Copy email</string>
     <string name="support_copied">Email copied</string>
     <string name="support_copy_latest_logs">Copy latest logs</string>
     <string name="support_logs_copied">Latest logs copied</string>
-    <string name="support_choose_report_data">Choose report data</string>
+    <string name="support_choose_report_data">Choose what to include</string>
     <string name="support_include_debug">Include debug info</string>
     <string name="support_include_debug_summary">App, device, permissions, Switchly state, schedules, and runtime status</string>
     <string name="support_include_advanced_debug">Include extended diagnostics</string>

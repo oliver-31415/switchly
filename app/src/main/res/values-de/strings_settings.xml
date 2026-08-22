@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="settings_find_title">Einstellung finden</string>
+    <string name="settings_find_hint">NFC, Akku, Backup … eingeben</string>
+    <string name="settings_search_terms_keys">NFC, QR, Barcode, Tags</string>
+    <string name="settings_search_terms_display">Widgets, Kacheln, Verknüpfungen, Home</string>
+    <string name="settings_search_terms_permissions">Akku, Hintergrund, Bedienungshilfe, Autostart</string>
+    <string name="settings_search_terms_account">Backup, Wiederherstellung, Sync, Konto, Konto löschen, Kontolöschung</string>
+    <string name="settings_search_terms_developer">Deinstallationsschutz, Geräteadministrator, ADB</string>
+    <string name="settings_search_terms_blocking">Kontrollmodus, temporärer Timer, Regeln</string>
 
     <!-- ====================================================== -->
     <!-- Settings sections -->

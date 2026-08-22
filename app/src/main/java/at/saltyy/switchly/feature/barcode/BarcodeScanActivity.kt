@@ -23,7 +23,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
@@ -42,6 +41,7 @@ import at.saltyy.switchly.data.prefs.BarcodeScanCountStore
 import at.saltyy.switchly.data.prefs.ScanCodeStore
 import at.saltyy.switchly.nfc.InternalScanDispatchGuard
 import at.saltyy.switchly.nfc.NfcEntryActivity
+import at.saltyy.switchly.util.ScanFeedback
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -79,7 +79,13 @@ class BarcodeScanActivity : AppCompatActivity() {
     ) { granted ->
         if (granted) startCamera()
         else {
-            Toast.makeText(this, R.string.permission_barcode_camera_required, Toast.LENGTH_SHORT).show()
+            ScanFeedback.error(
+                this,
+                "Barcode",
+                "permission_missing",
+                getString(R.string.scan_error_camera_permission_barcode),
+                long = true,
+            )
             finish()
         }
     }
@@ -111,7 +117,7 @@ class BarcodeScanActivity : AppCompatActivity() {
             return true
         }
         if (!allowDirectOpen() && !AutomationModeStore.isBarcodeAllowed(this)) {
-            Toast.makeText(this, R.string.mode_blocked_barcode_action, Toast.LENGTH_SHORT).show()
+            ScanFeedback.error(this, "Barcode", "control_mode_blocked", getString(R.string.mode_blocked_barcode_action))
             return false
         }
         return true
@@ -119,7 +125,7 @@ class BarcodeScanActivity : AppCompatActivity() {
 
     private fun startCamera() {
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-            Toast.makeText(this, R.string.barcode_camera_unavailable, Toast.LENGTH_LONG).show()
+            ScanFeedback.error(this, "Barcode", "camera_unavailable", getString(R.string.scan_error_camera_unavailable), long = true)
             finish()
             return
         }
@@ -127,7 +133,7 @@ class BarcodeScanActivity : AppCompatActivity() {
         val providerFuture = ProcessCameraProvider.getInstance(this)
         providerFuture.addListener({
             val provider = runCatching { providerFuture.get() }.getOrElse {
-                Toast.makeText(this, R.string.barcode_camera_unavailable, Toast.LENGTH_LONG).show()
+                ScanFeedback.error(this, "Barcode", "camera_unavailable", getString(R.string.scan_error_camera_unavailable), long = true)
                 finish()
                 return@addListener
             }
@@ -136,7 +142,7 @@ class BarcodeScanActivity : AppCompatActivity() {
                 runCatching { provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA) }.getOrDefault(false) -> CameraSelector.DEFAULT_BACK_CAMERA
                 runCatching { provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) }.getOrDefault(false) -> CameraSelector.DEFAULT_FRONT_CAMERA
                 else -> {
-                    Toast.makeText(this, R.string.barcode_camera_unavailable, Toast.LENGTH_LONG).show()
+                    ScanFeedback.error(this, "Barcode", "camera_unavailable", getString(R.string.scan_error_camera_unavailable), long = true)
                     finish()
                     return@addListener
                 }
@@ -163,7 +169,7 @@ class BarcodeScanActivity : AppCompatActivity() {
                     analysis
                 )
             }.onFailure {
-                Toast.makeText(this, R.string.barcode_camera_unavailable, Toast.LENGTH_LONG).show()
+                ScanFeedback.error(this, "Barcode", "camera_unavailable", getString(R.string.scan_error_camera_unavailable), long = true)
                 finish()
             }
         }, ContextCompat.getMainExecutor(this))
@@ -211,7 +217,7 @@ class BarcodeScanActivity : AppCompatActivity() {
         }
 
         if (!allowDirectOpen() && !AutomationModeStore.isBarcodeAllowed(this)) {
-            Toast.makeText(this, R.string.mode_blocked_barcode_action, Toast.LENGTH_SHORT).show()
+            ScanFeedback.error(this, "Barcode", "control_mode_blocked", getString(R.string.mode_blocked_barcode_action))
             finish()
             return
         }
@@ -233,7 +239,7 @@ class BarcodeScanActivity : AppCompatActivity() {
             return
         }
 
-        Toast.makeText(this, R.string.invalid_barcode, Toast.LENGTH_SHORT).show()
+        ScanFeedback.error(this, "Barcode", "not_linked", getString(R.string.scan_error_barcode_not_linked))
         finish()
     }
 

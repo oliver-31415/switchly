@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -25,8 +26,8 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="end|center_vertical"
-                android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/statistics_usage_info_title"
                 android:src="@drawable/info_24"
                 app:tint="@android:color/white" />
@@ -36,12 +37,12 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:fillViewport="true"
         android:paddingStart="16dp"
         android:paddingTop="8dp"
         android:paddingEnd="16dp"
         android:paddingBottom="24dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -55,11 +56,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="8dp"
+                android:alpha="0.82"
                 android:text="@string/statistics_usage_subtitle_web"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="14.5sp"
-                android:textStyle="bold"
-                android:alpha="0.82" />
+                android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/chipGroupRange"
@@ -110,8 +111,8 @@
                     android:layout_height="40dp"
                     android:minWidth="0dp"
                     android:gravity="center"
-                    android:text=""
                     android:contentDescription="@string/activity_history_range_custom"
+                    android:text=""
                     app:cornerRadius="4dp"
                     app:icon="@drawable/calendar_month_24"
                     app:iconGravity="textStart"
@@ -163,10 +164,10 @@
                         android:id="@+id/totalLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:alpha="0.74"
                         android:text="@string/usage_total_screen_time"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp"
-                        android:alpha="0.74" />
+                        android:textSize="14sp" />
 
                     <TextView
                         android:id="@+id/totalTime"
@@ -213,10 +214,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:alpha="0.9"
                 android:text="@string/usage_row_tap_hint"
                 android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp"
-                android:alpha="0.9" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/permHint"
@@ -224,8 +225,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:visibility="gone"
-                android:text="@string/usage_access_needed_desc"
-                android:alpha="0.85" />
+                android:alpha="0.85"
+                android:text="@string/usage_access_needed_desc" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnOpenSettings"
@@ -248,10 +249,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:visibility="gone"
-                tools:text="@string/usage_websites_no_data"
+                app:drawableTopCompat="@drawable/bar_chart_24"
+                android:drawablePadding="10dp"
+                android:gravity="center"
+                android:minHeight="104dp"
+                android:padding="18dp"
+                android:textAlignment="center"
                 android:textColor="?attr/colorOnSurface"
-                android:alpha="0.8" />
+                android:textSize="14sp"
+                android:visibility="gone"
+                app:drawableTint="?attr/colorPrimary"
+                tools:text="@string/usage_websites_no_data" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
@@ -260,9 +268,9 @@
         android:id="@+id/fabSortFilter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="96dp"
+        android:layout_gravity="bottom|end"
         android:contentDescription="@string/stats_sort_filter"
         app:srcCompat="@drawable/tune_24"
         app:useCompatPadding="true" />

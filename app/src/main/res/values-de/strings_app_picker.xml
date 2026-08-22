@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_allow_mode_preview_title">„Ausgewählte erlauben“ verwenden?</string>
+    <string name="app_allow_mode_preview_body">Mit der aktuellen Liste gilt: %1$s und %2$s. Nicht in dieser Auswahl angezeigte Apps bleiben verfügbar.</string>
+    <plurals name="app_allow_mode_preview_blocked_count">
+        <item quantity="one">%d App wird blockiert</item>
+        <item quantity="other">%d Apps werden blockiert</item>
+    </plurals>
+    <plurals name="app_allow_mode_preview_allowed_count">
+        <item quantity="one">%d bleibt verfügbar</item>
+        <item quantity="other">%d bleiben verfügbar</item>
+    </plurals>
+    <string name="app_allow_mode_preview_action">Modus verwenden</string>
 
     <!-- ====================================================== -->
     <!-- List basics -->
@@ -59,9 +70,9 @@
     <string name="app_picker_keyboard_warning_message">Das Blockieren deiner aktuellen Tastatur kann Tippen, Passworteingaben, Suche oder die Wiederherstellung von Switchly verhindern. Stelle sicher, dass eine andere Tastatur und die Notfall-Entsperrung verfügbar sind.</string>
     <string name="app_picker_launcher_warning_title">Aktuellen Launcher trotzdem blockieren?</string>
     <string name="app_picker_launcher_warning_message">Das Blockieren deines aktuellen Launchers kann eine dauernde Homescreen-Sperrschleife verursachen oder dich ohne nutzbaren Homescreen zurücklassen. Stelle sicher, dass ein anderer Launcher und die Notfall-Entsperrung verfügbar sind.</string>
-    <string name="app_picker_assistant_hint">Google- oder Assistent-Apps können tief in Launcher-Suche, Sprachassistenz und Systemstart-Abläufe integriert sein.</string>
+    <string name="app_picker_assistant_hint">Google- und Assistent-Apps können blockiert werden, das kann auf manchen Geräten aber Launcher-Suche oder Sprachassistenz beeinflussen.</string>
     <string name="app_picker_assistant_warning_title">Google- oder Assistent-App trotzdem blockieren?</string>
-    <string name="app_picker_assistant_warning_message">Diese App kann für Launcher-Suche, Sprachassistenz, Systemdienste oder Startabläufe verwendet werden. Das Blockieren kann auf manchen Geräten Sperrschleifen verursachen oder Gerätefunktionen beschädigen.</string>
+    <string name="app_picker_assistant_warning_message">Das Blockieren dieser App kann auf manchen Geräten Launcher-Suche, Discover oder Sprachassistenz deaktivieren oder beeinträchtigen. Falls diese Funktionen danach nicht wie erwartet arbeiten, kannst du die App wieder aus der Blockierliste entfernen.</string>
     <string name="app_picker_system_ui_hint">System UI steuert zentrale Android-Bereiche wie Statusleiste, Navigation, Benachrichtigungen und Sperrbildschirm.</string>
     <string name="app_picker_system_ui_warning_title">System UI trotzdem blockieren?</string>
     <string name="app_picker_system_ui_warning_message">Das Blockieren von System UI kann Navigation, Benachrichtigungen, Statusleiste, Sperrbildschirm oder grundlegende Wiederherstellung beschädigen. Das ist extrem riskant.</string>
@@ -92,9 +103,6 @@
     <string name="app_picker_files_hint">Dateien- und Dokumentauswahl-Apps können für Backups, Wiederherstellungen, Exporte und Recovery wichtig sein.</string>
     <string name="app_picker_files_warning_title">Dateien-App trotzdem blockieren?</string>
     <string name="app_picker_files_warning_message">Das Blockieren von Dateien- oder Dokumentauswahl-Apps kann Backups, Wiederherstellungen, Exporte und Recovery erschweren.</string>
-    <string name="app_picker_browser_hint">Browser werden oft für Downloads, Support, Anmeldung und Wiederherstellungsschritte genutzt.</string>
-    <string name="app_picker_browser_warning_title">Browser-App trotzdem blockieren?</string>
-    <string name="app_picker_browser_warning_message">Das Blockieren eines Browsers kann Downloads, Support und Wiederherstellungsschritte erschweren.</string>
 
     <!-- ====================================================== -->
     <!-- Settings lockout requirements -->
@@ -119,7 +127,7 @@
     <string name="app_rules_title">App-Regeln</string>
     <string name="app_rules_profile_subtitle">Regeln für: %1$s</string>
     <string name="app_rules_info_title">App-Regeln</string>
-    <string name="app_rules_info_body">App-Regeln:\n• Apps, Website-/Domain-Regeln und In-App-Bereiche werden pro Profil verwaltet und besitzen jeweils einen eigenen Block-selected-/Allow-selected-Modus.\n• Nutze die App-Liste unten für komplette Apps.\n• Nutze Website-/Domain-Regeln für Browser-Regeln im aktiven Profil.\n• Nutze In-App-Bereiche für unterstützte installierte Apps wie YouTube, Instagram, X und Snapchat.\n\nWelche Apps verfügbar sind:\n• Die normale Liste zeigt Apps, die aktuell auf diesem Gerät installiert sind und von Android mit einem normalen Launcher-Eintrag bereitgestellt werden. Switchly kann dadurch die meisten normal startbaren Apps verwalten; die Liste ist kein Katalog aller Android-Apps.\n• Apps ohne Launcher-Eintrag, versteckte Systemkomponenten und nicht installierte Apps werden normalerweise nicht angezeigt. Eine zuvor ausgewählte und später entfernte App kann weiterhin als Nicht verfügbar erscheinen.\n• Switchly selbst bleibt ausgeschlossen. Sicherheitsrelevante Apps wie aktiver Launcher, Tastatur, Telefon-App, Google-App, Paketinstallation, Berechtigungsverwaltung und System UI sind als Geschützt markiert. Alle auswählen überspringt sie, sie können aber einzeln nach einer deutlichen Risikowarnung ausgewählt werden.\n• Die genaue Liste kann je nach Android-Version, Hersteller, Arbeitsprofil und Package-Visibility-Einschränkungen leicht abweichen.\n\nAusgewählte blockieren:\n• Ausgewählte Apps werden blockiert, solange dieses Profil aktiv ist.\n• Nicht ausgewählte Apps sind erlaubt, außer ein anderes Limit blockiert sie.\n\nAusgewählte erlauben:\n• Apps in dieser Picker-Liste sind nur erlaubt, wenn sie ausgewählt sind.\n• Apps in dieser Picker-Liste, die nicht ausgewählt sind, werden blockiert.\n• Apps, die im Picker nicht angezeigt werden, gelten als erlaubt, weil sie hier nicht auswählbar sind.\n\nNeu installierte Apps automatisch blockieren:\n• Nur im Block selected Modus verfügbar.\n• Wenn aktiviert, werden neu installierte startbare Apps automatisch zu diesem Profil hinzugefügt.\n• Alle auswählen aktiviert das auch für zukünftige Installationen.</string>
+    <string name="app_rules_info_body">App-Regeln gelten nur für das ausgewählte Profil. Nutze diese Liste für vollständige Apps; Website- und In-App-Regeln haben eigene Bereiche.\n\nWähle einen Modus:\n• Ausgewählte blockieren: Ausgewählte Apps werden blockiert. Andere Apps bleiben verfügbar, solange kein Limit sie blockiert.\n• Ausgewählte erlauben: Ausgewählte Apps bleiben verfügbar. Andere Apps aus dieser Liste werden blockiert. Nicht angezeigte Apps bleiben verfügbar.\n\nVerfügbare Apps:\n• Die Liste enthält installierte Apps mit einem normalen Startsymbol.\n• Entfernte Apps können als Nicht verfügbar gelistet bleiben, bis du sie entfernst.\n• Geschützte System-Apps werden bei Alle auswählen übersprungen und benötigen eine separate Risikobestätigung.\n\nNeue Apps automatisch blockieren ist im Modus Ausgewählte blockieren verfügbar und fügt neu installierte startbare Apps zu diesem Profil hinzu.</string>
     <string name="allow_mode_empty_save_title">Keine erlaubten Apps ausgewählt?</string>
     <string name="allow_mode_empty_save_message">Dieses Profil ist im Allow Mode, aber es sind keine Apps ausgewählt. Gelistete Picker-Apps können blockiert werden, aber Apps, die im Picker nicht angezeigt werden, gelten als erlaubt.</string>
     <string name="allow_mode_empty_save_confirm">Trotzdem speichern</string>

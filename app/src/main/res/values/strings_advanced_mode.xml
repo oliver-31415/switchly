@@ -9,13 +9,22 @@
     <string name="advanced_mode_admin_description">Gives Switchly the control needed for optional advanced device-admin and managed-device features.</string>
     <string name="advanced_mode_disable_warning">Disabling Switchly Device Admin turns off uninstall protection. Direct uninstall attempts can work again afterwards.</string>
     <string name="advanced_mode_summary_body">Advanced ADB setup for Device Admin, Profile Owner, and Device Owner protection. Use this only on your own device and only after reading the setup notes.</string>
-    <string name="advanced_mode_recommendation_body">For most users, uninstall protection with Device Admin is the best balance. Device Owner can enforce a stronger system policy, but it requires a technical provisioning setup and can be difficult to undo.</string>
-    <string name="advanced_mode_constraints_body">Device Owner usually needs a freshly provisioned device with no existing accounts. Profile Owner has separate setup limits. Device Admin is easier to enable, but it is not the same as full managed-device protection.</string>
+    <string name="advanced_mode_recommendation_body">For most users, uninstall protection with Device Admin is the best balance. Device Owner can enforce Android’s managed uninstall block for Switchly itself, but it requires technical provisioning and can be difficult to undo. Switchly does not enable additional device-wide lockouts automatically.</string>
+    <string name="advanced_mode_constraints_body">Device Owner usually needs a freshly provisioned device with no existing accounts. Profile Owner has separate setup limits. Device Admin is easier to enable, but it is only uninstall friction; managed ownership is the path that can enforce a real uninstall-block policy.</string>
 
     <!-- ====================================================== -->
     <!-- Advanced mode tiles -->
     <!-- ====================================================== -->
     <string name="advanced_mode_tile_status">Current setup</string>
+    <string name="advanced_mode_tile_release_diagnostics">Release diagnostics</string>
+    <string name="advanced_mode_section_release_checks">Release checks</string>
+    <string name="advanced_mode_release_status_ok">signing OK</string>
+    <string name="advanced_mode_release_status_warning">signing warning</string>
+    <string name="advanced_mode_release_status_error">signing error</string>
+    <string name="advanced_mode_release_status_na">debug build</string>
+    <string name="advanced_mode_upgrade_status_observed">upgrade observed</string>
+    <string name="advanced_mode_upgrade_status_not_observed">no upgrade observed</string>
+    <string name="advanced_mode_release_diagnostics_summary">%1$s · %2$s</string>
     <string name="advanced_mode_tile_summary">Purpose</string>
     <string name="advanced_mode_tile_recommendation">Recommendation</string>
     <string name="advanced_mode_tile_receiver">Admin receiver component</string>

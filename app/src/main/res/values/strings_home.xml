@@ -41,13 +41,12 @@
     <!-- ====================================================== -->
     <string name="dashboard_control_mode_hint_placeholder">Control mode: —</string>
     <string name="dashboard_control_mode_hint_fmt">Control mode: %1$s</string>
-    <string name="dashboard_control_method_schedule">schedules</string>
+    <string name="dashboard_control_method_schedule">Schedules</string>
     <string name="dashboard_control_method_nfc">NFC</string>
-    <string name="dashboard_control_method_qr">QR Scan</string>
-    <string name="dashboard_control_method_barcode">Barcode Scan</string>
+    <string name="dashboard_control_method_qr">QR</string>
+    <string name="dashboard_control_method_barcode">Barcode</string>
     <string name="dashboard_control_method_manual">manual controls</string>
     <string name="dashboard_control_method_configured">configured method</string>
-    <string name="dashboard_control_method_separator">, </string>
     <string name="dashboard_control_mode_hint_mixed_fmt">Control mode: %1$s\nChannels: %2$s</string>
     <string name="dashboard_control_mode_schedule">Schedules</string>
     <string name="dashboard_control_mode_nfc">NFC</string>
@@ -97,6 +96,7 @@
     <string name="dashboard_temp_hint_disable">Temporary pause - choose duration</string>
     <string name="dashboard_temp_hint_locked_nfc">Temporary mode unavailable while NFC-required unlock is enabled.</string>
     <string name="dashboard_temp_nudge">Tip:\nUse temporary mode for quick 5–60 minute sessions.</string>
+    <string name="dashboard_temp_active_changes_locked">This timer is protected. Home cannot replace or shorten it. A temporary pause can still be ended early to restore protection.</string>
     <string name="dashboard_temp_discovery_done">Temporary mode is ready. Open it from the status card anytime.</string>
 
     <!-- ====================================================== -->
@@ -151,6 +151,13 @@
     <string name="block_reason_info_title">Why was this blocked?</string>
     <string name="block_reason_info_button_desc">Show why this was blocked</string>
     <string name="block_reason_info_empty">No recent block reason is available.</string>
+    <string name="block_reason_field_profile">Profile</string>
+    <string name="block_reason_field_rule">Rule</string>
+    <string name="block_reason_field_mode">Mode</string>
+    <string name="block_reason_field_source">Source</string>
+    <string name="block_reason_field_matched">Matched</string>
+    <string name="block_reason_field_result">Result</string>
+    <string name="block_reason_field_details">Details</string>
     <string name="block_reason_rule_allow_selected">Allow selected mode</string>
     <string name="block_reason_rule_daily_time_limit">Daily time limit</string>
     <string name="block_reason_rule_open_limit">Daily open limit</string>

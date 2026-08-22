@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_allow_mode_preview_title">Use Allow selected?</string>
+    <string name="app_allow_mode_preview_body">With the current list, %1$s and %2$s. Apps not shown in this picker remain available.</string>
+    <plurals name="app_allow_mode_preview_blocked_count">
+        <item quantity="one">%d app will be blocked</item>
+        <item quantity="other">%d apps will be blocked</item>
+    </plurals>
+    <plurals name="app_allow_mode_preview_allowed_count">
+        <item quantity="one">%d will remain available</item>
+        <item quantity="other">%d will remain available</item>
+    </plurals>
+    <string name="app_allow_mode_preview_action">Use mode</string>
 
     <!-- ====================================================== -->
     <!-- List basics -->
@@ -59,9 +70,9 @@
     <string name="app_picker_keyboard_warning_message">Blocking your current keyboard can prevent you from typing, entering passwords, searching, or recovering Switchly settings. Make sure another keyboard and Emergency Unlock are available.</string>
     <string name="app_picker_launcher_warning_title">Block your current launcher anyway?</string>
     <string name="app_picker_launcher_warning_message">Blocking your current launcher can cause a repeated Home-screen blocking loop or leave you without a usable Home screen. Make sure another launcher and Emergency Unlock are available.</string>
-    <string name="app_picker_assistant_hint">Google or assistant apps can be deeply integrated into launcher search, voice assistance, and system startup flows.</string>
+    <string name="app_picker_assistant_hint">Google and assistant apps can be blocked, but doing so may affect launcher search or voice-assistant features on some devices.</string>
     <string name="app_picker_assistant_warning_title">Block Google or assistant app anyway?</string>
-    <string name="app_picker_assistant_warning_message">This app may be used by launcher search, voice assistance, system services, or startup flows. Blocking it can cause repeated blocking loops or break device features on some phones.</string>
+    <string name="app_picker_assistant_warning_message">Blocking this app may disable or interfere with launcher search, Discover, or voice-assistant features on some devices. You can remove it from the blocked list again if those features stop working as expected.</string>
     <string name="app_picker_system_ui_hint">System UI controls core Android surfaces such as status, navigation, notifications, and lock-screen behavior.</string>
     <string name="app_picker_system_ui_warning_title">Block System UI anyway?</string>
     <string name="app_picker_system_ui_warning_message">Blocking System UI can break navigation, notifications, the status bar, lock-screen behavior, or basic device recovery. This is extremely risky.</string>
@@ -92,9 +103,6 @@
     <string name="app_picker_files_hint">Files and document picker apps can be important for backups, restores, exports, and recovery.</string>
     <string name="app_picker_files_warning_title">Block files app anyway?</string>
     <string name="app_picker_files_warning_message">Blocking files or document picker apps can make backups, restores, exports, and recovery harder.</string>
-    <string name="app_picker_browser_hint">Browsers are often used for downloads, support, sign-in, and recovery steps.</string>
-    <string name="app_picker_browser_warning_title">Block browser app anyway?</string>
-    <string name="app_picker_browser_warning_message">Blocking a browser can make downloads, support, and recovery steps harder.</string>
 
     <!-- ====================================================== -->
     <!-- Settings lockout requirements -->
@@ -119,7 +127,7 @@
     <string name="app_rules_title">App rules</string>
     <string name="app_rules_profile_subtitle">Rules for: %1$s</string>
     <string name="app_rules_info_title">App rules</string>
-    <string name="app_rules_info_body">App rules:\n• Apps, website/domain rules, and in-app sections are managed per profile, each with its own Block selected/Allow selected mode.\n• Use the app list below for whole-app blocking or allowing.\n• Use Website/domain rules for browser rules in the active profile.\n• Use In-app sections for supported installed apps like YouTube, Instagram, X, and Snapchat.\n\nWhich apps are available:\n• The normal list shows apps currently installed on this device that Android exposes with a regular launcher entry. Switchly can therefore manage most regular launchable apps; it is not a catalog of every Android app.\n• Apps without a launcher entry, hidden system components, and apps that are not installed are normally not shown. A previously selected app can remain listed as Unavailable after it is removed.\n• Switchly itself remains excluded. Safety-sensitive apps such as the active launcher, keyboard, dialer, Google app, package installer, permission controller, and System UI are marked Protected. They are skipped by Select all, but can be selected individually after a clear risk warning.\n• The exact list can vary slightly by Android version, manufacturer, work profile, and package-visibility restrictions.\n\nBlock selected:\n• Selected apps are blocked while this profile is active.\n• Apps not selected here are allowed unless another limit blocks them.\n\nAllow selected:\n• Apps in this picker list are allowed only when selected.\n• Apps in this picker list that are not selected are blocked.\n• Apps not shown in the picker are treated as allowed because they cannot be selected here.\n\nAutomatically block newly installed apps:\n• Only available in Block selected mode.\n• When enabled, newly installed launchable apps are added to this profile automatically.\n• Select all also turns this on for future installs.</string>
+    <string name="app_rules_info_body">App rules apply only to the selected profile. Use this list for complete apps; website and in-app rules have their own screens.\n\nChoose a mode:\n• Block selected: Selected apps are blocked. Other apps stay available unless a limit blocks them.\n• Allow selected: Selected apps stay available. Other apps shown in this list are blocked. Apps not shown here stay available.\n\nAvailable apps:\n• The list contains installed apps with a regular launcher entry.\n• Removed apps can remain marked as Unavailable until you remove them.\n• Protected system apps are skipped by Select all and require a separate risk confirmation.\n\nAutomatically block new apps is available in Block selected mode and adds newly installed launchable apps to this profile.</string>
     <string name="allow_mode_empty_save_title">No allowed apps selected?</string>
     <string name="allow_mode_empty_save_message">This profile is in Allow selected mode, but no apps are selected. Listed picker apps may be blocked, but apps not shown in the picker are treated as allowed.</string>
     <string name="allow_mode_empty_save_confirm">Save anyway</string>

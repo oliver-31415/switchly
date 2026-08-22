@@ -48,7 +48,13 @@
     <string name="app_lock_screen_title">App-Sperre</string>
     <string name="app_lock_strict_protection_title">Deinstallationsschutz</string>
     <string name="app_lock_strict_protection_summary">Verwendet Android-Geräteadmin als zusätzliche Hürde vor dem Entfernen. Zum Ausschalten in Switchly ist deine PIN oder Biometrie nötig.</string>
-    <string name="app_lock_strict_protection_admin_explanation">Der Deinstallationsschutz verwendet Android-Geräteadmin als zusätzliche Hürde, bevor Switchly entfernt werden kann. Android kann weiterhin einen Systemweg zum Deaktivieren des Admins anbieten.</string>
+    <string name="app_lock_strict_protection_summary_device_admin_active">Der Geräteadmin-Schutz ist aktiv. Er erschwert die Deinstallation deutlich, Android kann aber weiterhin einen Systemweg zum Deaktivieren des Administrators anbieten.</string>
+    <string name="app_lock_strict_protection_summary_device_owner_active">Die verwaltete Deinstallationssperre ist über Android Device Owner aktiv. Android meldet Switchlys Paket derzeit als für die Deinstallation gesperrt.</string>
+    <string name="app_lock_strict_protection_summary_profile_owner_active">Die verwaltete Deinstallationssperre ist über Android Profile Owner aktiv. Android meldet Switchlys Paket derzeit als für die Deinstallation gesperrt.</string>
+    <string name="app_lock_strict_protection_summary_managed_not_active">Managed-Device-Besitz ist aktiv, Android meldet Switchlys Deinstallationsrichtlinie derzeit aber nicht als aktiv. Prüfe die Developer-Tools oder einen Supportbericht.</string>
+    <string name="app_lock_strict_protection_summary_admin_inactive">Deinstallationsschutz ist konfiguriert, der Android-Admin-/Managed-Status ist aber nicht mehr aktiv. Aktiviere den Schutz erneut, um ihn wiederherzustellen.</string>
+    <string name="app_lock_strict_protection_summary_managed_available">Managed-Device-Besitz ist bereits aktiv. Aktiviere den Deinstallationsschutz, um Androids verwaltete Deinstallationssperre auf Switchly anzuwenden.</string>
+    <string name="app_lock_strict_protection_admin_explanation">Der Deinstallationsschutz verwendet Android-Geräteadmin als zusätzliche Hürde, bevor Switchly entfernt werden kann. Android kann weiterhin einen Systemweg zum Deaktivieren des Admins anbieten. Ein erweitertes Device-Owner-Setup kann eine verwaltete Deinstallationssperre erzwingen, ist aber eine separate technische Bereitstellung.</string>
     <string name="app_lock_strict_protection_enabled">Deinstallationsschutz aktiviert.</string>
     <string name="app_lock_strict_protection_not_granted">Geräteadmin wurde nicht aktiviert.</string>
     <string name="app_lock_strict_protection_disabled">Deinstallationsschutz deaktiviert.</string>

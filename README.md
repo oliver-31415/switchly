@@ -76,6 +76,13 @@ Individual release tasks:
 ./gradlew :app:bundleFullRelease
 ```
 
+Before publishing an update, the maintainer can verify that the previous direct-download public APK uses the same signer as the configured release key:
+```bash
+./gradlew :app:checkSwitchlyUpgradeCompatibility -PSWITCHLY_UPGRADE_BASE_APK=/path/to/previous-public.apk
+```
+
+If `SWITCHLY_UPGRADE_BASE_APK` is supplied while running `release-apk`, this signer check runs automatically. This signer comparison applies to the direct-download APK path. Play Store upgrades must also be tested through a Play testing track. It verifies signing compatibility only; still perform one real on-device upgrade smoke test with App Lock/uninstall protection enabled to confirm that app data and Android admin/managed-owner state remain intact.
+
 See [`docs/APK_VARIANTS.md`](./docs/APK_VARIANTS.md) for build details and [`docs/EXTERNAL_PAYMENTS_STRIPE.md`](./docs/EXTERNAL_PAYMENTS_STRIPE.md) for Stripe/direct payment setup.
 
 ---

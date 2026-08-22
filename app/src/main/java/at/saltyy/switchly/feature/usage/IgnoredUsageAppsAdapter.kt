@@ -127,6 +127,7 @@ class IgnoredUsageAppsAdapter(
             name.text = item.label
             packageName.text = item.packageName
             suggested.isVisible = item.suggested
+            suggested.setTextColor(AccentColor.getAccentColorInt(suggested.context))
 
             bindSelection(item.packageName in selectedPackages)
 

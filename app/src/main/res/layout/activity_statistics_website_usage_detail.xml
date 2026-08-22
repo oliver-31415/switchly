@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -25,8 +26,8 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
         android:padding="16dp"
+        android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -53,28 +54,28 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="12dp"
+                    android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/detailTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        tools:text="YouTube"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="20sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        tools:text="YouTube" />
 
                     <TextView
                         android:id="@+id/detailSubtitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        tools:text="Usage, limits, and activity"
+                        android:alpha="0.72"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="13sp"
-                        android:alpha="0.72" />
+                        tools:text="Usage, limits, and activity" />
 
                     <TextView
                         android:id="@+id/todayUsage"
@@ -146,9 +147,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:alpha="0.7"
                 android:text="@string/limits_quick_edit_hint"
-                android:textColor="?attr/colorOnSurface"
-                android:alpha="0.7" />
+                android:textColor="?attr/colorOnSurface" />
 
             <!-- Range selector -->
             <com.google.android.material.button.MaterialButtonToggleGroup
@@ -198,8 +199,8 @@
                     android:layout_height="40dp"
                     android:minWidth="0dp"
                     android:gravity="center"
-                    android:text=""
                     android:contentDescription="@string/activity_history_range_custom"
+                    android:text=""
                     app:icon="@drawable/calendar_month_24"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp" />
@@ -258,9 +259,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_mon"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day2"
@@ -268,9 +269,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_tue"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day3"
@@ -278,9 +279,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_wed"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day4"
@@ -288,9 +289,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_thu"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day5"
@@ -298,9 +299,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_fri"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day6"
@@ -308,9 +309,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_sat"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/day7"
@@ -318,9 +319,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:alpha="0.7"
                     android:text="@string/day_short_sun"
-                    android:textColor="?attr/colorOnSurface"
-                    android:alpha="0.7" />
+                    android:textColor="?attr/colorOnSurface" />
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -352,10 +353,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
+                        android:alpha="0.75"
                         android:text="@string/website_timeline_empty"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="13sp"
-                        android:alpha="0.75" />
+                        android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

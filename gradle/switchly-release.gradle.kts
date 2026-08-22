@@ -3,6 +3,7 @@ import java.io.File
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.util.Locale
+import java.util.Properties
 
 // Release helpers for official signed artifacts and public-repository validation builds.
 // Inputs are provided by app/build.gradle.kts through Gradle extra properties.
@@ -43,6 +44,60 @@ fun switchlyReleaseCertificateSha1(
     return MessageDigest.getInstance("SHA-1")
         .digest(certificate.encoded)
         .joinToString("") { byte -> "%02X".format(byte.toInt() and 0xFF) }
+}
+
+fun findSwitchlyApkSigner(rootProject: Project): File? {
+    val localProperties = Properties().apply {
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.isFile) {
+            localPropertiesFile.inputStream().use { input -> load(input) }
+        }
+    }
+    val sdkRoot = sequenceOf(
+        localProperties.getProperty("sdk.dir"),
+        System.getenv("ANDROID_SDK_ROOT"),
+        System.getenv("ANDROID_HOME"),
+    ).mapNotNull { it?.takeIf(String::isNotBlank) }
+        .map(::File)
+        .firstOrNull { it.isDirectory }
+        ?: return null
+
+    val executable = if (System.getProperty("os.name").lowercase(Locale.US).contains("win")) {
+        "apksigner.bat"
+    } else {
+        "apksigner"
+    }
+    return sdkRoot.resolve("build-tools")
+        .listFiles()
+        .orEmpty()
+        .filter { it.isDirectory }
+        .sortedByDescending { it.name }
+        .map { it.resolve(executable) }
+        .firstOrNull { it.isFile }
+}
+
+fun switchlyApkSignerSha1(apkSigner: File, apk: File): String {
+    val args = listOf(
+        apkSigner.absolutePath,
+        "verify",
+        "--print-certs",
+        apk.absolutePath,
+    )
+    val command = if (apkSigner.extension.equals("bat", ignoreCase = true)) {
+        listOf("cmd", "/c") + args
+    } else {
+        args
+    }
+    val process = ProcessBuilder(command).redirectErrorStream(true).start()
+    val output = process.inputStream.bufferedReader().use { it.readText() }
+    val exitCode = process.waitFor()
+    if (exitCode != 0) {
+        throw GradleException("apksigner could not verify ${apk.absolutePath}:\n$output")
+    }
+    val match = Regex("Signer #1 certificate SHA-1 digest: ([0-9A-Fa-f:]+)")
+        .find(output)
+        ?: throw GradleException("Could not read signer SHA-1 from apksigner output for ${apk.absolutePath}.")
+    return normalizeSwitchlySha1(match.groupValues[1])
 }
 
 fun switchlyGoogleServicesAndroidSha1s(
@@ -215,11 +270,72 @@ tasks.register("checkSwitchlyReleaseInputs") {
     dependsOn("checkSwitchlyOfficialReleaseInputs")
 }
 
+val switchlyUpgradeBaseApk = providers.gradleProperty("SWITCHLY_UPGRADE_BASE_APK")
+    .orElse(providers.environmentVariable("SWITCHLY_UPGRADE_BASE_APK"))
+
+tasks.register("checkSwitchlyUpgradeCompatibility") {
+    group = "switchly"
+    description = "Checks that a previous direct-download Switchly APK uses the same signer as the configured release key."
+
+    doLast {
+        if (!releaseSigningConfigured) {
+            throw GradleException(
+                "Official release signing is not configured. Configure the release key before checking upgrade compatibility."
+            )
+        }
+
+        val basePath = switchlyUpgradeBaseApk.orNull?.trim().orEmpty()
+        if (basePath.isBlank()) {
+            throw GradleException(
+                "Set SWITCHLY_UPGRADE_BASE_APK to the previous direct-download public APK, for example " +
+                    "-PSWITCHLY_UPGRADE_BASE_APK=/path/to/Switchly-2.2.3.apk."
+            )
+        }
+        val baseApk = rootProject.file(basePath)
+        if (!baseApk.isFile) {
+            throw GradleException("Upgrade base APK not found: ${baseApk.absolutePath}")
+        }
+        val apkSigner = findSwitchlyApkSigner(rootProject)
+            ?: throw GradleException("Could not find apksigner in the configured Android SDK build-tools.")
+        val releaseKeystore = rootProject.file(releaseStoreFile.get())
+        if (!releaseKeystore.isFile) {
+            throw GradleException("Release keystore not found: ${releaseStoreFile.get()}")
+        }
+
+        val baseSha1 = switchlyApkSignerSha1(apkSigner, baseApk)
+        val releaseSha1 = normalizeSwitchlySha1(
+            switchlyReleaseCertificateSha1(
+                storeFile = releaseKeystore,
+                storePassword = releaseStorePassword.get(),
+                keyAlias = releaseKeyAlias.get(),
+            )
+        )
+        if (baseSha1 != releaseSha1) {
+            throw GradleException(
+                "Upgrade signer mismatch. Previous APK SHA-1=${formatSwitchlySha1(baseSha1)}, " +
+                    "configured release SHA-1=${formatSwitchlySha1(releaseSha1)}. " +
+                    "Do not publish this build as a normal in-place update until signing compatibility is resolved."
+            )
+        }
+
+        logger.lifecycle(
+            "Upgrade signer OK: previous APK and configured release key use ${formatSwitchlySha1(releaseSha1)}"
+        )
+        logger.lifecycle(
+            "Still run one on-device smoke test: enable App Lock/uninstall protection on the previous public build, " +
+                "install the new release over it, then verify App Lock, Device Admin/Owner state and uninstall protection remain intact."
+        )
+    }
+}
+
 tasks.register("release-apk") {
     group = "switchly"
     description = "Builds, lints and copies all official signed Switchly APK/AAB variants to dist/."
 
     dependsOn("checkSwitchlyOfficialReleaseInputs")
+    if (switchlyUpgradeBaseApk.orNull?.isNotBlank() == true) {
+        dependsOn("checkSwitchlyUpgradeCompatibility")
+    }
     dependsOn("lintFullRelease", "lintFirebaseEmailRelease", "lintOfflineRelease")
     dependsOn(switchlyOfficialReleaseArtifacts.map { it.taskName })
 

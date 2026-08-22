@@ -323,7 +323,7 @@ class PrivacyReportActivity : TilesInfoActivity() {
             .setTitle(R.string.privacy_report_export_data_title)
             .setMessage(R.string.privacy_report_export_progress)
             .setCancelable(false)
-            .show()
+            .showAccented()
 
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {

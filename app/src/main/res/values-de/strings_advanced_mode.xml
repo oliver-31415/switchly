@@ -8,14 +8,23 @@
     <string name="advanced_mode_admin_label">Switchly</string>
     <string name="advanced_mode_admin_description">Gibt Switchly die nötige Kontrolle für optionale erweiterte Geräteadmin- und Managed-Device-Funktionen.</string>
     <string name="advanced_mode_disable_warning">Wenn du Switchly-Geräteadmin deaktivierst, wird der Deinstallationsschutz ausgeschaltet. Direkte Deinstallationsversuche können danach wieder funktionieren.</string>
-    <string name="advanced_mode_summary_body">Erweiterte ADB-Einrichtung für Device Admin, Profile Owner und Device Owner Schutz. Nutze das nur auf deinem eigenen Gerät und erst nach den Setup-Hinweisen.</string>
-    <string name="advanced_mode_recommendation_body">Für die meisten Nutzer bietet der Deinstallationsschutz mit Geräteadmin die beste Balance. Device Owner kann eine stärkere Systemrichtlinie erzwingen, benötigt aber ein technisches Bereitstellungs-Setup und lässt sich später schwerer rückgängig machen.</string>
-    <string name="advanced_mode_constraints_body">Device Owner braucht meist ein frisch eingerichtetes Gerät ohne bestehende Accounts. Profile Owner hat eigene Grenzen. Device Admin ist leichter zu aktivieren, aber nicht dasselbe wie vollständiger Managed-Device-Schutz.</string>
+    <string name="advanced_mode_summary_body">Erweiterte ADB-Einrichtung für den Schutz als Geräteadministrator, Profile Owner oder Device Owner. Nutze sie nur auf deinem eigenen Gerät und nach dem Lesen der Einrichtungshinweise.</string>
+    <string name="advanced_mode_recommendation_body">Für die meisten Nutzer bietet der Deinstallationsschutz mit Geräteadministrator die beste Balance. Device Owner kann Androids verwaltete Deinstallationssperre für Switchly selbst erzwingen, benötigt aber eine technische Bereitstellung und lässt sich später schwerer rückgängig machen. Zusätzliche geräteweite Sperren aktiviert Switchly nicht automatisch.</string>
+    <string name="advanced_mode_constraints_body">Device Owner braucht meist ein frisch eingerichtetes Gerät ohne bestehende Accounts. Profile Owner hat eigene Grenzen. Geräteadmin ist leichter zu aktivieren, bietet aber nur Deinstallationshürden; verwalteter Besitz ist der Weg zu einer echten Deinstallationssperre.</string>
 
     <!-- ====================================================== -->
     <!-- Advanced mode tiles -->
     <!-- ====================================================== -->
-    <string name="advanced_mode_tile_status">Aktuelles Setup</string>
+    <string name="advanced_mode_tile_status">Aktuelle Einrichtung</string>
+    <string name="advanced_mode_tile_release_diagnostics">Release-Diagnose</string>
+    <string name="advanced_mode_section_release_checks">Release-Prüfungen</string>
+    <string name="advanced_mode_release_status_ok">Signatur OK</string>
+    <string name="advanced_mode_release_status_warning">Signatur-Warnung</string>
+    <string name="advanced_mode_release_status_error">Signatur-Fehler</string>
+    <string name="advanced_mode_release_status_na">Debug-Build</string>
+    <string name="advanced_mode_upgrade_status_observed">Upgrade erkannt</string>
+    <string name="advanced_mode_upgrade_status_not_observed">kein Upgrade erkannt</string>
+    <string name="advanced_mode_release_diagnostics_summary">%1$s · %2$s</string>
     <string name="advanced_mode_tile_summary">Zweck</string>
     <string name="advanced_mode_tile_recommendation">Empfehlung</string>
     <string name="advanced_mode_tile_receiver">Admin-Receiver-Komponente</string>

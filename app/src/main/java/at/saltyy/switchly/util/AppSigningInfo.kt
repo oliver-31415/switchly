@@ -20,50 +20,39 @@
 package at.saltyy.switchly.util
 
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
+import android.content.pm.Signature
+import androidx.core.content.pm.PackageInfoCompat
 import java.security.MessageDigest
 import java.util.Locale
 
 object AppSigningInfo {
 
-    fun sha1(context: Context): String? {
-        val signatures = runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    context.packageManager.getPackageInfo(
-                        context.packageName,
-                        PackageManager.PackageInfoFlags.of(
-                            PackageManager.GET_SIGNING_CERTIFICATES.toLong()
-                        ),
-                    )
-                } else {
-                    @Suppress("DEPRECATION")
-                    context.packageManager.getPackageInfo(
-                        context.packageName,
-                        PackageManager.GET_SIGNING_CERTIFICATES,
-                    )
-                }
-                val signingInfo = info.signingInfo ?: return@runCatching emptyArray<android.content.pm.Signature>()
-                if (signingInfo.hasMultipleSigners()) {
-                    signingInfo.apkContentsSigners
-                } else {
-                    signingInfo.signingCertificateHistory
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.getPackageInfo(
-                    context.packageName,
-                    PackageManager.GET_SIGNATURES,
-                ).signatures
-            }
-        }.getOrNull().orEmpty()
+    /**
+     * Returns the currently active signing certificate where Android exposes a rotation lineage.
+     * PackageInfoCompat handles the pre-Android-9 compatibility path without direct use of the deprecated PackageInfo.signatures/GET_SIGNATURES APIs in Switchly code.
+     */
+    fun sha1(context: Context): String? = signatures(context)
+        .lastOrNull()
+        ?.let(::sha1)
 
-        val certificate = signatures.firstOrNull()?.toByteArray() ?: return null
-        return MessageDigest.getInstance("SHA-1")
-            .digest(certificate)
-            .joinToString(":") { byte ->
-                String.format(Locale.US, "%02X", byte.toInt() and 0xFF)
-            }
-    }
+    /**
+     * Returns the signing certificate lineage known to Android.
+     * For a rotated single signer, Android reports the lineage from the original certificate through the current certificate.
+     */
+    fun sha1History(context: Context): List<String> = signatures(context)
+        .map(::sha1)
+        .distinct()
+
+    private fun signatures(context: Context): List<Signature> = runCatching {
+        PackageInfoCompat.getSignatures(
+            context.packageManager,
+            context.packageName,
+        ).toList()
+    }.getOrDefault(emptyList())
+
+    private fun sha1(signature: Signature): String = MessageDigest.getInstance("SHA-1")
+        .digest(signature.toByteArray())
+        .joinToString(":") { byte ->
+            String.format(Locale.US, "%02X", byte.toInt() and 0xFF)
+        }
 }

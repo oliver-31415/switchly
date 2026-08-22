@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     style="@style/Switchly.Card"
     android:layout_width="match_parent"
@@ -45,11 +46,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:textSize="13sp"
-                android:maxLines="1"
-                android:ellipsize="end"
                 android:alpha="0.8"
-                android:fontFamily="monospace" />
+                android:textSize="13sp"
+                android:fontFamily="monospace"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvMeta"
@@ -57,28 +58,28 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:visibility="gone"
+                android:alpha="0.72"
                 android:textSize="12sp"
                 android:maxLines="3"
-                android:ellipsize="end"
-                android:alpha="0.72" />
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvAction"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
+                android:alpha="0.86"
                 android:textSize="14sp"
                 android:maxLines="2"
-                android:ellipsize="end"
-                android:alpha="0.86" />
+                android:ellipsize="end" />
         </LinearLayout>
 
         <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/cbSelect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             android:clickable="false"
-            android:focusable="false" />
+            android:focusable="false"
+            android:visibility="gone" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

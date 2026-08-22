@@ -20,7 +20,6 @@
 package at.saltyy.switchly.feature.onboarding
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -82,6 +81,8 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.MainActivity
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.util.BatteryOptimizationRequest
 import at.saltyy.switchly.util.PackageManagerApiCompat
 import at.saltyy.switchly.util.PermissionSetupChecks
 import at.saltyy.switchly.util.PermissionUtils
@@ -648,11 +649,10 @@ class OnboardingActivity : ComponentActivity() {
         }
     }
 
-    @SuppressLint("BatteryLife")
     private fun requestIgnoreBatteryOptimizationFromOnboarding() {
-        if (safeStart(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = "package:$packageName".toUri()
-            })) {
+        if (!BatteryOptimizationRequest.isAlreadyAllowed(this) &&
+            safeStart(BatteryOptimizationRequest.intent(this))
+        ) {
             return
         }
         if (!safeStart(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) {
@@ -820,7 +820,8 @@ class OnboardingActivity : ComponentActivity() {
             desc = getString(R.string.onb_welcome_desc),
             detailRows = listOf(
                 getString(R.string.onb_core_point_choose),
-                getString(R.string.onb_core_point_control)
+                getString(R.string.onb_core_point_control),
+                getString(R.string.onb_core_point_enforce),
             ),
             level = OnboardingPage.Level.START
         )
@@ -1228,6 +1229,7 @@ class OnboardingActivity : ComponentActivity() {
 
         dialog.setOnDismissListener { rebuildPagesKeepingPosition() }
         dialog.show()
+        dialog.styleSwitchlyDialogButtons()
         dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
             if (pendingSelection.isEmpty()) {
                 Toast.makeText(this, R.string.onb_keep_one_app, Toast.LENGTH_SHORT).show()
@@ -1236,7 +1238,6 @@ class OnboardingActivity : ComponentActivity() {
             ProfileStore.setSelectedForProfileMode(this, profile, pendingSelection)
             dialog.dismiss()
         }
-        at.saltyy.switchly.theme.CustomAccentApplier.applyToDialog(dialog)
     }
 
     private fun markDone() {

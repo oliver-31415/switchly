@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     style="@style/Switchly.Card"
     android:layout_width="match_parent"
@@ -45,12 +46,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:alpha="0.8"
                 android:text="@string/paired_tag_uid_placeholder"
                 android:textSize="13sp"
+                android:fontFamily="monospace"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:alpha="0.8"
-                android:fontFamily="monospace" />
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvNote"
@@ -58,11 +59,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:visibility="gone"
+                android:alpha="0.86"
                 android:text="@string/paired_tag_note_placeholder"
                 android:textSize="14sp"
                 android:maxLines="2"
-                android:ellipsize="end"
-                android:alpha="0.86" />
+                android:ellipsize="end" />
         </LinearLayout>
 
         <androidx.appcompat.widget.SwitchCompat
@@ -76,8 +77,8 @@
             android:id="@+id/cbSelect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             android:clickable="false"
-            android:focusable="false" />
+            android:focusable="false"
+            android:visibility="gone" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

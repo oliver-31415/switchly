@@ -28,7 +28,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
-import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
@@ -65,7 +64,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         ScheduleRuntimeStore.markTickNow(ctx)
 
         if (!AutomationModeStore.isScheduleAllowed(ctx)) {
-            // Schedule automation channel is currently disabled by control mode.
+            AppLogStore.append(ctx, "Schedule", "action_result action=schedule result=blocked reason=control_mode")
             return
         }
 
@@ -137,11 +136,11 @@ class ScheduleReceiver : BroadcastReceiver() {
             }
         }
 
-        // On some devices ("use mobile data"/VPN/poor Wi-Fi), the active/default network can be CELLULAR even while Wi-Fi is still connected.
-        // We therefore treat Wi-Fi as connected when *any* network has TRANSPORT_WIFI.
+        // WifiTriggerService keeps the SSID cache current from a TRANSPORT_WIFI NetworkCallback, including cases where VPN/cellular is the default network.
+        // The active network is only a synchronous fallback for the short window before that cache is populated.
         val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val wifiCaps = currentWifiCaps(cm)
-        val wifiConnected = wifiCaps != null
+        val wifiCaps = currentDefaultWifiCaps(cm)
+        val wifiConnected = !ssid.isNullOrBlank() || wifiCaps != null
 
         // If Wi-Fi is connected but SSID hasn't been cached yet (or was unavailable during service start), attempt to read it directly here.
         // This prevents "Wi-Fi schedule does nothing" when enabling a schedule while already connected, and also makes time-boundary ticks independent from the Wi-Fi service timing.
@@ -623,10 +622,11 @@ class ScheduleReceiver : BroadcastReceiver() {
         ctx: Context,
         schedule: ScheduleStore.Schedule,
         source: String,
-        enabled: Boolean
+        enabled: Boolean,
+        reason: String,
     ) {
         val nowMs = System.currentTimeMillis()
-        val signature = "${schedule.id}|${schedule.action.name}|${schedule.profile}|$source|$enabled"
+        val signature = "${schedule.id}|${schedule.action.name}|${schedule.profile}|$source|$enabled|$reason"
         val prefs = ctx.getSharedPreferences(PREFS_RUNTIME, Context.MODE_PRIVATE)
         val lastTs = prefs.getLong(KEY_LAST_NOOP_LOG_TS, 0L)
         val lastSignature = prefs.getString(KEY_LAST_NOOP_LOG_SIGNATURE, null)
@@ -642,7 +642,7 @@ class ScheduleReceiver : BroadcastReceiver() {
         AppLogStore.append(
             ctx,
             "Schedule",
-            "schedule_noop id=${schedule.id} name=${ScheduleInsights.scheduleDisplayName(schedule)} action=${schedule.action.name} profile=${schedule.profile.ifBlank { "-" }} source=$source enabled=$enabled reason=unchanged"
+            "action_result action=${schedule.action.name.lowercase()} result=noop reason=$reason id=${schedule.id} name=${ScheduleInsights.scheduleDisplayName(schedule)} profile=${schedule.profile.ifBlank { "-" }} source=$source enabled=$enabled"
         )
     }
 
@@ -657,6 +657,11 @@ class ScheduleReceiver : BroadcastReceiver() {
                 ctx,
                 "Schedule",
                 "schedule_skipped id=${s.id} name=${ScheduleInsights.scheduleDisplayName(s)} action=${s.action.name} source=$source reason=emergency_active"
+            )
+            AppLogStore.append(
+                ctx,
+                "Schedule",
+                "action_result action=${s.action.name.lowercase()} result=blocked reason=emergency_active id=${s.id} source=$source"
             )
             updateNextAlarmAndNotifyIfChanged(ctx)
             return false
@@ -699,6 +704,11 @@ class ScheduleReceiver : BroadcastReceiver() {
                     ctx,
                     "Schedule",
                     "schedule_skipped id=${s.id} name=${ScheduleInsights.scheduleDisplayName(s)} action=${s.action.name} source=$source reason=manual_disabled"
+                )
+                AppLogStore.append(
+                    ctx,
+                    "Schedule",
+                    "action_result action=${s.action.name.lowercase()} result=blocked reason=manual_paused id=${s.id} source=$source"
                 )
                 dbg("Schedule enable skipped by manual disable pause (id=${s.id}, source=$source)")
                 updateNextAlarmAndNotifyIfChanged(ctx)
@@ -763,6 +773,11 @@ class ScheduleReceiver : BroadcastReceiver() {
             // Visible in schedules screen banner so users understand why end-times may not disable.
             ScheduleRuntimeStore.markDisableBlockedByNfc(ctx)
             AppLogStore.append(ctx, "Schedule", "Match failed reason=disable_blocked_by_nfc")
+            AppLogStore.append(
+                ctx,
+                "Schedule",
+                "action_result action=${s.action.name.lowercase()} result=blocked reason=nfc_required id=${s.id} source=$source"
+            )
             dbg("Schedule disable blocked by NFC lock (id=${s.id}, source=$source)")
             updateNextAlarmAndNotifyIfChanged(ctx)
             return false
@@ -803,7 +818,14 @@ class ScheduleReceiver : BroadcastReceiver() {
         }
 
         if (!stateActuallyChanged && !profileChanged) {
-            logScheduleNoopIfNeeded(ctx, s, source, baseEnabledAfter)
+            val noopReason = when (s.action) {
+                ScheduleStore.Action.ENABLE, ScheduleStore.Action.ENABLE_AND_DISABLE ->
+                    if (baseEnabledAfter) "already_enabled" else "unchanged"
+                ScheduleStore.Action.DISABLE, ScheduleStore.Action.DISABLE_AND_ENABLE ->
+                    if (!baseEnabledAfter) "already_disabled" else "unchanged"
+                ScheduleStore.Action.TOGGLE -> "unchanged"
+            }
+            logScheduleNoopIfNeeded(ctx, s, source, baseEnabledAfter, noopReason)
             updateNextAlarmAndNotifyIfChanged(ctx)
             return countNoopAsApplied
         }
@@ -812,6 +834,11 @@ class ScheduleReceiver : BroadcastReceiver() {
             ctx,
             "Schedule",
             "schedule_apply id=${s.id} name=${ScheduleInsights.scheduleDisplayName(s)} action=${s.action.name} profile=${s.profile.ifBlank { "-" }} source=$source enabledBefore=$baseEnabledBefore enabledAfter=$baseEnabledAfter profileChanged=$profileChanged"
+        )
+        AppLogStore.append(
+            ctx,
+            "Schedule",
+            "action_result action=${s.action.name.lowercase()} result=changed reason=applied id=${s.id} profile=${s.profile.ifBlank { "-" }} source=$source enabledBefore=$baseEnabledBefore enabledAfter=$baseEnabledAfter profileChanged=$profileChanged"
         )
 
         updateNextAlarmAndNotifyIfChanged(ctx)
@@ -957,31 +984,22 @@ class ScheduleReceiver : BroadcastReceiver() {
     private fun cachedSsid(ctx: Context) =
         ctx.getSharedPreferences(PREFS_WIFI, Context.MODE_PRIVATE).getString(KEY_LAST_SSID, null)
 
-    private fun allNetworksCompat(cm: ConnectivityManager): Array<Network> {
-        val value = runCatching {
-            cm.javaClass.getMethod("getAllNetworks").invoke(cm)
-        }.getOrNull()
-        return (value as? Array<*>)?.filterIsInstance<Network>()?.toTypedArray() ?: emptyArray()
-    }
-
-    private fun wifiConnectionInfoCompat(wifiManager: WifiManager): WifiInfo? {
+    /** Legacy SSID source for Android 8.1/9 only (API 27/28). */
+    private fun wifiConnectionInfoLegacyApi27To28(wifiManager: WifiManager): WifiInfo? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return null
         return runCatching {
             wifiManager.javaClass.getMethod("getConnectionInfo").invoke(wifiManager) as? WifiInfo
         }.getOrNull()
     }
     /**
-     * Returns the capabilities for any currently connected Wi‑Fi network.
-     * We intentionally do NOT use [ConnectivityManager.activeNetwork] because the "default" network can be CELLULAR (or a VPN) while Wi‑Fi is still connected.
+     * Synchronous fallback for the currently active/default Wi-Fi network.
+     * Non-default Wi-Fi is tracked by WifiTriggerService's NetworkCallback and represented by the shared SSID cache, avoiding deprecated ConnectivityManager.getAllNetworks().
      */
-    private fun currentWifiCaps(cm: ConnectivityManager): NetworkCapabilities? {
+    private fun currentDefaultWifiCaps(cm: ConnectivityManager): NetworkCapabilities? {
         return try {
-            for (n in allNetworksCompat(cm)) {
-                val caps = cm.getNetworkCapabilities(n) ?: continue
-                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                    return caps
-                }
-            }
-            null
+            val network = cm.activeNetwork ?: return null
+            cm.getNetworkCapabilities(network)
+                ?.takeIf { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }
         } catch (_: Throwable) {
             null
         }
@@ -994,19 +1012,12 @@ class ScheduleReceiver : BroadcastReceiver() {
     private fun tryReadCurrentSsid(ctx: Context, wifiCaps: NetworkCapabilities?): String? {
         return try {
             val raw = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Prefer the provided Wi‑Fi caps (may not be the active/default network)
-                val capSsid = (wifiCaps?.transportInfo as? WifiInfo)?.ssid
-                if (!capSsid.isNullOrBlank()) {
-                    capSsid
-                } else {
-                    // Some OEMs return null transportInfo even while connected.
-                    // Fallback to WifiManager.connectionInfo (still requires Location permission).
-                    val wifiManager = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                    wifiConnectionInfoCompat(wifiManager)?.ssid
-                }
+                // API 29+: use NetworkCapabilities/WifiInfo only.
+                (wifiCaps?.transportInfo as? WifiInfo)?.ssid
             } else {
+                // API 27/28: NetworkCapabilities does not expose WifiInfo transportInfo yet.
                 val wifiManager = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                wifiConnectionInfoCompat(wifiManager)?.ssid
+                wifiConnectionInfoLegacyApi27To28(wifiManager)?.ssid
             } ?: return null
 
             normalizeSsid(raw)

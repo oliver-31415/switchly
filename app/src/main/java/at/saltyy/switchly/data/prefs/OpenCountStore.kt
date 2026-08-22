@@ -173,7 +173,7 @@ object OpenCountStore {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         var sum = 0
         val suffix = "__${safeProfile}__${pkg}"
-        for ((k, _v) in sp.all) {
+        for ((k, _) in sp.all) {
             if (!k.startsWith(PREFIX) || !k.endsWith(suffix)) continue
             sum += readIntWithLongMigration(sp, k)
         }
@@ -383,7 +383,7 @@ object OpenCountStore {
         var sum = 0
         val profilelessSuffix = '_' + pkg
         val newSuffix = "__" + pkg
-        for ((k, _v) in sp.all) {
+        for ((k, _) in sp.all) {
             if (!k.startsWith(PREFIX)) continue
             when {
                 k.endsWith(newSuffix) -> sum += readIntWithLongMigration(sp, k)
@@ -402,7 +402,7 @@ object OpenCountStore {
         var foundNew = false
         val dayPrefix = PREFIX + ymd.toString() + "__"
         val newSuffix = "__" + pkg
-        for ((k, _v) in sp.all) {
+        for ((k, _) in sp.all) {
             if (!k.startsWith(dayPrefix) || !k.endsWith(newSuffix)) continue
             sum += readIntWithLongMigration(sp, k)
             foundNew = true

@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
@@ -31,6 +32,7 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AppLogStore
 import at.saltyy.switchly.data.prefs.AutomationModeStore
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
+import at.saltyy.switchly.data.prefs.ScanActionHistoryStore
 import at.saltyy.switchly.feature.qr.QrGenerateActivity
 import at.saltyy.switchly.feature.settings.ManageBarcodesActivity
 import at.saltyy.switchly.feature.settings.ManagePairedTagsActivity
@@ -41,6 +43,7 @@ import at.saltyy.switchly.ui.LockedUi
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.RelativeTimeFormatter
 import com.google.android.material.appbar.MaterialToolbar
 
 class ManageKeysActivity : AppCompatActivity() {
@@ -69,11 +72,57 @@ class ManageKeysActivity : AppCompatActivity() {
         setupCards()
         applyOnboardingFilterIfNeeded()
         syncLockedCardState()
+        refreshLastScanActions()
     }
 
     override fun onResume() {
         super.onResume()
         syncLockedCardState()
+        refreshLastScanActions()
+    }
+
+    private fun refreshLastScanActions() {
+        bindLastScanAction(R.id.tvLastNfcAction, ScanActionHistoryStore.Source.NFC)
+        bindLastScanAction(R.id.tvLastQrAction, ScanActionHistoryStore.Source.QR)
+        bindLastScanAction(R.id.tvLastBarcodeAction, ScanActionHistoryStore.Source.BARCODE)
+    }
+
+    private fun bindLastScanAction(viewId: Int, source: ScanActionHistoryStore.Source) {
+        val view = findViewById<TextView>(viewId) ?: return
+        val entry = ScanActionHistoryStore.get(this, source)
+        if (entry == null) {
+            view.text = getString(R.string.scan_last_action_none)
+            view.alpha = 0.68f
+            view.visibility = View.VISIBLE
+            return
+        }
+        view.alpha = 1f
+
+        val normalizedAction = entry.action.lowercase()
+        var actionLabel = when {
+            normalizedAction in setOf("enable", "start", "on", "activate") -> getString(R.string.scan_last_action_enabled)
+            normalizedAction in setOf("disable", "stop", "off") -> getString(R.string.scan_last_action_disabled)
+            normalizedAction.startsWith("temp_enable") -> getString(R.string.scan_last_action_temp_enabled)
+            normalizedAction.startsWith("temp_disable") || normalizedAction.startsWith("reentry") ->
+                getString(R.string.scan_last_action_temp_disabled)
+            normalizedAction == "toggle" -> if (entry.profile.isNullOrBlank()) {
+                getString(if (entry.resultingEnabled) R.string.scan_last_action_enabled else R.string.scan_last_action_disabled)
+            } else {
+                getString(R.string.scan_last_action_profile_switched)
+            }
+            normalizedAction == "emergency_disable" -> getString(R.string.scan_last_action_emergency)
+            else -> getString(R.string.scan_last_action_applied)
+        }
+        entry.profile?.takeIf { it.isNotBlank() }?.let { profile ->
+            actionLabel = getString(R.string.scan_last_action_profile_fmt, actionLabel, profile)
+        }
+        entry.durationMs?.takeIf { it > 0L }?.let { durationMs ->
+            val minutes = ((durationMs + 59_999L) / 60_000L).coerceAtLeast(1L)
+            actionLabel = getString(R.string.scan_last_action_duration_fmt, actionLabel, minutes)
+        }
+        val relative = RelativeTimeFormatter.format(this, entry.atMillis)
+        view.text = getString(R.string.scan_last_action_fmt, actionLabel, relative)
+        view.visibility = View.VISIBLE
     }
 
     private fun applyOnboardingFilterIfNeeded() {

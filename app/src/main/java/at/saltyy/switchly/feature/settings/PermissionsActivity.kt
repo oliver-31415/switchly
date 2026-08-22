@@ -20,7 +20,6 @@
 package at.saltyy.switchly.feature.settings
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -29,9 +28,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.Settings
-import android.text.SpannableStringBuilder
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -45,7 +42,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
-import androidx.core.text.bold
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import at.saltyy.switchly.R
 import at.saltyy.switchly.blocking.BlockingRuntime
@@ -63,6 +60,9 @@ import at.saltyy.switchly.theme.CustomAccentApplier
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.ui.dialog.SwitchlyInfoRow
+import at.saltyy.switchly.ui.dialog.showSwitchlyInfoDialog
+import at.saltyy.switchly.util.BatteryOptimizationRequest
 import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.LocaleHelper
 import at.saltyy.switchly.util.NfcLaunchAccessCompat
@@ -810,16 +810,10 @@ class PermissionsActivity : AppCompatActivity() {
         return PermissionSetupChecks.batteryOptimizationReady(this)
     }
 
-    @SuppressLint("BatteryLife")
     private fun requestIgnoreBatteryOptimizationsSystemPopup() {
-        val alreadyAllowed = runCatching {
-            getSystemService(PowerManager::class.java)
-                ?.isIgnoringBatteryOptimizations(packageName) == true
-        }.getOrDefault(false)
-
-        if (!alreadyAllowed && safeStart(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = "package:$packageName".toUri()
-            })) {
+        if (!BatteryOptimizationRequest.isAlreadyAllowed(this) &&
+            safeStart(BatteryOptimizationRequest.intent(this))
+        ) {
             return
         }
         openBatteryOptimizationSettingsPages()
@@ -993,17 +987,15 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun showWhyDialog(title: String, message: String) {
-        val prettyMessage = SpannableStringBuilder().apply {
-            bold { append(getString(R.string.permissions_why_dialog_header)) }
-            append("\n")
-            append(message)
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setMessage(prettyMessage)
-            .setPositiveButton(R.string.ok, null)
-            .showAccented()
+        showSwitchlyInfoDialog(
+            title = title,
+            rows = listOf(
+                SwitchlyInfoRow(
+                    label = getString(R.string.permissions_why_dialog_header),
+                    value = message,
+                ),
+            ),
+        )
     }
 
     private fun safeStart(intent: Intent): Boolean {
@@ -1016,17 +1008,31 @@ class PermissionsActivity : AppCompatActivity() {
     }
 
     private fun focusRequestedSection() {
-        val targetId = when (intent.getStringExtra(EXTRA_FOCUS_SECTION)) {
+        val sectionId = when (intent.getStringExtra(EXTRA_FOCUS_SECTION)) {
             SECTION_CORE -> R.id.sectionCore
             SECTION_NOTIFICATIONS -> R.id.sectionNotifications
             SECTION_TRIGGERS -> R.id.sectionTriggers
             SECTION_BATTERY -> R.id.sectionBattery
             else -> return
         }
+        val requestedTargetId = when (intent.getStringExtra(EXTRA_FOCUS_TARGET)) {
+            TARGET_AUTOSTART -> R.id.groupAutostart
+            else -> sectionId
+        }
         val scroll = findViewById<ScrollView>(R.id.permissionsScroll)
-        val target = findViewById<View>(targetId)
         scroll.post {
-            scroll.smoothScrollTo(0, (target.top - resources.displayMetrics.density * 8f).toInt().coerceAtLeast(0))
+            val requested = findViewById<View>(requestedTargetId)
+            val fallback = findViewById<View>(sectionId)
+            val target = requested.takeIf { it.isVisible } ?: fallback
+            scroll.smoothScrollTo(
+                0,
+                (target.top - resources.displayMetrics.density * 8f).toInt().coerceAtLeast(0),
+            )
+            if (requestedTargetId != sectionId && requested.isVisible) {
+                requested.animate().alpha(0.72f).setDuration(120L).withEndAction {
+                    requested.animate().alpha(1f).setDuration(220L).start()
+                }.start()
+            }
         }
     }
 
@@ -1063,10 +1069,12 @@ class PermissionsActivity : AppCompatActivity() {
         const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
         const val EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE = "extra_show_accessibility_disclosure"
         const val EXTRA_FOCUS_SECTION = "extra_focus_section"
+        const val EXTRA_FOCUS_TARGET = "extra_focus_target"
 
         const val SECTION_CORE = "core"
         const val SECTION_NOTIFICATIONS = "notifications"
         const val SECTION_TRIGGERS = "triggers"
         const val SECTION_BATTERY = "battery"
+        const val TARGET_AUTOSTART = "autostart"
     }
 }

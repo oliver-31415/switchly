@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="settings_find_title">Find a setting</string>
+    <string name="settings_find_hint">Type NFC, battery, backup…</string>
+    <string name="settings_search_terms_keys">NFC, QR, barcode, tags</string>
+    <string name="settings_search_terms_display">widgets, tiles, shortcuts, Home</string>
+    <string name="settings_search_terms_permissions">battery, background, Accessibility, autostart</string>
+    <string name="settings_search_terms_account">backup, restore, sync, account, delete account, account deletion</string>
+    <string name="settings_search_terms_developer">uninstall protection, Device Admin, ADB</string>
+    <string name="settings_search_terms_blocking">control mode, temporary timer, rules</string>
 
     <!-- ====================================================== -->
     <!-- Settings sections -->

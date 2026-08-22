@@ -39,6 +39,7 @@ import at.saltyy.switchly.blocking.BlockingRuntime
 import at.saltyy.switchly.data.prefs.BlockingToggleKeys
 import at.saltyy.switchly.data.prefs.IgnoredUsageAppsStore
 import at.saltyy.switchly.data.prefs.InAppRuleStore
+import at.saltyy.switchly.data.prefs.InAppDetectionStore
 import at.saltyy.switchly.data.prefs.ProfileRuleModeStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SurfaceLimitStore
@@ -48,6 +49,9 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.SegmentedToggleUi
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
+import at.saltyy.switchly.ui.dialog.SwitchlyInfoRow
+import at.saltyy.switchly.ui.dialog.showSwitchlyInfoDialog
+import at.saltyy.switchly.util.RelativeTimeFormatter
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.PackageLaunchIntentCompat
 import com.google.android.material.appbar.MaterialToolbar
@@ -127,12 +131,15 @@ class InAppRulesActivity : AppCompatActivity() {
     }
 
     private fun showInAppRulesInfo() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.in_app_rules_info_title)
-            .setMessage(getString(R.string.in_app_rules_info_body))
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
-            .styleSwitchlyDialogButtons()
+        showSwitchlyInfoDialog(
+            title = getString(R.string.in_app_rules_info_title),
+            rows = listOf(
+                SwitchlyInfoRow(
+                    label = getString(R.string.in_app_rules_info_title),
+                    value = getString(R.string.in_app_rules_info_body),
+                ),
+            ),
+        )
     }
 
     private fun render() {
@@ -205,10 +212,62 @@ class InAppRulesActivity : AppCompatActivity() {
                 return@addOnButtonCheckedListener
             }
 
-            InAppRuleStore.setMode(this, currentProfile(), mode)
-            BlockingRuntime.ensureRunning(this)
-            render()
+            if (mode == InAppRuleStore.MODE_ALLOW_SELECTED) {
+                confirmAllowSelectedMode()
+            } else {
+                applyRuleMode(mode)
+            }
         }
+    }
+
+    private fun confirmAllowSelectedMode() {
+        // Reset the segmented control while the confirmation dialog is open.
+        // This makes it clear that the mode has not changed yet and also handles Back/outside-tap safely.
+        updateModeUi()
+        val installedSurfaces = groups()
+            .filter { isAppInstalled(it.packageName) }
+            .filter { group ->
+                group.surfaces.any { surface ->
+                    surface.prefKey?.let { key ->
+                        InAppRuleStore.isRuleSelected(this, currentProfile(), key)
+                    } == true
+                }
+            }
+            .flatMap { it.surfaces }
+            .filter { it.prefKey != null }
+        val allowedCount = installedSurfaces.count { surface ->
+            InAppRuleStore.isRuleSelected(this, currentProfile(), surface.prefKey.orEmpty())
+        }
+        val blockedCount = (installedSurfaces.size - allowedCount).coerceAtLeast(0)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.in_app_rule_allow_confirm_title)
+            .setMessage(
+                getString(
+                    R.string.in_app_rule_allow_confirm_body_counted,
+                    resources.getQuantityString(
+                        R.plurals.in_app_rule_allow_blocked_count,
+                        blockedCount,
+                        blockedCount,
+                    ),
+                    resources.getQuantityString(
+                        R.plurals.in_app_rule_allow_allowed_count,
+                        allowedCount,
+                        allowedCount,
+                    ),
+                )
+            )
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.in_app_rule_allow_confirm_action) { _, _ ->
+                applyRuleMode(InAppRuleStore.MODE_ALLOW_SELECTED)
+            }
+            .show()
+            .styleSwitchlyDialogButtons()
+    }
+
+    private fun applyRuleMode(mode: String) {
+        InAppRuleStore.setMode(this, currentProfile(), mode)
+        BlockingRuntime.ensureRunning(this)
+        render()
     }
 
     private fun updateModeUi() {
@@ -280,7 +339,7 @@ class InAppRulesActivity : AppCompatActivity() {
             }
         })
         header.addView(TextView(this).apply {
-            text = getString(R.string.in_app_status_installed)
+            text = appDiagnosticLabel(group)
             alpha = 0.72f
             textSize = 12f
             setTextColor(AccentColor.getAccentColorInt(this@InAppRulesActivity))
@@ -293,6 +352,25 @@ class InAppRulesActivity : AppCompatActivity() {
 
         card.addView(body)
         return card
+    }
+
+    private fun appDiagnosticLabel(group: AppGroup): String {
+        val info = runCatching { packageManager.getPackageInfo(group.packageName, 0) }.getOrNull()
+        val version = info?.versionName.orEmpty().ifBlank { "?" }
+        val lastDetected = InAppDetectionStore.lastForAny(
+            this,
+            group.surfaces.mapNotNull { it.surfaceKey },
+        )
+        return when {
+            lastDetected <= 0L -> getString(R.string.in_app_app_diagnostic_never, version)
+            info != null && info.lastUpdateTime > lastDetected ->
+                getString(R.string.in_app_app_diagnostic_stale, version)
+            else -> getString(
+                R.string.in_app_app_diagnostic_detected,
+                version,
+                RelativeTimeFormatter.format(this, lastDetected),
+            )
+        }
     }
 
     private fun buildSurfaceRow(surface: Surface, packageName: String): View {
@@ -314,6 +392,7 @@ class InAppRulesActivity : AppCompatActivity() {
                 alpha = 0.72f
                 textSize = 12f
                 setTextColor(onSurfaceColor())
+                gravity = Gravity.CENTER_VERTICAL
             })
         })
 
@@ -415,30 +494,44 @@ class InAppRulesActivity : AppCompatActivity() {
         val card = MaterialCardView(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+                LinearLayout.LayoutParams.WRAP_CONTENT,
             ).apply { topMargin = dp(10) }
             setCardBackgroundColor(ContextCompat.getColor(this@InAppRulesActivity, R.color.switchly_card_bg))
             strokeColor = ContextCompat.getColor(this@InAppRulesActivity, R.color.switchly_card_stroke)
             strokeWidth = dp(1)
-            radius = dp(8).toFloat()
+            radius = dp(20).toFloat()
+            cardElevation = 0f
         }
         card.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(16), dp(16), dp(16))
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(22), dp(22), dp(22), dp(22))
+            addView(ImageView(this@InAppRulesActivity).apply {
+                setImageResource(R.drawable.apps_24)
+                imageTintList = ColorStateList.valueOf(AccentColor.getAccentColorInt(this@InAppRulesActivity))
+                contentDescription = null
+                layoutParams = LinearLayout.LayoutParams(dp(34), dp(34))
+            })
             addView(TextView(this@InAppRulesActivity).apply {
                 text = getString(R.string.in_app_rules_empty_installed)
                 setTypeface(typeface, Typeface.BOLD)
                 textSize = 16f
-                setTextColor(onSurfaceColor())
-            })
-            addView(TextView(this@InAppRulesActivity).apply {
-                text = getString(R.string.in_app_rules_empty_installed_summary)
-                textSize = 14f
-                alpha = 0.72f
+                gravity = Gravity.CENTER
                 setTextColor(onSurfaceColor())
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = dp(10) }
+            })
+            addView(TextView(this@InAppRulesActivity).apply {
+                text = getString(R.string.in_app_rules_empty_installed_summary)
+                textSize = 13f
+                alpha = 0.72f
+                gravity = Gravity.CENTER
+                setTextColor(onSurfaceColor())
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
                 ).apply { topMargin = dp(4) }
             })
         })

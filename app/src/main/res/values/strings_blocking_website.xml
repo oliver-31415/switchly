@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="website_allow_mode_preview_title">Use Allow selected?</string>
+    <plurals name="website_allow_mode_preview_body">
+        <item quantity="one">%d saved website will remain available. Other detected websites will be blocked while this profile is active.</item>
+        <item quantity="other">%d saved websites will remain available. Other detected websites will be blocked while this profile is active.</item>
+    </plurals>
+    <string name="website_allow_mode_preview_action">Use mode</string>
 
     <!-- ====================================================== -->
     <!-- Website blocking overview -->
@@ -9,7 +15,7 @@
     <string name="blocked_websites_empty_body">Add a website this profile should block.</string>
     <string name="empty_action_add_first_website">Add first website</string>
     <string name="website_rules_info_title">Website rules</string>
-    <string name="website_rules_info_body">Website rules are profile-specific and apply only while this profile is active.\n\nRules are active as soon as they exist. Use the checkbox on each domain to enable or pause that rule without deleting it. In Block selected mode, checked domains are blocked. In Allow selected mode, checked domains are allowed.\n\nWebsite blocking reads the visible URL from supported browsers through Accessibility. Supported/tested browsers include Chrome, Brave, Edge, Opera, Samsung Internet, Firefox, Waterfox, Kiwi, Vivaldi, DuckDuckGo, and Ecosia. Switchly also detects Facebook Messenger’s built-in browser on a best-effort basis when Messenger exposes the current URL through Accessibility. Normal chats and message text are not treated as website surfaces. Support can still vary by app version and device. Brave Shields can temporarily hide URL information; Switchly keeps the last confirmed Brave domain while the browser remains open, but this fallback cannot guarantee perfect attribution after every navigation.</string>
+    <string name="website_rules_info_body">Website rules apply only to the selected profile.\n\nChoose a mode:\n• Block selected: Enabled domains are blocked.\n• Allow selected: Enabled domains stay available; other detected websites are blocked.\n\nUse the checkbox next to a domain to pause or resume its rule without deleting it. Switchly detects visible URLs in supported browsers using Accessibility. Browser updates and privacy features can affect detection.\n\nThe current compatibility list and troubleshooting steps are available in Help.</string>
     <string name="website_rule_mode_title">Website rule mode</string>
     <string name="website_rule_mode_block_summary">Selected enabled websites are blocked while this profile is active.</string>
     <string name="website_rule_mode_allow_summary">Selected enabled websites are allowed. Other websites are blocked while this profile is active.</string>
@@ -52,7 +58,7 @@
 
     <string name="session_reset_limit_value_format">%1$d min/session</string>
     <string name="allowed_websites_empty_title">No allowed websites yet</string>
-    <string name="allowed_websites_empty_body">Add websites that should stay available while this profile is in Allow selected mode.</string>
+    <string name="allowed_websites_empty_body">Add websites that should stay available for this profile.</string>
     <string name="blocked_websites_profile_subtitle">Rules for: %1$s</string>
     <string name="rule_allowed">Allowed</string>
     <string name="rule_allowed_always">Allowed always</string>

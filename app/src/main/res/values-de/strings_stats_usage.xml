@@ -58,11 +58,11 @@
     <!-- Usage detail info -->
     <!-- ====================================================== -->
     <string name="usage_details_info_title">Nutzungsdetails</string>
-    <string name="usage_details_info_body">Die Chips unter der App zeigen Nutzungszeit, Öffnungen und Blockierungen für den ausgewählten Zeitraum. Tippe auf das Tune-Icon oder eine der Limit-Karten, um Limits zu bearbeiten.\n\nTageslimits zählen gegen das heutige Limit. Sitzungs-Limits werden zurückgesetzt, wenn Switchly oder das aktive Profil eine neue aktive Sitzung startet.\n\nDer Sitzungsbalken zeigt, wie viel vom aktuellen Sitzungs-Limit bereits verwendet wurde.</string>
+    <string name="usage_details_info_body">Die Zusammenfassung zeigt:\n• Nutzungszeit\n• App-Öffnungen\n• Blockierungen\n\nNutze die Limit-Aktion oder eine Limit-Karte, um Limits zu bearbeiten. Tageslimits werden täglich zurückgesetzt. Sitzungslimits beginnen mit einer neuen aktiven Sitzung von Switchly oder dem Profil neu.</string>
     <string name="usage_details_limits_section">Limits</string>
     <string name="usage_details_activity_section">Nutzung im Zeitverlauf</string>
     <string name="website_usage_info_title">Website-Nutzungsdetails</string>
-    <string name="website_usage_info_body">Zeigt die für diese Domain getrackte Zeit zusammen mit Tageslimit und aktuellem Regelstatus. Tippe auf das Tune-Icon, um das Limit zu bearbeiten, oder öffne Website-Regeln, um die Domain zu blockieren beziehungsweise zu erlauben.\n\nWebsite-Tracking hängt von Bedienungshilfe und der Erkennung unterstützter Browser oder In-App-Browser ab. Private, eingebettete oder herstellerspezifische Browser-Sitzungen können daher fehlen.</string>
+    <string name="website_usage_info_body">Dieser Bildschirm zeigt:\n• Erfasste Zeit der Domain\n• Aktuelles Tageslimit\n• Aktuellen Regelstatus\n\nNutze die Limit-Aktion zum Bearbeiten oder öffne die Website-Regeln, um den Zugriff zu ändern. Private, eingebettete oder nicht unterstützte Browser-Sitzungen können fehlen.</string>
     <string name="app_usage_detail_title">App-Nutzungsdetails</string>
     <string name="app_usage_detail_subtitle">Nutzung, Limits und Aktivität</string>
     <string name="website_usage_detail_title">Website-Nutzungsdetails</string>
@@ -97,7 +97,7 @@
     <!-- ====================================================== -->
     <string name="statistics_usage_title">App- &amp; Website-Nutzung</string>
     <string name="statistics_usage_info_title">App- &amp; Website-Nutzung</string>
-    <string name="statistics_usage_info_body">Tippe auf das Tune-Icon neben einer App, um Limits zu bearbeiten.\n\nApp-Zeilen zeigen zusätzlich Öffnungen und Blockierungen für den ausgewählten Zeitraum. Switchly-Statistiken konzentrieren sich auf Blockieraktivität, Scans, Zeitpläne und limitbezogene Nutzung. Erlaubte oder temporär freigegebene Nutzung wird ggf. nicht immer vollständig erfasst; es ist kein vollständiger Digital-Wellbeing-Ersatz.\n\nTageslimits zählen gegen das heutige Limit. Sitzungs-Limits werden zurückgesetzt, wenn Switchly oder das aktive Profil eine neue aktive Sitzung startet.</string>
+    <string name="statistics_usage_info_body">Jede App-Zeile kann anzeigen:\n• Nutzungszeit\n• App-Öffnungen\n• Blockierungen\n\nNutze die Limit-Aktion, um Tages- oder Sitzungslimits zu bearbeiten. Switchly konzentriert sich auf schutzbezogene Aktivitäten und ersetzt keine vollständige Digital-Wellbeing-Auswertung.</string>
     <string name="stats_range_today">Heute</string>
     <string name="stats_range_week">Woche</string>
     <string name="stats_range_month">Monat</string>
@@ -131,7 +131,7 @@
     <string name="usage_timeline_permission_needed">Nutzungszugriff wird für die Öffnungs-Timeline benötigt.</string>
     <string name="usage_timeline_row">%1$s · %2$s–%3$s · %4$s</string>
     <string name="app_launches_info_title">App-Öffnungen</string>
-    <string name="app_launches_info_body">Zeigt, wie oft Apps im ausgewählten Zeitraum geöffnet wurden und welche Nutzungssitzungen zu einer App gehören. Die Zähler kombinieren Switchlys lokales Öffnungsarchiv mit Android-Nutzungszugriff, sofern verfügbar, und zählen interne Activity-Wechsel nicht als neue App-Öffnungen.\n\nExakte historische Sitzungen hängen vom Nutzungszugriff und vom Beginn der lokalen Archivierung ab. Ältere Zeiträume können daher Gesamtwerte ohne jeden einzelnen Öffnungszeitpunkt enthalten.</string>
+    <string name="app_launches_info_body">Zeigt, wie oft Apps im ausgewählten Zeitraum geöffnet wurden und welche Sitzungen zu einer App gehören. Ältere Zeiträume können nur einen Gesamtwert ohne jeden einzelnen Zeitpunkt enthalten, da der detaillierte Verlauf erst mit der lokalen Archivierung beginnt.</string>
     <string name="app_launches_total_title">Öffnungen gesamt</string>
     <string name="app_launches_overview_title">Öffnungsübersicht</string>
     <string name="app_launches_empty">Keine App-Öffnungen für diesen Zeitraum gefunden.</string>
@@ -146,7 +146,7 @@
         <item quantity="other">%1$d Öffnungen</item>
     </plurals>
     <string name="screen_unlocks_info_title">Entsperrungen</string>
-    <string name="screen_unlocks_info_body">Fasst Geräteentsperrungen zu Sitzungen zusammen und zeigt die Apps und Websites, die bis zum nächsten Sperren verwendet wurden. Dafür ist Nutzungszugriff erforderlich.\n\nAndroid und Hersteller stellen Entsperr- und Vordergrundereignisse unterschiedlich bereit. Sehr kurze Sitzungen oder bestimmte Systemaktivitäten können deshalb fehlen.</string>
+    <string name="screen_unlocks_info_body">Fasst Geräteentsperrungen zu Sitzungen zusammen und zeigt die bis zum nächsten Sperren verwendeten Apps und Websites. Dafür ist Nutzungszugriff erforderlich. Sehr kurze Sitzungen oder Systemaktivitäten können fehlen.</string>
     <string name="screen_unlocks_permission_needed">Nutzungszugriff wird für Entsperr-Einblicke benötigt.</string>
     <string name="screen_unlocks_empty">Keine Entsperrungen für diesen Zeitraum gefunden.</string>
     <string name="screen_unlocks_sort_filter_title">Entsperrungen sortieren &amp; filtern</string>
@@ -176,7 +176,7 @@
     <!-- ====================================================== -->
     <string name="active_time_title">Aktive Zeit</string>
     <string name="active_time_info_title">Aktive Zeit</string>
-    <string name="active_time_info_body">Zeigt, wie lange Switchly aktiv war. Die aktuelle Fokus-Session wird mitgerechnet, solange sie läuft. Werte werden beim Deaktivieren abgeschlossen und für Fortschritt/Progress gespeichert.</string>
+    <string name="active_time_info_body">Zeigt, wie lange Switchly aktiv war. Die aktuelle Fokussitzung wird mitgerechnet, solange sie läuft. Beim Deaktivieren wird die Sitzung abgeschlossen und für den Fortschritt gespeichert.</string>
     <string name="active_time_total_label">Gesamte aktive Zeit</string>
     <string name="active_time_current_session">Aktuelle Session: %1$s</string>
     <string name="active_time_average_day">Durchschnitt pro Tag: %1$s</string>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -37,9 +38,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:enabled="false"
+                android:fontFamily="monospace"
                 android:maxLines="1"
-                android:inputType="none"
-                android:fontFamily="monospace" />
+                android:inputType="none" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -81,10 +82,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:maxLines="3"
+                android:minLines="2"
                 android:inputType="textCapSentences|textMultiLine"
                 android:autofillHints="none"
-                android:importantForAutofill="yes"
-                android:minLines="2" />
+                android:importantForAutofill="yes" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
@@ -164,13 +165,13 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRewriteTag"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Switchly.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:minHeight="48dp"
-            android:text="@string/paired_tag_rewrite_action"
             android:visibility="gone"
+            android:text="@string/paired_tag_rewrite_action"
             app:icon="@drawable/nfc_24"
             app:iconGravity="textStart"
             app:iconPadding="10dp" />

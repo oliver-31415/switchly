@@ -22,6 +22,8 @@
     <string name="premium_button_buy_with_price">Premium kaufen • %1$s</string>
     <string name="premium_purchase_open_timeout">Google Play hat den Kaufbildschirm nicht geöffnet. Bitte versuche es erneut.</string>
     <string name="premium_purchase_error_generic">Google Play-Kauf konnte nicht geöffnet werden. Bitte versuche es erneut oder kontaktiere den Support.</string>
+    <string name="premium_purchase_already_opening">Der Google-Play-Kauf wird bereits geöffnet. Bitte warte einen Moment.</string>
+    <string name="premium_purchase_google_play_unavailable">Verbindung zu Google Play konnte nicht hergestellt werden. Bitte versuche es gleich noch einmal.</string>
     <string name="premium_button_opening">Google Play wird geöffnet…</string>
     <string name="premium_button_restore">Käufe wiederherstellen</string>
     <string name="premium_button_thanks">Danke für deine Unterstützung!</string>

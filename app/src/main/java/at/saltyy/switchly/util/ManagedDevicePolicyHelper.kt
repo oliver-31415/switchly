@@ -37,6 +37,15 @@ object ManagedDevicePolicyHelper {
         executor.execute { syncSelfUninstallBlockNow(appContext) }
     }
 
+    // Returns null when Switchly is not a managed owner or Android cannot report the policy.
+    fun isSelfUninstallBlocked(context: Context): Boolean? {
+        val dpm = context.getSystemService(DevicePolicyManager::class.java) ?: return null
+        val hasManagedOwnership = dpm.isDeviceOwnerApp(context.packageName) || dpm.isProfileOwnerApp(context.packageName)
+        if (!hasManagedOwnership) return null
+        val admin = ComponentName(context, DPMReceiver::class.java)
+        return runCatching { dpm.isUninstallBlocked(admin, context.packageName) }.getOrNull()
+    }
+
     private fun syncSelfUninstallBlockNow(context: Context) {
         val dpm = context.getSystemService(DevicePolicyManager::class.java) ?: return
         val admin = ComponentName(context, DPMReceiver::class.java)

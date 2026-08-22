@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/blocker_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface"
     android:padding="16dp"
+    android:background="?attr/colorSurface"
     tools:ignore="Overdraw">
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:padding="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_max="340dp">
 
         <LinearLayout
@@ -43,9 +44,9 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="4dp"
-                android:visibility="gone"
-                android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:visibility="gone"
                 android:contentDescription="@string/block_reason_info_button_desc"
                 android:src="@drawable/info_24"
                 app:tint="?attr/colorPrimary" />
@@ -72,16 +73,17 @@
             android:textColor="?attr/colorOnSurface"
             android:textSize="14sp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_close"
+            style="@style/Switchly.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:minWidth="90dp"
-            android:backgroundTint="?attr/colorPrimary"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:text="@android:string/ok"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:backgroundTint="?attr/colorPrimary" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

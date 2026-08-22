@@ -37,6 +37,7 @@ import at.saltyy.switchly.R
 import at.saltyy.switchly.data.prefs.AdvancedModeStore
 import at.saltyy.switchly.receiver.DPMReceiver
 import at.saltyy.switchly.util.AndroidSystemPackages
+import at.saltyy.switchly.util.ReleaseDiagnostics
 import com.google.android.material.appbar.MaterialToolbar
 
 class AdvancedModeActivity : TilesInfoActivity() {
@@ -169,6 +170,23 @@ class AdvancedModeActivity : TilesInfoActivity() {
         val summary = getString(R.string.advanced_mode_summary_body)
         val recommendation = getString(R.string.advanced_mode_recommendation_body)
         val statusSubtitle = detailStatus
+        val releaseDiagnostics = ReleaseDiagnostics.snapshot(this)
+        val releaseStatus = when (releaseDiagnostics.status) {
+            ReleaseDiagnostics.Status.OK -> getString(R.string.advanced_mode_release_status_ok)
+            ReleaseDiagnostics.Status.WARNING -> getString(R.string.advanced_mode_release_status_warning)
+            ReleaseDiagnostics.Status.ERROR -> getString(R.string.advanced_mode_release_status_error)
+            ReleaseDiagnostics.Status.NOT_APPLICABLE -> getString(R.string.advanced_mode_release_status_na)
+        }
+        val upgradeStatus = if (releaseDiagnostics.upgradeObserved) {
+            getString(R.string.advanced_mode_upgrade_status_observed)
+        } else {
+            getString(R.string.advanced_mode_upgrade_status_not_observed)
+        }
+        val releaseDiagnosticSummary = getString(
+            R.string.advanced_mode_release_diagnostics_summary,
+            releaseStatus,
+            upgradeStatus,
+        )
 
         return listOf(
             Tile(
@@ -180,6 +198,20 @@ class AdvancedModeActivity : TilesInfoActivity() {
                 subtitleAlpha = 1f,
                 onClick = { openAdminScreen() },
                 enableLongPressCopy = false
+            ),
+            Tile(
+                title = getString(R.string.advanced_mode_tile_release_diagnostics),
+                subtitle = releaseDiagnosticSummary,
+                sectionTitle = getString(R.string.advanced_mode_section_release_checks),
+                iconRes = R.drawable.tune_24,
+                copyValue = buildString {
+                    append("Signing status: ").append(releaseDiagnostics.status.name).append('\n')
+                    append("Signing: ").append(releaseDiagnostics.signingMessage).append('\n')
+                    append("Current SHA-1: ").append(releaseDiagnostics.currentSha1 ?: "-").append('\n')
+                    append("Signing history: ").append(releaseDiagnostics.signingHistory.joinToString(" -> ").ifBlank { "-" }).append('\n')
+                    append("Upgrade observed: ").append(releaseDiagnostics.upgradeObserved).append('\n')
+                    append("Installer: ").append(releaseDiagnostics.installerPackage ?: "-")
+                },
             ),
             Tile(
                 title = getString(R.string.advanced_mode_tile_constraints),

@@ -56,13 +56,14 @@ class QuickActionReceiver : BroadcastReceiver() {
         }
 
         fun handleFocusNow(context: Context): Boolean {
-            if (!ensureProtectionReady(context)) {
+            if (!ensureProtectionReady(context, "enable")) {
                 refreshWidgets(context)
                 return false
             }
 
             val canEnable = AutomationModeStore.isButtonEnableAllowed(context)
             if (!canEnable) {
+                AppLogStore.append(context, "Widget", "action_result action=enable result=blocked reason=control_mode")
                 Toast.makeText(context, context.getString(R.string.mode_blocked_tile_action), Toast.LENGTH_SHORT).show()
                 refreshWidgets(context)
                 return false
@@ -72,6 +73,7 @@ class QuickActionReceiver : BroadcastReceiver() {
             val tempEnableRemaining = SwitchModeStore.getTemporaryEnableRemainingMillis(context)
             val currentlyEnabled = SwitchModeStore.isEnabled(context)
             if (currentlyEnabled && tempDisableRemaining <= 0L && tempEnableRemaining <= 0L) {
+                AppLogStore.append(context, "Widget", "action_result action=enable result=noop reason=already_enabled")
                 Toast.makeText(context, context.getString(R.string.widget_focus_already_active), Toast.LENGTH_SHORT).show()
                 refreshWidgets(context)
                 return false
@@ -80,26 +82,30 @@ class QuickActionReceiver : BroadcastReceiver() {
             SwitchModeStore.setEnabled(context, true)
             AppLogStore.append(context, "Profiles", "Manual toggle action=enable profile=${ProfileStore.getCurrent(context)}")
             BlockingRuntime.ensureRunning(context)
+            AppLogStore.append(context, "Widget", "action_result action=enable result=changed reason=applied")
             Toast.makeText(context, context.getString(R.string.widget_focus_now_applied), Toast.LENGTH_SHORT).show()
             refreshWidgets(context)
             return true
         }
 
         fun handlePauseSwitchly(context: Context, minutes: Int): Boolean {
-            if (!ensureProtectionReady(context)) {
+            if (!ensureProtectionReady(context, "temp_disable")) {
                 refreshWidgets(context)
                 return false
             }
 
             val baseEnabled = SwitchModeStore.isBaseEnabled(context)
             val tempDisableRemaining = SwitchModeStore.getTemporaryRemainingMillis(context)
-            if (!baseEnabled && tempDisableRemaining <= 0L) {
+            val tempEnableActive = SwitchModeStore.hasActiveTemporaryEnable(context)
+            if (!baseEnabled && !tempEnableActive && tempDisableRemaining <= 0L) {
+                AppLogStore.append(context, "Widget", "action_result action=temp_disable result=noop reason=already_disabled")
                 Toast.makeText(context, context.getString(R.string.widget_pause_already_disabled), Toast.LENGTH_SHORT).show()
                 refreshWidgets(context)
                 return false
             }
 
             if (!AutomationModeStore.isTileAllowed(context)) {
+                AppLogStore.append(context, "Widget", "action_result action=temp_disable result=blocked reason=control_mode")
                 Toast.makeText(context, context.getString(R.string.mode_blocked_tile_action), Toast.LENGTH_SHORT).show()
                 refreshWidgets(context)
                 return false
@@ -108,6 +114,7 @@ class QuickActionReceiver : BroadcastReceiver() {
             val requireNfc = SwitchModeStore.isNfcRequiredForDisable(context)
             val emergencyActive = EmergencyBypassStore.isActive(context)
             if (requireNfc && !emergencyActive) {
+                AppLogStore.append(context, "Widget", "action_result action=temp_disable result=blocked reason=nfc_required")
                 Toast.makeText(context, context.getString(R.string.toast_disable_requires_nfc), Toast.LENGTH_SHORT).show()
                 refreshWidgets(context)
                 return false
@@ -116,6 +123,7 @@ class QuickActionReceiver : BroadcastReceiver() {
             SwitchModeStore.setTemporarilyDisabled(context, minutes * 60_000L)
             AppLogStore.append(context, "Profiles", "Manual toggle action=temp_disable profile=${ProfileStore.getCurrent(context)} duration=${minutes * 60_000L}ms")
             BlockingRuntime.ensureRunning(context)
+            AppLogStore.append(context, "Widget", "action_result action=temp_disable result=changed reason=applied durationMin=$minutes")
             Toast.makeText(
                 context,
                 context.resources.getQuantityString(R.plurals.widget_pause_applied_fmt, minutes, minutes),
@@ -125,11 +133,12 @@ class QuickActionReceiver : BroadcastReceiver() {
             return true
         }
 
-        private fun ensureProtectionReady(context: Context): Boolean {
+        private fun ensureProtectionReady(context: Context, action: String): Boolean {
             if (BlockingRuntime.isAccessibilityActive(context)) {
                 return true
             }
 
+            AppLogStore.append(context, "Widget", "action_result action=$action result=blocked reason=permission_missing")
             Toast.makeText(context, context.getString(R.string.widget_action_requires_permissions), Toast.LENGTH_SHORT).show()
             runCatching {
                 context.startActivity(

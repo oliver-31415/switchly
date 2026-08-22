@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:clipToPadding="false"
-    android:fillViewport="true"
     android:paddingTop="8dp"
-    android:paddingBottom="12dp">
+    android:paddingBottom="12dp"
+    android:clipToPadding="false"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -76,8 +77,8 @@
                 style="@style/TextAppearance.MaterialComponents.Body2"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:layout_weight="1"
                 android:visibility="gone"
                 android:text="@string/schedules_dialog_nfc_lock_hint" />
         </LinearLayout>
@@ -152,9 +153,9 @@
                 android:layout_height="wrap_content"
                 android:minHeight="64dp"
                 android:gravity="center_vertical"
+                android:minLines="2"
                 android:inputType="textCapSentences|textMultiLine"
-                android:autofillHints="none"
-                android:minLines="2" />
+                android:autofillHints="none" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Time group (only for time schedules + not date-range) -->
@@ -194,7 +195,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/textStartTime"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="64dp"
                     android:minWidth="0dp"
@@ -209,7 +210,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/textEndTime"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="64dp"
                     android:layout_marginTop="10dp"
@@ -258,7 +259,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnScanWifi"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Switchly.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/schedules_wifi_pick_action"
@@ -298,7 +299,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnUseConnectedBt"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Switchly.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -312,7 +313,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPickPairedBt"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Switchly.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -383,7 +384,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnUseCurrentLocation"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Switchly.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/schedules_location_choose"
@@ -474,9 +475,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:clipToPadding="false"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
+                android:clipToPadding="false"
                 android:overScrollMode="never"
                 android:scrollbars="none">
 
@@ -486,8 +487,8 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="0dp"
                     android:paddingEnd="0dp"
-                    app:singleLine="true"
-                    app:chipSpacingHorizontal="4dp">
+                    app:chipSpacingHorizontal="4dp"
+                    app:singleLine="true">
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipMon"
@@ -561,9 +562,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:clipToPadding="false"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
+                android:clipToPadding="false"
                 android:overScrollMode="never"
                 android:scrollbars="none">
 
@@ -572,8 +573,8 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="2dp"
                     android:paddingEnd="2dp"
-                    app:singleLine="true"
-                    app:chipSpacingHorizontal="4dp">
+                    app:chipSpacingHorizontal="4dp"
+                    app:singleLine="true">
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipWeekdays"
@@ -624,7 +625,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/textStartDate"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="64dp"
                     android:minWidth="0dp"
@@ -639,7 +640,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/textEndDate"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="64dp"
                     android:layout_marginTop="10dp"

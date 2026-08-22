@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -22,11 +23,11 @@
             android:id="@+id/etProfile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:singleLine="true"
             android:maxLines="1"
             android:inputType="textCapWords|textPersonName"
             android:imeOptions="actionNext"
-            android:maxLength="24" />
+            android:maxLength="24"
+            android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -47,9 +48,9 @@
             android:minHeight="112dp"
             android:gravity="top|start"
             android:maxLines="4"
+            android:minLines="3"
             android:inputType="textCapSentences|textMultiLine"
             android:imeOptions="actionDone"
-            android:maxLength="120"
-            android:minLines="3" />
+            android:maxLength="120" />
     </com.google.android.material.textfield.TextInputLayout>
 </LinearLayout>

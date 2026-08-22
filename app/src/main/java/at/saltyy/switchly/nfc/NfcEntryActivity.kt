@@ -51,6 +51,7 @@ import at.saltyy.switchly.data.prefs.NfcTempDisableLimiterStore
 import at.saltyy.switchly.data.prefs.NfcUidPairingStore
 import at.saltyy.switchly.data.prefs.QrTempActionLimiterStore
 import at.saltyy.switchly.data.prefs.ScanCodeStore
+import at.saltyy.switchly.data.prefs.ScanActionHistoryStore
 import at.saltyy.switchly.data.prefs.ProfileStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.data.prefs.TempEnableCountStore
@@ -59,6 +60,7 @@ import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
+import at.saltyy.switchly.util.ScanFeedback
 import java.util.Locale
 
 /**
@@ -89,6 +91,15 @@ class NfcEntryActivity : Activity() {
         // If an NFC tag parcelable exists, this came from NFC.
         // QR scanner routes here via deep-link without EXTRA_TAG.
         val fromNfc = tag != null
+
+        // A foreground NFC writer owns NFC while its waiting screen is alive.
+        // If Android delivers a manifest-dispatch intent during the tiny resume/reader-mode handoff window, swallow it here instead of treating the tag as a normal Switchly action and showing "not linked".
+        if (fromNfc && NfcWriteWaitingActivity.isWriteSessionActive()) {
+            AppLogStore.append(this, "NFC", "Ignored normal NFC dispatch while writer session is active")
+            finish()
+            return
+        }
+
         val rawScanSource = intent?.getStringExtra(QrScanActivity.EXTRA_SCAN_SOURCE)
         val trustedScanSource = if (!fromNfc && isTrustedInternalScanDispatch(intent, rawScanSource)) {
             rawScanSource
@@ -131,17 +142,17 @@ class NfcEntryActivity : Activity() {
         // Respect user-selected control mode.
         if (fromNfc && !AutomationModeStore.isNfcAllowed(this)) {
             NfcDiagnosticsStore.recordFailure(this, "nfc_channel_disabled")
-            toast(getString(R.string.mode_blocked_nfc_action))
+            ScanFeedback.error(this, "NFC", "control_mode_blocked", getString(R.string.mode_blocked_nfc_action))
             finish()
             return
         }
         if (fromBarcode && !AutomationModeStore.isBarcodeAllowed(this)) {
-            toast(getString(R.string.mode_blocked_barcode_action))
+            ScanFeedback.error(this, "Barcode", "control_mode_blocked", getString(R.string.mode_blocked_barcode_action))
             finish()
             return
         }
         if (fromQr && !AutomationModeStore.isQrAllowed(this)) {
-            toast(getString(R.string.mode_blocked_qr_action))
+            ScanFeedback.error(this, "QR", "control_mode_blocked", getString(R.string.mode_blocked_qr_action))
             finish()
             return
         }
@@ -187,18 +198,26 @@ class NfcEntryActivity : Activity() {
                     else -> "no_switchly_action_uid_action_disabled"
                 }
                 NfcDiagnosticsStore.recordFailure(this, reason)
-
-                // Ignore unrelated/unknown NFC tags by default.
+                ScanFeedback.error(this, "NFC", "not_linked", getString(R.string.scan_error_nfc_not_linked))
                 finish()
                 return
             }
 
-            toast(
-                getString(
-                    R.string.nfc_action_error_fmt,
-                    getString(R.string.nfc_error_invalid_or_missing_uri)
-                )
-            )
+            val source = if (fromBarcode) "Barcode" else "QR"
+            val incomingUri = intent?.data
+            val incomingSwitchlyUri = incomingUri?.scheme?.equals("switchly", ignoreCase = true) == true
+            val reason = when {
+                incomingSwitchlyUri -> "unsupported_action"
+                incomingUri != null -> "invalid_payload"
+                else -> "not_linked"
+            }
+            val message = when {
+                incomingSwitchlyUri -> getString(R.string.scan_error_unsupported_action)
+                incomingUri != null -> getString(R.string.scan_error_invalid_payload)
+                fromBarcode -> getString(R.string.scan_error_barcode_not_linked)
+                else -> getString(R.string.scan_error_qr_not_linked)
+            }
+            ScanFeedback.error(this, source, reason, message)
             finish()
             return
         }
@@ -389,6 +408,15 @@ class NfcEntryActivity : Activity() {
 
         when {
             action in listOf("start", "enable", "on", "activate") -> {
+                if (SwitchModeStore.isEnabled(this)) {
+                    ScanFeedback.noop(
+                        this,
+                        sourceLogTag,
+                        "already_enabled",
+                        getString(R.string.nfc_feedback_already_started, getString(R.string.app_name)),
+                    )
+                    return true
+                }
                 SwitchModeStore.setEnabled(this, true)
                 BlockingRuntime.ensureRunning(this)
                 appendScanActionApplied(sourceLogTag, "enable")
@@ -397,7 +425,12 @@ class NfcEntryActivity : Activity() {
 
             action in listOf("stop", "disable", "off") -> {
                 if (!SwitchModeStore.isEnabled(this)) {
-                    toast(getString(R.string.nfc_feedback_already_stopped, getString(R.string.app_name)))
+                    ScanFeedback.noop(
+                        this,
+                        sourceLogTag,
+                        "already_disabled",
+                        getString(R.string.nfc_feedback_already_stopped, getString(R.string.app_name)),
+                    )
                     return true
                 }
                 if (!consumeScanUnlockQuotaIfNeeded(tag, fromNfc, fromBarcode, rawActionUri)) {
@@ -491,8 +524,12 @@ class NfcEntryActivity : Activity() {
                 if (fromNfc) {
                     NfcDiagnosticsStore.recordFailure(this, "unknown_action")
                 }
-                AppLogStore.append(this, scanSourceLogTag(fromNfc, fromBarcode), "Action failed reason=unknown_action")
-                toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
+                ScanFeedback.error(
+                    this,
+                    scanSourceLogTag(fromNfc, fromBarcode),
+                    "unsupported_action",
+                    getString(R.string.scan_error_unsupported_action),
+                )
             }
         }
         return true
@@ -513,8 +550,12 @@ class NfcEntryActivity : Activity() {
             if (fromNfc) {
                 NfcDiagnosticsStore.recordFailure(this, "missing_profile")
             }
-            AppLogStore.append(this, sourceLogTag, "Action failed reason=missing_profile")
-            toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_missing_profile)))
+            ScanFeedback.error(
+                this,
+                sourceLogTag,
+                "profile_missing",
+                getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_missing_profile)),
+            )
             return true
         }
 
@@ -523,8 +564,12 @@ class NfcEntryActivity : Activity() {
             if (fromNfc) {
                 NfcDiagnosticsStore.recordFailure(this, "unknown_profile")
             }
-            AppLogStore.append(this, sourceLogTag, "Action failed reason=unknown_profile")
-            toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_profile_fmt, profile)))
+            ScanFeedback.error(
+                this,
+                sourceLogTag,
+                "profile_not_found",
+                getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_profile_fmt, profile)),
+            )
             return true
         }
 
@@ -532,6 +577,15 @@ class NfcEntryActivity : Activity() {
 
         when {
             action in listOf("start", "enable", "on", "activate") -> {
+                if (SwitchModeStore.isEnabled(this) && ProfileStore.getCurrent(this) == profile) {
+                    ScanFeedback.noop(
+                        this,
+                        sourceLogTag,
+                        "already_enabled",
+                        getString(R.string.nfc_feedback_already_started, profile),
+                    )
+                    return true
+                }
                 ProfileStore.setCurrent(this, profile)
                 SwitchModeStore.setEnabled(this, true)
                 BlockingRuntime.ensureRunning(this)
@@ -551,7 +605,12 @@ class NfcEntryActivity : Activity() {
                     appendScanActionApplied(sourceLogTag, action, profile)
                     toast(getString(R.string.nfc_feedback_stopped, profile))
                 } else {
-                    toast(getString(R.string.nfc_error_profile_not_active_nothing_to_disable_fmt, profile))
+                    ScanFeedback.noop(
+                        this,
+                        sourceLogTag,
+                        "profile_not_active",
+                        getString(R.string.nfc_error_profile_not_active_nothing_to_disable_fmt, profile),
+                    )
                 }
             }
 
@@ -648,7 +707,12 @@ class NfcEntryActivity : Activity() {
                     appendScanActionApplied(sourceLogTag, "temp_disable", profile, durationMs = durationMs)
                     toast(getString(R.string.nfc_feedback_stopped, profile))
                 } else {
-                    toast(getString(R.string.nfc_error_profile_not_active_nothing_to_disable_fmt, profile))
+                    ScanFeedback.noop(
+                        this,
+                        sourceLogTag,
+                        "profile_not_active",
+                        getString(R.string.nfc_error_profile_not_active_nothing_to_disable_fmt, profile),
+                    )
                 }
             }
 
@@ -664,7 +728,12 @@ class NfcEntryActivity : Activity() {
                     appendScanActionApplied(sourceLogTag, "temp_disable", profile, durationMs = durationMs, request = action)
                     toast(getString(R.string.nfc_feedback_stopped, profile))
                 } else {
-                    toast(getString(R.string.nfc_error_profile_not_active_nothing_to_disable_fmt, profile))
+                    ScanFeedback.noop(
+                        this,
+                        sourceLogTag,
+                        "profile_not_active",
+                        getString(R.string.nfc_error_profile_not_active_nothing_to_disable_fmt, profile),
+                    )
                 }
             }
 
@@ -673,7 +742,12 @@ class NfcEntryActivity : Activity() {
                 toast(getString(R.string.nfc_action_emergency_tag_removed))
             }
 
-            else -> toast(getString(R.string.nfc_action_error_fmt, getString(R.string.nfc_error_unknown_action)))
+            else -> ScanFeedback.error(
+                this,
+                sourceLogTag,
+                "unsupported_action",
+                getString(R.string.scan_error_unsupported_action),
+            )
         }
         return true
     }
@@ -817,6 +891,16 @@ class NfcEntryActivity : Activity() {
         durationMs?.let { parts += "duration=${it}ms" }
         if (!request.isNullOrBlank()) parts += "request=$request"
         AppLogStore.append(this, sourceLogTag, parts.joinToString(" "))
+        ScanActionHistoryStore.Source.fromLogTag(sourceLogTag)?.let { source ->
+            ScanActionHistoryStore.record(
+                context = this,
+                source = source,
+                action = action,
+                profile = profile,
+                durationMs = durationMs,
+                resultingEnabled = SwitchModeStore.isEnabled(this),
+            )
+        }
     }
 
     private fun scanSourceLogTag(fromNfc: Boolean, fromBarcode: Boolean): String {
@@ -852,7 +936,7 @@ class NfcEntryActivity : Activity() {
         val managedLimitError = managedEntry?.let { ScanCodeStore.checkLimits(this, it) }
         if (managedLimitError != null) {
             AppLogStore.append(this, sourceLogTag, "Unlock limit blocked type=managed reason=$managedLimitError")
-            toast(managedLimitError)
+            ScanFeedback.error(this, sourceLogTag, "limit_reached", managedLimitError)
             return false
         }
 
@@ -871,7 +955,12 @@ class NfcEntryActivity : Activity() {
                     sourceLogTag,
                     "Unlock limit blocked type=qr_temp reason=cooldown remainingMin=${qrLimitResult.minutesRemaining}",
                 )
-                toast(getString(R.string.qr_temp_limiter_cooldown, qrLimitResult.minutesRemaining))
+                ScanFeedback.error(
+                    this,
+                    sourceLogTag,
+                    "cooldown_active",
+                    getString(R.string.qr_temp_limiter_cooldown, qrLimitResult.minutesRemaining),
+                )
                 return false
             }
 
@@ -881,12 +970,15 @@ class NfcEntryActivity : Activity() {
                     sourceLogTag,
                     "Unlock limit blocked type=qr_temp reason=daily used=${qrLimitResult.usedToday} limit=${qrLimitResult.limit}",
                 )
-                toast(
+                ScanFeedback.error(
+                    this,
+                    sourceLogTag,
+                    "daily_limit_reached",
                     resources.getQuantityString(
                         R.plurals.qr_temp_limiter_daily_limit,
                         qrLimitResult.limit,
                         qrLimitResult.limit,
-                    )
+                    ),
                 )
                 return false
             }
@@ -957,7 +1049,12 @@ class NfcEntryActivity : Activity() {
                     "NFC",
                     "Unlock limit blocked uid=$bucket reason=cooldown remainingMin=${result.minutesRemaining}",
                 )
-                toast(getString(R.string.nfc_temp_disable_limiter_cooldown, result.minutesRemaining))
+                ScanFeedback.error(
+                    this,
+                    "NFC",
+                    "cooldown_active",
+                    getString(R.string.nfc_temp_disable_limiter_cooldown, result.minutesRemaining),
+                )
                 false
             }
 
@@ -967,7 +1064,12 @@ class NfcEntryActivity : Activity() {
                     "NFC",
                     "Unlock limit blocked uid=$bucket reason=daily used=${result.usedToday} limit=${result.limit}",
                 )
-                toast(resources.getQuantityString(R.plurals.nfc_temp_disable_limiter_daily_limit, result.limit, result.limit))
+                ScanFeedback.error(
+                    this,
+                    "NFC",
+                    "daily_limit_reached",
+                    resources.getQuantityString(R.plurals.nfc_temp_disable_limiter_daily_limit, result.limit, result.limit),
+                )
                 false
             }
         }

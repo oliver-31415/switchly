@@ -54,6 +54,7 @@ import at.saltyy.switchly.ui.updateSelectionSubtitle
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDestructivePositiveButton
 import at.saltyy.switchly.ui.dialog.showDestructiveAccented
+import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.EditingLockGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButtonToggleGroup
@@ -147,9 +148,29 @@ class ManageBlockedWebsitesActivity : AppCompatActivity() {
                 WebsiteRuleModeStore.MODE_BLOCK_SELECTED
             }
             if (mode == WebsiteRuleModeStore.getMode(this, currentProfile())) return@addOnButtonCheckedListener
-            WebsiteRuleModeStore.setMode(this, currentProfile(), mode)
-            syncRuleModeUi()
-            refreshList()
+            fun applyMode() {
+                WebsiteRuleModeStore.setMode(this, currentProfile(), mode)
+                syncRuleModeUi()
+                refreshList()
+            }
+            if (mode == WebsiteRuleModeStore.MODE_ALLOW_SELECTED) {
+                toggleGroup.check(R.id.btnWebsiteModeBlock)
+                val allowedCount = DomainBlockStore.getAllowedDomainsForProfile(this, currentProfile()).size
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.website_allow_mode_preview_title)
+                    .setMessage(
+                        resources.getQuantityString(
+                            R.plurals.website_allow_mode_preview_body,
+                            allowedCount,
+                            allowedCount,
+                        )
+                    )
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.website_allow_mode_preview_action) { _, _ -> applyMode() }
+                    .showAccented()
+            } else {
+                applyMode()
+            }
         }
         applyWebsiteRuleModeButtonStyle()
     }

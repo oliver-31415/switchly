@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -24,8 +25,8 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="12dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
@@ -41,10 +42,10 @@
                 android:id="@+id/tvSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:alpha="0.7"
                 android:text="@string/dashboard_temp_sheet_sub_disable"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="13sp"
-                android:alpha="0.7" />
+                android:textSize="13sp" />
 
             <!-- Remaining time (only visible if a temporary timer is currently active) -->
             <TextView
@@ -66,9 +67,9 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
         android:layout_marginTop="12dp"
+        android:alpha="0.7"
         android:text="@string/nfc_temp_hint_timer_behavior"
-        android:textSize="12sp"
-        android:alpha="0.7" />
+        android:textSize="12sp" />
 
     <!-- Options injected from code -->
     <LinearLayout
@@ -80,7 +81,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnClose"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Switchly.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"

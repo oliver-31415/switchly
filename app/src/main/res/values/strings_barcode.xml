@@ -6,9 +6,6 @@
     <!-- ====================================================== -->
     <string name="barcode_scan_title">Scan barcode</string>
     <string name="barcode_scan_option_summary">Open the camera and scan a saved barcode action.</string>
-    <string name="permission_barcode_camera_required">Camera permission is required to scan barcodes.</string>
-    <string name="invalid_barcode">Unknown barcode</string>
-    <string name="barcode_camera_unavailable">No camera is available for barcode scanning on this device.</string>
 
     <!-- ====================================================== -->
     <!-- Barcode management -->

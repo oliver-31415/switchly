@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widgetHubRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center_vertical"
-    android:background="@color/widget_scanner_surface"
     android:padding="10dp"
+    android:background="@color/widget_scanner_surface"
     tools:ignore="NestedWeights">
 
     <TextView
@@ -24,8 +25,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
         android:layout_marginTop="8dp"
+        android:layout_weight="1"
         android:orientation="vertical"
         android:baselineAligned="false"
         android:weightSum="2">
@@ -33,8 +34,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
             android:layout_marginBottom="6dp"
+            android:layout_weight="1"
             android:orientation="horizontal"
             android:baselineAligned="false"
             android:weightSum="2">
@@ -43,14 +44,14 @@
                 android:id="@+id/widgetOpenApp"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
                 android:layout_marginEnd="6dp"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
+                android:padding="6dp"
                 android:background="@color/widget_scanner_button_surface"
-                android:padding="6dp">
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/widgetOpenAppIcon"
@@ -77,10 +78,10 @@
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
+                android:padding="6dp"
                 android:background="@color/widget_scanner_button_surface"
-                android:padding="6dp">
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/widgetOpenQrIcon"
@@ -113,14 +114,14 @@
                 android:id="@+id/widgetOpenBarcode"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
                 android:layout_marginEnd="6dp"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
+                android:padding="6dp"
                 android:background="@color/widget_scanner_button_surface"
-                android:padding="6dp">
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/widgetOpenBarcodeIcon"
@@ -147,10 +148,10 @@
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
+                android:padding="6dp"
                 android:background="@color/widget_scanner_button_surface"
-                android:padding="6dp">
+                android:clickable="true"
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/widgetOpenFocusNowIcon"
@@ -179,22 +180,22 @@
         android:layout_marginTop="6dp"
         android:orientation="horizontal"
         android:gravity="center"
-        android:visibility="gone"
         android:baselineAligned="false"
+        android:visibility="gone"
         android:weightSum="2">
 
         <LinearLayout
             android:id="@+id/widgetOpenNfcWrite"
             android:layout_width="0dp"
             android:layout_height="42dp"
-            android:layout_weight="1"
             android:layout_marginEnd="6dp"
+            android:layout_weight="1"
             android:orientation="horizontal"
             android:gravity="center"
-            android:clickable="true"
-            android:focusable="true"
+            android:padding="6dp"
             android:background="@color/widget_scanner_button_surface"
-            android:padding="6dp">
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
                 android:id="@+id/widgetOpenNfcWriteIcon"
@@ -221,10 +222,10 @@
             android:layout_weight="1"
             android:orientation="horizontal"
             android:gravity="center"
-            android:clickable="true"
-            android:focusable="true"
+            android:padding="6dp"
             android:background="@color/widget_scanner_button_surface"
-            android:padding="6dp">
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
                 android:id="@+id/widgetOpenBlockedNotificationsIcon"

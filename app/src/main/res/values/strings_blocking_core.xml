@@ -21,7 +21,6 @@
     <!-- Automatic blocking -->
     <!-- ====================================================== -->
     <string name="app_picker_auto_block_new_apps_title">Automatically block newly installed apps</string>
-    <string name="app_picker_auto_block_new_apps_info_title">Automatically block newly installed apps</string>
-    <string name="app_picker_auto_block_new_apps_info_body">When enabled, newly installed launchable apps are added to this profile automatically. Protected and safety-sensitive apps are skipped and must be confirmed individually.\n\nSelect all also turns this on for future installs.</string>
+    <string name="app_picker_auto_block_new_apps_summary">Newly installed launchable apps are added to this profile automatically. Safety-sensitive apps are skipped.</string>
 
 </resources>

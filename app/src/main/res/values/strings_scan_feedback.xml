@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scan_error_nfc_not_linked">This NFC tag is not linked to a Switchly action.</string>
+    <string name="scan_error_qr_not_linked">This QR code is not linked to a Switchly action.</string>
+    <string name="scan_error_barcode_not_linked">This barcode is not linked to a Switchly action.</string>
+    <string name="scan_error_camera_permission_qr">Camera permission is required to scan QR codes. Enable it in Permissions and try again.</string>
+    <string name="scan_error_camera_permission_barcode">Camera permission is required to scan barcodes. Enable it in Permissions and try again.</string>
+    <string name="scan_error_camera_unavailable">No usable camera is available for scanning.</string>
+    <string name="scan_error_invalid_payload">The scanned code does not contain a valid Switchly action.</string>
+    <string name="scan_error_unsupported_action">This Switchly action is not supported by this version.</string>
+</resources>

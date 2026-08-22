@@ -76,12 +76,12 @@
     <string name="schedules_wifi_enter_manually">Manuell eingeben</string>
     <string name="schedules_wifi_pick_action">WLAN auswählen</string>
     <string name="schedules_health_info_title">Zeitplan-Status</string>
-    <string name="schedules_health_info_body">Dieses Banner zeigt häufige Gründe, warum Zeitpläne unzuverlässig auslösen können (Akku-Optimierung, exakte Alarme, erforderliche Berechtigungen und Status des Accessibility-Dienstes).</string>
+    <string name="schedules_health_info_body">Dieses Banner bleibt Zeitplan-Konflikten oder Automationszuständen vorbehalten, die Aufmerksamkeit brauchen. Fehlende Trigger-Berechtigungen werden direkt in der Zeitplan-Info und im Setup-Status angezeigt.</string>
     <string name="schedules_health_action_title">Empfohlene Aktion</string>
     <string name="schedules_health_action_permissions">Berechtigungen beheben</string>
     <string name="schedules_health_action_toggle_options">Umschaltoptionen öffnen</string>
     <string name="schedules_health_last_exec_never">nie</string>
-    <string name="schedules_health_generic_issue">Es sind noch nicht alle Zeitplan-Berechtigungen oder Voraussetzungen korrekt gesetzt.</string>
+    <string name="schedules_health_generic_issue">Eine Zeitplan-Voraussetzung benötigt Aufmerksamkeit.</string>
     <string name="schedules_health_last_exec_compact">Letzte Zeitplan-Ausführung: %1$s</string>
     <string name="schedules_insights_title">Zeitplan-Übersicht</string>
     <string name="schedules_insights_overlap_title">Zeitplan-Überschneidung</string>
@@ -104,10 +104,6 @@
     <string name="schedules_disabled_footer_mode">Aktueller Steuerungsmodus: %1$s</string>
     <string name="schedules_disabled_footer_mixed_off">Aktueller Steuerungsmodus: %1$s - Zeitplan-Kanal: aus</string>
     <string name="schedules_disabled_action_open_controls">Schutzsteuerung öffnen</string>
-    <string name="schedules_locked_title">Zeitpläne sind gesperrt, solange Switchly aktiv ist</string>
-    <string name="schedules_locked_body">Zeitpläne laufen weiterhin normal, aber Hinzufügen, Bearbeiten, Löschen und Umschalten sind gesperrt, bis du Switchly deaktivierst.</string>
-    <string name="schedules_locked_footer">Aktueller Steuerungsmodus: %1$s - Zeitplan-Bearbeitung: gesperrt</string>
-    <string name="schedules_locked_action_open_controls">Schutzsteuerung öffnen</string>
     <string name="schedules_subtitle_fmt">%1$s - %2$s</string>
     <string name="schedules_label_value_fmt">%1$s: %2$s</string>
     <string name="schedules_label_value_multiline_fmt">%1$s\n%2$s</string>
@@ -210,4 +206,57 @@
     <string name="schedules_error_location_required">Bitte wähle zuerst einen Standort aus.</string>
 
     <string name="schedules_priority_info_body">Priorität bei Überschneidungen:\n1. Manuelle/NFC-Übersteuerung\n2. Notfall-Entsperrung\n3. Temporäre Aktionen\n4. Standort-Zeitpläne\n5. WLAN-/Bluetooth-Zeitpläne\n6. Zeit-Zeitpläne\n\nWenn mehrere Zeitpläne passen, protokolliert Switchly den Konflikt und wendet den Gewinner an, statt ihn still zu verstecken.</string>
+
+    <!-- ====================================================== -->
+    <!-- Schedule test                                         -->
+    <!-- ====================================================== -->
+
+    <!-- Entry point / dialog -->
+    <string name="schedules_test_title">Zeitplan prüfen</string>
+
+    <!-- Dialog fields -->
+    <string name="schedules_test_field_schedule">Zeitplan</string>
+    <string name="schedules_test_field_condition">Bedingung</string>
+    <string name="schedules_test_field_permissions">Berechtigungen</string>
+    <string name="schedules_test_field_detected">Aktuell erkannt</string>
+    <string name="schedules_test_field_action">Aktion</string>
+    <string name="schedules_test_field_result">Ergebnis</string>
+
+    <!-- Field values -->
+    <string name="schedules_test_value_enabled">Aktiviert</string>
+    <string name="schedules_test_value_disabled">Deaktiviert</string>
+    <string name="schedules_test_value_condition_met">Erfüllt</string>
+    <string name="schedules_test_value_condition_not_met">Nicht erfüllt</string>
+    <string name="schedules_test_value_permissions_ready">Bereit</string>
+    <string name="schedules_test_value_permission_missing_fmt">Fehlt: %1$s</string>
+
+    <!-- Detected state -->
+    <string name="schedules_test_status_time_fmt">Zeit %1$s</string>
+    <string name="schedules_test_status_wifi_fmt">WLAN „%1$s“</string>
+    <string name="schedules_test_status_wifi_none">WLAN nicht verbunden / SSID nicht verfügbar</string>
+    <string name="schedules_test_status_bt_fmt">Bluetooth %1$s</string>
+    <string name="schedules_test_status_bt_none">kein passendes Bluetooth-Gerät verbunden</string>
+    <string name="schedules_test_status_location_inside_fmt">im Bereich · %1$d m vom Mittelpunkt</string>
+    <string name="schedules_test_status_location_outside_fmt">außerhalb · %1$d m vom Mittelpunkt</string>
+    <string name="schedules_test_status_location_unknown">aktueller Standort nicht verfügbar</string>
+
+    <!-- Permission names -->
+    <string name="schedules_test_permission_wifi">WLAN / Standort</string>
+    <string name="schedules_test_permission_bluetooth">Bluetooth</string>
+    <string name="schedules_test_permission_location">Standort</string>
+    <string name="schedules_test_permission_accessibility">Bedienungshilfe</string>
+
+    <!-- Result messages -->
+    <string name="schedules_test_result_would_change">würde den Schutzstatus ändern</string>
+    <string name="schedules_test_result_profile_change">würde das aktive Profil wechseln</string>
+    <string name="schedules_test_result_already_enabled">keine Änderung — bereits aktiviert</string>
+    <string name="schedules_test_result_already_disabled">keine Änderung — bereits deaktiviert</string>
+    <string name="schedules_test_result_waiting">wartet auf die Bedingung</string>
+    <string name="schedules_test_result_schedule_disabled">Zeitplan ist deaktiviert</string>
+    <string name="schedules_test_result_permission_missing">erforderliche Berechtigung fehlt</string>
+    <string name="schedules_test_result_control_mode">durch den aktuellen Kontrollmodus blockiert</string>
+    <string name="schedules_test_result_nfc_lock">Deaktivieren wäre blockiert, weil NFC erforderlich ist</string>
+    <string name="schedules_test_result_emergency">während des Notfallmodus blockiert</string>
+    <string name="schedules_test_result_temp_override">würde den Basiszustand des Zeitplans aktualisieren; die temporäre Aktion bleibt aktiv</string>
+
 </resources>

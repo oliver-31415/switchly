@@ -21,11 +21,15 @@ package at.saltyy.switchly.feature.settings
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.text.InputType
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -42,10 +46,13 @@ import at.saltyy.switchly.data.prefs.EmergencyPinStore
 import at.saltyy.switchly.data.prefs.SwitchModeStore
 import at.saltyy.switchly.feature.about.AdvancedModeActivity
 import at.saltyy.switchly.feature.premium.PremiumInfoActivity
+import at.saltyy.switchly.feature.qr.QrGenerateActivity
+import at.saltyy.switchly.feature.schedule.SchedulesActivity
 import at.saltyy.switchly.feature.tools.RulesHubActivity
 import at.saltyy.switchly.feature.tools.ManageKeysActivity
 import at.saltyy.switchly.feature.tools.ActivityHubActivity
 import at.saltyy.switchly.feature.usage.IgnoredUsageAppsActivity
+import at.saltyy.switchly.nfc.NfcWriterActivity
 import at.saltyy.switchly.theme.AccentColor
 import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.LockedUi
@@ -60,6 +67,8 @@ import at.saltyy.switchly.util.ActivityTransitionCompat
 import at.saltyy.switchly.util.SwitchlyAppAccessGuard
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -99,6 +108,268 @@ class SettingsActivity : AppCompatActivity() {
         } else {
             false
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_settings, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_find_setting -> {
+                showSettingsFinder()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showSettingsFinder() {
+        data class SettingsSearchItem(
+            val title: String,
+            val searchableText: String,
+            val open: () -> Unit,
+        ) {
+            override fun toString(): String = title
+        }
+
+        val items = mutableListOf<SettingsSearchItem>()
+
+        fun add(titleRes: Int, extraTerms: String = "", open: () -> Unit) {
+            val title = getString(titleRes)
+            items += SettingsSearchItem(
+                title = title,
+                searchableText = "$title $extraTerms".trim(),
+                open = open,
+            )
+        }
+
+        fun addText(title: String, extraTerms: String = "", open: () -> Unit) {
+            if (title.isBlank()) return
+            items += SettingsSearchItem(
+                title = title,
+                searchableText = "$title $extraTerms".trim(),
+                open = open,
+            )
+        }
+
+        fun openRootCard(cardId: Int) {
+            showRootSettings()
+            findViewById<View>(cardId)?.performClick()
+        }
+
+        fun openProtectedActivity(intent: Intent) {
+            openProtectedSettingsSection { startActivity(intent) }
+        }
+
+        fun openToggleSection(section: String, displayTarget: String? = null) {
+            openProtectedActivity(Intent(this, ToggleOptionsActivity::class.java).apply {
+                putExtra(ToggleOptionsActivity.EXTRA_VIEW_SECTION, section)
+                if (!displayTarget.isNullOrBlank()) {
+                    putExtra(ToggleOptionsActivity.EXTRA_DISPLAY_TARGET, displayTarget)
+                }
+            })
+        }
+
+        fun openPermissionSection(section: String, target: String? = null) {
+            openProtectedActivity(Intent(this, PermissionsActivity::class.java).apply {
+                putExtra(PermissionsActivity.EXTRA_FOCUS_SECTION, section)
+                if (!target.isNullOrBlank()) {
+                    putExtra(PermissionsActivity.EXTRA_FOCUS_TARGET, target)
+                }
+            })
+        }
+
+        val oemBackgroundSearchTerms = listOf(
+            "manufacturer", "Hersteller", "OEM", "background", "Hintergrund", "autostart", "Autostart",
+            "battery", "Akku", "startup", "reboot", "Neustart", "power management",
+            "xiaomi", "redmi", "poco", "miui", "hyperos",
+            "samsung", "one ui", "oneui",
+            "huawei", "honor", "emui", "magic os", "magicos",
+            "oppo", "coloros", "realme", "oneplus", "oxygenos",
+            "vivo", "iqoo", "funtouch",
+            "motorola", "lenovo", "asus", "sony", "nokia", "zte", "tecno", "infinix",
+            Build.MANUFACTURER.orEmpty(), Build.BRAND.orEmpty(),
+        ).filter { it.isNotBlank() }.joinToString(" ")
+
+        // Top-level destinations.
+        add(R.string.toggle_group_manage_blocking_modes, "control mode NFC QR barcode schedule mixed") {
+            openRootCard(R.id.cardSettingsBlockingModes)
+        }
+        add(R.string.toggle_group_manage_other_blocking_features, "${getString(R.string.settings_search_terms_blocking)} temporary timer temporärer Timer safety Sicherheit status notification Benachrichtigung blocking features") {
+            openRootCard(R.id.cardSettingsBlockingFeatures)
+        }
+        add(R.string.settings_keys_codes_title, "${getString(R.string.settings_search_terms_keys)} NFC QR barcode Strichcode tags codes Schlüssel Codes") { openRootCard(R.id.cardSettingsKeysCodes) }
+        add(R.string.settings_theme_title, "theme appearance color language time home") { openRootCard(R.id.cardSettingsAppearance) }
+        add(R.string.ignored_usage_apps_title, "usage statistics ignored apps") { openRootCard(R.id.cardSettingsIgnoredApps) }
+        add(R.string.settings_display_shortcuts_title, "${getString(R.string.settings_search_terms_display)} widgets Kacheln tiles quick settings shortcuts Verknüpfungen home Startseite") { openRootCard(R.id.cardSettingsDisplayShortcuts) }
+        add(R.string.pref_permissions_title, "${getString(R.string.settings_search_terms_permissions)} battery Akku background Hintergrund accessibility Bedienungshilfe autostart Autostart notifications Benachrichtigungen NFC reliability Zuverlässigkeit") { openRootCard(R.id.cardSettingsPermissions) }
+        add(R.string.pref_app_lock_title, "app lock App-Sperre uninstall protection Deinstallationsschutz remove removal device admin Geräteadministrator bypass anti-bypass") { openRootCard(R.id.cardSettingsAppLock) }
+        add(R.string.settings_emergency_unlock_title, "emergency bypass unlock") { openRootCard(R.id.cardSettingsEmergencyUnlock) }
+        add(R.string.settings_account_title, "${getString(R.string.settings_search_terms_account)} account Konto cloud Cloud backup Sicherung restore Wiederherstellung sync Synchronisierung data Daten") { openRootCard(R.id.cardSettingsAccountData) }
+        add(R.string.premium_title, "premium billing purchase") { openRootCard(R.id.cardSettingsPremium) }
+        if (AdvancedModeStore.isEnabled(this)) {
+            add(R.string.developer_mode_title, "${getString(R.string.settings_search_terms_developer)} developer Entwickler ADB uninstall protection Deinstallationsschutz diagnostics Diagnose device owner profile owner managed device managed-device provisioning factory reset safe mode") { openRootCard(R.id.cardSettingsDeveloper) }
+        }
+        add(R.string.settings_help_about_title, "help FAQ support changelog info privacy") { openRootCard(R.id.cardSettingsHelpAbout) }
+
+        // Individual control-mode settings.
+        add(R.string.pref_mode_nfc_title, "NFC control mode") { openProtectedActivity(Intent(this, BlockingModesActivity::class.java)) }
+        add(R.string.pref_mode_qr_title, "QR control mode") { openProtectedActivity(Intent(this, BlockingModesActivity::class.java)) }
+        add(R.string.pref_mode_barcode_title, "barcode control mode") { openProtectedActivity(Intent(this, BlockingModesActivity::class.java)) }
+        add(R.string.pref_mode_schedule_title, "schedule control mode automation") { openProtectedActivity(Intent(this, BlockingModesActivity::class.java)) }
+        add(R.string.pref_require_nfc_unlock_title, "NFC required disable lock") { openToggleSection(ToggleOptionsActivity.SECTION_SAFETY) }
+        add(R.string.schedules_title, "schedule Wi-Fi Bluetooth location time automation") { startActivity(Intent(this, SchedulesActivity::class.java)) }
+
+        // NFC / QR / barcode tools.
+        add(R.string.nfc_writer_title, "write NFC tag") { openProtectedActivity(Intent(this, NfcWriterActivity::class.java)) }
+        add(R.string.keys_codes_paired_tags_title, "paired NFC UID tags") { openProtectedActivity(Intent(this, ManagePairedTagsActivity::class.java)) }
+        add(R.string.qr_generate_title, "QR generate manage") { openProtectedActivity(Intent(this, QrGenerateActivity::class.java)) }
+        add(R.string.manage_barcodes_title, "barcode manage scan") { openProtectedActivity(Intent(this, ManageBarcodesActivity::class.java)) }
+
+        // Display / Home / shortcuts.
+        add(R.string.onb_optional_display_tiles_title, "Quick Settings tiles NFC QR barcode") {
+            openToggleSection(ToggleOptionsActivity.SECTION_DISPLAY, ToggleOptionsActivity.DISPLAY_TARGET_TILES)
+        }
+        add(R.string.onb_optional_display_widgets_title, "widgets scanner timer schedule") {
+            openToggleSection(ToggleOptionsActivity.SECTION_DISPLAY, ToggleOptionsActivity.DISPLAY_TARGET_WIDGETS)
+        }
+        add(R.string.pref_persistent_status_notification_title, "persistent status notification") {
+            openToggleSection(ToggleOptionsActivity.SECTION_FEATURES)
+        }
+        // Permissions & reliability, down to the relevant section.
+        add(R.string.permissions_accessibility_title, "accessibility Bedienungshilfe service Dienst blocking Blockierung permission Berechtigung") { openPermissionSection(PermissionsActivity.SECTION_CORE) }
+        add(R.string.permissions_battery_title, "battery Akku optimization Optimierung unrestricted uneingeschränkt background Hintergrund") { openPermissionSection(PermissionsActivity.SECTION_BATTERY) }
+        add(R.string.permissions_notifications_title, "notifications Benachrichtigungen permission Berechtigung") { openPermissionSection(PermissionsActivity.SECTION_NOTIFICATIONS) }
+        add(R.string.permissions_notification_access_title, "notification Benachrichtigung access Zugriff blocked blockiert") { openPermissionSection(PermissionsActivity.SECTION_NOTIFICATIONS) }
+        add(R.string.permissions_nfc_title, "NFC launch trigger") { openPermissionSection(PermissionsActivity.SECTION_TRIGGERS) }
+        add(R.string.permissions_autostart_title, oemBackgroundSearchTerms) {
+            openPermissionSection(PermissionsActivity.SECTION_BATTERY, PermissionsActivity.TARGET_AUTOSTART)
+        }
+
+        // Real full-text index for PreferenceScreens and individual Preference rows.
+        // Titles/summaries come from the localized XML, so search automatically follows DE/EN copy changes.
+        val androidNs = "http://schemas.android.com/apk/res/android"
+        val topLevelScreensAlreadyIndexed = setOf(
+            "screen_appearance",
+            "screen_permissions_reliability",
+            "screen_account",
+            "screen_help_about",
+        )
+        val preferenceKeysAlreadyIndexed = setOf("pref_permissions")
+        val parser = resources.getXml(R.xml.preferences_settings)
+        val screenStack = mutableListOf<String?>()
+        fun parserText(attribute: String): String {
+            val resId = parser.getAttributeResourceValue(androidNs, attribute, 0)
+            if (resId != 0) {
+                return runCatching { getString(resId) }.getOrDefault("")
+            }
+            return parser.getAttributeValue(androidNs, attribute).orEmpty()
+        }
+        try {
+            var event = parser.eventType
+            while (event != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+                when (event) {
+                    org.xmlpull.v1.XmlPullParser.START_TAG -> {
+                        val simpleTag = parser.name.substringAfterLast('.')
+                        val key = parser.getAttributeValue(androidNs, "key")
+                        val title = parserText("title")
+                        val summary = parserText("summary")
+                        if (simpleTag == "PreferenceScreen") {
+                            if (!key.isNullOrBlank() && key !in topLevelScreensAlreadyIndexed && title.isNotBlank()) {
+                                val targetScreen = key
+                                addText(title, "$summary $targetScreen") {
+                                    showNestedSettingsScreen(targetScreen)
+                                }
+                            }
+                            screenStack += key ?: screenStack.lastOrNull()
+                        } else {
+                            val targetScreen = screenStack.lastOrNull()
+                            if (!key.isNullOrBlank() && key !in preferenceKeysAlreadyIndexed && !targetScreen.isNullOrBlank() && title.isNotBlank()) {
+                                val targetKey = key
+                                val parentScreen = targetScreen
+                                addText(title, "$summary $targetKey") {
+                                    showNestedSettingsScreen(parentScreen, targetKey)
+                                }
+                            }
+                        }
+                    }
+                    org.xmlpull.v1.XmlPullParser.END_TAG -> {
+                        if (parser.name.substringAfterLast('.') == "PreferenceScreen" && screenStack.isNotEmpty()) {
+                            screenStack.removeAt(screenStack.lastIndex)
+                        }
+                    }
+                }
+                event = parser.next()
+            }
+        } finally {
+            parser.close()
+        }
+
+        val adapter = object : ArrayAdapter<SettingsSearchItem>(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            items,
+        ) {
+            private val allItems = items.toList()
+
+            override fun getFilter(): android.widget.Filter = object : android.widget.Filter() {
+                override fun performFiltering(constraint: CharSequence?): FilterResults {
+                    val query = constraint?.toString()?.trim().orEmpty()
+                    val terms = query.split(Regex("\\s+")).filter { it.isNotBlank() }
+                    val matches = if (terms.isEmpty()) {
+                        emptyList()
+                    } else {
+                        allItems.filter { item ->
+                            terms.all { term -> item.searchableText.contains(term, ignoreCase = true) }
+                        }.sortedWith(
+                            compareByDescending<SettingsSearchItem> { it.title.startsWith(query, ignoreCase = true) }
+                                .thenBy { it.title.length }
+                        ).take(12)
+                    }
+                    return FilterResults().apply {
+                        values = matches
+                        count = matches.size
+                    }
+                }
+
+                override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+                    clear()
+                    val filteredItems = (results?.values as? List<*>)
+                        .orEmpty()
+                        .filterIsInstance<SettingsSearchItem>()
+                    addAll(filteredItems)
+                    notifyDataSetChanged()
+                }
+            }
+        }
+
+        val content = layoutInflater.inflate(
+            R.layout.dialog_settings_find,
+            FrameLayout(this),
+            false,
+        )
+        val input = content.findViewById<MaterialAutoCompleteTextView>(R.id.acSettingsFind).apply {
+            threshold = 1
+            setAdapter(adapter)
+        }
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.settings_find_title)
+            .setView(content)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+        input.setOnItemClickListener { parent, _, index, _ ->
+            val result = (parent.getItemAtPosition(index) as? SettingsSearchItem)
+                ?: adapter.getItem(index)
+                ?: return@setOnItemClickListener
+            input.dismissDropDown()
+            dialog.dismiss()
+            result.open()
+        }
+        dialog.setOnShowListener { input.requestFocus() }
+        dialog.show()
+        dialog.styleSwitchlyDialogButtons()
     }
 
     fun setToolbarTitle(title: String) {
@@ -298,11 +569,14 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun showNestedSettingsScreen(screenKey: String) {
+    private fun showNestedSettingsScreen(screenKey: String, focusKey: String? = null) {
         showNestedSettingsContainer()
         val fragment = SettingsFragment().apply {
             arguments = Bundle().apply {
                 putString("androidx.preference.PreferenceFragmentCompat.PREFERENCE_ROOT", screenKey)
+                if (!focusKey.isNullOrBlank()) {
+                    putString(SettingsFragment.ARG_FOCUS_KEY, focusKey)
+                }
             }
         }
         supportFragmentManager.beginTransaction()

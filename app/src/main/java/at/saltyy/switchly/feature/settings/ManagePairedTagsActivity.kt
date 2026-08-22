@@ -61,7 +61,6 @@ import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.showSwitchlyFormDialog
 import at.saltyy.switchly.util.EditingLockGuard
-import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.card.MaterialCardView
@@ -293,15 +292,11 @@ class ManagePairedTagsActivity : AppCompatActivity() {
     private fun showPairedTagsInfoDialog() {
         Dialogs.builder(this)
             .setTitle(R.string.paired_tags_info_title)
-            .setMessage(buildStoreInfoMessage(R.string.paired_tags_info_body))
-            .setNeutralButton(R.string.store_open) { _, _ -> SwitchlyStoreLinks.openStore(this) }
+            .setMessage(R.string.paired_tags_info_body)
             .setPositiveButton(R.string.ok, null)
             .showAccented()
     }
 
-    private fun buildStoreInfoMessage(baseMessageRes: Int): String {
-        return getString(baseMessageRes) + "\n\n" + getString(R.string.store_card_title) + "\n" + getString(R.string.store_card_summary)
-    }
 
     private fun showAddDialog() {
         val entries = listOf(

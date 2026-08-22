@@ -19,12 +19,44 @@
 
 package at.saltyy.switchly.ui
 
+import android.graphics.Color
 import android.view.View
+import android.widget.TextView
 import androidx.annotation.StringRes
+import at.saltyy.switchly.theme.AccentColor
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 
+/**
+ * Screen actions use Snackbars; scanner/background events remain Toasts.
+ * Keep every Snackbar visually neutral and use the current Switchly accent only for actions.
+ */
+fun Snackbar.applySwitchlyStyle(): Snackbar {
+    val ctx = view.context
+    val accent = AccentColor.getAccentColorInt(ctx)
+    val surface = MaterialColors.getColor(
+        ctx,
+        com.google.android.material.R.attr.colorSurfaceVariant,
+        Color.DKGRAY,
+    )
+    val onSurface = MaterialColors.getColor(
+        ctx,
+        com.google.android.material.R.attr.colorOnSurfaceVariant,
+        Color.WHITE,
+    )
+    view.setBackgroundColor(surface)
+    view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)?.apply {
+        setTextColor(onSurface)
+        maxLines = 3
+    }
+    setActionTextColor(accent)
+    return this
+}
+
 fun View.showSwitchlyStatus(message: CharSequence, long: Boolean = false) {
-    Snackbar.make(this, message, if (long) Snackbar.LENGTH_LONG else Snackbar.LENGTH_SHORT).show()
+    Snackbar.make(this, message, if (long) Snackbar.LENGTH_LONG else Snackbar.LENGTH_SHORT)
+        .applySwitchlyStyle()
+        .show()
 }
 
 fun View.showSwitchlyStatus(@StringRes messageRes: Int, long: Boolean = false) {

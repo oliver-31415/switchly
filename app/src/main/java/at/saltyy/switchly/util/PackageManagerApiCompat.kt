@@ -21,6 +21,7 @@ package at.saltyy.switchly.util
 
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.os.Build
@@ -33,6 +34,18 @@ import java.lang.reflect.Method
  * Android versions isolated from deprecated overloads.
  */
 object PackageManagerApiCompat {
+
+    fun getPackageInfo(
+        packageManager: PackageManager,
+        packageName: String,
+        flags: Long = 0L,
+    ): PackageInfo {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Api33.getPackageInfo(packageManager, packageName, flags)
+        } else {
+            Legacy.getPackageInfo(packageManager, packageName, flags)
+        }
+    }
     fun getApplicationInfo(
         packageManager: PackageManager,
         packageName: String,
@@ -71,6 +84,18 @@ object PackageManagerApiCompat {
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private object Api33 {
+
+        fun getPackageInfo(
+            packageManager: PackageManager,
+            packageName: String,
+            flags: Long,
+        ): PackageInfo {
+            return packageManager.getPackageInfo(
+                packageName,
+                PackageManager.PackageInfoFlags.of(flags),
+            )
+        }
+
         fun getApplicationInfo(
             packageManager: PackageManager,
             packageName: String,
@@ -106,6 +131,14 @@ object PackageManagerApiCompat {
     }
 
     private object Legacy {
+
+        private val getPackageInfoMethod: Method by lazy {
+            PackageManager::class.java.getMethod(
+                "getPackageInfo",
+                String::class.java,
+                Integer.TYPE,
+            )
+        }
         private val getApplicationInfoMethod: Method by lazy {
             PackageManager::class.java.getMethod(
                 "getApplicationInfo",
@@ -126,6 +159,15 @@ object PackageManagerApiCompat {
                 Intent::class.java,
                 Integer.TYPE,
             )
+        }
+
+        fun getPackageInfo(
+            packageManager: PackageManager,
+            packageName: String,
+            flags: Long,
+        ): PackageInfo {
+            return invoke(getPackageInfoMethod, packageManager, packageName, flags.toInt())
+                as PackageInfo
         }
 
         fun getApplicationInfo(

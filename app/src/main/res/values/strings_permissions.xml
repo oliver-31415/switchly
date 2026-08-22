@@ -20,7 +20,7 @@
     <!-- Core permissions -->
     <!-- ====================================================== -->
     <string name="permissions_accessibility_title">Accessibility service</string>
-    <string name="permissions_accessibility_desc">Required for reliable protection: lets Switchly detect opened apps and websites, react to in-app navigation, and enforce blocking, profiles, schedules, and usage limits.</string>
+    <string name="permissions_accessibility_desc">Required for app, website, supported in-app, and usage-limit protection: lets Switchly detect foreground changes and the visible information needed for configured rules.</string>
     <string name="permissions_usage_access_title">App usage access</string>
     <string name="permissions_usage_access_desc">Required for screen-time statistics and daily app limits. Enable “App usage data” access for Switchly.</string>
     <string name="permissions_battery_oem_note">Some devices do not offer an “Unrestricted” battery option. If you already enabled the highest available background setting for Switchly, that may already be the maximum supported on your device.</string>
@@ -38,13 +38,13 @@
     <string name="permissions_nfc_status_manual">Check manually</string>
     <string name="permissions_nfc_status_not_allowed">Launch permission missing</string>
     <string name="permissions_nfc_status_system_disabled">System NFC disabled</string>
-    <string name="permissions_nfc_desc">Some Android versions show a separate “Launch via NFC” entry under Special app access. Allow Switchly there so written NFC tags can open Switchly when scanned. Also make sure the system “Use NFC” toggle is enabled. NFC does not use a normal runtime permission popup, so this row checks the system NFC state and Android tag-launch access instead. Android normally requires the device to be unlocked before passive NFC tags are dispatched to apps.</string>
+    <string name="permissions_nfc_desc">Required for opening Switchly from NFC tags. Make sure system NFC is enabled and, when available, allow Switchly under Special app access → Launch via NFC. Android normally requires the device to be unlocked before scanning.</string>
 
     <!-- ====================================================== -->
     <!-- Trigger and notification permissions -->
     <!-- ====================================================== -->
     <string name="permissions_location_title">Location</string>
-    <string name="permissions_location_desc">Needed for Wi-Fi-based schedules and location schedules. You can enable it here before creating a schedule. Wi-Fi triggers need location to read the current SSID, and location schedules need precise location. For geofence-based schedules in the background, also allow “Allow all the time”.</string>
+    <string name="permissions_location_desc">Required for Wi-Fi and location schedules. Wi-Fi triggers need location access to read the network name. Location schedules need precise location and “Allow all the time” for reliable background geofences.</string>
     <string name="permissions_bluetooth_title">Bluetooth (Nearby devices)</string>
     <string name="permissions_bluetooth_desc">Needed for Bluetooth-based schedules on Android 12+. You can enable it here before creating a schedule.</string>
     <string name="permissions_notifications_title">Notifications</string>
@@ -75,10 +75,26 @@
     <!-- Why dialogs and disclosures -->
     <!-- ====================================================== -->
     <string name="permissions_why_dialog_header">Why this matters</string>
-    <string name="accessibility_service_desc">Lets Switchly detect opened apps and websites, react to in-app navigation, and enforce blocking, profiles, schedules, and usage limits.</string>
+    <string name="accessibility_service_desc">Lets Switchly detect foreground apps, supported browser URLs/text, and supported in-app navigation when needed to enforce configured protection and usage limits.</string>
     <string name="accessibility_disclosure_title">Accessibility service consent</string>
-    <string name="accessibility_disclosure_message">Switchly uses the Android Accessibility Service for its core protection features.\n\nWhat Switchly can access while the service is active:\n• The currently opened app and window changes\n• Visible text and URLs in supported browsers when needed to check website rules\n• In-app navigation events in supported apps when needed for in-app rules and limits\n\nHow Switchly uses this access:\n• To detect blocked apps and websites and move you away from them\n• To enforce profiles, schedules, app limits, website limits, and in-app blocking\n• To count usage and blocking statistics locally on your device\n\nSwitchly does not use Accessibility to read passwords or private messages, does not change system settings without your action, and does not share Accessibility data for advertising.\n\nYou can decline this permission, but Switchly’s core protection features require Accessibility and will not work without it.</string>
-    <string name="accessibility_disclosure_checkbox">I understand that Switchly needs Accessibility for its core protection features.</string>
+    <string name="accessibility_disclosure_message">Switchly uses the Android Accessibility Service for app, website, and supported in-app protection.
+
+What Switchly can access while the service is active:
+• The currently opened app and window changes
+• Visible text and URLs in supported browsers when needed to check website rules
+• In-app navigation events in supported apps when needed for in-app rules and limits
+
+How Switchly uses this access:
+• To detect protected apps, websites, and supported in-app sections and redirect you away from them
+• To enforce app and website limits and record local usage/blocking statistics
+• To keep protection responsive when the foreground app or visible page changes
+
+Accessibility is not used to prevent uninstall, enable Device Admin or Device Owner, or change managed-device policies. Those protections use separate Android device-management APIs and require separate user or provisioning steps.
+
+Switchly does not use Accessibility to read passwords or private messages and does not sell or share Accessibility data for advertising. Processing for these protection features happens on your device.
+
+You can decline this permission, but app, website, and supported in-app protection that depends on foreground detection will not work without it.</string>
+    <string name="accessibility_disclosure_checkbox">I understand what Accessibility lets Switchly access and how it is used for protection.</string>
     <string name="accessibility_disclosure_accept">I agree</string>
     <string name="accessibility_disclosure_decline">Not now</string>
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -109,8 +110,8 @@
                                 android:id="@+id/btnWhyAccessibility"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -118,7 +119,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenAccessibility"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -180,8 +181,8 @@
                                 android:id="@+id/btnWhyUsageAccess"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -189,7 +190,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenUsageAccess"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -270,8 +271,8 @@
                                 android:id="@+id/btnWhyNotifications"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -279,7 +280,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenNotifications"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -341,8 +342,8 @@
                                 android:id="@+id/btnWhyNotificationAccess"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -350,7 +351,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenNotificationAccess"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -431,8 +432,8 @@
                                 android:id="@+id/btnWhyExactAlarms"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -440,7 +441,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenExactAlarms"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -502,8 +503,8 @@
                                 android:id="@+id/btnWhyNfc"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -511,7 +512,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenNfc"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -573,8 +574,8 @@
                                 android:id="@+id/btnWhyLocation"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -582,7 +583,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnReqLocation"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -590,7 +591,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenLocation"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
@@ -652,8 +653,8 @@
                                 android:id="@+id/btnWhyBluetooth"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -661,7 +662,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnReqBluetooth"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -669,7 +670,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenBluetooth"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
@@ -743,8 +744,8 @@
                             android:id="@+id/btnWhyBattery"
                             android:layout_width="44dp"
                             android:layout_height="44dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
                             android:padding="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="@string/info"
                             android:src="@drawable/info_24"
                             app:tint="?attr/colorPrimary" />
@@ -752,7 +753,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnReqBattery"
-                        style="?attr/materialButtonOutlinedStyle"
+                        style="@style/Switchly.OutlinedButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
@@ -760,7 +761,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnOpenBattery"
-                        style="?attr/materialButtonOutlinedStyle"
+                        style="@style/Switchly.OutlinedButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
@@ -825,8 +826,8 @@
                                 android:id="@+id/btnWhyAutostart"
                                 android:layout_width="44dp"
                                 android:layout_height="44dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="10dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="@string/info"
                                 android:src="@drawable/info_24"
                                 app:tint="?attr/colorPrimary" />
@@ -842,7 +843,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenAutostart"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Switchly.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"

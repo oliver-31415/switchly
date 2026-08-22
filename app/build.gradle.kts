@@ -11,8 +11,8 @@ plugins {
     id("com.google.firebase.crashlytics") apply false
 }
 
-val switchlyVersionCode = 223
-val switchlyVersionName = "2.2.3"
+val switchlyVersionCode = 224
+val switchlyVersionName = "2.2.4"
 
 val switchlySecretPropertiesFile = rootProject.file("signing.properties")
 val switchlySecretProperties = Properties().apply {
@@ -161,6 +161,7 @@ android {
 
         buildConfigField("String", "SWITCHLY_GOOGLE_WEB_CLIENT_ID", buildConfigString(googleWebClientId.get()))
         buildConfigField("boolean", "SWITCHLY_HAS_MAPS_API_KEY", mapsApiKey.get().isNotBlank().toString())
+        buildConfigField("boolean", "SWITCHLY_RELEASE_SIGNING_CONFIGURED", releaseSigningConfigured.toString())
     }
 
     flavorDimensions += "services"
@@ -275,6 +276,7 @@ extra["switchlyDownloadsUrl"] = switchlyDownloadsUrl
 
 // Shared dependency declarations for the Android app module.
 dependencies {
+
     // AndroidX core, UI, and preferences
     add("implementation", "androidx.preference:preference-ktx:1.2.1")
     add("implementation", "androidx.core:core-ktx:1.18.0")

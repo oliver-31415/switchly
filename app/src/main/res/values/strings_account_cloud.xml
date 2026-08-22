@@ -20,9 +20,19 @@
     <!-- ====================================================== -->
     <string name="settings_account_action_delete">Delete account</string>
     <string name="settings_account_delete_confirm_title">Delete Switchly account?</string>
-    <string name="settings_account_delete_confirm_message">This will delete your Switchly cloud data, backups, and local settings. This cannot be undone.</string>
-    <string name="account_delete_recent_login_required">For security reasons, please sign in again, then try deleting the account again.</string>
-    <string name="account_delete_recent_login_title">Sign in again</string>
+    <string name="settings_account_delete_confirm_message">This permanently deletes your Switchly account and associated cloud backups/data. Local profiles, rules, schedules and statistics stored only on this device are kept. This cannot be undone.</string>
+    <string name="account_delete_verify_title">Verify your identity</string>
+    <string name="account_delete_verify_google">Verify with Google</string>
+    <string name="account_delete_verify_google_summary">Confirm the Google account currently linked to Switchly.</string>
+    <string name="account_delete_verify_password">Verify with password</string>
+    <string name="account_delete_verify_password_summary">Enter the password for the current Switchly account.</string>
+    <string name="account_delete_verify_password_message">Enter your current Switchly account password before deletion.</string>
+    <string name="account_delete_verify_password_message_email">Enter the password for %1$s before deletion.</string>
+    <string name="account_delete_reauth_wrong_account">The selected Google account does not match the Switchly account being deleted.</string>
+    <string name="account_delete_reauth_provider_unsupported">This account uses a sign-in method Switchly cannot verify for deletion yet. Sign out, sign in again with the original method, and retry.</string>
+    <string name="account_delete_progress">Deleting account and cloud data…</string>
+    <string name="account_delete_failed_title">Account not fully deleted</string>
+    <string name="account_delete_failed_auth_after_cloud_fmt">Your Switchly cloud data was removed, but the Firebase account could not be deleted. Your local Switchly data is still on this device. Please retry account deletion.\n\n%1$s</string>
     <string name="account_delete_failed_delete_account_fmt">Failed to delete account:\n%1$s</string>
     <string name="account_delete_failed_delete_cloud_data_fmt">Failed to delete cloud data:\n%1$s</string>
     <string name="account_delete_failed_delete_backups_fmt">Failed to delete backups:\n%1$s</string>
@@ -163,6 +173,11 @@
     <string name="backup_preset_manual_custom_summary">Review categories and reuse your last custom selection.</string>
     <string name="backup_select_categories_title">Choose backup data</string>
     <string name="restore_select_categories_title">Choose restore data</string>
+    <string name="restore_contents_preview_title">Backup contents</string>
+    <string name="restore_contents_preview_body">Profiles: %1$d\nApp rules: %2$d\nWebsite rules: %3$d\nSchedules: %4$d\nStatistics: %5$s\n\nSelected categories replace their current local data. Switchly and schedules remain disabled after restore.</string>
+    <string name="restore_contents_preview_continue">Choose restore data</string>
+    <string name="restore_contents_statistics_included">included</string>
+    <string name="restore_contents_statistics_not_included">not included</string>
     <string name="backup_category_sensitive_suffix"> (sensitive)</string>
     <string name="backup_create_with_selection">Create backup</string>
     <string name="backup_select_at_least_one">Select at least one backup category</string>

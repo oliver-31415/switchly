@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardQuickActions"
     style="@style/Switchly.Card"
@@ -21,14 +22,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
-            android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:clickable="true"
-            android:focusable="true"
+            android:gravity="center_vertical"
             android:paddingStart="6dp"
             android:paddingTop="2dp"
             android:paddingEnd="6dp"
-            android:paddingBottom="2dp">
+            android:paddingBottom="2dp"
+            android:clickable="true"
+            android:focusable="true">
 
             <TextView
                 android:id="@+id/tvQuickActionsTitle"
@@ -36,18 +37,18 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:alpha="0.75"
-                android:includeFontPadding="true"
                 android:text="@string/dashboard_quick_actions"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:includeFontPadding="true" />
 
             <ImageView
                 android:id="@+id/ivQuickActionsEdit"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginEnd="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/dashboard_quick_actions_edit"
                 android:src="@drawable/edit_24"
                 app:tint="?attr/colorOnSurface" />
@@ -56,8 +57,8 @@
                 android:id="@+id/ivQuickActionsChevron"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/dashboard_quick_actions_collapse"
                 android:src="@drawable/keyboard_arrow_up_24"
                 app:tint="?attr/colorOnSurface" />
@@ -102,8 +103,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
                         android:orientation="vertical"
+                        android:gravity="center"
                         android:padding="16dp">
 
                         <ImageView
@@ -148,8 +149,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
                         android:orientation="vertical"
+                        android:gravity="center"
                         android:padding="16dp">
 
                         <ImageView
@@ -194,8 +195,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
                         android:orientation="vertical"
+                        android:gravity="center"
                         android:padding="16dp">
 
                         <ImageView
@@ -248,8 +249,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
                         android:orientation="vertical"
+                        android:gravity="center"
                         android:padding="16dp">
 
                         <ImageView
@@ -304,8 +305,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
                         android:orientation="vertical"
+                        android:gravity="center"
                         android:padding="16dp">
 
                         <ImageView
@@ -350,8 +351,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
                         android:orientation="vertical"
+                        android:gravity="center"
                         android:padding="16dp">
 
                         <ImageView
@@ -405,8 +406,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
                         android:orientation="vertical"
+                        android:gravity="center"
                         android:padding="16dp">
 
                         <ImageView
@@ -451,8 +452,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
                         android:orientation="vertical"
+                        android:gravity="center"
                         android:padding="16dp">
 
                         <ImageView

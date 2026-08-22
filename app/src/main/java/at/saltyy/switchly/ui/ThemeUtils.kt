@@ -45,12 +45,13 @@ object ThemeUtils {
 
         activity.setTheme(themeRes)
 
-        // Runtime fallback for arbitrary custom accent colors.
-        // This retints remaining default-accent widgets after inflation.
-        if (accent == "custom") {
-            activity.window?.decorView?.post {
+        // Run one shared late UI pass after inflation.
+        // Custom accents first replace any remaining compile-time theme green; the consistency pass then normalizes late-bound widget states.
+        activity.window?.decorView?.post {
+            if (accent == "custom") {
                 runCatching { CustomAccentApplier.applyIfNeeded(activity) }
             }
+            runCatching { UiConsistency.apply(activity) }
         }
     }
 }

@@ -138,21 +138,89 @@ object AuthRuntime {
             return
         }
 
-        launchGoogleButtonFlow(
+        launchGoogleIdTokenFlow(
             activity = activity,
-            auth = auth,
             serverClientId = serverClientId,
-            onResult = onResult
+            onToken = { idToken -> firebaseAuthWithGoogle(activity, auth, idToken, onResult) },
+            onResult = onResult,
         )
+    }
+
+    fun reauthenticateWithGoogle(
+        activity: Activity,
+        onResult: (Boolean, Throwable?) -> Unit,
+    ) {
+        val auth = firebaseAuthOrNull(activity)
+        val user = auth?.currentUser
+        if (user == null) {
+            onResult(false, IllegalStateException(activity.getString(R.string.settings_google_logged_out)))
+            return
+        }
+
+        val serverClientId = serverClientIdOrNull(activity)
+        if (serverClientId == null) {
+            onResult(false, IllegalStateException(activity.getString(R.string.auth_missing_google_server_client_id)))
+            return
+        }
+
+        val expectedUid = user.uid
+        launchGoogleIdTokenFlow(
+            activity = activity,
+            serverClientId = serverClientId,
+            onToken = { idToken ->
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                user.reauthenticate(credential)
+                    .addOnCompleteListener(activity) { task ->
+                        val currentUid = auth.currentUser?.uid
+                        if (task.isSuccessful && currentUid == expectedUid) {
+                            AppLogStore.append(activity, TAG, "Firebase Google reauthentication success")
+                            onResult(true, null)
+                        } else {
+                            val error = task.exception ?: IllegalStateException(
+                                activity.getString(R.string.account_delete_reauth_wrong_account)
+                            )
+                            AppLogStore.append(activity, TAG, "Firebase Google reauthentication failed", error)
+                            onResult(false, error)
+                        }
+                    }
+            },
+            onResult = onResult,
+        )
+    }
+
+    fun reauthenticateWithEmail(
+        context: Context,
+        password: String,
+        onResult: (Boolean, Throwable?) -> Unit,
+    ) {
+        val user = firebaseAuthOrNull(context)?.currentUser
+        val email = user?.email?.trim().orEmpty()
+        if (user == null || email.isBlank()) {
+            onResult(false, IllegalStateException(context.getString(R.string.settings_google_logged_out)))
+            return
+        }
+
+        val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, password)
+        user.reauthenticate(credential)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    AppLogStore.append(context, TAG, "Firebase email reauthentication success")
+                    onResult(true, null)
+                } else {
+                    val error = task.exception
+                    AppLogStore.append(context, TAG, "Firebase email reauthentication failed", error)
+                    onResult(false, error)
+                }
+            }
     }
 
     private val googleIdTokenCredentialClassName = GoogleIdTokenCredential::class.java.name
 
-    private fun launchGoogleButtonFlow(
+    private fun launchGoogleIdTokenFlow(
         activity: Activity,
-        auth: FirebaseAuth,
         serverClientId: String,
-        onResult: (Boolean, Throwable?) -> Unit
+        onToken: (String) -> Unit,
+        onResult: (Boolean, Throwable?) -> Unit,
     ) {
         val credentialManager = CredentialManager.create(activity)
 
@@ -182,7 +250,7 @@ object AuthRuntime {
                     ) {
                         try {
                             val googleCred = parseGoogleIdCredential(credential.data)
-                            firebaseAuthWithGoogle(activity, auth, googleCred.idToken, onResult)
+                            onToken(googleCred.idToken)
                             return
                         } catch (e: GoogleIdTokenParsingException) {
                             Log.e(TAG, "Google ID token parsing failed", e)

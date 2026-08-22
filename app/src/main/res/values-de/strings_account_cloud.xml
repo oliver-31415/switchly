@@ -20,9 +20,19 @@
     <!-- ====================================================== -->
     <string name="settings_account_action_delete">Konto löschen</string>
     <string name="settings_account_delete_confirm_title">Switchly-Konto löschen?</string>
-    <string name="settings_account_delete_confirm_message">Dadurch werden deine Switchly-Cloud-Daten, Backups und lokalen Einstellungen gelöscht. Dies kann nicht rückgängig gemacht werden.</string>
-    <string name="account_delete_recent_login_required">Aus Sicherheitsgründen melde dich bitte erneut an und versuche dann, das Konto erneut zu löschen.</string>
-    <string name="account_delete_recent_login_title">Erneut anmelden</string>
+    <string name="settings_account_delete_confirm_message">Dadurch werden dein Switchly-Konto und die zugehörigen Cloud-Backups/-Daten dauerhaft gelöscht. Lokale Profile, Regeln, Zeitpläne und Statistiken, die nur auf diesem Gerät gespeichert sind, bleiben erhalten. Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="account_delete_verify_title">Identität bestätigen</string>
+    <string name="account_delete_verify_google">Mit Google bestätigen</string>
+    <string name="account_delete_verify_google_summary">Bestätige das aktuell mit Switchly verknüpfte Google-Konto.</string>
+    <string name="account_delete_verify_password">Mit Passwort bestätigen</string>
+    <string name="account_delete_verify_password_summary">Gib das Passwort des aktuellen Switchly-Kontos ein.</string>
+    <string name="account_delete_verify_password_message">Gib vor dem Löschen das aktuelle Passwort deines Switchly-Kontos ein.</string>
+    <string name="account_delete_verify_password_message_email">Gib vor dem Löschen das Passwort für %1$s ein.</string>
+    <string name="account_delete_reauth_wrong_account">Das ausgewählte Google-Konto entspricht nicht dem Switchly-Konto, das gelöscht werden soll.</string>
+    <string name="account_delete_reauth_provider_unsupported">Dieses Konto verwendet eine Anmeldemethode, die Switchly für die Löschung noch nicht bestätigen kann. Melde dich ab, mit der ursprünglichen Methode erneut an und versuche es nochmals.</string>
+    <string name="account_delete_progress">Konto und Cloud-Daten werden gelöscht…</string>
+    <string name="account_delete_failed_title">Konto nicht vollständig gelöscht</string>
+    <string name="account_delete_failed_auth_after_cloud_fmt">Deine Switchly-Cloud-Daten wurden gelöscht, aber das Firebase-Konto konnte nicht gelöscht werden. Deine lokalen Switchly-Daten befinden sich weiterhin auf diesem Gerät. Bitte versuche die Kontolöschung erneut.\n\n%1$s</string>
     <string name="account_delete_failed_delete_account_fmt">Konto konnte nicht gelöscht werden:\n%1$s</string>
     <string name="account_delete_failed_delete_cloud_data_fmt">Cloud-Daten konnten nicht gelöscht werden:\n%1$s</string>
     <string name="account_delete_failed_delete_backups_fmt">Backups konnten nicht gelöscht werden:\n%1$s</string>
@@ -66,7 +76,7 @@
     <!-- File backup and restore -->
     <!-- ====================================================== -->
     <string name="pref_file_backup_title">In Datei sichern</string>
-    <string name="pref_file_backup_summary">Lokales JSON-Backup ohne Anmeldung exportieren. Die Datei kann persönliche Blocking-Daten enthalten.</string>
+    <string name="pref_file_backup_summary">Lokale JSON-Sicherung ohne Anmeldung exportieren. Die Datei kann persönliche Schutzdaten enthalten.</string>
     <string name="pref_file_restore_title">Aus Datei wiederherstellen</string>
     <string name="pref_file_restore_summary">Lokales JSON-Backup importieren und lokale Einstellungen überschreiben</string>
     <string name="file_backup_ok">Datei-Backup gespeichert</string>
@@ -96,9 +106,9 @@
     <string name="restore_compatibility_warning_statistics">Switchly versucht, kompatible Zähler aus diesem Backup zu migrieren. Daten, die ältere Versionen nicht gespeichert haben – besonders genaue Sitzungen oder Verläufe – können weiterhin unvollständig sein oder fehlen.</string>
     <string name="settings_confirm_file_restore_message">Lokales JSON-Backup wiederherstellen und aktuelle Switchly-Daten überschreiben? Aus Sicherheitsgründen werden Switchly und aktive Zeitpläne nach der Wiederherstellung deaktiviert.</string>
     <string name="settings_confirm_backup_message_with_included_categories">Aktuelle Daten in der Cloud sichern?\n\nEnthalten:\n%1$s</string>
-    <string name="settings_confirm_backup_message_with_categories">Aktuelle Daten in der Cloud sichern?\n\nEnthalten:\n%1$s\n\nAusgeschlossen/bei Restore behalten:\n%2$s</string>
+    <string name="settings_confirm_backup_message_with_categories">Aktuelle Daten in der Cloud sichern?\n\nEnthalten:\n%1$s\n\nAusgeschlossen und bei der Wiederherstellung behalten:\n%2$s</string>
     <string name="settings_confirm_file_backup_message_with_included_categories">Lokale Backup-Datei erstellen?\n\nEnthalten:\n%1$s</string>
-    <string name="settings_confirm_file_backup_message_with_categories">Lokale Backup-Datei erstellen?\n\nEnthalten:\n%1$s\n\nAusgeschlossen/bei Restore behalten:\n%2$s</string>
+    <string name="settings_confirm_file_backup_message_with_categories">Lokale Sicherungsdatei erstellen?\n\nEnthalten:\n%1$s\n\nAusgeschlossen und bei der Wiederherstellung behalten:\n%2$s</string>
 
     <!-- ====================================================== -->
     <!-- Password reset -->
@@ -158,14 +168,19 @@
     <string name="backup_preset_profiles_only">Nur Profile</string>
     <string name="backup_preset_manual_custom">Manuell/letzte Auswahl</string>
     <string name="backup_preset_full_summary">Alles inklusive Regeln, Einstellungen, Keys, Zeitplänen, Zählern und App-Optionen.</string>
-    <string name="backup_preset_privacy_summary">Kern-Setup ohne Usage-/Statistik-Zähler.</string>
+    <string name="backup_preset_privacy_summary">Grundeinstellungen ohne Nutzungs- und Statistikzähler.</string>
     <string name="backup_preset_profiles_only_summary">Nur Profile und ausgewählte App-Listen.</string>
     <string name="backup_preset_manual_custom_summary">Kategorien prüfen und die letzte eigene Auswahl wiederverwenden.</string>
     <string name="backup_select_categories_title">Backup-Daten wählen</string>
-    <string name="restore_select_categories_title">Restore-Daten wählen</string>
+    <string name="restore_select_categories_title">Daten zur Wiederherstellung wählen</string>
+    <string name="restore_contents_preview_title">Inhalt der Sicherung</string>
+    <string name="restore_contents_preview_body">Profile: %1$d\nApp-Regeln: %2$d\nWebsite-Regeln: %3$d\nZeitpläne: %4$d\nStatistiken: %5$s\n\nAusgewählte Kategorien ersetzen die aktuellen lokalen Daten. Switchly und Zeitpläne bleiben nach der Wiederherstellung deaktiviert.</string>
+    <string name="restore_contents_preview_continue">Daten auswählen</string>
+    <string name="restore_contents_statistics_included">enthalten</string>
+    <string name="restore_contents_statistics_not_included">nicht enthalten</string>
     <string name="backup_category_sensitive_suffix"> (sensibel)</string>
     <string name="backup_create_with_selection">Backup erstellen</string>
     <string name="backup_select_at_least_one">Wähle mindestens eine Backup-Kategorie</string>
-    <string name="restore_select_at_least_one">Wähle mindestens eine Restore-Kategorie</string>
+    <string name="restore_select_at_least_one">Wähle mindestens eine Kategorie zur Wiederherstellung</string>
 
 </resources>

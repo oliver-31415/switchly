@@ -20,7 +20,6 @@
 package at.saltyy.switchly.feature.onboarding.adapters
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -64,6 +63,7 @@ import at.saltyy.switchly.feature.usage.IgnoredUsageAppsActivity
 import at.saltyy.switchly.feature.usage.UsageStatsRepo
 import at.saltyy.switchly.security.AppLockStore
 import at.saltyy.switchly.theme.AccentColor
+import at.saltyy.switchly.util.BatteryOptimizationRequest
 import at.saltyy.switchly.util.PackageManagerApiCompat
 import at.saltyy.switchly.util.PermissionSetupChecks
 import at.saltyy.switchly.util.PermissionUtils
@@ -1471,11 +1471,13 @@ class OnboardingPagerAdapter(
             openPermissionsScreen(activity, PermissionsActivity.SECTION_NOTIFICATIONS)
         }
 
-        @SuppressLint("BatteryLife")
         private fun openBatterySetup(activity: Activity) {
-            if (safeStart(activity, Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = "package:${activity.packageName}".toUri()
-                })) {
+            if (!BatteryOptimizationRequest.isAlreadyAllowed(activity) &&
+                safeStart(activity, BatteryOptimizationRequest.intent(activity))
+            ) {
+                return
+            }
+            if (safeStart(activity, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))) {
                 return
             }
             openPermissionsScreen(activity, PermissionsActivity.SECTION_BATTERY)

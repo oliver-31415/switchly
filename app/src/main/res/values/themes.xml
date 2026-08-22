@@ -21,6 +21,7 @@
 
         <!-- Global Material component styles -->
         <item name="materialButtonStyle">@style/Switchly.Button</item>
+        <item name="materialButtonOutlinedStyle">@style/Switchly.OutlinedButton</item>
         <item name="floatingActionButtonStyle">@style/Switchly.Fab</item>
         <item name="materialCardViewStyle">@style/Switchly.Card</item>
 

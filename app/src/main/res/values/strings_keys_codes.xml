@@ -28,10 +28,10 @@
     <!-- Info dialogs -->
     <!-- ====================================================== -->
     <string name="qr_info_title">QR code actions</string>
-    <string name="qr_info_body">Create QR codes that run Switchly actions when scanned. QR codes can enable, disable, toggle, or temporarily change Switchly.\n\nFor stricter setups, keep only QR enabled in Control modes and disable the other channels you do not want to use.</string>
+    <string name="qr_info_body">QR codes can run these Switchly actions when scanned:\n• Enable or disable protection\n• Toggle the current state\n• Start a temporary action\n• Switch profiles\n\nFor a stricter setup, keep only the control channels you want to use enabled.</string>
     <string name="manage_barcodes_info_title">Barcode actions</string>
-    <string name="manage_barcodes_info_body">Saved barcodes turn printed or physical codes into Switchly actions. You can use them to enable, disable, toggle, or temporarily change Switchly without editing the app.\n\nFor stronger friction, place the barcode away from your phone and use Temporary Disable or Temporary Enable with “Ask when scanned”.</string>
+    <string name="manage_barcodes_info_body">Saved barcodes link a physical code to a Switchly action:\n• Enable, disable, or toggle protection\n• Start a temporary action\n• Switch profiles\n\nFor more friction, keep the barcode away from your phone. “Ask when scanned” lets you choose the duration during the scan.</string>
     <string name="paired_tags_info_title">Paired NFC tags</string>
-    <string name="paired_tags_info_body">Paired tags let Switchly recognize an NFC tag by its UID. Read-only tags use the selected profile and action directly. Writable tags can keep the profile, action and duration stored on the tag or override them with a custom setup.\n\nDaily-use and cooldown limits apply to actual unlock or protection-pausing actions for both tag types.</string>
+    <string name="paired_tags_info_body">Paired tags are recognized by their unique ID.\n• Read-only tags use the action configured in Switchly.\n• Writable tags can use their stored action or a custom override.\n• Daily-use and cooldown limits apply to unlock and protection-pause actions.\n\nPairing is optional for normal writable Switchly tags unless you need per-tag settings or limits.</string>
 
 </resources>

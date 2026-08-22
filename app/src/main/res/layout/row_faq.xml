@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardFaqItem"
     android:layout_width="match_parent"
@@ -7,12 +8,12 @@
     android:layout_marginHorizontal="2dp"
     android:layout_marginVertical="5dp"
     android:foreground="?attr/selectableItemBackground"
-    app:strokeColor="@color/switchly_card_stroke"
-    app:strokeWidth="1dp"
     app:cardBackgroundColor="@color/switchly_card_bg"
     app:cardCornerRadius="18dp"
     app:cardElevation="1dp"
-    app:cardUseCompatPadding="true">
+    app:cardUseCompatPadding="true"
+    app:strokeColor="@color/switchly_card_stroke"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:id="@+id/root"
@@ -78,8 +79,8 @@
             android:visibility="gone"
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="14sp"
-            android:autoLink="web|email"
             android:lineSpacingExtra="2dp"
+            android:autoLink="web|email"
             android:linksClickable="true" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

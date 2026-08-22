@@ -44,12 +44,14 @@ import at.saltyy.switchly.BuildConfig
 import at.saltyy.switchly.R
 import at.saltyy.switchly.platform.receiver.schedule.ScheduleReceiver
 import at.saltyy.switchly.ui.MainActivity
+import java.util.concurrent.ConcurrentHashMap
 
 class WifiTriggerService : Service() {
 
     private lateinit var cm: ConnectivityManager
     private var wifi: WifiManager? = null
     private var cb: ConnectivityManager.NetworkCallback? = null
+    private val wifiCapsByNetwork = ConcurrentHashMap<Network, NetworkCapabilities>()
     private val handler = Handler(Looper.getMainLooper())
     private var retryCount = 0
 
@@ -83,12 +85,18 @@ class WifiTriggerService : Service() {
                 }
 
                 override fun onLost(network: Network) {
+                    wifiCapsByNetwork.remove(network)
                     runWifiCallback("lost") {
                         handleWifiLost("lost")
                     }
                 }
 
                 override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
+                    if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        wifiCapsByNetwork[network] = caps
+                    } else {
+                        wifiCapsByNetwork.remove(network)
+                    }
                     runWifiCallback("capabilitiesChanged") {
                         if (!cacheWifiFromCaps(caps, "capabilitiesChanged")) {
                             cacheWifiFromActiveNetwork("capabilitiesChangedFallback")
@@ -107,12 +115,18 @@ class WifiTriggerService : Service() {
                 }
 
                 override fun onLost(network: Network) {
+                    wifiCapsByNetwork.remove(network)
                     runWifiCallback("lost") {
                         handleWifiLost("lost")
                     }
                 }
 
                 override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
+                    if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        wifiCapsByNetwork[network] = caps
+                    } else {
+                        wifiCapsByNetwork.remove(network)
+                    }
                     runWifiCallback("capabilitiesChanged") {
                         if (!cacheWifiFromCaps(caps, "capabilitiesChanged")) {
                             cacheWifiFromActiveNetwork("capabilitiesChangedFallback")
@@ -158,6 +172,7 @@ class WifiTriggerService : Service() {
         handler.removeCallbacksAndMessages(null)
         cb?.let { runCatching { cm.unregisterNetworkCallback(it) } }
         cb = null
+        wifiCapsByNetwork.clear()
 
         runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) }
         super.onDestroy()
@@ -320,22 +335,13 @@ class WifiTriggerService : Service() {
     }
 
     private fun cacheWifiFromAnyWifiNetwork(reason: String): Boolean {
-        val nets = allNetworksCompat(cm)
-        for (n in nets) {
-            val caps = cm.getNetworkCapabilities(n) ?: continue
+        for (caps in wifiCapsByNetwork.values) {
             if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) continue
-            if (cacheWifiFromCaps(caps, "$reason(allNetworks)")) {
+            if (cacheWifiFromCaps(caps, "$reason(callbackCache)")) {
                 return true
             }
         }
         return false
-    }
-
-    private fun allNetworksCompat(cm: ConnectivityManager): Array<Network> {
-        val value = runCatching {
-            cm.javaClass.getMethod("getAllNetworks").invoke(cm)
-        }.getOrNull()
-        return (value as? Array<*>)?.filterIsInstance<Network>()?.toTypedArray() ?: emptyArray()
     }
 
     private fun cacheWifiFromCaps(caps: NetworkCapabilities, reason: String): Boolean {
@@ -347,22 +353,15 @@ class WifiTriggerService : Service() {
         var bssid: String? = null
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // API 29+: NetworkCapabilities is the authoritative Wi-Fi source.
             val wifiInfo = caps.transportInfo as? WifiInfo
             if (wifiInfo != null) {
                 ssid = wifiInfo.ssid
                 bssid = wifiInfo.bssid
             }
-
-            // Some OEMs return null transportInfo even while connected to Wi-Fi.
-            // Compatibility fallback to WifiManager connection info (still requires Location permission on modern Android).
-            if (ssid.isNullOrBlank() && bssid.isNullOrBlank()) {
-                readWifiInfoCompat()?.let { info ->
-                    ssid = info.ssid
-                    bssid = info.bssid
-                }
-            }
         } else {
-            readWifiInfoCompat()?.let { info ->
+            // API 27/28 only: transportInfo cannot expose WifiInfo yet.
+            readWifiInfoLegacyApi27To28()?.let { info ->
                 ssid = info.ssid
                 bssid = info.bssid
             }
@@ -398,21 +397,16 @@ class WifiTriggerService : Service() {
         return true
     }
 
-    private fun readWifiInfoCompat(): WifiInfo? {
+    private fun readWifiInfoLegacyApi27To28(): WifiInfo? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return null
         val wifiManager = wifi ?: return null
         return try {
-            wifiConnectionInfoCompat(wifiManager)
+            wifiManager.javaClass.getMethod("getConnectionInfo").invoke(wifiManager) as? WifiInfo
         } catch (_: SecurityException) {
             null
         } catch (_: Throwable) {
             null
         }
-    }
-
-    private fun wifiConnectionInfoCompat(wifiManager: WifiManager): WifiInfo? {
-        return runCatching {
-            wifiManager.javaClass.getMethod("getConnectionInfo").invoke(wifiManager) as? WifiInfo
-        }.getOrNull()
     }
     private fun scheduleWifiRetryIfNeeded(reason: String) {
         val hasWifiSchedules = at.saltyy.switchly.data.prefs.ScheduleStore

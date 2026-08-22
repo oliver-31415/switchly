@@ -94,6 +94,8 @@ import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.BatteryOptimizationCompat
 import at.saltyy.switchly.util.NfcLaunchAccessCompat
 import at.saltyy.switchly.util.PersistentStatusNotifier
+import at.saltyy.switchly.util.ReleaseDiagnostics
+import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import java.util.Calendar
@@ -438,6 +440,31 @@ class SupportActivity : AppCompatActivity() {
         line(
             "Maps API key bundled",
             BuildConfig.SWITCHLY_HAS_MAPS_API_KEY
+        )
+        line(
+            "Official release signing configured at build",
+            BuildConfig.SWITCHLY_RELEASE_SIGNING_CONFIGURED
+        )
+
+        section("Release diagnostics")
+        val releaseDiagnostics = ReleaseDiagnostics.snapshot(this@SupportActivity)
+        line("Status", releaseDiagnostics.status.name)
+        line("Signing check", releaseDiagnostics.signingMessage)
+        line("Installed signing SHA-1", releaseDiagnostics.currentSha1 ?: "-")
+        line("Signing history count", releaseDiagnostics.signingHistory.size)
+        line(
+            "Signing history SHA-1",
+            releaseDiagnostics.signingHistory.ifEmpty { listOf("-") }.joinToString(" -> ")
+        )
+        line("Installer", releaseDiagnostics.installerPackage ?: "-")
+        line("Upgrade observed", releaseDiagnostics.upgradeObserved)
+        line(
+            "Upgrade check",
+            if (releaseDiagnostics.upgradeObserved) {
+                "OK: Android reports an in-place update for this installation."
+            } else {
+                "N/A: fresh install or no previous install timestamp; run a release-signed upgrade smoke test before publishing."
+            }
         )
 
         section("Device")
@@ -834,13 +861,17 @@ class SupportActivity : AppCompatActivity() {
         val deviceAdminActive = dpm?.isAdminActive(adminComponent) == true
         val profileOwnerActive = dpm?.isProfileOwnerApp(packageName) == true
         val deviceOwnerActive = dpm?.isDeviceOwnerApp(packageName) == true
-        val managedAdminActive = deviceAdminActive || profileOwnerActive || deviceOwnerActive
-        val uninstallProtectionEffective =
-            (strictProtectionConfigured && managedAdminActive) || legacyUninstallFrictionEnabled
+        val managedSelfUninstallBlocked = ManagedDevicePolicyHelper.isSelfUninstallBlocked(this@SupportActivity)
+        val uninstallProtectionEffective = when {
+            (deviceOwnerActive || profileOwnerActive) && strictProtectionConfigured -> managedSelfUninstallBlocked == true
+            strictProtectionConfigured && deviceAdminActive -> true
+            else -> legacyUninstallFrictionEnabled
+        }
         val uninstallProtectionReason = when {
-            deviceOwnerActive && strictProtectionConfigured -> "uninstall protection + device owner"
-            profileOwnerActive && strictProtectionConfigured -> "uninstall protection + profile owner"
-            deviceAdminActive && strictProtectionConfigured -> "uninstall protection + device admin"
+            deviceOwnerActive && strictProtectionConfigured && managedSelfUninstallBlocked == true -> "managed uninstall block active + device owner"
+            profileOwnerActive && strictProtectionConfigured && managedSelfUninstallBlocked == true -> "managed uninstall block active + profile owner"
+            (deviceOwnerActive || profileOwnerActive) && strictProtectionConfigured -> "managed ownership active but uninstall policy not reported active"
+            deviceAdminActive && strictProtectionConfigured -> "device admin uninstall friction active"
             legacyUninstallFrictionEnabled -> "legacy uninstall friction enabled"
             strictProtectionConfigured -> "uninstall protection configured but admin inactive"
             else -> "uninstall protection disabled"
@@ -856,6 +887,10 @@ class SupportActivity : AppCompatActivity() {
         line(
             "Device owner active",
             deviceOwnerActive
+        )
+        line(
+            "Managed self-uninstall blocked",
+            managedSelfUninstallBlocked?.toString() ?: "n/a"
         )
         line(
             "Uninstall protection effective",

@@ -54,7 +54,6 @@ import at.saltyy.switchly.ui.dialog.Dialogs
 import at.saltyy.switchly.ui.dialog.showAccented
 import at.saltyy.switchly.util.EditingLockGuard
 import at.saltyy.switchly.util.LocaleHelper
-import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
@@ -236,15 +235,11 @@ class QrGenerateActivity : AppCompatActivity() {
     private fun showQrInfoDialog() {
         Dialogs.builder(this)
             .setTitle(R.string.qr_info_title)
-            .setMessage(buildStoreInfoMessage(R.string.qr_info_body))
-            .setNeutralButton(R.string.store_open) { _, _ -> SwitchlyStoreLinks.openStore(this) }
+            .setMessage(R.string.qr_info_body)
             .setPositiveButton(R.string.ok, null)
             .showAccented()
     }
 
-    private fun buildStoreInfoMessage(baseMessageRes: Int): String {
-        return getString(baseMessageRes) + "\n\n" + getString(R.string.store_card_title) + "\n" + getString(R.string.store_card_summary)
-    }
 
     private fun refreshProfiles() {
         val profiles = ProfileStore.getProfiles(this).toList().sorted()

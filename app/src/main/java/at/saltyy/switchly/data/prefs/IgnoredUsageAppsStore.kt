@@ -26,6 +26,7 @@ import android.telecom.TelecomManager
 import androidx.core.content.edit
 import at.saltyy.switchly.data.statistics.UsageInsightsAppCatalog
 import at.saltyy.switchly.util.PackageManagerApiCompat
+import at.saltyy.switchly.util.getIntCompat
 
 /**
  * Stores user-selected app visibility filters for Usage & Insights and app pickers.
@@ -138,7 +139,7 @@ object IgnoredUsageAppsStore {
             return
         }
 
-        val currentVersion = prefs.getInt(KEY_USAGE_SUGGESTIONS_VERSION, 1)
+        val currentVersion = prefs.getIntCompat(KEY_USAGE_SUGGESTIONS_VERSION, 1)
         if (currentVersion < USAGE_SUGGESTIONS_VERSION) {
             val stored = prefs.getStringSet(KEY_USAGE_PACKAGES, emptySet()).orEmpty()
             val migrated = buildSet {

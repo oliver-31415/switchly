@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -31,23 +32,23 @@
             android:id="@+id/recycler"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
             android:paddingTop="16dp"
-            android:paddingBottom="120dp" />
+            android:paddingBottom="120dp"
+            android:clipToPadding="false" />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/tvEmpty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="top"
             android:layout_marginStart="8dp"
             android:layout_marginTop="24dp"
             android:layout_marginEnd="8dp"
+            android:layout_gravity="top"
             android:visibility="gone"
-            app:strokeColor="@color/status_border"
-            app:strokeWidth="1dp"
             app:cardCornerRadius="20dp"
-            app:cardElevation="0dp">
+            app:cardElevation="0dp"
+            app:strokeColor="@color/status_border"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -60,8 +61,8 @@
                     android:layout_width="34dp"
                     android:layout_height="34dp"
                     android:contentDescription="@null"
-                    android:src="@drawable/nfc_24"
                     android:importantForAccessibility="no"
+                    android:src="@drawable/nfc_24"
                     app:tint="?attr/colorPrimary" />
 
                 <TextView
@@ -85,7 +86,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnEmptyAddTag"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Switchly.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
@@ -102,9 +103,9 @@
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="96dp"
+        android:layout_gravity="bottom|end"
         android:contentDescription="@string/paired_tags_add_fab_desc"
         app:srcCompat="@drawable/add_24" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

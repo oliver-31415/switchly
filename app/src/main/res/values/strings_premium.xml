@@ -21,6 +21,8 @@
     <string name="premium_button_buy">Buy Premium</string>
     <string name="premium_button_buy_with_price">Buy Premium • %1$s</string>
     <string name="premium_purchase_error_generic">Could not open Google Play purchase. Please try again or contact support.</string>
+    <string name="premium_purchase_already_opening">Google Play purchase is already opening. Please wait a moment.</string>
+    <string name="premium_purchase_google_play_unavailable">Could not connect to Google Play. Please try again in a moment.</string>
     <string name="premium_purchase_open_timeout">Google Play did not open the purchase screen. Please try again.</string>
     <string name="premium_button_opening">Opening Google Play…</string>
     <string name="premium_button_restore">Restore purchases</string>

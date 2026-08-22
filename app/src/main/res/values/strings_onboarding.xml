@@ -20,10 +20,11 @@
     <!-- Welcome and core concept -->
     <!-- ====================================================== -->
     <string name="onb_welcome_title">Welcome to Switchly</string>
-    <string name="onb_welcome_desc">Build a setup that adds friction where you need it without making your whole phone harder to use.</string>
-    <string name="onb_core_point_choose">Choose the apps, websites and in-app content you want each profile to manage.</string>
-    <string name="onb_core_point_control">Control protection with buttons, schedules, NFC, QR, barcodes, widgets or tiles.</string>
-
+    <string name="onb_welcome_desc">Choose what to protect, decide which controls may change protection, then let Switchly keep those rules in place.</string>
+    <string name="onb_core_point_choose">Pick the apps, websites and supported in-app sections you want each profile to protect.</string>
+    <string name="onb_core_point_control">Choose the control channels you trust: NFC, schedules, QR, barcode or manual controls.</string>
+    <string name="onb_core_point_enforce">Temporary actions end automatically, while protected settings stay read-only during active protection.</string>
+    
     <!-- ====================================================== -->
     <!-- Usage report onboarding step -->
     <!-- ====================================================== -->
@@ -67,12 +68,12 @@
     <!-- ====================================================== -->
     <!-- Blocking controls -->
     <!-- ====================================================== -->
-    <string name="onb_controls_title">Choose how blocking is controlled</string>
-    <string name="onb_controls_desc">Choose how strict Switchly should be while blocking is active. You can keep it simple now and tighten it later.</string>
+    <string name="onb_controls_title">Choose what can change protection</string>
+    <string name="onb_controls_desc">Only the control channels you allow can change protection. Keep the setup simple now and tighten it later if you want more friction.</string>
     <string name="onb_controls_action">Choose mode</string>
     <string name="onb_controls_selected">Mode selected</string>
-    <string name="onb_controls_point_enable_disable">Choose which actions can enable or disable Switchly.</string>
-    <string name="onb_controls_point_lock_edits">Restrict profile, schedule or app-list edits while active.</string>
+    <string name="onb_controls_point_enable_disable">Allow only the paths you want: NFC, schedules, QR, barcode or manual controls.</string>
+    <string name="onb_controls_point_lock_edits">Protection-related edits stay read-only while Switchly is active.</string>
     <string name="onb_required_controls">Please choose how Switchly should be controlled before continuing.</string>
 
     <!-- ====================================================== -->
@@ -124,10 +125,10 @@
     <!-- Ready to start -->
     <!-- ====================================================== -->
     <string name="onb_start_title">Ready to start</string>
-    <string name="onb_start_desc_clean">Review your setup and start Switchly. Profiles, controls, Home, rules and more can still be customized later in Settings.</string>
+    <string name="onb_start_desc_clean">Review what is protected, which controls may change it, and whether the required permissions are ready. You can customize the rest later in Settings.</string>
     <string name="onb_start_test_toast">Switchly enabled. Try opening one blocked app to test it.</string>
     <string name="onb_review_profile_title">Profile</string>
-    <string name="onb_review_mode_title">Mode</string>
+    <string name="onb_review_mode_title">Allowed controls</string>
 
     <!-- ====================================================== -->
     <!-- Selected apps review -->
@@ -172,7 +173,7 @@
     <string name="onb_optional_display_title">Widgets &amp; shortcuts</string>
     <string name="onb_optional_display_desc">Add Android Quick Settings tiles and Home screen widgets.</string>
     <string name="onb_optional_app_lock_title">App lock &amp; uninstall protection</string>
-    <string name="onb_optional_app_lock_desc">Protect access to Switchly and optionally add Device Admin uninstall friction.</string>
+    <string name="onb_optional_app_lock_desc">Protect access to Switchly and add optional uninstall friction. Advanced managed-device protection stays a separate technical setup.</string>
     <string name="onb_optional_feature_access_title">Feature access</string>
     <string name="onb_optional_feature_access_desc">Choose what remains accessible while protection is active and review advanced controls.</string>
     <string name="onb_optional_faq_title">FAQ &amp; setup help</string>

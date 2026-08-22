@@ -23,7 +23,7 @@
     <string name="toggle_section_mixed_channels">Mixed-Mode-Kanäle</string>
     <string name="toggle_section_mixed_channels_summary">Nur in Mixed Mode relevant. Wähle, welche Kanäle Switchly steuern dürfen, wenn Mixed Mode ausgewählt ist.</string>
     <string name="toggle_section_additional_features">Funktionszugriff während Schutz</string>
-    <string name="toggle_section_additional_features_summary">Allow-selected Bearbeitung und Hilfsfunktionen während Switchly aktiv ist. Home-Aussehen ist in Appearance.</string>
+    <string name="toggle_section_additional_features_summary">Bearbeitung im Modus Ausgewählte erlauben und Hilfsfunktionen bei aktivem Switchly. Das Aussehen der Startseite findest du unter Darstellung.</string>
     <string name="toggle_section_protection">Sicherheit &amp; Einschränkungen</string>
     <string name="toggle_section_protection_summary">Sicherheits-, Wiederherstellungs- und Zuverlässigkeitsoptionen.</string>
     <string name="toggle_section_ui">Home-Aussehen</string>
@@ -85,6 +85,8 @@
     <string name="pref_allow_button_enable_title">Manuelle Steuerung nur zum Aktivieren</string>
     <string name="pref_allow_button_enable_summary">Erlaubt Home-Buttons und Schnelleinstellungen-Kacheln, Switchly zu aktivieren. Ausschalten braucht weiterhin eine erlaubte Steuerungsmethode.</string>
     <string name="toggle_detail_allow_button_enable">Wenn aktiviert, können Home-Buttons und Schnelleinstellungen-Kacheln Switchly in jedem Kontrollmodus einschalten. Ausschalten braucht weiterhin die aktuell erlaubten Steuerungsmethoden.</string>
+    <string name="pref_lock_active_temporary_timer_title">Aktiven temporären Timer sperren</string>
+    <string name="pref_lock_active_temporary_timer_summary">Home kann einen laufenden Schutz-Timer nicht ersetzen oder verkürzen. Eine temporäre Pause kann nur beendet werden, um den Schutz wiederherzustellen. Erlaubte NFC-, QR- und Barcode-Aktionen funktionieren weiter.</string>
     <string name="mixed_channels_locked_while_switchly_enabled">Deaktiviere Switchly, um Steuerungsmethoden und Zugriffsregeln zu bearbeiten.</string>
     <string name="pref_mixed_allow_app_picking_title">App-Auswahl erlauben</string>
     <string name="pref_mixed_allow_app_picking_summary">Erlaubt das Öffnen der App-Auswahl, während Switchly aktiv ist.</string>
@@ -108,9 +110,6 @@
     <string name="toggle_locked_nfc_howto">Scanne dein NFC-Aktionstag, um Switchly zu deaktivieren und geschützte Einstellungen zu entsperren. Wenn QR-Unlock aktiv ist, kannst du stattdessen deinen QR-Fallback nutzen.</string>
     <string name="pref_enable_paired_uids_title">Gepaarte NFC-Tags aktivieren</string>
     <string name="pref_enable_paired_uids_summary">Erlaubt UID-basierte Aktionen, Overrides geschriebener Aktionen und Limits pro gekoppeltem NFC-Tag. Nicht gekoppelte beschriebene Switchly-Tags funktionieren weiterhin normal.</string>
-    <string name="toggle_info_paired_uids_title">Gepaarte NFC-Tags</string>
-    <string name="toggle_info_paired_uids_body_enabled">Nur-UID-/schreibgeschützte Tags sind aktiviert. Koppel Tags in „Gekoppelte Tags verwalten“, um sie ohne geschriebene Switchly-Aktion zu nutzen oder Limits pro Tag anzuwenden. Geschriebene Switchly-NFC-Aktionstags funktionieren weiterhin ohne Kopplung.</string>
-    <string name="toggle_info_paired_uids_body_disabled">Kopplung ist derzeit deaktiviert.\nNormale geschriebene Switchly-NFC-Aktionstags funktionieren ohne Kopplung, wenn NFC-Steuerung erlaubt ist.\nAktiviere das nur für Nur-UID-/schreibgeschützte Tags oder Limits pro Tag.</string>
     <string name="pref_auto_pair_on_write_title">Beschriebene NFC-Tags automatisch koppeln</string>
     <string name="pref_auto_pair_on_write_summary">Fügt die UID nach dem Schreiben einer Switchly-Aktion zusätzlich zu den gekoppelten Tags hinzu.</string>
     <string name="toggle_detail_auto_pair_on_write">Standardmäßig aus. Wenn aktiviert, speichert das Schreiben eines Switchly-NFC-Tags zusätzlich dessen UID als gekoppelten Tag. Nur aktivieren, wenn Schreiben und Koppeln bewusst zusammen passieren sollen.</string>
@@ -136,9 +135,9 @@
     <string name="toggle_detail_emergency">Erlaubt eine temporäre Entsperrung pro Tag (15 Minuten). Währenddessen ist Switchly deaktiviert, damit du kurz auf blockierte Apps zugreifen kannst.</string>
     <string name="toggle_subsection_tiles">Schnelleinstellungen-Kacheln</string>
     <string name="toggle_subsection_widgets">Widgets</string>
-    <string name="toggle_subsection_widgets_summary">Füge Android-Home-Screen-Widgets für Scanner, Zeitpläne und Status hinzu.</string>
+    <string name="toggle_subsection_widgets_summary">Füge Android-Widgets für Scanner, Zeitpläne und Status zur Startseite hinzu.</string>
     <string name="pref_home_layout_mode_title">Home-Modus</string>
-    <string name="pref_home_layout_mode_summary">Wähle, wie viele Details der Home Screen zeigt.</string>
+    <string name="pref_home_layout_mode_summary">Wähle, wie viele Details die Startseite zeigt.</string>
     <string name="pref_home_layout_custom_title">Home anpassen</string>
     <string name="pref_home_layout_custom_summary">Wähle die großen Home-Karten und die Details innerhalb jeder Karte.</string>
     <string name="pref_home_layout_custom_builder_intro">Wähle die Home-Karten und ihre Inhalte.</string>
@@ -191,7 +190,7 @@
     <!-- Home display -->
     <!-- ====================================================== -->
     <string name="toggle_subsection_in_app_home">Switchly Home</string>
-    <string name="toggle_subsection_in_app_home_summary">Wähle, welche Shortcuts und Statuskarten auf dem Switchly-Home-Screen erscheinen.</string>
+    <string name="toggle_subsection_in_app_home_summary">Wähle, welche Schnellaktionen und Statuskarten auf der Switchly-Startseite erscheinen.</string>
     <string name="pref_show_quick_actions_title">Schnellaktionen</string>
     <string name="pref_show_quick_actions_summary">Zeigt Schnellaktionen auf dem Startbildschirm.</string>
     <string name="toggle_detail_quick_actions">Zeigt auf dem Dashboard Schnellbuttons für häufige Aktionen (z. B. temporär deaktivieren oder Profil-Shortcuts).</string>
@@ -246,9 +245,9 @@
     <string name="pref_barcode_qs_tile_summary">Fügt einen Schnelleinstellungen-Shortcut zum Öffnen des Barcode-Scanners hinzu.</string>
     <string name="pref_qs_tile_already_added">Bereits hinzugefügt</string>
     <string name="pref_widget_barcode_title">Barcode-Scanner-Widget</string>
-    <string name="pref_widget_barcode_summary">Fügt ein Home-Screen-Widget zum Öffnen des Barcode-Scanners hinzu.</string>
+    <string name="pref_widget_barcode_summary">Fügt ein Startseiten-Widget zum Öffnen des Barcode-Scanners hinzu.</string>
     <string name="pref_widget_qr_title">QR-Scanner-Widget</string>
-    <string name="pref_widget_qr_summary">Fügt ein Home-Screen-Widget zum Öffnen des QR-Scanners hinzu.</string>
+    <string name="pref_widget_qr_summary">Fügt ein Startseiten-Widget zum Öffnen des QR-Scanners hinzu.</string>
     <string name="pref_widget_next_schedule_title">Nächster-Zeitplan-Widget</string>
     <string name="pref_widget_next_schedule_summary">Fügt ein Widget hinzu, das die nächste geplante Zeitplan-Änderung zeigt.</string>
     <string name="pref_widget_active_timer_title">Aktivzeit-Widget</string>
@@ -285,10 +284,10 @@
     <string name="home_custom_next_schedule">Nächster Zeitplan</string>
     <string name="home_custom_blocked_apps">Verwaltete Apps</string>
     <string name="home_custom_profile_dropdown">Profilauswahl</string>
-    <string name="home_mode_default_card_summary">Aufgeräumter Start-Home-Screen mit den wichtigsten Controls, App Picker und ausgewählter App-Liste, ohne erweiterte Statusbereiche.</string>
-    <string name="home_mode_simple_card_summary">Minimaler Home Screen mit den wichtigsten Switchly-Steuerungen.</string>
-    <string name="home_mode_advanced_card_summary">Voller Home Screen mit mehr Details, Shortcuts und Statusbereichen.</string>
-    <string name="home_mode_custom_card_summary">Wähle große Home-Karten, passe ihre Inhalte an und sortiere sowohl Karten als auch Inhalte per Drag &amp; Drop.</string>
+    <string name="home_mode_default_card_summary">Aufgeräumte Startseite mit den wichtigsten Steuerungen, der App-Auswahl und der ausgewählten App-Liste.</string>
+    <string name="home_mode_simple_card_summary">Minimale Startseite mit den wichtigsten Switchly-Steuerungen.</string>
+    <string name="home_mode_advanced_card_summary">Vollständige Startseite mit zusätzlichen Details, Schnellaktionen und Statusbereichen.</string>
+    <string name="home_mode_custom_card_summary">Wähle Karten und Inhalte selbst aus und sortiere sie per Drag &amp; Drop.</string>
     <string name="home_custom_active_timer_summary">Zeigt, wie lange der aktuelle Schutzstatus bereits aktiv ist.</string>
     <string name="home_custom_main_button_summary">Zeigt den Hauptbutton zum Aktivieren oder Deaktivieren von Switchly.</string>
     <string name="home_custom_active_profile_summary">Zeigt die aktuell aktive Profil-Zeile.</string>

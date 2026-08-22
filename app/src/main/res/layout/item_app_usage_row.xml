@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     style="@style/Switchly.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
+    android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
     app:cardUseCompatPadding="false">
 
     <LinearLayout
@@ -37,8 +38,8 @@
                 android:id="@+id/name"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="12dp"
+                android:layout_weight="1"
                 android:text="@string/usage_app_placeholder"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp"
@@ -57,10 +58,10 @@
                     android:id="@+id/time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:alpha="0.8"
                     android:text="@string/usage_time_zero_short"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp"
-                    android:alpha="0.8" />
+                    android:textSize="14sp" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -72,21 +73,21 @@
                         android:id="@+id/percent"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:alpha="0.65"
                         android:text="@string/usage_percent_zero"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="12sp"
-                        android:alpha="0.65" />
+                        android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/details"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
+                        android:alpha="0.92"
                         android:text="@string/usage_open_details"
                         android:textColor="?attr/colorPrimary"
                         android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:alpha="0.92" />
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -147,12 +148,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:visibility="gone"
+            android:alpha="0.85"
             android:text=""
             android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
             android:maxLines="1"
-            android:ellipsize="end"
-            android:alpha="0.85" />
+            android:ellipsize="end" />
 
         <LinearLayout
             android:id="@+id/sessionUsageContainer"
@@ -166,12 +167,12 @@
                 android:id="@+id/sessionUsageText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:alpha="0.88"
                 android:text=""
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:alpha="0.88" />
+                android:ellipsize="end" />
 
             <ProgressBar
                 android:id="@+id/sessionProgress"

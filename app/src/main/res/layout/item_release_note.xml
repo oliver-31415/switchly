@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     style="@style/Switchly.Card"
@@ -24,16 +25,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                tools:text="v2.2.1-beta"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                tools:text="v2.2.1-beta" />
 
             <TextView
                 android:id="@+id/tvDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="Jul 9, 2026"
                 android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
-                android:textColor="?android:attr/textColorSecondary" />
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="Jul 9, 2026" />
         </LinearLayout>
 
         <TextView
@@ -41,19 +42,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            tools:text="Release notes…"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:lineSpacingExtra="4dp"
             android:breakStrategy="balanced"
             android:hyphenationFrequency="normal"
-            android:lineSpacingExtra="4dp" />
+            tools:text="Release notes…" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnToggleBody"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Switchly.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
             android:layout_marginTop="4dp"
+            android:layout_gravity="end"
             android:minHeight="0dp"
             android:visibility="gone"
             android:text="@string/changelog_show_more"

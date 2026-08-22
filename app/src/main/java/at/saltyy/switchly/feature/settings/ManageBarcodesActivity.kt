@@ -59,7 +59,6 @@ import at.saltyy.switchly.ui.dialog.SwitchlyDialogOption
 import at.saltyy.switchly.ui.dialog.showSwitchlyOptionDialog
 import at.saltyy.switchly.ui.dialog.showSwitchlyFormDialog
 import at.saltyy.switchly.util.EditingLockGuard
-import at.saltyy.switchly.util.SwitchlyStoreLinks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
@@ -251,15 +250,11 @@ class ManageBarcodesActivity : AppCompatActivity() {
     private fun showBarcodeInfoDialog() {
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.manage_barcodes_info_title)
-            .setMessage(buildStoreInfoMessage(R.string.manage_barcodes_info_body))
-            .setNeutralButton(R.string.store_open) { _, _ -> SwitchlyStoreLinks.openStore(this) }
+            .setMessage(R.string.manage_barcodes_info_body)
             .setPositiveButton(R.string.ok, null)
             .showAccented()
     }
 
-    private fun buildStoreInfoMessage(baseMessageRes: Int): String {
-        return getString(baseMessageRes) + "\n\n" + getString(R.string.store_card_title) + "\n" + getString(R.string.store_card_summary)
-    }
 
     private fun refresh() {
         val entries = ScanCodeStore.getEntries(this).filter { it.kind == ScanCodeStore.Kind.BARCODE }

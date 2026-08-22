@@ -46,6 +46,7 @@ import at.saltyy.switchly.ui.EdgeToEdgeUtils
 import at.saltyy.switchly.ui.ThemeUtils
 import at.saltyy.switchly.ui.dialog.styleSwitchlyDialogButtons
 import at.saltyy.switchly.util.LocaleHelper
+import at.saltyy.switchly.util.ManagedDevicePolicyHelper
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 
@@ -57,8 +58,10 @@ class AppLockSettingsActivity : AppCompatActivity() {
     private lateinit var switchStrictProtection: SwitchMaterial
     private lateinit var rowSetPin: View
     private lateinit var tvSetPinLabel: TextView
+    private lateinit var tvStrictProtectionSummary: TextView
     private var ignoreChanges = false
     private var pendingStrictProtectionEnable = false
+    private var managedPolicySyncAttempted = false
 
     private val deviceAdminLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -97,6 +100,7 @@ class AppLockSettingsActivity : AppCompatActivity() {
         switchStrictProtection = findViewById(R.id.switchStrictProtection)
         rowSetPin = findViewById(R.id.rowSetPin)
         tvSetPinLabel = findViewById(R.id.tvSetPinLabel)
+        tvStrictProtectionSummary = findViewById(R.id.tvStrictProtectionSummary)
 
         findViewById<View>(R.id.rowAppLockEnabled).setOnClickListener { switchEnabled.toggle() }
         findViewById<View>(R.id.rowAppLockBiometric).setOnClickListener { switchBiometric.toggle() }
@@ -150,6 +154,7 @@ class AppLockSettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        managedPolicySyncAttempted = false
         refreshUi()
     }
 
@@ -157,11 +162,40 @@ class AppLockSettingsActivity : AppCompatActivity() {
         ignoreChanges = true
         val appLockEnabled = AppLockStore.isEnabled(this)
         val strictProtectionEnabled = isStrictProtectionEnabled()
+        val strictProtectionConfigured = AppLockStore.isStrictProtectionEnabled(this)
+        val dpm = getSystemService(DevicePolicyManager::class.java)
+        val adminComponent = ComponentName(this, DPMReceiver::class.java)
+        val deviceOwner = dpm?.isDeviceOwnerApp(packageName) == true
+        val profileOwner = dpm?.isProfileOwnerApp(packageName) == true
+        val deviceAdmin = dpm?.isAdminActive(adminComponent) == true
+        val managedBlock = ManagedDevicePolicyHelper.isSelfUninstallBlocked(this)
+        if (strictProtectionConfigured && (deviceOwner || profileOwner) && managedBlock == false && !managedPolicySyncAttempted) {
+            managedPolicySyncAttempted = true
+            ManagedDevicePolicyHelper.syncSelfUninstallBlock(this)
+            switchStrictProtection.postDelayed({
+                if (!isFinishing && !isDestroyed) refreshUi()
+            }, 350L)
+        }
         switchEnabled.isChecked = appLockEnabled
         switchBiometric.isChecked = AppLockStore.isBiometricEnabled(this)
         switchStrictProtection.isChecked = strictProtectionEnabled
         switchStrictProtection.isEnabled = true
         findViewById<View>(R.id.rowStrictProtection).alpha = 1f
+        tvStrictProtectionSummary.text = when {
+            strictProtectionConfigured && deviceOwner && managedBlock == true ->
+                getString(R.string.app_lock_strict_protection_summary_device_owner_active)
+            strictProtectionConfigured && profileOwner && managedBlock == true ->
+                getString(R.string.app_lock_strict_protection_summary_profile_owner_active)
+            strictProtectionConfigured && (deviceOwner || profileOwner) && managedBlock != true ->
+                getString(R.string.app_lock_strict_protection_summary_managed_not_active)
+            strictProtectionConfigured && deviceAdmin ->
+                getString(R.string.app_lock_strict_protection_summary_device_admin_active)
+            strictProtectionConfigured ->
+                getString(R.string.app_lock_strict_protection_summary_admin_inactive)
+            deviceOwner || profileOwner ->
+                getString(R.string.app_lock_strict_protection_summary_managed_available)
+            else -> getString(R.string.app_lock_strict_protection_summary)
+        }
         ignoreChanges = false
 
         tvSetPinLabel.text = getString(
@@ -196,6 +230,7 @@ class AppLockSettingsActivity : AppCompatActivity() {
         }
 
         if (isDeviceAdminOrManagedOwnerActive()) {
+            managedPolicySyncAttempted = false
             AppLockStore.setStrictProtectionEnabled(this, true)
             refreshUi()
             return

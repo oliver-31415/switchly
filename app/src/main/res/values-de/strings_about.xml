@@ -57,9 +57,7 @@
     <string name="about_email_label">E-Mail</string>
     <string name="about_gitlab_label">GitLab-Repository</string>
     <string name="about_store_label">Switchly Store</string>
-    <string name="store_card_title">Offizielle Switchly-Tags</string>
     <string name="store_card_summary">Offizielle NFC- und QR-Tags.</string>
-    <string name="store_open">Store öffnen</string>
     <string name="store_open_failed">Der Switchly Store konnte nicht geöffnet werden.</string>
     <string name="about_website_label">Website</string>
     <string name="about_mail">E-Mail</string>
@@ -75,7 +73,7 @@
     <string name="about_switchly_lite">Switchly Lite</string>
     <string name="about_switchly_lite_bonus">Eine leichtere Version für einfache Abläufe wie NFC, Tastenaktionen und zeitgesteuerte Pläne.</string>
     <string name="about_switchly_launcher">Switchly Launcher</string>
-    <string name="about_switchly_launcher_bonus">Ein simpler und starker Launcher für ein minimaleres, ablenkungsärmeres Setup.</string>
+    <string name="about_switchly_launcher_bonus">Ein einfacher und leistungsfähiger Launcher für eine minimalere, ablenkungsärmere Einrichtung.</string>
     <string name="about_other_apps_info_title">Weitere Switchly-Apps</string>
     <string name="about_other_apps_info_body">Switchly Lite ist die leichtere App für einfache NFC-, Button- und Zeitplan-Setups.\n\nSwitchly Launcher ist ein minimalistischer Launcher für strengere, ablenkungsärmere Handy-Setups.</string>
 

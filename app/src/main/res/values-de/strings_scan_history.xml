@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scan_last_action_none">Noch kein erfolgreicher Scan</string>
+    <string name="scan_last_action_fmt">Letzte Aktion: %1$s · %2$s</string>
+    <string name="scan_last_action_profile_fmt">%1$s · %2$s</string>
+    <string name="scan_last_action_duration_fmt">%1$s · %2$d Min.</string>
+    <string name="scan_last_action_enabled">Aktiviert</string>
+    <string name="scan_last_action_disabled">Deaktiviert</string>
+    <string name="scan_last_action_temp_enabled">Temporär aktiviert</string>
+    <string name="scan_last_action_temp_disabled">Temporär deaktiviert</string>
+    <string name="scan_last_action_profile_switched">Profil gewechselt</string>
+    <string name="scan_last_action_emergency">Notfallaktion</string>
+    <string name="scan_last_action_applied">Aktion ausgeführt</string>
+</resources>

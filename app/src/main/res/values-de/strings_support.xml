@@ -5,19 +5,19 @@
     <!-- Support contact flow -->
     <!-- ====================================================== -->
     <string name="support_title">Support</string>
-    <string name="support_desc">Erstelle einen Bericht mit den gewünschten Details oder prüfe aktuelle Logs, bevor du den Support kontaktierst.</string>
+    <string name="support_desc">Kontaktiere den Support per E-Mail und wähle, welche Diagnosedaten mitgesendet werden sollen, oder prüfe vorher die aktuellen Logs.</string>
     <string name="support_email_subject">Switchly-Support</string>
-    <string name="support_open_email">Bericht erstellen</string>
+    <string name="support_open_email">Support kontaktieren</string>
     <string name="support_copy_email">E-Mail kopieren</string>
     <string name="support_copied">E-Mail kopiert</string>
     <string name="support_copy_latest_logs">Neueste Logs kopieren</string>
     <string name="support_logs_copied">Neueste Logs kopiert</string>
-    <string name="support_choose_report_data">Report-Daten auswählen</string>
+    <string name="support_choose_report_data">Mitgesendete Daten auswählen</string>
     <string name="support_include_debug">Debug-Infos anhängen</string>
     <string name="support_include_debug_summary">App, Gerät, Berechtigungen, Switchly-Status, Zeitpläne und Laufzeitstatus</string>
     <string name="support_include_advanced_debug">Erweiterte Diagnoseinfos anhängen</string>
     <string name="support_include_advanced_debug_summary">Ergänzt interne Einstellungs- und Funktionszähler im Debug-Report</string>
-    <string name="support_include_setup_details">Setup-Details anhängen</string>
+    <string name="support_include_setup_details">Einrichtungsdetails anhängen</string>
     <string name="support_include_setup_details_summary">Ergänzt Profilnamen, Regelanzahlen, Zeitplan-Konfiguration, Trigger und Überschneidungen</string>
     <string name="support_include_active_profile_apps">Apps aus dem aktiven Profil anhängen</string>
     <string name="support_include_active_profile_apps_summary">Ergänzt App-Namen und Paket-IDs, die durch den Regelmodus des aktiven Profils ausgewählt sind</string>
@@ -27,7 +27,7 @@
     <string name="support_latest_logs_heading">Neueste Logs</string>
     <string name="support_response_time_short">Antwortzeit: bis zu 7 Tage</string>
     <string name="support_response_time_title">Support-Antwortzeit</string>
-    <string name="support_response_time_details">Switchly wird von einer einzelnen Person entwickelt und unterstützt. Ich lese Support-Nachrichten und Bugreports so schnell wie möglich, Antworten können je nach Auslastung aber manchmal bis zu 7 Tage dauern.\n\nBitte füge bei Problemen mit Blocking, Zeitplänen, Premium oder Berechtigungen nach Möglichkeit Debug-Infos hinzu. Das hilft mir, schneller zu verstehen, was passiert ist.</string>
+    <string name="support_response_time_details">Switchly wird von einer einzelnen Person entwickelt und unterstützt. Ich lese Support-Nachrichten und Fehlerberichte so schnell wie möglich; Antworten können je nach Auslastung bis zu 7 Tage dauern.\n\nFüge bei Problemen mit Schutz, Zeitplänen, Premium oder Berechtigungen möglichst Diagnoseinformationen hinzu. Das erleichtert die Fehlersuche.</string>
 
     <!-- ====================================================== -->
     <!-- Onboarding link -->
