@@ -184,4 +184,11 @@
     <string name="dashboard_pause_until_next_schedule">Pause until next schedule change</string>
     <string name="dashboard_pause_until_leave_location">Pause until I leave this location</string>
     <string name="dashboard_pause_until_tomorrow">Pause until tomorrow</string>
+
+    <!-- Activity heatmap (Foqos-style habit tracker) -->
+    <string name="activity_section_title">Activity</string>
+    <string name="activity_heatmap_content_desc">Heatmap of blocked focus time for the last 28 days</string>
+    <string name="activity_week_fmt">This week: %1$s</string>
+    <string name="activity_day_detail_fmt">%1$s · %2$s blocked</string>
+    <string name="activity_day_none_fmt">%1$s · nothing blocked</string>
 </resources>

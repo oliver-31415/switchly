@@ -152,6 +152,10 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Calendar
 import java.util.Locale
+import java.text.DateFormat
+import at.saltyy.switchly.data.prefs.BlockedTimeStore
+import at.saltyy.switchly.ui.widgets.FoqosHeatmapView
+import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -228,6 +232,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvSetupSubtitle: TextView
     private lateinit var tvSetupDesc: TextView
     private lateinit var btnFinishSetup: MaterialButton
+
+    // Activity heatmap (Foqos-style)
+    private lateinit var activityHeatmap: FoqosHeatmapView
+    private lateinit var tvActivityWeek: TextView
+    private lateinit var tvActivityDetail: TextView
+    @Volatile private var activityDaysMs: LongArray = LongArray(FoqosHeatmapView.DAYS)
 
     // Quick actions tiles
     private lateinit var tileManageApps: MaterialCardView
@@ -400,6 +410,12 @@ class MainActivity : AppCompatActivity() {
         tvSetupSubtitle = findViewById(R.id.tvSetupSubtitle)
         tvSetupDesc = findViewById(R.id.tvSetupDesc)
         btnFinishSetup = findViewById(R.id.btnFinishSetup)
+
+        activityHeatmap = findViewById(R.id.activityHeatmap)
+        tvActivityWeek = findViewById(R.id.tvActivityWeek)
+        tvActivityDetail = findViewById(R.id.tvActivityDetail)
+        activityHeatmap.onDaySelected = { index -> onHeatmapDaySelected(index) }
+        refreshActivityHeatmap()
 
         tileManageApps = findViewById(R.id.tileManageApps)
         tileProfiles = findViewById(R.id.tileProfiles)
@@ -598,6 +614,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         syncScanQuickActions()
+        refreshActivityHeatmap()
 
         ExactAlarmPermissionSync.syncAndReschedule(this, reason = "main_resume")
         BlockingRuntime.ensureRunning(this)
@@ -1489,6 +1506,60 @@ class MainActivity : AppCompatActivity() {
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             true
+        }
+    }
+
+    // =========================
+    // Activity heatmap (Foqos BlockedSessionsHabitTracker equivalent)
+    // =========================
+    private fun refreshActivityHeatmap() {
+        if (!::activityHeatmap.isInitialized) {
+            return
+        }
+        thread {
+            val days = BlockedTimeStore.getDayTotalsMs(this, FoqosHeatmapView.DAYS)
+            runOnUiThread {
+                activityDaysMs = days
+                activityHeatmap.setData(days)
+                tvActivityWeek.text = getString(
+                    R.string.activity_week_fmt,
+                    formatDurationShort(days.sum())
+                )
+                onHeatmapDaySelected(-1)
+            }
+        }
+    }
+
+    private fun onHeatmapDaySelected(index: Int) {
+        if (!::tvActivityDetail.isInitialized) {
+            return
+        }
+        if (index < 0 || index >= activityDaysMs.size) {
+            tvActivityDetail.text = ""
+            return
+        }
+        val daysAgo = (activityDaysMs.size - 1) - index
+        val cal = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, -daysAgo)
+        }
+        val label = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault())
+            .format(cal.time)
+        val ms = activityDaysMs[index]
+        tvActivityDetail.text = if (ms > 0L) {
+            getString(R.string.activity_day_detail_fmt, label, formatDurationShort(ms))
+        } else {
+            getString(R.string.activity_day_none_fmt, label)
+        }
+    }
+
+    private fun formatDurationShort(ms: Long): String {
+        val totalMin = ms / 60_000L
+        val h = totalMin / 60
+        val m = totalMin % 60
+        return when {
+            h > 0 -> String.format(Locale.getDefault(), "%dh %02dm", h, m)
+            m > 0 -> String.format(Locale.getDefault(), "%dm", m)
+            else -> String.format(Locale.getDefault(), "<1m")
         }
     }
 

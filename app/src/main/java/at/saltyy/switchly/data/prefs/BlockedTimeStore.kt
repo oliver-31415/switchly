@@ -146,6 +146,52 @@ object BlockedTimeStore {
     }
 
     /**
+     * Per-day blocked-time totals for the last N days (inclusive of today),
+     * ordered oldest -> today. Entry index [days - 1] is always today.
+     * Used by the Foqos-style activity heatmap on Home.
+     */
+    fun getDayTotalsMs(ctx: Context, days: Int): LongArray {
+        val result = LongArray(days.coerceAtLeast(1))
+        if (days <= 0) {
+            return result
+        }
+
+        flush(ctx)
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        // Map ymd -> index in result.
+        val indexByYmd = HashMap<Int, Int>(days)
+        val calWalk = cal.clone() as Calendar
+        calWalk.add(Calendar.DAY_OF_YEAR, -(days - 1))
+        for (i in 0 until days) {
+            indexByYmd[ymdInt(calWalk)] = i
+            calWalk.add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        for ((k, vAny) in sp.all) {
+            if (!k.startsWith(PREFIX_DAY)) continue
+            // Key: blocked_ms_yyyymmdd_pkg
+            val ymdPart = k.removePrefix(PREFIX_DAY).substringBefore('_')
+            val idx = indexByYmd[ymdPart.toIntOrNull() ?: continue] ?: continue
+            val v = when (vAny) {
+                is Long -> vAny
+                is Int -> vAny.toLong()
+                is Number -> vAny.toLong()
+                else -> 0L
+            }
+            if (v > 0L) result[idx] += v
+        }
+        return result
+    }
+
+    /**
      * Sums all persisted blocked_ms entries for the given package across *all* days.
      * This is used for the "Overall" stats range.
      */

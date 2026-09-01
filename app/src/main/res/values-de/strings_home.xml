@@ -184,4 +184,11 @@
     <string name="dashboard_pause_until_next_schedule">Bis zum nächsten Zeitplanwechsel pausieren</string>
     <string name="dashboard_pause_until_leave_location">Pausieren bis ich den Ort verlasse</string>
     <string name="dashboard_pause_until_tomorrow">Bis morgen pausieren</string>
+
+    <!-- Aktivitäts-Heatmap (Foqos-Stil) -->
+    <string name="activity_section_title">Aktivität</string>
+    <string name="activity_heatmap_content_desc">Heatmap der blockierten Fokuszeit der letzten 28 Tage</string>
+    <string name="activity_week_fmt">Diese Woche: %1$s</string>
+    <string name="activity_day_detail_fmt">%1$s · %2$s blockiert</string>
+    <string name="activity_day_none_fmt">%1$s · nichts blockiert</string>
 </resources>

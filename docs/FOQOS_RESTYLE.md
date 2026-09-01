@@ -122,6 +122,49 @@ merge reintroduces duplicates inside `cardStatus`, resolve in favor of the dock 
 Scroll padding is 190dp bottom (dock + nav clearance); keep if upstream bumps it.
 `TextAppearance.Switchly.LargeTitle` is new — upstream will never conflict.
 
+### Commit 6 — "feat - Foqos Activity heatmap on Home"
+
+**Files:** `FoqosHeatmapView.kt` (new), `BlockedTimeStore.kt`, `MainActivity.kt`,
+`activity_main.xml`, `strings_home.xml` (EN+DE)
+
+- `BlockedTimeStore.getDayTotalsMs(ctx, days)` — per-day blocked-ms totals (28d window).
+- `ui/widgets/FoqosHeatmapView` — Canvas-based 4x7 grid (Foqos `FourWeekHeatmapView`):
+  Monday-first columns aligned to today, accent-intensity ramp per day, today ring,
+  tappable cells -> callback; empty cells tinted from textColorPrimary (mode-safe).
+- New `cardActivity` on Home ("Activity" + weekly summary + heatmap + tap detail line).
+- Data loaded on a background thread in onCreate/onResume (upstream ANR discipline).
+
+**Merge advice:** `cardActivity` sits between `cardStatus` and the quick-actions include;
+IDs `activityHeatmap`/`tvActivityWeek`/`tvActivityDetail` are new (no conflicts).
+`BlockedTimeStore.getDayTotalsMs` is additive. MainActivity additions: fields after
+`btnFinishSetup`, wiring after its findViewById, `refreshActivityHeatmap()` in onResume,
+helpers before `styleActiveDurationPill()`.
+
+### Full Foqos surface map (audit 2026-09-01, foqos @ main)
+
+Reference: `github.com/awaseem/foqos` — Foqos/Views + Foqos/Components.
+
+| Foqos view/feature | Switchly status |
+|---|---|
+| HomeView (large title, alerts, profiles, launcher) | **done** (commits 1-6) |
+| HomeProfileLauncher (docked Start/timer) | **done** (commit 5) |
+| BlockedSessionsHabitTracker / FourWeekHeatmapView | **done** (commit 6) |
+| WeeklySessionChart / MonthlySessionChart (tappable bar/month grid) | TODO — reuse `WeeklyBarChartView` + new month grid; data from BlockedTimeStore/BlockCountStore |
+| Streaks (habit streak display) | TODO — derivable from getDayTotalsMs |
+| HomeProfilesListView (profile ROWS on Home w/ start per profile) | TODO — RecyclerView + ProfileStore + SwitchModeStore wiring (replaces dropdown) |
+| StartProfilePickerView (sheet to pick profile to start) | partially — profileDropdown + ManageProfilesActivity |
+| BlockedProfileView (profile detail: emoji, apps grid, domains, schedules, strategy) | partially — ManageProfilesActivity + RulesHub; needs Foqos-style detail page pass |
+| StrategyPicker (horizontal strategy cards: manual/NFC/QR/timer/pause/soft-unblock) | n/a-mapped — Switchly's model is control channels (settings), not strategies |
+| ActiveProfileSessionView (fullscreen countdown, hold-to-break, focus messages) | TODO — restyle BlockerActivity toward a session view w/ timer + break affordances |
+| ProfileInsightsView (week/month pickers, summary rows, session list, delete) | partially — Activity tab has equivalents; needs per-profile insights pass |
+| SessionDetailsView / SessionRow | partially — BlockedInboxActivity / ActivityHistory |
+| EmergencyView (reset countdown, unblocks remaining, 2/4/6/8-week windows) | TODO — build from EmergencyBypassStore/EmergencyUnlockCountStore |
+| SettingsView (Theme/Help/About/Buy NFC sections) | partially — SettingsActivity exists; needs grouped-card pass + store links |
+| Welcome (empty state) | exists (onboarding); restyle pass pending |
+| IntroView (steppers) | exists (OnboardingActivity, setup version 220) |
+| Live Activities / Widgets | Switchly has its own widget set (ahead of Foqos here) |
+| Domain/app selectors | exist (ManageBlockedWebsitesActivity, AppPicker) |
+
 ## Known pitfalls (verified on device: Pixel 10 Pro XL, Android 17)
 
 ### Pitfall #1 — Night-mode `?attr` resolution through Material theme overlays (CRASH)
