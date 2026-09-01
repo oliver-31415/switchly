@@ -208,7 +208,12 @@ class FoqosHeatmapView @JvmOverloads constructor(
     }
 
     private fun colorFor(valueMs: Long): Int {
-        return bucketColors(accent)[bucketFor(valueMs)]
+        val bucket = bucketFor(valueMs)
+        if (bucket < 0) {
+            // Empty day: subtle text-color tint so it's visible in light AND dark mode.
+            return (textColor and 0x00FFFFFF) or 0x16000000
+        }
+        return bucketColors(accent)[bucket]
     }
 
     /** Number color inside a cell: dark text on light buckets, white on dark buckets. */
