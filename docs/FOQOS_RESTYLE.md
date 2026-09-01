@@ -102,6 +102,26 @@ Note: `toolbarForegroundColor()`-style helpers in ~8 screens (Permissions, Suppo
 WhatsNew, TilesInfo, AppPicker, ...) return BLACK in light / WHITE in dark — correct for
 flat surface headers; do not "fix" them back to accent logic.
 
+### Commit 5 — "feat - Foqos Home layout: large title, docked launcher"
+
+**Files:** `activity_main.xml`, `layout.xml` (styles)
+
+Foqos Home anatomy recreated (reference: foqos `HomeView.swift` /
+`HomeProfilesListView.swift` / `HomeProfileLauncher.swift`):
+
+| Foqos element | Switchly implementation |
+|---|---|
+| `AppTitle` large bold floating header | `app:titleTextAppearance="@style/TextAppearance.Switchly.LargeTitle"` (32sp) on Home toolbar only; flat surface AppBar (elevation 0) |
+| `HomeAlertsView` | `cardSetup` (already compact) |
+| `HomeProfileLauncher` (bottom-docked Start / active timer) | NEW `layoutBottomDock` above `bottomNav`: `btnToggle` (56dp pill, weight 1) + `tvActiveDuration` (56dp accent-outline pill, tap = ActiveTimeActivity — preserved) moved out of the status card |
+| `HomeProfilesListView` grouped card | `cardStatus` now holds profile/controls rows (Active profile, temp, emergency, dropdown, pick-apps) |
+| Session timer in launcher | `tvActiveDuration` relocated to the dock; runtime refs unchanged (IDs kept) |
+
+**Merge advice:** `btnToggle`/`tvActiveDuration` exist EXACTLY ONCE each now — if a
+merge reintroduces duplicates inside `cardStatus`, resolve in favor of the dock versions.
+Scroll padding is 190dp bottom (dock + nav clearance); keep if upstream bumps it.
+`TextAppearance.Switchly.LargeTitle` is new — upstream will never conflict.
+
 ## Known pitfalls (verified on device: Pixel 10 Pro XL, Android 17)
 
 ### Pitfall #1 — Night-mode `?attr` resolution through Material theme overlays (CRASH)
@@ -173,8 +193,8 @@ changing the theme again.
 - [x] Debug co-install (commit 2)
 - [x] Dark-mode crash fixes (commit 3)
 - [x] Toolbar: flat surface style app-wide (via `AccentColor.getToolbarColor` + TopBar style)
-- [ ] Home (`activity_main.xml`) restructure toward Foqos layout: hero status card, prominent
-      primary action, profile cards, minimal bottom nav
+- [x] Home restructure: large-title header, docked launcher (commit 5)
+- [ ] Profile rows list on Home (needs a RecyclerView fed by ProfileStore + row adapter — real Kotlin work)
 - [ ] Typography pass (bigger display sizes on Home, tighter section headers)
 - [x] Dark status bar icons (`values-night/themes.xml` overrides `windowLightStatusBar`)
 - [ ] Settings/Preferences restyle pass

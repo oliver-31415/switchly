@@ -23,7 +23,8 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             app:navigationIcon="@null"
-            app:title="@string/app_name" />
+            app:title="@string/app_name"
+            app:titleTextAppearance="@style/TextAppearance.Switchly.LargeTitle" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Content -->
@@ -34,7 +35,7 @@
         android:paddingStart="16dp"
         android:paddingTop="12dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="96dp"
+        android:paddingBottom="190dp"
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
@@ -192,28 +193,8 @@
                                 android:letterSpacing="-0.01"
                                 android:maxLines="2" />
 
-                            <TextView
-                                android:id="@+id/tvActiveDuration"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:minHeight="34dp"
-                                android:gravity="center_vertical"
-                                android:visibility="visible"
-                                android:text="@string/dashboard_active_duration_placeholder"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnToggle"
-                        style="@style/Switchly.Button"
-                        android:layout_width="match_parent"
-                        android:layout_height="64dp"
-                        android:layout_marginTop="18dp"
-                        android:textSize="16sp"
-                        android:text="@string/dashboard_toggle_enable" />
 
                     <!-- Current configuration summary -->
                     <LinearLayout
@@ -565,9 +546,51 @@
         android:visibility="gone"
         android:importantForAccessibility="no" />
 
-    <!-- Bottom-Navigation -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
+    <!-- Bottom dock: Foqos-style launcher (primary action + active timer) -->
+    <LinearLayout
+        android:id="@+id/layoutBottomDock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/layoutLauncher"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="10dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnToggle"
+                style="@style/Switchly.Button"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:textSize="16sp"
+                android:text="@string/dashboard_toggle_enable" />
+
+            <TextView
+                android:id="@+id/tvActiveDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_marginStart="10dp"
+                android:gravity="center"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:visibility="visible"
+                android:text="@string/dashboard_active_duration_placeholder"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Bottom-Navigation -->
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
@@ -576,4 +599,5 @@
         android:background="?attr/colorSurface"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/menu_bottom_main" />
+    </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

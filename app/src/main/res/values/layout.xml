@@ -72,6 +72,14 @@
         <item name="navigationIconTint">?attr/colorOnSurface</item>
     </style>
 
+    <!-- Large title for the Home header (Foqos AppTitle style) -->
+    <style name="TextAppearance.Switchly.LargeTitle" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textSize">32sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.01</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
     <!-- Standard buttons -->
     <!-- Expressive pill shape via full corner radius -->
     <style name="Switchly.Button" parent="Widget.Material3.Button">
