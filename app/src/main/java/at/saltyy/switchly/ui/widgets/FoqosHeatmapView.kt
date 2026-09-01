@@ -70,7 +70,13 @@ class FoqosHeatmapView @JvmOverloads constructor(
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
-        textSize = sp(11f)
+        textSize = sp(12f)
+    }
+    private val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        textAlign = Paint.Align.CENTER
+        textSize = sp(15f)
+        isFakeBoldText = true
     }
 
     private val cellRect = RectF()
@@ -139,59 +145,75 @@ class FoqosHeatmapView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        // Weekday initials (Mon..Sun across columns).
-        val dfs = java.text.DateFormatSymbols.getInstance(Locale.getDefault())
-        val weekdays = dfs.shortWeekdays // index 1..7 = Sun..Sat
-        val order = intArrayOf(Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, Calendar.FRIDAY, Calendar.SATURDAY, Calendar.SUNDAY)
+        // Foqos FourWeekHeatmapView: day-of-month labels run ABOVE each column,
+        // matching the calendar layout of the last 28 days.
         labelPaint.color = textColor
-        for (c in 0 until COLS) {
-            val label = weekdays[order[c]].take(1).uppercase(Locale.getDefault())
-            val x = paddingLeft + c * (cellSize + gap) + cellSize / 2f
-            canvas.drawText(label, x, paddingTop + sp(11f), labelPaint)
-        }
-
-        val maxVal = dayValuesMs.maxOrNull() ?: 0L
-
-        // The calendar is aligned so that the column of "today" matches its weekday,
-        // and rows walk backwards in 7-day steps.
-        val todayCal = Calendar.getInstance()
-        val todayDowMonFirst = ((todayCal.get(Calendar.DAY_OF_WEEK) + 5) % 7) // Mon=0..Sun=6
         val cal = Calendar.getInstance()
+        for (i in dayValuesMs.indices) {
+            val daysAgo = (dayValuesMs.size - 1) - i
+            val pos = gridPosition(daysAgo) ?: continue
+            cal.timeInMillis = System.currentTimeMillis()
+            cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
+            val dayLabel = cal.get(Calendar.DAY_OF_MONTH).toString()
+            val hasValue = dayValuesMs[i] > 0L
+            val showInside = hasValue || i == selectedDay
+            if (!showInside) {
+                val x = paddingLeft + pos.first * (cellSize + gap) + cellSize / 2f
+                canvas.drawText(dayLabel, x, paddingTop + sp(12f), labelPaint)
+            }
+        }
 
         for (i in dayValuesMs.indices) {
             val daysAgo = (dayValuesMs.size - 1) - i
-            cal.timeInMillis = System.currentTimeMillis()
-            cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
-            val col = (todayDowMonFirst - (daysAgo % 7) + 7) % 7
-            val rowFromToday = daysAgo / 7
-            val row = ROWS - 1 - rowFromToday
-            if (row < 0 || col < 0) continue
+            val pos = gridPosition(daysAgo) ?: continue
+            val (col, row) = pos
 
             val left = paddingLeft + col * (cellSize + gap)
             val top = gridTop + row * (cellSize + gap)
             cellRect.set(left, top, left + cellSize, top + cellSize)
 
             val v = dayValuesMs[i]
-            cellPaint.color = colorFor(v, maxVal)
-            val radius = cellSize * 0.32f
+            cellPaint.color = colorFor(v)
+            val radius = cellSize * 0.26f
             canvas.drawRoundRect(cellRect, radius, radius, cellPaint)
 
             if (i == todayIndex || i == selectedDay) {
                 cellStrokePaint.color = accent
                 canvas.drawRoundRect(cellRect, radius, radius, cellStrokePaint)
             }
+
+            // Day number renders INSIDE the cell when it has data or is selected.
+            val hasValue = v > 0L
+            if (hasValue || i == selectedDay) {
+                cal.timeInMillis = System.currentTimeMillis()
+                cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
+                val label = cal.get(Calendar.DAY_OF_MONTH).toString()
+                val onColor = onBucketColor(v)
+                numberPaint.color = onColor
+                val x = left + cellSize / 2f
+                val y = top + cellSize / 2f - (numberPaint.descent() + numberPaint.ascent()) / 2f
+                canvas.drawText(label, x, y, numberPaint)
+            }
         }
     }
 
-    private fun colorFor(valueMs: Long, maxMs: Long): Int {
-        if (valueMs <= 0L) {
-            // Empty day: subtle text-color tint so it's visible in light AND dark mode.
-            return (textColor and 0x00FFFFFF) or 0x16000000
-        }
-        val ratio = if (maxMs <= 0L) 1f else valueMs.toFloat() / maxMs
-        // Scale alpha 35%..100% of the accent for a Foqos-like ramp.
-        val alpha = (0x35 + (0xFF - 0x35) * ratio).toInt().coerceIn(0x35, 0xFF)
-        return Color.argb(alpha, Color.red(accent), Color.green(accent), Color.blue(accent))
+    /** Column/row for a "days ago" offset; null when it falls outside the grid. */
+    private fun gridPosition(daysAgo: Int): Pair<Int, Int>? {
+        val todayDowMonFirst = ((Calendar.getInstance().get(Calendar.DAY_OF_WEEK) + 5) % 7) // Mon=0..Sun=6
+        val col = (todayDowMonFirst - (daysAgo % 7) + 7) % 7
+        val rowFromToday = daysAgo / 7
+        val row = ROWS - 1 - rowFromToday
+        if (row < 0 || col < 0 || col >= COLS) return null
+        return col to row
+    }
+
+    private fun colorFor(valueMs: Long): Int {
+        return bucketColors(accent)[bucketFor(valueMs)]
+    }
+
+    /** Number color inside a cell: dark text on light buckets, white on dark buckets. */
+    private fun onBucketColor(valueMs: Long): Int {
+        return if (bucketFor(valueMs) <= 1) Color.argb(0xFF, 0x1B, 0x1B, 0x18) else Color.WHITE
     }
 
     override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
@@ -232,5 +254,39 @@ class FoqosHeatmapView @JvmOverloads constructor(
         const val DAYS = 28
         const val ROWS = 4
         const val COLS = 7
+
+        /** Intensity bucket for a day value in ms (Foqos legend: <1h, 1-3h, 3-5h, >5h). */
+        fun bucketFor(valueMs: Long): Int = when {
+            valueMs <= 0L -> -1
+            valueMs < 3_600_000L -> 0
+            valueMs < 3 * 3_600_000L -> 1
+            valueMs < 5 * 3_600_000L -> 2
+            else -> 3
+        }
+
+        /**
+         * The 4 bucket fill colors, light -> dark single-hue ramp derived from the
+         * active accent (Foqos uses a light->dark purple ramp on its accent).
+         */
+        fun bucketColors(accent: Int): IntArray {
+            val hsv = FloatArray(3)
+            Color.colorToHSV(accent, hsv)
+            fun variant(lighten: Float, satMul: Float): Int {
+                val v = FloatArray(3)
+                v[0] = hsv[0]
+                v[1] = (hsv[1] * satMul).coerceIn(0.25f, 1f)
+                v[2] = (hsv[2] + lighten).coerceIn(0f, 1f)
+                return Color.HSVToColor(v)
+            }
+            return intArrayOf(
+                variant(0.42f, 0.55f),
+                variant(0.18f, 0.8f),
+                accent,
+                variant(-0.22f, 1.05f),
+            )
+        }
+
+        /** Human-readable bucket labels for legends. */
+        fun bucketLabels(): List<String> = listOf("<1h", "1-3h", "3-5h", ">5h")
     }
 }

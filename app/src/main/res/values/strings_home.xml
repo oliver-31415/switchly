@@ -186,7 +186,7 @@
     <string name="dashboard_pause_until_tomorrow">Pause until tomorrow</string>
 
     <!-- Activity heatmap (Foqos-style habit tracker) -->
-    <string name="activity_section_title">Activity</string>
+    <string name="activity_section_title">4 Week Activity</string>
     <string name="activity_heatmap_content_desc">Heatmap of blocked focus time for the last 28 days</string>
     <string name="activity_week_fmt">%1$s – %2$s this week</string>
     <string name="profile_row_meta_fmt">%1$s | %2$s</string>
@@ -199,4 +199,15 @@
     <string name="profile_row_active">Active</string>
     <string name="activity_chart_mode_heatmap">28 days</string>
     <string name="activity_chart_mode_week">Week</string>
+    <string name="activity_hide">Hide</string>
+    <string name="activity_show">Show</string>
+    <string name="hero_stat_apps">Apps</string>
+    <string name="hero_stat_domains">Domains</string>
+    <string name="hero_stat_blocks">Blocks · 28d</string>
+    <string name="hero_strategy_manual">Manual Blocking</string>
+    <string name="hero_chip_mode_block">Block selected</string>
+    <string name="hero_chip_mode_allow">Allow selected</string>
+    <string name="hero_chip_autoblock">Auto-block new apps</string>
+    <string name="hero_chip_temporary">Temporary</string>
+    <string name="hero_chip_emergency">Emergency</string>
     </resources>

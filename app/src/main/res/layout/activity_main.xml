@@ -185,6 +185,160 @@
                             android:text="@string/profile_rows_manage" />
                     </LinearLayout>
 
+                    <!-- Foqos hero profile card: active profile summary -->
+                    <LinearLayout
+                        android:id="@+id/heroProfileRoot"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="6dp"
+                        android:padding="16dp"
+                        android:background="@drawable/hero_profile_bg">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tvHeroProfileName"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface"
+                                tools:text="Work Profile" />
+
+                            <ImageView
+                                android:id="@+id/ibtnHeroEdit"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:padding="8dp"
+                                android:background="@drawable/bg_round_outline"
+                                android:contentDescription="@string/profile_rows_manage"
+                                android:src="@drawable/edit_24"
+                                app:tint="?attr/colorOnSurface" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvHeroChips"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:textSize="12sp"
+                            android:alpha="0.85"
+                            tools:text="Block selected · Auto-block new apps" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_round_filled">
+
+                                <ImageView
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:layout_gravity="center"
+                                    android:contentDescription="@null"
+                                    android:src="@drawable/security_24"
+                                    app:tint="?attr/colorOnPrimary" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:id="@+id/tvHeroStrategy"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:layout_weight="1"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface"
+                                tools:text="Manual Blocking" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:orientation="horizontal"
+                            android:baselineAligned="false">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/hero_stat_apps"
+                                    android:textSize="12sp"
+                                    android:alpha="0.8" />
+
+                                <TextView
+                                    android:id="@+id/tvHeroStatApps"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold"
+                                    tools:text="9" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/hero_stat_domains"
+                                    android:textSize="12sp"
+                                    android:alpha="0.8" />
+
+                                <TextView
+                                    android:id="@+id/tvHeroStatDomains"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold"
+                                    tools:text="0" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/hero_stat_blocks"
+                                    android:textSize="12sp"
+                                    android:alpha="0.8" />
+
+                                <TextView
+                                    android:id="@+id/tvHeroStatBlocks"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold"
+                                    tools:text="11" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
                     <LinearLayout
                         android:id="@+id/profileRowsContainer"
                         android:layout_width="match_parent"
@@ -429,6 +583,20 @@
                             android:textSize="17sp"
                             android:textStyle="bold" />
 
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnActivityHide"
+                            style="@style/Switchly.OutlinedButton.CompactSegment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:minWidth="0dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="@string/activity_hide"
+                            app:icon="@drawable/visibility_off_24"
+                            app:iconGravity="textStart"
+                            app:iconPadding="4dp"
+                            app:iconSize="14dp" />
+
                         <TextView
                             android:id="@+id/tvActivityWeek"
                             android:layout_width="0dp"
@@ -462,11 +630,20 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
+                    <TextView
+                        android:id="@+id/tvHeatmapLegend"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:textSize="12sp"
+                        tools:text="legend" />
+
                     <at.saltyy.switchly.ui.widgets.FoqosHeatmapView
                         android:id="@+id/activityHeatmap"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="8dp"
                         android:contentDescription="@string/activity_heatmap_content_desc" />
 
                     <at.saltyy.switchly.ui.widgets.WeeklyBarChartView

@@ -189,6 +189,30 @@ item-click listener now delegates to `switchToProfile()` — if upstream changes
 flow, apply it there. `refreshProfileRows()` is additive; keep it called at the end of
 `refreshProfilesUi()`.
 
+### Commit 8 — "feat - Foqos visual parity: numbered heatmap, buckets+legend, Hide, hero card"
+
+**Files:** `FoqosHeatmapView.kt` (rework), `hero_profile_bg.xml`/`bg_round_outline.xml`/
+`bg_round_filled.xml` (new), `activity_main.xml`, `MainActivity.kt`, `strings_home.xml`
+
+Matches the real Foqos home (user-provided screenshots):
+- **Heatmap**: day-of-month labels ABOVE each column (weekday initials removed); numbers
+  render INSIDE filled/selected cells (dark text on light buckets, white on dark);
+  **4 intensity buckets** (<1h / 1-3h / 3-5h / >5h) as a light->dark single-hue ramp of
+  the accent (`FoqosHeatmapView.bucketColors(accent)` via HSV lighten/darken); legend row
+  with colored-dot spans (`tvHeatmapLegend`); section retitled "4 Week Activity"; **Hide**
+  pill toggles grid+legend+detail (label flips to Show).
+- **Hero profile card** (`heroProfileRoot`, `hero_profile_bg` 28dp-radius surface card):
+  active profile name 24sp + round edit button, feature chips line (Block/Allow selected ·
+  auto-block new apps · emergency if enabled), strategy row (shield roundel + "Manual
+  Blocking"), three stat columns (Apps / Domains / Blocks · 28d from `BlockCountStore`).
+- Profile rows kept BELOW the hero (Foqos shows only the hero; Switchly keeps rows for
+  fast switching — revisit if strict parity wanted).
+
+**Merge advice:** `bucketColors/bucketFor/bucketLabels` are new companion members of
+`FoqosHeatmapView` — don't lose them when merging upstream widget edits. The Hide toggle
+flips visibility on `tvHeatmapLegend`/`activityHeatmap`/`activityWeekChart`/`tvActivityDetail`
+and reuses `Switchly.OutlinedButton.CompactSegment`.
+
 ## Known pitfalls (verified on device: Pixel 10 Pro XL, Android 17)
 
 ### Pitfall #1 — Night-mode `?attr` resolution through Material theme overlays (CRASH)

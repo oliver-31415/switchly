@@ -154,6 +154,7 @@ import java.util.Calendar
 import java.util.Locale
 import java.text.DateFormat
 import at.saltyy.switchly.data.prefs.BlockedTimeStore
+import at.saltyy.switchly.data.prefs.BlockCountStore
 import at.saltyy.switchly.ui.widgets.FoqosHeatmapView
 import at.saltyy.switchly.ui.widgets.WeeklyBarChartView
 import at.saltyy.switchly.ui.SegmentedToggleUi
@@ -237,6 +238,14 @@ class MainActivity : AppCompatActivity() {
 
     // Activity heatmap (Foqos-style)
     private lateinit var activityHeatmap: FoqosHeatmapView
+    private lateinit var tvHeatmapLegend: TextView
+    private lateinit var btnActivityHide: MaterialButton
+    private lateinit var tvHeroProfileName: TextView
+    private lateinit var tvHeroChips: TextView
+    private lateinit var tvHeroStatApps: TextView
+    private lateinit var tvHeroStatDomains: TextView
+    private lateinit var tvHeroStatBlocks: TextView
+    private var activityHidden = false
     private lateinit var activityWeekChart: WeeklyBarChartView
     private lateinit var btnChartHeatmap: MaterialButton
     private lateinit var btnChartWeek: MaterialButton
@@ -421,6 +430,23 @@ class MainActivity : AppCompatActivity() {
         btnFinishSetup = findViewById(R.id.btnFinishSetup)
 
         activityHeatmap = findViewById(R.id.activityHeatmap)
+        tvHeatmapLegend = findViewById(R.id.tvHeatmapLegend)
+        btnActivityHide = findViewById(R.id.btnActivityHide)
+        tvHeroProfileName = findViewById(R.id.tvHeroProfileName)
+        tvHeroChips = findViewById(R.id.tvHeroChips)
+        tvHeroStatApps = findViewById(R.id.tvHeroStatApps)
+        tvHeroStatDomains = findViewById(R.id.tvHeroStatDomains)
+        tvHeroStatBlocks = findViewById(R.id.tvHeroStatBlocks)
+        btnActivityHide.setOnClickListener {
+            activityHidden = !activityHidden
+            val gridVisible = !activityHidden
+            tvHeatmapLegend.visibility = if (gridVisible) View.VISIBLE else View.GONE
+            activityHeatmap.visibility = if (gridVisible) View.VISIBLE else View.GONE
+            activityWeekChart.visibility = if (gridVisible && !isHeatmapMode()) View.VISIBLE else View.GONE
+            tvActivityDetail.visibility = if (gridVisible) View.VISIBLE else View.GONE
+            btnActivityHide.text = getString(if (gridVisible) R.string.activity_hide else R.string.activity_show)
+        }
+        applyHeatmapLegend()
         activityWeekChart = findViewById(R.id.activityWeekChart)
         btnChartHeatmap = findViewById(R.id.btnChartHeatmap)
         btnChartWeek = findViewById(R.id.btnChartWeek)
@@ -1559,6 +1585,69 @@ class MainActivity : AppCompatActivity() {
                 onHeatmapDaySelected(-1)
             }
         }
+    }
+
+    private fun isHeatmapMode(): Boolean = activityHeatmap.visibility == View.VISIBLE
+
+    /** Foqos legend chips: colored dots + hour-range labels, colors from bucket ramp. */
+    private fun applyHeatmapLegend() {
+        val colors = FoqosHeatmapView.bucketColors(AccentColor.getAccentColorInt(this))
+        val labels = FoqosHeatmapView.bucketLabels()
+        val sb = android.text.SpannableStringBuilder()
+        labels.forEachIndexed { i, label ->
+            val start = sb.length
+            sb.append("\u25CF ")
+            sb.setSpan(
+                android.text.style.ForegroundColorSpan(colors[i]),
+                start,
+                start + 1,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            sb.append(label)
+            if (i < labels.size - 1) sb.append("    ")
+        }
+        tvHeatmapLegend.text = sb
+    }
+
+    /** Foqos hero card: active profile name, feature chips and stat columns. */
+    private fun refreshProfileHero(current: String?) {
+        val profile = current ?: return
+        if (!::tvHeroProfileName.isInitialized) {
+            return
+        }
+        tvHeroProfileName.text = profile
+
+        val appCount = ProfileStore.getSelectedForProfileMode(this, profile).size
+        val domainCount = DomainBlockStore.getDomainsForProfile(this, profile).size
+        tvHeroStatApps.text = appCount.toString()
+        tvHeroStatDomains.text = domainCount.toString()
+        thread {
+            val blocks28d = BlockCountStore.getTotalForLastNDays(this, 28)
+            runOnUiThread {
+                if (::tvHeroStatBlocks.isInitialized) {
+                    tvHeroStatBlocks.text = blocks28d.toString()
+                }
+            }
+        }
+
+        val chips = buildList {
+            add(
+                if (ProfileRuleModeStore.getMode(this@MainActivity, profile) ==
+                    ProfileRuleModeStore.MODE_ALLOW_SELECTED
+                ) {
+                    getString(R.string.hero_chip_mode_allow)
+                } else {
+                    getString(R.string.hero_chip_mode_block)
+                }
+            )
+            if (ProfileStore.isAutoBlockNewAppsEnabled(this@MainActivity, profile)) {
+                add(getString(R.string.hero_chip_autoblock))
+            }
+            if (EmergencyBypassStore.isFeatureEnabled(this@MainActivity)) {
+                add(getString(R.string.hero_chip_emergency))
+            }
+        }
+        tvHeroChips.text = chips.joinToString("  ·  ")
     }
 
     private fun setActivityChartMode(heatmapMode: Boolean) {
@@ -3057,6 +3146,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         profileRowsContainer.removeAllViews()
+        refreshProfileHero(current)
         val inflater = android.view.LayoutInflater.from(this)
 
         profiles.forEachIndexed { index, profile ->
