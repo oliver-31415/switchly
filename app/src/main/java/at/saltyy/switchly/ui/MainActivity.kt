@@ -363,14 +363,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         setSupportActionBar(toolbar)
-        toolbar.setBackgroundColor(AccentColor.getToolbarColor(this))
 
-        // Force white toolbar action/overflow icons (some devices/theme combos render them black in light mode)
-        runCatching {
-            val white = ContextCompat.getColor(this, R.color.font_white)
-            toolbar.overflowIcon?.mutate()?.let { it.setTint(white); toolbar.overflowIcon = it }
-            toolbar.navigationIcon?.mutate()?.let { it.setTint(white); toolbar.navigationIcon = it }
-        }
+        // Foqos restyle: toolbar is flat surface; icons follow the on-surface color from
+        // Switchly.TopBar (no forced white tinting anymore).
 
         // UI refs
 
@@ -617,9 +612,7 @@ class MainActivity : AppCompatActivity() {
         updateEmergencyHintVisibility()
         refreshHomeLayout()
 
-        // Refresh toolbar + accents when theme changes
-        findViewById<MaterialToolbar>(R.id.toolbar)
-            .setBackgroundColor(AccentColor.getToolbarColor(this))
+        // Refresh accents when theme changes (toolbar stays flat surface — Foqos restyle)
         applyAccentToButtons()
 
         // Bottom navigation state

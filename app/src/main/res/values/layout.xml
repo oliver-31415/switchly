@@ -58,17 +58,18 @@
     <!-- =========================
          COMPONENT STYLES: Toolbar/buttons/cards/chips
          ========================= -->
-    <!-- Unified top bar, uses current accent color -->
+    <!-- Unified top bar: Foqos-flat (surface background, on-surface text) -->
     <style name="Switchly.TopBar" parent="Widget.Material3.Toolbar">
-        <!-- Background = current accent color -->
-        <item name="android:background">?attr/colorPrimary</item>
-        <item name="backgroundTint">?attr/colorPrimary</item>
+        <!-- Background = flat surface, no accent header -->
+        <item name="android:background">?attr/colorSurface</item>
+        <item name="backgroundTint">?attr/colorSurface</item>
 
         <!-- Title color -->
-        <item name="titleTextColor">@android:color/white</item>
+        <item name="titleTextColor">?attr/colorOnSurface</item>
+        <item name="subtitleTextColor">?attr/colorOnSurfaceVariant</item>
 
-        <!-- Back arrow in light/dark appearance -->
-        <item name="navigationIconTint">@android:color/white</item>
+        <!-- Back arrow / icons follow surface text color -->
+        <item name="navigationIconTint">?attr/colorOnSurface</item>
     </style>
 
     <!-- Standard buttons -->

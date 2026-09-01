@@ -83,7 +83,10 @@ object AccentColor {
         }
     }
 
-    fun getToolbarColor(context: Context): Int = getAccentColorInt(context)
+    // Foqos restyle: toolbars are flat surface (no accent header). The accent stays on
+    // buttons/controls. All activities that tint their toolbar programmatically get the
+    // surface color here, so the whole app flips consistently.
+    fun getToolbarColor(context: Context): Int = ContextCompat.getColor(context, R.color.foqos_surface)
 
     fun getActiveColor(context: Context): ColorStateList = ColorStateList.valueOf(getAccentColorInt(context))
 }
