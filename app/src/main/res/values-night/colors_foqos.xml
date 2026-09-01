@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Foqos-inspired tokens (dark): warm near-black neutrals, softened surfaces -->
+
+    <!-- Surfaces -->
+    <color name="foqos_bg">#FF101010</color>
+    <color name="foqos_surface">#FF1A1A18</color>
+    <color name="foqos_surface_variant">#FF232320</color>
+    <color name="foqos_surface_container">#FF1F1F1D</color>
+    <color name="foqos_surface_container_high">#FF282826</color>
+
+    <!-- Text -->
+    <color name="foqos_on_surface">#FFF2F1EC</color>
+    <color name="foqos_on_surface_variant">#FFA5A49D</color>
+
+    <!-- Outline (hairlines/borders) -->
+    <color name="foqos_outline">#FF2E2E2B</color>
+    <color name="foqos_outline_variant">#FF262624</color>
+
+    <!-- Primary -->
+    <color name="foqos_primary">#FF2E8B57</color>
+    <color name="foqos_on_primary">#FFFFFFFF</color>
+    <color name="foqos_primary_container">#FF1F4433</color>
+    <color name="foqos_on_primary_container">#FFC9EBD6</color>
+    <color name="foqos_secondary_container">#FF25352C</color>
+    <color name="foqos_on_secondary_container">#FFD8EADF</color>
+
+    <!-- Accent containers (dark) -->
+    <color name="accent_green_container">#FF1F4433</color>
+    <color name="accent_green_on_container">#FFC9EBD6</color>
+    <color name="accent_blue_container">#FF173A5C</color>
+    <color name="accent_blue_on_container">#FFC6DDF5</color>
+    <color name="accent_teal_container">#FF0F4038</color>
+    <color name="accent_teal_on_container">#FFC2E8E2</color>
+    <color name="accent_purple_container">#FF3D1F52</color>
+    <color name="accent_purple_on_container">#FFE7D2F5</color>
+    <color name="accent_pink_container">#FF52222F</color>
+    <color name="accent_pink_on_container">#FFF9CFDC</color>
+    <color name="accent_red_container">#FF52201F</color>
+    <color name="accent_red_on_container">#FFF5CDCD</color>
+    <color name="accent_orange_container">#FF53331A</color>
+    <color name="accent_orange_on_container">#FFFAD9BC</color>
+    <color name="accent_amber_container">#FF4E3A18</color>
+    <color name="accent_amber_on_container">#FFF7E3B8</color>
+    <color name="accent_gray_container">#FF2A343A</color>
+    <color name="accent_gray_on_container">#FFD6E0E5</color>
+
+</resources>

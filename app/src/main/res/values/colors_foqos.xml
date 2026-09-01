@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        Foqos-inspired Material 3 Expressive token palette (light).
+        Soft warm paper neutrals, hairline outlines, calm green primary.
+        These tokens exist alongside the original Switchly palette so the
+        restyle can be rolled out screen-by-screen without touching
+        upstream-owned color files.
+    -->
+
+    <!-- Surfaces -->
+    <color name="foqos_bg">#FFF7F6F2</color>
+    <color name="foqos_surface">#FFFFFFFF</color>
+    <color name="foqos_surface_variant">#FFF0EFEA</color>
+    <color name="foqos_surface_container">#FFF3F2ED</color>
+    <color name="foqos_surface_container_high">#FFEDECE7</color>
+
+    <!-- Text -->
+    <color name="foqos_on_surface">#FF1B1B18</color>
+    <color name="foqos_on_surface_variant">#FF6F6F69</color>
+
+    <!-- Outline (hairlines/borders) -->
+    <color name="foqos_outline">#FFE4E2DC</color>
+    <color name="foqos_outline_variant">#FFEEEEE8</color>
+
+    <!-- Primary (calm green, matches Switchly default accent) -->
+    <!-- tools:ignore: reserved M3 token set for the Foqos restyle rollout -->
+    <color name="foqos_primary" tools:ignore="UnusedResources">#FF2E8B57</color>
+    <color name="foqos_on_primary" tools:ignore="UnusedResources">#FFFFFFFF</color>
+    <color name="foqos_primary_container" tools:ignore="UnusedResources">#FFD8F0E2</color>
+    <color name="foqos_on_primary_container" tools:ignore="UnusedResources">#FF0F3D24</color>
+    <color name="foqos_secondary_container" tools:ignore="UnusedResources">#FFE3EFE8</color>
+    <color name="foqos_on_secondary_container" tools:ignore="UnusedResources">#FF1F3A2C</color>
+
+    <!-- =========================
+         ACCENT CONTAINERS (M3)
+         Soft tinted containers derived from each Switchly accent,
+         so switches/chips/dialogs follow the active accent under M3.
+         ========================= -->
+    <color name="accent_green_container">#FFD8F0E2</color>
+    <color name="accent_green_on_container">#FF0F3D24</color>
+    <color name="accent_blue_container">#FFD6E4F5</color>
+    <color name="accent_blue_on_container">#FF0B3B66</color>
+    <color name="accent_teal_container">#FFCDE8E5</color>
+    <color name="accent_teal_on_container">#FF00443D</color>
+    <color name="accent_purple_container">#FFE5D4F0</color>
+    <color name="accent_purple_on_container">#FF3D1158</color>
+    <color name="accent_pink_container">#FFFADCE5</color>
+    <color name="accent_pink_on_container">#FF7A1F3D</color>
+    <color name="accent_red_container">#FFF5D5D5</color>
+    <color name="accent_red_on_container">#FF6E1414</color>
+    <color name="accent_orange_container">#FFFAE3CC</color>
+    <color name="accent_orange_on_container">#FF6E3400</color>
+    <color name="accent_amber_container">#FFFAEACB</color>
+    <color name="accent_amber_on_container">#FF5C4200</color>
+    <color name="accent_gray_container">#FFDCE3E7</color>
+    <color name="accent_gray_on_container">#FF26343B</color>
+
+</resources>
