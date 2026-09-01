@@ -1820,11 +1820,7 @@ class MainActivity : AppCompatActivity() {
         else -> true
     }
 
-    private fun shouldShowHomeActiveProfile(): Boolean = when (homeLayoutMode()) {
-        ToggleOptionsActivity.HOME_MODE_CUSTOM -> shouldShowHomeProtectionControl() &&
-            customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_ACTIVE_PROFILE, true)
-        else -> true
-    }
+    private fun shouldShowHomeActiveProfile(): Boolean = false // Foqos parity: hero card replaced this row
 
     private fun shouldShowHomeControlMode(): Boolean = when (homeLayoutMode()) {
         ToggleOptionsActivity.HOME_MODE_DEFAULT -> false

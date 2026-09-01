@@ -213,6 +213,23 @@ Matches the real Foqos home (user-provided screenshots):
 flips visibility on `tvHeatmapLegend`/`activityHeatmap`/`activityWeekChart`/`tvActivityDetail`
 and reuses `Switchly.OutlinedButton.CompactSegment`.
 
+### Commit 9 — "feat - Foqos structural parity: section order, hero gradient, section titles"
+
+**Files:** `activity_main.xml`, `hero_profile_bg.xml` (gradient now), `bg_round_white.xml`/
+`bg_round_white_soft.xml` (new), `MainActivity.kt`
+
+- **Section order = Foqos**: Setup card → 4 Week Activity (heatmap) → Profiles →
+  quick actions → next schedule → blocked list. Activity card moved above Profiles.
+- **Section titles** bumped to 20sp.
+- **Hero profile card** now uses a saturated green diagonal gradient (Foqos's purple-artwork
+  equivalent) with all-white inner text/chips/stats; edit button = translucent white circle
+  (`bg_round_white`); strategy roundel = translucent white circle (`bg_round_white_soft`).
+  NOTE: hero gradient is fixed green (doesn't follow accent changes) — documented trade-off;
+  ?attr colors are not supported inside <gradient> shapes.
+- `shouldShowHomeActiveProfile()` → always false (the "Active profile" row is replaced by
+  the hero card; it previously re-showed itself at runtime via the home-layout-mode check,
+  which is why XML visibility=gone alone didn't stick).
+
 ## Known pitfalls (verified on device: Pixel 10 Pro XL, Android 17)
 
 ### Pitfall #1 — Night-mode `?attr` resolution through Material theme overlays (CRASH)

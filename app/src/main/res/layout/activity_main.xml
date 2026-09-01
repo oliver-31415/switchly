@@ -138,6 +138,128 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Activity heatmap (Foqos BlockedSessionsHabitTracker) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardActivity"
+                style="@style/Switchly.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="18dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingBottom="18dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/tvActivityTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:maxLines="1"
+                            android:text="@string/activity_section_title"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnActivityHide"
+                            style="@style/Switchly.OutlinedButton.CompactSegment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:minWidth="0dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="@string/activity_hide"
+                            app:icon="@drawable/visibility_off_24"
+                            app:iconGravity="textStart"
+                            app:iconPadding="4dp"
+                            app:iconSize="14dp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/tvActivityWeek"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            tools:text="This week: 4h 10m" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnChartHeatmap"
+                            style="@style/Switchly.OutlinedButton.CompactSegment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:minWidth="0dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="@string/activity_chart_mode_heatmap"
+                            android:textSize="12sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnChartWeek"
+                            style="@style/Switchly.OutlinedButton.CompactSegment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:layout_marginStart="6dp"
+                            android:minWidth="0dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="@string/activity_chart_mode_week"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvHeatmapLegend"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:textSize="12sp"
+                        tools:text="legend" />
+
+                    <at.saltyy.switchly.ui.widgets.FoqosHeatmapView
+                        android:id="@+id/activityHeatmap"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:contentDescription="@string/activity_heatmap_content_desc" />
+
+                    <at.saltyy.switchly.ui.widgets.WeeklyBarChartView
+                        android:id="@+id/activityWeekChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="160dp"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvActivityDetail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:minHeight="20dp"
+                        android:alpha="0.8"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <Space
                 android:id="@+id/spaceBeforeStatusCard"
                 android:layout_width="1dp"
@@ -174,7 +296,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/profile_rows_title"
-                            android:textSize="17sp"
+                            android:textSize="20sp"
                             android:textStyle="bold" />
 
                         <com.google.android.material.button.MaterialButton
@@ -208,7 +330,7 @@
                                 android:layout_weight="1"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
-                                android:textColor="?attr/colorOnSurface"
+                                android:textColor="#FFFFFFFF"
                                 tools:text="Work Profile" />
 
                             <ImageView
@@ -216,10 +338,10 @@
                                 android:layout_width="36dp"
                                 android:layout_height="36dp"
                                 android:padding="8dp"
-                                android:background="@drawable/bg_round_outline"
+                                android:background="@drawable/bg_round_white"
                                 android:contentDescription="@string/profile_rows_manage"
                                 android:src="@drawable/edit_24"
-                                app:tint="?attr/colorOnSurface" />
+                                app:tint="#FFFFFFFF" />
                         </LinearLayout>
 
                         <TextView
@@ -228,7 +350,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:textSize="12sp"
-                            android:alpha="0.85"
+                            android:textColor="#E6FFFFFF"
                             tools:text="Block selected · Auto-block new apps" />
 
                         <LinearLayout
@@ -241,7 +363,7 @@
                             <FrameLayout
                                 android:layout_width="34dp"
                                 android:layout_height="34dp"
-                                android:background="@drawable/bg_round_filled">
+                                android:background="@drawable/bg_round_white_soft">
 
                                 <ImageView
                                     android:layout_width="18dp"
@@ -249,7 +371,7 @@
                                     android:layout_gravity="center"
                                     android:contentDescription="@null"
                                     android:src="@drawable/security_24"
-                                    app:tint="?attr/colorOnPrimary" />
+                                    app:tint="#FFFFFFFF" />
                             </FrameLayout>
 
                             <TextView
@@ -260,7 +382,7 @@
                                 android:layout_weight="1"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                android:textColor="?attr/colorOnSurface"
+                                android:textColor="#FFFFFFFF"
                                 tools:text="Manual Blocking" />
                         </LinearLayout>
 
@@ -282,7 +404,7 @@
                                     android:layout_height="wrap_content"
                                     android:text="@string/hero_stat_apps"
                                     android:textSize="12sp"
-                                    android:alpha="0.8" />
+                                    android:textColor="#CCFFFFFF" />
 
                                 <TextView
                                     android:id="@+id/tvHeroStatApps"
@@ -290,6 +412,7 @@
                                     android:layout_height="wrap_content"
                                     android:textSize="18sp"
                                     android:textStyle="bold"
+                                    android:textColor="#FFFFFFFF"
                                     tools:text="9" />
                             </LinearLayout>
 
@@ -304,7 +427,7 @@
                                     android:layout_height="wrap_content"
                                     android:text="@string/hero_stat_domains"
                                     android:textSize="12sp"
-                                    android:alpha="0.8" />
+                                    android:textColor="#CCFFFFFF" />
 
                                 <TextView
                                     android:id="@+id/tvHeroStatDomains"
@@ -312,6 +435,7 @@
                                     android:layout_height="wrap_content"
                                     android:textSize="18sp"
                                     android:textStyle="bold"
+                                    android:textColor="#FFFFFFFF"
                                     tools:text="0" />
                             </LinearLayout>
 
@@ -326,7 +450,7 @@
                                     android:layout_height="wrap_content"
                                     android:text="@string/hero_stat_blocks"
                                     android:textSize="12sp"
-                                    android:alpha="0.8" />
+                                    android:textColor="#CCFFFFFF" />
 
                                 <TextView
                                     android:id="@+id/tvHeroStatBlocks"
@@ -334,6 +458,7 @@
                                     android:layout_height="wrap_content"
                                     android:textSize="18sp"
                                     android:textStyle="bold"
+                                    android:textColor="#FFFFFFFF"
                                     tools:text="11" />
                             </LinearLayout>
                         </LinearLayout>
@@ -549,128 +674,6 @@
                             android:dropDownWidth="match_parent"
                             android:importantForAutofill="no" />
                     </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Activity heatmap (Foqos BlockedSessionsHabitTracker) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardActivity"
-                style="@style/Switchly.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingStart="18dp"
-                    android:paddingTop="18dp"
-                    android:paddingEnd="18dp"
-                    android:paddingBottom="18dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <TextView
-                            android:id="@+id/tvActivityTitle"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:maxLines="1"
-                            android:text="@string/activity_section_title"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnActivityHide"
-                            style="@style/Switchly.OutlinedButton.CompactSegment"
-                            android:layout_width="wrap_content"
-                            android:layout_height="32dp"
-                            android:minWidth="0dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="@string/activity_hide"
-                            app:icon="@drawable/visibility_off_24"
-                            app:iconGravity="textStart"
-                            app:iconPadding="4dp"
-                            app:iconSize="14dp" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <TextView
-                            android:id="@+id/tvActivityWeek"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            tools:text="This week: 4h 10m" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnChartHeatmap"
-                            style="@style/Switchly.OutlinedButton.CompactSegment"
-                            android:layout_width="wrap_content"
-                            android:layout_height="32dp"
-                            android:minWidth="0dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="@string/activity_chart_mode_heatmap"
-                            android:textSize="12sp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnChartWeek"
-                            style="@style/Switchly.OutlinedButton.CompactSegment"
-                            android:layout_width="wrap_content"
-                            android:layout_height="32dp"
-                            android:layout_marginStart="6dp"
-                            android:minWidth="0dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="@string/activity_chart_mode_week"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tvHeatmapLegend"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:gravity="center"
-                        android:textSize="12sp"
-                        tools:text="legend" />
-
-                    <at.saltyy.switchly.ui.widgets.FoqosHeatmapView
-                        android:id="@+id/activityHeatmap"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:contentDescription="@string/activity_heatmap_content_desc" />
-
-                    <at.saltyy.switchly.ui.widgets.WeeklyBarChartView
-                        android:id="@+id/activityWeekChart"
-                        android:layout_width="match_parent"
-                        android:layout_height="160dp"
-                        android:layout_marginTop="12dp"
-                        android:visibility="gone" />
-
-                    <TextView
-                        android:id="@+id/tvActivityDetail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:minHeight="20dp"
-                        android:alpha="0.8"
-                        android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
