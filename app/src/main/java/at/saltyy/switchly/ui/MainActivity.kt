@@ -242,6 +242,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnActivityHide: MaterialButton
     private lateinit var tvHeroProfileName: TextView
     private lateinit var tvHeroChips: TextView
+    private lateinit var tvHeroStrategy: TextView
     private lateinit var tvHeroStatApps: TextView
     private lateinit var tvHeroStatDomains: TextView
     private lateinit var tvHeroStatBlocks: TextView
@@ -434,6 +435,7 @@ class MainActivity : AppCompatActivity() {
         btnActivityHide = findViewById(R.id.btnActivityHide)
         tvHeroProfileName = findViewById(R.id.tvHeroProfileName)
         tvHeroChips = findViewById(R.id.tvHeroChips)
+        tvHeroStrategy = findViewById(R.id.tvHeroStrategy)
         tvHeroStatApps = findViewById(R.id.tvHeroStatApps)
         tvHeroStatDomains = findViewById(R.id.tvHeroStatDomains)
         tvHeroStatBlocks = findViewById(R.id.tvHeroStatBlocks)
@@ -1648,6 +1650,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         tvHeroChips.text = chips.joinToString("  ·  ")
+        tvHeroStrategy.text = getString(R.string.hero_strategy_manual)
     }
 
     private fun setActivityChartMode(heatmapMode: Boolean) {

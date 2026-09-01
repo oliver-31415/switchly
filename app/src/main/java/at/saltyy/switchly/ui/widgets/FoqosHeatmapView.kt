@@ -211,7 +211,7 @@ class FoqosHeatmapView @JvmOverloads constructor(
         val bucket = bucketFor(valueMs)
         if (bucket < 0) {
             // Empty day: subtle text-color tint so it's visible in light AND dark mode.
-            return (textColor and 0x00FFFFFF) or 0x16000000
+            return (textColor and 0x00FFFFFF) or 0x2A000000
         }
         return bucketColors(accent)[bucket]
     }
