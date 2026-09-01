@@ -156,12 +156,52 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingStart="18dp"
-                    android:paddingTop="20dp"
+                    android:paddingTop="16dp"
                     android:paddingEnd="18dp"
                     android:paddingBottom="18dp">
 
-                    <!-- Hero status -->
+                    <!-- Foqos-style Profiles section -->
                     <LinearLayout
+                        android:id="@+id/layoutProfilesHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/tvProfilesTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/profile_rows_title"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnManageProfiles"
+                            style="@style/Switchly.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_rows_manage" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/profileRowsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="4dp" />
+
+                    <com.google.android.material.divider.MaterialDivider
+                        style="@style/Switchly.Divider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="6dp" />
+
+                    <!-- Hero status (hidden: status lives in the dock launcher) -->
+                    <LinearLayout
+                        android:visibility="gone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
@@ -333,12 +373,13 @@
                         android:layout_marginTop="14dp"
                         android:layout_marginBottom="14dp" />
 
-                    <!-- Profile dropdown -->
+                    <!-- Profile dropdown (replaced by profile rows; kept for compat) -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/layoutProfileDropdown"
                         style="@style/Switchly.DropdownLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:visibility="gone"
                         android:hint="@string/select_profile"
                         app:endIconMode="dropdown_menu">
 
@@ -390,11 +431,35 @@
 
                         <TextView
                             android:id="@+id/tvActivityWeek"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:textSize="13sp"
                             android:textStyle="bold"
                             tools:text="This week: 4h 10m" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnChartHeatmap"
+                            style="@style/Switchly.OutlinedButton.CompactSegment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:minWidth="0dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="@string/activity_chart_mode_heatmap"
+                            android:textSize="12sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnChartWeek"
+                            style="@style/Switchly.OutlinedButton.CompactSegment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:layout_marginStart="6dp"
+                            android:minWidth="0dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="@string/activity_chart_mode_week"
+                            android:textSize="12sp" />
                     </LinearLayout>
 
                     <at.saltyy.switchly.ui.widgets.FoqosHeatmapView
@@ -403,6 +468,13 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:contentDescription="@string/activity_heatmap_content_desc" />
+
+                    <at.saltyy.switchly.ui.widgets.WeeklyBarChartView
+                        android:id="@+id/activityWeekChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="160dp"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone" />
 
                     <TextView
                         android:id="@+id/tvActivityDetail"

@@ -188,7 +188,15 @@
     <!-- Aktivitäts-Heatmap (Foqos-Stil) -->
     <string name="activity_section_title">Aktivität</string>
     <string name="activity_heatmap_content_desc">Heatmap der blockierten Fokuszeit der letzten 28 Tage</string>
-    <string name="activity_week_fmt">Diese Woche: %1$s</string>
+    <string name="activity_week_fmt">%1$s – %2$s diese Woche</string>
+    <string name="profile_row_meta_fmt">%1$s | %2$s</string>
     <string name="activity_day_detail_fmt">%1$s · %2$s blockiert</string>
     <string name="activity_day_none_fmt">%1$s · nichts blockiert</string>
-</resources>
+
+    <!-- Profil-Reihen auf der Startseite (Foqos-Stil) -->
+    <string name="profile_rows_title">Profile</string>
+    <string name="profile_rows_manage">Verwalten</string>
+    <string name="profile_row_active">Aktiv</string>
+    <string name="activity_chart_mode_heatmap">28 Tage</string>
+    <string name="activity_chart_mode_week">Woche</string>
+    </resources>

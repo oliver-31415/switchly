@@ -188,7 +188,15 @@
     <!-- Activity heatmap (Foqos-style habit tracker) -->
     <string name="activity_section_title">Activity</string>
     <string name="activity_heatmap_content_desc">Heatmap of blocked focus time for the last 28 days</string>
-    <string name="activity_week_fmt">This week: %1$s</string>
+    <string name="activity_week_fmt">%1$s – %2$s this week</string>
+    <string name="profile_row_meta_fmt">%1$s | %2$s</string>
     <string name="activity_day_detail_fmt">%1$s · %2$s blocked</string>
     <string name="activity_day_none_fmt">%1$s · nothing blocked</string>
-</resources>
+
+    <!-- Foqos-style profile rows on Home -->
+    <string name="profile_rows_title">Profiles</string>
+    <string name="profile_rows_manage">Manage</string>
+    <string name="profile_row_active">Active</string>
+    <string name="activity_chart_mode_heatmap">28 days</string>
+    <string name="activity_chart_mode_week">Week</string>
+    </resources>

@@ -149,9 +149,10 @@ Reference: `github.com/awaseem/foqos` — Foqos/Views + Foqos/Components.
 | HomeView (large title, alerts, profiles, launcher) | **done** (commits 1-6) |
 | HomeProfileLauncher (docked Start/timer) | **done** (commit 5) |
 | BlockedSessionsHabitTracker / FourWeekHeatmapView | **done** (commit 6) |
-| WeeklySessionChart / MonthlySessionChart (tappable bar/month grid) | TODO — reuse `WeeklyBarChartView` + new month grid; data from BlockedTimeStore/BlockCountStore |
+| WeeklySessionChart | **done** (commit 7 — WeeklyBarChartView toggle w/ heatmap) |
+| MonthlySessionChart (month grid) | TODO — new month grid view |
 | Streaks (habit streak display) | TODO — derivable from getDayTotalsMs |
-| HomeProfilesListView (profile ROWS on Home w/ start per profile) | TODO — RecyclerView + ProfileStore + SwitchModeStore wiring (replaces dropdown) |
+| HomeProfilesListView (profile ROWS on Home) | **done** (commit 7 — LinearLayout rows, Active chip, tap-to-switch) |
 | StartProfilePickerView (sheet to pick profile to start) | partially — profileDropdown + ManageProfilesActivity |
 | BlockedProfileView (profile detail: emoji, apps grid, domains, schedules, strategy) | partially — ManageProfilesActivity + RulesHub; needs Foqos-style detail page pass |
 | StrategyPicker (horizontal strategy cards: manual/NFC/QR/timer/pause/soft-unblock) | n/a-mapped — Switchly's model is control channels (settings), not strategies |
@@ -164,6 +165,29 @@ Reference: `github.com/awaseem/foqos` — Foqos/Views + Foqos/Components.
 | IntroView (steppers) | exists (OnboardingActivity, setup version 220) |
 | Live Activities / Widgets | Switchly has its own widget set (ahead of Foqos here) |
 | Domain/app selectors | exist (ManageBlockedWebsitesActivity, AppPicker) |
+
+### Commit 7 — "feat - Foqos profile rows on Home + weekly chart toggle"
+
+**Files:** `row_home_profile.xml` (new), `activity_main.xml`, `MainActivity.kt`,
+`strings_home.xml` (EN+DE)
+
+- **Profile rows** (Foqos `HomeProfilesListView`): "Profiles" header + Manage text button
+  (→ ManageProfilesActivity), one row per profile — name, "N apps | M websites" metadata
+  (mode-aware app count via `getSelectedForProfileMode`, per-profile domain count),
+  green **Active** chip on the current profile, indented dividers.
+- Row tap = switch active profile (shared `switchToProfile()`, same
+  `ensureCanSwitchProfiles` + Snackbar flow as the old dropdown); tap on active row or
+  long-press = open profile management.
+- Old profile dropdown kept in tree with `visibility="gone"` (Kotlin refs intact).
+- Hero status row in the Profiles card hidden (status lives in the dock launcher);
+  `tvSwitchMode`/`ivStatusIcon` remain for `updateSwitchState()`.
+- **Chart toggle** (Foqos chart configuration): "28 days | Week" compact segmented toggle
+  (SegmentedToggleUi) swaps heatmap ↔ `WeeklyBarChartView` (last-7-days data).
+
+**Merge advice:** `row_home_profile.xml` is new. In `refreshProfilesUi`, the dropdown
+item-click listener now delegates to `switchToProfile()` — if upstream changes the switch
+flow, apply it there. `refreshProfileRows()` is additive; keep it called at the end of
+`refreshProfilesUi()`.
 
 ## Known pitfalls (verified on device: Pixel 10 Pro XL, Android 17)
 

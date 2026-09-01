@@ -155,6 +155,8 @@ import java.util.Locale
 import java.text.DateFormat
 import at.saltyy.switchly.data.prefs.BlockedTimeStore
 import at.saltyy.switchly.ui.widgets.FoqosHeatmapView
+import at.saltyy.switchly.ui.widgets.WeeklyBarChartView
+import at.saltyy.switchly.ui.SegmentedToggleUi
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -235,9 +237,16 @@ class MainActivity : AppCompatActivity() {
 
     // Activity heatmap (Foqos-style)
     private lateinit var activityHeatmap: FoqosHeatmapView
+    private lateinit var activityWeekChart: WeeklyBarChartView
+    private lateinit var btnChartHeatmap: MaterialButton
+    private lateinit var btnChartWeek: MaterialButton
     private lateinit var tvActivityWeek: TextView
     private lateinit var tvActivityDetail: TextView
     @Volatile private var activityDaysMs: LongArray = LongArray(FoqosHeatmapView.DAYS)
+
+    // Foqos-style profile rows
+    private lateinit var profileRowsContainer: LinearLayout
+    private lateinit var btnManageProfiles: MaterialButton
 
     // Quick actions tiles
     private lateinit var tileManageApps: MaterialCardView
@@ -412,10 +421,22 @@ class MainActivity : AppCompatActivity() {
         btnFinishSetup = findViewById(R.id.btnFinishSetup)
 
         activityHeatmap = findViewById(R.id.activityHeatmap)
+        activityWeekChart = findViewById(R.id.activityWeekChart)
+        btnChartHeatmap = findViewById(R.id.btnChartHeatmap)
+        btnChartWeek = findViewById(R.id.btnChartWeek)
         tvActivityWeek = findViewById(R.id.tvActivityWeek)
         tvActivityDetail = findViewById(R.id.tvActivityDetail)
         activityHeatmap.onDaySelected = { index -> onHeatmapDaySelected(index) }
+        btnChartHeatmap.setOnClickListener { setActivityChartMode(true) }
+        btnChartWeek.setOnClickListener { setActivityChartMode(false) }
+        setActivityChartMode(true)
         refreshActivityHeatmap()
+
+        profileRowsContainer = findViewById(R.id.profileRowsContainer)
+        btnManageProfiles = findViewById(R.id.btnManageProfiles)
+        btnManageProfiles.setOnClickListener {
+            startActivity(Intent(this, ManageProfilesActivity::class.java))
+        }
 
         tileManageApps = findViewById(R.id.tileManageApps)
         tileProfiles = findViewById(R.id.tileProfiles)
@@ -1521,13 +1542,32 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 activityDaysMs = days
                 activityHeatmap.setData(days)
+                val week = days.takeLast(7)
+                if (::activityWeekChart.isInitialized) {
+                    activityWeekChart.setValues(week.toList())
+                }
+                val weekStartCal = java.util.Calendar.getInstance().apply {
+                    add(java.util.Calendar.DAY_OF_YEAR, -6)
+                }
+                val weekLabel = java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT)
+                    .format(weekStartCal.time)
                 tvActivityWeek.text = getString(
                     R.string.activity_week_fmt,
-                    formatDurationShort(days.sum())
+                    weekLabel,
+                    formatDurationShort(week.sum())
                 )
                 onHeatmapDaySelected(-1)
             }
         }
+    }
+
+    private fun setActivityChartMode(heatmapMode: Boolean) {
+        if (!::activityHeatmap.isInitialized) {
+            return
+        }
+        activityHeatmap.visibility = if (heatmapMode) View.VISIBLE else View.GONE
+        activityWeekChart.visibility = if (heatmapMode) View.GONE else View.VISIBLE
+        SegmentedToggleUi.apply(this, listOf(btnChartHeatmap, btnChartWeek), if (heatmapMode) R.id.btnChartHeatmap else R.id.btnChartWeek)
     }
 
     private fun onHeatmapDaySelected(index: Int) {
@@ -3001,27 +3041,90 @@ class MainActivity : AppCompatActivity() {
 
         profileDropdown.setOnItemClickListener { _, _, pos, _ ->
             val selected = adapter.getItem(pos) ?: return@setOnItemClickListener
+            switchToProfile(selected)
+        }
 
-            if (!ensureCanSwitchProfiles(showFeedback = true)) {
-                val cur = ProfileStore.getCurrent(this)
-                profileDropdown.setText(cur ?: "", false)
-                return@setOnItemClickListener
+        refreshProfileRows(profiles, current)
+    }
+
+    /**
+     * Foqos HomeProfilesListView equivalent: one tappable row per profile showing
+     * name, "N Apps | M Domains" metadata and an Active chip on the current profile.
+     * Tapping a row switches the active profile (same flow as the old dropdown).
+     */
+    private fun refreshProfileRows(profiles: List<String>, current: String?) {
+        if (!::profileRowsContainer.isInitialized) {
+            return
+        }
+        profileRowsContainer.removeAllViews()
+        val inflater = android.view.LayoutInflater.from(this)
+
+        profiles.forEachIndexed { index, profile ->
+            val row = inflater.inflate(R.layout.row_home_profile, profileRowsContainer, false)
+            val name = row.findViewById<TextView>(R.id.tvProfileRowName)
+            val meta = row.findViewById<TextView>(R.id.tvProfileRowMeta)
+            val active = row.findViewById<TextView>(R.id.tvProfileRowActive)
+
+            name.text = profile
+            val appCount = ProfileStore.getSelectedForProfileMode(this, profile).size
+            val domainCount = DomainBlockStore.getDomainsForProfile(this, profile).size
+            val appsLabel = resources.getQuantityString(R.plurals.profile_app_count, appCount, appCount)
+            val domainsLabel = resources.getQuantityString(R.plurals.profile_website_count, domainCount, domainCount)
+            meta.text = getString(R.string.profile_row_meta_fmt, appsLabel, domainsLabel)
+            active.visibility = if (profile == current) View.VISIBLE else View.GONE
+
+            row.setOnClickListener {
+                if (profile == current) {
+                    openProfileManagement()
+                    return@setOnClickListener
+                }
+                switchToProfile(profile)
+            }
+            row.setOnLongClickListener {
+                openProfileManagement()
+                true
             }
 
-            ProfileStore.setCurrent(this, selected)
-            refreshBlockedList()
-            updateSwitchState()
-            Snackbar.make(
-                snackRoot(),
-                getString(
-                    R.string.profile_set_active_rules_toast,
-                    selected,
-                    ProfileStore.getSelectedForProfileMode(this, selected).size.let { count -> resources.getQuantityString(R.plurals.profile_app_count, count, count) },
-                    DomainBlockStore.getDomains(this).size.let { count -> resources.getQuantityString(R.plurals.profile_website_count, count, count) },
-                ),
-                Snackbar.LENGTH_SHORT
-            ).applySwitchlyStyle().show()
+            profileRowsContainer.addView(row)
+            if (index < profiles.size - 1) {
+                val divider = com.google.android.material.divider.MaterialDivider(this)
+                divider.setDividerColorResource(at.saltyy.switchly.R.color.foqos_outline_variant)
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+                lp.marginStart = homeDp(52f)
+                divider.layoutParams = lp
+                profileRowsContainer.addView(divider)
+            }
         }
+    }
+
+    private fun openProfileManagement() {
+        startActivity(Intent(this, ManageProfilesActivity::class.java))
+    }
+
+    private fun switchToProfile(selected: String) {
+        if (!ensureCanSwitchProfiles(showFeedback = true)) {
+            val cur = ProfileStore.getCurrent(this)
+            profileDropdown.setText(cur ?: "", false)
+            return
+        }
+
+        ProfileStore.setCurrent(this, selected)
+        refreshBlockedList()
+        updateSwitchState()
+        refreshProfilesUi()
+        Snackbar.make(
+            snackRoot(),
+            getString(
+                R.string.profile_set_active_rules_toast,
+                selected,
+                ProfileStore.getSelectedForProfileMode(this, selected).size.let { count -> resources.getQuantityString(R.plurals.profile_app_count, count, count) },
+                DomainBlockStore.getDomains(this).size.let { count -> resources.getQuantityString(R.plurals.profile_website_count, count, count) },
+            ),
+            Snackbar.LENGTH_SHORT
+        ).applySwitchlyStyle().show()
     }
 
     private fun snackRoot(): View {
