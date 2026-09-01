@@ -239,6 +239,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Separate app id so local builds co-install with the Play Store release
+            // instead of being blocked by version/signature mismatch.
+            applicationIdSuffix = ".foqosdev"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

@@ -6,7 +6,7 @@
          ========================= -->
     <!-- Variant without ActionBar (overlay/blocker screens) -->
     <!-- Fully opaque, no edge-to-edge; used e.g. for BlockerActivity -->
-    <style name="Theme.Switchly.Blocker" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.Switchly.Blocker" parent="Theme.Switchly">
         <item name="android:windowIsTranslucent">false</item>
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowTranslucentNavigation">false</item>
@@ -137,6 +137,12 @@
 
     <style name="Switchly.Card" parent="Widget.Material3.CardView.Elevated">
         <item name="shapeAppearance">@style/ShapeAppearance.Switchly.Card</item>
+        <!--
+            M3 elevated-card state list animator uses ?attr/ motion references, which the
+            framework's themeless state-list-animator path cannot resolve (crash in dark mode).
+            Flat Foqos cards don't need press-elevation anyway. See docs/FOQOS_RESTYLE.md Pitfall #2.
+        -->
+        <item name="android:stateListAnimator">@null</item>
         <item name="cardBackgroundColor">@color/foqos_surface</item>
         <item name="strokeColor">@color/foqos_outline_variant</item>
         <item name="strokeWidth">1dp</item>
@@ -208,6 +214,7 @@
          ========================= -->
     <!-- Default (non-dropdown) TextInputLayout styling used globally via theme -->
     <style name="Switchly.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="enforceTextAppearance" tools:ignore="MissingId">false</item>
         <item name="boxStrokeWidth">1dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
         <item name="boxCornerRadiusTopStart">16dp</item>
@@ -226,6 +233,7 @@
 
     <!-- Layout container for exposed dropdown menus -->
     <style name="Switchly.DropdownLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="enforceTextAppearance" tools:ignore="MissingId">false</item>
         <item name="boxStrokeWidth">1dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
         <item name="boxCornerRadiusTopStart">16dp</item>
