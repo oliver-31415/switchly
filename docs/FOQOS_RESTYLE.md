@@ -87,6 +87,21 @@ theorizing.
 
 ---
 
+### Commit 4 — `28b2f1c` "restyle - Foqos Home: flat toolbars, hero status card"
+
+**Files:** `AccentColor.kt`, `layout.xml` (styles), `MainActivity.kt`, `activity_main.xml`
+
+| Change | Merge advice |
+|---|---|
+| `AccentColor.getToolbarColor` returns `@color/foqos_surface` instead of accent | All ~15 activities that call `toolbar.setBackgroundColor(getToolbarColor(...))` go flat automatically. If upstream adds a new activity copying the old accent-toolbar pattern, it will just be flat — no action needed. |
+| `Switchly.TopBar`: surface bg, `colorOnSurface` title/icons | If upstream adds toolbar style items, merge on top of the surface variant. |
+| `MainActivity`: removed white toolbar icon tinting + one `setBackgroundColor` call (both onCreate and theme-change refresh) | If upstream modifies the removed block, keep it removed (icons follow the style now). |
+| `activity_main.xml`: hero title 28sp, `btnToggle` 64dp, `btnFinishSetup` 56dp, tinted `ivStatusIcon`, roomier paddings (16dp scroll / 18-20dp cards) | Pure XML attribute changes — on conflict take ours where the attribute is a size/padding/textSize, theirs for new views/attributes. **Never delete or rename view IDs.** |
+
+Note: `toolbarForegroundColor()`-style helpers in ~8 screens (Permissions, Support, FAQ,
+WhatsNew, TilesInfo, AppPicker, ...) return BLACK in light / WHITE in dark — correct for
+flat surface headers; do not "fix" them back to accent logic.
+
 ## Known pitfalls (verified on device: Pixel 10 Pro XL, Android 17)
 
 ### Pitfall #1 — Night-mode `?attr` resolution through Material theme overlays (CRASH)
@@ -157,8 +172,7 @@ changing the theme again.
 - [x] Theme foundation: M3 + Foqos tokens + expressive shapes (commit 1)
 - [x] Debug co-install (commit 2)
 - [x] Dark-mode crash fixes (commit 3)
-- [ ] Toolbar: flat surface style (Foqos has no colored header) — audit screens that set
-      toolbar background via `AccentColor.getToolbarColor`
+- [x] Toolbar: flat surface style app-wide (via `AccentColor.getToolbarColor` + TopBar style)
 - [ ] Home (`activity_main.xml`) restructure toward Foqos layout: hero status card, prominent
       primary action, profile cards, minimal bottom nav
 - [ ] Typography pass (bigger display sizes on Home, tighter section headers)
