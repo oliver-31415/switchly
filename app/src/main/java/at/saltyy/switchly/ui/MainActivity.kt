@@ -1605,6 +1605,38 @@ class MainActivity : AppCompatActivity() {
         }
         list.addView(title)
 
+        // Create new profile
+        val newRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            val padV = homeDp(14f)
+            setPadding(0, padV, 0, padV)
+            isClickable = true
+            isFocusable = true
+            setBackgroundResource(android.R.attr.selectableItemBackground.resId(this@MainActivity))
+        }
+        val newIcon = TextView(this).apply {
+            text = "\uFF0B"
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_primary))
+        }
+        val newLabel = TextView(this).apply {
+            text = getString(R.string.profile_sheet_new_profile)
+            textSize = 15f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_primary))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = homeDp(12f)
+            }
+        }
+        newRow.addView(newIcon)
+        newRow.addView(newLabel)
+        newRow.setOnClickListener {
+            sheet.dismiss()
+            showCreateProfileDialog()
+        }
+        list.addView(newRow)
+
         profiles.forEach { profile ->
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -1742,6 +1774,32 @@ class MainActivity : AppCompatActivity() {
         sheet.show()
     }
 
+    private fun showCreateProfileDialog() {
+        val input = android.widget.EditText(this).apply {
+            hint = getString(R.string.profile_sheet_rename_hint)
+            setSingleLine(true)
+        }
+        val container = android.widget.FrameLayout(this).apply {
+            val pad = homeDp(20f)
+            setPadding(pad, homeDp(8f), pad, 0)
+            addView(input)
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(getString(R.string.profile_sheet_new_profile))
+            .setView(container)
+            .setPositiveButton(getString(R.string.save)) { _, _ ->
+                val name = input.text.toString().trim()
+                if (name.isNotEmpty() && ProfileStore.addProfile(this, name)) {
+                    ProfileStore.setCurrent(this, name)
+                    refreshProfileRowsUi()
+                    refreshBlockedList()
+                    updateSwitchState()
+                }
+            }
+            .setNegativeButton(getString(android.R.string.cancel), null)
+            .show()
+    }
+
     private fun refreshProfileRowsUi() {
         val profiles = ProfileStore.getProfiles(this).toList().sorted()
         refreshProfileRows(profiles, ProfileStore.getCurrent(this))
@@ -1868,48 +1926,57 @@ class MainActivity : AppCompatActivity() {
     /** Builds the hero card background from the CURRENT accent so accent switching works. */
     private fun applyHeroBackground(active: Boolean) {
         val radius = homeDp(28f).toFloat()
+
+        fun rounded(color: Int): android.graphics.drawable.GradientDrawable =
+            android.graphics.drawable.GradientDrawable().apply {
+                setColor(color)
+                cornerRadius = radius
+            }
+
         if (!active) {
-            val surface = MaterialColors.getColor(this, android.R.attr.colorBackground, Color.GRAY)
-            val outline = ContextCompat.getColor(this, at.saltyy.switchly.R.color.foqos_outline)
-            val gd = android.graphics.drawable.GradientDrawable().apply {
-                setColor(MaterialColors.getColor(this@MainActivity, com.google.android.material.R.attr.colorSurfaceContainer, surface))
-                cornerRadius = radius.toFloat()
+            val gd = rounded(ContextCompat.getColor(this, at.saltyy.switchly.R.color.foqos_surface_variant)).apply {
                 setStroke(homeDp(1f), ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_outline))
             }
             heroProfileRoot.background = gd
             return
         }
 
+        // Foqos-style organic artwork: base gradient + big accent-tinted ovals that
+        // overflow the card and get cropped by the view bounds (hard "wave" curves).
         val accent = AccentColor.getAccentColorInt(this)
         fun vary(lighten: Float, satMul: Float, alpha: Int): Int {
             val hsv = FloatArray(3)
             Color.colorToHSV(accent, hsv)
             hsv[1] = (hsv[1] * satMul).coerceIn(0.3f, 1f)
             hsv[2] = (hsv[2] + lighten).coerceIn(0f, 1f)
-            return Color.argb(alpha, Color.red(Color.HSVToColor(hsv)), Color.green(Color.HSVToColor(hsv)), Color.blue(Color.HSVToColor(hsv)))
-        }
-        fun blob(centerX: Float, centerY: Float, radiusDp: Float, color: Int): android.graphics.drawable.GradientDrawable {
-            return android.graphics.drawable.GradientDrawable(
-                android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
-                intArrayOf(color, Color.TRANSPARENT)
-            ).apply {
-                gradientType = android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT
-                setGradientCenter(centerX, centerY)
-                gradientRadius = homeDp(radiusDp).toFloat()
-                cornerRadius = radius
-            }
+            val c = Color.HSVToColor(hsv)
+            return Color.argb(alpha, Color.red(c), Color.green(c), Color.blue(c))
         }
 
-        val base = android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
-            intArrayOf(vary(0.05f, 1.05f, 0xFF), accent, vary(-0.28f, 1.1f, 0xFF))
-        ).apply { cornerRadius = radius }
-        val glow1 = blob(0.12f, 0.05f, 460f, vary(0.42f, 0.5f, 0x8C))
-        val glow2 = blob(0.95f, 0.35f, 420f, vary(0.18f, 0.85f, 0x59))
-        val glow3 = blob(0.55f, 1.05f, 520f, vary(0.10f, 0.95f, 0x40))
+        val base = rounded(vary(-0.18f, 1.1f, 0xFF))
+        fun blob(sizeDp: Int, color: Int): android.graphics.drawable.ShapeDrawable {
+            val sd = android.graphics.drawable.ShapeDrawable(android.graphics.drawable.shapes.OvalShape())
+            sd.paint.color = color
+            sd.intrinsicWidth = homeDp(sizeDp.toFloat())
+            sd.intrinsicHeight = homeDp(sizeDp.toFloat())
+            return sd
+        }
 
-        val ld = android.graphics.drawable.LayerDrawable(arrayOf(base, glow1, glow2, glow3))
-        ld.setLayerInset(1, 0, 0, 0, 0)
+        val b1 = blob(360, vary(0.30f, 0.9f, 0xB4))   // light wash, top-left overflow
+        val b2 = blob(300, vary(0.14f, 1.0f, 0x8C))   // mid tone, right overflow
+        val b3 = blob(220, vary(0.42f, 0.7f, 0x66))   // small highlight
+        val deep = blob(340, vary(-0.30f, 1.15f, 0x7A)) // dark base wave, bottom
+
+        val ld = android.graphics.drawable.LayerDrawable(
+            arrayOf(base, deep, b1, b2, b3)
+        )
+        val H = heroProfileRoot.height.takeIf { it > 0 } ?: homeDp(260f)
+        val W = heroProfileRoot.width.takeIf { it > 0 } ?: homeDp(640f)
+
+        ld.setLayerInset(1, W / 4, H * 2 / 3, -W / 3, -H / 2)              // deep wave bottom
+        ld.setLayerInset(2, -W / 3, -H / 2, W / 5, H / 3)                  // light top-left
+        ld.setLayerInset(3, W / 2, H / 4, -W / 4, -H / 5)                  // mid right
+        ld.setLayerInset(4, W / 5, -H / 6, -W / 2, H / 2)                  // small highlight
         heroProfileRoot.background = ld
     }
 

@@ -245,4 +245,5 @@
     <string name="blocking_mode_schedule_desc">Only schedules can change Switchly</string>
     <string name="blocking_mode_unsupported">Not available on this device</string>
     <string name="profile_rows_switch">Switch profile</string>
+    <string name="profile_sheet_new_profile">New profile</string>
 </resources>

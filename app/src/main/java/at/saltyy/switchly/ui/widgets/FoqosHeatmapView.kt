@@ -150,20 +150,17 @@ class FoqosHeatmapView @JvmOverloads constructor(
         labelPaint.color = textColor
         val cal = Calendar.getInstance()
         for (i in dayValuesMs.indices) {
-            val daysAgo = (dayValuesMs.size - 1) - i
-            val pos = gridPosition(daysAgo) ?: continue
-            val (_, row) = pos
-            if (row != 0) continue
+            val pos = gridPosition(i) ?: continue
+            if (pos.second != 0) continue
             cal.timeInMillis = System.currentTimeMillis()
-            cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
+            cal.add(Calendar.DAY_OF_YEAR, -(dayValuesMs.size - 1 - i))
             val dayLabel = cal.get(Calendar.DAY_OF_MONTH).toString()
             val x = paddingLeft + pos.first * (cellSize + gap) + cellSize / 2f
             canvas.drawText(dayLabel, x, paddingTop + sp(12f), labelPaint)
         }
 
         for (i in dayValuesMs.indices) {
-            val daysAgo = (dayValuesMs.size - 1) - i
-            val pos = gridPosition(daysAgo) ?: continue
+            val pos = gridPosition(i) ?: continue
             val (col, row) = pos
 
             val left = paddingLeft + col * (cellSize + gap)
@@ -184,7 +181,7 @@ class FoqosHeatmapView @JvmOverloads constructor(
             val hasValue = v > 0L
             if (hasValue || i == selectedDay) {
                 cal.timeInMillis = System.currentTimeMillis()
-                cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
+                cal.add(Calendar.DAY_OF_YEAR, -(dayValuesMs.size - 1 - i))
                 val label = cal.get(Calendar.DAY_OF_MONTH).toString()
                 val onColor = onBucketColor(v)
                 numberPaint.color = onColor
@@ -195,14 +192,10 @@ class FoqosHeatmapView @JvmOverloads constructor(
         }
     }
 
-    /** Column/row for a "days ago" offset; null when it falls outside the grid. */
-    private fun gridPosition(daysAgo: Int): Pair<Int, Int>? {
-        val todayDowMonFirst = ((Calendar.getInstance().get(Calendar.DAY_OF_WEEK) + 5) % 7) // Mon=0..Sun=6
-        val col = (todayDowMonFirst - (daysAgo % 7) + 7) % 7
-        val rowFromToday = daysAgo / 7
-        val row = ROWS - 1 - rowFromToday
-        if (row < 0 || col < 0 || col >= COLS) return null
-        return col to row
+    /** Column/row for an index in the 28-day sequence: left->right, top->bottom. */
+    private fun gridPosition(index: Int): Pair<Int, Int>? {
+        if (index < 0 || index >= dayValuesMs.size) return null
+        return (index % COLS) to (index / COLS)
     }
 
     private fun colorFor(valueMs: Long): Int {
@@ -228,10 +221,8 @@ class FoqosHeatmapView @JvmOverloads constructor(
                 val col = (x / (cellSize + gap)).toInt()
                 val row = (y / (cellSize + gap)).toInt()
                 if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return performClick()
-                // Invert the same geometry used when drawing.
-                val todayDowMonFirst = ((Calendar.getInstance().get(Calendar.DAY_OF_WEEK) + 5) % 7)
-                val daysAgo = ((ROWS - 1 - row) * 7) + (todayDowMonFirst - col + 7) % 7
-                val idx = (dayValuesMs.size - 1) - daysAgo
+                // Same geometry as drawing: sequential grid.
+                val idx = row * COLS + col
                 if (idx in dayValuesMs.indices) {
                     selectedDay = if (selectedDay == idx) -1 else idx
                     invalidate()
