@@ -41,6 +41,13 @@
         <!-- Foqos surfaces / backgrounds -->
         <item name="android:colorBackground">@color/foqos_bg</item>
         <item name="android:windowBackground">@color/foqos_bg</item>
+
+        <!-- Framework text colors (foqos_* flip per config; fixes dark-mode gray text) -->
+        <item name="android:textColorPrimary">@color/foqos_on_surface</item>
+        <item name="android:textColorSecondary">@color/foqos_on_surface_variant</item>
+        <item name="android:textColorTertiary">@color/foqos_on_surface_variant</item>
+        <item name="android:textColorPrimaryInverse">@color/foqos_on_surface</item>
+        <item name="android:textColorSecondaryInverse">@color/foqos_on_surface_variant</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">true</item>
 

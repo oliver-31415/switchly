@@ -244,6 +244,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvHeroProfileName: TextView
     private lateinit var tvHeroChips: TextView
     private lateinit var tvHeroStrategy: TextView
+    private lateinit var heroProfileRoot: View
     private lateinit var tvHeroStatApps: TextView
     private lateinit var tvHeroStatDomains: TextView
     private lateinit var tvHeroStatBlocks: TextView
@@ -437,6 +438,7 @@ class MainActivity : AppCompatActivity() {
         tvHeroProfileName = findViewById(R.id.tvHeroProfileName)
         tvHeroChips = findViewById(R.id.tvHeroChips)
         tvHeroStrategy = findViewById(R.id.tvHeroStrategy)
+        heroProfileRoot = findViewById(R.id.heroProfileRoot)
         tvHeroStatApps = findViewById(R.id.tvHeroStatApps)
         tvHeroStatDomains = findViewById(R.id.tvHeroStatDomains)
         tvHeroStatBlocks = findViewById(R.id.tvHeroStatBlocks)
@@ -473,7 +475,7 @@ class MainActivity : AppCompatActivity() {
         profileRowsContainer = findViewById(R.id.profileRowsContainer)
         btnManageProfiles = findViewById(R.id.btnManageProfiles)
         btnManageProfiles.setOnClickListener {
-            startActivity(Intent(this, ManageProfilesActivity::class.java))
+            openSwitchProfileSheet()
         }
 
         tileManageApps = findViewById(R.id.tileManageApps)
@@ -1573,6 +1575,68 @@ class MainActivity : AppCompatActivity() {
     // =========================
     // Foqos-style profile edit sheet (SPA: all profile edits from the home pill)
     // =========================
+    /** Foqos-style quick profile switcher. */
+    private fun openSwitchProfileSheet() {
+        val profiles = ProfileStore.getProfiles(this).toList().sorted()
+        val current = ProfileStore.getCurrent(this)
+        val sheet = BottomSheetDialog(this)
+        val list = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = homeDp(20f)
+            setPadding(pad, homeDp(18f), pad, homeDp(22f))
+            setBackgroundColor(ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_surface))
+        }
+        val title = TextView(this).apply {
+            text = getString(R.string.profile_rows_switch)
+            textSize = 20f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_on_surface))
+        }
+        list.addView(title)
+
+        profiles.forEach { profile ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                val padV = homeDp(14f)
+                setPadding(0, padV, 0, padV)
+                isClickable = true
+                isFocusable = true
+                setBackgroundResource(android.R.attr.selectableItemBackground)
+            }
+            val name = TextView(this).apply {
+                text = profile
+                textSize = 15f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setTextColor(ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_on_surface))
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val check = TextView(this).apply {
+                text = "\u2713"
+                textSize = 16f
+                setTextColor(ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_primary))
+                visibility = if (profile == current) View.VISIBLE else View.GONE
+                tag = "switch_check"
+            }
+            row.addView(name)
+            row.addView(check)
+            row.setOnClickListener {
+                if (profile != current) {
+                    switchToProfile(profile)
+                }
+                // update checks in place
+                for (i in 0 until list.childCount) {
+                    list.getChildAt(i).findViewWithTag<TextView>("switch_check")?.visibility = View.GONE
+                }
+                check.visibility = View.VISIBLE
+            }
+            list.addView(row)
+        }
+
+        sheet.setContentView(list)
+        sheet.show()
+    }
+
     private fun openProfileEditSheet(profile: String) {
         val sheet = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.sheet_profile_edit, null)
@@ -2907,6 +2971,13 @@ class MainActivity : AppCompatActivity() {
 
         // Apply lock to profile/app editing controls
         applyLockedUi(locked)
+
+        // Foqos-style hero: vivid layered gradient while blocking is active
+        if (::heroProfileRoot.isInitialized) {
+            heroProfileRoot.setBackgroundResource(
+                if (enabled) R.drawable.hero_profile_bg_active else R.drawable.hero_profile_bg
+            )
+        }
 
         // Profile label
         val current = ProfileStore.getCurrent(this)

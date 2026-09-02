@@ -173,19 +173,19 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnActivityHide"
-                            style="@style/Switchly.OutlinedButton.CompactSegment"
+                            style="@style/Switchly.TextButton"
                             android:layout_width="wrap_content"
-                            android:layout_height="30dp"
-                            android:layout_marginBottom="8dp"
+                            android:layout_height="32dp"
+                            android:layout_marginBottom="6dp"
                             android:minWidth="0dp"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:textSize="12sp"
-                            android:text="@string/activity_hide"
                             app:icon="@drawable/visibility_off_24"
                             app:iconGravity="textStart"
                             app:iconPadding="4dp"
-                            app:iconSize="14dp" />
+                            app:iconSize="14dp"
+                            android:text="@string/activity_hide" />
 
                     </LinearLayout>
 
@@ -473,12 +473,14 @@
                         </LinearLayout>
                     </LinearLayout>
 
+                    <!-- Rows hidden: the hero card + Switch profile button replace them -->
                     <LinearLayout
                         android:id="@+id/profileRowsContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginTop="4dp"
+                        android:visibility="gone" />
 
                     <com.google.android.material.divider.MaterialDivider
                         style="@style/Switchly.Divider"

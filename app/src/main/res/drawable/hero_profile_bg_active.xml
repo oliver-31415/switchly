@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active blocking: layered "blob" gradient in the spirit of Foqos's artwork -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="315"
+                android:startColor="#FF37A56B"
+                android:centerColor="#FF1F7A4C"
+                android:endColor="#FF0E3D28" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="420dp"
+                android:centerX="0.15"
+                android:centerY="0.1"
+                android:startColor="#66A8E6C3"
+                android:endColor="#00A8E6C3" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="500dp"
+                android:centerX="0.9"
+                android:centerY="0.95"
+                android:startColor="#4D6FD6A4"
+                android:endColor="#006FD6A4" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+</layer-list>

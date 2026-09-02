@@ -215,7 +215,7 @@
     <!-- Foqos-style profile rows on Home -->
     <string name="profile_rows_title">Profiles</string>
     <string name="profile_rows_manage">Switch profile</string>
-    <string name="profile_row_active">Active</string>
+    <string name="profile_row_active">Selected</string>
     <string name="activity_chart_mode_heatmap">28 days</string>
     <string name="activity_chart_mode_week">Week</string>
     <string name="activity_hide">Hide</string>
