@@ -4409,6 +4409,19 @@ private class HeroArtDrawable(private val accent: Int, private val radiusPx: Flo
     override fun draw(canvas: android.graphics.Canvas) {
         val b = bounds
         if (b.width() == 0 || b.height() == 0) return
+        // start lazily: setVisible(true) never fires for a background set while the view is already visible
+        if (animator == null) {
+            animator = android.animation.ValueAnimator.ofFloat(0f, (2 * Math.PI).toFloat()).apply {
+                duration = 16000
+                repeatCount = android.animation.ValueAnimator.INFINITE
+                interpolator = android.view.animation.LinearInterpolator()
+                addUpdateListener {
+                    phase = it.animatedValue as Float
+                    invalidateSelf()
+                }
+                start()
+            }
+        }
         clipPath.reset()
         clipPath.addRoundRect(
             b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
