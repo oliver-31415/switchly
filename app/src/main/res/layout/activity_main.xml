@@ -915,9 +915,10 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Bottom-Navigation -->
+        <!-- Bottom-Navigation (removed in SPA restyle; view kept for Kotlin compat) -->
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNav"
+            android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
