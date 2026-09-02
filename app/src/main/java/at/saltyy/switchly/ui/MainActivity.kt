@@ -240,7 +240,7 @@ class MainActivity : AppCompatActivity() {
     // Activity heatmap (Foqos-style)
     private lateinit var activityHeatmap: FoqosHeatmapView
     private lateinit var tvHeatmapLegend: TextView
-    private lateinit var btnActivityHide: MaterialButton
+    private lateinit var btnActivityHide: LinearLayout
     private lateinit var tvHeroProfileName: TextView
     private lateinit var tvHeroChips: TextView
     private lateinit var tvHeroStrategy: TextView
@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
 
     // Foqos-style profile rows
     private lateinit var profileRowsContainer: LinearLayout
-    private lateinit var btnManageProfiles: MaterialButton
+    private lateinit var btnManageProfiles: LinearLayout
 
     // Quick actions tiles
     private lateinit var tileManageApps: MaterialCardView
@@ -458,7 +458,8 @@ class MainActivity : AppCompatActivity() {
             activityHeatmap.visibility = if (gridVisible) View.VISIBLE else View.GONE
             activityWeekChart.visibility = if (gridVisible && !isHeatmapMode()) View.VISIBLE else View.GONE
             tvActivityDetail.visibility = if (gridVisible) View.VISIBLE else View.GONE
-            btnActivityHide.text = getString(if (gridVisible) R.string.activity_hide else R.string.activity_show)
+            btnActivityHide.findViewById<TextView>(R.id.tvHeaderPillLabel)?.text =
+                getString(if (gridVisible) R.string.activity_hide else R.string.activity_show)
         }
         applyHeatmapLegend()
         activityWeekChart = findViewById(R.id.activityWeekChart)
@@ -1854,6 +1855,54 @@ class MainActivity : AppCompatActivity() {
         tvHeroStrategy.text = blockingModeLabel(AutomationModeStore.getMode(this))
     }
 
+    /** Builds the hero card background from the CURRENT accent so accent switching works. */
+    private fun applyHeroBackground(active: Boolean) {
+        val radius = homeDp(28f).toFloat()
+        if (!active) {
+            val surface = MaterialColors.getColor(this, android.R.attr.colorBackground, Color.GRAY)
+            val outline = ContextCompat.getColor(this, at.saltyy.switchly.R.color.foqos_outline)
+            val gd = android.graphics.drawable.GradientDrawable().apply {
+                setColor(MaterialColors.getColor(this@MainActivity, com.google.android.material.R.attr.colorSurfaceContainer, surface))
+                cornerRadius = radius.toFloat()
+                setStroke(homeDp(1f), ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_outline))
+            }
+            heroProfileRoot.background = gd
+            return
+        }
+
+        val accent = AccentColor.getAccentColorInt(this)
+        fun vary(lighten: Float, satMul: Float, alpha: Int): Int {
+            val hsv = FloatArray(3)
+            Color.colorToHSV(accent, hsv)
+            hsv[1] = (hsv[1] * satMul).coerceIn(0.3f, 1f)
+            hsv[2] = (hsv[2] + lighten).coerceIn(0f, 1f)
+            return Color.argb(alpha, Color.red(Color.HSVToColor(hsv)), Color.green(Color.HSVToColor(hsv)), Color.blue(Color.HSVToColor(hsv)))
+        }
+        fun blob(centerX: Float, centerY: Float, radiusDp: Float, color: Int): android.graphics.drawable.GradientDrawable {
+            return android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+                intArrayOf(color, Color.TRANSPARENT)
+            ).apply {
+                gradientType = android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT
+                setGradientCenter(centerX, centerY)
+                gradientRadius = homeDp(radiusDp).toFloat()
+                cornerRadius = radius
+            }
+        }
+
+        val base = android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+            intArrayOf(vary(0.05f, 1.05f, 0xFF), accent, vary(-0.28f, 1.1f, 0xFF))
+        ).apply { cornerRadius = radius }
+        val glow1 = blob(0.12f, 0.05f, 460f, vary(0.42f, 0.5f, 0x8C))
+        val glow2 = blob(0.95f, 0.35f, 420f, vary(0.18f, 0.85f, 0x59))
+        val glow3 = blob(0.55f, 1.05f, 520f, vary(0.10f, 0.95f, 0x40))
+
+        val ld = android.graphics.drawable.LayerDrawable(arrayOf(base, glow1, glow2, glow3))
+        ld.setLayerInset(1, 0, 0, 0, 0)
+        heroProfileRoot.background = ld
+    }
+
     private fun blockingModeLabel(mode: AutomationModeStore.Mode): String = getString(
         when (mode) {
             AutomationModeStore.Mode.MIXED -> R.string.blocking_mode_mixed
@@ -2972,12 +3021,10 @@ class MainActivity : AppCompatActivity() {
         // Apply lock to profile/app editing controls
         applyLockedUi(locked)
 
-        // Foqos-style hero: vivid layered blob artwork while blocking is active,
-        // calm neutral card while idle (obvious state signal)
+        // Foqos-style hero: vivid layered blob artwork (built from the live accent)
+        // while blocking is active; calm neutral card while idle.
         if (::heroProfileRoot.isInitialized) {
-            heroProfileRoot.setBackgroundResource(
-                if (enabled) R.drawable.hero_profile_bg_active else R.drawable.hero_profile_bg_idle
-            )
+            applyHeroBackground(enabled)
         }
 
         // Profile label
