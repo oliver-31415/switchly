@@ -1713,14 +1713,8 @@ class MainActivity : AppCompatActivity() {
                 if (::activityWeekChart.isInitialized) {
                     activityWeekChart.setValues(week.toList())
                 }
-                val weekStartCal = java.util.Calendar.getInstance().apply {
-                    add(java.util.Calendar.DAY_OF_YEAR, -6)
-                }
-                val weekLabel = java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT)
-                    .format(weekStartCal.time)
                 tvActivityWeek.text = getString(
                     R.string.activity_week_fmt,
-                    weekLabel,
                     formatDurationShort(week.sum())
                 )
                 onHeatmapDaySelected(-1)
@@ -1992,12 +1986,7 @@ class MainActivity : AppCompatActivity() {
         else -> false
     }
 
-    private fun shouldShowHomeBlockedApps(): Boolean = when (homeLayoutMode()) {
-        ToggleOptionsActivity.HOME_MODE_DEFAULT -> true
-        ToggleOptionsActivity.HOME_MODE_ADVANCED -> true
-        ToggleOptionsActivity.HOME_MODE_CUSTOM -> customHomeEnabled(ToggleOptionsActivity.KEY_HOME_CUSTOM_BLOCKED_APPS, true)
-        else -> false
-    }
+    private fun shouldShowHomeBlockedApps(): Boolean = false // SPA/Foqos parity: app editing lives in the profile sheet
 
     private fun shouldShowHomeTemporaryShortcut(): Boolean = when (homeLayoutMode()) {
         ToggleOptionsActivity.HOME_MODE_DEFAULT, ToggleOptionsActivity.HOME_MODE_ADVANCED -> true
@@ -2931,11 +2920,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        tvTempHint.alpha = when {
-            tempDisableRemaining > 0L || tempEnableRemaining > 0L -> 0.96f
-            lockedByNfc -> 0.95f
-            else -> 0.88f
-        }
+        tvTempHint.alpha = 1f
     }
 
     private fun updateEmergencyHintVisibility() {

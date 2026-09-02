@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:textSize="13sp"
-            android:alpha="0.75"
+            android:textColor="@color/foqos_on_surface_variant"
             tools:text="12 Apps | 3 Domains" />
     </LinearLayout>
 
