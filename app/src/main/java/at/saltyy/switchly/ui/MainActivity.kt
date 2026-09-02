@@ -4372,21 +4372,22 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-/** Foqos-style hero artwork: base gradient + organic accent blobs.
- *  Zero intrinsic size so it NEVER inflates the host view's layout. */
+/** Foqos-style hero artwork: base gradient + drifting organic accent blobs.
+ *  Zero intrinsic size (never inflates layout); animates only while visible. */
 private class HeroArtDrawable(private val accent: Int, private val radiusPx: Float) : android.graphics.drawable.Drawable() {
-    private class Blob(val fx: Float, val fy: Float, val fr: Float, val color: Int)
+    private class Blob(val fx: Float, val fy: Float, val fr: Float, val color: Int, val phase: Float, val drift: Float)
 
     private val basePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
     private val blobPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+    private val clipPath = android.graphics.Path()
     private val blobs = listOf(
-        Blob(0.08f, -0.12f, 0.52f, vary(0.30f, 0.9f, 0xB4)),
-        Blob(1.05f, 0.28f, 0.46f, vary(0.14f, 1.0f, 0x8C)),
-        Blob(0.55f, 1.12f, 0.58f, vary(0.08f, 0.95f, 0x40)),
-        Blob(-0.06f, 0.88f, 0.38f, vary(-0.30f, 1.15f, 0x7A)),
+        Blob(0.08f, -0.12f, 0.52f, vary(0.30f, 0.9f, 0xB4), 0.0f, 0.040f),
+        Blob(1.05f, 0.28f, 0.46f, vary(0.14f, 1.0f, 0x8C), 1.7f, 0.032f),
+        Blob(0.55f, 1.12f, 0.58f, vary(0.08f, 0.95f, 0x40), 3.1f, 0.050f),
+        Blob(-0.06f, 0.88f, 0.38f, vary(-0.30f, 1.15f, 0x7A), 4.4f, 0.036f),
     )
-    private var builtW = 0
-    private var builtH = 0
+    private var phase = 0f
+    private var animator: android.animation.ValueAnimator? = null
 
     private fun vary(lighten: Float, satMul: Float, alpha: Int): Int {
         val hsv = FloatArray(3)
@@ -4397,37 +4398,61 @@ private class HeroArtDrawable(private val accent: Int, private val radiusPx: Flo
         return android.graphics.Color.argb(alpha, android.graphics.Color.red(c), android.graphics.Color.green(c), android.graphics.Color.blue(c))
     }
 
-    override fun onBoundsChange(bounds: android.graphics.Rect) {
-        if (bounds.width() == 0 || bounds.height() == 0) return
-        basePaint.shader = android.graphics.LinearGradient(
-            0f, 0f, bounds.width().toFloat(), bounds.height().toFloat(),
-            vary(0.05f, 1.05f, 0xFF), vary(-0.28f, 1.1f, 0xFF),
-            android.graphics.Shader.TileMode.CLAMP,
-        )
-        builtW = bounds.width()
-        builtH = bounds.height()
-    }
-
     override fun draw(canvas: android.graphics.Canvas) {
         val b = bounds
+        if (b.width() == 0 || b.height() == 0) return
+        clipPath.reset()
+        clipPath.addRoundRect(
+            b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
+            radiusPx, radiusPx, android.graphics.Path.Direction.CW,
+        )
         canvas.save()
-        canvas.clipRect(b)
+        canvas.clipPath(clipPath)
+
         canvas.drawRoundRect(
             b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
-            radiusPx, radiusPx, basePaint,
+            radiusPx, radiusPx, basePaint.apply {
+                shader = basePaint.shader ?: android.graphics.LinearGradient(
+                    b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
+                    vary(0.05f, 1.05f, 0xFF), vary(-0.28f, 1.1f, 0xFF),
+                    android.graphics.Shader.TileMode.CLAMP,
+                )
+            },
         )
+
         val w = b.width().toFloat().coerceAtLeast(1f)
         val h = b.height().toFloat().coerceAtLeast(1f)
         val minDim = minOf(w, h)
         for (blob in blobs) {
-            val cx = b.left + blob.fx * w
-            val cy = b.top + blob.fy * h
+            val cx = b.left + blob.fx * w + kotlin.math.sin(phase + blob.phase) * minDim * blob.drift
+            val cy = b.top + blob.fy * h + kotlin.math.cos(phase * 0.8f + blob.phase) * minDim * blob.drift
             val r = blob.fr * minDim
             blobPaint.color = blob.color
-            blobPaint.shader = null
             canvas.drawOval(cx - r, cy - r, cx + r, cy + r, blobPaint)
         }
         canvas.restore()
+    }
+
+    override fun setVisible(visible: Boolean, restart: Boolean): Boolean {
+        if (visible) {
+            if (animator == null) {
+                animator = android.animation.ValueAnimator.ofFloat(0f, (2 * Math.PI).toFloat()).apply {
+                    duration = 14000
+                    repeatCount = android.animation.ValueAnimator.INFINITE
+                    interpolator = android.view.animation.LinearInterpolator()
+                    addUpdateListener {
+                        phase = it.animatedValue as Float
+                        invalidateSelf()
+                    }
+                    start()
+                }
+            } else {
+                animator?.resume()
+            }
+        } else {
+            animator?.pause()
+        }
+        return super.setVisible(visible, restart)
     }
 
     override fun setAlpha(alpha: Int) {}
@@ -4437,3 +4462,4 @@ private class HeroArtDrawable(private val accent: Int, private val radiusPx: Flo
     override fun getIntrinsicWidth(): Int = -1
     override fun getIntrinsicHeight(): Int = -1
 }
+
