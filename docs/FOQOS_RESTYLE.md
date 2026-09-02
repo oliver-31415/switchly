@@ -230,6 +230,31 @@ and reuses `Switchly.OutlinedButton.CompactSegment`.
   the hero card; it previously re-showed itself at runtime via the home-layout-mode check,
   which is why XML visibility=gone alone didn't stick).
 
+### Commit 10 — "feat - SPA rebuild" (current head)
+
+**Files:** `activity_main.xml`, `sheet_profile_edit.xml` (new), `sheet_profile_bg.xml`/
+`bg_round_white*.xml` (new), `menu_top_main.xml`, `activity_settings.xml`, `MainActivity.kt`,
+`layout.xml` (SheetRow style), strings (EN+DE)
+
+**The app is now a single-page app modeled on Foqos:**
+- Bottom navigation removed from Home (view kept, `visibility=gone` — MainActivity still
+  binds it); bottom-nav tour disabled. Docked launcher is the only bottom surface.
+- Home content = setup alert, "4 Week Activity", Profiles (hero + rows), dock launcher.
+  Quick actions / next schedule / blocked-app list are hidden in place (Kotlin refs intact).
+- Header: gear item (`action_settings_gear`) opens `SettingsActivity.openWithAccessCheck`.
+- **Profile edit bottom sheet** (`openProfileEditSheet(profile)`), opened by tapping the
+  hero card or its pencil: rename (AlertDialog -> `ProfileStore.renameProfile`), Block/Allow
+  segmented mode toggle (`ProfileRuleModeStore.setMode`), destinations Apps / Websites /
+  In-app rules / Schedules (all through `openRulesDestination` access checks), Insights &
+  history (ActivityHubActivity), Delete (confirm + last-profile guard -> `removeProfile`).
+- Settings hub slimmed (56dp rows, 15sp titles, 6dp gaps) and its own bottom nav hidden.
+
+**Merge advice:** if upstream touches `menu_top_main.xml`, keep the gear item AND its
+`onOptionsItemSelected` branch. If upstream changes the quick-actions/next-schedule/blocked
+cards' VISIBILITY logic (updateQuickActionsVisibility etc.), those views are now
+XML-hidden — leave the XML gone flags intact. The sheet's delete flow must keep the
+last-profile guard.
+
 ## Known pitfalls (verified on device: Pixel 10 Pro XL, Android 17)
 
 ### Pitfall #1 — Night-mode `?attr` resolution through Material theme overlays (CRASH)
