@@ -4372,19 +4372,27 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-/** Foqos-style hero artwork: base gradient + drifting organic accent blobs.
- *  Zero intrinsic size (never inflates layout); animates only while visible. */
+/** Foqos-style hero artwork: stacked, wobbly-edged accent blobs that slowly
+ *  morph shape like a lava lamp. Zero intrinsic size (never inflates layout);
+ *  animates only while visible. */
 private class HeroArtDrawable(private val accent: Int, private val radiusPx: Float) : android.graphics.drawable.Drawable() {
-    private class Blob(val fx: Float, val fy: Float, val fr: Float, val color: Int, val phase: Float, val drift: Float)
+    private class Blob(
+        val fx: Float, val fy: Float,      // center (fractions of card)
+        val fr: Float,                     // base radius (fraction of min dimension)
+        val color: Int,
+        val seed: Float,                   // per-blob shape offsets
+    )
 
     private val basePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
     private val blobPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
     private val clipPath = android.graphics.Path()
+
+    // Stacked back -> front: big light wave behind, mid saturated shape, smaller dark highlight on top.
     private val blobs = listOf(
-        Blob(0.08f, -0.12f, 0.52f, vary(0.30f, 0.9f, 0xB4), 0.0f, 0.040f),
-        Blob(1.05f, 0.28f, 0.46f, vary(0.14f, 1.0f, 0x8C), 1.7f, 0.032f),
-        Blob(0.55f, 1.12f, 0.58f, vary(0.08f, 0.95f, 0x40), 3.1f, 0.050f),
-        Blob(-0.06f, 0.88f, 0.38f, vary(-0.30f, 1.15f, 0x7A), 4.4f, 0.036f),
+        Blob(0.55f, 0.10f, 1.05f, vary(0.34f, 0.80f, 0xE6), 0.0f),   // big light, top
+        Blob(0.95f, 0.75f, 0.95f, vary(0.02f, 1.05f, 0xD9), 2.1f),   // mid saturated, right/bottom
+        Blob(0.30f, 0.95f, 0.62f, vary(-0.22f, 1.15f, 0xC8), 4.0f),  // darker, bottom-left front
+        Blob(0.80f, 0.30f, 0.34f, vary(0.46f, 0.65f, 0xA0), 5.3f),   // smaller highlight on top
     )
     private var phase = 0f
     private var animator: android.animation.ValueAnimator? = null
@@ -4414,7 +4422,7 @@ private class HeroArtDrawable(private val accent: Int, private val radiusPx: Flo
             radiusPx, radiusPx, basePaint.apply {
                 shader = basePaint.shader ?: android.graphics.LinearGradient(
                     b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
-                    vary(0.05f, 1.05f, 0xFF), vary(-0.28f, 1.1f, 0xFF),
+                    vary(0.02f, 1.0f, 0xFF), vary(-0.30f, 1.15f, 0xFF),
                     android.graphics.Shader.TileMode.CLAMP,
                 )
             },
@@ -4423,12 +4431,32 @@ private class HeroArtDrawable(private val accent: Int, private val radiusPx: Flo
         val w = b.width().toFloat().coerceAtLeast(1f)
         val h = b.height().toFloat().coerceAtLeast(1f)
         val minDim = minOf(w, h)
+        val t = phase
+
         for (blob in blobs) {
-            val cx = b.left + blob.fx * w + kotlin.math.sin(phase + blob.phase) * minDim * blob.drift
-            val cy = b.top + blob.fy * h + kotlin.math.cos(phase * 0.8f + blob.phase) * minDim * blob.drift
-            val r = blob.fr * minDim
+            // slow lava-lamp drift of the center
+            val cx = b.left + blob.fx * w + kotlin.math.sin(t * 0.55f + blob.seed) * minDim * 0.045f
+            val cy = b.top + blob.fy * h + kotlin.math.cos(t * 0.42f + blob.seed * 1.3f) * minDim * 0.055f
+            val path = android.graphics.Path()
+            path.reset()
+            // morphing outline
+            val steps = 72
+            val radius = blob.fr * minDim
+            var first = true
+            for (k in 0..steps) {
+                val theta = (k % steps) * (Math.PI * 2 / steps).toFloat()
+                val wobble = 1f +
+                    0.16f * kotlin.math.sin(2f * theta + blob.seed + t * 0.9f) +
+                    0.10f * kotlin.math.sin(3f * theta - blob.seed * 1.7f - t * 0.6f) +
+                    0.05f * kotlin.math.sin(5f * theta + blob.seed * 2.3f + t * 1.4f)
+                val r = radius * wobble
+                val x = cx + r * kotlin.math.cos(theta)
+                val y = cy + r * kotlin.math.sin(theta)
+                if (first) { path.moveTo(x, y); first = false } else { path.lineTo(x, y) }
+            }
+            path.close()
             blobPaint.color = blob.color
-            canvas.drawOval(cx - r, cy - r, cx + r, cy + r, blobPaint)
+            canvas.drawPath(path, blobPaint)
         }
         canvas.restore()
     }
@@ -4437,7 +4465,7 @@ private class HeroArtDrawable(private val accent: Int, private val radiusPx: Flo
         if (visible) {
             if (animator == null) {
                 animator = android.animation.ValueAnimator.ofFloat(0f, (2 * Math.PI).toFloat()).apply {
-                    duration = 14000
+                    duration = 16000
                     repeatCount = android.animation.ValueAnimator.INFINITE
                     interpolator = android.view.animation.LinearInterpolator()
                     addUpdateListener {
@@ -4462,4 +4490,5 @@ private class HeroArtDrawable(private val accent: Int, private val radiusPx: Flo
     override fun getIntrinsicWidth(): Int = -1
     override fun getIntrinsicHeight(): Int = -1
 }
+
 
