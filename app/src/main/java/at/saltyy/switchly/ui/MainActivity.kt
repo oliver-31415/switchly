@@ -1923,61 +1923,33 @@ class MainActivity : AppCompatActivity() {
         tvHeroStrategy.text = blockingModeLabel(AutomationModeStore.getMode(this))
     }
 
-    /** Builds the hero card background from the CURRENT accent so accent switching works. */
+    private var lastHeroArtActive: Boolean? = null
+    private var lastHeroArtAccent: Int? = null
+
+    /** Builds the hero card background from the CURRENT accent so accent switching works.
+     *  Rebuilds only when state/accent changes (updateSwitchState ticks every second). */
     private fun applyHeroBackground(active: Boolean) {
+        if (!::heroProfileRoot.isInitialized) {
+            return
+        }
+        val accent = AccentColor.getAccentColorInt(this)
+        if (lastHeroArtActive == active && lastHeroArtAccent == accent && heroProfileRoot.background != null) {
+            return
+        }
+        lastHeroArtActive = active
+        lastHeroArtAccent = accent
+
         val radius = homeDp(28f).toFloat()
-
-        fun rounded(color: Int): android.graphics.drawable.GradientDrawable =
-            android.graphics.drawable.GradientDrawable().apply {
-                setColor(color)
-                cornerRadius = radius
-            }
-
         if (!active) {
-            val gd = rounded(ContextCompat.getColor(this, at.saltyy.switchly.R.color.foqos_surface_variant)).apply {
+            val gd = android.graphics.drawable.GradientDrawable().apply {
+                setColor(ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_surface_variant))
+                cornerRadius = radius
                 setStroke(homeDp(1f), ContextCompat.getColor(this@MainActivity, at.saltyy.switchly.R.color.foqos_outline))
             }
             heroProfileRoot.background = gd
             return
         }
-
-        // Foqos-style organic artwork: base gradient + big accent-tinted ovals that
-        // overflow the card and get cropped by the view bounds (hard "wave" curves).
-        val accent = AccentColor.getAccentColorInt(this)
-        fun vary(lighten: Float, satMul: Float, alpha: Int): Int {
-            val hsv = FloatArray(3)
-            Color.colorToHSV(accent, hsv)
-            hsv[1] = (hsv[1] * satMul).coerceIn(0.3f, 1f)
-            hsv[2] = (hsv[2] + lighten).coerceIn(0f, 1f)
-            val c = Color.HSVToColor(hsv)
-            return Color.argb(alpha, Color.red(c), Color.green(c), Color.blue(c))
-        }
-
-        val base = rounded(vary(-0.18f, 1.1f, 0xFF))
-        fun blob(sizeDp: Int, color: Int): android.graphics.drawable.ShapeDrawable {
-            val sd = android.graphics.drawable.ShapeDrawable(android.graphics.drawable.shapes.OvalShape())
-            sd.paint.color = color
-            sd.intrinsicWidth = homeDp(sizeDp.toFloat())
-            sd.intrinsicHeight = homeDp(sizeDp.toFloat())
-            return sd
-        }
-
-        val b1 = blob(360, vary(0.30f, 0.9f, 0xB4))   // light wash, top-left overflow
-        val b2 = blob(300, vary(0.14f, 1.0f, 0x8C))   // mid tone, right overflow
-        val b3 = blob(220, vary(0.42f, 0.7f, 0x66))   // small highlight
-        val deep = blob(340, vary(-0.30f, 1.15f, 0x7A)) // dark base wave, bottom
-
-        val ld = android.graphics.drawable.LayerDrawable(
-            arrayOf(base, deep, b1, b2, b3)
-        )
-        val H = heroProfileRoot.height.takeIf { it > 0 } ?: homeDp(260f)
-        val W = heroProfileRoot.width.takeIf { it > 0 } ?: homeDp(640f)
-
-        ld.setLayerInset(1, W / 4, H * 2 / 3, -W / 3, -H / 2)              // deep wave bottom
-        ld.setLayerInset(2, -W / 3, -H / 2, W / 5, H / 3)                  // light top-left
-        ld.setLayerInset(3, W / 2, H / 4, -W / 4, -H / 5)                  // mid right
-        ld.setLayerInset(4, W / 5, -H / 6, -W / 2, H / 2)                  // small highlight
-        heroProfileRoot.background = ld
+        heroProfileRoot.background = HeroArtDrawable(accent, radius)
     }
 
     private fun blockingModeLabel(mode: AutomationModeStore.Mode): String = getString(
@@ -4398,4 +4370,70 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+}
+
+/** Foqos-style hero artwork: base gradient + organic accent blobs.
+ *  Zero intrinsic size so it NEVER inflates the host view's layout. */
+private class HeroArtDrawable(private val accent: Int, private val radiusPx: Float) : android.graphics.drawable.Drawable() {
+    private class Blob(val fx: Float, val fy: Float, val fr: Float, val color: Int)
+
+    private val basePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+    private val blobPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+    private val blobs = listOf(
+        Blob(0.08f, -0.12f, 0.52f, vary(0.30f, 0.9f, 0xB4)),
+        Blob(1.05f, 0.28f, 0.46f, vary(0.14f, 1.0f, 0x8C)),
+        Blob(0.55f, 1.12f, 0.58f, vary(0.08f, 0.95f, 0x40)),
+        Blob(-0.06f, 0.88f, 0.38f, vary(-0.30f, 1.15f, 0x7A)),
+    )
+    private var builtW = 0
+    private var builtH = 0
+
+    private fun vary(lighten: Float, satMul: Float, alpha: Int): Int {
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(accent, hsv)
+        hsv[1] = (hsv[1] * satMul).coerceIn(0.3f, 1f)
+        hsv[2] = (hsv[2] + lighten).coerceIn(0f, 1f)
+        val c = android.graphics.Color.HSVToColor(hsv)
+        return android.graphics.Color.argb(alpha, android.graphics.Color.red(c), android.graphics.Color.green(c), android.graphics.Color.blue(c))
+    }
+
+    override fun onBoundsChange(bounds: android.graphics.Rect) {
+        if (bounds.width() == 0 || bounds.height() == 0) return
+        basePaint.shader = android.graphics.LinearGradient(
+            0f, 0f, bounds.width().toFloat(), bounds.height().toFloat(),
+            vary(0.05f, 1.05f, 0xFF), vary(-0.28f, 1.1f, 0xFF),
+            android.graphics.Shader.TileMode.CLAMP,
+        )
+        builtW = bounds.width()
+        builtH = bounds.height()
+    }
+
+    override fun draw(canvas: android.graphics.Canvas) {
+        val b = bounds
+        canvas.save()
+        canvas.clipRect(b)
+        canvas.drawRoundRect(
+            b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
+            radiusPx, radiusPx, basePaint,
+        )
+        val w = b.width().toFloat().coerceAtLeast(1f)
+        val h = b.height().toFloat().coerceAtLeast(1f)
+        val minDim = minOf(w, h)
+        for (blob in blobs) {
+            val cx = b.left + blob.fx * w
+            val cy = b.top + blob.fy * h
+            val r = blob.fr * minDim
+            blobPaint.color = blob.color
+            blobPaint.shader = null
+            canvas.drawOval(cx - r, cy - r, cx + r, cy + r, blobPaint)
+        }
+        canvas.restore()
+    }
+
+    override fun setAlpha(alpha: Int) {}
+    override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {}
+    @Deprecated("Deprecated in Java")
+    override fun getOpacity(): Int = android.graphics.PixelFormat.TRANSLUCENT
+    override fun getIntrinsicWidth(): Int = -1
+    override fun getIntrinsicHeight(): Int = -1
 }
