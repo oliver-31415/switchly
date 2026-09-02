@@ -145,22 +145,20 @@ class FoqosHeatmapView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        // Foqos FourWeekHeatmapView: day-of-month labels run ABOVE each column,
-        // matching the calendar layout of the last 28 days.
+        // Foqos FourWeekHeatmapView: day-of-month labels run ABOVE each column —
+        // one label per column (the oldest day in that column), never stacked.
         labelPaint.color = textColor
         val cal = Calendar.getInstance()
         for (i in dayValuesMs.indices) {
             val daysAgo = (dayValuesMs.size - 1) - i
             val pos = gridPosition(daysAgo) ?: continue
+            val (_, row) = pos
+            if (row != 0) continue
             cal.timeInMillis = System.currentTimeMillis()
             cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
             val dayLabel = cal.get(Calendar.DAY_OF_MONTH).toString()
-            val hasValue = dayValuesMs[i] > 0L
-            val showInside = hasValue || i == selectedDay
-            if (!showInside) {
-                val x = paddingLeft + pos.first * (cellSize + gap) + cellSize / 2f
-                canvas.drawText(dayLabel, x, paddingTop + sp(12f), labelPaint)
-            }
+            val x = paddingLeft + pos.first * (cellSize + gap) + cellSize / 2f
+            canvas.drawText(dayLabel, x, paddingTop + sp(12f), labelPaint)
         }
 
         for (i in dayValuesMs.indices) {
@@ -211,7 +209,7 @@ class FoqosHeatmapView @JvmOverloads constructor(
         val bucket = bucketFor(valueMs)
         if (bucket < 0) {
             // Empty day: subtle text-color tint so it's visible in light AND dark mode.
-            return (textColor and 0x00FFFFFF) or 0x2A000000
+            return (textColor and 0x00FFFFFF) or 0x1F000000
         }
         return bucketColors(accent)[bucket]
     }
