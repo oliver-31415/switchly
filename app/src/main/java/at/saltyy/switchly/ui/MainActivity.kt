@@ -1602,7 +1602,7 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, padV, 0, padV)
                 isClickable = true
                 isFocusable = true
-                setBackgroundResource(android.R.attr.selectableItemBackground)
+                setBackgroundResource(android.R.attr.selectableItemBackground.resId(this@MainActivity))
             }
             val name = TextView(this).apply {
                 text = profile
@@ -2972,10 +2972,11 @@ class MainActivity : AppCompatActivity() {
         // Apply lock to profile/app editing controls
         applyLockedUi(locked)
 
-        // Foqos-style hero: vivid layered gradient while blocking is active
+        // Foqos-style hero: vivid layered blob artwork while blocking is active,
+        // calm neutral card while idle (obvious state signal)
         if (::heroProfileRoot.isInitialized) {
             heroProfileRoot.setBackgroundResource(
-                if (enabled) R.drawable.hero_profile_bg_active else R.drawable.hero_profile_bg
+                if (enabled) R.drawable.hero_profile_bg_active else R.drawable.hero_profile_bg_idle
             )
         }
 

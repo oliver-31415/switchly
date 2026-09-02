@@ -177,6 +177,17 @@
         <item name="dividerColor">@color/switchly_divider</item>
         <item name="dividerThickness">1dp</item>
     </style>
+    <!-- Foqos-style section header pill (Hide / Switch profile) -->
+    <style name="Switchly.HeaderPill" parent="">
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:background">@drawable/bg_header_pill</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
     <!-- Profile edit sheet row -->
     <style name="Switchly.SheetRow">
         <item name="android:orientation">horizontal</item>

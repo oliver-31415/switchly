@@ -21,7 +21,9 @@
             style="@style/Switchly.TopBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="52dp"
+            android:minHeight="0dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="4dp"
             app:navigationIcon="@null"
             app:title="@string/app_name"
             app:titleTextAppearance="@style/TextAppearance.Switchly.LargeTitle" />
@@ -171,21 +173,29 @@
                             android:textSize="20sp"
                             android:textStyle="bold" />
 
-                        <com.google.android.material.button.MaterialButton
+                        <LinearLayout
                             android:id="@+id/btnActivityHide"
-                            style="@style/Switchly.TextButton"
+                            style="@style/Switchly.HeaderPill"
                             android:layout_width="wrap_content"
-                            android:layout_height="32dp"
-                            android:layout_marginBottom="6dp"
-                            android:minWidth="0dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:textSize="12sp"
-                            app:icon="@drawable/visibility_off_24"
-                            app:iconGravity="textStart"
-                            app:iconPadding="4dp"
-                            app:iconSize="14dp"
-                            android:text="@string/activity_hide" />
+                            android:layout_height="38dp"
+                            android:layout_marginBottom="6dp">
+
+                            <ImageView
+                                android:layout_width="15dp"
+                                android:layout_height="15dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/visibility_off_24"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="7dp"
+                                android:text="@string/activity_hide"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface" />
+                        </LinearLayout>
 
                     </LinearLayout>
 
@@ -301,12 +311,28 @@
                             android:textSize="20sp"
                             android:textStyle="bold" />
 
-                        <com.google.android.material.button.MaterialButton
+                        <LinearLayout
                             android:id="@+id/btnManageProfiles"
-                            style="@style/Switchly.TextButton"
+                            style="@style/Switchly.HeaderPill"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/profile_rows_manage" />
+                            android:layout_height="38dp">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/account_box_24"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="7dp"
+                                android:text="@string/profile_rows_manage"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <!-- Foqos hero profile card: active profile summary -->
