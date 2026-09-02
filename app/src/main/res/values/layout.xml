@@ -60,9 +60,9 @@
          ========================= -->
     <!-- Unified top bar: Foqos-flat (surface background, on-surface text) -->
     <style name="Switchly.TopBar" parent="Widget.Material3.Toolbar">
-        <!-- Background = flat surface, no accent header -->
-        <item name="android:background">?attr/colorSurface</item>
-        <item name="backgroundTint">?attr/colorSurface</item>
+        <!-- Background = page color (seamless, no floating band) -->
+        <item name="android:background">@color/foqos_bg</item>
+        <item name="backgroundTint">@color/foqos_bg</item>
 
         <!-- Title color -->
         <item name="titleTextColor">?attr/colorOnSurface</item>

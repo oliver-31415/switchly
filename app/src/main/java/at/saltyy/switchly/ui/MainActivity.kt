@@ -151,6 +151,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Calendar
+import android.util.TypedValue
 import java.util.Locale
 import java.text.DateFormat
 import at.saltyy.switchly.data.prefs.BlockedTimeStore
@@ -444,6 +445,9 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.ibtnHeroEdit).setOnClickListener {
             ProfileStore.getCurrent(this)?.let { openProfileEditSheet(it) }
+        }
+        findViewById<View>(R.id.rowHeroStrategy).setOnClickListener {
+            openBlockingModeSheet()
         }
         btnActivityHide.setOnClickListener {
             activityHidden = !activityHidden
@@ -1783,7 +1787,113 @@ class MainActivity : AppCompatActivity() {
             }
         }
         tvHeroChips.text = chips.joinToString("  ·  ")
-        tvHeroStrategy.text = getString(R.string.hero_strategy_manual)
+        tvHeroStrategy.text = blockingModeLabel(AutomationModeStore.getMode(this))
+    }
+
+    private fun blockingModeLabel(mode: AutomationModeStore.Mode): String = getString(
+        when (mode) {
+            AutomationModeStore.Mode.MIXED -> R.string.blocking_mode_mixed
+            AutomationModeStore.Mode.NFC -> R.string.blocking_mode_nfc
+            AutomationModeStore.Mode.QR -> R.string.blocking_mode_qr
+            AutomationModeStore.Mode.BARCODE -> R.string.blocking_mode_barcode
+            AutomationModeStore.Mode.SCHEDULE -> R.string.blocking_mode_schedule
+        }
+    )
+
+    /** Foqos strategy-picker equivalent: choose how Switchly may be changed. */
+    private fun openBlockingModeSheet() {
+        val sheet = BottomSheetDialog(this)
+        val ctx = this
+        val list = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = homeDp(20f)
+            setPadding(pad, homeDp(18f), pad, homeDp(22f))
+            setBackgroundColor(ContextCompat.getColor(ctx, at.saltyy.switchly.R.color.foqos_surface))
+        }
+        val title = TextView(ctx).apply {
+            text = getString(R.string.blocking_mode_title)
+            textSize = 20f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(ctx, at.saltyy.switchly.R.color.foqos_on_surface))
+        }
+        list.addView(title)
+
+        val current = AutomationModeStore.getMode(ctx)
+        val entries = listOf(
+            Triple(AutomationModeStore.Mode.MIXED, R.string.blocking_mode_mixed, R.string.blocking_mode_mixed_desc),
+            Triple(AutomationModeStore.Mode.NFC, R.string.blocking_mode_nfc, R.string.blocking_mode_nfc_desc),
+            Triple(AutomationModeStore.Mode.QR, R.string.blocking_mode_qr, R.string.blocking_mode_qr_desc),
+            Triple(AutomationModeStore.Mode.BARCODE, R.string.blocking_mode_barcode, R.string.blocking_mode_barcode_desc),
+            Triple(AutomationModeStore.Mode.SCHEDULE, R.string.blocking_mode_schedule, R.string.blocking_mode_schedule_desc),
+        )
+
+        entries.forEach { (mode, nameRes, descRes) ->
+            val supported = AutomationModeStore.isModeSupported(ctx, mode)
+            val row = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                val padV = homeDp(12f)
+                setPadding(0, padV, 0, padV)
+                isClickable = true
+                isFocusable = true
+                alpha = if (supported) 1f else 0.4f
+                setBackgroundResource(android.R.attr.selectableItemBackground.resId(ctx))
+            }
+            val texts = LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val name = TextView(ctx).apply {
+                text = getString(nameRes)
+                textSize = 15f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setTextColor(ContextCompat.getColor(ctx, at.saltyy.switchly.R.color.foqos_on_surface))
+            }
+            val desc = TextView(ctx).apply {
+                text = if (supported) getString(descRes) else getString(R.string.blocking_mode_unsupported)
+                textSize = 12f
+                setTextColor(ContextCompat.getColor(ctx, at.saltyy.switchly.R.color.foqos_on_surface_variant))
+            }
+            texts.addView(name)
+            texts.addView(desc)
+            val check = TextView(ctx).apply {
+                text = "\u2713"
+                textSize = 16f
+                setTextColor(ContextCompat.getColor(ctx, at.saltyy.switchly.R.color.foqos_primary))
+                visibility = if (mode == current) View.VISIBLE else View.GONE
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { marginStart = homeDp(12f) }
+            }
+            row.addView(texts)
+            row.addView(check)
+            row.setOnClickListener {
+                if (!supported) {
+                    return@setOnClickListener
+                }
+                AutomationModeStore.setMode(ctx, mode)
+                tvHeroStrategy.text = blockingModeLabel(mode)
+                // refresh check marks
+                for (i in 0 until list.childCount) {
+                    val child = list.getChildAt(i)
+                    val mark = child.findViewWithTag<TextView>("mode_check") ?: continue
+                    mark.visibility = View.GONE
+                }
+                check.visibility = View.VISIBLE
+            }
+            check.tag = "mode_check"
+            list.addView(row)
+        }
+
+        sheet.setContentView(list)
+        sheet.show()
+    }
+
+    private fun Int.resId(ctx: Context): Int {
+        val tv = TypedValue()
+        ctx.theme.resolveAttribute(this, tv, true)
+        return tv.resourceId
     }
 
     private fun setActivityChartMode(heatmapMode: Boolean) {

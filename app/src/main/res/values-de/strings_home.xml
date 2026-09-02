@@ -231,4 +231,19 @@
     <string name="hero_chip_autoblock">Auto-block new apps</string>
     <string name="hero_chip_temporary">Temporary</string>
     <string name="hero_chip_emergency">Emergency</string>
-    </resources>
+    
+    <!-- Blocking mode picker (hero strategy row) -->
+    <string name="blocking_mode_title">Blocking-Methode</string>
+    <string name="blocking_mode_mixed">Gemischt</string>
+    <string name="blocking_mode_mixed_desc">Manueller Button plus erlaubte Kanäle</string>
+    <string name="blocking_mode_nfc">NFC-Modus</string>
+    <string name="blocking_mode_nfc_desc">Nur NFC-Tags können Switchly ändern</string>
+    <string name="blocking_mode_qr">QR-Modus</string>
+    <string name="blocking_mode_qr_desc">Nur QR-Codes können Switchly ändern</string>
+    <string name="blocking_mode_barcode">Barcode-Modus</string>
+    <string name="blocking_mode_barcode_desc">Nur Barcodes können Switchly ändern</string>
+    <string name="blocking_mode_schedule">Zeitplan-Modus</string>
+    <string name="blocking_mode_schedule_desc">Nur Zeitpläne können Switchly ändern</string>
+    <string name="blocking_mode_unsupported">Auf diesem Gerät nicht verfügbar</string>
+    <string name="profile_rows_switch">Profil wechseln</string>
+</resources>
