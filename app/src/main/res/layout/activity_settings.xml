@@ -51,7 +51,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -59,10 +59,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -109,7 +112,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -117,10 +120,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -167,7 +173,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -175,10 +181,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -232,7 +241,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -240,10 +249,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -290,7 +302,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -298,10 +310,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -350,7 +365,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -358,10 +373,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -415,7 +433,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -423,10 +441,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -473,7 +494,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -481,10 +502,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -531,7 +555,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -539,10 +563,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -596,7 +623,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -604,10 +631,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -654,7 +684,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -662,10 +692,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -721,7 +754,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
@@ -730,10 +763,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -787,7 +823,7 @@
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
@@ -795,10 +831,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="72dp"
+                    android:minHeight="56dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -859,6 +898,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:visibility="gone"
         android:paddingTop="0dp"
         android:paddingBottom="0dp"
         android:background="?attr/colorSurface"

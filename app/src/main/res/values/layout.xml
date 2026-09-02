@@ -177,6 +177,19 @@
         <item name="dividerColor">@color/switchly_divider</item>
         <item name="dividerThickness">1dp</item>
     </style>
+    <!-- Profile edit sheet row -->
+    <style name="Switchly.SheetRow">
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:layout_marginTop">4dp</item>
+    </style>
+
     <!-- Small badges -->
     <style name="Switchly.Chip" parent="Widget.Material3.Chip.Assist">
         <item name="chipBackgroundColor">@color/foqos_surface_variant</item>

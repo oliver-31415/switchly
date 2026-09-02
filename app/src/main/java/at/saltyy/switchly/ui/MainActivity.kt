@@ -439,6 +439,12 @@ class MainActivity : AppCompatActivity() {
         tvHeroStatApps = findViewById(R.id.tvHeroStatApps)
         tvHeroStatDomains = findViewById(R.id.tvHeroStatDomains)
         tvHeroStatBlocks = findViewById(R.id.tvHeroStatBlocks)
+        findViewById<View>(R.id.heroProfileRoot).setOnClickListener {
+            ProfileStore.getCurrent(this)?.let { openProfileEditSheet(it) }
+        }
+        findViewById<View>(R.id.ibtnHeroEdit).setOnClickListener {
+            ProfileStore.getCurrent(this)?.let { openProfileEditSheet(it) }
+        }
         btnActivityHide.setOnClickListener {
             activityHidden = !activityHidden
             val gridVisible = !activityHidden
@@ -802,6 +808,8 @@ class MainActivity : AppCompatActivity() {
     )
 
     private fun scheduleBottomNavTour(bottomNav: BottomNavigationView) {
+        // SPA restyle: bottom navigation removed from Home.
+        return
         val prefs = getSharedPreferences(PREFS_UI_HINTS, MODE_PRIVATE)
         val pending = prefs.getBoolean(KEY_BOTTOM_NAV_TOUR_PENDING, false)
         val completedVersion = prefs.getIntCompat(KEY_BOTTOM_NAV_TOUR_VERSION, 0)
@@ -1556,6 +1564,137 @@ class MainActivity : AppCompatActivity() {
         } else {
             true
         }
+    }
+
+    // =========================
+    // Foqos-style profile edit sheet (SPA: all profile edits from the home pill)
+    // =========================
+    private fun openProfileEditSheet(profile: String) {
+        val sheet = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.sheet_profile_edit, null)
+        sheet.setContentView(view)
+        sheet.behavior.peekHeight = resources.displayMetrics.heightPixels / 2
+
+        val nameView = view.findViewById<TextView>(R.id.tvSheetProfileName)
+        val modeBlock = view.findViewById<MaterialButton>(R.id.btnSheetModeBlock)
+        val modeAllow = view.findViewById<MaterialButton>(R.id.btnSheetModeAllow)
+
+        nameView.text = profile
+        val allowMode = ProfileRuleModeStore.isAllowMode(this, profile)
+        SegmentedToggleUi.apply(
+            this,
+            listOf(modeBlock, modeAllow),
+            if (allowMode) R.id.btnSheetModeAllow else R.id.btnSheetModeBlock,
+        )
+
+        fun refreshSheetMode() {
+            val allow = ProfileRuleModeStore.isAllowMode(this, profile)
+            SegmentedToggleUi.apply(
+                this,
+                listOf(modeBlock, modeAllow),
+                if (allow) R.id.btnSheetModeAllow else R.id.btnSheetModeBlock,
+            )
+        }
+
+        modeBlock.setOnClickListener {
+            ProfileRuleModeStore.setMode(this, profile, ProfileRuleModeStore.MODE_BLOCK_SELECTED)
+            refreshSheetMode()
+            refreshProfileRowsUi()
+        }
+        modeAllow.setOnClickListener {
+            ProfileRuleModeStore.setMode(this, profile, ProfileRuleModeStore.MODE_ALLOW_SELECTED)
+            refreshSheetMode()
+            refreshProfileRowsUi()
+        }
+
+        view.findViewById<View>(R.id.rowSheetRename).setOnClickListener {
+            showRenameDialog(profile) { newName ->
+                nameView.text = newName
+                refreshProfileRowsUi()
+            }
+        }
+        view.findViewById<View>(R.id.rowSheetApps).setOnClickListener {
+            sheet.dismiss()
+            openAppPickerIfUnlocked()
+        }
+        view.findViewById<View>(R.id.rowSheetWebsites).setOnClickListener {
+            sheet.dismiss()
+            openRulesDestination(Intent(this, ManageBlockedWebsitesActivity::class.java))
+        }
+        view.findViewById<View>(R.id.rowSheetInApp).setOnClickListener {
+            sheet.dismiss()
+            openRulesDestination(Intent(this, InAppRulesActivity::class.java))
+        }
+        view.findViewById<View>(R.id.rowSheetSchedules).setOnClickListener {
+            sheet.dismiss()
+            openRulesDestination(Intent(this, SchedulesActivity::class.java))
+        }
+        view.findViewById<View>(R.id.rowSheetInsights).setOnClickListener {
+            sheet.dismiss()
+            ActivityTransitionCompat.switchWithoutAnimation(
+                activity = this,
+                intent = Intent(this, ActivityHubActivity::class.java),
+            )
+        }
+        view.findViewById<View>(R.id.rowSheetDelete).setOnClickListener {
+            val profiles = ProfileStore.getProfiles(this)
+            if (profiles.size <= 1) {
+                com.google.android.material.snackbar.Snackbar.make(
+                    snackRoot(),
+                    getString(R.string.profile_sheet_last_profile),
+                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT,
+                ).applySwitchlyStyle().show()
+                return@setOnClickListener
+            }
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(getString(R.string.profile_sheet_delete))
+                .setMessage(getString(R.string.profile_sheet_delete_confirm, profile))
+                .setPositiveButton(getString(R.string.delete)) { _, _ ->
+                    ProfileStore.removeProfile(this, profile)
+                    sheet.dismiss()
+                    refreshProfileRowsUi()
+                    refreshBlockedList()
+                    updateSwitchState()
+                }
+                .setNegativeButton(getString(android.R.string.cancel), null)
+                .show()
+        }
+
+        sheet.show()
+    }
+
+    private fun refreshProfileRowsUi() {
+        val profiles = ProfileStore.getProfiles(this).toList().sorted()
+        refreshProfileRows(profiles, ProfileStore.getCurrent(this))
+        refreshProfileHero(ProfileStore.getCurrent(this))
+    }
+
+    private fun showRenameDialog(profile: String, onRenamed: (String) -> Unit) {
+        val input = android.widget.EditText(this).apply {
+            setText(profile)
+            setSelection(profile.length)
+            setSingleLine(true)
+        }
+        val container = android.widget.FrameLayout(this).apply {
+            val pad = homeDp(20f)
+            setPadding(pad, homeDp(8f), pad, 0)
+            addView(input)
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(getString(R.string.profile_sheet_rename))
+            .setView(container)
+            .setPositiveButton(getString(R.string.save)) { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isNotEmpty() && newName != profile &&
+                    ProfileStore.renameProfile(this, profile, newName)
+                ) {
+                    onRenamed(newName)
+                    refreshBlockedList()
+                    updateSwitchState()
+                }
+            }
+            .setNegativeButton(getString(android.R.string.cancel), null)
+            .show()
     }
 
     // =========================
@@ -3819,6 +3958,10 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_scanner_header -> {
                 showScannerChoiceDialog()
+                true
+            }
+            R.id.action_settings_gear -> {
+                SettingsActivity.openWithAccessCheck(this)
                 true
             }
             R.id.action_info -> {

@@ -35,7 +35,7 @@
         android:paddingStart="16dp"
         android:paddingTop="12dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="190dp"
+        android:paddingBottom="120dp"
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
@@ -315,7 +315,10 @@
                         android:orientation="vertical"
                         android:layout_marginTop="6dp"
                         android:padding="16dp"
-                        android:background="@drawable/hero_profile_bg">
+                        android:background="@drawable/hero_profile_bg"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -678,9 +681,10 @@
             </com.google.android.material.card.MaterialCardView>
 
             <include
-                layout="@layout/view_home_quick_actions" />
+                layout="@layout/view_home_quick_actions"
+                android:visibility="gone" />
 
-            <!-- Next schedule (optional) -->
+            <!-- Next schedule (optional; hidden in SPA home) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardNextSchedule"
                 style="@style/Switchly.Card"
@@ -738,9 +742,10 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- App list -->
+            <!-- App list (hidden in SPA home; editing lives in the profile sheet) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardBlockedApps"
+                android:visibility="gone"
                 style="@style/Switchly.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -866,6 +871,7 @@
         android:focusable="true"
         android:visibility="gone"
         android:importantForAccessibility="no" />
+
 
     <!-- Bottom dock: Foqos-style launcher (primary action + active timer) -->
     <LinearLayout

@@ -4,51 +4,51 @@
     <!-- ====================================================== -->
     <!-- Dashboard profile state -->
     <!-- ====================================================== -->
-    <string name="dashboard_active_profile_fmt">Aktives Profil: %1$s</string>
-    <string name="dashboard_active_profile_unknown">Aktives Profil: —</string>
-    <string name="dashboard_unavailable_hint_pick_apps">Nicht auf diesem Gerät installiert.\nÖffne „App rules“, um den Eintrag zu entfernen.</string>
+    <string name="dashboard_active_profile_fmt">Active profile: %1$s</string>
+    <string name="dashboard_active_profile_unknown">Active profile: —</string>
+    <string name="dashboard_unavailable_hint_pick_apps">Not installed on this device.\nOpen “App rules” to remove.</string>
 
     <!-- ====================================================== -->
     <!-- Blocked app list actions -->
     <!-- ====================================================== -->
-    <string name="dashboard_blocked_app_action_edit_limits">Limits bearbeiten</string>
-    <string name="dashboard_blocked_app_action_edit_limits_summary">Zeit- oder Öffnungslimits für %1$s setzen.</string>
-    <string name="dashboard_blocked_app_limits_title">Limits bearbeiten</string>
-    <string name="dashboard_blocked_app_action_time_limit">Zeitlimit bearbeiten</string>
-    <string name="dashboard_blocked_app_action_time_limit_summary">Erlaubte Minuten begrenzen, bevor blockiert wird.</string>
-    <string name="dashboard_blocked_app_action_open_limit">Öffnen-Limit bearbeiten</string>
-    <string name="dashboard_blocked_app_action_open_limit_summary">Begrenzen, wie oft die App heute geöffnet werden darf.</string>
-    <string name="dashboard_blocked_app_action_remove">App entfernen</string>
-    <string name="dashboard_blocked_app_action_remove_summary">%1$s aus dem aktuellen Profil entfernen.</string>
-    <string name="dashboard_blocked_app_remove_title">App entfernen</string>
-    <string name="dashboard_blocked_app_remove_message">%1$s aus dem aktuellen Profil entfernen?</string>
-    <string name="dashboard_blocked_app_removed">%1$s entfernt</string>
+    <string name="dashboard_blocked_app_action_edit_limits">Edit limits</string>
+    <string name="dashboard_blocked_app_action_edit_limits_summary">Set time or open limits for %1$s.</string>
+    <string name="dashboard_blocked_app_limits_title">Edit limits</string>
+    <string name="dashboard_blocked_app_action_time_limit">Edit time limit</string>
+    <string name="dashboard_blocked_app_action_time_limit_summary">Limit allowed minutes before blocking.</string>
+    <string name="dashboard_blocked_app_action_open_limit">Edit open limit</string>
+    <string name="dashboard_blocked_app_action_open_limit_summary">Limit how often the app can be opened today.</string>
+    <string name="dashboard_blocked_app_action_remove">Remove app</string>
+    <string name="dashboard_blocked_app_action_remove_summary">Remove %1$s from the current profile.</string>
+    <string name="dashboard_blocked_app_remove_title">Remove app</string>
+    <string name="dashboard_blocked_app_remove_message">Remove %1$s from the current profile?</string>
+    <string name="dashboard_blocked_app_removed">%1$s removed</string>
 
     <!-- ====================================================== -->
     <!-- Emergency and active timer hints -->
     <!-- ====================================================== -->
-    <string name="dashboard_emergency_hint_ready">Notfall-Entsperrung - 1x pro Tag</string>
-    <string name="dashboard_emergency_hint_active">Notfall aktiv (%1$d Min) — tippe für Pause oder Ende</string>
-    <string name="dashboard_emergency_hint_paused">Notfall pausiert (%1$d Min) — tippe für Fortsetzen oder Ende</string>
-    <string name="dashboard_emergency_hint_used_today">Notfall-Entsperrung heute bereits genutzt</string>
-    <string name="dashboard_emergency_hint_disabled">Notfall-Entsperrung ist aus — öffne die Blockiersteuerung</string>
-    <string name="widget_active_timer_title">Aktivzeit</string>
-    <string name="widget_active_timer_inactive">Nicht aktiv</string>
-    <string name="widget_active_timer_desc">Zeigt die aktuelle Aktivzeit.</string>
+    <string name="dashboard_emergency_hint_ready">Emergency unlock - use once a day</string>
+    <string name="dashboard_emergency_hint_active">Emergency active (%1$d min) — tap to pause or end</string>
+    <string name="dashboard_emergency_hint_paused">Emergency paused (%1$d min) — tap to resume or end</string>
+    <string name="dashboard_emergency_hint_used_today">Emergency unlock already used today</string>
+    <string name="dashboard_emergency_hint_disabled">Emergency unlock is off — open Switchly controls</string>
+    <string name="widget_active_timer_title">Active timer</string>
+    <string name="widget_active_timer_inactive">Not active</string>
+    <string name="widget_active_timer_desc">Shows the current active timer.</string>
 
     <!-- ====================================================== -->
     <!-- Control mode labels -->
     <!-- ====================================================== -->
-    <string name="dashboard_control_mode_hint_placeholder">Kontrollmodus: —</string>
-    <string name="dashboard_control_mode_hint_fmt">Kontrollmodus: %1$s</string>
-    <string name="dashboard_control_method_schedule">Zeitpläne</string>
+    <string name="dashboard_control_mode_hint_placeholder">Control mode: —</string>
+    <string name="dashboard_control_mode_hint_fmt">Control mode: %1$s</string>
+    <string name="dashboard_control_method_schedule">Schedules</string>
     <string name="dashboard_control_method_nfc">NFC</string>
     <string name="dashboard_control_method_qr">QR</string>
     <string name="dashboard_control_method_barcode">Barcode</string>
-    <string name="dashboard_control_method_manual">manueller Steuerung</string>
-    <string name="dashboard_control_method_configured">konfigurierter Methode</string>
-    <string name="dashboard_control_mode_hint_mixed_fmt">Kontrollmodus: %1$s Kanäle: %2$s</string>
-    <string name="dashboard_control_mode_schedule">Zeitpläne</string>
+    <string name="dashboard_control_method_manual">manual controls</string>
+    <string name="dashboard_control_method_configured">configured method</string>
+    <string name="dashboard_control_mode_hint_mixed_fmt">Control mode: %1$s\nChannels: %2$s</string>
+    <string name="dashboard_control_mode_schedule">Schedules</string>
     <string name="dashboard_control_mode_nfc">NFC</string>
     <string name="dashboard_control_mode_qr">QR</string>
     <string name="dashboard_control_mode_barcode">Barcode</string>
@@ -57,157 +57,178 @@
     <!-- ====================================================== -->
     <!-- Dashboard setup and state -->
     <!-- ====================================================== -->
-    <string name="dashboard_nfc_locked_hint">Gesperrt: Switchly per NFC-Tag deaktivieren</string>
-    <string name="dashboard_setup_title">Fast fertig</string>
-    <string name="dashboard_setup_subtitle">Aktiviere diese Punkte, damit die Blockierung zuverlässig funktioniert.</string>
+    <string name="dashboard_nfc_locked_hint">Locked: disable Switchly via NFC tag</string>
+    <string name="dashboard_setup_title">Almost ready</string>
+    <string name="dashboard_setup_subtitle">Enable these items so blocking works reliably.</string>
     <plurals name="dashboard_setup_subtitle_missing">
-        <item quantity="one">Aktiviere diesen Punkt, damit die Blockierung zuverlässig funktioniert.</item>
-        <item quantity="other">Aktiviere diese Punkte, damit die Blockierung zuverlässig funktioniert.</item>
+        <item quantity="one">Enable this item so blocking works reliably.</item>
+        <item quantity="other">Enable these items so blocking works reliably.</item>
     </plurals>
-    <string name="dashboard_setup_desc">Schließe die erforderlichen Berechtigungen ab, damit Switchly Apps zuverlässig blockieren kann.</string>
-    <string name="dashboard_setup_cta">Einrichtung abschließen</string>
-    <string name="dashboard_blocked_now_title">Gerade blockiert</string>
-    <string name="dashboard_blocked_now_reason_profile">Durch Profil blockiert</string>
-    <string name="dashboard_blocked_now_reason_limit">Limit erreicht</string>
-    <string name="dashboard_blocked_now_reason_attempts">Öffnen-Limit erreicht</string>
+    <string name="dashboard_setup_desc">Finish the required permissions so Switchly can block apps reliably.</string>
+    <string name="dashboard_setup_cta">Finish setup</string>
+    <string name="dashboard_blocked_now_title">Blocked right now</string>
+    <string name="dashboard_blocked_now_reason_profile">Blocked by profile</string>
+    <string name="dashboard_blocked_now_reason_limit">Limit reached</string>
+    <string name="dashboard_blocked_now_reason_attempts">Open limit reached</string>
     <plurals name="dashboard_badge_missing">
-        <item quantity="one">%1$d fehlt</item>
-        <item quantity="other">%1$d fehlen</item>
+        <item quantity="one">%1$d missing</item>
+        <item quantity="other">%1$d missing</item>
     </plurals>
-    <string name="dashboard_active_duration_placeholder">Jetzt aktiv · —</string>
-    <string name="dashboard_active_duration_fmt">Jetzt aktiv · %1$s</string>
-    <string name="dashboard_active_duration_less_than_minute">unter 1 Min.</string>
+    <string name="dashboard_active_duration_placeholder">Active now · —</string>
+    <string name="dashboard_active_duration_fmt">Active now · %1$s</string>
+    <string name="dashboard_active_duration_less_than_minute">under 1m</string>
 
     <!-- ====================================================== -->
     <!-- Temporary mode -->
     <!-- ====================================================== -->
-    <string name="dashboard_temp_remaining_fmt">Verbleibend: %1$s</string>
-    <string name="dashboard_temp_remaining_placeholder">Verbleibend: 00:00</string>
-    <string name="dashboard_temp_status_enabled">Vorübergehend aktiviert • noch %1$s</string>
-    <string name="dashboard_temp_status_disabled">Temporär pausiert • noch %1$s</string>
-    <string name="dashboard_temp_sheet_sub_enable">Blockierung für kurze Zeit aktivieren</string>
-    <string name="dashboard_temp_sheet_sub_enable_profile">%1$s für kurze Zeit aktivieren</string>
-    <string name="dashboard_temp_sheet_sub_disable">Switchly kurz pausieren</string>
-    <string name="dashboard_temp_sheet_sub_disable_locked">Temporäres Deaktivieren ist gesperrt (NFC-Sperre ist aktiv). Nutze bei Bedarf die Notfall-Entsperrung.</string>
-    <string name="dashboard_temp_sheet_cancel_timer">Timer abbrechen</string>
-    <string name="dashboard_temp_hint">Temporärer Modus - Aktion wählen</string>
-    <string name="dashboard_temp_hint_enable">Temporär aktivieren - Dauer wählen</string>
-    <string name="dashboard_temp_hint_enable_profile">%1$s temporär aktivieren</string>
-    <string name="dashboard_temp_hint_disable">Temporär pausieren - Dauer wählen</string>
-    <string name="dashboard_temp_hint_locked_nfc">Temporärer Modus ist nicht verfügbar, solange „NFC erforderlich“ aktiv ist.</string>
-    <string name="dashboard_temp_nudge">Tipp:\nNutze den temporären Modus für schnelle 5–60-Minuten-Sessions.</string>
-    <string name="dashboard_temp_active_changes_locked">Dieser Timer ist geschützt. Auf Home kann er nicht ersetzt oder verkürzt werden. Eine temporäre Pause kann weiterhin vorzeitig beendet werden, um den Schutz wiederherzustellen.</string>
-    <string name="dashboard_temp_discovery_done">Temporärer Modus ist bereit. Öffne ihn jederzeit über die Statuskarte.</string>
+    <string name="dashboard_temp_remaining_fmt">Remaining: %1$s</string>
+    <string name="dashboard_temp_remaining_placeholder">Remaining: 00:00</string>
+    <string name="dashboard_temp_status_enabled">Temporarily enabled • %1$s left</string>
+    <string name="dashboard_temp_status_disabled">Temporarily paused • %1$s left</string>
+    <string name="dashboard_temp_sheet_sub_enable">Enable blocking for a short time</string>
+    <string name="dashboard_temp_sheet_sub_enable_profile">Enable %1$s for a short time</string>
+    <string name="dashboard_temp_sheet_sub_disable">Pause Switchly for a short time</string>
+    <string name="dashboard_temp_sheet_sub_disable_locked">Temporary disable is locked (NFC lock is active). Use Emergency Unlock if needed.</string>
+    <string name="dashboard_temp_sheet_cancel_timer">Cancel timer</string>
+    <string name="dashboard_temp_hint">Temporary mode - choose action</string>
+    <string name="dashboard_temp_hint_enable">Temporary enable - choose duration</string>
+    <string name="dashboard_temp_hint_enable_profile">Temporarily enable %1$s</string>
+    <string name="dashboard_temp_hint_disable">Temporary pause - choose duration</string>
+    <string name="dashboard_temp_hint_locked_nfc">Temporary mode unavailable while NFC-required unlock is enabled.</string>
+    <string name="dashboard_temp_nudge">Tip:\nUse temporary mode for quick 5–60 minute sessions.</string>
+    <string name="dashboard_temp_active_changes_locked">This timer is protected. Home cannot replace or shorten it. A temporary pause can still be ended early to restore protection.</string>
+    <string name="dashboard_temp_discovery_done">Temporary mode is ready. Open it from the status card anytime.</string>
 
     <!-- ====================================================== -->
     <!-- Home actions and tiles -->
     <!-- ====================================================== -->
-    <string name="dashboard_toggle_enable">Aktivieren</string>
-    <string name="dashboard_toggle_disable">Deaktivieren</string>
-    <string name="dashboard_quick_actions">Schnellaktionen</string>
+    <string name="dashboard_toggle_enable">Enable</string>
+    <string name="dashboard_toggle_disable">Disable</string>
+    <string name="dashboard_quick_actions">Quick actions</string>
     <plurals name="dashboard_quick_actions_count">
-        <item quantity="one">Schnellaktionen • %1$d ausgewählt</item>
-        <item quantity="other">Schnellaktionen • %1$d ausgewählt</item>
+        <item quantity="one">Quick actions • %1$d selected</item>
+        <item quantity="other">Quick actions • %1$d selected</item>
     </plurals>
-    <string name="dashboard_tile_apps">Apps verwalten</string>
-    <string name="dashboard_tile_apps_sub">App-Liste bearbeiten</string>
-    <string name="dashboard_tile_profiles">Profile</string>
-    <string name="dashboard_tile_profiles_sub">Erstellen &amp; bearbeiten</string>
-    <string name="dashboard_tile_blocked_websites">Website-Regeln</string>
-    <string name="dashboard_tile_blocked_websites_sub">Domains für dieses Profil</string>
-    <string name="dashboard_tile_in_app">In-App-Schutz</string>
-    <string name="dashboard_tile_in_app_sub">Feeds &amp; Oberflächen</string>
-    <string name="dashboard_quick_actions_edit">Schnellaktionen bearbeiten</string>
-    <string name="dashboard_quick_actions_customize">Schnellaktionen anpassen</string>
-    <string name="dashboard_tile_qr">QR-Scanner</string>
-    <string name="dashboard_tile_qr_sub">Tippen scannt\nHalten für Optionen</string>
-    <string name="dashboard_tile_barcode">Barcode-Scanner</string>
-    <string name="dashboard_tile_barcode_sub">Tippen scannt\nHalten für Optionen</string>
-    <string name="dashboard_tile_write_nfc">NFC-Tag schreiben</string>
-    <string name="dashboard_tile_write_nfc_sub">Schreiben oder gepaarte Tags verwalten</string>
-    <string name="dashboard_tile_blocked_notifications">Blockierte Benachrichtigungen</string>
-    <string name="dashboard_tile_blocked_notifications_sub">Postfach &amp; Aktivität</string>
-    <string name="dashboard_quick_actions_expand">Schnellaktionen ausklappen</string>
-    <string name="dashboard_quick_actions_collapse">Schnellaktionen einklappen</string>
-    <string name="dashboard_blocked_apps_expand">App-Liste ausklappen</string>
-    <string name="dashboard_blocked_apps_collapse">App-Liste einklappen</string>
+    <string name="dashboard_tile_apps">App rules</string>
+    <string name="dashboard_tile_apps_sub">Choose blocked apps</string>
+    <string name="dashboard_tile_profiles">Profiles</string>
+    <string name="dashboard_tile_profiles_sub">Create &amp; edit</string>
+    <string name="dashboard_tile_blocked_websites">Website rules</string>
+    <string name="dashboard_tile_blocked_websites_sub">Domains for this profile</string>
+    <string name="dashboard_tile_in_app">In-app blocking</string>
+    <string name="dashboard_tile_in_app_sub">Feeds &amp; surfaces</string>
+    <string name="dashboard_quick_actions_edit">Edit quick actions</string>
+    <string name="dashboard_quick_actions_customize">Customize quick actions</string>
+    <string name="dashboard_tile_qr">QR scanner</string>
+    <string name="dashboard_tile_qr_sub">Tap to scan\nHold for options</string>
+    <string name="dashboard_tile_barcode">Barcode scanner</string>
+    <string name="dashboard_tile_barcode_sub">Tap to scan\nHold for options</string>
+    <string name="dashboard_tile_write_nfc">Write NFC tag</string>
+    <string name="dashboard_tile_write_nfc_sub">Write or manage paired tags</string>
+    <string name="dashboard_tile_blocked_notifications">Blocked notifications</string>
+    <string name="dashboard_tile_blocked_notifications_sub">Inbox &amp; activity</string>
+    <string name="dashboard_quick_actions_expand">Expand quick actions</string>
+    <string name="dashboard_quick_actions_collapse">Collapse quick actions</string>
+    <string name="dashboard_blocked_apps_expand">Expand app list</string>
+    <string name="dashboard_blocked_apps_collapse">Collapse app list</string>
 
     <!-- ====================================================== -->
     <!-- Development notice and Home modes -->
     <!-- ====================================================== -->
-    <string name="scanner_choice_title">Code scannen</string>
-    <string name="main_info_title">Noch in Entwicklung</string>
-    <string name="main_info_contact_action">Kontakt</string>
+    <string name="scanner_choice_title">Scan a code</string>
+    <string name="main_info_title">Still in development</string>
+    <string name="main_info_contact_action">Contact</string>
     <string name="main_info_older_versions_action">Downloads</string>
-    <string name="main_development_info_message">Switchly ist noch in Entwicklung. Ich teste die App so sorgfältig wie möglich mit offenen Beta-Phasen, aber Android verhält sich je nach Gerät unterschiedlich, daher finde ich nicht jedes Problem selbst.\nWenn bei dir etwas nicht richtig funktioniert, schreib mir bitte eine Mail.\n\nDu kannst die Download-Seite über den Button unten öffnen.</string>
-    <string name="home_layout_default">Standard</string>
-    <string name="home_layout_minimal">Einfach</string>
-    <string name="home_layout_detailed">Erweitert</string>
-    <string name="home_layout_custom">Benutzerdefiniert</string>
+    <string name="main_development_info_message">Switchly is still in development. I test it as carefully as I can with open beta phases, but Android behaves differently across devices, so I cannot catch every issue on my own.\nIf something is not working right for you, please send me a mail.\n\nYou can open the download page from the button below.</string>
+    <string name="home_layout_default">Default</string>
+    <string name="home_layout_minimal">Simple</string>
+    <string name="home_layout_detailed">Advanced</string>
+    <string name="home_layout_custom">Custom</string>
 
     <!-- ====================================================== -->
     <!-- Block reason info -->
     <!-- ====================================================== -->
-    <string name="block_reason_info_title">Warum wurde das blockiert?</string>
-    <string name="block_reason_info_button_desc">Anzeigen, warum das blockiert wurde</string>
-    <string name="block_reason_info_empty">Kein aktueller Blockiergrund verfügbar.</string>
-    <string name="block_reason_field_profile">Profil</string>
-    <string name="block_reason_field_rule">Regel</string>
-    <string name="block_reason_field_mode">Modus</string>
-    <string name="block_reason_field_source">Quelle</string>
-    <string name="block_reason_field_matched">Treffer</string>
-    <string name="block_reason_field_result">Ergebnis</string>
+    <string name="block_reason_info_title">Why was this blocked?</string>
+    <string name="block_reason_info_button_desc">Show why this was blocked</string>
+    <string name="block_reason_info_empty">No recent block reason is available.</string>
+    <string name="block_reason_field_profile">Profile</string>
+    <string name="block_reason_field_rule">Rule</string>
+    <string name="block_reason_field_mode">Mode</string>
+    <string name="block_reason_field_source">Source</string>
+    <string name="block_reason_field_matched">Matched</string>
+    <string name="block_reason_field_result">Result</string>
     <string name="block_reason_field_details">Details</string>
-    <string name="block_reason_rule_allow_selected">Nur ausgewählte erlauben</string>
-    <string name="block_reason_rule_daily_time_limit">Tages-Zeitlimit</string>
-    <string name="block_reason_rule_open_limit">Tägliches Öffnungslimit</string>
-    <string name="block_reason_rule_strict_lock">Strict-/NFC-Schutz</string>
-    <string name="block_reason_rule_blocked_apps">Blockierte App-Liste</string>
-    <string name="block_reason_rule_website_rule">Website-Regel</string>
-    <string name="block_reason_rule_website_limit">Website-Zeitlimit</string>
-    <string name="block_reason_rule_settings_bypass">Einstellungen-Schutz</string>
-    <string name="block_reason_mode_block_selected">Ausgewählte blockieren: Eintrag ist ausgewählt</string>
-    <string name="block_reason_mode_allow_not_allowed">Ausgewählte erlauben: Eintrag ist nicht erlaubt</string>
-    <string name="block_reason_mode_website_block_selected">Ausgewählte blockieren: Domain ist ausgewählt</string>
-    <string name="block_reason_mode_website_allow_not_allowed">Ausgewählte erlauben: Domain ist nicht erlaubt</string>
-    <string name="block_reason_source_app_blocking">App-Schutz</string>
-    <string name="block_reason_source_website">Website-Regel</string>
-    <string name="block_reason_source_in_app">In-App-Regel</string>
-    <string name="block_reason_source_strict_mode">Strict Mode</string>
-    <string name="block_reason_result_blocked">Blockiert</string>
-    <string name="block_reason_result_surface_blocked">Bereich blockiert</string>
+    <string name="block_reason_rule_allow_selected">Allow selected mode</string>
+    <string name="block_reason_rule_daily_time_limit">Daily time limit</string>
+    <string name="block_reason_rule_open_limit">Daily open limit</string>
+    <string name="block_reason_rule_strict_lock">Strict/NFC lock protection</string>
+    <string name="block_reason_rule_blocked_apps">Blocked app list</string>
+    <string name="block_reason_rule_website_rule">Website rule</string>
+    <string name="block_reason_rule_website_limit">Website time limit</string>
+    <string name="block_reason_rule_settings_bypass">Settings bypass protection</string>
+    <string name="block_reason_mode_block_selected">Block selected: item is selected</string>
+    <string name="block_reason_mode_allow_not_allowed">Allow selected: item is not allowed</string>
+    <string name="block_reason_mode_website_block_selected">Block selected: domain is selected</string>
+    <string name="block_reason_mode_website_allow_not_allowed">Allow selected: domain is not allowed</string>
+    <string name="block_reason_source_app_blocking">App blocking</string>
+    <string name="block_reason_source_website">Website rule</string>
+    <string name="block_reason_source_in_app">In-app rule</string>
+    <string name="block_reason_source_strict_mode">Strict mode</string>
+    <string name="block_reason_result_blocked">Blocked</string>
+    <string name="block_reason_result_surface_blocked">Surface blocked</string>
 
     <!-- ====================================================== -->
     <!-- Pause until actions -->
     <!-- ====================================================== -->
-    <string name="dashboard_pause_until_title">Pausieren bis…</string>
-    <string name="dashboard_pause_until_next_schedule">Bis zum nächsten Zeitplanwechsel pausieren</string>
-    <string name="dashboard_pause_until_leave_location">Pausieren bis ich den Ort verlasse</string>
-    <string name="dashboard_pause_until_tomorrow">Bis morgen pausieren</string>
+    <string name="dashboard_pause_until_title">Pause until…</string>
+    <string name="dashboard_pause_until_next_schedule">Pause until next schedule change</string>
+    <string name="dashboard_pause_until_leave_location">Pause until I leave this location</string>
+    <string name="dashboard_pause_until_tomorrow">Pause until tomorrow</string>
 
-    <!-- Aktivitäts-Heatmap (Foqos-Stil) -->
-    <string name="activity_section_title">4 Wochen Aktivität</string>
-    <string name="activity_heatmap_content_desc">Heatmap der blockierten Fokuszeit der letzten 28 Tage</string>
-    <string name="activity_week_fmt">%1$s – %2$s diese Woche</string>
+    <!-- Activity heatmap (Foqos-style habit tracker) -->
+    <string name="activity_section_title">4 Week Activity</string>
+    <string name="activity_heatmap_content_desc">Heatmap of blocked focus time for the last 28 days</string>
+    <string name="activity_week_fmt">%1$s – %2$s this week</string>
     <string name="profile_row_meta_fmt">%1$s | %2$s</string>
-    <string name="activity_day_detail_fmt">%1$s · %2$s blockiert</string>
-    <string name="activity_day_none_fmt">%1$s · nichts blockiert</string>
+    <string name="activity_day_detail_fmt">%1$s · %2$s blocked</string>
+    <string name="activity_day_none_fmt">%1$s · nothing blocked</string>
 
-    <!-- Profil-Reihen auf der Startseite (Foqos-Stil) -->
-    <string name="profile_rows_title">Profile</string>
-    <string name="profile_rows_manage">Verwalten</string>
-    <string name="profile_row_active">Aktiv</string>
-    <string name="activity_chart_mode_heatmap">28 Tage</string>
-    <string name="activity_chart_mode_week">Woche</string>
-    <string name="activity_hide">Ausblenden</string>
-    <string name="activity_show">Einblenden</string>
+    <string name="settings_title">Settings</string>
+
+    <!-- Profile edit sheet (SPA) -->
+    <string name="profile_sheet_edit_profile">Edit profile</string>
+    <string name="profile_sheet_rename">Rename</string>
+    <string name="profile_sheet_mode_title">Rule mode</string>
+    <string name="profile_sheet_apps">Apps</string>
+    <string name="profile_sheet_apps_summary">Choose blocked or allowed apps</string>
+    <string name="profile_sheet_websites">Websites</string>
+    <string name="profile_sheet_websites_summary">Blocked or allowed domains</string>
+    <string name="profile_sheet_inapp">In-app rules</string>
+    <string name="profile_sheet_inapp_summary">Shorts, Reels, feeds and more</string>
+    <string name="profile_sheet_schedules">Schedules</string>
+    <string name="profile_sheet_schedules_summary">Time, Wi-Fi, Bluetooth and location</string>
+    <string name="profile_sheet_insights">Insights &amp; history</string>
+    <string name="profile_sheet_insights_summary">Statistics, events and sessions</string>
+    <string name="profile_sheet_delete">Delete profile</string>
+    <string name="profile_sheet_delete_confirm">Delete profile \"%1$s\"? Its rules and limits are removed.</string>
+    <string name="profile_sheet_last_profile">Dies ist das einzige Profil — erstelle ein neues, bevor du es löschst.</string>
+    <string name="profile_sheet_rename_hint">Profile name</string>
+
+    <!-- Foqos-style profile rows on Home -->
+    <string name="profile_rows_title">Profiles</string>
+    <string name="profile_rows_manage">Manage</string>
+    <string name="profile_row_active">Active</string>
+    <string name="activity_chart_mode_heatmap">28 days</string>
+    <string name="activity_chart_mode_week">Week</string>
+    <string name="activity_hide">Hide</string>
+    <string name="activity_show">Show</string>
     <string name="hero_stat_apps">Apps</string>
     <string name="hero_stat_domains">Domains</string>
-    <string name="hero_stat_blocks">Blockiert · 28 T</string>
-    <string name="hero_strategy_manual">Manuelles Blocking</string>
-    <string name="hero_chip_mode_block">Auswahl blockieren</string>
-    <string name="hero_chip_mode_allow">Auswahl erlauben</string>
-    <string name="hero_chip_autoblock">Neue Apps blockieren</string>
-    <string name="hero_chip_temporary">Temporär</string>
-    <string name="hero_chip_emergency">Notfall</string>
+    <string name="hero_stat_blocks">Blocks · 28d</string>
+    <string name="hero_strategy_manual">Manual Blocking</string>
+    <string name="hero_chip_mode_block">Block selected</string>
+    <string name="hero_chip_mode_allow">Allow selected</string>
+    <string name="hero_chip_autoblock">Auto-block new apps</string>
+    <string name="hero_chip_temporary">Temporary</string>
+    <string name="hero_chip_emergency">Emergency</string>
     </resources>

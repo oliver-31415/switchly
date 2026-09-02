@@ -12,6 +12,13 @@
         tools:ignore="AlwaysShowAction" />
 
     <item
+        android:id="@+id/action_settings_gear"
+        android:title="@string/settings_title"
+        android:icon="@drawable/tune_24"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction" />
+
+    <item
         android:id="@+id/action_info"
         android:title="@string/main_info_title"
         android:icon="@drawable/info_24"

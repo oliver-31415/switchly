@@ -193,6 +193,25 @@
     <string name="activity_day_detail_fmt">%1$s · %2$s blocked</string>
     <string name="activity_day_none_fmt">%1$s · nothing blocked</string>
 
+    <!-- Profile edit sheet (SPA) -->
+    <string name="profile_sheet_edit_profile">Edit profile</string>
+    <string name="profile_sheet_rename">Rename</string>
+    <string name="profile_sheet_mode_title">Rule mode</string>
+    <string name="profile_sheet_apps">Apps</string>
+    <string name="profile_sheet_apps_summary">Choose blocked or allowed apps</string>
+    <string name="profile_sheet_websites">Websites</string>
+    <string name="profile_sheet_websites_summary">Blocked or allowed domains</string>
+    <string name="profile_sheet_inapp">In-app rules</string>
+    <string name="profile_sheet_inapp_summary">Shorts, Reels, feeds and more</string>
+    <string name="profile_sheet_schedules">Schedules</string>
+    <string name="profile_sheet_schedules_summary">Time, Wi-Fi, Bluetooth and location</string>
+    <string name="profile_sheet_insights">Insights &amp; history</string>
+    <string name="profile_sheet_insights_summary">Statistics, events and sessions</string>
+    <string name="profile_sheet_delete">Delete profile</string>
+    <string name="profile_sheet_delete_confirm">Delete profile \"%1$s\"? Its rules and limits are removed.</string>
+    <string name="profile_sheet_last_profile">This is the only profile — create another before deleting it.</string>
+    <string name="profile_sheet_rename_hint">Profile name</string>
+
     <!-- Foqos-style profile rows on Home -->
     <string name="profile_rows_title">Profiles</string>
     <string name="profile_rows_manage">Manage</string>
@@ -210,4 +229,5 @@
     <string name="hero_chip_autoblock">Auto-block new apps</string>
     <string name="hero_chip_temporary">Temporary</string>
     <string name="hero_chip_emergency">Emergency</string>
-    </resources>
+        <string name="settings_title">Settings</string>
+</resources>
