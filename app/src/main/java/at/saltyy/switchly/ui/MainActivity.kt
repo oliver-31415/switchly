@@ -65,7 +65,10 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updatePadding
 import androidx.core.view.isVisible
 import androidx.core.view.iterator
 import androidx.core.widget.TextViewCompat
@@ -245,6 +248,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvHeroChips: TextView
     private lateinit var tvHeroStrategy: TextView
     private lateinit var heroProfileRoot: View
+    private lateinit var scrollMain: androidx.core.widget.NestedScrollView
     private lateinit var tvHeroStatApps: TextView
     private lateinit var tvHeroStatDomains: TextView
     private lateinit var tvHeroStatBlocks: TextView
@@ -395,8 +399,14 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(toolbar)
 
-        // Foqos restyle: toolbar is flat surface; icons follow the on-surface color from
-        // Switchly.TopBar (no forced white tinting anymore).
+        scrollMain = findViewById(R.id.scrollMain)
+        // Foqos restyle: toolbar is inline in the scroll (scrolls away like Foqos's title),
+        // so the scroll view must consume the status-bar inset itself.
+        ViewCompat.setOnApplyWindowInsetsListener(scrollMain) { v, insets ->
+            val status = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            v.updatePadding(top = status + homeDp(4f))
+            insets
+        }
 
         // UI refs
 
